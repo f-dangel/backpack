@@ -1,3 +1,11 @@
 # backprop-extended
 
-Pytorch extension for modified backward
+PyTorch extension to compute additional quantities such as
+* Hessian blocks
+* batch gradients
+
+by backpropagation for employment in 
+* 2nd-order and
+* variance-adapted
+
+optimization methods
