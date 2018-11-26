@@ -8,7 +8,12 @@ from torch.nn import Module
 
 
 def decorate(module_subclass):
-    """Add functionality to torch.nn.Module subclass."""
+    """Add functionality to torch.nn.Module subclass.
+
+    Implemented in this way, each subclass of nn.Module is decorated
+    separately, thereby avoiding double-inheritance from torch.nn.Module
+    in a diamond-like pattern.
+    """
     if not issubclass(module_subclass, Module):
         raise ValueError('Can onĺy wrap subclasses of torch.nn.Module')
 
@@ -19,6 +24,7 @@ def decorate(module_subclass):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.exts_hooks = []
+            self.exts_buffers = set()
 
         __init__.__doc__ = module_subclass.__init__.__doc__
 
@@ -42,6 +48,16 @@ def decorate(module_subclass):
             """Track hooks set up for extended backpropagation."""
             self.exts_hooks.append(handle)
             return handle
+
+        # --- buffer tracking ---
+        def register_exts_buffer(self, name, tensor=None):
+            """Register tracked buffer for extended backpropagation."""
+            self.register_buffer(name, tensor)
+            self._track_exts_buffer(name)
+
+        def _track_exts_buffer(self, name):
+            """Keep track of buffers."""
+            self.exts_buffers.add(name)
 
     DecoratedModule.__name__ = 'Decorated{}'.format(module_subclass.__name__)
 
