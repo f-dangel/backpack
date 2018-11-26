@@ -1,7 +1,7 @@
 """Test decorator of torch.nn.Module subclasses."""
 
 import torch.nn
-from decorator import decorate
+from .decorator import decorate
 
 
 def test_decorated_linear_properties():
