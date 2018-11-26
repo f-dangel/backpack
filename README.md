@@ -9,3 +9,6 @@ by backpropagation for employment in
 * variance-adapted
 
 optimization methods
+
+# developer notes
+* Please copy the `pre-commit` file to your `.git/hooks/` directory. It will run tests before accepting commits.
