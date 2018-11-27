@@ -59,6 +59,13 @@ def decorate(module_subclass):
             """Keep track of buffers."""
             self.exts_buffers.add(name)
 
+        # --- disable exts ---
+        def remove_exts_buffers(self):
+            """Remove all buffers introduced by exts."""
+            while self.exts_buffers:
+                name = self.exts_buffers.pop()
+                self._buffers.pop(name)
+
     DecoratedModule.__name__ = 'Decorated{}'.format(module_subclass.__name__)
 
     return DecoratedModule
