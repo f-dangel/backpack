@@ -52,8 +52,12 @@ def test_exts_hooking():
         assert len(layer.exts_hooks) == i
 
 
-def test_exts_buffering():
-    """Test registration of buffers by exts methods."""
+def module_with_buffers():
+    """Return module that holds two buffers.
+
+    `'buffer1'` is registered by the torch.nn.Module method.
+    `'buffer2'` is registered by the exts method.
+    """
     layer = DecoratedAffine(in_features=5, out_features=5)
     # buffer1 is registered normally, buffer2 with exts method
     buffer_names = ['buffer1', 'buffer2']
@@ -62,9 +66,28 @@ def test_exts_buffering():
     # register
     for name, tensor, register in zip(buffer_names, tensors, buffer_register):
         register(name, tensor)
+    return layer, buffer_names
+
+
+def test_exts_buffering():
+    """Test registration of buffers by exts methods."""
+    layer, buffer_names = module_with_buffers()
     # check if all buffers are present
     for b in buffer_names:
         assert b in layer._buffers
     # but only buffer2 is tracked by exts
     assert buffer_names[0] not in layer.exts_buffers
     assert buffer_names[1] in layer.exts_buffers
+
+
+def test_buffer_removing():
+    """Test removing of exts buffers."""
+    layer, buffer_names = module_with_buffers()
+    # remove buffer_names[1] which was registered with exts
+    layer.remove_exts_buffers()
+    # buffer1 is still existent
+    assert buffer_names[0] in layer._buffers
+    assert hasattr(layer, buffer_names[0])
+    # buffer2 not
+    assert not (buffer_names[1] in layer._buffers)
+    assert not hasattr(layer, buffer_names[1])
