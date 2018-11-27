@@ -8,4 +8,4 @@ def torch_allclose(a, b, *args, **kwargs):
 
     Internally, `numpy.allclose` is called.
     """
-    return allclose(a.numpy(), b.numpy(), *args, **kwargs)
+    return allclose(a.data, b.data, *args, **kwargs)
