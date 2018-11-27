@@ -93,6 +93,7 @@ def test_grad():
         assert torch_allclose(g_lin.bias.grad, b_grad)
         assert torch_allclose(g_lin.weight.grad, w_grad)
         g_lin.zero_grad()
+        g_lin.clear_grad_batch()
         g_lin.remove_exts_buffers()
 
 
@@ -109,4 +110,5 @@ def test_grad_batch():
         print(w_grad_batch)
         assert torch_allclose(g_lin.weight.grad_batch, w_grad_batch)
         g_lin.zero_grad()
+        g_lin.clear_grad_batch()
         g_lin.remove_exts_buffers()

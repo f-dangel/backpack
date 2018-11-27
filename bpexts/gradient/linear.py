@@ -16,7 +16,6 @@ class G_Linear(DecoratedLinear):
         self.register_exts_forward_pre_hook(self.store_input)
         self.register_exts_backward_hook(self.compute_grad_batch)
 
-
     @staticmethod
     def store_input(module, input):
         """Pre forward hook saving layer input as buffer.
@@ -86,3 +85,14 @@ class G_Linear(DecoratedLinear):
             weight_grad_batch = einsum('bi,bj->bij', (grad_output,
                                                       module.input))
             return weight_grad_batch.reshape(batch_size, in_dim, out_dim)
+
+    def clear_grad_batch(self):
+        """Delete batch gradients."""
+        try:
+            del self.weight.grad_batch
+        except AttributeError:
+            pass
+        try:
+            del self.bias.grad_batch
+        except AttributeError:
+            pass
