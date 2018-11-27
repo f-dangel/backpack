@@ -60,6 +60,12 @@ def decorate(module_subclass):
             self.exts_buffers.add(name)
 
         # --- disable exts ---
+        def remove_exts_hooks(self):
+            """Remove all hooks tracked by exts."""
+            while self.exts_hooks:
+                handle = self.exts_hooks.pop()
+                handle.remove()
+
         def remove_exts_buffers(self):
             """Remove all buffers introduced by exts."""
             while self.exts_buffers:
