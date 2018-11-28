@@ -1,6 +1,6 @@
 """Extension of torch.nn.Conv2d for computing batch gradients."""
 
-from torch.nn import (Conv2d, Fold, Unfold)
+from torch.nn import (Conv2d, Unfold)
 from torch import (randn, einsum)
 from numpy import prod
 from ..decorator import decorate
@@ -36,6 +36,9 @@ class G_Conv2d(DecoratedConv2d):
         convoluted = einsum('ki,bij->bkj', (kernel_matrix, im2col))
         # reshape into output image
         col2im = convoluted.view(out_shape)
+        if self.bias is not None:
+            bias = self.bias.view(1, -1, 1, 1)
+            col2im.add_(bias.expand_as(col2im))
         return col2im
 
     def output_size(self, input_size):

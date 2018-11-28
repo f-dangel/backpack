@@ -8,7 +8,7 @@ The example is taken from
 
 from torch import (Tensor, randn)
 from torch.nn import Conv2d
-from random import randint
+from random import (randint, choice)
 from .conv2d import G_Conv2d
 from ..utils import torch_allclose
 
@@ -95,22 +95,38 @@ def test_forward():
         assert torch_allclose(out_g_conv2d, result)
 
 
-def random_convolutions_and_inputs():
-    """Return same torch/exts 2d conv modules and random inputs."""
+def random_convolutions_and_inputs(in_channels=None,
+                                   out_channels=None,
+                                   kernel_size=None,
+                                   stride=None,
+                                   padding=None,
+                                   dilation=None,
+                                   bias=None,
+                                   kernel_shape=None,
+                                   batch_size=None,
+                                   in_size=None):
+    """Return same torch/exts 2d conv modules and random inputs.
+
+    Arguments can be fixed by handing them over.
+    """
     # random convolution parameters
-    in_channels = randint(1, 3)
-    out_channels = randint(1, 3)
-    kernel_size = (randint(1, 3), randint(1, 3))
-    stride = (randint(1, 3), randint(1, 3))
-    padding = (randint(0, 2), randint(0, 2))
-    dilation = (randint(1, 3), randint(1, 3))
-    bias = False
+    in_channels = in_channels if in_channels is not None else randint(1, 3)
+    out_channels = out_channels if out_channels is not None else randint(1, 3)
+    kernel_size = kernel_size if kernel_size is not None\
+        else (randint(1, 3), randint(1, 3))
+    stride = stride if stride is not None else (randint(1, 3), randint(1, 3))
+    padding = padding if padding is not None\
+        else (randint(0, 2), randint(0, 2))
+    dilation = dilation if dilation is not None\
+        else (randint(1, 3), randint(1, 3))
+    bias = bias if bias is not None else choice([True, False])
     # random kernel
     kernel_shape = (out_channels, in_channels) + kernel_size
     kernel = randn(kernel_shape)
     # random input
-    batch_size = randint(1, 3)
-    in_size = (randint(8, 12), randint(8, 12))
+    batch_size = batch_size if batch_size is not None else randint(1, 3)
+    in_size = in_size if in_size is not None\
+        else (randint(8, 12), randint(8, 12))
     in_shape = (batch_size, in_channels) + in_size
     input = randn(in_shape)
     # torch.nn convolution
@@ -131,6 +147,12 @@ def random_convolutions_and_inputs():
                         dilation=dilation,
                         bias=bias)
     g_conv2d.weight.data = kernel
+    # random bias
+    if bias is True:
+        bias_vals = randn(out_channels)
+        conv2d.bias.data = bias_vals
+        g_conv2d.bias.data = bias_vals
+        assert torch_allclose(conv2d.bias, g_conv2d.bias)
     assert torch_allclose(conv2d.weight, g_conv2d.weight)
     return conv2d, g_conv2d, input
 
