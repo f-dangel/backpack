@@ -6,8 +6,9 @@ The example is taken from
     for Document Processing (2007).
 """
 
-from torch import Tensor
+from torch import (Tensor, randn)
 from torch.nn import Conv2d
+from random import randint
 from .conv2d import G_Conv2d
 from ..utils import torch_allclose
 
@@ -92,3 +93,53 @@ def test_forward():
         assert torch_allclose(out_conv2d, result)
         out_g_conv2d = g_conv2d(input)
         assert torch_allclose(out_g_conv2d, result)
+
+
+def random_convolutions_and_inputs():
+    """Return same torch/exts 2d conv modules and random inputs."""
+    # random convolution parameters
+    in_channels = randint(1, 3)
+    out_channels = randint(1, 3)
+    kernel_size = (randint(1, 3), randint(1, 3))
+    stride = (randint(1, 3), randint(1, 3))
+    padding = (randint(0, 2), randint(0, 2))
+    dilation = (randint(1, 3), randint(1, 3))
+    bias = False
+    # random kernel
+    kernel_shape = (out_channels, in_channels) + kernel_size
+    kernel = randn(kernel_shape)
+    # random input
+    batch_size = randint(1, 3)
+    in_size = (randint(8, 12), randint(8, 12))
+    in_shape = (batch_size, in_channels) + in_size
+    input = randn(in_shape)
+    # torch.nn convolution
+    conv2d = Conv2d(in_channels=in_channels,
+                    out_channels=out_channels,
+                    kernel_size=kernel_size,
+                    stride=stride,
+                    padding=padding,
+                    dilation=dilation,
+                    bias=bias)
+    conv2d.weight.data = kernel
+    # extended convolution layer
+    g_conv2d = G_Conv2d(in_channels=in_channels,
+                        out_channels=out_channels,
+                        kernel_size=kernel_size,
+                        stride=stride,
+                        padding=padding,
+                        dilation=dilation,
+                        bias=bias)
+    g_conv2d.weight.data = kernel
+    assert torch_allclose(conv2d.weight, g_conv2d.weight)
+    return conv2d, g_conv2d, input
+
+
+def test_random_forward(random_runs=10):
+    """Compare output of conv and g_conv for random convolutions/inputs."""
+    for _ in range(random_runs):
+        conv2d, g_conv2d, input = random_convolutions_and_inputs()
+        out_conv2d = conv2d(input)
+        out_g_conv2d = g_conv2d(input)
+        # need to choose lower precision for some reason
+        assert torch_allclose(out_g_conv2d, out_conv2d, atol=1E-4)

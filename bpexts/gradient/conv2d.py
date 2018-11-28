@@ -14,28 +14,28 @@ class G_Conv2d(DecoratedConv2d):
     """Extended backpropagation for torch.nn.Conv2d."""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.unfold = None
-        self.fold = None
-
-    def forward(self, input):
         self.unfold = Unfold(kernel_size=self.kernel_size,
                              dilation=self.dilation,
                              padding=self.padding,
                              stride=self.stride)
+
+    def forward(self, input):
+        """Apply 2d convolution using unfold.
+
+        More info on how to do this manually:
+            https://discuss.pytorch.org/t/custom-convolution-dot-
+            product/14992/7
+        """
         out_size = self.output_size(input.size()[1:])
+        out_shape = (-1, self.out_channels) + out_size
         # expand patches
         im2col = self.unfold(input)
-        print('im2col', im2col)
         # perform convolution by matrix multiplication
         kernel_matrix = self.weight.view(self.out_channels, -1)
-        print('kernel matrix', kernel_matrix)
         # j: output image size, k: output channels
         convoluted = einsum('ki,bij->bkj', (kernel_matrix, im2col))
-        print('convoluted', convoluted)
         # reshape into output image
-        out_shape = (-1, self.out_channels) + out_size
         col2im = convoluted.view(out_shape)
-        print('col2im', col2im)
         return col2im
 
     def output_size(self, input_size):
