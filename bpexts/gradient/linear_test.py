@@ -70,8 +70,9 @@ def test_forward():
     Handles single-instance and batch mode."""
     for input, result in zip(inputs, results):
         out_lin = lin(input)
+        assert torch_allclose(out_lin, result)
         out_g_lin = g_lin(input)
-        assert torch_allclose(out_lin, out_g_lin)
+        assert torch_allclose(out_g_lin, result)
 
 
 def test_losses():
