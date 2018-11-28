@@ -29,16 +29,12 @@ class G_Conv2d(DecoratedConv2d):
         # perform convolution by matrix multiplication
         kernel_matrix = self.weight.view(self.out_channels, -1)
         print('kernel matrix', kernel_matrix)
-        convoluted = einsum('bij,ki->bjk', (im2col, kernel_matrix))
+        # j: output image size, k: output channels
+        convoluted = einsum('ki,bij->bkj', (kernel_matrix, im2col))
         print('convoluted', convoluted)
         # reshape into output image
-        batch_size = input.size()[0]
-        out_numel = (prod(out_size))
-        out_shape = (batch_size, out_numel, self.out_channels)
+        out_shape = (-1, self.out_channels) + out_size
         col2im = convoluted.view(out_shape)
-        col2im = col2im.transpose(1, 2)
-        out_shape = (batch_size, self.out_channels) + out_size
-        col2im = col2im.view(out_shape)
         print('col2im', col2im)
         return col2im
 
