@@ -16,9 +16,10 @@ from ..utils import torch_allclose
 in_channels = 3
 out_channels = 2
 kernel_size = (2, 2)
-stride = 1
-padding = 0
-dilation = 1
+stride = (1, 1)
+padding = (0, 0)
+dilation = (1, 1)
+bias = False
 
 # predefined kernel matrix
 kernel11 = [[1, 1],
@@ -61,18 +62,18 @@ conv2d = Conv2d(in_channels=in_channels,
                 kernel_size=kernel_size,
                 stride=stride,
                 padding=padding,
-                dilation=1,
-                bias=False)
+                dilation=dilation,
+                bias=bias)
 conv2d.weight.data = kernel
 
 # extended convolution layer
-g_conv2d = Conv2d(in_channels=in_channels,
-                  out_channels=out_channels,
-                  kernel_size=kernel_size,
-                  stride=stride,
-                  padding=padding,
-                  dilation=1,
-                  bias=False)
+g_conv2d = G_Conv2d(in_channels=in_channels,
+                    out_channels=out_channels,
+                    kernel_size=kernel_size,
+                    stride=stride,
+                    padding=padding,
+                    dilation=dilation,
+                    bias=bias)
 g_conv2d.weight.data = kernel
 
 
