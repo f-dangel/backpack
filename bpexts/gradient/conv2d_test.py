@@ -162,16 +162,6 @@ def random_convolutions_and_inputs(in_channels=None,
     return conv2d, g_conv2d, input
 
 
-def test_random_forward(random_runs=10):
-    """Compare output of conv and g_conv for random convolutions/inputs."""
-    for _ in range(random_runs):
-        conv2d, g_conv2d, input = random_convolutions_and_inputs()
-        out_conv2d = conv2d(input)
-        out_g_conv2d = g_conv2d(input)
-        # need to choose lower precision for some reason
-        assert torch_allclose(out_g_conv2d, out_conv2d, atol=1E-4)
-
-
 def compare_grads(conv2d, g_conv2d, input):
     """Feed input through nn and exts conv2d, compare bias/weight grad."""
     # backward for torch conv2d
