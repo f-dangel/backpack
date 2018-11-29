@@ -1,7 +1,7 @@
 """Extension of torch.nn.Conv2d for computing batch gradients."""
 
 from torch.nn import (Conv2d, Unfold)
-from torch import (randn, einsum)
+from torch import einsum
 from numpy import prod
 from ..decorator import decorate
 
@@ -112,3 +112,14 @@ class G_Conv2d(DecoratedConv2d):
         dE_dW = einsum('blj,bkj->bkl', (X, dE_dY))
         # reshape dE/dW into dE/dw
         return dE_dW.view(dE_dw_shape)
+
+    def clear_grad_batch(self):
+        """Delete batch gradients."""
+        try:
+            del self.weight.grad_batch
+        except AttributeError:
+            pass
+        try:
+            del self.bias.grad_batch
+        except AttributeError:
+            pass
