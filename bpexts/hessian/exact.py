@@ -54,3 +54,16 @@ def exact_hessian(f, parameters, show_progress=True):
                       else cat([d2theta, d2.contiguous().view(-1)])
         hessian[idx] = d2theta
     return hessian
+
+
+def exact_hessian_diagonal_blocks(f, parameters, show_progress=True):
+    """Compute diagonal blocks of a scalar function's Hessian.
+
+    Return a list of Hessian blocks.
+    The blocks are defined by the tensors in `parameters`. For each
+    parameter, `exact_hessian` is called.
+
+    See `exact_hessian` for more information.
+    """
+    return [exact_hessian(f, [p], show_progress=show_progress)
+            for p in parameters]
