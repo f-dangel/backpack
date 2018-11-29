@@ -172,8 +172,8 @@ def test_random_forward(random_runs=10):
         assert torch_allclose(out_g_conv2d, out_conv2d, atol=1E-4)
 
 
-def compare_bias_grad(conv2d, g_conv2d, input):
-    """Feed input through nn and exts conv2d, compare bias grad."""
+def compare_grads(conv2d, g_conv2d, input):
+    """Feed input through nn and exts conv2d, compare bias/weight grad."""
     # backward for torch conv2d
     out_conv2d = conv2d(input)
     loss = loss_function(out_conv2d)
@@ -186,8 +186,16 @@ def compare_bias_grad(conv2d, g_conv2d, input):
     assert torch_allclose(g_conv2d.bias.grad,
                           conv2d.bias.grad,
                           atol=1E-4)
+    assert torch_allclose(g_conv2d.weight.grad,
+                          conv2d.weight.grad,
+                          atol=1E-4)
     assert torch_allclose(g_conv2d.bias.grad_batch.sum(0),
                           conv2d.bias.grad,
+                          atol=1E-4)
+    print(g_conv2d.weight.grad_batch.sum(0))
+    print(conv2d.weight.grad.data)
+    assert torch_allclose(g_conv2d.weight.grad_batch.sum(0),
+                          conv2d.weight.grad,
                           atol=1E-4)
 
 
@@ -197,11 +205,11 @@ def test_random_bias_grad(random_runs=10):
         conv2d, g_conv2d, input = random_convolutions_and_inputs(
                 bias=True,
                 batch_size=1)
-        compare_bias_grad(conv2d, g_conv2d, input)
+        compare_grads(conv2d, g_conv2d, input)
 
 
 def test_random_bias_grad_batch(random_runs=10):
     """Check bias gradients for a batch."""
     for i in range(random_runs):
         conv2d, g_conv2d, input = random_convolutions_and_inputs(bias=True)
-        compare_bias_grad(conv2d, g_conv2d, input)
+        compare_grads(conv2d, g_conv2d, input)
