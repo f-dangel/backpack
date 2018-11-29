@@ -82,3 +82,21 @@ def test_exact_hessian_diagonal_blocks_simple():
                                                    show_progress=True)
     for block, result in zip(hessian_blocks, results):
         assert torch_allclose(block, result)
+
+
+def test_exact_hessian_diagonal_blocks_involved():
+    """Test exact block Hessian computation for a complicated function."""
+    f, parameters = involved_function_with_parameters()
+    # expected outcome
+    block1 = tensor([[2, 4, 0, 0],
+                     [4, 8, 0, 0],
+                     [0, 0, 2, 4],
+                     [0, 0, 4, 8]]).float()
+    block2 = tensor([[2, 0],
+                     [0, 2]]).float()
+    results = [block1, block2]
+    # compute and compare
+    hessian_blocks = exact_hessian_diagonal_blocks(f, parameters,
+                                                   show_progress=True)
+    for block, result in zip(hessian_blocks, results):
+        assert torch_allclose(block, result)
