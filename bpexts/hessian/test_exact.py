@@ -1,7 +1,7 @@
 """Test exact computation of Hessian."""
 
 from torch import tensor
-from .exact import exact_hessian
+from .exact import (exact_hessian, exact_hessian_diagonal_blocks)
 from ..utils import torch_allclose
 
 
@@ -67,3 +67,18 @@ def test_exact_hessian_involved():
     hessian = exact_hessian(f, parameters, show_progress=True)
     print(hessian)
     assert torch_allclose(hessian, result)
+
+
+def test_exact_hessian_diagonal_blocks_simple():
+    """Test exact block Hessian computation for a simple function."""
+    f, parameters = simple_function_with_parameters()
+    # expected outcome
+    block1 = tensor([[1, 4],
+                     [4, 2]]).float()
+    block2 = tensor([3]).float()
+    results = [block1, block2]
+    # compute and compare
+    hessian_blocks = exact_hessian_diagonal_blocks(f, parameters,
+                                                   show_progress=True)
+    for block, result in zip(hessian_blocks, results):
+        assert torch_allclose(block, result)
