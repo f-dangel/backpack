@@ -34,7 +34,7 @@ def exact_jacobian(f, parameters, show_progress=True):
                        disable=(not show_progress))
     f_flat = f.view(-1)
     for idx in progressbar:
-        df = grad(f_flat[idx], parameters, create_graph=True)
+        df = grad(f_flat[idx], params, create_graph=True)
         dtheta = None
         for d in df:
             dtheta = d.contiguous().view(-1) if dtheta is None\

@@ -41,6 +41,6 @@ def test_exact_jacobian_linear_layer():
                      [0, 0, 0, 7, 8, 9, 0, 1],
                      [10, 11, 12, 0, 0, 0, 1, 0],
                      [0, 0, 0, 10, 11, 12, 0, 1]]).float()
-    jacobian = exact_jacobian(f, list(layer.parameters()),
+    jacobian = exact_jacobian(f, layer.parameters(),
                               show_progress=True)
     assert torch_allclose(result, jacobian)
