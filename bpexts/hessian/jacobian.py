@@ -5,7 +5,7 @@ from torch.autograd import grad
 from tqdm import tqdm
 
 
-def exact_jacobian(f, parameters, show_progress=True):
+def exact_jacobian(f, parameters, show_progress=False):
     """Compute the excact Jacobian matrix.
 
     Parameters:
@@ -41,3 +41,40 @@ def exact_jacobian(f, parameters, show_progress=True):
                      else cat([dtheta, d.contiguous().view(-1)])
         jacobian[idx] = dtheta
     return jacobian
+
+
+def exact_jacobian_batchwise(f, parameter, show_progress=True):
+    """Jacobian of batch function and parameter (inefficient).
+
+    Both the 0th axis of `f` and `parameter` have to correspond
+    to the batch dimension.
+
+    Note:
+    -----
+    Take into account that the function and parameters were processed
+    batch-wise. This leads to a sparse structure (i.e. block-diagonality)
+    of the exact Jacobian.
+    
+    Given a tensor function `f` of shape `(batch_size, dim_x, dim_y, ...)`
+    with a `parameter` of shape `(batch_size, dim_1, dim_2, ...)`,
+    the batchwise Jacobian is a matrix of size 
+    `(batch_size, dim_x * dim_y * ..., dim_1 * dim_2 * ...)`.
+
+    When computing the Jacobian of a function whose output is known to
+    consist of batch samples along the 0th axis with respect to batch-shaped
+    parameters, it is sufficient to store the Jacobian for each
+    sample/parameter pair. Speaking differently, the 0th axis of the
+    computed batchwise Jacobian holds all exact Jacobians of the 0th axis
+    of the function w.r.t. the zeroth axes of all parameters.   
+    """
+    batch_size = f.size()[0]
+    if not parameter.size()[0] == batch_size:
+        raise ValueError('Parameter does not have batch dimension of f')
+    jacobian = exact_jacobian(f, [parameter], show_progress=show_progress)
+    # reshape, grouping the batch dimensions of f and p
+    no_batch_f = f.numel() // batch_size
+    no_batch_p = parameter.numel() // batch_size
+    jacobian = jacobian.view(batch_size, no_batch_f, batch_size, no_batch_p)
+    # cut out diagonal blocks
+    range_b = list(range(batch_size))
+    return jacobian[range_b, :, range_b, :]
