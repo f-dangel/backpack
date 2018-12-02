@@ -43,7 +43,7 @@ def exact_jacobian(f, parameters, show_progress=False):
     return jacobian
 
 
-def exact_jacobian_batchwise(f, parameter, show_progress=True):
+def exact_jacobian_batchwise(f, parameter, show_progress=False):
     """Jacobian of batch function and parameter (inefficient).
 
     Both the 0th axis of `f` and `parameter` have to correspond
