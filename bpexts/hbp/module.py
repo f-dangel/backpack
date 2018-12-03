@@ -46,7 +46,7 @@ def hbp_decorate(module_subclass):
             pass
 
         def backward_hessian(self, output_hessian, compute_input_hessian=True):
-            """Propagate Hessian, optionally compute parameter Hessians.
+            """Propagate Hessian, optionally compute parameter Hessian.
 
             Backpropagation of the Hessian requires a layer to provide a method
             that, given the Hessian with respect to its output (output_hessian)
@@ -71,7 +71,7 @@ def hbp_decorate(module_subclass):
                                           return None.
             """
             if self.has_trainable_parameters():
-                self.init_parameter_hessian(output_hessian)
+                self.parameter_hessian(output_hessian)
             return None if compute_input_hessian is False else\
                 self.input_hessian(output_hessian)
 
@@ -87,7 +87,7 @@ def hbp_decorate(module_subclass):
                     return True
             return False
 
-        def init_parameter_hessian(output_hessian):
+        def parameter_hessian(output_hessian):
             """Initialize Hessians with respect to trainable layer parameters.
 
             Parameters:
