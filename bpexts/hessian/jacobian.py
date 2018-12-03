@@ -5,60 +5,22 @@ from torch.autograd import grad
 from tqdm import tqdm
 
 
-def exact_jacobian(f, parameters, show_progress=False):
-    """Compute the excact Jacobian matrix.
+def jacobian(f, x, batched_f = False, batched_x = False, show_progress=False):
+    """Compute the Jacobian matrix/tensor Df(x).
+
+    Batch dimensions are handled in a special way if specified.
 
     Parameters:
     -----------
-    f (tensor): Tensor-valued function.
-    parameters (list/tuple/iterator): Iterable object containing all
-               tensor-valued argument of `f`.
-    show_progress (bool): Show a progressbar which also estimates the
-                  remaining runtime
+    f (tensor): Tensor-valued function
+    x (tensor): Tensor-valued variable
+    batched_f (bool): The 0th axis of `f` represents different samples 
+    batched_x (bool): The 0th axis of `x` represents different samples 
+    show_progress (bool): Show progressbar with runtime estimate
 
     The generalized Jacobian for a tensor-valued function `f` of
-    a tensor-valued input `x` is given by d vec(f)/ d vec(x), where
+    a tensor-valued input `x` is given by d vec(f) / d vec(x)^T, where
     the vectorization corresponds to a one-dimensional view of the
-    tensor.
-
-    Returns matrix with `J[i,j] = d vec(f)[i] / d vec(x)[j]`.
-    """
-    params = list(parameters)
-    num_params = int(sum(p.numel() for p in params))
-    if not all(p.requires_grad for p in params):
-        raise ValueError('All parameters have to require_grad')
-    jacobian = zeros(f.numel(), num_params)
-    progressbar = tqdm(iterable=range(f.numel()),
-                       total=f.numel(),
-                       desc='[exact] Jacobian',
-                       disable=(not show_progress))
-    f_flat = f.view(-1)
-    for idx in progressbar:
-        df = grad(f_flat[idx], params, create_graph=True)
-        dtheta = None
-        for d in df:
-            dtheta = d.contiguous().view(-1) if dtheta is None\
-                     else cat([dtheta, d.contiguous().view(-1)])
-        jacobian[idx] = dtheta
-    return jacobian
-
-
-def exact_jacobian_batchwise(f, parameter, show_progress=False):
-    """Jacobian of batch function and parameter (inefficient).
-
-    Both the 0th axis of `f` and `parameter` have to correspond
-    to the batch dimension.
-
-    Note:
-    -----
-    Take into account that the function and parameters were processed
-    batch-wise. This leads to a sparse structure (i.e. block-diagonality)
-    of the exact Jacobian.
-    
-    Given a tensor function `f` of shape `(batch_size, dim_x, dim_y, ...)`
-    with a `parameter` of shape `(batch_size, dim_1, dim_2, ...)`,
-    the batchwise Jacobian is a matrix of size 
-    `(batch_size, dim_x * dim_y * ..., dim_1 * dim_2 * ...)`.
 
     When computing the Jacobian of a function whose output is known to
     consist of batch samples along the 0th axis with respect to batch-shaped
@@ -66,15 +28,81 @@ def exact_jacobian_batchwise(f, parameter, show_progress=False):
     sample/parameter pair. Speaking differently, the 0th axis of the
     computed batchwise Jacobian holds all exact Jacobians of the 0th axis
     of the function w.r.t. the zeroth axes of all parameters.   
+    tensors.
+
+    | shape(f) | shape(x) | (batched_f, batched_x) | shape(Df(x)) |
+    | ------ | ------ | ------ | ------ | 
+    | (f1, ...) | (x1, ...) | (False, False) | (f1 * ..., x1 * ...) 
+    | (b, f1, ...) | (x1, ...) | (True, False) | (b, f1 * ..., x1 * ...) 
+    | (f1, ...) | (b, x1, ...) | (False, True) | (f1 * ..., b, x1 * ...) 
+    | (b, f1, ...) | (b, x1, ...) | (True, True) | (b, f1 * ..., x1 * ...) 
     """
-    batch_size = f.size()[0]
-    if not parameter.size()[0] == batch_size:
-        raise ValueError('Parameter does not have batch dimension of f')
-    jacobian = exact_jacobian(f, [parameter], show_progress=show_progress)
-    # reshape, grouping the batch dimensions of f and p
-    no_batch_f = f.numel() // batch_size
-    no_batch_p = parameter.numel() // batch_size
-    jacobian = jacobian.view(batch_size, no_batch_f, batch_size, no_batch_p)
-    # cut out diagonal blocks
-    range_b = list(range(batch_size))
-    return jacobian[range_b, :, range_b, :]
+    # full Jacobian by brute force
+    jac = _jacobian_flattened_tensors(f, x, show_progress=show_progress)
+    # reshape into (almost final) shape
+    shape = _jacobian_shape_convention(f, x, batched_f, batched_x)
+    jac = jac.view(shape)
+    # slice batch axes into a single one
+    if batched_f and batched_x:
+        batch = list(range(shape[0]))
+        jac = jac[batch,:,batch,:]
+    return jac
+
+
+def _jacobian_flattened_tensors(f, x, show_progress=False):
+    """Compute Jacobian of flattened tensor f w.r.t. flattened tensor x. 
+
+    Return matrix with `J[i,j] = d vec(f)[i] / d vec(x)[j]` where vec
+    refers to a flattened view of a tensor-valued quantity.
+    """
+    jac = zeros(f.numel(), x.numel())
+    progressbar = tqdm(iterable=range(f.numel()),
+                       total=f.numel(),
+                       desc='[exact] Jacobian',
+                       disable=(not show_progress))
+    f_flat = f.view(-1)
+    for idx in progressbar:
+        df = grad(f_flat[idx], x, create_graph=True)
+        dx = None
+        for d in df:
+            dx = d.contiguous().view(-1) if dx is None\
+                    else cat([dx, d.contiguous().view(-1)])
+        jac[idx] = dx
+    return jac
+ 
+
+def _jacobian_shape_convention(f, x, batched_f, batched_x):
+    """Return shape of the Jacobian matrix/tensor Df(x).
+
+    Parameters:
+    -----------
+    f (tensor): Function
+    x (tensor): Variable
+    batched_f (bool): The 0th axis of `f` represents batch samples
+    batched_x (bool): The 0th axis of `x` represents batch samples
+
+    | shape(f) | shape(x) | (batched_f, batched_x) | shape(Df(x)) |
+    | ------ | ------ | ------ | ------ | 
+    | (f1, ...) | (x1, ...) | (False, False) | (f1 * ..., x1 * ...) 
+    | (b, f1, ...) | (x1, ...) | (True, False) | (b, f1 * ..., x1 * ...) 
+    | (f1, ...) | (b, x1, ...) | (False, True) | (f1 * ..., b, x1 * ...) 
+    | (b, f1, ...) | (b, x1, ...) | (True, True) | (b, f1 * ..., b, x1 * ...) 
+
+    Returns:
+    --------
+    jacobian_shape (tuple): Shape of the Jacobian matrix/tensor
+    """
+    f_total, x_total = f.numel(), x.numel()
+    if (not batched_f) and (not batched_x):
+        return (f_total, x_total)
+    elif (batched_f) and (not batched_x):
+        batch = f.size()[0]
+        return (batch, f_total // batch, x_total)
+    elif (not batched_f) and (batched_x):
+        batch = x.size()[0]
+        return (f_total, batch, x_total // batch)
+    elif batched_f and batched_x:
+        batch1, batch2 = f.size()[0], x.size()[0]
+        if not batch1 == batch2:
+            raise ValueError('f and x must have same batch dimension')
+        return (batch1, f_total // batch1, batch2, x_total // batch2)
