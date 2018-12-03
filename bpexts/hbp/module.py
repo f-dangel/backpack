@@ -14,7 +14,6 @@ def hbp_decorate(module_subclass):
         For working Hessian backpropagation, the following methods should
         be implemented by the user:
         - hbp_hooks()
-        - hbp_buffers()
         - parameter_hessian()
         - input_hessian()
         """
@@ -26,25 +25,20 @@ def hbp_decorate(module_subclass):
             self.enable_hbp()
 
         def enable_hbp(self):
-            """(Re-)enable Hessian backpropagation functionality.
+            """Enable Hessian backpropagation functionality.
 
-            Set up hooks and buffers again.
+            Set up hooks again.
             """
             self.hbp_hooks()
+
+        def disable_hbp(self, keep_buffers=False):
+            """Disable Hessian backpropagation functionality."""
+            self.disable_exts(keep_buffers=keep_buffers)
 
         def hbp_hooks(self):
             """Register all hooks required for Hessian backpropagation.
 
-            This class should be implemented for custom HBP modules.
-
-            For instance, a layer applying a nonlinear function f to each
-            input elementwise requires access to
-                i) the gradient with respect to its output,
-                ii) the first derivative of f applied on the input,
-                iii) the second derivative of f applied on the input.
-
-            For layers with parameters, more quantities have to be
-            tracked, for instance to provide Hessian-vector products.
+            This method should be implemented for custom HBP modules.
             """
             warnings.warn('WARNING: Override hbp_hooks if your module'
                           ' requires access to intermediate quantities'
