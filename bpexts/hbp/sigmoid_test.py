@@ -61,6 +61,5 @@ def test_sigmoid_input_hessian():
     loss_hessian = batch_summed_hessian(loss, out)
     loss.backward()
     input_hessian = layer.backward_hessian(loss_hessian)
-    print(input_hessian)
     x_hessian = layer_input_hessian()
     assert torch_allclose(x_hessian, input_hessian)
