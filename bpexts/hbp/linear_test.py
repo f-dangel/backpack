@@ -75,7 +75,7 @@ def test_bias_hessian(random_vp=10):
         v = randn(2)
         vp = layer.bias.hvp(v)
         result = bias_hessian.matmul(v)
-        assert torch_allclose(vp, result)
+        assert torch_allclose(vp, result, atol=1E-5)
 
 
 def test_weight_hessian(random_vp=10):
@@ -96,4 +96,4 @@ def test_weight_hessian(random_vp=10):
         v = randn(6)
         vp = layer.weight.hvp(v)
         result = weight_hessian.matmul(v)
-        assert torch_allclose(vp, result)
+        assert torch_allclose(vp, result, atol=1E-5)
