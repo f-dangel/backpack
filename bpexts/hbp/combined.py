@@ -1,4 +1,4 @@
-"""Hessian backpropagation for a composition of sigmoid and linear layer.
+"""Hessian backpropagation for a composition of activation and linear layer.
 
 This composition leads to the scheme from BDA-PCH and KFRA.
 """
@@ -10,8 +10,8 @@ from .sigmoid import HBPSigmoid
 from .module import hbp_decorate
 
 
-class HBPSigmoidLinear(hbp_decorate(Module)):
-    """Sigmoid linear layer with HBP in BDA-PCH/KFRA style.
+class HBPCompositionActivationLinear(hbp_decorate(Module)):
+    """linear(activation) layer with HBP in BDA-PCH style.
 
     Applies phi(x) A^T + b.
 
@@ -23,15 +23,16 @@ class HBPSigmoidLinear(hbp_decorate(Module)):
 
     Parameters:
     -----------
+    nonlinear_hbp_cls (class): HBP class of an elementwise activation
     in_features (int): Number of input features
     out_features (int): Number of output features
     bias (bool): Use a bias term
     """
-    def __init__(self, in_features, out_features, bias=True,
-                 *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # TODO: disable store_grad_output in sigmoid layer, not required
-        self.sigmoid = HBPSigmoid()
+    def __init__(self, nonlinear_hbp_cls, in_features, out_features,
+                 bias=True):
+        super().__init__()
+        # TODO: disable grad_output storing in activation
+        self.activation = nonlinear_hbp_cls()
         self.linear = HBPLinear(in_features=in_features,
                                 out_features=out_features,
                                 bias=bias)
@@ -43,7 +44,7 @@ class HBPSigmoidLinear(hbp_decorate(Module)):
 
     # override
     def forward(self, input):
-        """Apply sigmoid, followed by an affine transformation.
+        """Apply activation, followed by an affine transformation.
 
         Note:
         -----
@@ -52,7 +53,7 @@ class HBPSigmoidLinear(hbp_decorate(Module)):
         backpropagation). This is conceptionally cleaner but obviously not
         the most efficient way of doing so.
         """
-        return self.linear(self.sigmoid(input))
+        return self.linear(self.activation(input))
 
     # override
     def parameter_hessian(self, output_hessian):
@@ -87,9 +88,9 @@ class HBPSigmoidLinear(hbp_decorate(Module)):
 
         The Jacobian J^T is given by (W \odot phi'), see Chen 2018 paper.
         """
-        batch = self.sigmoid.grad_phi.size()[0]
+        batch = self.activation.grad_phi.size()[0]
         jacobian = einsum('ij,bi->ij', (self.linear.weight.t(),
-                                        self.sigmoid.grad_phi)) / batch
+                                        self.activation.grad_phi)) / batch
         return jacobian
 
     def _compute_residuum(self):
@@ -100,7 +101,7 @@ class HBPSigmoidLinear(hbp_decorate(Module)):
         where grad_output denotes the derivative of the loss function with
         respect to the layer output.
         """
-        residuum_diag = einsum('bi,ij,bj->i', (self.sigmoid.gradgrad_phi,
+        residuum_diag = einsum('bi,ij,bj->i', (self.activation.gradgrad_phi,
                                                self.linear.weight.t(),
                                                self.grad_output))
         # residuum_diag = residuum_diag.abs()
