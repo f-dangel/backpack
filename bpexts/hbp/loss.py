@@ -21,7 +21,7 @@ def batch_summed_hessian(f, x):
     dim = x.numel() // x.size()[0]
     df, = grad(f, x, create_graph=True)
     # summed over batch samples
-    df = df.sum(0)
+    df = df.sum(0).view(-1)
     # vector for collecting all second derivatives
     d2f = None
     for d in df:
