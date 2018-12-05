@@ -129,7 +129,7 @@ def layer_input_hessian():
     return input_hessian
 
 
-def test_unfolded_input_hessian():
+def test_input_hessian():
     """Check Hessian w.r.t. layer input."""
     layer, x, out, loss = layer_with_input_output_and_loss()
     # Hessian of loss function w.r.t layer output
@@ -137,9 +137,7 @@ def test_unfolded_input_hessian():
     loss_hessian = 2 * eye(8)
     assert torch_allclose(loss_hessian, output_hessian)
     # Hessian with respect to layer inputs
-    # h_in_result = layer_input_hessian()
-    # check for unfolded input Hessian
-    h_in_result = hessian_input_unfolded()
+    h_in_result = layer_input_hessian()
     # call hessian backward
     loss.backward()
     input_hessian = layer.backward_hessian(loss_hessian)
@@ -195,61 +193,3 @@ def test_weight_hessian(random_vp=10):
         vp = layer.weight.hvp(v)
         result = w_hessian.matmul(v)
         assert torch_allclose(vp, result, atol=1E-5)
-
-
-class Conv2dByUnfold(Conv2d):
-    """2D convolution using unfold."""
-
-    def forward(self, input):
-        """Apply 2d convolution using unfold.
-
-        More info on how to do this manually:
-            https://discuss.pytorch.org/t/custom-convolution-dot-
-            product/14992/7
-        """
-        out_size = self.output_size(input.size()[1:])
-        out_shape = (-1, self.out_channels) + out_size
-        # expand patches
-        im2col = functional.unfold(input,
-                                   kernel_size=self.kernel_size,
-                                   dilation=self.dilation,
-                                   padding=self.padding,
-                                   stride=self.stride)
-        self.input_unfolded = im2col
-        # perform convolution by matrix multiplication
-        kernel_matrix = self.weight.view(self.out_channels, -1)
-        # j: output image size, k: output channels
-        convoluted = einsum('ki,bij->bkj', (kernel_matrix, im2col))
-        # reshape into output image
-        col2im = convoluted.view(out_shape)
-        if self.bias is not None:
-            bias = self.bias.view(1, -1, 1, 1)
-            col2im.add_(bias.expand_as(col2im))
-        return col2im
-
-    def output_size(self, input_size):
-        """Compute size of the output channels from random input.
-
-        Taken from
-            https://discuss.pytorch.org/t/convolution-and-pooling-
-            layers-need-a-method-to-calculate-output-size/21895/2
-        """
-        x = randn(input_size).unsqueeze(0)
-        output = super().forward(x)
-        return output.size()[2:]
-
-
-def hessian_input_unfolded():
-    """Compute the Hessian w.r.t. the unfolded input."""
-    x = example_input()
-    layer = Conv2dByUnfold(in_channels=in_channels,
-                           out_channels=out_channels,
-                           kernel_size=kernel_size,
-                           stride=stride,
-                           padding=padding)
-    layer.weight.data = kernel
-    layer.weight.bias = b
-    out = layer(x)
-    loss = example_loss(out)
-    result = exact.exact_hessian(loss, [layer.input_unfolded])
-    return result

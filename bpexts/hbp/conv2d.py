@@ -1,7 +1,7 @@
 """Hessian backpropagation for 2D convolution."""
 
 from numpy import prod
-from torch import (eye, einsum)
+from torch import (eye, einsum, arange, zeros)
 from torch.nn import functional
 from torch.nn import Conv2d
 from .module import hbp_decorate
@@ -34,6 +34,9 @@ class HBPConv2d(hbp_decorate(Conv2d)):
             raise ValueError('Cannot handle multi-input scenario')
         unfolded_input = module.unfold(input[0]).detach()
         module.register_exts_buffer('unfolded_input', unfolded_input)
+        # save number of elements in a single sample
+        sample_dim = input[0].size()[1:]
+        module.sample_dim = sample_dim
     # --- end of hooks ---
 
     # override
@@ -59,22 +62,59 @@ class HBPConv2d(hbp_decorate(Conv2d)):
         if compute_input_hessian is False:
             return None
         else:
-            return self.unfolded_input_hessian(output_hessian.detach())
+            unfolded_hessian = self.unfolded_input_hessian(
+                    output_hessian.detach())
+            return self.sum_shared_inputs(unfolded_hessian)
+
+    def sum_shared_inputs(self, unfolded_input_hessian):
+        """Sum rows and columns belonging to the same original input.
+
+        The unfolding procedure of the input during the forward pass
+        of the convolution corresponds to spreading out the input
+        into a larger matrix. Given the Hessian of the loss with
+        respect to the unfolded input, the Hessian of the original
+        input is obtained by summing up rows and columns of the positions
+        where certain input has been spread.
+        """
+        sample_numel = int(prod(self.sample_dim))
+        # input image with pixels containing the index value
+        idx = arange(sample_numel).view((1,) + self.sample_dim)
+        # unfolded indices (indicate which input unfolds to which index)
+        idx_unfolded = self.unfold(idx).view(-1).long()
+        # sum rows of all positions an input was unfolded to
+        acc_rows = zeros(sample_numel, unfolded_input_hessian.size()[1])
+        acc_rows.index_add_(0, idx_unfolded, unfolded_input_hessian)
+        # sum columns of all positions an input was unfolded to
+        acc_cols = zeros(sample_numel, sample_numel)
+        acc_cols.index_add_(1, idx_unfolded, acc_rows)
+        return acc_cols
 
     def unfolded_input_hessian(self, out_h):
-        """Compute Hessian with respect to the layer's unfolded input."""
+        """Compute Hessian with respect to the layer's unfolded input.
+
+        Make use of the relation between the output and the unfolded
+        input by a matrix multiplication with the kernel matrix. Hence
+        the Jacobian is given by a Kronecker product, which has to be
+        multiplied to the output Hessian from left and right. Unfortunately,
+        this cannot be simplified further, resultin in a tensor network
+        that has to be contracted (see the `einsum` call below).
+        """
         kernel_matrix = self.weight.view(self.out_channels, -1)
+        # identity matrix of dimension number of patches
         num_patches = self.unfolded_input.size()[2]
         id_num_patches = eye(num_patches)
+        # shape of out_h for tensor network contraction
         h_tensor_structure = 2 * (self.out_channels, num_patches)
+        # perform tensor network contraction
         unfolded_hessian = einsum('ij,kl,ilmn,mp,no->jkpo',
                                   (kernel_matrix,
                                    id_num_patches,
                                    out_h.view(h_tensor_structure),
                                    kernel_matrix,
                                    id_num_patches))
-        final_shape = 2 * (prod(self.unfolded_input.size()[1:]),)
-        return unfolded_hessian.view(final_shape)
+        # reshape into square matrix
+        shape = 2 * (prod(self.unfolded_input.size()[1:]),)
+        return unfolded_hessian.view(shape)
 
     def init_bias_hessian(self, output_hessian):
         """Initialized bias attributes hessian and hvp.
@@ -151,7 +191,7 @@ class HBPConv2d(hbp_decorate(Conv2d)):
             result = einsum('ij,bkl,jlmp,mn,bop,no->ik',
                             (id_out_channels,
                              self.unfolded_input,
-                             out_h.view(self._out_h_tensor_structure()),
+                             out_h.view(self.h_shape_weight_hessian()),
                              id_out_channels,
                              self.unfolded_input,
                              temp)) / batch
@@ -172,7 +212,7 @@ class HBPConv2d(hbp_decorate(Conv2d)):
             w_hessian = einsum('ij,bkl,jlmp,mn,bop->ikno',
                                (id_out_channels,
                                 self.unfolded_input,
-                                out_h.view(self._out_h_tensor_structure()),
+                                out_h.view(self.h_shape_weight_hessian()),
                                 id_out_channels,
                                 self.unfolded_input)) / batch
             # reshape into square matrix
@@ -180,8 +220,8 @@ class HBPConv2d(hbp_decorate(Conv2d)):
             return w_hessian.view(num_weight, num_weight)
         return weight_hessian
 
-    def _out_h_tensor_structure(self):
-        """Return tensor shape of output Hessian for further processing.
+    def h_shape_weight_hessian(self):
+        """Return tensor shape of output Hessian for weight Hessian.
 
         The rank-4 shape is given by (out_channels, patch_size, out_channels,
         patch_size)."""
