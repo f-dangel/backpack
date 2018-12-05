@@ -59,8 +59,22 @@ class HBPConv2d(hbp_decorate(Conv2d)):
         if compute_input_hessian is False:
             return None
         else:
-            # TODO
-            raise NotImplementedError
+            return self.unfolded_input_hessian(output_hessian.detach())
+
+    def unfolded_input_hessian(self, out_h):
+        """Compute Hessian with respect to the layer's unfolded input."""
+        kernel_matrix = self.weight.view(self.out_channels, -1)
+        num_patches = self.unfolded_input.size()[2]
+        id_num_patches = eye(num_patches)
+        h_tensor_structure = 2 * (self.out_channels, num_patches)
+        unfolded_hessian = einsum('ij,kl,ilmn,mp,no->jkpo',
+                                  (kernel_matrix,
+                                   id_num_patches,
+                                   out_h.view(h_tensor_structure),
+                                   kernel_matrix,
+                                   id_num_patches))
+        final_shape = 2 * (prod(self.unfolded_input.size()[1:]),)
+        return unfolded_hessian.view(final_shape)
 
     def init_bias_hessian(self, output_hessian):
         """Initialized bias attributes hessian and hvp.
@@ -129,6 +143,7 @@ class HBPConv2d(hbp_decorate(Conv2d)):
            """
             if not len(v.size()) == 1:
                 raise ValueError('Require one-dimensional tensor')
+            batch = self.unfolded_input.size()[0]
             id_out_channels = eye(self.out_channels)
             # reshape vector into (out_channels, -1)
             temp = v.view(self.out_channels, -1)
@@ -139,7 +154,7 @@ class HBPConv2d(hbp_decorate(Conv2d)):
                              out_h.view(self._out_h_tensor_structure()),
                              id_out_channels,
                              self.unfolded_input,
-                             temp))
+                             temp)) / batch
             return result.view(v.size())
         return hvp
 
@@ -151,6 +166,7 @@ class HBPConv2d(hbp_decorate(Conv2d)):
         """
         def weight_hessian():
             """Compute matrix form of the weight Hessian when called."""
+            batch = self.unfolded_input.size()[0]
             id_out_channels = eye(self.out_channels)
             # compute the weight Hessian
             w_hessian = einsum('ij,bkl,jlmp,mn,bop->ikno',
@@ -158,7 +174,7 @@ class HBPConv2d(hbp_decorate(Conv2d)):
                                 self.unfolded_input,
                                 out_h.view(self._out_h_tensor_structure()),
                                 id_out_channels,
-                                self.unfolded_input))
+                                self.unfolded_input)) / batch
             # reshape into square matrix
             num_weight = self.weight.numel()
             return w_hessian.view(num_weight, num_weight)
