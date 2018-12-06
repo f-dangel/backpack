@@ -100,16 +100,15 @@ class HBPConv2d(hbp_decorate(Conv2d)):
         that has to be contracted (see the `einsum` call below).
         """
         kernel_matrix = self.weight.view(self.out_channels, -1)
-        # identity matrix of dimension number of patches
-        num_patches = self.unfolded_input.size()[2]
-        id_num_patches = eye(num_patches)
         # shape of out_h for tensor network contraction
-        h_tensor_structure = 2 * (self.out_channels, num_patches)
+        h_out_structure = self.h_out_tensor_structure()
+        # identity matrix of dimension number of patches
+        id_num_patches = eye(h_out_structure[1])
         # perform tensor network contraction
         unfolded_hessian = einsum('ij,kl,ilmn,mp,no->jkpo',
                                   (kernel_matrix,
                                    id_num_patches,
-                                   out_h.view(h_tensor_structure),
+                                   out_h.view(h_out_structure),
                                    kernel_matrix,
                                    id_num_patches))
         # reshape into square matrix
@@ -131,8 +130,7 @@ class HBPConv2d(hbp_decorate(Conv2d)):
         out_h (torch.Tensor): Batch-averaged Hessian with respect to
                               the layer's outputs
         """
-        num_patches = self.unfolded_input.size()[2]
-        shape = 2 * (self.out_channels, num_patches)
+        shape = self.h_out_tensor_structure()
         self.bias.hessian = output_hessian.view(shape).sum(3).sum(1)
         self.bias.hvp = self._bias_hessian_vp
 
@@ -191,7 +189,7 @@ class HBPConv2d(hbp_decorate(Conv2d)):
             result = einsum('ij,bkl,jlmp,mn,bop,no->ik',
                             (id_out_channels,
                              self.unfolded_input,
-                             out_h.view(self.h_shape_weight_hessian()),
+                             out_h.view(self.h_out_tensor_structure()),
                              id_out_channels,
                              self.unfolded_input,
                              temp)) / batch
@@ -212,7 +210,7 @@ class HBPConv2d(hbp_decorate(Conv2d)):
             w_hessian = einsum('ij,bkl,jlmp,mn,bop->ikno',
                                (id_out_channels,
                                 self.unfolded_input,
-                                out_h.view(self.h_shape_weight_hessian()),
+                                out_h.view(self.h_out_tensor_structure()),
                                 id_out_channels,
                                 self.unfolded_input)) / batch
             # reshape into square matrix
@@ -220,10 +218,10 @@ class HBPConv2d(hbp_decorate(Conv2d)):
             return w_hessian.view(num_weight, num_weight)
         return weight_hessian
 
-    def h_shape_weight_hessian(self):
+    def h_out_tensor_structure(self):
         """Return tensor shape of output Hessian for weight Hessian.
 
-        The rank-4 shape is given by (out_channels, patch_size, out_channels,
-        patch_size)."""
-        patch_size = prod(self.weight.size()[2:])
-        return 2 * (self.out_channels, patch_size)
+        The rank-4 shape is given by (out_channels, num_patches,
+        out_channels, num_patches)."""
+        num_patches = self.unfolded_input.size()[2]
+        return 2 * (self.out_channels, num_patches)
