@@ -1,7 +1,7 @@
 """Hessian backpropagation for 2D convolution."""
 
 from numpy import prod
-from torch import (eye, einsum, arange, zeros)
+from torch import (eye, einsum, arange, zeros, tensor)
 from torch.nn import functional
 from torch.nn import Conv2d
 from .module import hbp_decorate
@@ -12,7 +12,8 @@ class HBPConv2d(hbp_decorate(Conv2d)):
     # override
     def hbp_hooks(self):
         """Install hook storing unfolded input."""
-        self.register_exts_forward_pre_hook(self.store_unfolded_input)
+        self.register_exts_forward_pre_hook(
+                self.store_unfolded_input_and_sample_dimension)
 
     def unfold(self, input):
         """Unfold input using convolution hyperparameters."""
@@ -24,19 +25,20 @@ class HBPConv2d(hbp_decorate(Conv2d)):
 
     # --- hooks ---
     @staticmethod
-    def store_unfolded_input(module, input):
-        """Save unfolded input.
+    def store_unfolded_input_and_sample_dimension(module, input):
+        """Save unfolded input and dimension of input sample.
 
         Indended use as pre-forward hook.
-        Initialize module buffer 'unfolded_input'
+        Initialize module buffer 'unfolded_input'.
+        Initialize module buffer 'sample_dim'.
         """
         if not len(input) == 1:
             raise ValueError('Cannot handle multi-input scenario')
         unfolded_input = module.unfold(input[0]).detach()
         module.register_exts_buffer('unfolded_input', unfolded_input)
         # save number of elements in a single sample
-        sample_dim = input[0].size()[1:]
-        module.sample_dim = sample_dim
+        sample_dim = tensor(input[0].size()[1:])
+        module.register_exts_buffer('sample_dim', sample_dim)
     # --- end of hooks ---
 
     # override
@@ -76,11 +78,11 @@ class HBPConv2d(hbp_decorate(Conv2d)):
         input is obtained by summing up rows and columns of the positions
         where certain input has been spread.
         """
-        sample_numel = int(prod(self.sample_dim))
+        sample_numel = int(prod(self.sample_dim.numpy()))
         idx_num = sample_numel + 1
         # input image with pixels containing the index value (starting from 1)
         # also take padding into account (will be indicated by index 0)
-        idx = arange(1, idx_num).view((1,) + self.sample_dim)
+        idx = arange(1, idx_num).view((1,) + tuple(self.sample_dim))
         # unfolded indices (indicate which input unfolds to which index)
         idx_unfolded = self.unfold(idx).view(-1).long()
         # sum rows of all positions an input was unfolded to
