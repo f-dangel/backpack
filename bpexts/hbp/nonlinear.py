@@ -96,8 +96,8 @@ def hbp_elementwise_nonlinear(module_subclass):
             (torch.Tensor): Gauss-Newton matrix, batch-averaged
             """
             # FAR better approximation
-            jacobian = self.grad_phi
-            batch = jacobian.size()[0]
+            batch = self.grad_phi.size()[0]
+            jacobian = self.grad_phi.view(batch, -1)
             return einsum('bi,ij,bj->ij', (jacobian,
                                            output_hessian,
                                            jacobian)) / batch
@@ -122,8 +122,10 @@ def hbp_elementwise_nonlinear(module_subclass):
             --------
             (torch.Tensor): Residuum Hessian matrix, averaged over batch
             """
-            residuum_diag = einsum('bi,bi->i', (self.gradgrad_phi,
-                                                self.grad_output))
+            batch = self.gradgrad_phi.size()[0]
+            residuum_diag = einsum('bi,bi->i',
+                                   (self.gradgrad_phi.view(batch, -1),
+                                    self.grad_output.view(batch, -1)))
             return diagflat(residuum_diag)
 
     HBPElementwiseNonlinear.__name__ = 'HBPElementwiseNonlinear{}'.format(
