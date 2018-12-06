@@ -131,8 +131,8 @@ class HBPConv2d(hbp_decorate(Conv2d)):
         out_h (torch.Tensor): Batch-averaged Hessian with respect to
                               the layer's outputs
         """
-        patch = prod(self.kernel_size)
-        shape = (self.out_channels, patch, self.out_channels, patch)
+        num_patches = self.unfolded_input.size()[2]
+        shape = 2 * (self.out_channels, num_patches)
         self.bias.hessian = output_hessian.view(shape).sum(3).sum(1)
         self.bias.hvp = self._bias_hessian_vp
 
