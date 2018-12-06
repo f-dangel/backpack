@@ -64,7 +64,7 @@ def example_loss(tensor):
     return (tensor**2).contiguous().view(-1).sum()
 
 
-def hessian_backward(layers, input):
+def hessian_backward():
     """Feed input through net and loss, backward the Hessian.
 
     Return the layers.
@@ -96,7 +96,7 @@ def test_network_parameter_hessians(random_vp=10):
     """Test equality between HBP Hessians and brute force Hessians.
     Check Hessian-vector products."""
     # test bias Hessians
-    layers = hessian_backward(create_layers(), random_input())
+    layers = hessian_backward()
     for idx, layer in enumerate(reversed(layers), 1):
         b_hessian = layer.bias.hessian
         b_brute_force = brute_force_hessian(-idx, 'bias')
