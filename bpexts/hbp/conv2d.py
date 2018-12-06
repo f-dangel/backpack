@@ -77,17 +77,20 @@ class HBPConv2d(hbp_decorate(Conv2d)):
         where certain input has been spread.
         """
         sample_numel = int(prod(self.sample_dim))
-        # input image with pixels containing the index value
-        idx = arange(sample_numel).view((1,) + self.sample_dim)
+        idx_num = sample_numel + 1
+        # input image with pixels containing the index value (starting from 1)
+        # also take padding into account (will be indicated by index 0)
+        idx = arange(1, idx_num).view((1,) + self.sample_dim)
         # unfolded indices (indicate which input unfolds to which index)
         idx_unfolded = self.unfold(idx).view(-1).long()
         # sum rows of all positions an input was unfolded to
-        acc_rows = zeros(sample_numel, unfolded_input_hessian.size()[1])
+        acc_rows = zeros(idx_num, unfolded_input_hessian.size()[1])
         acc_rows.index_add_(0, idx_unfolded, unfolded_input_hessian)
         # sum columns of all positions an input was unfolded to
-        acc_cols = zeros(sample_numel, sample_numel)
+        acc_cols = zeros(idx_num, idx_num)
         acc_cols.index_add_(1, idx_unfolded, acc_rows)
-        return acc_cols
+        # cut out dimension of padding elements (index 0)
+        return acc_cols[1:, 1:]
 
     def unfolded_input_hessian(self, out_h):
         """Compute Hessian with respect to the layer's unfolded input.

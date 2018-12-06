@@ -10,16 +10,13 @@ from ..utils import (torch_allclose,
                      set_seeds)
 
 
-in_channels = [2, 2, 2]
-out_channels = [2, 2, 2]
-kernel_sizes = [(3, 3), (2, 2), (1, 2)]
-# BUG: Cannot handle non-zero padding in intermediate layers,
-# probably in input Hessian computation
-# The bug can be reproduced by setting paddings to [2, 1, 1]
-paddings = [2, 0, 0]
+in_channels = [3, 5, 4]
+out_channels = [5, 4, 2]
+kernel_sizes = [(4, 4), (3, 2), (1, 3)]
+paddings = [2, 3, 1]
 strides = [2, 2, 1]
 
-input_size = (10, 10)
+input_size = (7, 7)
 input = randn((1, in_channels[0]) + input_size)
 
 
