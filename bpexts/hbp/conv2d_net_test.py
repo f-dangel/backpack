@@ -92,25 +92,29 @@ def brute_force_hessian(layer_idx, which):
         raise ValueError
 
 
-def test_network_parameter_hessians():
-    """Test equality between HBP Hessians and brute force Hessians."""
+def test_network_parameter_hessians(random_vp=10):
+    """Test equality between HBP Hessians and brute force Hessians.
+    Check Hessian-vector products."""
     # test bias Hessians
     layers = hessian_backward(create_layers(), random_input())
     for idx, layer in enumerate(reversed(layers), 1):
-        print('bias')
-        print(-idx)
         b_hessian = layer.bias.hessian
-        print(b_hessian)
-        result = brute_force_hessian(-idx, 'bias')
-        print(result)
-        assert torch_allclose(b_hessian, result, atol=1E-5)
-        print('ok')
+        b_brute_force = brute_force_hessian(-idx, 'bias')
+        assert torch_allclose(b_hessian, b_brute_force, atol=1E-5)
+        # check bias Hessian-veector product
+        for _ in range(random_vp):
+            v = randn(layer.bias.numel())
+            vp = layer.bias.hvp(v)
+            vp_result = b_brute_force.matmul(v)
+            assert torch_allclose(vp, vp_result, atol=1E-5)
     # test weight Hessians
     for idx, layer in enumerate(reversed(layers), 1):
-        print('weight')
-        print(-idx)
         w_hessian = layer.weight.hessian()
-        print(w_hessian)
-        result = brute_force_hessian(-idx, 'weight')
-        print(result)
-        assert torch_allclose(w_hessian, result, atol=1E-5)
+        w_brute_force = brute_force_hessian(-idx, 'weight')
+        assert torch_allclose(w_hessian, w_brute_force, atol=1E-5)
+        # check weight Hessian-vector product
+        for _ in range(random_vp):
+            v = randn(layer.weight.numel())
+            vp = layer.weight.hvp(v)
+            vp_result = w_brute_force.matmul(v)
+            assert torch_allclose(vp, vp_result, atol=1E-5)
