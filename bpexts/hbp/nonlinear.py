@@ -64,7 +64,8 @@ def hbp_elementwise_nonlinear(module_subclass):
             module.register_exts_buffer('grad_output', grad_output[0].detach())
 
         # override
-        def input_hessian(self, output_hessian):
+        def input_hessian(self, output_hessian,
+                          modify_2nd_order_terms='none'):
             """Compute input Hessian.
 
             The input Hessian consists of two parts:
@@ -75,7 +76,7 @@ def hbp_elementwise_nonlinear(module_subclass):
             ii) residuum = diag(gradgrad_phi) \odot grad_output
             """
             in_hessian = self._gauss_newton(output_hessian)
-            in_hessian.add_(self._residuum())
+            in_hessian.add_(self._residuum(modify_2nd_order_terms))
             return in_hessian
 
         def _gauss_newton(self, output_hessian):
@@ -102,14 +103,14 @@ def hbp_elementwise_nonlinear(module_subclass):
                                            output_hessian,
                                            jacobian)) / batch
             # BAD approximation
-            # batch_size = self.grad_phi.size()[0]
+            # batch = self.grad_phi.size()[0]
             # jacobian = self.grad_phi.mean(0)
             # return torch.einsum('i,ij,j->ij',
             #                    (jacobian,
             #                     output_hessian,
-            #                     jacobian))
+            #                     jacobian)) * batch
 
-        def _residuum(self):
+        def _residuum(self, modify_2nd_order_terms):
             """Residuum of the input Hessian matrix.
 
             The computed relation is
@@ -126,6 +127,17 @@ def hbp_elementwise_nonlinear(module_subclass):
             residuum_diag = einsum('bi,bi->i',
                                    (self.gradgrad_phi.view(batch, -1),
                                     self.grad_output.view(batch, -1)))
+            if modify_2nd_order_terms == 'none':
+                pass
+            elif modify_2nd_order_terms == 'clip':
+                residuum_diag.clamp_(min=0)
+            elif modify_2nd_order_terms == 'abs':
+                residuum_diag.abs_()
+            elif modify_2nd_order_terms == 'zero':
+                residuum_diag.zero_()
+            else:
+                raise ValueError('Unknown 2nd-order term strategy {}'
+                                 .format(modify_2nd_order_terms))
             return diagflat(residuum_diag)
 
     HBPElementwiseNonlinear.__name__ = 'HBPElementwiseNonlinear{}'.format(
