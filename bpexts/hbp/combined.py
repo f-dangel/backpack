@@ -61,7 +61,8 @@ class HBPCompositionActivationLinear(hbp_decorate(Module)):
         self.linear.parameter_hessian(output_hessian)
 
     # override
-    def input_hessian(self, output_hessian, compute_input_hessian=True):
+    def input_hessian(self, output_hessian, compute_input_hessian=True,
+                      modify_2nd_order_terms='none'):
         """Compute the Hessian with respect to the layer input.
 
         Exploited relation: recursion in BDA-PCH paper.
@@ -70,7 +71,7 @@ class HBPCompositionActivationLinear(hbp_decorate(Module)):
             return None
         else:
             in_hessian = self._compute_gauss_newton(output_hessian)
-            in_hessian.add_(self._compute_residuum())
+            in_hessian.add_(self._compute_residuum(modify_2nd_order_terms))
             return in_hessian
 
     def _compute_gauss_newton(self, output_hessian):
@@ -93,7 +94,7 @@ class HBPCompositionActivationLinear(hbp_decorate(Module)):
                                         self.activation.grad_phi)) / batch
         return jacobian
 
-    def _compute_residuum(self):
+    def _compute_residuum(self, modify_2nd_order_terms):
         """Compute the Hessian residuum accounting for 2nd-order layer effects.
 
         The residuum (res) is given by:
@@ -104,5 +105,15 @@ class HBPCompositionActivationLinear(hbp_decorate(Module)):
         residuum_diag = einsum('bi,ij,bj->i', (self.activation.gradgrad_phi,
                                                self.linear.weight.t(),
                                                self.grad_output))
-        # residuum_diag = residuum_diag.abs()
+        if modify_2nd_order_terms == 'none':
+            pass
+        elif modify_2nd_order_terms == 'clip':
+            residuum_diag.clamp_(min=0)
+        elif modify_2nd_order_terms == 'abs':
+            residuum_diag.abs_()
+        elif modify_2nd_order_terms == 'zero':
+            residuum_diag.zero_()
+        else:
+            raise ValueError('Unknown 2nd-order term strategy {}'
+                             .format(modify_2nd_order_terms))
         return diagflat(residuum_diag)

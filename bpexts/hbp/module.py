@@ -45,7 +45,8 @@ def hbp_decorate(module_subclass):
                           ' during Hessian backpropagation.')
             pass
 
-        def backward_hessian(self, output_hessian, compute_input_hessian=True):
+        def backward_hessian(self, output_hessian, compute_input_hessian=True,
+                             modify_2nd_order_terms='none'):
             """Propagate Hessian, optionally compute parameter Hessian.
 
             Backpropagation of the Hessian requires a layer to provide a method
@@ -63,6 +64,9 @@ def hbp_decorate(module_subclass):
             compute_input_hessian (bool): Compute the input with respect to the
                                           layer's input (e.g not necessary for
                                           the first layer in a network)
+            modify_2nd_order_terms : string ('none', 'clip', 'sign', 'zero')
+                String specifying the strategy for dealing with 2nd-order
+                module effects (only required if nonlinear layers are involved)
 
             Returns:
             --------
@@ -73,7 +77,7 @@ def hbp_decorate(module_subclass):
             if self.has_trainable_parameters():
                 self.parameter_hessian(output_hessian)
             return None if compute_input_hessian is False else\
-                self.input_hessian(output_hessian)
+                self.input_hessian(output_hessian, modify_2nd_order_terms)
 
         def has_trainable_parameters(self):
             """Check if there are trainable parameters.
@@ -87,7 +91,7 @@ def hbp_decorate(module_subclass):
                     return True
             return False
 
-        def parameter_hessian(output_hessian):
+        def parameter_hessian(self, output_hessian):
             """Initialize Hessians with respect to trainable layer parameters.
 
             Parameters:
@@ -108,7 +112,8 @@ def hbp_decorate(module_subclass):
                                       ' this method computing Hessians with'
                                       ' respect to their parameters.')
 
-        def input_hessian(self, output_hessian):
+        def input_hessian(self, output_hessian, compute_input_hessian=True,
+                          modify_2nd_order_terms='none'):
             """Compute Hessians with respect to layer input.
 
             Parameters:

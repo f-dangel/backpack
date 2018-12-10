@@ -59,7 +59,8 @@ class HBPConv2d(hbp_decorate(Conv2d)):
         self.init_weight_hessian(output_hessian.detach())
 
     # override
-    def input_hessian(self, output_hessian, compute_input_hessian=True):
+    def input_hessian(self, output_hessian, compute_input_hessian=True,
+                      modify_2nd_order_terms='none'):
         """Compute the Hessian with respect to the layer input."""
         if compute_input_hessian is False:
             return None
