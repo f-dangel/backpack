@@ -96,3 +96,24 @@ def test_parameter_hessians(random_vp=10):
             vp = layer.get_submodule(idx).weight.hvp(v)
             vp_result = w_brute_force.matmul(v)
             assert torch_allclose(vp, vp_result, atol=1E-5)
+
+
+def brute_force_input_hessian():
+    """Compute the Hessian with respect to the input by brute force."""
+    layer = create_layer()
+    input = random_input()
+    input.requires_grad = True
+    _, loss = forward(layer, input)
+    return exact.exact_hessian(loss, [input])
+
+
+def test_input_hessians():
+    """Test whether Hessian with respect to input is correctly reproduced."""
+    layer = create_layer()
+    input = random_input()
+    _, loss = forward(layer, input)
+    loss_hessian = 2 * eye(input.numel())
+    loss.backward()
+    # call HBP recursively
+    in_h = layer.backward_hessian(loss_hessian)
+    assert torch_allclose(in_h, brute_force_input_hessian())
