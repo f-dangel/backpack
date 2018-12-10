@@ -1,4 +1,4 @@
-"""Hessian backpropagation tests with different modes."""
+"""Hessian backpropagation tests for different modes."""
 
 from ..utils import torch_allclose, set_seeds
 from torch import randn, eye
@@ -11,7 +11,6 @@ from .sigmoid import HBPSigmoid
 in_features = [10, 5, 4]
 out_features = [5, 4, 2]
 input_size = (10,)
-
 input = randn((3,) + input_size)
 
 
