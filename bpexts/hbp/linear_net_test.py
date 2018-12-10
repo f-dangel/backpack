@@ -88,10 +88,10 @@ def check_network_parameter_hessians(random_vp, activation):
     layers = hessian_backward(activation)
     for idx, layer in enumerate(reversed(layers), 1):
         # ignore activation layers
-        if idx % 1 == 0:
+        if idx % 2 == 1:
             continue
         b_hessian = layer.bias.hessian
-        b_brute_force = brute_force_hessian(-idx, 'bias')
+        b_brute_force = brute_force_hessian(-idx, 'bias', activation)
         assert torch_allclose(b_hessian, b_brute_force, atol=1E-5)
         # check bias Hessian-veector product
         for _ in range(random_vp):
@@ -102,10 +102,10 @@ def check_network_parameter_hessians(random_vp, activation):
     # test weight Hessians
     for idx, layer in enumerate(reversed(layers), 1):
         # ignore activation layers
-        if idx % 1 == 0:
+        if idx % 2 == 1:
             continue
         w_hessian = layer.weight.hessian()
-        w_brute_force = brute_force_hessian(-idx, 'weight')
+        w_brute_force = brute_force_hessian(-idx, 'weight', activation)
         assert torch_allclose(w_hessian, w_brute_force, atol=1E-5)
         # check weight Hessian-vector product
         for _ in range(random_vp):

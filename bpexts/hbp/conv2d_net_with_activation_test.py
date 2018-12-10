@@ -102,7 +102,7 @@ def check_network_parameter_hessians(random_vp, activation):
     layers = hessian_backward(activation)
     for idx, layer in enumerate(reversed(layers), 1):
         # skip activation layers
-        if idx % 1 == 0:
+        if idx % 2 == 1:
             continue
         b_hessian = layer.bias.hessian
         b_brute_force = brute_force_hessian(-idx, 'bias', activation)
@@ -116,7 +116,7 @@ def check_network_parameter_hessians(random_vp, activation):
     # test weight Hessians
     for idx, layer in enumerate(reversed(layers), 1):
         # skip activation layers
-        if idx % 1 == 0:
+        if idx % 2 == 1:
             continue
         w_hessian = layer.weight.hessian()
         w_brute_force = brute_force_hessian(-idx, 'weight', activation)
