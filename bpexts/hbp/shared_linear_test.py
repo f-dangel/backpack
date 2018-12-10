@@ -110,9 +110,8 @@ def brute_force_input_hessian():
 def test_input_hessians():
     """Test whether Hessian with respect to input is correctly reproduced."""
     layer = create_layer()
-    input = random_input()
-    _, loss = forward(layer, input)
-    loss_hessian = 2 * eye(input.numel())
+    out, loss = forward(layer, random_input())
+    loss_hessian = 2 * eye(out.numel())
     loss.backward()
     # call HBP recursively
     in_h = layer.backward_hessian(loss_hessian)
