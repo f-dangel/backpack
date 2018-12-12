@@ -2,3 +2,5 @@
 
 # Hook for git to run before commit
 pytest -v bpexts
+# Optional: Test experiments
+pytest -v exp
