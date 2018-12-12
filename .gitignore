@@ -3,3 +3,6 @@ __pycache__/
 
 # virtual environment files
 .venv/
+
+# datasets and logged data from experiments
+dat/
