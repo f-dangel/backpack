@@ -34,12 +34,12 @@ def test_simple_on_cpu():
     simple(use_gpu=False)
 
 
-#def test_simple_on_gpu():
-#    """Try running simple test on GPU."""
-#    if torch.cuda.is_available():
-#        simple(use_gpu=True)
-#    else:
-#        warn('Could not find CUDA device')
+def test_simple_on_gpu():
+    """Try running simple test on GPU."""
+    if torch.cuda.is_available():
+        simple(use_gpu=True)
+    else:
+        warn('Could not find CUDA device')
 
 
 def random_task(dim, use_gpu=False):
@@ -68,7 +68,7 @@ def random_task(dim, use_gpu=False):
     return A, b
 
 
-def random(dim=50, use_gpu=False):
+def random(dim=10, use_gpu=False):
     """Test CG for a random PSD matrix on GPU/CPU.
 
     Parameters:
@@ -87,15 +87,15 @@ def test_random_on_cpu():
     random(use_gpu=False)
 
 
-#def test_random_on_gpu():
-#    """Try running random test on GPU."""
-#    if torch.cuda.is_available():
-#        random(use_gpu=True)
-#    else:
-#        warn('Could not find CUDA device')
+def test_random_on_gpu():
+    """Try running random test on GPU."""
+    if torch.cuda.is_available():
+        random(use_gpu=True)
+    else:
+        warn('Could not find CUDA device')
 
 
-def implicit(dim=50, use_gpu=False):
+def implicit(dim=10, use_gpu=False):
     """Test CG with a function that provides matrix-vector products.
 
     Parameters:
@@ -128,9 +128,9 @@ def test_implicit_on_cpu():
     implicit(use_gpu=False)
 
 
-#def test_implicit_on_gpu():
-#    """Try running implicit test on GPU."""
-#    if torch.cuda.is_available():
-#        implicit(use_gpu=True)
-#    else:
-#        warn('Could not find CUDA device')
+def test_implicit_on_gpu():
+    """Try running implicit test on GPU."""
+    if torch.cuda.is_available():
+        implicit(use_gpu=True)
+    else:
+        warn('Could not find CUDA device')
