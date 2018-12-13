@@ -5,19 +5,29 @@ from abc import ABC, abstractmethod
 
 class DatasetLoader(ABC):
     """Base class implementing interface for dataset loading."""
-
-    @abstractmethod
-    def train_loader(self,
-                     batch_size=None,
-                     seed=0):
-        """Data loader of the training set.
-
+    def __init__(self,
+                 train_batch_size=None,
+                 train_seed=0,
+                 test_batch_size=None):
+        """
         Parameters:
         -----------
-        batch_size : (int)
-            Number of samples per batch, load entire set if left `None`
-        seed : (int)
+        train_batch_size : (int)
+            Number of samples per batch in the training set, load
+            entire set if left `None`
+        train_seed : (int)
             Random seed for shuffling the training samples.
+        test_batch_size : (int)
+            Number of samples per batch in the test set, load
+            entire set if left `None`
+        """
+        self.train_batch_size = train_batch_size
+        self.train_seed = train_seed
+        self.test_batch_size = test_batch_size
+
+    @abstractmethod
+    def train_loader(self):
+        """Data loader of the training set.
 
         Returns:
         --------
@@ -27,14 +37,8 @@ class DatasetLoader(ABC):
         pass
 
     @abstractmethod
-    def test_loader(self,
-                    batch_size=None):
+    def test_loader(self):
         """Data loader of the test set.
-
-        Parameters:
-        -----------
-        batch_size : (int)
-            Number of samples per batch, load entire set if left `None`
 
         Returns:
         --------

@@ -53,25 +53,21 @@ class MNISTLoader(DatasetLoader):
                               transform=trans,
                               download=True)
 
-    def train_loader(self,
-                     batch_size=None,
-                     seed=0):
-        """Return loader for MNIST training data batches.
-
-        Use entire train set if batch_size is unspecified.
-        """
-        set_seeds(seed)
-        batch_size = len(self.train_set) if batch_size is None else batch_size
+    def train_loader(self):
+        """Return loader for MNIST training data batches."""
+        set_seeds(self.train_seed)
+        batch = len(self.train_set)\
+            if self.train_batch_size is None\
+            else self.train_batch_size
         return DataLoader(dataset=self.train_set,
-                          batch_size=batch_size,
+                          batch_size=batch,
                           shuffle=True)
 
-    def test_loader(self, batch_size=None):
-        """Return loader for MNIST test data.
-
-        Use entire test set if batch_size is unspecified.
-        """
-        batch_size = len(self.test_set) if batch_size is None else batch_size
+    def test_loader(self):
+        """Return loader for MNIST test data."""
+        batch = len(self.test_set)\
+            if self.test_batch_size is None\
+            else self.test_batch_size
         return DataLoader(dataset=self.test_set,
-                          batch_size=batch_size,
+                          batch_size=batch,
                           shuffle=False)

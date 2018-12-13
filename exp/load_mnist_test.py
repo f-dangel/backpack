@@ -7,11 +7,12 @@ from load_mnist import MNISTLoader
 
 def test_deterministic_loading():
     """Test deterministc loading of samples."""
-    mnist = MNISTLoader()
-    train1 = mnist.train_loader(10)
+    mnist1 = MNISTLoader(10, 0)
+    train1 = mnist1.train_loader()
     train1_samples, train1_labels = next(iter(train1))
 
-    train2 = mnist.train_loader(10)
+    mnist2 = MNISTLoader(10, 0)
+    train2 = mnist2.train_loader()
     train2_samples, train2_labels = next(iter(train2))
 
     assert torch_allclose(train1_samples, train2_samples)
