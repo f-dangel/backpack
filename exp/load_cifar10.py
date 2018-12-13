@@ -16,58 +16,58 @@ Normalization values taken from
 from os import path
 from torchvision import transforms, datasets
 from torch.utils.data import DataLoader
+from load_dataset import DatasetLoader
 # enable import of bpexts in parent directory
 import enable_import_bpexts
 from bpexts.utils import set_seeds
 
-# directory to store CIFAR-10 (3x28x28): ../dat/CIFAR10_dataset
-parent_dir = path.dirname(
-        path.dirname(path.realpath(__file__)))
-data_dir = 'dat/CIFAR10'
-root = path.join(parent_dir, data_dir)
 
-# transformation of the data
-trans = transforms.Compose(
-        [  # convert to tensor
-           transforms.ToTensor(),
-           # normalize
-           transforms.Normalize(
-               # taken from ref above
-               (0.49139968, 0.48215841, 0.44653091),
-               # taken from ref above
-               (0.24703223, 0.24348513, 0.26158784))
-        ])
+class CIFAR10Loader(DatasetLoader):
+    """Loading of training/test sets of MNIST."""
 
-# download CIFAR10 if non-existent
-train_set = datasets.CIFAR10(root=root,
-                             train=True,
-                             transform=trans,
-                             download=True)
-test_set = datasets.CIFAR10(root=root,
-                            train=False,
-                            transform=trans,
-                            download=True)
+    # directory to store CIFAR-10 (3x28x28): ../dat/CIFAR10_dataset
+    parent_dir = path.dirname(
+            path.dirname(path.realpath(__file__)))
+    data_dir = 'dat/CIFAR10'
+    root = path.join(parent_dir, data_dir)
 
+    # transformation of the data
+    trans = transforms.Compose(
+            [  # convert to tensor
+               transforms.ToTensor(),
+               # normalize
+               transforms.Normalize(
+                   # taken from ref above
+                   (0.49139968, 0.48215841, 0.44653091),
+                   # taken from ref above
+                   (0.24703223, 0.24348513, 0.26158784))
+            ])
 
-def train_loader(batch_size=None,
-                 seed=0):
-    """Return loader for CIFAR-10 training data batches.
+    # download CIFAR10 if non-existent
+    train_set = datasets.CIFAR10(root=root,
+                                 train=True,
+                                 transform=trans,
+                                 download=True)
+    test_set = datasets.CIFAR10(root=root,
+                                train=False,
+                                transform=trans,
+                                download=True)
 
-    Use entire train set if batch_size is unspecified.
-    """
-    set_seeds(seed)
-    batch_size = len(train_set) if batch_size is None else batch_size
-    return DataLoader(dataset=train_set,
-                      batch_size=batch_size,
-                      shuffle=True)
+    def train_loader(self):
+        """Return loader for CIFAR-10 training data batches."""
+        set_seeds(self.train_seed)
+        batch = len(self.train_set)\
+            if self.train_batch_size is None\
+            else self.train_batch_size
+        return DataLoader(dataset=self.train_set,
+                          batch_size=batch,
+                          shuffle=True)
 
-
-def test_loader(batch_size=None):
-    """Return loader for CIFAR-10 test data.
-
-    Use entire test set if batch_size is unspecified.
-    """
-    batch_size = len(test_set) if batch_size is None else batch_size
-    return DataLoader(dataset=test_set,
-                      batch_size=batch_size,
-                      shuffle=False)
+    def test_loader(self):
+        """Return loader for CIFAR-10 test data."""
+        batch = len(self.test_set)\
+            if self.test_batch_size is None\
+            else self.test_batch_size
+        return DataLoader(dataset=self.test_set,
+                          batch_size=batch,
+                          shuffle=False)
