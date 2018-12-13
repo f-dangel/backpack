@@ -66,7 +66,8 @@ class Training(object):
         progressbar = tqdm(range(num_epochs))
         for epoch in progressbar:
             for idx, (inputs, labels) in enumerate(training_set):
-                outputs, loss = self.forward_pass(inputs, labels, device)
+                inputs, labels = inputs.to(device), labels.to(device)
+                outputs, loss = self.forward_pass(inputs, labels)
                 # backward pass and update step
                 self.optimizer.zero_grad()
                 self.backward_pass(outputs, loss)
@@ -95,7 +96,7 @@ class Training(object):
                               batch_loss, batch_acc)
                     progressbar.set_description(status)
 
-    def forward_pass(self, inputs, labels, device):
+    def forward_pass(self, inputs, labels):
         """Perform forward pass, return model output and loss.
 
         Parameters:
@@ -104,8 +105,6 @@ class Training(object):
             Tensor of size (batch_size, ...) containing the inputs
         labels : (torch.Tensor)
             Tensor of size (batch_size, 1) holding the labels
-        device : (torch.Device)
-            Device to perform the forward pass on
 
         Returns:
         --------
@@ -116,8 +115,7 @@ class Training(object):
         """
         # reshape and load to device
         batch_size = inputs.size()[0]
-        inputs = inputs.view(batch_size, -1).to(device)
-        labels = labels.to(device)
+        inputs = inputs.view(batch_size, -1)
         # forward pass
         outputs = self.model(inputs)
         loss = self.loss_function(outputs, labels)
@@ -181,23 +179,24 @@ class Training(object):
         correct = (predicted == labels).sum().item()
         return correct / total
 
-    def loss_and_accuracy_on_test_set(self):
-        """Evaluate loss and accuracy on the entire test set.
-
-        Returns:
-        --------
-        loss, accuracy : (float, float)
-            Loss evaluated on the entire test set and ratio
-            of correctly classified test examples
-        """
-        test_loader = self.load_test_set()
-        if not len(test_loader) == 1:
-            raise NotImplementedError('Test loss/accuracy currently only'
-                                      ' supported in unbatched mode')
-        with torch.no_grad():
-            (inputs, labels) = next(iter(test_loader))
-            total = labels.size(0)
-            outputs = self.model(inputs.view(total, -1))
-            loss = self.loss_function(outputs, labels).item()
-            _, predicted = torch.max(outputs.data, 1)
-            return loss, self.compute_accuracy(outputs, labels)
+    # TODO
+    # def loss_and_accuracy_on_test_set(self):
+    #    """Evaluate loss and accuracy on the entire test set.
+    #
+    #    Returns:
+    #    --------
+    #    loss, accuracy : (float, float)
+    #        Loss evaluated on the entire test set and ratio
+    #        of correctly classified test examples
+    #    """
+    #    test_loader = self.load_test_set()
+    #    if not len(test_loader) == 1:
+    #        raise NotImplementedError('Test loss/accuracy currently only'
+    #                                  ' supported in unbatched mode')
+    #    with torch.no_grad():
+    #        (inputs, labels) = next(iter(test_loader))
+    #        total = labels.size(0)
+    #        outputs = self.model(inputs.view(total, -1))
+    #        loss = self.loss_function(outputs, labels).item()
+    #        _, predicted = torch.max(outputs.data, 1)
+    #        return loss, self.compute_accuracy(outputs, labels)
