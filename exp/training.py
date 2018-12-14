@@ -6,7 +6,7 @@ from tqdm import tqdm
 import torch
 
 import enable_import_bpexts
-import bpexts
+from bpexts.hbp.loss import batch_summed_hessian
 
 
 class FirstOrderTraining(object):
@@ -211,7 +211,7 @@ class SecondOrderTraining(FirstOrderTraining):
             raise e
         finally:
             # reset Hessian backward mode
-            self.__class._modify_2nd_order = None
+            self.__class__._modify_2nd_order = None
 
     # override
     def backward_pass(self, outputs, loss):
@@ -225,13 +225,12 @@ class SecondOrderTraining(FirstOrderTraining):
             Scalar value of the loss function evaluated on the outputs
         """
         # Hessian of loss function w.r.t. outputs
-        output_hessian = bpexts.hessian.loss.batch_summed_hessian(loss, outputs)
+        output_hessian = batch_summed_hessian(loss, outputs)
         # compute gradients
         super().backward_pass(outputs, loss)
-        loss.backward()
 
         # backward Hessian
-        mod = self.__class__._modify_2nd_order_terms
+        mod = self.__class__._modify_2nd_order
         self.model.backward_hessian(output_hessian,
                                     compute_input_hessian=False,
                                     modify_2nd_order_terms=mod)
