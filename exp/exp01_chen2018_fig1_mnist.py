@@ -1,4 +1,4 @@
-"""Experiments performed in Chen et al.: BDA-PCH.
+"""Experiments performed in Chen et al.: BDA-PCH, figure 1.
 
 Link to the reference:
     https://arxiv.org/pdf/1802.06502v2.pdf
@@ -8,10 +8,8 @@ import torch
 from torch.nn import CrossEntropyLoss
 from torch.optim import SGD
 from os import path
-from models_chen2018 import (original_mnist_model,
-                             original_cifar10_model)
+from models_chen2018 import original_mnist_model
 from load_mnist import MNISTLoader
-from load_cifar10 import CIFAR10Loader
 from training import Training
 from utils import (directory_in_data,
                    dirname_from_params,
