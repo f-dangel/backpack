@@ -77,7 +77,9 @@ def hbp_decorate(module_subclass):
             if self.has_trainable_parameters():
                 self.parameter_hessian(output_hessian)
             return None if compute_input_hessian is False else\
-                self.input_hessian(output_hessian, modify_2nd_order_terms)
+                self.input_hessian(
+                        output_hessian,
+                        modify_2nd_order_terms=modify_2nd_order_terms)
 
         def has_trainable_parameters(self):
             """Check if there are trainable parameters.
@@ -112,8 +114,7 @@ def hbp_decorate(module_subclass):
                                       ' this method computing Hessians with'
                                       ' respect to their parameters.')
 
-        def input_hessian(self, output_hessian, compute_input_hessian=True,
-                          modify_2nd_order_terms='none'):
+        def input_hessian(self, output_hessian, modify_2nd_order_terms='none'):
             """Compute Hessians with respect to layer input.
 
             Parameters:
