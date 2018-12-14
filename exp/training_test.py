@@ -5,7 +5,7 @@ from os import path
 from torch.nn import Linear, CrossEntropyLoss
 from torch.optim import SGD
 from warnings import warn
-from training import Training
+from training import FirstOrderTraining
 from load_mnist import MNISTLoader
 
 
@@ -24,7 +24,8 @@ def simple_mnist_model(use_gpu=False):
     data_dir = 'dat/test_training_simple_mnist_model'
     logdir = path.join(parent_dir, data_dir)
     # initialize training
-    train = Training(model, loss_function, optimizer, data_loader, logdir)
+    train = FirstOrderTraining(model, loss_function,
+                               optimizer, data_loader, logdir)
     train.run(num_epochs=1, device=device)
 
 
