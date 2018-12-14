@@ -65,3 +65,62 @@ if __name__ == '__main__':
                                    logdir)
         train.run(num_epochs=epochs,
                   device=device)
+
+    # ----------------
+    # CIFAR-10CGNewton
+    # ----------------
+    # device = torch.device('cuda:0' if torch.cuda.is_available()
+    #                       else 'cpu')
+    device = torch.device('cpu')
+
+    # hyper parameters
+    # ----------------
+    batch = 500
+    epochs = 100
+    lr = 0.1
+    alpha = 0.02
+    modify_2nd_order_terms = 'abs'
+    cg_maxiter = 50
+    cg_tol = 0.1
+    cg_atol = 0
+
+    # logging directory
+    # -----------------
+    directory_name = 'exp01_reproduce_chen_figures/cifar10'
+    data_dir = directory_in_data(directory_name)
+    print(tensorboard_instruction(data_dir))
+    # directory of run
+    run_name = dirname_from_params(opt='cgn',
+                                   batch=batch,
+                                   lr=lr,
+                                   alpha=alpha,
+                                   maxiter=cg_maxiter,
+                                   tol=cg_tol,
+                                   atol=cg_atol,
+                                   mod2nd=modify_2nd_order_terms)
+    logdir = path.join(data_dir, run_name)
+
+    # training procedure
+    # ------------------
+    if not run_directory_exists(logdir):
+        # set up training and run
+        model = original_cifar10_model()
+        # works, scaling problem in Jacobian above
+        # model = separated_mnist_model()
+        loss_function = CrossEntropyLoss()
+        data_loader = CIFAR10Loader(train_batch_size=batch)
+        optimizer = CGNewton(model.parameters(),
+                             lr=lr,
+                             alpha=alpha,
+                             cg_atol=cg_atol,
+                             cg_tol=cg_tol,
+                             cg_maxiter=cg_maxiter)
+        # initialize training
+        train = SecondOrderTraining(model,
+                                    loss_function,
+                                    optimizer,
+                                    data_loader,
+                                    logdir)
+        train.run(num_epochs=epochs,
+                  modify_2nd_order_terms=modify_2nd_order_terms,
+                  device=device)
