@@ -5,9 +5,12 @@ from os import path
 from tqdm import tqdm
 import torch
 
+import enable_import_bpexts
+from bpexts.hbp.loss import batch_summed_hessian
 
-class Training(object):
-    """Handle logging during training procedure."""
+
+class FirstOrderTraining(object):
+    """Handle logging during training procedure with 1st-order optimizers."""
     def __init__(self, model, loss_function, optimizer,
                  data_loader, logdir):
         """Train a model, log loss values into logdir.
@@ -72,11 +75,6 @@ class Training(object):
                 self.optimizer.zero_grad()
                 self.backward_pass(outputs, loss)
                 self.optimizer.step()
-                """
-                # for HBP
-                model.backward_hessian(loss_h)
-                loss.backward()
-                """
                 batch_size = inputs.size()[0]
                 train_samples_seen += batch_size
 
@@ -179,6 +177,65 @@ class Training(object):
         correct = (predicted == labels).sum().item()
         return correct / total
 
+
+class SecondOrderTraining(FirstOrderTraining):
+    """Handle logging in training procedure with 2nd-order optimizers."""
+    _modify_2nd_order = None
+
+    def run(self,
+            num_epochs,
+            modify_2nd_order_terms,
+            device=torch.device('cpu'),
+            logs_per_epoch=10):
+        """Run training, log values to logdir.
+
+        Parameters:
+        -----------
+        num_epochs : (int)
+            Number of epochs to train on
+        modify_2nd_order_terms : (str) ('none', 'clip', 'sign', 'zero')
+            String specifying the strategy for dealing with 2nd-order
+            terms during Hessian backpropagation
+        device : (torch.Device)
+           Device to run the training on
+        logs_per_epoch : (int)
+            Number of datapoints written into logdir per epoch
+        """
+        try:
+            # modify Hessian backward mode
+            self.__class__._modify_2nd_order = modify_2nd_order_terms
+            super().run(num_epochs,
+                        device=device,
+                        logs_per_epoch=logs_per_epoch)
+        except Exception as e:
+            raise e
+        finally:
+            # reset Hessian backward mode
+            self.__class__._modify_2nd_order = None
+
+    # override
+    def backward_pass(self, outputs, loss):
+        """Perform backward pass for gradients and Hessians.
+
+        Parameters:
+        -----------
+        outputs : (torch.Tensor)
+            Tensor of size (batch_size, ...) storing the model outputs
+        loss : (torch.Tensor)
+            Scalar value of the loss function evaluated on the outputs
+        """
+        # Hessian of loss function w.r.t. outputs
+        output_hessian = batch_summed_hessian(loss, outputs)
+        # compute gradients
+        super().backward_pass(outputs, loss)
+
+        # backward Hessian
+        mod = self.__class__._modify_2nd_order
+        self.model.backward_hessian(output_hessian,
+                                    compute_input_hessian=False,
+                                    modify_2nd_order_terms=mod)
+
+ 
     # TODO
     # def loss_and_accuracy_on_test_set(self):
     #    """Evaluate loss and accuracy on the entire test set.
