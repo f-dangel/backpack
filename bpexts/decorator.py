@@ -62,10 +62,11 @@ def decorate(module_subclass):
         # --- disable exts ---
         def disable_exts(self, keep_buffers=False):
             """Disable exts behavior, make module behave like torch.nn."""
-            for module in self.modules():
-                if not keep_buffers:
-                    module.remove_exts_buffers()
-                    module.remove_exts_hooks()
+            self.remove_exts_hooks()
+            if not keep_buffers:
+                self.remove_exts_buffers()
+            for module in self.children():
+                module.disable_exts(keep_buffers=keep_buffers)
 
         def remove_exts_hooks(self):
             """Remove all hooks tracked by exts."""
@@ -78,6 +79,16 @@ def decorate(module_subclass):
             while self.exts_buffers:
                 name = self.exts_buffers.pop()
                 self._buffers.pop(name)
+
+        def extra_repr(self):
+            """Show number of active extension buffers and hooks."""
+            active_hooks = len(self.exts_hooks)
+            active_buffers = len(self.exts_buffers)
+            repr = '{}, exts buffers: {}, exts hooks {}'.format(
+                    super().extra_repr(),
+                    active_buffers,
+                    active_hooks)
+            return repr
 
     DecoratedModule.__name__ = 'Decorated{}'.format(module_subclass.__name__)
 
