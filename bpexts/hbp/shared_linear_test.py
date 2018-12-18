@@ -21,9 +21,9 @@ def create_layer():
     """Return example linear layer."""
     # same seed
     set_seeds(0)
-    return HBPSharedLinear(in_features=in_features,
-                           out_features_list=out_features_list,
-                           bias=True)
+    return HBPSharedLinear.with_splitting(in_features=in_features,
+                                          out_features_list=out_features_list,
+                                          bias=True)
 
 
 def forward(layer, input):
