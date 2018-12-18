@@ -2,6 +2,7 @@
 
 from torch import randn, eye
 from .shared_linear import HBPSharedLinear
+from .linear import HBPLinear
 from ..utils import (torch_allclose,
                      set_seeds)
 from ..hessian import exact
@@ -116,3 +117,13 @@ def test_input_hessians():
     # call HBP recursively
     in_h = layer.backward_hessian(loss_hessian)
     assert torch_allclose(in_h, brute_force_input_hessian())
+
+
+def test_forward_pass():
+    """Test whether single module = parallel modules in forward mode."""
+    linear = HBPLinear(in_features=in_features,
+                       out_features=sum(out_features_list),
+                       bias=True)
+    x = random_input()
+    parallel = HBPSharedLinear.fromHBPLinear(linear, out_features_list)
+    assert torch_allclose(linear(x), parallel(x))
