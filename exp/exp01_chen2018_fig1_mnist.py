@@ -20,11 +20,14 @@ import enable_import_bpexts
 from bpexts.optim.cg_newton import CGNewton
 
 
-if __name__ == '__main__':
-
+def mnist_sgd():
+    """
     # ---------
     # MNIST SGD
     # ---------
+
+    Run will be skipped if logging directory already exists.
+    """
     device = torch.device('cuda:0' if torch.cuda.is_available()
                           else 'cpu')
 
@@ -68,9 +71,23 @@ if __name__ == '__main__':
         train.run(num_epochs=epochs,
                   device=device)
 
+
+def mnist_cgnewton(modify_2nd_order_terms):
+    """
     # --------------
     # MNIST CGNewton
     # --------------
+
+    Run will be skipped if logging directory already exists.
+
+    Parameters:
+    -----------
+    modify_2nd_order_terms : (str)
+        Strategy for treating 2nd-order effects of module functions:
+        * `'zero'`: Yields the Generalizes Gauss Newton matrix
+        * `'abs'`: BDA-PCH approximation
+        * `'clip'`: Different BDA-PCH approximation
+    """
     device = torch.device('cuda:0' if torch.cuda.is_available()
                           else 'cpu')
 
@@ -80,7 +97,6 @@ if __name__ == '__main__':
     epochs = 30
     lr = 0.1
     alpha = 0.02
-    modify_2nd_order_terms = 'abs'
     cg_maxiter = 50
     cg_tol = 0.1
     cg_atol = 0
@@ -125,3 +141,17 @@ if __name__ == '__main__':
         train.run(num_epochs=epochs,
                   modify_2nd_order_terms=modify_2nd_order_terms,
                   device=device)
+
+
+if __name__ == '__main__':
+    # 1) SGD curve
+    mnist_sgd()
+
+    # 2) Jacobian curve
+    mnist_cgnewton('zero')
+
+    # 3) BDA-PCH curve
+    mnist_cgnewton('abs')
+
+    # 4) alternative BDA-PCH curve
+    mnist_cgnewton('clip')

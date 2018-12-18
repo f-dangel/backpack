@@ -19,11 +19,15 @@ from utils import (directory_in_data,
 import enable_import_bpexts
 from bpexts.optim.cg_newton import CGNewton
 
-if __name__ == '__main__':
 
+def cifar10_sgd():
+    """
     # -----------
     # CIFAR10 SGD
     # -----------
+
+    Run will be skipped if logging directory already exists.
+    """
     device = torch.device('cuda:0' if torch.cuda.is_available()
                           else 'cpu')
 
@@ -66,9 +70,24 @@ if __name__ == '__main__':
         train.run(num_epochs=epochs,
                   device=device)
 
+
+def cifar10_cgnewton(modify_2nd_order_terms):
+    """
     # ----------------
     # CIFAR-10CGNewton
     # ----------------
+
+    Run will be skipped if logging directory already exists.
+
+    Parameters:
+    -----------
+    modify_2nd_order_terms : (str)
+        Strategy for treating 2nd-order effects of module functions:
+        * `'zero'`: Yields the Generalizes Gauss Newton matrix
+        * `'abs'`: BDA-PCH approximation
+        * `'clip'`: Different BDA-PCH approximation
+    """
+    # Requires ~3GB of RAM
     # device = torch.device('cuda:0' if torch.cuda.is_available()
     #                       else 'cpu')
     device = torch.device('cpu')
@@ -124,3 +143,17 @@ if __name__ == '__main__':
         train.run(num_epochs=epochs,
                   modify_2nd_order_terms=modify_2nd_order_terms,
                   device=device)
+
+
+if __name__ == '__main__':
+    # 1) SGD curve
+    cifar10_sgd()
+
+    # 2) Jacobian curve
+    cifar10_cgnewton('zero')
+
+    # 3) BDA-PCH curve
+    cifar10_cgnewton('abs')
+
+    # 4) alternative BDA-PCH curve
+    cifar10_cgnewton('clip')
