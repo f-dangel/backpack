@@ -84,7 +84,8 @@ class HBPSharedLinear(hbp_decorate(Module)):
         # split into blocks
         split_out_hessians = self.split_output_hessian(output_hessian)
         # input hessian
-        in_hessian = zeros(self.in_features, self.in_features)
+        if compute_input_hessian is True:
+            in_hessian = zeros(self.in_features, self.in_features)
         # call backward_hessian for each layer separately
         for layer, split_out in zip(self.children(), split_out_hessians):
             in_h = layer.backward_hessian(
