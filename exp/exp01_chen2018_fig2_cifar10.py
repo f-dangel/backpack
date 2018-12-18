@@ -98,7 +98,6 @@ def cifar10_cgnewton(modify_2nd_order_terms):
     epochs = 100
     lr = 0.1
     alpha = 0.02
-    modify_2nd_order_terms = 'abs'
     cg_maxiter = 50
     cg_tol = 0.1
     cg_atol = 0
