@@ -1,7 +1,7 @@
 """Test Hessian backpropagation of shared linear layer."""
 
 from torch import randn, eye
-from .shared_linear import HBPParallelFactory
+from .parallel_converter import HBPParallelModule
 from .linear import HBPLinear
 from .combined_sigmoid import HBPSigmoidLinear
 from ..utils import (torch_allclose,
@@ -23,7 +23,7 @@ def create_layer():
     """Return example linear layer."""
     # same seed
     set_seeds(0)
-    return HBPParallelFactory.hbp_linear_with_splitting(
+    return HBPParallelModule.hbp_linear_with_splitting(
             in_features=in_features,
             out_features_list=out_features_list,
             bias=True)
@@ -127,7 +127,7 @@ def test_forward_pass_hbp_linear():
                        out_features=sum(out_features_list),
                        bias=True)
     x = random_input()
-    parallel = HBPParallelFactory.fromHBPLinear(linear, out_features_list)
+    parallel = HBPParallelModule.fromHBPLinear(linear, out_features_list)
     assert torch_allclose(linear(x), parallel(x))
 
 
@@ -137,7 +137,7 @@ def test_forward_pass_hbp_sigmoidlinear():
                                       out_features=sum(out_features_list),
                                       bias=True)
     x = random_input()
-    parallel = HBPParallelFactory.fromHBPCompositionActivationLinear(
+    parallel = HBPParallelModule.fromHBPCompositionActivationLinear(
             sigmoid_linear,
             out_features_list)
     assert torch_allclose(sigmoid_linear(x), parallel(x))

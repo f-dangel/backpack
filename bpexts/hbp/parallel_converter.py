@@ -10,7 +10,7 @@ from .linear import HBPLinear
 from .parallel import HBPParallel
 
 
-class HBPParallelFactory(HBPParallel):
+class HBPParallelModule(HBPParallel):
     """Factory for layers sharing the same input."""
 
     @classmethod
