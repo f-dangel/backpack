@@ -92,7 +92,7 @@ class HBPParallel(hbp_decorate(Module)):
         split_out_hessians = self.split_output_hessian(output_hessian)
         # input hessian
         if compute_input_hessian is True:
-            in_hessian = zeros(self.in_features, self.in_features)
+            in_hessian = None
         # call backward_hessian for each layer separately
         for layer, split_out in zip(self.children(), split_out_hessians):
             in_h = layer.backward_hessian(
@@ -100,7 +100,10 @@ class HBPParallel(hbp_decorate(Module)):
                     compute_input_hessian=compute_input_hessian,
                     modify_2nd_order_terms=modify_2nd_order_terms)
             if compute_input_hessian is True:
-                in_hessian.add_(in_h)
+                if in_hessian is None:
+                    in_hessian = in_h
+                else:
+                    in_hessian.add_(in_h)
         if compute_input_hessian is True:
             return in_hessian
 
