@@ -2,7 +2,9 @@
 
 from .parallel import HBPParallel
 from ..linear import HBPLinear
+from ..combined import HBPCompositionActivationLinear
 from .converter_linear import HBPParallelConverterLinear
+from .converter_combined import HBPParallelConverterCompositionActivationLinear
 
 
 class HBPParallelIdentical(HBPParallel):
@@ -52,6 +54,8 @@ class HBPParallelIdentical(HBPParallel):
         """Return the appropriate converter for layers."""
         if self.layer_class is HBPLinear:
             return HBPParallelConverterLinear
+        elif issubclass(self.layer_class, HBPCompositionActivationLinear):
+            return HBPParallelConverterCompositionActivationLinear
         else:
             raise ValueError('No conversion known for layer of type '
                              '{}'.format(self.layer_class))
