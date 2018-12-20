@@ -1,17 +1,40 @@
-"""Test Hessian backpropagation of shared linear layer."""
+"""Test Hessian backpropagation of parallel series of linear layers."""
 
 from torch import randn, eye
-from .parallel_converter import HBPParallelModule
-from .linear import HBPLinear
-from .combined_sigmoid import HBPSigmoidLinear
-from ..utils import (torch_allclose,
-                     set_seeds)
-from ..hessian import exact
+from .parallel import HBPParallel
+from ..linear import HBPLinear
+from ...utils import (torch_allclose,
+                      set_seeds)
+from ...hessian import exact
 
 in_features = 20
 out_features_list = [2, 3, 4]
 num_layers = len(out_features_list)
 input = randn(1, in_features)
+
+
+def hbp_linear_with_splitting(in_features, out_features_list, bias=True):
+    """Return linear layers acting in parallel on the same input.
+
+    Parameters:
+    -----------
+    in_features : (int)
+        Number of input features
+    out_features_list : (list(int))
+        Output features for each of the parallel modules
+    bias : (bool)
+        Use bias terms in linear layers
+
+    Returns:
+    --------
+    (HBPParallel)
+    """
+    layers = []
+    for idx, out in enumerate(out_features_list):
+        layers.append(HBPLinear(in_features=in_features,
+                                out_features=out,
+                                bias=bias))
+    return HBPParallel(layers)
 
 
 def random_input():
@@ -23,10 +46,9 @@ def create_layer():
     """Return example linear layer."""
     # same seed
     set_seeds(0)
-    return HBPParallelModule.hbp_linear_with_splitting(
-            in_features=in_features,
-            out_features_list=out_features_list,
-            bias=True)
+    return hbp_linear_with_splitting(in_features=in_features,
+                                     out_features_list=out_features_list,
+                                     bias=True)
 
 
 def forward(layer, input):
@@ -119,25 +141,3 @@ def test_input_hessians():
     # call HBP recursively
     in_h = layer.backward_hessian(loss_hessian)
     assert torch_allclose(in_h, brute_force_input_hessian())
-
-
-def test_forward_pass_hbp_linear():
-    """Test whether single module = parallel modules in forward mode."""
-    linear = HBPLinear(in_features=in_features,
-                       out_features=sum(out_features_list),
-                       bias=True)
-    x = random_input()
-    parallel = HBPParallelModule.fromHBPLinear(linear, out_features_list)
-    assert torch_allclose(linear(x), parallel(x))
-
-
-def test_forward_pass_hbp_sigmoidlinear():
-    """Test whether single module = parallel modules in forward mode."""
-    sigmoid_linear = HBPSigmoidLinear(in_features=in_features,
-                                      out_features=sum(out_features_list),
-                                      bias=True)
-    x = random_input()
-    parallel = HBPParallelModule.fromHBPCompositionActivationLinear(
-            sigmoid_linear,
-            out_features_list)
-    assert torch_allclose(sigmoid_linear(x), parallel(x))
