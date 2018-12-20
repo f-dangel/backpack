@@ -1,9 +1,8 @@
-"""Converter fromn HBPLinear to parallel series."""
+"""Converter from HBPLinear to parallel series."""
 
 from numpy import cumsum
 from torch import cat
 from .converter import HBPParallelConverter
-from ..linear import HBPLinear
 
 
 class HBPParallelConverterLinear(HBPParallelConverter):
@@ -15,7 +14,7 @@ class HBPParallelConverterLinear(HBPParallelConverter):
 
         Parameters:
         -----------
-        parallel : (HBPParallelIdentica)
+        parallel : (HBPParallelIdentical)
             Parallel series with a single linear layer
         out_features_list : (list(int))
             Output features for each of the parallel modules
@@ -36,9 +35,9 @@ class HBPParallelConverterLinear(HBPParallelConverter):
         idx = [0] + list(cumsum(out_features_list))
         idx = [(idx[i], idx[i + 1]) for i in range(len(idx) - 1)]
         for out, (i, j) in zip(out_features_list, idx):
-            layer = HBPLinear(in_features=in_features,
-                              out_features=out,
-                              bias=has_bias)
+            layer = linear.__class__(in_features=in_features,
+                                     out_features=out,
+                                     bias=has_bias)
             layer.weight.data = linear.weight.data[i:j, :]
             if has_bias:
                 layer.bias.data = linear.bias.data[i:j]
@@ -74,9 +73,9 @@ class HBPParallelConverterLinear(HBPParallelConverter):
                              ' of bias, got {}'.format(has_bias))
         has_bias = has_bias.pop()
 
-        layer = HBPLinear(in_features=in_features,
-                          out_features=out_features,
-                          bias=has_bias)
+        layer = parallel.layer_class(in_features=in_features,
+                                     out_features=out_features,
+                                     bias=has_bias)
 
         # concatenate weight matrix and assign
         weight = None
