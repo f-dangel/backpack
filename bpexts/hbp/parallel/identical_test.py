@@ -19,6 +19,7 @@ def test_splitting_into_blocks():
 
     parallel = HBPParallelIdentical.from_module(linear)
     assert parallel.total_out_features() == out_features
+    assert parallel.compute_out_features_list(1) == [10]
     assert parallel.compute_out_features_list(4) == [3, 3, 2, 2]
     assert parallel.compute_out_features_list(5) == [2, 2, 2, 2, 2]
     assert parallel.compute_out_features_list(6) == [2, 2, 2, 2, 1, 1]
@@ -27,6 +28,7 @@ def test_splitting_into_blocks():
 
     parallel2 = parallel.split(out_features_list)
     assert parallel2.total_out_features() == out_features
+    assert parallel2.compute_out_features_list(1) == [10]
     assert parallel2.compute_out_features_list(4) == [3, 3, 2, 2]
     assert parallel2.compute_out_features_list(5) == [2, 2, 2, 2, 2]
     assert parallel2.compute_out_features_list(6) == [2, 2, 2, 2, 1, 1]
