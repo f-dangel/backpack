@@ -1,6 +1,5 @@
 """Test MNIST data loader."""
 
-import enable_import_bpexts
 from bpexts.utils import torch_allclose
 from load_mnist import MNISTLoader
 

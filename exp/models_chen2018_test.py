@@ -1,6 +1,5 @@
 """Test of model architectures from Chen et al.: BDA-PCH (2018)."""
 
-import enable_import_bpexts
 from bpexts.utils import set_seeds, torch_allclose
 from models_chen2018 import (original_mnist_model,
                              separated_mnist_model,

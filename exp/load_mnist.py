@@ -17,8 +17,6 @@ from os import path
 from torchvision import transforms, datasets
 from torch.utils.data import DataLoader
 from load_dataset import DatasetLoader
-# enable import of bpexts in parent directory
-import enable_import_bpexts
 from bpexts.utils import set_seeds
 
 

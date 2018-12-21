@@ -8,7 +8,6 @@ from warnings import warn
 from training import (FirstOrderTraining, SecondOrderTraining)
 from load_mnist import MNISTLoader
 
-import enable_import_bpexts
 from bpexts.hbp.linear import HBPLinear
 from bpexts.optim.cg_newton import CGNewton
 
