@@ -123,8 +123,6 @@ def cifar10_cgnewton(modify_2nd_order_terms):
     if not run_directory_exists(logdir):
         # set up training and run
         model = original_cifar10_model()
-        # works, scaling problem in Jacobian above
-        # model = separated_mnist_model()
         loss_function = CrossEntropyLoss()
         data_loader = CIFAR10Loader(train_batch_size=batch)
         optimizer = CGNewton(model.parameters(),

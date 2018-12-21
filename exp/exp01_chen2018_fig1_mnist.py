@@ -122,8 +122,6 @@ def mnist_cgnewton(modify_2nd_order_terms):
     if not run_directory_exists(logdir):
         # set up training and run
         model = original_mnist_model()
-        # works, scaling problem in Jacobian above
-        # model = separated_mnist_model()
         loss_function = CrossEntropyLoss()
         data_loader = MNISTLoader(train_batch_size=batch)
         optimizer = CGNewton(model.parameters(),
