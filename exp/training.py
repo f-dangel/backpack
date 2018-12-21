@@ -5,7 +5,6 @@ from os import path
 from tqdm import tqdm
 import torch
 
-import enable_import_bpexts
 from bpexts.hbp.loss import batch_summed_hessian
 
 
