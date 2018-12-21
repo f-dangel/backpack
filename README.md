@@ -30,6 +30,16 @@ source .venv/bin/activate
 pip3 install -r ./requirements.txt
 ```
 
+* Additional dependencies for benchmarks, tests and experiments
+```console
+pip3 install -r ./requirements_dev.txt
+```
+
+* Install the library (in editable mode)
+```console
+pip3 install --editable .
+```
+
 * (Optional) run tests using the `pre-commit` script
 ```console
 chmod u+x ./pre-commit
