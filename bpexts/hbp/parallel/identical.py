@@ -50,6 +50,11 @@ class HBPParallelIdentical(HBPParallel):
         layers = converter.split(united, out_features_list)
         return self.__class__(layers)
 
+    def split_into_blocks(self, num_blocks):
+        """Split layer into `num_blocks` parallel modules."""
+        out_features_list = self.compute_out_features_list(num_blocks)
+        return self.split(out_features_list)
+
     def get_converter(self):
         """Return the appropriate converter for layers."""
         if self.layer_class is HBPLinear:
@@ -59,3 +64,28 @@ class HBPParallelIdentical(HBPParallel):
         else:
             raise ValueError('No conversion known for layer of type '
                              '{}'.format(self.layer_class))
+
+    def total_out_features(self):
+        """Return the number of out_features in total."""
+        if self.layer_class is HBPLinear:
+            return sum(mod.out_features for mod in self.children())
+        elif issubclass(self.layer_class, HBPCompositionActivationLinear):
+            return sum(mod.linear.out_features for mod in self.children())
+        else:
+            raise ValueError('No method for getting outputs known for layer '
+                             '{}'.format(self.layer_class))
+
+    def compute_out_features_list(self, num_blocks):
+        """Compute the sizes of the output when splitting into blocks."""
+        out_features = self.total_out_features()
+        if num_blocks <= 0:
+            raise ValueError('Parameter splitting only valid for'
+                             ' non-negative number of blocks, but '
+                             ' got {}'.format(num_blocks))
+        num_blocks = min(out_features, num_blocks)
+        block_size, block_rest = divmod(out_features, num_blocks)
+        out_features_list = num_blocks * [block_size]
+        if block_rest != 0:
+            for i in range(block_rest):
+                out_features_list[i] += 1
+        return list(out_features_list)
