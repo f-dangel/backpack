@@ -3,7 +3,7 @@
 import torch
 from bpexts.utils import set_seeds
 
-class Runner():
+class TrainingRunner():
     """Run experiments with different seeds."""
     def __init__(self, training_fn):
         """
@@ -16,11 +16,7 @@ class Runner():
         self.training_fn = training_fn
 
 
-    def run(self,
-            seeds,
-            num_epochs,
-            device=torch.device('cpu'),
-            logs_per_epoch=10):
+    def run(self, seeds):
         """Run training procedure with different seeds.
 
         Parameters:
@@ -37,4 +33,5 @@ class Runner():
         for seed in seeds:
             set_seeds(seed)
             training = self.training_fn()
+            training.point_logger_to('seed{}'.format(seed))
             training.run()
