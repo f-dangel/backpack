@@ -8,52 +8,44 @@ import torch
 from torch.nn import CrossEntropyLoss
 from torch.optim import SGD
 from os import path
-from .models_chen2018 import original_mnist_model, separated_mnist_model
+from .models_chen2018 import original_mnist_model
 from .loading.load_mnist import MNISTLoader
 from .training.first_order import FirstOrderTraining
 from .training.second_order import SecondOrderTraining
+from .training.runner import TrainingRunner
 from .utils import (directory_in_data,
-                    dirname_from_params,
-                    tensorboard_instruction,
-                    run_directory_exists)
+                    dirname_from_params)
 from bpexts.optim.cg_newton import CGNewton
 
 
-def mnist_sgd():
-    """
-    # ---------
-    # MNIST SGD
-    # ---------
+# global hyper parameters
+batch = 500
+epochs = 30
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+data_dir = directory_in_data('exp01_reproduce_chen_figures/mnist')
+logs_per_epoch = 10
 
-    Run will be skipped if logging directory already exists.
-    """
-    device = torch.device('cuda:0' if torch.cuda.is_available()
-                          else 'cpu')
 
+def mnist_sgd_train_fn():
+    """Create training instance for MNIST experiment."""
     # hyper parameters
     # ----------------
-    batch = 500
-    epochs = 30
     lr = 0.1
     momentum = 0.9
 
     # logging directory
     # -----------------
-    directory_name = 'exp01_reproduce_chen_figures/mnist'
-    data_dir = directory_in_data(directory_name)
-    print(tensorboard_instruction(data_dir))
     # directory of run
     run_name = dirname_from_params(opt='sgd',
                                    batch=batch,
                                    lr=lr,
                                    mom=momentum)
     logdir = path.join(data_dir, run_name)
-    logs_per_epoch = 10
 
     # training procedure
     # ------------------
-    if not run_directory_exists(logdir):
-        # set up training and run
+    def training_fn():
+        """Training function setting up the train instance."""
         model = original_mnist_model()
         # NOTE: Important line, deactivate extension hooks/buffers!
         model.disable_exts()
@@ -71,16 +63,12 @@ def mnist_sgd():
                                    epochs,
                                    logs_per_epoch=logs_per_epoch,
                                    device=device)
-        train.run()
+        return train
+    return training_fn
 
 
-def mnist_cgnewton(modify_2nd_order_terms):
-    """
-    # --------------
-    # MNIST CGNewton
-    # --------------
-
-    Run will be skipped if logging directory already exists.
+def mnist_cgnewton_train_fn(modify_2nd_order_terms):
+    """Create training instance for MNIST experiment.
 
     Parameters:
     -----------
@@ -90,13 +78,8 @@ def mnist_cgnewton(modify_2nd_order_terms):
         * `'abs'`: BDA-PCH approximation
         * `'clip'`: Different BDA-PCH approximation
     """
-    device = torch.device('cuda:0' if torch.cuda.is_available()
-                          else 'cpu')
-
     # hyper parameters
     # ----------------
-    batch = 500
-    epochs = 30
     lr = 0.1
     alpha = 0.02
     cg_maxiter = 50
@@ -105,9 +88,6 @@ def mnist_cgnewton(modify_2nd_order_terms):
 
     # logging directory
     # -----------------
-    directory_name = 'exp01_reproduce_chen_figures/mnist'
-    data_dir = directory_in_data(directory_name)
-    print(tensorboard_instruction(data_dir))
     # directory of run
     run_name = dirname_from_params(opt='cgn',
                                    batch=batch,
@@ -118,11 +98,11 @@ def mnist_cgnewton(modify_2nd_order_terms):
                                    atol=cg_atol,
                                    mod2nd=modify_2nd_order_terms)
     logdir = path.join(data_dir, run_name)
-    logs_per_epoch = 10
 
     # training procedure
     # ------------------
-    if not run_directory_exists(logdir):
+    def train_fn():
+        """Training function setting up the train instance."""
         # set up training and run
         model = original_mnist_model()
         loss_function = CrossEntropyLoss()
@@ -143,18 +123,23 @@ def mnist_cgnewton(modify_2nd_order_terms):
                                     modify_2nd_order_terms,
                                     logs_per_epoch=logs_per_epoch,
                                     device=device)
-        train.run()
+        return train
+    return train_fn
 
 
 if __name__ == '__main__':
-    # 1) SGD curve
-    mnist_sgd()
-
-    # 2) Jacobian curve
-    mnist_cgnewton('zero')
-
-    # 3) BDA-PCH curve
-    mnist_cgnewton('abs')
-
-    # 4) alternative BDA-PCH curve
-    mnist_cgnewton('clip')
+    seeds = range(10)
+    experiments = [
+                   # 1) SGD curve
+                   mnist_sgd_train_fn(),
+                   # 2) Jacobian curve
+                   mnist_cgnewton_train_fn('zero'),
+                   # 3) BDA-PCH curve
+                   mnist_cgnewton_train_fn('abs'),
+                   # 4) alternative BDA-PCH curve
+                   mnist_cgnewton_train_fn('clip'),
+                  ]
+                
+    for train_fn in experiments:
+        runner = TrainingRunner(train_fn)
+        runner.run(seeds)
