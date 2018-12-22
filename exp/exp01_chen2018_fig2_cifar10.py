@@ -8,15 +8,14 @@ import torch
 from torch.nn import CrossEntropyLoss
 from torch.optim import SGD
 from os import path
-from models_chen2018 import original_cifar10_model
-from load_cifar10 import CIFAR10Loader
-from training import (FirstOrderTraining,
-                      SecondOrderTraining)
-from utils import (directory_in_data,
-                   dirname_from_params,
-                   tensorboard_instruction,
-                   run_directory_exists)
-import enable_import_bpexts
+from .models_chen2018 import original_cifar10_model
+from .loading.load_cifar10 import CIFAR10Loader
+from .training.first_order import FirstOrderTraining
+from .training.second_order import SecondOrderTraining
+from .utils import (directory_in_data,
+                    dirname_from_params,
+                    tensorboard_instruction,
+                    run_directory_exists)
 from bpexts.optim.cg_newton import CGNewton
 
 
@@ -49,6 +48,7 @@ def cifar10_sgd():
                                    lr=lr,
                                    mom=momentum)
     logdir = path.join(data_dir, run_name)
+    logs_per_epoch = 10
 
     # training procedure
     # ------------------
@@ -66,9 +66,11 @@ def cifar10_sgd():
                                    loss_function,
                                    optimizer,
                                    data_loader,
-                                   logdir)
-        train.run(num_epochs=epochs,
-                  device=device)
+                                   logdir,
+                                   epochs,
+                                   logs_per_epoch=logs_per_epoch,
+                                   device=device)
+        train.run()
 
 
 def cifar10_cgnewton(modify_2nd_order_terms):
@@ -117,6 +119,7 @@ def cifar10_cgnewton(modify_2nd_order_terms):
                                    atol=cg_atol,
                                    mod2nd=modify_2nd_order_terms)
     logdir = path.join(data_dir, run_name)
+    logs_per_epoch = 10
 
     # training procedure
     # ------------------
@@ -136,10 +139,13 @@ def cifar10_cgnewton(modify_2nd_order_terms):
                                     loss_function,
                                     optimizer,
                                     data_loader,
-                                    logdir)
-        train.run(num_epochs=epochs,
-                  modify_2nd_order_terms=modify_2nd_order_terms,
-                  device=device)
+                                    logdir,
+                                    epochs,
+                                    modify_2nd_order_terms,
+                                    logs_per_epoch=logs_per_epoch,
+                                    device=device)
+        train.run()
+
 
 
 if __name__ == '__main__':
