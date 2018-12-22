@@ -16,58 +16,56 @@ Normalization values taken from
 from os import path
 from torchvision import transforms, datasets
 from torch.utils.data import DataLoader
-# enable import of bpexts in parent directory
-import enable_import_bpexts
+from load_dataset import DatasetLoader
 from bpexts.utils import set_seeds
 
-# directory to store MNIST (28x28): ../dat/MNIST_dataset
-parent_dir = path.dirname(
-        path.dirname(path.realpath(__file__)))
-data_dir = 'dat/MNIST'
-root = path.join(parent_dir, data_dir)
 
-# transformation of the data
-trans = transforms.Compose(
-        [  # convert to tensor
-           transforms.ToTensor(),
-           # normalize
-           transforms.Normalize(
-               # taken from ref
-               (0.13066048,),
-               # taken from ref
-               (0.30810781,))
-        ])
+class MNISTLoader(DatasetLoader):
+    """Loading of training/test sets of MNIST."""
 
-# download MNIST if non-existent
-train_set = datasets.MNIST(root=root,
-                           train=True,
-                           transform=trans,
-                           download=True)
-test_set = datasets.MNIST(root=root,
-                          train=False,
-                          transform=trans,
-                          download=True)
+    # directory to store MNIST (28x28): ../dat/MNIST_dataset
+    parent_dir = path.dirname(
+            path.dirname(path.realpath(__file__)))
+    data_dir = 'dat/MNIST'
+    root = path.join(parent_dir, data_dir)
 
+    # transformation of the data
+    trans = transforms.Compose(
+            [  # convert to tensor
+               transforms.ToTensor(),
+               # normalize
+               transforms.Normalize(
+                   # taken from ref
+                   (0.13066048,),
+                   # taken from ref
+                   (0.30810781,))
+            ])
 
-def train_loader(batch_size=None,
-                 seed=0):
-    """Return loader for MNIST training data batches.
+    # download MNIST if non-existent
+    train_set = datasets.MNIST(root=root,
+                               train=True,
+                               transform=trans,
+                               download=True)
+    test_set = datasets.MNIST(root=root,
+                              train=False,
+                              transform=trans,
+                              download=True)
 
-    Use entire train set if batch_size is unspecified.
-    """
-    set_seeds(seed)
-    batch_size = len(train_set) if batch_size is None else batch_size
-    return DataLoader(dataset=train_set,
-                      batch_size=batch_size,
-                      shuffle=True)
+    def train_loader(self):
+        """Return loader for MNIST training data batches."""
+        set_seeds(self.train_seed)
+        batch = len(self.train_set)\
+            if self.train_batch_size is None\
+            else self.train_batch_size
+        return DataLoader(dataset=self.train_set,
+                          batch_size=batch,
+                          shuffle=True)
 
-
-def test_loader(batch_size=None):
-    """Return loader for MNIST test data.
-
-    Use entire test set if batch_size is unspecified.
-    """
-    batch_size = len(test_set) if batch_size is None else batch_size
-    return DataLoader(dataset=test_set,
-                      batch_size=batch_size,
-                      shuffle=False)
+    def test_loader(self):
+        """Return loader for MNIST test data."""
+        batch = len(self.test_set)\
+            if self.test_batch_size is None\
+            else self.test_batch_size
+        return DataLoader(dataset=self.test_set,
+                          batch_size=batch,
+                          shuffle=False)

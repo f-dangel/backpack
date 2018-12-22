@@ -4,7 +4,6 @@ The same initialization method for the parameters was chosen.
 """
 
 import torch.nn as nn
-import enable_import_bpexts
 from bpexts.hbp.linear import HBPLinear
 from bpexts.hbp.sigmoid import HBPSigmoid
 from bpexts.hbp.combined_sigmoid import HBPSigmoidLinear

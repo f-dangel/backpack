@@ -1,6 +1,7 @@
 """Test of conjugate gradient Newton style optimizer."""
 
 import torch
+from warnings import warn
 from .cg_newton import CGNewton
 from ..utils import torch_allclose
 
@@ -44,4 +45,7 @@ def test_simple_on_cpu():
 
 def test_simple_on_gpu():
     """Run simple test on CPU."""
-    simple(use_gpu=True)
+    if torch.cuda.is_available():
+        simple(use_gpu=True)
+    else:
+        warn('Could not find CUDA device')
