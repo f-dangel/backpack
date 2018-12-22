@@ -1,6 +1,5 @@
 """Test CIFAR-10 data loader."""
 
-import enable_import_bpexts
 from bpexts.utils import torch_allclose
 from load_cifar10 import CIFAR10Loader
 
