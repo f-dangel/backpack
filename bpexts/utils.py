@@ -15,12 +15,19 @@ def torch_allclose(a, b, *args, **kwargs):
     return allclose(a.data, b.data, *args, **kwargs)
 
 
-def set_seeds(seed):
-    """Set random seeds of pyTorch (+CUDA), NumPy and random modules."""
-    # PyTorch
-    torch_manual_seed(seed)
-    torch_cuda_manual_seed(seed)
-    # NumPy
-    numpy_seed(seed)
-    # random
-    random_seed(seed)
+def set_seeds(seed=None):
+    """Set random seeds of pyTorch (+CUDA), NumPy and random modules.
+    
+    Parameters:
+    -----------
+    seed : (int or None)
+        Seed initialization value, no reset if `None`
+    """
+    if seed is not None:
+        # PyTorch
+        torch_manual_seed(seed)
+        torch_cuda_manual_seed(seed)
+        # NumPy
+        numpy_seed(seed)
+        # random
+        random_seed(seed)

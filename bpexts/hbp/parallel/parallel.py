@@ -1,13 +1,18 @@
 """
 Hessian backpropagation implementation of multiple modules connected
 in parallel to the same input.
+
+Convert layers to parallel series and unite their parameters.
+
+Both versions behave identically in the forward and backward
+pass, while the backward pass of the Hessian yields the Hessian
+for different groupings of parameters.
 """
 
 from torch.nn import Module
 from numpy import cumsum
 from torch import (cat, zeros)
-from .linear import HBPLinear
-from .module import hbp_decorate
+from ..module import hbp_decorate
 
 
 class HBPParallel(hbp_decorate(Module)):
