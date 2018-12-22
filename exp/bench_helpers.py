@@ -74,14 +74,17 @@ class MLP(nn.Sequential):
 
 def run(make_model, functions, modules, N, correctness=False):
 
-    torch.manual_seed(0)
-    nnModel = make_model(modules['nn'])
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     torch.manual_seed(0)
-    bpextsModel = make_model(modules['bpexts'])
+    nnModel = make_model(modules['nn']).to(device)
+
+    torch.manual_seed(0)
+    bpextsModel = make_model(modules['bpexts']).to(device)
 
     mnist_loader = MNISTLoader(train_batch_size=N).train_loader()
     x, y = next(iter(mnist_loader))
+    x, y = x.to(device), y.to(device)
 
     def datafunc():
         return x, y, nnModel, bpextsModel
