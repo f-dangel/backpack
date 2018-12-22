@@ -3,6 +3,7 @@
 import torch
 from bpexts.utils import set_seeds
 
+
 class TrainingRunner():
     """Run experiments with different seeds."""
     def __init__(self, training_fn):
@@ -33,5 +34,6 @@ class TrainingRunner():
         for seed in seeds:
             set_seeds(seed)
             training = self.training_fn()
+            training.print_tensorboard_instruction()
             training.point_logger_to('seed{}'.format(seed))
             training.run()

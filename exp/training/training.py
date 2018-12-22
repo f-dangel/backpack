@@ -176,7 +176,15 @@ class Training(ABC):
         """
         for key, value in summary.items():
             self.logger.log_value(key, value, step)
- 
+
+
+    def print_tensorboard_instruction(self):
+        """Print message on how to display results using tensorboard."""
+        print('\nLogging data into {}\n\nUse tensorboard to'
+              ' investigate the output by typing\n\t'
+              ' tensorboard --logdir {}\n'.format(self.logdir,
+                                                  self.logdir))
+
     # TODO
     # def loss_and_accuracy_on_test_set(self):
     #    """Evaluate loss and accuracy on the entire test set.

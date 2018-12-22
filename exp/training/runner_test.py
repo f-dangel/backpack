@@ -10,7 +10,6 @@ from ..loading.load_mnist import MNISTLoader
 from ..utils import directory_in_data
 
 
-
 def training_fn_on_device(use_gpu):
     """Return function that creates the training instance."""
     def training_fn():
