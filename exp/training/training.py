@@ -1,17 +1,24 @@
 """Class for handling training and logging metrics."""
 
+from abc import ABC, abstractmethod
 from tensorboard_logger import Logger
 from os import path
 from tqdm import tqdm
 import torch
 
-from bpexts.hbp.loss import batch_summed_hessian
 
-
-class FirstOrderTraining(object):
-    """Handle logging during training procedure with 1st-order optimizers."""
-    def __init__(self, model, loss_function, optimizer,
-                 data_loader, logdir):
+class Training(ABC):
+    """Handle training and logging."""
+    def __init__(self,
+                 model,
+                 loss_function,
+                 optimizer,
+                 data_loader,
+                 logdir,
+                 num_epochs,
+                 logs_per_epoch=10,
+                 device=torch.device('cpu'),
+                 ):
         """Train a model, log loss values into logdir.
 
         Parameters:
@@ -22,53 +29,40 @@ class FirstOrderTraining(object):
             Scalar loss function computed on top of the model output
         optimizer : (torch.optim.Optimizer)
             Optimizer used for training
-        batch_size (int): Number of samples in a batch
-        num_epochs (int): Epochs to train the model
-        reuse (int): Number of iterations to reuse the Hessian
+        data_loader : (DatasetLoader)
+            Provides loaders for train and test set, see `load_dataset.py`
+        logdir : (str)
+            Path to the log directory
+        num_epochs : (int)
+            Number of epochs to train on
+        logs_per_epoch : (int)
+            Number of datapoints written into logdir per epoch
+        device : (torch.Device)
+           Device to run the training on
         """
-        self.model = model
+        self.model = model.to(device)
         self.loss_function = loss_function
         self.optimizer = optimizer
         self.data_loader = data_loader
-        self.logger = self.create_logger(logdir)
+        self.logdir = logdir
+        self.num_epochs = num_epochs
+        self.logs_per_epoch = logs_per_epoch
+        self.device = device
+        # initialize self.logger
+        self.point_logger_to('')
 
-    def log_values(self, summary, step):
-        """Log all key-value pairs in `summary` at `step`.
-
-        Parameters:
-        -----------
-        summary : (dict)
-            Dictionary with scalar items step : (int)
-            Step for logging (must be int)
-        """
-        for key, value in summary.items():
-            self.logger.log_value(key, value, step)
-
-    def run(self,
-            num_epochs,
-            device=torch.device('cpu'),
-            logs_per_epoch=10):
-        """Run training, log values to logdir.
-
-        Parameters:
-        -----------
-        num_epochs : (int)
-            Number of epochs to train on
-        device : (torch.Device)
-           Device to run the training on
-        logs_per_epoch : (int)
-            Number of datapoints written into logdir per epoch
-        """
-        self.model = self.model.to(device)
+    def run(self):
+        """Run training, log values to logdir."""
         training_set = self.data_loader.train_loader()
         num_batches = len(training_set)
-        log_every = max(num_batches // logs_per_epoch, 1)
+        log_every = max(num_batches // self.logs_per_epoch, 1)
 
         train_samples_seen = 0
-        progressbar = tqdm(range(num_epochs))
+        progressbar = tqdm(range(self.num_epochs))
         for epoch in progressbar:
             for idx, (inputs, labels) in enumerate(training_set):
-                inputs, labels = inputs.to(device), labels.to(device)
+                inputs = inputs.to(self.device)
+                labels = labels.to(self.device)
                 outputs, loss = self.forward_pass(inputs, labels)
                 # backward pass and update step
                 self.optimizer.zero_grad()
@@ -86,7 +80,7 @@ class FirstOrderTraining(object):
                     self.log_values(summary, train_samples_seen)
 
                     status = 'epoch [{}/{}] step [{}/{}]'.format(epoch + 1,
-                                                                 num_epochs,
+                                                                 self.num_epochs,
                                                                  idx + 1,
                                                                  num_batches)
                     status += ' batch_loss: {:.5f} batch_acc: {:.5f}'.format(
@@ -130,31 +124,6 @@ class FirstOrderTraining(object):
         """
         loss.backward()
 
-    def create_logger(self, logdir):
-        """Instantiate and return a logger for logdir.
-
-        Parameters:
-        -----------
-        logdir : (str)
-            Path to the log directory
-
-        Raises:
-        -------
-        (FileExistsError)
-            If logdir already exists.
-        """
-        # if path.isdir(logdir):
-        #    raise FileExistsError('Logdir {} already exists!'.format(logdir))
-        return Logger(logdir)
-
-    def load_training_set(self):
-        """Return the train_loader."""
-        return self.data_loader.train_loader()
-
-    def load_test_set(self):
-        """Return the test_loader."""
-        return self.data_loader.test_loader()
-
     @staticmethod
     def compute_accuracy(outputs, labels):
         """Compute accuracy given the networks' outputs and labels.
@@ -176,64 +145,37 @@ class FirstOrderTraining(object):
         correct = (predicted == labels).sum().item()
         return correct / total
 
+    def load_training_set(self):
+        """Return the train_loader."""
+        return self.data_loader.train_loader()
 
-class SecondOrderTraining(FirstOrderTraining):
-    """Handle logging in training procedure with 2nd-order optimizers."""
-    _modify_2nd_order = None
+    def load_test_set(self):
+        """Return the test_loader."""
+        return self.data_loader.test_loader()
 
-    def run(self,
-            num_epochs,
-            modify_2nd_order_terms,
-            device=torch.device('cpu'),
-            logs_per_epoch=10):
-        """Run training, log values to logdir.
+    def point_logger_to(self, sub_logdir=''):
+        """Point logger to subdirectory in `self.logdir`.
 
-        Parameters:
-        -----------
-        num_epochs : (int)
-            Number of epochs to train on
-        modify_2nd_order_terms : (str) ('none', 'clip', 'sign', 'zero')
-            String specifying the strategy for dealing with 2nd-order
-            terms during Hessian backpropagation
-        device : (torch.Device)
-           Device to run the training on
-        logs_per_epoch : (int)
-            Number of datapoints written into logdir per epoch
-        """
-        try:
-            # modify Hessian backward mode
-            self.__class__._modify_2nd_order = modify_2nd_order_terms
-            super().run(num_epochs,
-                        device=device,
-                        logs_per_epoch=logs_per_epoch)
-        except Exception as e:
-            raise e
-        finally:
-            # reset Hessian backward mode
-            self.__class__._modify_2nd_order = None
-
-    # override
-    def backward_pass(self, outputs, loss):
-        """Perform backward pass for gradients and Hessians.
+        Modify attribute `self.logger`.
 
         Parameters:
         -----------
-        outputs : (torch.Tensor)
-            Tensor of size (batch_size, ...) storing the model outputs
-        loss : (torch.Tensor)
-            Scalar value of the loss function evaluated on the outputs
+        sub_logdir : (str)
+            name of the subdirectory logging directory
         """
-        # Hessian of loss function w.r.t. outputs
-        output_hessian = batch_summed_hessian(loss, outputs)
-        # compute gradients
-        super().backward_pass(outputs, loss)
+        self.logger = Logger(path.join(self.logdir, sub_logdir))
 
-        # backward Hessian
-        mod = self.__class__._modify_2nd_order
-        self.model.backward_hessian(output_hessian,
-                                    compute_input_hessian=False,
-                                    modify_2nd_order_terms=mod)
+    def log_values(self, summary, step):
+        """Log all key-value pairs in `summary` at `step`.
 
+        Parameters:
+        -----------
+        summary : (dict)
+            Dictionary with scalar items step : (int)
+            Step for logging (must be int)
+        """
+        for key, value in summary.items():
+            self.logger.log_value(key, value, step)
  
     # TODO
     # def loss_and_accuracy_on_test_set(self):
