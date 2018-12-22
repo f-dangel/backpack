@@ -1,7 +1,7 @@
 """Test MNIST data loader."""
 
 from bpexts.utils import torch_allclose
-from load_mnist import MNISTLoader
+from .load_mnist import MNISTLoader
 
 
 def test_deterministic_loading():
