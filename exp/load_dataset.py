@@ -7,7 +7,7 @@ class DatasetLoader(ABC):
     """Base class implementing interface for dataset loading."""
     def __init__(self,
                  train_batch_size=None,
-                 train_seed=0,
+                 train_seed=None,
                  test_batch_size=None):
         """
         Parameters:
@@ -15,8 +15,9 @@ class DatasetLoader(ABC):
         train_batch_size : (int)
             Number of samples per batch in the training set, load
             entire set if left `None`
-        train_seed : (int)
+        train_seed : (int or None)
             Random seed for shuffling the training samples.
+            No reset of the seed if left `None`
         test_batch_size : (int)
             Number of samples per batch in the test set, load
             entire set if left `None`
