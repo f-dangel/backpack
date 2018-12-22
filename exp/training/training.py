@@ -48,11 +48,13 @@ class Training(ABC):
         self.num_epochs = num_epochs
         self.logs_per_epoch = logs_per_epoch
         self.device = device
-        # initialize self.logger
-        self.point_logger_to('')
+        # initialize self.logger during run or by point_logger_to
+        self.logger = None
 
     def run(self):
         """Run training, log values to logdir."""
+        if self.logger is None:
+            self.point_logger_to('')
         training_set = self.data_loader.train_loader()
         num_batches = len(training_set)
         log_every = max(num_batches // self.logs_per_epoch, 1)
@@ -163,7 +165,11 @@ class Training(ABC):
         sub_logdir : (str)
             name of the subdirectory logging directory
         """
-        self.logger = Logger(path.join(self.logdir, sub_logdir))
+        self.logger = Logger(self.logger_subdir(sub_logdir))
+
+    def logger_subdir(self, sub_logdir):
+        """Return path of subdirectory of logger."""
+        return path.join(self.logdir, sub_logdir)
 
     def log_values(self, summary, step):
         """Log all key-value pairs in `summary` at `step`.
@@ -176,7 +182,6 @@ class Training(ABC):
         """
         for key, value in summary.items():
             self.logger.log_value(key, value, step)
-
 
     def print_tensorboard_instruction(self):
         """Print message on how to display results using tensorboard."""
