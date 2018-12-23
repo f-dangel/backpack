@@ -4,6 +4,7 @@ from tensorboard_logger import Logger as TensorboardLogger
 from tensorboard.backend.event_processing.event_accumulator\
         import EventAccumulator
 from os import path
+import pandas
 
 
 class Logger(TensorboardLogger):
@@ -62,23 +63,45 @@ class Logger(TensorboardLogger):
               ' tensorboard --logdir {}\n'.format(self.__logdir,
                                                   self.__logdir))
 
+    def extract_logdir_to_csv(self):
+        """Extract scalar quantities in current logdir to .csv file."""
+        for tag, data in self.extract_logdir_to_pandas().items():
+            filename = path.join(self.logdir, tag + '.csv')
+            print('Save scalar to', filename, '...', end='')
+            data.to_csv(filename, index=False)
+            print('Successfull')
+
+    def extract_logdir_to_pandas(self):
+        """Return pandas dataframes for all metrics in logdir.
+        
+        Returns:
+        --------
+        (dict(pandas.DataFrame))
+            Dictionary with (key, value) pairs corresponding to the name
+            and the data of the metric
+        """
+        return self._scalars_to_pandas(self.logdir)
+
     @classmethod
-    def scalars_to_csv(cls, event_dir):
-        """Extract scalar quantities in event directory to .csv files.
+    def _scalars_to_pandas(cls, event_dir):
+        """Extract scalar quantities in event directory to pandas DataFrame.
 
         Parameters:
         -----------
         event_dir : (str)
             Directory containing the tensorboard event file
+
+        Returns:
+        --------
+        (dict(pandas.DataFrame))
+            Dictionary with (key, value) pairs corresponding to the name
+            and the data of the metric
         """
         event_acc = EventAccumulator(event_dir)
         event_acc.Reload()
-        for (tag, data) in cls._extract_scalars(event_acc):
-            filename = path.join(event_dir, tag + '.csv')
-            print('Save scalar to', filename, '...', end='')
-            data.to_csv(filename, index=False)
-            print('Successfull')
-
+        pandas_dict = {tag: data
+                       for (tag, data) in cls._extract_scalars(event_acc)}
+        return pandas_dict
 
     @staticmethod
     def _extract_scalars(event_acc):
@@ -87,5 +110,3 @@ class Logger(TensorboardLogger):
             wall, step, value = zip(*event_acc.Scalars(tag))
             data = pandas.DataFrame(dict(wall=wall, step=step, value=value))
             yield (tag, data)
-
-
