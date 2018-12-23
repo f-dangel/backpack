@@ -3,6 +3,7 @@
 import torch
 from bpexts.utils import set_seeds
 from os import path
+from warnings import warn
 
 
 class TrainingRunner():
@@ -35,11 +36,10 @@ class TrainingRunner():
         for seed in seeds:
             set_seeds(seed)
             training = self.training_fn()
-            training.print_tensorboard_instruction()
             sub = 'seed{}'.format(seed)
-            if path.isdir(training.logger_subdir(sub)):
-                print('Logging directory {} already exists. Skipping'
-                      ' run'.format(training.logger_subdir(sub)))
+            if path.isdir(training.logger_subdir_path(sub)):
+                warn('Logging directory {} already exists. Skipping'
+                     ' run'.format(training.logger_subdir_path(sub)))
             else:
-                training.point_logger_to(sub)
+                training.point_logger_to_subdir(sub)
                 training.run()

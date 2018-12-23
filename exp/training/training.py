@@ -1,10 +1,12 @@
 """Class for handling training and logging metrics."""
 
 from abc import ABC, abstractmethod
-from tensorboard_logger import Logger
 from os import path
 from tqdm import tqdm
 import torch
+import pandas
+from .logger import Logger
+
 
 
 class Training(ABC):
@@ -48,13 +50,19 @@ class Training(ABC):
         self.num_epochs = num_epochs
         self.logs_per_epoch = logs_per_epoch
         self.device = device
-        # initialize self.logger during run or by point_logger_to
+        # initialize during run or point_to
         self.logger = None
 
-    def run(self):
-        """Run training, log values to logdir."""
+    def run(self, convert_to_csv=True):
+        """Run training, log values to logdir and convert to csv.
+        
+        Parameters:
+        -----------
+        convert_to_csv : (bool)
+            Convert the tensorboard logging file into a csv file
+        """
         if self.logger is None:
-            self.point_logger_to('')
+            self.point_logger_to_subdir('')
         training_set = self.data_loader.train_loader()
         num_batches = len(training_set)
         log_every = max(num_batches // self.logs_per_epoch, 1)
@@ -79,7 +87,7 @@ class Training(ABC):
                     batch_acc = self.compute_accuracy(outputs, labels)
                     summary = {'batch_loss': batch_loss,
                                'batch_acc': batch_acc}
-                    self.log_values(summary, train_samples_seen)
+                    self.logger.log_scalar_values(summary, train_samples_seen)
 
                     status = 'epoch [{}/{}] step [{}/{}]'.format(epoch + 1,
                                                                  self.num_epochs,
@@ -155,40 +163,20 @@ class Training(ABC):
         """Return the test_loader."""
         return self.data_loader.test_loader()
 
-    def point_logger_to(self, sub_logdir=''):
-        """Point logger to subdirectory in `self.logdir`.
-
-        Modify attribute `self.logger`.
+    def point_logger_to_subdir(self, subdir):
+        """Point logger to subdirectory.
 
         Parameters:
         -----------
-        sub_logdir : (str)
+        subdir : (str)
             name of the subdirectory logging directory
         """
-        self.logger = Logger(self.logger_subdir(sub_logdir))
+        self.logger = Logger(self.logdir, subdir)
+        self.logger.print_tensorboard_instruction()
 
-    def logger_subdir(self, sub_logdir):
-        """Return path of subdirectory of logger."""
-        return path.join(self.logdir, sub_logdir)
-
-    def log_values(self, summary, step):
-        """Log all key-value pairs in `summary` at `step`.
-
-        Parameters:
-        -----------
-        summary : (dict)
-            Dictionary with scalar items step : (int)
-            Step for logging (must be int)
-        """
-        for key, value in summary.items():
-            self.logger.log_value(key, value, step)
-
-    def print_tensorboard_instruction(self):
-        """Print message on how to display results using tensorboard."""
-        print('\nLogging data into {}\n\nUse tensorboard to'
-              ' investigate the output by typing\n\t'
-              ' tensorboard --logdir {}\n'.format(self.logdir,
-                                                  self.logdir))
+    def logger_subdir_path(self, subdir):
+        """Return path to subdirectory of logger."""
+        return Logger.subdir_path(self.logdir, subdir)
 
     # TODO
     # def loss_and_accuracy_on_test_set(self):
