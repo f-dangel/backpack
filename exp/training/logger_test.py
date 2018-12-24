@@ -10,7 +10,7 @@ def test_pandas_conversion():
     logger = Logger(directory_in_data('test_logging'))
     logger.log_value('metric1', 0.5, 1)
     logger.log_value('metric2', 0.3, 5)
-    data = logger.extract_logdir_to_pandas()
+    data = logger._extract_logdir_to_pandas()
 
     df1 = data['metric1'][['step', 'value']].values
     array1 = np.array([1, 0.5])

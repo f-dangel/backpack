@@ -20,7 +20,8 @@ def training_fn_on_device(use_gpu):
         data_loader = MNISTLoader(1000)
         optimizer = SGD(model.parameters(), lr=0.1)
         num_epochs, logs_per_epoch = 1, 15
-        logdir = directory_in_data('test_training_simple_mnist_model')
+        logdir = directory_in_data('test_training_simple_mnist_model_{}'
+                                   .format('gpu' if use_gpu else 'cpu'))
         # initialize training
         train = FirstOrderTraining(model,
                                    loss_function,
@@ -38,8 +39,9 @@ def simple_mnist_model_1st_order(use_gpu=False):
     """Train on simple MNIST model, using SGD, for multiple seeds."""
     training_fn = training_fn_on_device(use_gpu)
     runner = TrainingRunner(training_fn)
-    seeds = [1,2]
+    seeds = [1,2,3]
     runner.run(seeds)
+    runner.merge_and_average_runs(seeds)
 
 
 def test_runner_mnist_1st_order_cpu():

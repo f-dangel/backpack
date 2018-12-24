@@ -65,13 +65,13 @@ class Logger(TensorboardLogger):
 
     def extract_logdir_to_csv(self):
         """Extract scalar quantities in current logdir to .csv file."""
-        for tag, data in self.extract_logdir_to_pandas().items():
+        for tag, data in self._extract_logdir_to_pandas().items():
             filename = path.join(self.logdir, tag + '.csv')
             print('Save scalar to', filename, '...', end='')
             data.to_csv(filename, index=False)
             print('Successfull')
 
-    def extract_logdir_to_pandas(self):
+    def _extract_logdir_to_pandas(self):
         """Return pandas dataframes for all metrics in logdir.
         
         Returns:
