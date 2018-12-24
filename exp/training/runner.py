@@ -6,6 +6,7 @@ import pandas
 from bpexts.utils import set_seeds
 from os import path, listdir
 from warnings import warn
+from .merger import CSVMerger
 
 
 class TrainingRunner():
@@ -73,77 +74,13 @@ class TrainingRunner():
             df.to_csv(out_file, index=False)
 
     def _merge_metric(self, metric, seeds):
-        """Merge metric of different runs."""
+        """Merge metric of different runs, add mean and std, return df."""
         logdir = self._logdir_name()
         source_files = [path.join(self._seed_dir_name(seed, logdir),
                                   '{}.csv'.format(metric))
                         for seed in seeds]
         labels = [self._seed_dir_name(seed) for seed in seeds]
-        data = [self._load_and_rename_cols(file, label)
-                for file, label in zip(source_files, labels)]
-        df = self._merge_frames_and_check_consistency(data)
-        df = self._add_mean_col(df, labels)
-        df = self._add_std_col(df, labels)
-        return df
-
-    @staticmethod
-    def _add_mean_col(df, labels):
-        """Compute mean of columns given by `labels` in `df`.
-
-        Add column `'mean'` to data frame.
-        """
-        df['mean'] = df[labels].mean(axis=1)
-        return df
-
-    @staticmethod
-    def _add_std_col(df, labels):
-        """Compute stddev of columns given by `labels` in `df`.
-
-        Add column `'std'` to data frame.
-        """
-        df['std'] = df[labels].std(axis=1)
-        return df
-
-    def _load_and_rename_cols(self, source_file, new_label):
-        """Load file as pandas.DataFrame, rename column.
-        
-        Wall time is ignored.
-        """
-        rename_dict = {
-                       'step': 'step', 
-                       'value': new_label
-                       }
-        df = pandas.read_csv(source_file)[list(rename_dict.keys())]
-        return df.rename(index=str, columns=rename_dict)
-
-    def _merge_frames_and_check_consistency(self, data_frames):
-        """Merge data frames on column `'step'`. Check for NaNs.
-
-        NaNs occur if the source data frames were not logged at
-        the same step.
-
-        Raises:
-        -------
-        (InconsistentCSVError)
-            If NaNs emerge in the merged version
-        """
-        temp = None
-        while data_frames:
-            df = data_frames.pop()
-            temp = df if temp is None else temp.merge(df, on=['step'])
-        self._raise_exception_if_nan(temp)
-        return temp
-
-    def _raise_exception_if_nan(self, df):
-        """Raise inconsistency exception if data frame contains NaN."""
-        num_nans = df.isnull().sum().sum()
-        if num_nans != 0:
-            raise self.InconsistentCSVError('Found {} NaN values'
-                                            .format(num_nans))
-
-    class InconsistentCSVError(Exception):
-        """Exception raised if CSV data is inconsistent."""
-        pass
+        return CSVMerger(source_files, labels).merge()
 
     def _logdir_name(self):
         """Return the log directory of the training instance."""
