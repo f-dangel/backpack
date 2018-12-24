@@ -41,7 +41,7 @@ def simple_mnist_model_1st_order(use_gpu=False):
     runner = TrainingRunner(training_fn)
     seeds = [1,2,3]
     runner.run(seeds)
-    runner.merge_and_average_runs(seeds)
+    runner.merge_runs(seeds)
 
 
 def test_runner_mnist_1st_order_cpu():
