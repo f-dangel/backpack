@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import quickbench
-from load_mnist import MNISTLoader
+from loading.load_mnist import MNISTLoader
 
 
 class CNN(nn.Module):
