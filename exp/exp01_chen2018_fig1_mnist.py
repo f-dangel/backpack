@@ -7,23 +7,28 @@ Link to the reference:
 import torch
 from torch.nn import CrossEntropyLoss
 from torch.optim import SGD
-from os import path
+from os import path, makedirs
+import matplotlib.pyplot as plt
 from .models.chen2018 import original_mnist_model
 from .loading.load_mnist import MNISTLoader
 from .training.first_order import FirstOrderTraining
 from .training.second_order import SecondOrderTraining
 from .training.runner import TrainingRunner
+from .plotting.plotting import OptimizationPlot
 from .utils import (directory_in_data,
+                    directory_in_fig,
                     dirname_from_params)
 from bpexts.optim.cg_newton import CGNewton
 
 
 # global hyperparameters
 batch = 500
-epochs = 30
+epochs = 20
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-data_dir = directory_in_data('exp01_reproduce_chen_figures/mnist')
-logs_per_epoch = 10
+dirname = 'exp01_reproduce_chen_figures/mnist'
+data_dir = directory_in_data(dirname)
+fig_dir = directory_in_fig(dirname)
+logs_per_epoch = 3
 
 
 def mnist_sgd_train_fn():
@@ -129,6 +134,12 @@ def mnist_cgnewton_train_fn(modify_2nd_order_terms):
 
 if __name__ == '__main__':
     seeds = range(10)
+    labels = [
+              'SGD',
+              'CG (GGN)',
+              'CG (PCH, abs)',
+              'CG (PCH, clip)',
+             ]
     experiments = [
                    # 1) SGD curve
                    mnist_sgd_train_fn(),
@@ -139,8 +150,35 @@ if __name__ == '__main__':
                    # 4) alternative BDA-PCH curve
                    mnist_cgnewton_train_fn('clip'),
                   ]
-                
+
+
+    # run experiments
+    # ---------------
+    metric_to_files = None
     for train_fn in experiments:
         runner = TrainingRunner(train_fn)
         runner.run(seeds)
-        runner.merge_runs(seeds)
+        m_to_f = runner.merge_runs(seeds)
+        if metric_to_files is None:
+            metric_to_files = {k : [v] for k, v in m_to_f.items()}
+        else:
+            for key, value in m_to_f.items():
+                metric_to_files[key].append(value)
+
+    # plotting
+    # --------
+    for metric, files in metric_to_files.items():
+        out_file = path.join(fig_dir, metric)
+        makedirs(fig_dir, exist_ok=True)
+        # figure
+        plt.figure()
+        plt.legend()
+        OptimizationPlot.create_standard_plot('epoch',
+                                              metric,
+                                              files,
+                                              labels,
+                                              # scale by training set
+                                              scale_steps=60000)
+        # fine tuning
+        plt.ylim(top=1)
+        OptimizationPlot.save_as_tikz(out_file)

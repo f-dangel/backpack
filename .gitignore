@@ -7,3 +7,5 @@ __pycache__/
 
 # datasets and logged data from experiments
 dat/
+# figures
+fig/
