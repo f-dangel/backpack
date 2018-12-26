@@ -1,14 +1,24 @@
-"""Utility functions for running experiments."""
+"""Utility functions for running experiments.
+
+* directory to log quantities : ../dat
+* directory to store figures : ../fig
+"""
 
 from os import path
 from warnings import warn
 
 
+parent_dir = path.dirname(path.dirname(path.realpath(__file__)))
+
+
 def directory_in_data(dir_name):
     """Return path in data folder with given name."""
-    # directory to log quantities : ../dat
-    parent_dir = path.dirname(path.dirname(path.realpath(__file__)))
     return path.join(parent_dir, 'dat', dir_name)
+
+
+def directory_in_fig(dir_name):
+    """Return path in fig folder with given name."""
+    return path.join(parent_dir, 'fig', dir_name)
 
 
 def dirname_from_params(**kwargs):

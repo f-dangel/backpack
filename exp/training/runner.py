@@ -67,7 +67,7 @@ class TrainingRunner():
         --------
         (dict)
             Dictionary with metric names as keys and merged output
-            file (no file type extension) as value
+            file as value
         """
         metrics = [
                    'batch_acc',
@@ -77,8 +77,8 @@ class TrainingRunner():
         for metric in metrics:
             df = self._merge_metric(metric, seeds)
             out_file = path.join(self._logdir_name(),
-                                 '{}'.format(metric))
-            df.to_csv('{}.csv'.format(out_file), index=False)
+                                 '{}.csv'.format(metric))
+            df.to_csv(out_file, index=False)
             metric_to_file[metric] = out_file
         return metric_to_file
 
