@@ -1,9 +1,5 @@
 numpy==1.14.5
 pytest==4.0.1
-tensorboard==1.11.0
-tensorboard-logger==0.1.0
-tensorflow==1.11.0
 torch==0.4.0
 tqdm==4.28.1
-
 
