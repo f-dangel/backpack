@@ -66,4 +66,7 @@ def test_training_mnist_2nd_order_cpu():
 
 def test_training_mnist_2nd_order_gpu():
     """Test training procedure on MNIST for GPU using CGNewton."""
-    simple_mnist_model_2nd_order(use_gpu=True)
+    if torch.cuda.is_available():
+        simple_mnist_model_2nd_order(use_gpu=True)
+    else:
+        warn('Could not find CUDA device')
