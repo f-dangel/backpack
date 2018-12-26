@@ -18,7 +18,7 @@ from .utils import (directory_in_data,
 from bpexts.optim.cg_newton import CGNewton
 
 
-# global hyper parameters
+# global hyperparameters
 batch = 500
 epochs = 30
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -27,7 +27,7 @@ logs_per_epoch = 10
 
 
 def mnist_sgd_train_fn():
-    """Create training instance for MNIST experiment."""
+    """Create training instance for MNIST SGD experiment."""
     # hyper parameters
     # ----------------
     lr = 0.1
@@ -68,7 +68,7 @@ def mnist_sgd_train_fn():
 
 
 def mnist_cgnewton_train_fn(modify_2nd_order_terms):
-    """Create training instance for MNIST experiment.
+    """Create training instance for MNIST CG experiment.
 
     Parameters:
     -----------
@@ -143,3 +143,4 @@ if __name__ == '__main__':
     for train_fn in experiments:
         runner = TrainingRunner(train_fn)
         runner.run(seeds)
+        runner.merge_runs(seeds)
