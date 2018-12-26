@@ -18,14 +18,6 @@ def dirname_from_params(**kwargs):
     return '_'.join(words)
 
 
-def tensorboard_instruction(logdir):
-    """Return tensorboard instruction as string."""
-    return ('\nLogging data into {}\n\nUse tensorboard to'
-            + ' investigate the output by typing\n\t'
-            + ' tensorboard --logdir {}\n').format(logdir,
-                                                   logdir)
-
-
 def run_directory_exists(logdir):
     """Return warning: Run directory exists, will be skipped."""
     if path.isdir(logdir):

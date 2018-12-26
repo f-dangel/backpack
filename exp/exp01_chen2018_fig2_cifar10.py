@@ -8,41 +8,35 @@ import torch
 from torch.nn import CrossEntropyLoss
 from torch.optim import SGD
 from os import path
-from models_chen2018 import original_cifar10_model
-from load_cifar10 import CIFAR10Loader
-from training import (FirstOrderTraining,
-                      SecondOrderTraining)
-from utils import (directory_in_data,
-                   dirname_from_params,
-                   tensorboard_instruction,
-                   run_directory_exists)
-import enable_import_bpexts
+from .models.chen2018 import original_cifar10_model
+from .loading.load_cifar10 import CIFAR10Loader
+from .training.first_order import FirstOrderTraining
+from .training.second_order import SecondOrderTraining
+from .utils import (directory_in_data,
+                    dirname_from_params,
+                    tensorboard_instruction,
+                    run_directory_exists)
 from bpexts.optim.cg_newton import CGNewton
 
 
-def cifar10_sgd():
-    """
-    # -----------
-    # CIFAR10 SGD
-    # -----------
+# global hyperparameters
+batch = 500
+epochs = 100
+data_dir = directory_in_data('exp01_reproduce_chen_figures/cifar10')
+logs_per_epoch = 3
 
-    Run will be skipped if logging directory already exists.
-    """
+
+def cifar10_sgd_train_fn():
+    """Create training instance for CIFAR10 SGD experiment."""
     device = torch.device('cuda:0' if torch.cuda.is_available()
                           else 'cpu')
-
     # hyper parameters
     # ----------------
-    batch = 500
-    epochs = 100
     lr = 0.1
     momentum = 0.9
 
     # logging directory
     # -----------------
-    directory_name = 'exp01_reproduce_chen_figures/cifar10'
-    data_dir = directory_in_data(directory_name)
-    print(tensorboard_instruction(data_dir))
     # directory of run
     run_name = dirname_from_params(opt='sgd',
                                    batch=batch,
@@ -52,9 +46,11 @@ def cifar10_sgd():
 
     # training procedure
     # ------------------
-    if not run_directory_exists(logdir):
+    def training_fn():
+        """Training function setting up the train instance."""
         # setting up training and run
         model = original_cifar10_model()
+        # NOTE: Important line, deactivate extension hooks/buffers!
         model.disable_exts()
         loss_function = CrossEntropyLoss()
         data_loader = CIFAR10Loader(train_batch_size=batch)
@@ -66,18 +62,16 @@ def cifar10_sgd():
                                    loss_function,
                                    optimizer,
                                    data_loader,
-                                   logdir)
-        train.run(num_epochs=epochs,
-                  device=device)
+                                   logdir,
+                                   epochs,
+                                   logs_per_epoch=logs_per_epoch,
+                                   device=device)
+        return train
+    return training_fn
 
 
-def cifar10_cgnewton(modify_2nd_order_terms):
-    """
-    # ----------------
-    # CIFAR-10CGNewton
-    # ----------------
-
-    Run will be skipped if logging directory already exists.
+def cifar10_cgnewton_train_fn(modify_2nd_order_terms):
+    """Create training instance for CIFAR10 CG experiment
 
     Parameters:
     -----------
@@ -94,8 +88,6 @@ def cifar10_cgnewton(modify_2nd_order_terms):
 
     # hyper parameters
     # ----------------
-    batch = 500
-    epochs = 100
     lr = 0.1
     alpha = 0.02
     cg_maxiter = 50
@@ -104,9 +96,6 @@ def cifar10_cgnewton(modify_2nd_order_terms):
 
     # logging directory
     # -----------------
-    directory_name = 'exp01_reproduce_chen_figures/cifar10'
-    data_dir = directory_in_data(directory_name)
-    print(tensorboard_instruction(data_dir))
     # directory of run
     run_name = dirname_from_params(opt='cgn',
                                    batch=batch,
@@ -120,7 +109,8 @@ def cifar10_cgnewton(modify_2nd_order_terms):
 
     # training procedure
     # ------------------
-    if not run_directory_exists(logdir):
+    def training_fn():
+        """Training function setting up the train instance."""
         # set up training and run
         model = original_cifar10_model()
         loss_function = CrossEntropyLoss()
@@ -136,21 +126,29 @@ def cifar10_cgnewton(modify_2nd_order_terms):
                                     loss_function,
                                     optimizer,
                                     data_loader,
-                                    logdir)
-        train.run(num_epochs=epochs,
-                  modify_2nd_order_terms=modify_2nd_order_terms,
-                  device=device)
+                                    logdir,
+                                    epochs,
+                                    modify_2nd_order_terms,
+                                    logs_per_epoch=logs_per_epoch,
+                                    device=device)
+        return train
+    return training_fn
 
 
 if __name__ == '__main__':
-    # 1) SGD curve
-    cifar10_sgd()
+    seeds = range(10)
+    experiments = [
+                   # 1) SGD curve
+                   cifar10_sgd_train_fn(),
+                   # 2) Jacobian curve
+                   cifar10_cgnewton_train_fn('zero'),
+                   # 3) BDA-PCH curve
+                   cifar10_cgnewton_train_fn('abs'),
+                   # 4) alternative BDA-PCH curve
+                   cifar10_cgnewton_train_fn('clip'),
+                  ]
 
-    # 2) Jacobian curve
-    cifar10_cgnewton('zero')
-
-    # 3) BDA-PCH curve
-    cifar10_cgnewton('abs')
-
-    # 4) alternative BDA-PCH curve
-    cifar10_cgnewton('clip')
+    for train_fn in experiments:
+        runner = TrainingRunner(train_fn)
+        runner.run(seeds)
+        runner.merge_runs(seeds)
