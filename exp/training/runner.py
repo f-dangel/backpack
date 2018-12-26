@@ -62,16 +62,25 @@ class TrainingRunner():
             * `'batch_acc'`: Batch accuracy
             * `'batch_loss'`: Batch loss 
             Use all available metrics if left `None`
+
+        Returns:
+        --------
+        (dict)
+            Dictionary with metric names as keys and merged output
+            file (no file type extension) as value
         """
         metrics = [
                    'batch_acc',
                    'batch_loss'
                   ] if metrics is None else metrics
+        metric_to_file = {}
         for metric in metrics:
             df = self._merge_metric(metric, seeds)
             out_file = path.join(self._logdir_name(),
-                                 '{}.csv'.format(metric))
-            df.to_csv(out_file, index=False)
+                                 '{}'.format(metric))
+            df.to_csv('{}.csv'.format(out_file), index=False)
+            metric_to_file[metric] = out_file
+        return metric_to_file
 
     def _merge_metric(self, metric, seeds):
         """Merge metric of different runs, add mean and std, return df."""
