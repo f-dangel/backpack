@@ -8,7 +8,7 @@ import torch
 from torch.nn import CrossEntropyLoss
 from torch.optim import SGD
 from os import path
-from .models_chen2018 import original_mnist_model
+from .models.chen2018 import original_mnist_model
 from .loading.load_mnist import MNISTLoader
 from .training.first_order import FirstOrderTraining
 from .training.second_order import SecondOrderTraining
