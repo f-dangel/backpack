@@ -1,6 +1,8 @@
 """Abstract class for loading training/test sets of datasets."""
 
-from abc import ABC, abstractmethod
+from abc import ABC
+from torch.utils.data import DataLoader
+from bpexts.utils import set_seeds
 
 
 class DatasetLoader(ABC):
@@ -28,15 +30,24 @@ class DatasetLoader(ABC):
 
     @property
     def test_set_size(self):
-        """Return `self.test_set_size`, the size of the test_set."""
-        raise NotImplementedError('Please define the test set size')
+        """Return the size of the test set."""
+        return len(self.test_set)
 
     @property
     def train_set_size(self):
-        """Return `self.train_set_size`, the size of the training_set."""
+        """Return the size of the training set."""
+        return len(self.train_set)
+
+    @property
+    def train_set(self):
+        """Dataset correponding to the training set."""
         raise NotImplementedError('Please define the training set size')
 
-    @abstractmethod
+    @property
+    def test_set(self):
+        """Dataset corresponding to the test set."""
+        raise NotImplementedError('Please define the test set size')
+
     def train_loader(self):
         """Data loader of the training set.
 
@@ -45,9 +56,14 @@ class DatasetLoader(ABC):
         (torch.utils.data.DataLoader)
             DataLoader providing shuffled batches of the training set
         """
-        pass
+        set_seeds(self.train_seed)
+        batch = len(self.train_set)\
+            if self.train_batch_size is None\
+            else self.train_batch_size
+        return DataLoader(dataset=self.train_set,
+                          batch_size=batch,
+                          shuffle=True)
 
-    @abstractmethod
     def test_loader(self):
         """Data loader of the test set.
 
@@ -56,4 +72,9 @@ class DatasetLoader(ABC):
         (torch.utils.data.DataLoader)
             DataLoader providing unshuffled batches of the test set
         """
-        pass
+        batch = len(self.test_set)\
+            if self.test_batch_size is None\
+            else self.test_batch_size
+        return DataLoader(dataset=self.test_set,
+                          batch_size=batch,
+                          shuffle=False)

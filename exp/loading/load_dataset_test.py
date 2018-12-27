@@ -17,3 +17,17 @@ def test_abstract_train_size():
         DatasetLoader.train_set_size
     except NotImplementedError:
         pass
+
+def test_abstract_train_set():
+    """Check if attribute `train_set` is abstract."""
+    try:
+        DatasetLoader.train_set
+    except NotImplementedError:
+        pass
+
+def test_abstract_test_set():
+    """Check if attribute `test_set` is abstract."""
+    try:
+        DatasetLoader.test_set
+    except NotImplementedError:
+        pass

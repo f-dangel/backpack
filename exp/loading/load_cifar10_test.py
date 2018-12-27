@@ -20,9 +20,11 @@ def test_deterministic_loading():
 
 def test_test_set_size():
     """The test set size should be 10k."""
-    assert CIFAR10Loader.test_set_size == 10000
+    cifar10 = CIFAR10Loader(10, 0)
+    assert cifar10.test_set_size == 10000
 
 
 def test_train_set_size():
     """The training set size should be 50k."""
-    assert CIFAR10Loader.train_set_size == 50000
+    cifar10 = CIFAR10Loader(10, 0)
+    assert cifar10.train_set_size == 50000
