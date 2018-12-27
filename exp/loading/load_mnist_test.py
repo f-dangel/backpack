@@ -28,3 +28,11 @@ def test_train_set_size():
     """The training set size should be 60k."""
     mnist = MNISTLoader(10, 0)
     assert mnist.train_set_size == 60000
+
+def test_train_loss_loader():
+    """Should return randum subset of training set.""" 
+    mnist = MNISTLoader(1000, 0)
+    samples = 0
+    for (inputs, labels) in mnist.train_loss_loader():
+        samples += labels.size()[0]
+    assert samples == mnist.test_set_size

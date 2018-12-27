@@ -1,7 +1,9 @@
 """Abstract class for loading training/test sets of datasets."""
 
 from abc import ABC
+import numpy as np
 from torch.utils.data import DataLoader
+from torch.utils.data.sampler import SubsetRandomSampler
 from bpexts.utils import set_seeds
 
 
@@ -63,6 +65,27 @@ class DatasetLoader(ABC):
         return DataLoader(dataset=self.train_set,
                           batch_size=batch,
                           shuffle=True)
+
+    def train_loss_loader(self):
+        """Load random subset of train set of same size as test set.
+
+        Returns:
+        --------
+        (torch.utils.data.DataLoader)
+            DataLoader providing a random subset of the training set
+            of same size as the test set in batches of size 
+            `self.train_batch_size`.
+        """
+        indices = np.random.choice(self.train_set_size,
+                                   size=self.test_set_size,
+                                   replace=False)
+        sampler = SubsetRandomSampler(indices)
+        batch = len(self.test_set)\
+            if self.train_batch_size is None\
+            else self.train_batch_size
+        return DataLoader(dataset=self.train_set,
+                          batch_size=batch,
+                          sampler=sampler)
 
     def test_loader(self):
         """Data loader of the test set.

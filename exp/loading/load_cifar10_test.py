@@ -28,3 +28,12 @@ def test_train_set_size():
     """The training set size should be 50k."""
     cifar10 = CIFAR10Loader(10, 0)
     assert cifar10.train_set_size == 50000
+
+
+def test_train_loss_loader():
+    """Should return randum subset of training set.""" 
+    cifar10 = CIFAR10Loader(1000, 0)
+    samples = 0
+    for (inputs, labels) in cifar10.train_loss_loader():
+        samples += labels.size()[0]
+    assert samples == cifar10.test_set_size
