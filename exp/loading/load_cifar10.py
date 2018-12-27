@@ -48,6 +48,11 @@ class CIFAR10Loader(DatasetLoader):
                                 transform=trans,
                                 download=True)
 
+    # size of the test set
+    test_set_size = len(test_set)
+    # size of the training set
+    train_set_size = len(train_set)
+
     def train_loader(self):
         """Return loader for CIFAR-10 training data batches."""
         set_seeds(self.train_seed)

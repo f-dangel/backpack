@@ -16,3 +16,13 @@ def test_deterministic_loading():
 
     assert torch_allclose(train1_samples, train2_samples)
     assert torch_allclose(train1_labels, train2_labels)
+
+
+def test_test_set_size():
+    """The test set size should be 10k."""
+    assert MNISTLoader.test_set_size == 10000
+
+
+def test_train_set_size():
+    """The training set size should be 60k."""
+    assert MNISTLoader.train_set_size == 60000

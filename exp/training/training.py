@@ -195,12 +195,13 @@ class Training(ABC):
             Mean loss evaluated on the entire test set and ratio
             of correctly classified test examples
         """
-        samples_seen, loss, correct = 0, 0., 0.
+        loss, correct = 0., 0.
         with torch.no_grad():
             for (inputs, labels) in self.load_test_set():
                 batch = labels.size()[0]
                 outputs, b_loss = self.forward_pass(inputs, labels)
                 loss += batch * b_loss.item()
-                samples_seen += batch
                 correct += batch * self.compute_accuracy(outputs, labels)
-        return loss / samples_seen, correct / samples_seen
+        loss /= self.data_loader.test_set_size
+        correct /= self.data_loader.test_set_size
+        return loss, correct

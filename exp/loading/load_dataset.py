@@ -26,6 +26,16 @@ class DatasetLoader(ABC):
         self.train_seed = train_seed
         self.test_batch_size = test_batch_size
 
+    @property
+    def test_set_size(self):
+        """Return `self.test_set_size`, the size of the test_set."""
+        raise NotImplementedError('Please define the test set size')
+
+    @property
+    def train_set_size(self):
+        """Return `self.train_set_size`, the size of the training_set."""
+        raise NotImplementedError('Please define the training set size')
+
     @abstractmethod
     def train_loader(self):
         """Data loader of the training set.
