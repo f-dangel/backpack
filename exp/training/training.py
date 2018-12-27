@@ -83,8 +83,9 @@ class Training(ABC):
                 ####################
                 if idx % log_every == 0:
                     batch_loss, batch_acc = (loss.item(),
-                                             self.compute_accuracy(outputs,
-                                                                   labels))
+                                             self.compute_accuracy(
+                                                 outputs,
+                                                 labels.to(self.device)))
                     test_loss, test_acc = self.test_loss_and_accuracy()
                     train_loss, train_acc = self.train_loss_and_accuracy()
 
@@ -232,6 +233,7 @@ class Training(ABC):
         for (inputs, labels) in loader:
             batch = labels.size()[0]
             outputs, b_loss = self.forward_pass(inputs, labels)
+            labels = labels.to(self.device)
             loss += batch * b_loss.item()
             correct += batch * self.compute_accuracy(outputs, labels)
             samples_seen += batch
