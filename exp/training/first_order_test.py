@@ -20,7 +20,7 @@ def simple_mnist_model_1st_order(use_gpu=False):
     device = torch.device('cuda:0' if use_gpu else 'cpu')
     model = Linear(784, 10)
     loss_function = CrossEntropyLoss()
-    data_loader = MNISTLoader(1000, None, 1000)
+    data_loader = MNISTLoader(1000, 1000)
     optimizer = SGD(model.parameters(), lr=0.1)
     # initialize training
     train = FirstOrderTraining(model,
@@ -53,7 +53,7 @@ def training_example(seed, test_batch, use_gpu=False):
     device = torch.device('cuda:0' if use_gpu else 'cpu')
     model = Linear(784, 10)
     loss_function = CrossEntropyLoss()
-    data_loader = MNISTLoader(1000, None, test_batch)
+    data_loader = MNISTLoader(1000, test_batch)
     optimizer = SGD(model.parameters(), lr=0.1)
     # initialize training
     train = FirstOrderTraining(model,
