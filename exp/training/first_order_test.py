@@ -12,7 +12,7 @@ from bpexts.utils import set_seeds
 
 
 logdir = directory_in_data('test_training_simple_mnist_model')
-num_epochs, logs_per_epoch = 1, 15
+num_epochs, logs_per_epoch = 1, 5
 
 
 def simple_mnist_model_1st_order(use_gpu=False):
@@ -69,7 +69,7 @@ def training_example(seed, test_batch, use_gpu=False):
 
 def test_test_loss_and_accuracy(use_gpu=False):
     """Compute test loss/accuracy from different train set batch sizes."""
-    train1 = training_example(0, 130, use_gpu)
+    train1 = training_example(0, 1300, use_gpu)
     train1.run()
     loss1, acc1 = train1.test_loss_and_accuracy()
 

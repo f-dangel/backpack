@@ -15,9 +15,9 @@ def simple_mnist_model_2nd_order(use_gpu=False):
     device = torch.device('cuda:0' if use_gpu else 'cpu')
     model = HBPLinear(784, 10)
     loss_function = CrossEntropyLoss()
-    data_loader = MNISTLoader(10000)
+    data_loader = MNISTLoader(1000, 1000)
     optimizer = CGNewton(model.parameters(), lr=0.1, alpha=0.1)
-    num_epochs, logs_per_epoch = 1, 15
+    num_epochs, logs_per_epoch = 1, 5
     modify_2nd_order_terms='abs'
     logdir = directory_in_data('test_training_simple_mnist_model')
     # initialize training
