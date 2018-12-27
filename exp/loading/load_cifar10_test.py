@@ -1,7 +1,7 @@
 """Test CIFAR-10 data loader."""
 
 from bpexts.utils import torch_allclose
-from load_cifar10 import CIFAR10Loader
+from .load_cifar10 import CIFAR10Loader
 
 
 def test_deterministic_loading():
