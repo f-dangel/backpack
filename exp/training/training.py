@@ -96,18 +96,18 @@ class Training(ABC):
                                'train_acc': train_acc}
                     self.logger.log_scalar_values(summary, train_samples_seen)
 
-                    status = 'epoch | step [{}/{}|{}/{}]'\
+                    status = '[epoch {}/{} | step {}/{}]'\
                              .format(epoch + 1,
                                      self.num_epochs,
                                      idx + 1,
                                      num_batches)
-                    status += ' | batch_loss: {:.5f} batch_acc: {:.4f}'\
+                    status += ' || BATCH: loss: {:.4f}, acc: {:.4f}'\
                               .format(batch_loss,
                                       batch_acc)
-                    status += ' | train_loss: {:.5f} train_acc: {:.4f}'\
+                    status += ' || TRAIN: loss: {:.4f}, acc: {:.4f}'\
                               .format(train_loss,
                                       train_acc)
-                    status += ' | test_loss: {:.5f} test_acc: {:.4f}'\
+                    status += ' || TEST: loss {:.4f} acc: {:.4f}'\
                               .format(test_loss,
                                       test_acc)
                     progressbar.set_description(status)
@@ -224,7 +224,7 @@ class Training(ABC):
             of correctly classified test examples
         """
         with torch.no_grad():
-            return self.data_loss_and_accuracy(self.load_training_set())
+            return self.data_loss_and_accuracy(self.load_training_loss_set())
 
     def data_loss_and_accuracy(self, loader):
         """Compute mean loss and accuracy of the dataset from `loader`."""
