@@ -31,7 +31,6 @@ class HBPCompositionActivationLinear(hbp_decorate(Module)):
     def __init__(self, nonlinear_hbp_cls, in_features, out_features,
                  bias=True):
         super().__init__()
-        # TODO: disable grad_output storing in activation
         self.activation = nonlinear_hbp_cls()
         self.linear = HBPLinear(in_features=in_features,
                                 out_features=out_features,
@@ -39,8 +38,8 @@ class HBPCompositionActivationLinear(hbp_decorate(Module)):
 
     # override
     def hbp_hooks(self):
-        """Install hook for storing the gradient w.r.t. the output."""
-        self.register_exts_backward_hook(HBPSigmoid.store_grad_output)
+        """No hooks required."""
+        pass
 
     # override
     def forward(self, input):
@@ -111,9 +110,8 @@ class HBPCompositionActivationLinear(hbp_decorate(Module)):
             Diagonal term of the quadratic term (corresponding to the only
             nonzero elements)
         """
-        residuum_diag = einsum('bi,ij,bj->i', (self.activation.gradgrad_phi,
-                                               self.linear.weight.t(),
-                                               self.grad_output))
+        residuum_diag = einsum('bi,bi->i', (self.activation.gradgrad_phi,
+                                            self.activation.grad_output))
         if modify_2nd_order_terms == 'none':
             pass
         elif modify_2nd_order_terms == 'clip':
