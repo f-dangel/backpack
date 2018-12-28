@@ -3,7 +3,7 @@
 This composition leads to the scheme from BDA-PCH and KFRA.
 """
 
-from torch import (einsum, diagflat)
+from torch import einsum
 from torch.nn import Module
 from .linear import HBPLinear
 from .sigmoid import HBPSigmoid
@@ -71,7 +71,10 @@ class HBPCompositionActivationLinear(hbp_decorate(Module)):
             return None
         else:
             in_hessian = self._compute_gauss_newton(output_hessian)
-            in_hessian.add_(self._compute_residuum(modify_2nd_order_terms))
+            idx = list(range(in_hessian.size()[0]))
+            in_hessian[idx, idx] = in_hessian[idx, idx] +\
+                                   self._compute_residuum(
+                                           modify_2nd_order_terms)
             return in_hessian
 
     def _compute_gauss_newton(self, output_hessian):
@@ -101,6 +104,12 @@ class HBPCompositionActivationLinear(hbp_decorate(Module)):
             res = diag(phi'') \odot grad_output,
         where grad_output denotes the derivative of the loss function with
         respect to the layer output.
+
+        Returns:
+        --------
+        (torch.Tensor)
+            Diagonal term of the quadratic term (corresponding to the only
+            nonzero elements)
         """
         residuum_diag = einsum('bi,ij,bj->i', (self.activation.gradgrad_phi,
                                                self.linear.weight.t(),
@@ -116,4 +125,4 @@ class HBPCompositionActivationLinear(hbp_decorate(Module)):
         else:
             raise ValueError('Unknown 2nd-order term strategy {}'
                              .format(modify_2nd_order_terms))
-        return diagflat(residuum_diag)
+        return residuum_diag
