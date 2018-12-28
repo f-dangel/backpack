@@ -152,6 +152,10 @@ class Training(ABC):
         """
         loss.backward()
 
+    def is_device_cuda(self):
+        """Return whether `self.device` is a GPU or a CPU."""
+        return self.device.type == 'cuda'
+
     @staticmethod
     def compute_accuracy(outputs, labels):
         """Compute accuracy given the networks' outputs and labels.
@@ -175,15 +179,18 @@ class Training(ABC):
 
     def load_training_set(self):
         """Return the train_loader."""
-        return self.data_loader.train_loader()
+        return self.data_loader.train_loader(
+                pin_memory=self.is_device_cuda())
 
     def load_test_set(self):
         """Return the test_loader."""
-        return self.data_loader.test_loader()
+        return self.data_loader.test_loader(
+                pin_memory=self.is_device_cuda())
 
     def load_training_loss_set(self):
         """Return the loader for the set to evaluate train loss."""
-        return self.data_loader.train_loss_loader()
+        return self.data_loader.train_loss_loader(
+                pin_memory=self.is_device_cuda())
 
     def point_logger_to_subdir(self, subdir):
         """Point logger to subdirectory.

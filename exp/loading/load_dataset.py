@@ -47,8 +47,14 @@ class DatasetLoader(ABC):
         """Dataset corresponding to the test set."""
         raise NotImplementedError('Please define the test set size')
 
-    def train_loader(self):
+    def train_loader(self, pin_memory=False):
         """Data loader of the training set.
+
+        Parameters:
+        -----------
+        pin_memory : (bool)
+            Load data to pinned memory. This speeds up host-to-device
+            transfers when training on the GPU
 
         Returns:
         --------
@@ -57,10 +63,18 @@ class DatasetLoader(ABC):
         """
         return DataLoader(dataset=self.train_set,
                           batch_size=self.train_batch_size,
-                          shuffle=True)
+                          shuffle=True,
+                          pin_memory=pin_memory)
 
-    def train_loss_loader(self):
+    def train_loss_loader(self, pin_memory=False):
         """Load random subset of train set of same size as test set.
+
+        Parameters:
+        -----------
+        pin_memory : (bool)
+            Load data to pinned memory. This speeds up host-to-device
+            transfers when training on the GPU
+
 
         Returns:
         --------
@@ -75,10 +89,18 @@ class DatasetLoader(ABC):
         sampler = SubsetRandomSampler(indices)
         return DataLoader(dataset=self.train_set,
                           batch_size=self.train_batch_size,
-                          sampler=sampler)
+                          sampler=sampler,
+                          pin_memory=pin_memory)
 
-    def test_loader(self):
+    def test_loader(self, pin_memory=False):
         """Data loader of the test set.
+
+        Parameters:
+        -----------
+        pin_memory : (bool)
+            Load data to pinned memory. This speeds up host-to-device
+            transfers when training on the GPU
+
 
         Returns:
         --------
@@ -87,4 +109,5 @@ class DatasetLoader(ABC):
         """
         return DataLoader(dataset=self.test_set,
                           batch_size=self.test_batch_size,
-                          shuffle=False)
+                          shuffle=False,
+                          pin_memory=pin_memory)
