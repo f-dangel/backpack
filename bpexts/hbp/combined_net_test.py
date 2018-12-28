@@ -62,8 +62,11 @@ def hessian_backward(layer_class):
     loss.backward()
     # call HBP recursively
     out_h = loss_hessian
-    for layer in reversed(layers):
-        out_h = layer.backward_hessian(out_h)
+    for i, layer in enumerate(reversed(layers)):
+        compute_input_hessian = not (i == len(layers) - 1)
+        out_h = layer.backward_hessian(
+                out_h,
+                compute_input_hessian)
     return layers
 
 
