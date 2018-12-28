@@ -17,9 +17,9 @@ def training_fn_on_device(use_gpu):
         device = torch.device('cuda:0' if use_gpu else 'cpu')
         model = Linear(784, 10)
         loss_function = CrossEntropyLoss()
-        data_loader = MNISTLoader(1000)
+        data_loader = MNISTLoader(1000, 1000)
         optimizer = SGD(model.parameters(), lr=0.1)
-        num_epochs, logs_per_epoch = 1, 15
+        num_epochs, logs_per_epoch = 1, 5
         logdir = directory_in_data('test_training_simple_mnist_model_{}'
                                    .format('gpu' if use_gpu else 'cpu'))
         # initialize training

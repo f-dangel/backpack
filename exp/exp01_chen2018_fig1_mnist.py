@@ -28,7 +28,7 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 dirname = 'exp01_reproduce_chen_figures/mnist'
 data_dir = directory_in_data(dirname)
 fig_dir = directory_in_fig(dirname)
-logs_per_epoch = 3
+logs_per_epoch = 5
 
 
 def mnist_sgd_train_fn():
@@ -55,7 +55,8 @@ def mnist_sgd_train_fn():
         # NOTE: Important line, deactivate extension hooks/buffers!
         model.disable_exts()
         loss_function = CrossEntropyLoss()
-        data_loader = MNISTLoader(train_batch_size=batch)
+        data_loader = MNISTLoader(train_batch_size=batch,
+                                  test_batch_size=batch)
         optimizer = SGD(model.parameters(),
                         lr=lr,
                         momentum=momentum)
@@ -111,7 +112,8 @@ def mnist_cgnewton_train_fn(modify_2nd_order_terms):
         # set up training and run
         model = original_mnist_model()
         loss_function = CrossEntropyLoss()
-        data_loader = MNISTLoader(train_batch_size=batch)
+        data_loader = MNISTLoader(train_batch_size=batch,
+                                  test_batch_size=batch)
         optimizer = CGNewton(model.parameters(),
                              lr=lr,
                              alpha=alpha,
@@ -151,7 +153,6 @@ if __name__ == '__main__':
                    mnist_cgnewton_train_fn('clip'),
                   ]
 
-
     # run experiments
     # ---------------
     metric_to_files = None
@@ -172,13 +173,13 @@ if __name__ == '__main__':
         makedirs(fig_dir, exist_ok=True)
         # figure
         plt.figure()
-        plt.legend()
         OptimizationPlot.create_standard_plot('epoch',
-                                              metric,
+                                              metric.replace('_', ' '),
                                               files,
                                               labels,
                                               # scale by training set
                                               scale_steps=60000)
+        plt.legend()
         # fine tuning
         plt.ylim(top=1)
         OptimizationPlot.save_as_tikz(out_file)

@@ -52,7 +52,9 @@ def test_load_and_rename_cols():
                                'step': [1, 2],
                                'renamed_value': [0.5, 0.4]
                               })
-    assert np.allclose(renamed.values, result.values)
+    columns = set({*(list(renamed) + list(result))})
+    for col in columns:
+        assert np.allclose(renamed[col].values, result[col].values)
 
 
 def test_merge_frames_and_consistency():

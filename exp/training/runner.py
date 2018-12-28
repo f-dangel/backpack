@@ -61,6 +61,10 @@ class TrainingRunner():
             Metrics to average over:
             * `'batch_acc'`: Batch accuracy
             * `'batch_loss'`: Batch loss 
+            * `'test_acc'`: Accuracy on test set
+            * `'test_loss'`: Loss on test set
+            * `'train_acc'`: Accuracy on a subset of the train set
+            * `'train_loss'`: Loss on a subset of the train set
             Use all available metrics if left `None`
 
         Returns:
@@ -71,7 +75,11 @@ class TrainingRunner():
         """
         metrics = [
                    'batch_acc',
-                   'batch_loss'
+                   'batch_loss',
+                   'test_acc',
+                   'test_loss',
+                   'train_acc',
+                   'train_loss'
                   ] if metrics is None else metrics
         metric_to_file = {}
         for metric in metrics:

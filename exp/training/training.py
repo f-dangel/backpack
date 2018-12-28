@@ -8,7 +8,6 @@ import pandas
 from .logger import Logger
 
 
-
 class Training(ABC):
     """Handle training and logging."""
     def __init__(self,
@@ -71,10 +70,9 @@ class Training(ABC):
         progressbar = tqdm(range(self.num_epochs))
         for epoch in progressbar:
             for idx, (inputs, labels) in enumerate(training_set):
-                inputs = inputs.to(self.device)
-                labels = labels.to(self.device)
                 outputs, loss = self.forward_pass(inputs, labels)
                 # backward pass and update step
+                ###############################
                 self.optimizer.zero_grad()
                 self.backward_pass(outputs, loss)
                 self.optimizer.step()
@@ -82,19 +80,37 @@ class Training(ABC):
                 train_samples_seen += batch_size
 
                 # logging of metrics
+                ####################
                 if idx % log_every == 0:
-                    batch_loss = loss.item()
-                    batch_acc = self.compute_accuracy(outputs, labels)
+                    batch_loss, batch_acc = (loss.item(),
+                                             self.compute_accuracy(
+                                                 outputs,
+                                                 labels.to(self.device)))
+                    test_loss, test_acc = self.test_loss_and_accuracy()
+                    train_loss, train_acc = self.train_loss_and_accuracy()
+
                     summary = {'batch_loss': batch_loss,
-                               'batch_acc': batch_acc}
+                               'batch_acc': batch_acc,
+                               'test_loss': test_loss,
+                               'test_acc': test_acc,
+                               'train_loss': train_loss,
+                               'train_acc': train_acc}
                     self.logger.log_scalar_values(summary, train_samples_seen)
 
-                    status = 'epoch [{}/{}] step [{}/{}]'.format(epoch + 1,
-                                                                 self.num_epochs,
-                                                                 idx + 1,
-                                                                 num_batches)
-                    status += ' batch_loss: {:.5f} batch_acc: {:.5f}'.format(
-                              batch_loss, batch_acc)
+                    status = '[epoch {}/{} | step {}/{}]'\
+                             .format(epoch + 1,
+                                     self.num_epochs,
+                                     idx + 1,
+                                     num_batches)
+                    status += ' || BATCH: loss: {:.4f}, acc: {:.4f}'\
+                              .format(batch_loss,
+                                      batch_acc)
+                    status += ' || TRAIN: loss: {:.4f}, acc: {:.4f}'\
+                              .format(train_loss,
+                                      train_acc)
+                    status += ' || TEST: loss {:.4f} acc: {:.4f}'\
+                              .format(test_loss,
+                                      test_acc)
                     progressbar.set_description(status)
 
     def forward_pass(self, inputs, labels):
@@ -114,6 +130,8 @@ class Training(ABC):
         loss : (torch.Tensor)
             Scalar value of the loss function evaluated on the outputs
         """
+        inputs = inputs.to(self.device)
+        labels = labels.to(self.device)
         # reshape and load to device
         batch_size = inputs.size()[0]
         inputs = inputs.view(batch_size, -1)
@@ -150,7 +168,7 @@ class Training(ABC):
         accuracy : (float)
             Ratio of correctly classified inputs
         """
-        total = labels.size(0)
+        total = labels.size()[0]
         _, predicted = torch.max(outputs.data, 1)
         correct = (predicted == labels).sum().item()
         return correct / total
@@ -162,6 +180,10 @@ class Training(ABC):
     def load_test_set(self):
         """Return the test_loader."""
         return self.data_loader.test_loader()
+
+    def load_training_loss_set(self):
+        """Return the loader for the set to evaluate train loss."""
+        return self.data_loader.train_loss_loader()
 
     def point_logger_to_subdir(self, subdir):
         """Point logger to subdirectory.
@@ -178,24 +200,41 @@ class Training(ABC):
         """Return path to subdirectory of logger."""
         return Logger.subdir_path(self.logdir, subdir)
 
-    # TODO
-    # def loss_and_accuracy_on_test_set(self):
-    #    """Evaluate loss and accuracy on the entire test set.
-    #
-    #    Returns:
-    #    --------
-    #    loss, accuracy : (float, float)
-    #        Loss evaluated on the entire test set and ratio
-    #        of correctly classified test examples
-    #    """
-    #    test_loader = self.load_test_set()
-    #    if not len(test_loader) == 1:
-    #        raise NotImplementedError('Test loss/accuracy currently only'
-    #                                  ' supported in unbatched mode')
-    #    with torch.no_grad():
-    #        (inputs, labels) = next(iter(test_loader))
-    #        total = labels.size(0)
-    #        outputs = self.model(inputs.view(total, -1))
-    #        loss = self.loss_function(outputs, labels).item()
-    #        _, predicted = torch.max(outputs.data, 1)
-    #        return loss, self.compute_accuracy(outputs, labels)
+    def test_loss_and_accuracy(self):
+        """Evaluate mean loss and accuracy on the entire test set.
+    
+        Returns:
+        --------
+        loss, accuracy : (float, float)
+            Mean loss evaluated on the entire test set and ratio
+            of correctly classified test examples
+        """
+        with torch.no_grad():
+            return self.data_loss_and_accuracy(self.load_test_set())
+
+    def train_loss_and_accuracy(self):
+        """Evaluate mean loss and accuracy on a subset of the train set.
+
+        The used dataset is of same size as the test set and is fetched
+        from the train set.
+    
+        Returns:
+        --------
+        loss, accuracy : (float, float)
+            Mean loss evaluated on the subset of the train set and ratio
+            of correctly classified test examples
+        """
+        with torch.no_grad():
+            return self.data_loss_and_accuracy(self.load_training_loss_set())
+
+    def data_loss_and_accuracy(self, loader):
+        """Compute mean loss and accuracy of the dataset from `loader`."""
+        samples_seen, loss, correct = 0, 0., 0.
+        for (inputs, labels) in loader:
+            batch = labels.size()[0]
+            outputs, b_loss = self.forward_pass(inputs, labels)
+            labels = labels.to(self.device)
+            loss += batch * b_loss.item()
+            correct += batch * self.compute_accuracy(outputs, labels)
+            samples_seen += batch
+        return loss / samples_seen, correct / samples_seen

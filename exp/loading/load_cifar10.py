@@ -14,7 +14,6 @@ Normalization values taken from
 """
 
 from torchvision import transforms, datasets
-from torch.utils.data import DataLoader
 from .load_dataset import DatasetLoader
 from bpexts.utils import set_seeds
 from ..utils import directory_in_data
@@ -47,22 +46,3 @@ class CIFAR10Loader(DatasetLoader):
                                 train=False,
                                 transform=trans,
                                 download=True)
-
-    def train_loader(self):
-        """Return loader for CIFAR-10 training data batches."""
-        set_seeds(self.train_seed)
-        batch = len(self.train_set)\
-            if self.train_batch_size is None\
-            else self.train_batch_size
-        return DataLoader(dataset=self.train_set,
-                          batch_size=batch,
-                          shuffle=True)
-
-    def test_loader(self):
-        """Return loader for CIFAR-10 test data."""
-        batch = len(self.test_set)\
-            if self.test_batch_size is None\
-            else self.test_batch_size
-        return DataLoader(dataset=self.test_set,
-                          batch_size=batch,
-                          shuffle=False)
