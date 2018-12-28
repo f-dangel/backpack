@@ -1,9 +1,10 @@
 """Collection of plotting commands for plotting mean/average of runs."""
 
 import pandas
+from scipy.interpolate import InterpolatedUnivariateSpline
+import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib2tikz import save as tikz_save
-
 
 class OptimizationPlot():
     """Collection of plotting commands for optimization plots."""
@@ -42,6 +43,16 @@ class OptimizationPlot():
     @staticmethod
     def plot_std(steps, mean, std, alpha=0.5):
         """Plot sigma-interval around the mean.""" 
+        #spline_lower = InterpolatedUnivariateSpline(steps, mean - std, k=3)
+        #spline_upper = InterpolatedUnivariateSpline(steps, mean + std, k=3)
+        #steps_fine = np.linspace(np.min(steps),
+        #                         np.max(steps),
+        #                         5*len(steps))
+
+        #plt.fill_between(steps_fine,
+        #                 spline_lower(steps_fine),
+        #                 spline_upper(steps_fine),
+        #                 alpha=alpha)
         plt.fill_between(steps, mean - std, mean + std, alpha=alpha)
 
     @staticmethod
