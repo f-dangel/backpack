@@ -86,10 +86,10 @@ def cifar10_cgnewton_train_fn(modify_2nd_order_terms):
         * `'abs'`: BDA-PCH approximation
         * `'clip'`: Different BDA-PCH approximation
     """
-    # Requires ~3GB of RAM
-    # device = torch.device('cuda:0' if torch.cuda.is_available()
-    #                       else 'cpu')
-    device = torch.device('cpu')
+    # Requires ~2GB of RAM
+    device = torch.device('cuda:0' if torch.cuda.is_available()
+                          else 'cpu')
+    #device = torch.device('cpu')
 
     # hyper parameters
     # ----------------

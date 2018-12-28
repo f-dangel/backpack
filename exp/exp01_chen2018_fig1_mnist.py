@@ -181,5 +181,6 @@ if __name__ == '__main__':
                                               scale_steps=60000)
         plt.legend()
         # fine tuning
-        plt.ylim(top=1)
+        if '_loss' in metric:
+            plt.ylim(bottom=-0.05, top=1)
         OptimizationPlot.save_as_tikz(out_file)
