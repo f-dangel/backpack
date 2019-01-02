@@ -3,6 +3,7 @@
 from numpy import cumsum
 from torch import cat
 from .converter import HBPParallelConverter
+from warnings import warn
 
 
 class HBPParallelConverterLinear(HBPParallelConverter):
@@ -42,6 +43,8 @@ class HBPParallelConverterLinear(HBPParallelConverter):
             if has_bias:
                 layer.bias.data = linear.bias.data[i:j]
             layers.append(layer)
+
+        # TODO: Buffers
 
         return layers
 
@@ -91,5 +94,12 @@ class HBPParallelConverterLinear(HBPParallelConverter):
                 bias = mod.bias.data if bias is None\
                         else cat([bias, mod.bias.data])
             layer.bias.data = bias
+
+        # buffer of input
+        try:
+            mod = next(iter(parallel.children()))
+            layer.register_exts_buffer('mean_input', mod.mean_input)
+        except AttributeError:
+            warn('Could not copy/find buffer mean_input')
 
         return layer

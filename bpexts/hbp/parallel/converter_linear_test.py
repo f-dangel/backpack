@@ -1,8 +1,10 @@
 """Test conversion HBPLinear to parallel series and splitting."""
 
-from torch import randn
+from torch import randn, Tensor
 from ..linear import HBPLinear
-from .identical import HBPParallelIdentical
+from ..linear_test import test_input_hessian\
+        as hbp_linear_after_hessian_backward
+from .parallel import HBPParallel
 from ...utils import (torch_allclose,
                       set_seeds)
 
@@ -25,7 +27,7 @@ def test_forward_pass_hbp_linear():
                        out_features=sum(out_features_list),
                        bias=True)
     x = random_input()
-    parallel = HBPParallelIdentical.from_module(linear)
+    parallel = HBPParallel.from_module(linear)
     assert torch_allclose(linear(x), parallel(x))
 
     parallel2 = parallel.split(out_features_list)
@@ -40,3 +42,12 @@ def test_forward_pass_hbp_linear():
 
     parallel4 = parallel2.split(out_features_list2)
     assert torch_allclose(linear(x), parallel4(x))
+
+
+def test_buffer_copy_hbp_linear_unite():
+    """Check if buffers are correctly copied over when uniting."""
+    layer = hbp_linear_after_hessian_backward()
+    parallel = HBPParallel.from_module(layer)
+
+    mod = parallel.get_submodule(0)
+    assert isinstance(mod.mean_input, Tensor)

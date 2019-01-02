@@ -1,7 +1,7 @@
 """Test Hessian backpropagation of sequence of identical parallel modules"""
 
 from torch import randn, eye
-from .parallel_sequential import HBPParallelIdenticalSequential
+from .parallel_sequential import HBPParallelSequential
 from ..sequential import HBPSequential
 from ..combined_sigmoid import HBPSigmoidLinear
 from ...utils import (torch_allclose,
@@ -17,7 +17,9 @@ input = randn(1, in_features[0])
 
 def random_input():
     """Return random input copy."""
-    return input.clone()
+    input_with_grad = input.clone()
+    input_with_grad.requires_grad = True
+    return input_with_grad
 
 
 def create_sequence():
@@ -27,7 +29,7 @@ def create_sequence():
     layers = [HBPSigmoidLinear(in_, out, bias=True)
               for in_, out in zip(in_features, out_features)]
     sequence = HBPSequential(*layers)
-    return HBPParallelIdenticalSequential.from_sequential(
+    return HBPParallelSequential.from_sequential(
             sequence).split_into_blocks(num_blocks)
 
 
@@ -52,7 +54,7 @@ def hessian_backward():
     Return the layer.
     """
     layer = create_sequence()
-    x, loss = forward(layer, random_input())
+    x, loss = forward(layer, input)
     loss_hessian = 2 * eye(x.numel())
     loss.backward()
     # call HBP recursively

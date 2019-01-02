@@ -84,7 +84,9 @@ class HBPSplitLinear(hbp_decorate(Module)):
         pass
 
     # override
-    def backward_hessian(self, output_hessian, compute_input_hessian=True,
+    def backward_hessian(self, output_hessian,
+                         compute_input_hessian=True,
+                         compute_param_hessian=True,
                          modify_2nd_order_terms='none'):
         """Compute Hessian w.r.t. input from Hessian w.r.t. output.
 
@@ -109,6 +111,7 @@ class HBPSplitLinear(hbp_decorate(Module)):
                     layer.backward_hessian(
                         split_out,
                         compute_input_hessian=compute_input_hessian,
+                        compute_param_hessian=compute_param_hessian,
                         modify_2nd_order_terms=modify_2nd_order_terms))
         # concatenate into large block-diagonal matrix
         if compute_input_hessian is True:
