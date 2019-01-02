@@ -1,8 +1,11 @@
 # Python cache files
 __pycache__/
+*.egg-info/
 
 # virtual environment files
 .venv/
 
 # datasets and logged data from experiments
 dat/
+# figures
+fig/

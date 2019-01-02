@@ -89,7 +89,7 @@ def all_eigvals_nonnegative(matrix):
     """
     eigvals, _ = matrix.symeig()
     eigvals = eigvals.numpy()
-    return numpy_all(eigvals > -1E-7)
+    return numpy_all(eigvals > -1E-6)
 
 
 def test_relu_network_psd():
