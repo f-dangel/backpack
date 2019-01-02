@@ -1,6 +1,10 @@
 """Test conversion/splitting HBPCompositionActivation to parallel."""
 
-from torch import randn
+from torch import randn, Tensor
+from ..combined_relu_test import test_input_hessian\
+        as hbp_relulinear_after_hessian_backward
+from ..combined_sigmoid_test import test_input_hessian\
+        as hbp_sigmoidlinear_after_hessian_backward
 from ..combined_relu import HBPReLULinear
 from ..combined_sigmoid import HBPSigmoidLinear
 from .identical import HBPParallelIdentical
@@ -68,3 +72,27 @@ def test_forward_pass_hbp_sigmoidlinear():
 
     parallel4 = parallel2.split(out_features_list2)
     assert torch_allclose(sigma_linear(x), parallel4(x))
+
+
+def test_buffer_copy_hbp_relulinear_unite():
+    """Check if buffers are correctly copied over when uniting."""
+    layer = hbp_relulinear_after_hessian_backward()
+    parallel = HBPParallelIdentical.from_module(layer)
+
+    mod = parallel.get_submodule(0)
+    assert isinstance(mod.linear.mean_input, Tensor)
+    assert isinstance(mod.activation.grad_phi, Tensor)
+    assert isinstance(mod.activation.gradgrad_phi, Tensor)
+    assert isinstance(mod.activation.grad_output, Tensor)
+
+
+def test_buffer_copy_hbp_sigmoidlinear_unite():
+    """Check if buffers are correctly copied over when uniting."""
+    layer = hbp_sigmoidlinear_after_hessian_backward()
+    parallel = HBPParallelIdentical.from_module(layer)
+
+    mod = parallel.get_submodule(0)
+    assert isinstance(mod.linear.mean_input, Tensor)
+    assert isinstance(mod.activation.grad_phi, Tensor)
+    assert isinstance(mod.activation.gradgrad_phi, Tensor)
+    assert isinstance(mod.activation.grad_output, Tensor)

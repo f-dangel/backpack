@@ -2,6 +2,7 @@
 
 from numpy import cumsum
 from torch import cat
+from warnings import warn
 from .converter import HBPParallelConverter
 from ..combined import HBPCompositionActivationLinear
 
@@ -42,6 +43,8 @@ class HBPParallelConverterCompositionActivationLinear(HBPParallelConverter):
             if has_bias:
                 layer.linear.bias.data = composition.linear.bias.data[i:j]
             layers.append(layer)
+
+        # TODO: Buffers
 
         return layers
 
@@ -94,5 +97,35 @@ class HBPParallelConverterCompositionActivationLinear(HBPParallelConverter):
                 bias = mod.linear.bias.data if bias is None\
                         else cat([bias, mod.linear.bias.data])
             layer.linear.bias.data = bias
+
+        # buffer grad_output
+        try:
+            grad_output = None
+            for mod in parallel.children():
+                grad_output = mod.grad_output if grad_output is None\
+                        else cat([grad_output, mod.grad_output])
+            layer.register_exts_buffer('grad_output', grad_output)
+        except AttributeError:
+            warn('Could not copy/find buffer grad_output')
+
+        # buffer grad_phi
+        try:
+            grad_phi = None
+            for mod in parallel.children():
+                grad_phi = mod.grad_phi if grad_phi is None\
+                        else cat([grad_phi, mod.grad_phi])
+            layer.register_exts_buffer('grad_phi', grad_phi)
+        except AttributeError:
+            warn('Could not copy/find buffer grad_phi')
+
+        # buffer gradgrad_phi
+        try:
+            gradgrad_phi = None
+            for mod in parallel.children():
+                gradgrad_phi = mod.gradgrad_phi if gradgrad_phi is None\
+                        else cat([gradgrad_phi, mod.gradgrad_phi])
+            layer.register_exts_buffer('gradgrad_phi', gradgrad_phi)
+        except AttributeError:
+            warn('Could not copy/find buffer gradgrad_phi')
 
         return layer
