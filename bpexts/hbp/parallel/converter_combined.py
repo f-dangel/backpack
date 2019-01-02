@@ -98,13 +98,26 @@ class HBPParallelConverterCompositionActivationLinear(HBPParallelConverter):
                         else cat([bias, mod.linear.bias.data])
             layer.linear.bias.data = bias
 
+        # buffer of input
+        try:
+            mod = next(iter(parallel.children()))
+            linear = mod.linear
+            layer.linear.register_exts_buffer('mean_input',
+                                              linear.mean_input)
+        except AttributeError:
+            warn('Could not copy/find buffer mean_input')
+
         # buffer grad_output
         try:
             grad_output = None
             for mod in parallel.children():
-                grad_output = mod.grad_output if grad_output is None\
-                        else cat([grad_output, mod.grad_output])
-            layer.register_exts_buffer('grad_output', grad_output)
+                activation = mod.activation
+                grad_output = activation.grad_output\
+                    if grad_output is None\
+                    else cat([grad_output,
+                              activation.grad_output])
+            layer.activation.register_exts_buffer('grad_output',
+                                                  grad_output)
         except AttributeError:
             warn('Could not copy/find buffer grad_output')
 
@@ -112,9 +125,11 @@ class HBPParallelConverterCompositionActivationLinear(HBPParallelConverter):
         try:
             grad_phi = None
             for mod in parallel.children():
-                grad_phi = mod.grad_phi if grad_phi is None\
-                        else cat([grad_phi, mod.grad_phi])
-            layer.register_exts_buffer('grad_phi', grad_phi)
+                activation = mod.activation
+                grad_phi = activation.grad_phi\
+                    if grad_phi is None\
+                    else cat([grad_phi, activation.grad_phi])
+            layer.activation.register_exts_buffer('grad_phi', grad_phi)
         except AttributeError:
             warn('Could not copy/find buffer grad_phi')
 
@@ -122,10 +137,15 @@ class HBPParallelConverterCompositionActivationLinear(HBPParallelConverter):
         try:
             gradgrad_phi = None
             for mod in parallel.children():
-                gradgrad_phi = mod.gradgrad_phi if gradgrad_phi is None\
-                        else cat([gradgrad_phi, mod.gradgrad_phi])
-            layer.register_exts_buffer('gradgrad_phi', gradgrad_phi)
+                activation = mod.activation
+                gradgrad_phi = activation.gradgrad_phi\
+                    if gradgrad_phi is None\
+                    else cat([gradgrad_phi, activation.gradgrad_phi])
+            layer.activation.register_exts_buffer('gradgrad_phi', gradgrad_phi)
         except AttributeError:
             warn('Could not copy/find buffer gradgrad_phi')
+
+        # out_features_list
+        layer.out_features_list = parallel.out_features_list
 
         return layer

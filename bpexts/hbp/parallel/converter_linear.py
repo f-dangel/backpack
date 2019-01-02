@@ -102,4 +102,7 @@ class HBPParallelConverterLinear(HBPParallelConverter):
         except AttributeError:
             warn('Could not copy/find buffer mean_input')
 
+        # out_features_list
+        layer.out_features_list = parallel.out_features_list
+
         return layer
