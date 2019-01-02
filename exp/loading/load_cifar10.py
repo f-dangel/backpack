@@ -13,23 +13,17 @@ Normalization values taken from
     https://github.com/Armour/pytorch-nn-practice/blob/master/utils/meanstd.py
 """
 
-from os import path
 from torchvision import transforms, datasets
-from torch.utils.data import DataLoader
-from load_dataset import DatasetLoader
-# enable import of bpexts in parent directory
-import enable_import_bpexts
+from .load_dataset import DatasetLoader
 from bpexts.utils import set_seeds
+from ..utils import directory_in_data
 
 
 class CIFAR10Loader(DatasetLoader):
     """Loading of training/test sets of MNIST."""
 
-    # directory to store CIFAR-10 (3x28x28): ../dat/CIFAR10_dataset
-    parent_dir = path.dirname(
-            path.dirname(path.realpath(__file__)))
-    data_dir = 'dat/CIFAR10'
-    root = path.join(parent_dir, data_dir)
+    # directory to store CIFAR-10 (3x28x28): ../../dat/CIFAR10_dataset
+    root = directory_in_data('CIFAR10')
 
     # transformation of the data
     trans = transforms.Compose(
@@ -52,22 +46,3 @@ class CIFAR10Loader(DatasetLoader):
                                 train=False,
                                 transform=trans,
                                 download=True)
-
-    def train_loader(self):
-        """Return loader for CIFAR-10 training data batches."""
-        set_seeds(self.train_seed)
-        batch = len(self.train_set)\
-            if self.train_batch_size is None\
-            else self.train_batch_size
-        return DataLoader(dataset=self.train_set,
-                          batch_size=batch,
-                          shuffle=True)
-
-    def test_loader(self):
-        """Return loader for CIFAR-10 test data."""
-        batch = len(self.test_set)\
-            if self.test_batch_size is None\
-            else self.test_batch_size
-        return DataLoader(dataset=self.test_set,
-                          batch_size=batch,
-                          shuffle=False)

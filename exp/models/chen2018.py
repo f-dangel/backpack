@@ -4,7 +4,6 @@ The same initialization method for the parameters was chosen.
 """
 
 import torch.nn as nn
-import enable_import_bpexts
 from bpexts.hbp.linear import HBPLinear
 from bpexts.hbp.sigmoid import HBPSigmoid
 from bpexts.hbp.combined_sigmoid import HBPSigmoidLinear
@@ -12,7 +11,7 @@ from bpexts.hbp.sequential import HBPSequential
 from bpexts.utils import set_seeds
 
 
-def original_mnist_model(seed=0):
+def original_mnist_model(seed=None):
     """FCNN architecture used by Chen et al on MNIST.
 
     The architecture uses the following structure:
@@ -24,7 +23,8 @@ def original_mnist_model(seed=0):
     Parameters:
     -----------
     seed : int
-        Random seed used for initialization process of layers
+        Random seed used for initialization process of layers,
+        No seed will be set if left `None`
 
     Returns:
     --------
@@ -53,8 +53,14 @@ def original_mnist_model(seed=0):
     return model
 
 
-def separated_mnist_model(seed=0):
-    """Original MNIST model with activations treated separately in HBP."""
+def separated_mnist_model(seed=None):
+    """Original MNIST model with activations treated separately in HBP.
+    
+    Parameters:
+    -----------
+    seed : (int)
+        Set seed before weight initialization, no reset if left `None`
+    """
     set_seeds(seed)
     model = HBPSequential(HBPLinear(784, 512),
                           HBPSigmoid(),
@@ -67,7 +73,7 @@ def separated_mnist_model(seed=0):
     return model
 
 
-def original_cifar10_model(seed=0):
+def original_cifar10_model(seed=None):
     """FCNN architecture used by Chen et al on CIFAR-10.
 
     The architecture uses the following neuron structure:
@@ -78,7 +84,9 @@ def original_cifar10_model(seed=0):
 
     Parameters:
     -----------
-    seed (int): Random seed used for initialization process of layers
+    seed : (int)
+        Random seed used for initialization process of layers,
+        no reset if left `None`
 
     Returns:
     --------
@@ -118,8 +126,14 @@ def original_cifar10_model(seed=0):
     return model
 
 
-def separated_cifar10_model(seed=0):
-    """Original CIFAR-10 model with activations treated separately in HBP."""
+def separated_cifar10_model(seed=None):
+    """Original CIFAR-10 model with activations treated separately in HBP.
+    
+    Parameters:
+    -----------
+    seed : (int)
+        Set random seed before layer initialization, no reset if left `None`
+    """
     set_seeds(seed)
     model = HBPSequential(HBPLinear(3072, 1024),
                           HBPSigmoid(),
