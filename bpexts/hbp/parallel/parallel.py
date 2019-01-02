@@ -76,7 +76,6 @@ class HBPParallel(hbp_decorate(Module)):
         """
         return cls([layer])
 
-
     # override
     def forward(self, input):
         """Apply each module separately, concatenate results.
@@ -108,7 +107,7 @@ class HBPParallel(hbp_decorate(Module)):
                          compute_input_hessian=True,
                          compute_param_hessian=True,
                          modify_2nd_order_terms='none',
-                         input_hessian_mode='blockwise'):
+                         input_hessian_mode='exact'):
         """Compute Hessian w.r.t. input from Hessian w.r.t. output.
 
         The output Hessian has to be split into diagonal blocks, where
@@ -152,13 +151,19 @@ class HBPParallel(hbp_decorate(Module)):
 
         # input Hessian with exact strategy
         elif input_hessian_mode == 'exact':
+            self.backward_hessian(
+                    output_hessian,
+                    compute_input_hessian=False,
+                    compute_param_hessian=compute_param_hessian,
+                    modify_2nd_order_terms=modify_2nd_order_terms,
+                    input_hessian_mode='blockwise')
             # call backward_hessian for each layer separately
-            united = None # TODO
-            return united.hessian_backward(
+            united = self.unite()
+            return united.backward_hessian(
                     output_hessian,
                     compute_input_hessian=compute_input_hessian,
                     # only compute param Hessian in blockwise mode
-                    compute_param_hessian=compute_param_hessian,
+                    compute_param_hessian=False,
                     modify_2nd_order_terms=modify_2nd_order_terms,
                     input_hessian_mode='blockwise')
         else:
@@ -175,14 +180,20 @@ class HBPParallel(hbp_decorate(Module)):
         """Unite all parallel layers into a single one."""
         converter = self.get_converter()
         layer = converter.unite(self)
-        return self.__class__([layer])
+        parallel = self.__class__([layer])
+        parallel.out_features_list = None\
+            if self.out_features_list is None\
+            else [sum(self.out_features_list)]
+        return parallel
 
     def split(self, out_features_list):
         """Split layer into multiple parallel ones."""
         united = self.unite()
         converter = self.get_converter()
         layers = converter.split(united, out_features_list)
-        return self.__class__(layers)
+        parallel = self.__class__(layers)
+        parallel.out_features_list = out_features_list
+        return parallel
 
     def split_into_blocks(self, num_blocks):
         """Split layer into `num_blocks` parallel modules."""
