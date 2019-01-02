@@ -17,7 +17,9 @@ input = randn(1, in_features[0])
 
 def random_input():
     """Return random input copy."""
-    return input.clone()
+    input_with_grad = input.clone()
+    input_with_grad.requires_grad = True
+    return input_with_grad
 
 
 def create_sequence():
@@ -52,7 +54,7 @@ def hessian_backward():
     Return the layer.
     """
     layer = create_sequence()
-    x, loss = forward(layer, random_input())
+    x, loss = forward(layer, input)
     loss_hessian = 2 * eye(x.numel())
     loss.backward()
     # call HBP recursively
