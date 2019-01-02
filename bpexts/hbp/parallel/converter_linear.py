@@ -100,6 +100,6 @@ class HBPParallelConverterLinear(HBPParallelConverter):
             mod = next(iter(parallel.children()))
             layer.register_exts_buffer('mean_input', mod.mean_input)
         except AttributeError:
-            warn('Could not copy over buffer mean_input')
+            warn('Could not copy/find buffer mean_input')
 
         return layer
