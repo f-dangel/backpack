@@ -7,7 +7,7 @@ from ..combined_sigmoid_test import test_input_hessian\
         as hbp_sigmoidlinear_after_hessian_backward
 from ..combined_relu import HBPReLULinear
 from ..combined_sigmoid import HBPSigmoidLinear
-from .identical import HBPParallelIdentical
+from .parallel import HBPParallel
 from ...utils import (torch_allclose,
                       set_seeds)
 
@@ -30,7 +30,7 @@ def test_forward_pass_hbp_relulinear():
                                 out_features=sum(out_features_list),
                                 bias=True)
     x = random_input()
-    parallel = HBPParallelIdentical.from_module(relu_linear)
+    parallel = HBPParallel.from_module(relu_linear)
     assert torch_allclose(relu_linear(x), parallel(x))
 
     parallel2 = parallel.split(out_features_list)
@@ -55,7 +55,7 @@ def test_forward_pass_hbp_sigmoidlinear():
                                     out_features=sum(out_features_list),
                                     bias=True)
     x = random_input()
-    parallel = HBPParallelIdentical.from_module(sigma_linear)
+    parallel = HBPParallel.from_module(sigma_linear)
     assert torch_allclose(sigma_linear(x), parallel(x))
 
     parallel2 = parallel.split(out_features_list)
@@ -77,7 +77,7 @@ def test_forward_pass_hbp_sigmoidlinear():
 def test_buffer_copy_hbp_relulinear_unite():
     """Check if buffers are correctly copied over when uniting."""
     layer = hbp_relulinear_after_hessian_backward()
-    parallel = HBPParallelIdentical.from_module(layer)
+    parallel = HBPParallel.from_module(layer)
 
     mod = parallel.get_submodule(0)
     assert isinstance(mod.linear.mean_input, Tensor)
@@ -89,7 +89,7 @@ def test_buffer_copy_hbp_relulinear_unite():
 def test_buffer_copy_hbp_sigmoidlinear_unite():
     """Check if buffers are correctly copied over when uniting."""
     layer = hbp_sigmoidlinear_after_hessian_backward()
-    parallel = HBPParallelIdentical.from_module(layer)
+    parallel = HBPParallel.from_module(layer)
 
     mod = parallel.get_submodule(0)
     assert isinstance(mod.linear.mean_input, Tensor)
