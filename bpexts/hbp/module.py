@@ -45,7 +45,9 @@ def hbp_decorate(module_subclass):
                           ' during Hessian backpropagation.')
             pass
 
-        def backward_hessian(self, output_hessian, compute_input_hessian=True,
+        def backward_hessian(self, output_hessian,
+                             compute_input_hessian=True,
+                             compute_param_hessian=True,
                              modify_2nd_order_terms='none'):
             """Propagate Hessian, optionally compute parameter Hessian.
 
@@ -61,9 +63,12 @@ def hbp_decorate(module_subclass):
             -----------
             output_hessian (torch.Tensor): Hessian with respect to the layer's
                                            output
-            compute_input_hessian (bool): Compute the input with respect to the
-                                          layer's input (e.g not necessary for
-                                          the first layer in a network)
+            compute_input_hessian (bool): Compute the Hessian with respect to
+                                          the layer's input (e.g not necessary
+                                          for the first layer in a network)
+            compute_param_hessian (bool): Compute the Hessian with respect to
+                                          the layer parameters if there are
+                                          trainable parameters
             modify_2nd_order_terms : string ('none', 'clip', 'sign', 'zero')
                 String specifying the strategy for dealing with 2nd-order
                 module effects (only required if nonlinear layers are involved)
@@ -74,8 +79,10 @@ def hbp_decorate(module_subclass):
                                           If compute_input_hessian is False,
                                           return None.
             """
-            if self.has_trainable_parameters():
+            if self.has_trainable_parameters() and compute_param_hessian:
                 self.parameter_hessian(output_hessian)
+            elif not compute_param_hessian:
+                raise Exception('Compute param Hessian is disabled')
             return None if compute_input_hessian is False else\
                 self.input_hessian(
                         output_hessian,
