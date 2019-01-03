@@ -1,6 +1,4 @@
-"""
-Parallel series of linear layers.
-"""
+"""Parallel series of linear layers."""
 
 from torch import cat
 from numpy import cumsum
@@ -10,8 +8,11 @@ from .parallel import HBPParallel
 
 
 class HBPParallelLinear(HBPParallel):
-    """
-    Handle backpropagation for a parallel series of linear layers.
+    """Handle backpropagation for a parallel series of linear layers.
+
+    The buffer `mean_input` is maintained in the first of all
+    parallel modules, with a reference to it being stored in
+    the other children.
     """
     contained_class = HBPLinear
 
@@ -21,37 +22,37 @@ class HBPParallelLinear(HBPParallel):
             raise ValueError('Expecting layers of type {}, got {}'
                              .format(self.contained_class,
                                      different_classes))
-        for l in layers:
+        for l in layers[1:]:
             l.disable_exts()
         super().__init__(*layers)
 
     # override
     def hbp_hooks(self):
         """Remove input hook in children, use a single copy instead."""
-        self.register_exts_forward_pre_hook(self.store_mean_input_with_ref)
+        self.register_exts_forward_hook(self.ref_mean_input)
 
     # --- hooks ---
     @staticmethod
-    def store_mean_input_with_ref(module, input):
-        """Save batch average of input of layer and store a reference
-        to this quantity in all submodules.
+    def ref_mean_input(module, input, output):
+        """Save reference of mean_input from first child in others.
 
-        Intended use as pre-forward hook.
-        Initialize module buffer 'mean_input'.
+        Intended use as forward hook.
+        Initialize module buffer 'mean_input' in all other children
+        beside the first one.
         """
-        # intialize module.mean_input
-        module.contained_class.store_mean_input(module, input)
-        # store references in each child
-        module.store_ref_to_mean_input_in_children()
+        module._ref_to_mean_input_in_children()
 
-    def store_ref_to_mean_input_in_children(self):
+    def _ref_to_mean_input_in_children(self):
         """Store a reference to the buffer mean_input in each child.
 
         Avoid copies of the same tensor.
         """
-        for mod in self.children():
-            mod.register_exts_buffer('mean_input',
-                                     self.mean_input)
+        mean_input = self.get_submodule(0).mean_input
+        for i, mod in enumerate(self.children()):
+            # skip first
+            if i != 0:
+                mod.register_exts_buffer('mean_input',
+                                         mean_input)
     # --- end of hooks ---
 
     def unite(self):
@@ -101,9 +102,10 @@ class HBPParallelLinear(HBPParallel):
 
         # copy over buffer of input
         try:
-            parallel.register_exts_buffer('mean_input',
-                                          self.mean_input)
-            parallel.store_ref_to_mean_input_in_children()
+            mean_input = self.get_submodule(0).mean_input
+            parallel.get_submodule(0).register_exts_buffer(
+                    'mean_input', mean_input)
+            parallel._ref_to_mean_input_in_children()
         except AttributeError as e:
             warn('Could not copy/find buffer mean_input.\n{}'
                  .format(e))
@@ -159,9 +161,10 @@ class HBPParallelLinear(HBPParallel):
 
         # copy over buffer of input
         try:
-            parallel.register_exts_buffer('mean_input',
-                                          self.mean_input)
-            parallel.store_ref_to_mean_input_in_children()
+            mean_input = self.get_submodule(0).mean_input
+            parallel.get_submodule(0).register_exts_buffer(
+                    'mean_input', mean_input)
+            parallel._ref_to_mean_input_in_children()
         except AttributeError as e:
             warn('Could not copy/find buffer mean_input.\n{}'
                  .format(e))

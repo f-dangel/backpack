@@ -18,7 +18,7 @@ input = randn(1, in_features)
 def random_input():
     """Return random input copy."""
     new_input = input.clone()
-    new_input.requires_grad=True
+    new_input.requires_grad = True
     return new_input
 
 
@@ -60,37 +60,33 @@ def test_buffer_ref_hbp_linear_unite():
     parallel = HBPParallelLinear(linear)
     parallel(x)
     # check if buffer is shared
-    assert isinstance(parallel.mean_input, Tensor)
     for mod in parallel.children():
         assert isinstance(mod.mean_input, Tensor)
-        assert mod.mean_input is parallel.mean_input
+        assert mod.mean_input is parallel.get_submodule(0).mean_input
 
     # after splitting
     parallel2 = parallel.split(out_features_list)
     parallel2(x)
     # check if buffer is shared
-    assert isinstance(parallel2.mean_input, Tensor)
     for mod in parallel2.children():
         assert isinstance(mod.mean_input, Tensor)
-        assert mod.mean_input is parallel2.mean_input
+        assert mod.mean_input is parallel2.get_submodule(0).mean_input
 
     # after unite
     parallel3 = parallel2.unite()
     parallel3(x)
     # check if buffer is shared
-    assert isinstance(parallel3.mean_input, Tensor)
     for mod in parallel3.children():
         assert isinstance(mod.mean_input, Tensor)
-        assert mod.mean_input is parallel3.mean_input
+        assert mod.mean_input is parallel3.get_submodule(0).mean_input
 
     # after splitting into number of blocks
     parallel4 = parallel2.split_into_blocks(4)
     parallel4(x)
     # check if buffer is shared
-    assert isinstance(parallel4.mean_input, Tensor)
     for mod in parallel4.children():
         assert isinstance(mod.mean_input, Tensor)
-        assert mod.mean_input is parallel4.mean_input
+        assert mod.mean_input is parallel4.get_submodule(0).mean_input
 
 
 def example_layer():
