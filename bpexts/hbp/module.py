@@ -47,14 +47,13 @@ def hbp_decorate(module_subclass):
 
         def backward_hessian(self, output_hessian,
                              compute_input_hessian=True,
-                             compute_param_hessian=True,
                              modify_2nd_order_terms='none'):
             """Propagate Hessian, optionally compute parameter Hessian.
 
             Backpropagation of the Hessian requires a layer to provide a method
             that, given the Hessian with respect to its output (output_hessian)
             computes the Hessian with respect to its input. During this
-            backward procedure, parameter Hessians can be computed.
+            backward procedure, parameter Hessians are computed.
 
             Classes inheriting from HPBModule must implement this backward
             method.
@@ -66,9 +65,6 @@ def hbp_decorate(module_subclass):
             compute_input_hessian (bool): Compute the Hessian with respect to
                                           the layer's input (e.g not necessary
                                           for the first layer in a network)
-            compute_param_hessian (bool): Compute the Hessian with respect to
-                                          the layer parameters if there are
-                                          trainable parameters
             modify_2nd_order_terms : string ('none', 'clip', 'sign', 'zero')
                 String specifying the strategy for dealing with 2nd-order
                 module effects (only required if nonlinear layers are involved)
@@ -79,10 +75,8 @@ def hbp_decorate(module_subclass):
                                           If compute_input_hessian is False,
                                           return None.
             """
-            if self.has_trainable_parameters() and compute_param_hessian:
+            if self.has_trainable_parameters():
                 self.parameter_hessian(output_hessian)
-            elif not compute_param_hessian:
-                raise Exception('Compute param Hessian is disabled')
             return None if compute_input_hessian is False else\
                 self.input_hessian(
                         output_hessian,
