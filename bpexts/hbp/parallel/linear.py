@@ -29,20 +29,20 @@ class HBPParallelLinear(HBPParallel):
     # override
     def hbp_hooks(self):
         """Remove input hook in children, use a single copy instead."""
-        self.register_exts_forward_hook(self.ref_mean_input)
+        self.register_exts_forward_hook(self.reference_mean_input)
 
     # --- hooks ---
     @staticmethod
-    def ref_mean_input(module, input, output):
+    def reference_mean_input(module, input, output):
         """Save reference of mean_input from first child in others.
 
         Intended use as forward hook.
         Initialize module buffer 'mean_input' in all other children
         beside the first one.
         """
-        module._ref_to_mean_input_in_children()
+        module._reference_mean_input_in_children()
 
-    def _ref_to_mean_input_in_children(self):
+    def _reference_mean_input_in_children(self):
         """Store a reference to the buffer mean_input in each child.
 
         Avoid copies of the same tensor.
@@ -105,7 +105,7 @@ class HBPParallelLinear(HBPParallel):
             mean_input = self.get_submodule(0).mean_input
             parallel.get_submodule(0).register_exts_buffer(
                     'mean_input', mean_input)
-            parallel._ref_to_mean_input_in_children()
+            parallel._reference_mean_input_in_children()
         except AttributeError as e:
             warn('Could not copy/find buffer mean_input.\n{}'
                  .format(e))
@@ -164,7 +164,7 @@ class HBPParallelLinear(HBPParallel):
             mean_input = self.get_submodule(0).mean_input
             parallel.get_submodule(0).register_exts_buffer(
                     'mean_input', mean_input)
-            parallel._ref_to_mean_input_in_children()
+            parallel._reference_mean_input_in_children()
         except AttributeError as e:
             warn('Could not copy/find buffer mean_input.\n{}'
                  .format(e))
