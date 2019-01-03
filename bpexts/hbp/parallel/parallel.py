@@ -21,7 +21,8 @@ class HBPParallel(hbp_decorate(Module)):
     Perform conversion from a usual HBP module to a parallel one,
     take care of parameter splitting and uniting.
 
-    The user has to implement the computation of the input Hessian.
+    The user has to specify the `unite` method in order to get a
+    working backward pass for the Hessian.
     """
     # naming convention for parallel modules
     layer_names = 'hbp_parallel'
@@ -86,17 +87,15 @@ class HBPParallel(hbp_decorate(Module)):
         split_out_hessians = self.split_output_hessian(output_hessian)
         # compute parameter Hessians blockwise
         for layer, split_out in zip(self.children(), split_out_hessians):
-            layer.parameter_hessian(
-                    split_out,
-                    modify_2nd_order_terms=modify_2nd_order_terms)
+            layer.parameter_hessian(split_out)
         # input Hessian
         if compute_input_hessian is False:
             return None
         else:
             united = self.unite()
-            return united.input_hessian(
+            return united.get_submodule(0).input_hessian(
                     output_hessian,
-                    modfiy_2nd_order_terms=modify_2nd_order_terms)
+                    modify_2nd_order_terms=modify_2nd_order_terms)
 
     def split_output_hessian(self, output_hessian):
         """Cut diagonal blocks corresponding to layer output sizes."""
