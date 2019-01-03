@@ -29,7 +29,7 @@ class HBPParallelLinear(HBPParallel):
             if i != 0:
                 mod.disable_exts()
 
-        # try to copy already existing buffers from HBP
+        # try to copy already existing duplicate buffers from HBP
         try:
             mean_input = layers[0].mean_input
             self.get_submodule(0).register_exts_buffer(
@@ -107,6 +107,14 @@ class HBPParallelLinear(HBPParallel):
             bias = cat([mod.bias.data for mod in self.children()])
             layer.bias.data = bias
 
+        # try to copy already existing duplicate buffers from HBP
+        try:
+            mean_input = self.get_submodule(0).mean_input
+            layer.register_exts_buffer('mean_input', mean_input)
+        except AttributeError as e:
+            warn('Could not copy/find buffer mean_input.\n{}'
+                 .format(e))
+
         # HBPParallelLinear version with single child
         parallel = self.__class__(layer)
 
@@ -156,7 +164,15 @@ class HBPParallelLinear(HBPParallel):
                 child.bias.data = linear.bias.data[i:j]
             layers.append(child)
 
-        # HBPParallelLinear version with single child
+        # try to copy already existing duplicate buffers from HBP
+        try:
+            mean_input = self.get_submodule(0).mean_input
+            layers[0].register_exts_buffer('mean_input', mean_input)
+        except AttributeError as e:
+            warn('Could not copy/find buffer mean_input.\n{}'
+                 .format(e))
+
+        # HBPParallelLinear version with split children
         parallel = self.__class__(*layers)
 
         # out_features_list
