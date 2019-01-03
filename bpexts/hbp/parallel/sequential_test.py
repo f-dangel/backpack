@@ -1,9 +1,12 @@
 """Test Hessian backpropagation of sequence of identical parallel modules"""
 
 from torch import randn, eye
-from .parallel_sequential import HBPParallelSequential
+from .sequential import HBPParallelSequential
 from ..sequential import HBPSequential
+from ..linear import HBPLinear
+from .linear import HBPParallelLinear
 from ..combined_sigmoid import HBPSigmoidLinear
+from .combined import HBPParallelCompositionActivationLinear
 from ...utils import (torch_allclose,
                       set_seeds)
 from ...hessian import exact
@@ -22,15 +25,35 @@ def random_input():
     return input_with_grad
 
 
+def test_init_from_sequential():
+    """Test initialization from HBPSequential."""
+    layers = [HBPSigmoidLinear(in_, out, bias=True)
+              for in_, out in zip(in_features, out_features)]
+    sequence = HBPSequential(*layers)
+    parallel = HBPParallelSequential(sequence)
+    for mod in parallel.children():
+        assert issubclass(mod.__class__, HBPParallelSequential)
+        for mod2 in mod.children():
+            assert issubclass(mod2.__class__,
+                              HBPParallelCompositionActivationLinear)
+
+
+def test_init_from_list():
+    """Test initialization from list."""
+    layers = [HBPLinear(in_, out, bias=True)
+              for in_, out in zip(in_features, out_features)]
+    parallel = HBPParallelSequential(*layers)
+    for mod in parallel.children():
+        assert issubclass(mod.__class__, HBPParallelLinear)
+
+
 def create_sequence():
     """Return sequence of identical modules in parallel."""
     # same seed
     set_seeds(0)
     layers = [HBPSigmoidLinear(in_, out, bias=True)
               for in_, out in zip(in_features, out_features)]
-    sequence = HBPSequential(*layers)
-    return HBPParallelSequential.from_sequential(
-            sequence).split_into_blocks(num_blocks)
+    return HBPParallelSequential(*layers).split_into_blocks(num_blocks)
 
 
 def forward(layer, input):
@@ -85,15 +108,13 @@ def brute_force_input_hessian():
     """Compute the Hessian with respect to the input by brute force."""
     layer = create_sequence()
     input = random_input()
-    input.requires_grad = True
     _, loss = forward(layer, input)
     return exact.exact_hessian(loss, [input])
 
 
 def test_input_hessians():
     """Test whether Hessian with respect to input is correctly reproduced."""
-    # need to unite for exact input Hessian
-    layer = create_sequence().unite()
+    layer = create_sequence()
     out, loss = forward(layer, random_input())
     loss_hessian = 2 * eye(out.numel())
     loss.backward()
