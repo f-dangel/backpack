@@ -22,9 +22,22 @@ class HBPParallelLinear(HBPParallel):
             raise ValueError('Expecting layers of type {}, got {}'
                              .format(self.contained_class,
                                      different_classes))
-        for l in layers[1:]:
-            l.disable_exts()
         super().__init__(*layers)
+
+        # disable hooks except for first layer
+        for i, mod in enumerate(self.children()):
+            if i != 0:
+                mod.disable_exts()
+
+        # try to copy already existing buffers from HBP
+        try:
+            mean_input = layers[0].mean_input
+            self.get_submodule(0).register_exts_buffer(
+                    'mean_input', mean_input)
+            self._reference_mean_input_in_children()
+        except AttributeError as e:
+            warn('Could not copy/find buffer mean_input.\n{}'
+                 .format(e))
 
     # override
     def hbp_hooks(self):
@@ -100,16 +113,6 @@ class HBPParallelLinear(HBPParallel):
         # out_features_list
         parallel.out_features_list = [out_features]
 
-        # copy over buffer of input
-        try:
-            mean_input = self.get_submodule(0).mean_input
-            parallel.get_submodule(0).register_exts_buffer(
-                    'mean_input', mean_input)
-            parallel._reference_mean_input_in_children()
-        except AttributeError as e:
-            warn('Could not copy/find buffer mean_input.\n{}'
-                 .format(e))
-
         return parallel
 
     def split(self, out_features_list):
@@ -158,15 +161,5 @@ class HBPParallelLinear(HBPParallel):
 
         # out_features_list
         parallel.out_features_list = out_features_list
-
-        # copy over buffer of input
-        try:
-            mean_input = self.get_submodule(0).mean_input
-            parallel.get_submodule(0).register_exts_buffer(
-                    'mean_input', mean_input)
-            parallel._reference_mean_input_in_children()
-        except AttributeError as e:
-            warn('Could not copy/find buffer mean_input.\n{}'
-                 .format(e))
 
         return parallel
