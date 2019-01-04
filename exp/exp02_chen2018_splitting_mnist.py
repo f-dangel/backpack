@@ -18,8 +18,7 @@ from .utils import (directory_in_data,
                     directory_in_fig,
                     dirname_from_params)
 from bpexts.optim.cg_newton import CGNewton
-from bpexts.hbp.parallel.parallel_sequential\
-        import HBPParallelSequential
+from bpexts.hbp.parallel.sequential import HBPParallelSequential
 
 
 # global hyperparameters
@@ -32,9 +31,7 @@ fig_dir = directory_in_fig(dirname)
 logs_per_epoch = 5
 
 
-def mnist_cgnewton_train_fn(modify_2nd_order_terms, num_blocks,
-                            # input_hessian_mode
-                            ):
+def mnist_cgnewton_train_fn(modify_2nd_order_terms, num_blocks):
     """Create training instance for MNIST CG experiment.
 
     Trainable parameters (weights and bias) will be split into
@@ -50,9 +47,6 @@ def mnist_cgnewton_train_fn(modify_2nd_order_terms, num_blocks,
     num_blocks : (int)
         * Split parameters per layer into subblocks during
           optimization
-    input_hessian_mode : (str)
-        `"exact"` or `"blockwise"`. Strategy for computing the
-        Hessian with respect to a parallel layer`s input
     """
     # hyper parameters
     # ----------------
@@ -73,9 +67,7 @@ def mnist_cgnewton_train_fn(modify_2nd_order_terms, num_blocks,
                                    tol=cg_tol,
                                    atol=cg_atol,
                                    mod2nd=modify_2nd_order_terms,
-                                   blocks=num_blocks,
-                                   # modhin=input_hessian_mode
-                                   )
+                                   blocks=num_blocks)
     logdir = path.join(data_dir, run_name)
 
     # training procedure
@@ -85,7 +77,7 @@ def mnist_cgnewton_train_fn(modify_2nd_order_terms, num_blocks,
         # set up training and run
         model = original_mnist_model()
         # split into parallel modules
-        model = HBPParallelSequential.from_sequential(model)
+        model = HBPParallelSequential(*list(model.children()))
         model = model.split_into_blocks(num_blocks)
         loss_function = CrossEntropyLoss()
         data_loader = MNISTLoader(train_batch_size=batch,
@@ -111,37 +103,38 @@ def mnist_cgnewton_train_fn(modify_2nd_order_terms, num_blocks,
 
 
 if __name__ == '__main__':
-    num_blocks = [1]  # , 2, 3, 4, 5, 256, 512]
+    num_blocks = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512]
     seeds = range(1)
 
-    labels = [
-              # 'CG (GGN)',
-              'CG (PCH, abs)',
-              # 'CG (PCH, clip)',
-             ]
-    experiments = [
-                   # 1) Jacobian curve
-                   # mnist_cgnewton_train_fn('zero'),
-                   # 2) BDA-PCH curve
-                   mnist_cgnewton_train_fn('abs', 10),
-                   # 3) alternative BDA-PCH curve
-                   # mnist_cgnewton_train_fn('clip'),
-                  ]
+    for blocks in num_blocks:
+        labels = [
+                  # 'CG (GGN)',
+                  'CG (PCH, abs)',
+                  # 'CG (PCH, clip)',
+                 ]
+        experiments = [
+                       # 1) Jacobian curve
+                       # mnist_cgnewton_train_fn('zero'),
+                       # 2) BDA-PCH curve
+                       mnist_cgnewton_train_fn('abs', blocks),
+                       # 3) alternative BDA-PCH curve
+                       # mnist_cgnewton_train_fn('clip'),
+                      ]
 
-    # run experiments
-    # ---------------
-    metric_to_files = None
-    for train_fn in experiments:
-        runner = TrainingRunner(train_fn)
-        runner.run(seeds)
-        """
-        m_to_f = runner.merge_runs(seeds)
-        if metric_to_files is None:
-            metric_to_files = {k: [v] for k, v in m_to_f.items()}
-        else:
-            for key, value in m_to_f.items():
-                metric_to_files[key].append(value)
-        """
+        # run experiments
+        # ---------------
+        metric_to_files = None
+        for train_fn in experiments:
+            runner = TrainingRunner(train_fn)
+            runner.run(seeds)
+            """
+            m_to_f = runner.merge_runs(seeds)
+            if metric_to_files is None:
+                metric_to_files = {k: [v] for k, v in m_to_f.items()}
+            else:
+                for key, value in m_to_f.items():
+                    metric_to_files[key].append(value)
+            """
 
     """
     # plotting
