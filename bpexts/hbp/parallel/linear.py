@@ -51,8 +51,9 @@ class HBPParallelLinear(HBPParallel):
                     in_features=self.main.in_features,
                     out_features=out_features,
                     bias=layer.bias is not None)
-            # disable hooks, buffers
-            parallel_idx.disable_exts()
+            # disable hooks, buffers (except 0th layer)
+            if idx != 0:
+                parallel_idx.disable_exts()
 
             # copy weight
             parallel_idx.weight.data = chunk_w
@@ -65,7 +66,6 @@ class HBPParallelLinear(HBPParallel):
     # override
     def hbp_hooks(self):
         """Remove input hook in children, use a single copy instead."""
-        self.register_exts_forward_pre_hook(HBPLinear.store_mean_input)
         self.register_exts_forward_hook(self.reference_mean_input)
 
     # --- hooks ---
@@ -75,12 +75,13 @@ class HBPParallelLinear(HBPParallel):
 
         Intended use as forward hook.
         Initialize module buffer 'mean_input' in all other children
-        beside the first one.
+        and the main layer.
         """
-        mean_input = module.mean_input
+        mean_input = module._get_parallel_module(0).mean_input
         module.main.register_exts_buffer('mean_input', mean_input)
-        for mod in module.main.children():
-            mod.register_exts_buffer('mean_input', mean_input)
+        for idx, mod in enumerate(module.main.children()):
+            if idx != 0:
+                mod.register_exts_buffer('mean_input', mean_input)
    # --- end of hooks ---
 
     # override
