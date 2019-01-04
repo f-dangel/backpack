@@ -28,10 +28,10 @@ class HBPParallelCompositionActivationLinear(HBPParallel):
         self.out_features_list = [c.linear.out_features
                                   for c in self.children()]
 
-        # disable hooks in linear layers except for first layer
+        # disable hooks in layers except for first layer
         for i, mod in enumerate(self.children()):
             if i != 0:
-                mod.linear.disable_exts()
+                mod.disable_exts()
 
         # try to copy already existing duplicate buffers from HBP
         try:
@@ -40,10 +40,43 @@ class HBPParallelCompositionActivationLinear(HBPParallel):
                     'mean_input', mean_input)
             self._reference_mean_input_in_children()
         except AttributeError as e:
-            warn('Could not copy/find buffer mean_input.\n{}'
-                 .format(e))
+            warn('Could not copy/find buffer mean_input.\n{}'.format(e))
 
-        # buffers from activation will be kept (no redundancy)
+        # Try to save memory
+        #####################
+        has_bias = set(mod.linear.bias is not None
+                       for mod in self.children())
+        if not len(has_bias) == 1:
+            raise ValueError('Expect simultaneous presence/absence'
+                             ' of bias, got {}'.format(has_bias))
+        has_bias = has_bias.pop()
+
+        # concatenate weight matrix
+        weight = cat([mod.linear.weight.data
+                      for mod in self.children()])
+        self.register_buffer('weight', weight)
+
+        # concatenate bias
+        bias = None if not has_bias else\
+            cat([mod.linear.bias.data for mod in self.children()])
+        self.register_buffer('bias', bias)
+
+        # assign slices to children parameters
+        idx = [0] + list(cumsum(self.out_features_list))
+        idx = [(idx[i], idx[i + 1]) for i in range(len(idx) - 1)]
+        for (i, j), child in zip(idx, self.children()):
+            child.linear.weight.data = self.weight.data[i:j, :]
+            if has_bias:
+                child.linear.bias.data = self.bias.data[i:j]
+
+    # override
+    def forward(self, input):
+        """Only use first activation layer, split activation output and
+        apply each linear module separately."""
+        activation_out = self.get_submodule(0).activation(input)
+        split_output = [layer.linear(activation_out)
+                        for layer in self.children()]
+        return self.concatenate_output(split_output)
 
     # override
     def hbp_hooks(self):
@@ -100,17 +133,24 @@ class HBPParallelCompositionActivationLinear(HBPParallel):
         layer = self.contained_class(in_features=in_features,
                                      out_features=out_features,
                                      bias=has_bias)
+        layer.linear.weight.data = self.weight
+        # concatenate bias and assign
+        if has_bias:
+            layer.linear.bias.data = self.bias.data
 
-        # unite linear layers and replace
-        united_linear = HBPParallelLinear(
-                *[c.linear for c in self.children()]
-                ).unite().get_submodule(0)
-        layer.linear = united_linear
+        # try to copy mean_input from linear
+        try:
+            mean_input = self.get_submodule(0).linear.mean_input
+            layer.linear.register_exts_buffer('mean_input',
+                                              mean_input)
+        except AttributeError:
+            warn('Could not copy/find buffer mean_input')
 
+        # copy buffers from activation
+        ##############################
         # buffer grad_output
         try:
-            grad_output = cat([c.activation.grad_output
-                               for c in self.children()])
+            grad_output = self.get_submodule(0).activation.grad_output
             layer.activation.register_exts_buffer('grad_output',
                                                   grad_output)
         except AttributeError:
@@ -118,8 +158,7 @@ class HBPParallelCompositionActivationLinear(HBPParallel):
 
         # buffer grad_phi
         try:
-            grad_phi = cat([c.activation.grad_phi
-                            for c in self.children()])
+            grad_phi = self.get_submodule(0).activation.grad_phi
             layer.activation.register_exts_buffer('grad_phi',
                                                   grad_phi)
         except AttributeError:
@@ -127,20 +166,13 @@ class HBPParallelCompositionActivationLinear(HBPParallel):
 
         # buffer gradgrad_phi
         try:
-            gradgrad_phi = cat([c.activation.gradgrad_phi
-                                for c in self.children()])
+            gradgrad_phi = self.get_submodule(0).activation.gradgrad_phi
             layer.activation.register_exts_buffer('gradgrad_phi',
                                                   gradgrad_phi)
         except AttributeError:
             warn('Could not copy/find buffer gradgrad_phi')
 
-        # HBPParallelLinear version with single child
-        parallel = self.__class__(layer)
-
-        # out_features_list
-        parallel.out_features_list = [out_features]
-
-        return parallel
+        return self.__class__(layer)
 
     def split(self, out_features_list):
         """Split into parallel series of HBPCompositionActivationLinear.
@@ -172,50 +204,49 @@ class HBPParallelCompositionActivationLinear(HBPParallel):
 
         idx = [0] + list(cumsum(out_features_list))
         idx = [(idx[i], idx[i + 1]) for i in range(len(idx) - 1)]
-        # parallel layers split
-        parallel_linear = HBPParallelLinear(combined.linear).split(
-                out_features_list)
-        for out, (i, j), mod in zip(out_features_list, idx,
-                                    parallel_linear.children()):
+        for out, (i, j) in zip(out_features_list, idx):
             # create HBPCompositionActivationLinear
             child = self.contained_class(in_features=in_features,
                                          out_features=out,
                                          bias=has_bias)
-            # replace linear layer
-            child.linear = mod
-
-            # split and register buffers grad_output, grad_phi, gradgrad_phi
-            # buffer grad_output
-            activation = combined.activation
-            try:
-                grad_output = activation.grad_output[:, i:j]
-                child.activation.register_exts_buffer('grad_output',
-                                                      grad_output)
-            except AttributeError:
-                warn('Could not copy/find buffer grad_output')
-
-            # buffer grad_phi
-            try:
-                grad_phi = activation.grad_phi
-                child.activation.register_exts_buffer('grad_phi',
-                                                      grad_phi)
-            except AttributeError:
-                warn('Could not copy/find buffer grad_phi')
-
-            # buffer gradgrad_phi
-            try:
-                gradgrad_phi = activation.gradgrad_phi
-                child.activation.register_exts_buffer('gradgrad_phi',
-                                                      gradgrad_phi)
-            except AttributeError:
-                warn('Could not copy/find buffer gradgrad_phi')
-
+            child.linear.weight.data = united.weight.data[i:j, :]
+            if has_bias:
+                child.linear.bias.data = united.bias.data[i:j]
             layers.append(child)
 
-        # HBPParallelCompositionActivationLinear version with single child
-        parallel = self.__class__(*layers)
 
-        # out_features_list
-        parallel.out_features_list = out_features_list
+        # register buffers grad_output, grad_phi, gradgrad_phi
+        # buffer grad_output
+        activation = combined.activation
+        try:
+            grad_output = activation.grad_output
+            layers[0].activation.register_exts_buffer('grad_output',
+                                                      grad_output)
+        except AttributeError:
+            warn('Could not copy/find buffer grad_output')
 
-        return parallel
+        # buffer grad_phi
+        try:
+            grad_phi = activation.grad_phi
+            layers[0].activation.register_exts_buffer('grad_phi',
+                                                      grad_phi)
+        except AttributeError:
+            warn('Could not copy/find buffer grad_phi')
+
+        # buffer gradgrad_phi
+        try:
+            gradgrad_phi = activation.gradgrad_phi
+            layers[0].activation.register_exts_buffer('gradgrad_phi',
+                                                      gradgrad_phi)
+        except AttributeError:
+            warn('Could not copy/find buffer gradgrad_phi')
+
+        # try to copy mean_input from linear
+        try:
+            mean_input = self.get_submodule(0).linear.mean_input
+            layers[0].linear.register_exts_buffer('mean_input',
+                                                  mean_input)
+        except AttributeError:
+            warn('Could not copy/find buffer mean_input')
+
+        return self.__class__(*layers)
