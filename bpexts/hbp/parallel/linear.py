@@ -19,9 +19,7 @@ class HBPParallelLinear(HBPParallel):
             raise ValueError('Expecting layer of type {}, got {}'
                              .format(self.contained_class,
                                      layer.__class__))
-        super().__init__()
-
-        self.num_blocks = min(num_blocks, layer.out_features)
+        super().__init__(num_blocks=min(num_blocks, layer.out_features))
 
         # disable exts hooks, buffers
         layer.disable_exts()
@@ -79,7 +77,7 @@ class HBPParallelLinear(HBPParallel):
         """
         mean_input = module._get_parallel_module(0).mean_input
         module.main.register_exts_buffer('mean_input', mean_input)
-        for idx, mod in enumerate(module.main.children()):
+        for idx, mod in enumerate(module.parallel_children()):
             if idx != 0:
                 mod.register_exts_buffer('mean_input', mean_input)
    # --- end of hooks ---
@@ -94,10 +92,10 @@ class HBPParallelLinear(HBPParallel):
                             self.num_blocks, 1)[i]
                     for i in range(self.num_blocks)]
         # call parameter Hessian recursively
-        for mod, out_h in zip(self.main.children(), out_h_split):
+        for mod, out_h in zip(self.parallel_children(), out_h_split):
             mod.parameter_hessian(out_h)
 
    # override
     def forward(self, input):
         """Feed through each parallel layer, concatenate result."""
-        return cat([layer(input) for layer in self.main.children()], 1)
+        return cat([layer(input) for layer in self.parallel_children()], 1)

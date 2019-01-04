@@ -10,8 +10,17 @@ for different groupings of parameters.
 from torch.nn import Module
 from ..module import hbp_decorate
 
+
 class HBPParallel(hbp_decorate(Module)):
     """Abstract class for implementing HBP with parameter splitting."""
+    def __init__(self, num_blocks):
+        super().__init__()
+        self.num_blocks = num_blocks
+
+    def parallel_children(self):
+        """Iterate over all parallel children."""
+        for i in range(self.num_blocks):
+            yield self._get_parallel_module(i)
 
     def _register_wrapped_module(self, layer):
         """Register the wrapped module."""
