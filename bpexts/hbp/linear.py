@@ -53,7 +53,7 @@ class HBPLinear(hbp_decorate(Linear)):
         """
         if not len(input) == 1:
             raise ValueError('Cannot handle multi-input scenario')
-        mean_input = input[0].detach().mean(0).unsqueeze(1)
+        mean_input = input[0].detach().mean(0).unsqueeze_(0)
         module.register_exts_buffer('mean_input', mean_input)
 
     def store_mean_input_outer(module, input):
@@ -172,15 +172,15 @@ class HBPLinear(hbp_decorate(Linear)):
             if not len(v.size()) == 1:
                 raise ValueError('Require one-dimensional tensor')
             num_outputs = out_h.size()[0]
-            num_inputs = self.mean_input.size()[0]
+            num_inputs = self.mean_input.size()[1]
             result = v.reshape(num_outputs, num_inputs)
             # order matters for memory consumption:
             #   - mean_input has shape (num_inputs, 1)
             #   - out_h has shape (num_outputs, num_outputs)
             # assume num_outputs is smaller than num_inputs
             temp = out_h.matmul(result)
-            temp = temp.matmul(self.mean_input)
-            return temp.matmul(self.mean_input.t()).reshape(v.size())
+            temp = temp.matmul(self.mean_input.t())
+            return temp.matmul(self.mean_input).reshape(v.size())
         return hvp
 
     def _compute_weight_hessian(self, output_hessian):
