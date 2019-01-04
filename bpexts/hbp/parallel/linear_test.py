@@ -1,6 +1,6 @@
 """Test conversion HBPLinear to parallel series and splitting."""
 
-from torch import randn, Tensor, eye, is_tensor
+from torch import randn, Tensor, eye
 from ..linear import HBPLinear
 from .linear import HBPParallelLinear
 from ...utils import (torch_allclose,
@@ -10,9 +10,9 @@ from ...hessian import exact
 
 
 in_features = 20
-out_features_list = [2, 3, 4]
-out_features_list2 = [1, 8]
-num_layers = len(out_features_list)
+num_blocks = 3
+out_features_list = [3, 3, 2]
+out_features = 8
 input = randn(1, in_features)
 
 
@@ -23,80 +23,39 @@ def random_input():
     return new_input
 
 
-def test_forward_pass_hbp_linear():
-    """Test whether single/split modules are consistent in forward."""
-    linear = HBPLinear(in_features=in_features,
-                       out_features=sum(out_features_list),
-                       bias=True)
-    x = random_input()
-    # after construction with a single child
-    parallel = HBPParallelLinear(linear)
-    assert torch_allclose(linear(x), parallel(x))
-
-    # after splitting
-    parallel2 = parallel.split(out_features_list)
-    assert torch_allclose(linear(x), parallel2(x))
-
-    # after unite
-    parallel3 = parallel2.unite()
-    assert torch_allclose(linear.bias,
-                          parallel3.get_submodule(0).bias)
-    assert torch_allclose(linear.weight,
-                          parallel3.get_submodule(0).weight)
-    assert torch_allclose(linear(x), parallel3(x))
-
-    # after splitting into number of blocks
-    parallel4 = parallel2.split_into_blocks(4)
-    assert torch_allclose(linear(x), parallel4(x))
-
-
-def test_buffer_ref_hbp_linear_unite():
-    """Check if buffer is correctly referenced when uniting."""
-    linear = HBPLinear(in_features=in_features,
-                       out_features=sum(out_features_list),
-                       bias=True)
-    x = random_input()
-
-    # after construction with a single child
-    parallel = HBPParallelLinear(linear)
-    parallel(x)
-    # check if buffer is shared
-    for mod in parallel.children():
-        assert isinstance(mod.mean_input, Tensor)
-        assert mod.mean_input is parallel.get_submodule(0).mean_input
-
-    # after splitting
-    parallel2 = parallel.split(out_features_list)
-    parallel2(x)
-    # check if buffer is shared
-    for mod in parallel2.children():
-        assert isinstance(mod.mean_input, Tensor)
-        assert mod.mean_input is parallel2.get_submodule(0).mean_input
-
-    # after unite
-    parallel3 = parallel2.unite()
-    parallel3(x)
-    # check if buffer is shared
-    for mod in parallel3.children():
-        assert isinstance(mod.mean_input, Tensor)
-        assert mod.mean_input is parallel3.get_submodule(0).mean_input
-
-    # after splitting into number of blocks
-    parallel4 = parallel2.split_into_blocks(4)
-    parallel4(x)
-    # check if buffer is shared
-    for mod in parallel4.children():
-        assert isinstance(mod.mean_input, Tensor)
-        assert mod.mean_input is parallel4.get_submodule(0).mean_input
-
-
-def example_layer():
-    """Return example split layer."""
+def example_linear():
+    """Return example layer of HBPLinear."""
     set_seeds(0)
-    return HBPParallelLinear(*[HBPLinear(in_features=in_features,
-                                         out_features=out,
-                                         bias=True)
-                               for out in out_features_list])
+    return HBPLinear(in_features=in_features,
+                     out_features=out_features,
+                     bias=True)
+
+def example_linear_parallel(num_blocks=num_blocks):
+    """Return example layer of HBPParallelLinear."""
+    return HBPParallelLinear(example_linear(), num_blocks=num_blocks)
+
+
+def test_num_blocks():
+    """Test number of blocks."""
+    # smaller than out_features
+    parallel = example_linear_parallel(num_blocks=3)
+    assert parallel.num_blocks == 3
+    # larger than out_features
+    parallel = example_linear_parallel(num_blocks=10)
+    assert parallel.num_blocks == out_features 
+
+
+def test_forward_pass():
+    """Test whether parallel module is consistent with main module."""
+    linear = example_linear()
+    parallel = example_linear_parallel(num_blocks=num_blocks)
+    x = random_input()
+    assert torch_allclose(linear(x), parallel(x))
+    assert isinstance(parallel.main.mean_input, Tensor)
+    # check HBP buffers
+    for child in parallel.main.children():
+        assert isinstance(child.mean_input, Tensor)
+        assert child.mean_input is parallel.main.mean_input
 
 
 def example_loss(tensor):
@@ -115,42 +74,52 @@ def input_hessian():
 
     Return the layers and input Hessian.
     """
-    layer = example_layer()
-    x, loss = forward(layer, random_input())
-    loss_hessian = 2 * eye(x.numel())
+    parallel = example_linear_parallel()
+    out, loss = forward(parallel, random_input())
+    loss_hessian = 2 * eye(out.numel())
     loss.backward()
     # call HBP recursively
     out_h = loss_hessian
-    in_h = layer.backward_hessian(out_h,
-                                  compute_input_hessian=True)
-    return layer, in_h
+    in_h = parallel.backward_hessian(out_h,
+                                     compute_input_hessian=True)
+    return parallel, in_h
 
 
 def brute_force_input_hessian():
     """Compute Hessian of loss w.r.t. input."""
-    layer = example_layer()
+    parallel = example_linear_parallel()
     input = random_input()
-    _, loss = forward(layer, input)
+    _, loss = forward(parallel, input)
     return exact.exact_hessian(loss, [input])
 
 
 def test_input_hessian():
     """Check if input Hessian is computed correctly."""
-    _, in_h = input_hessian()
+    layer, in_h = input_hessian()
     assert torch_allclose(in_h, brute_force_input_hessian())
-
+    for buffer in [layer.main.weight,
+                   layer.main.bias]:
+        assert buffer.grad is None
+        assert not hasattr(buffer, 'hvp')
+        assert not hasattr(buffer, 'hessian')
+    for child in layer.main.children():
+        for buffer in [child.weight, child.bias]:
+            assert buffer.grad is not None
+            assert hasattr(buffer, 'hvp')
+            assert hasattr(buffer, 'hessian')
+ 
 
 def brute_force_parameter_hessian(which):
     """Compute Hessian of loss w.r.t. the weights."""
-    layer = example_layer()
+    layer = example_linear_parallel()
     input = random_input()
     _, loss = forward(layer, input)
     if which == 'weight':
         return [exact.exact_hessian(loss, [child.weight])
-                for child in layer.children()]
+                for child in layer.main.children()]
     elif which == 'bias':
         return [exact.exact_hessian(loss, [child.bias])
-                for child in layer.children()]
+                for child in layer.main.children()]
 
 
 def test_weight_hessian():
@@ -158,7 +127,7 @@ def test_weight_hessian():
     layer, _ = input_hessian()
     for i, w_hessian in enumerate(
             brute_force_parameter_hessian('weight')):
-        w_h = layer.get_submodule(i).weight.hessian()
+        w_h = layer._get_parallel_module(i).weight.hessian()
         assert torch_allclose(w_h, w_hessian)
 
 
@@ -167,43 +136,51 @@ def test_bias_hessian():
     layer, _ = input_hessian()
     for i, b_hessian in enumerate(
             brute_force_parameter_hessian('bias')):
-        b_h = layer.get_submodule(i).bias.hessian
+        b_h = layer._get_parallel_module(i).bias.hessian
         assert torch_allclose(b_h, b_hessian)
 
 
-def test_memory_consumption():
-    """Check memory consumption during splitting."""
-    layer = example_layer()
-    layer(random_input())
-    print('Before splitting')
+def test_memory_consumption_vs_hbplinear():
+    """Test if requires same amount of memory as HBPLinear."""
+    # HBPLinear
+    layer = example_linear()
     mem_stat1 = memory_report()
-
-    layer = layer.unite()
-    print('After unite')
+    # HBPParallelLinear
+    layer = example_linear_parallel()
     mem_stat2 = memory_report()
+    assert mem_stat1 == mem_stat2
 
-    layer = layer.split_into_blocks(4)
-    print('After splitting')
-    mem_stat3 = memory_report()
-    assert mem_stat1 == mem_stat2 == mem_stat3
+
+def test_memory_consumption_forward():
+    """Check memory consumption during splitting."""
+    # feed through HBPLinear
+    layer = example_linear()
+    out = layer(random_input())
+    mem_stat1 = memory_report()
+    del layer, out
+    # feed through HBPParallelLinear
+    layer = example_linear_parallel()
+    out = layer(random_input())
+    mem_stat2 = memory_report()
+    assert mem_stat1 == mem_stat2
 
 
 def test_memory_consumption_during_hbp():
     """Check for constant memory consumption during HBP."""
-    linear = example_layer()
-
-    mem_stat = None
-    mem_stat_after = None
+    # HBPParallel layer
+    parallel = example_linear_parallel()
+    # will be initialized at first/10th HBP run
+    mem_stat, mem_stat_after = None, None
+    # HBP run
     for i in range(10):
         input = random_input()
-        out, loss = forward(linear, input)
+        out, loss = forward(parallel, input)
         loss_hessian = 2 * eye(out.numel())
         loss.backward()
         out_h = loss_hessian
-        linear.backward_hessian(out_h)
+        parallel.backward_hessian(out_h)
         if i == 0:
             mem_stat = memory_report()
         if i == 9:
             mem_stat_after = memory_report()
-
     assert mem_stat == mem_stat_after
