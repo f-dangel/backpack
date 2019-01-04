@@ -76,7 +76,9 @@ def hbp_elementwise_nonlinear(module_subclass):
             ii) residuum = diag(gradgrad_phi) \odot grad_output
             """
             in_hessian = self._gauss_newton(output_hessian)
-            in_hessian.add_(self._residuum(modify_2nd_order_terms))
+            idx = list(range(in_hessian.size()[0]))
+            in_hessian[idx, idx] = in_hessian[idx, idx] +\
+                self._residuum(modify_2nd_order_terms)
             return in_hessian
 
         def _gauss_newton(self, output_hessian):
@@ -96,19 +98,11 @@ def hbp_elementwise_nonlinear(module_subclass):
             --------
             (torch.Tensor): Gauss-Newton matrix, batch-averaged
             """
-            # FAR better approximation
             batch = self.grad_phi.size()[0]
             jacobian = self.grad_phi.view(batch, -1)
             return einsum('bi,ij,bj->ij', (jacobian,
                                            output_hessian,
                                            jacobian)) / batch
-            # BAD approximation
-            # batch = self.grad_phi.size()[0]
-            # jacobian = self.grad_phi.mean(0)
-            # return torch.einsum('i,ij,j->ij',
-            #                    (jacobian,
-            #                     output_hessian,
-            #                     jacobian)) * batch
 
         def _residuum(self, modify_2nd_order_terms):
             """Residuum of the input Hessian matrix.
@@ -138,7 +132,7 @@ def hbp_elementwise_nonlinear(module_subclass):
             else:
                 raise ValueError('Unknown 2nd-order term strategy {}'
                                  .format(modify_2nd_order_terms))
-            return diagflat(residuum_diag)
+            return residuum_diag
 
     HBPElementwiseNonlinear.__name__ = 'HBPElementwiseNonlinear{}'.format(
             module_subclass.__name__)

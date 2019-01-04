@@ -60,21 +60,17 @@ class HBPCompositionActivationLinear(hbp_decorate(Module)):
         self.linear.parameter_hessian(output_hessian)
 
     # override
-    def input_hessian(self, output_hessian, compute_input_hessian=True,
+    def input_hessian(self, output_hessian,
                       modify_2nd_order_terms='none'):
         """Compute the Hessian with respect to the layer input.
 
         Exploited relation: recursion in BDA-PCH paper.
         """
-        if compute_input_hessian is False:
-            return None
-        else:
-            in_hessian = self._compute_gauss_newton(output_hessian)
-            idx = list(range(in_hessian.size()[0]))
-            in_hessian[idx, idx] = in_hessian[idx, idx] +\
-                                   self._compute_residuum(
-                                           modify_2nd_order_terms)
-            return in_hessian
+        in_hessian = self._compute_gauss_newton(output_hessian)
+        idx = list(range(in_hessian.size()[0]))
+        in_hessian[idx, idx] = in_hessian[idx, idx] +\
+            self._compute_residuum(modify_2nd_order_terms)
+        return in_hessian
 
     def _compute_gauss_newton(self, output_hessian):
         """Compute the Gauss-Newton matrix from the output Hessian.
