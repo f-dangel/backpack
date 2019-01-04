@@ -1,10 +1,11 @@
 """Test conversion HBPLinear to parallel series and splitting."""
 
-from torch import randn, Tensor, eye
+from torch import randn, Tensor, eye, is_tensor
 from ..linear import HBPLinear
 from .linear import HBPParallelLinear
 from ...utils import (torch_allclose,
-                      set_seeds)
+                      set_seeds,
+                      memory_report)
 from ...hessian import exact
 
 
@@ -168,3 +169,41 @@ def test_bias_hessian():
             brute_force_parameter_hessian('bias')):
         b_h = layer.get_submodule(i).bias.hessian
         assert torch_allclose(b_h, b_hessian)
+
+
+def test_memory_consumption():
+    """Check memory consumption during splitting."""
+    layer = example_layer()
+    layer(random_input())
+    print('Before splitting')
+    mem_stat1 = memory_report()
+
+    layer = layer.unite()
+    print('After unite')
+    mem_stat2 = memory_report()
+
+    layer = layer.split_into_blocks(4)
+    print('After splitting')
+    mem_stat3 = memory_report()
+    assert mem_stat1 == mem_stat2 == mem_stat3
+
+
+def test_memory_consumption_during_hbp():
+    """Check for constant memory consumption during HBP."""
+    linear = example_layer()
+
+    mem_stat = None
+    mem_stat_after = None
+    for i in range(10):
+        input = random_input()
+        out, loss = forward(linear, input)
+        loss_hessian = 2 * eye(out.numel())
+        loss.backward()
+        out_h = loss_hessian
+        linear.backward_hessian(out_h)
+        if i == 0:
+            mem_stat = memory_report()
+        if i == 9:
+            mem_stat_after = memory_report()
+
+    assert mem_stat == mem_stat_after

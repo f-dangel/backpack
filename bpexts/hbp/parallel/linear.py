@@ -24,6 +24,8 @@ class HBPParallelLinear(HBPParallel):
                                      different_classes))
         super().__init__(*layers)
 
+        self.out_features_list = [mod.out_features for mod in layers]
+
         # disable hooks except for first layer
         for i, mod in enumerate(self.children()):
             if i != 0:
@@ -38,6 +40,31 @@ class HBPParallelLinear(HBPParallel):
         except AttributeError as e:
             warn('Could not copy/find buffer mean_input.\n{}'
                  .format(e))
+
+        # Try to save memory
+        #####################
+        has_bias = set(mod.bias is not None for mod in self.children())
+        if not len(has_bias) == 1:
+            raise ValueError('Expect simultaneous presence/absence'
+                             ' of bias, got {}'.format(has_bias))
+        has_bias = has_bias.pop()
+
+        # concatenate weight matrix
+        weight = cat([mod.weight.data for mod in self.children()])
+        self.register_buffer('weight', weight)
+
+        # concatenate bias
+        bias = None if not has_bias else\
+            cat([mod.bias.data for mod in self.children()])
+        self.register_buffer('bias', bias)
+
+        # assign slices to children parameters
+        idx = [0] + list(cumsum(self.out_features_list))
+        idx = [(idx[i], idx[i + 1]) for i in range(len(idx) - 1)]
+        for (i, j), child in zip(idx, self.children()):
+            child.weight.data = self.weight.data[i:j, :]
+            if has_bias:
+                child.bias.data = self.bias.data[i:j]
 
     # override
     def hbp_hooks(self):
@@ -99,13 +126,11 @@ class HBPParallelLinear(HBPParallel):
                                      bias=has_bias)
 
         # concatenate weight matrix and assign
-        weight = cat([mod.weight.data for mod in self.children()])
-        layer.weight.data = weight
+        layer.weight.data = self.weight.data
 
         # concatenate bias and assign
         if has_bias:
-            bias = cat([mod.bias.data for mod in self.children()])
-            layer.bias.data = bias
+            layer.bias.data = self.bias.data
 
         # try to copy already existing duplicate buffers from HBP
         try:
@@ -115,13 +140,7 @@ class HBPParallelLinear(HBPParallel):
             warn('Could not copy/find buffer mean_input.\n{}'
                  .format(e))
 
-        # HBPParallelLinear version with single child
-        parallel = self.__class__(layer)
-
-        # out_features_list
-        parallel.out_features_list = [out_features]
-
-        return parallel
+        return self.__class__(layer)
 
     def split(self, out_features_list):
         """Split into parallel series of HBPLinear.
@@ -172,10 +191,4 @@ class HBPParallelLinear(HBPParallel):
             warn('Could not copy/find buffer mean_input.\n{}'
                  .format(e))
 
-        # HBPParallelLinear version with split children
-        parallel = self.__class__(*layers)
-
-        # out_features_list
-        parallel.out_features_list = out_features_list
-
-        return parallel
+        return self.__class__(*layers)
