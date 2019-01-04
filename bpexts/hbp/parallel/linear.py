@@ -97,14 +97,7 @@ class HBPParallelLinear(HBPParallel):
         for mod, out_h in zip(self.main.children(), out_h_split):
             mod.parameter_hessian(out_h)
 
-    # override
-    def input_hessian(self, output_hessian, modify_2nd_order_terms='none'):
-        """Use united layer to backward the Hessian."""
-        return self.main.input_hessian(
-                output_hessian,
-                modify_2nd_order_terms=modify_2nd_order_terms)
-
-    # override
+   # override
     def forward(self, input):
         """Feed through each parallel layer, concatenate result."""
         return cat([layer(input) for layer in self.main.children()], 1)

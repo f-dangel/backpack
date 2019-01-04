@@ -25,3 +25,10 @@ class HBPParallel(hbp_decorate(Module)):
     def _parallel_module_name(idx):
         """Return internal name for parallel layer."""
         return 'parallel{}'.format(idx)
+
+    # override
+    def input_hessian(self, output_hessian, modify_2nd_order_terms='none'):
+        """Use united layer to backward the Hessian."""
+        return self.main.input_hessian(
+                output_hessian,
+                modify_2nd_order_terms=modify_2nd_order_terms)
