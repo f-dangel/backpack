@@ -69,9 +69,6 @@ class HBPParallelCompositionActivationLinear(HBPParallel):
         
         Avoid unnecessary copies"""
         self.register_exts_forward_hook(self.reference_mean_input)
-        return
-        self.register_exts_forward_hook(self.reference_grad_phi)
-        self.register_exts_forward_hook(self.reference_gradgrad_phi)
 
     # --- hooks ---
     @staticmethod
@@ -87,30 +84,6 @@ class HBPParallelCompositionActivationLinear(HBPParallel):
         for idx, mod in enumerate(module.parallel_children()):
             if idx != 0:
                 mod.linear.register_exts_buffer('mean_input', mean_input)
-
-    @staticmethod
-    def reference_grad_phi(module, input, output):
-        """Save concatenation of of grad_phi input from parallel activations.
-
-        Intended use as forward hook.
-        Initialize module buffer 'grad_phi' in the main layer.
-        """
-        grad_phi = cat([mod.activation.grad_phi
-                        for mod in module.parallel_children()], 1)
-        module.main.activation.register_exts_buffer('grad_phi', grad_phi)
-
-    @staticmethod
-    def reference_gradgrad_phi(module, input, output):
-        """Save concatenation of of gradgrad_phi input from parallel 
-        activations.
-
-        Intended use as forward hook.
-        Initialize module buffer 'gradgrad_phi' in the main layer.
-        """
-        gradgrad_phi = cat([mod.activation.gradgrad_phi
-                       for mod in module.parallel_children()], 1)
-        module.main.activation.register_exts_buffer('gradgrad_phi',
-                                                    gradgrad_phi)
     # --- end of hooks ---
 
     # override
