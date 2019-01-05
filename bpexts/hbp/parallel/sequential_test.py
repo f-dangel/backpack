@@ -33,7 +33,7 @@ target_classes = [
         HBPSigmoid,
         HBPReLU
         ]
-num_blocks = 2
+max_blocks = 2
 num_layers = len(in_features)
 input = randn(1, in_features[0])
 
@@ -62,9 +62,9 @@ def example_sequence():
     return HBPSequential(*create_layers())
 
 
-def example_sequence_parallel(num_blocks=num_blocks):
+def example_sequence_parallel(max_blocks=max_blocks):
     """Return example layer of HBPParallelCompositionActivation."""
-    return HBPParallelSequential(num_blocks, *create_layers())
+    return HBPParallelSequential(max_blocks, *create_layers())
 
 
 def test_conversion():
@@ -181,7 +181,7 @@ def test_parameter_hessians(random_vp=10):
         if idx > 2:
             continue
         layer_idx = list(layer.children())[idx]
-        for n in range(num_blocks):
+        for n in range(layer_idx.num_blocks):
             linear = None
             if idx == 0:
                 linear = layer_idx._get_parallel_module(n)
@@ -201,7 +201,7 @@ def test_parameter_hessians(random_vp=10):
         if idx > 2:
             continue
         layer_idx = list(layer.children())[idx]
-        for n in range(num_blocks):
+        for n in range(layer_idx.num_blocks):
             linear = None
             if idx == 0:
                 linear = layer_idx._get_parallel_module(n)

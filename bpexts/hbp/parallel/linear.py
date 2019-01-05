@@ -14,12 +14,13 @@ class HBPParallelLinear(HBPParallel):
     """
     contained_class = HBPLinear
 
-    def __init__(self, layer, num_blocks):
+    def __init__(self, layer, max_blocks):
         if not layer.__class__ == self.contained_class:
             raise ValueError('Expecting layer of type {}, got {}'
                              .format(self.contained_class,
                                      layer.__class__))
-        super().__init__(min(num_blocks, layer.out_features))
+        self.max_blocks = max_blocks
+        super().__init__(len(layer.weight.chunk(self.max_blocks, 0)))
 
         # disable exts hooks, buffers
         layer.disable_exts()
@@ -37,10 +38,16 @@ class HBPParallelLinear(HBPParallel):
         # register wrapped module
         self._register_wrapped_module(layer)
 
-        chunked_weight = layer.weight.chunk(self.num_blocks, 0)
+        chunked_weight = layer.weight.chunk(self.max_blocks, 0)
         chunked_bias = self.num_blocks * [None]\
                 if layer.bias is None\
-                else layer.bias.chunk(self.num_blocks, 0)
+                else layer.bias.chunk(self.max_blocks, 0)
+
+        # checks, TODO: can be removed
+        assert self.max_blocks >= self.num_blocks
+        assert len(chunked_weight) == self.num_blocks
+        assert len(chunked_bias) == self.num_blocks
+        # ---
 
         for idx, (chunk_w, chunk_b) in enumerate(zip(chunked_weight,
                                                      chunked_bias)):
@@ -88,8 +95,8 @@ class HBPParallelLinear(HBPParallel):
         parallel modules."""
         # split output_hessian 
         out_h_split = [(output_hessian.chunk(
-                          self.num_blocks, 0)[i]).chunk(
-                            self.num_blocks, 1)[i]
+                          self.max_blocks, 0)[i]).chunk(
+                            self.max_blocks, 1)[i]
                     for i in range(self.num_blocks)]
         # call parameter Hessian recursively
         for mod, out_h in zip(self.parallel_children(), out_h_split):

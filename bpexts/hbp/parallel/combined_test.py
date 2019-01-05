@@ -13,7 +13,7 @@ from ...hessian import exact
 test_classes = [HBPSigmoidLinear, HBPReLULinear]
 
 in_features = 20
-num_blocks = 3
+max_blocks = 3
 in_features_list = [7, 7, 6]
 out_features_list = [3, 3, 2]
 out_features = 8
@@ -34,20 +34,23 @@ def example_layer(cls):
                out_features=out_features,
                bias=True)
 
-def example_layer_parallel(cls, num_blocks=num_blocks):
+def example_layer_parallel(cls, max_blocks=max_blocks):
     """Return example layer of HBPParallelCompositionActivation."""
     return HBPParallelCompositionActivationLinear(example_layer(cls),
-                                                  num_blocks)
+                                                  max_blocks)
 
 
 def test_num_blocks():
     """Test number of blocks."""
     for cls in test_classes:
         # smaller than out_features
-        parallel = example_layer_parallel(cls, num_blocks=3)
+        parallel = example_layer_parallel(cls, max_blocks=3)
         assert parallel.num_blocks == 3
+        # smaller than out_features
+        parallel = example_layer_parallel(cls, max_blocks=6)
+        assert parallel.num_blocks == 4
         # larger than out_features
-        parallel = example_layer_parallel(cls, num_blocks=10)
+        parallel = example_layer_parallel(cls, max_blocks=10)
         assert parallel.num_blocks == out_features 
 
 
@@ -55,7 +58,7 @@ def test_forward_pass():
     """Test whether parallel module is consistent with main module."""
     for cls in test_classes:
         layer = example_layer(cls)
-        parallel = example_layer_parallel(cls, num_blocks=num_blocks)
+        parallel = example_layer_parallel(cls, max_blocks=max_blocks)
         x = random_input()
         assert torch_allclose(layer(x), parallel(x))
         assert isinstance(parallel.main.linear.mean_input, Tensor)
@@ -85,7 +88,7 @@ def forward(layer, input):
 def test_backward_pass():
     """Test whether parallel module is consistent with main module."""
     for cls in test_classes:
-        parallel = example_layer_parallel(cls, num_blocks=num_blocks)
+        parallel = example_layer_parallel(cls, max_blocks=max_blocks)
         x = random_input()
         out, loss = forward(parallel, x)
         loss.backward()

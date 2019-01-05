@@ -12,13 +12,14 @@ class HBPParallelCompositionActivationLinear(HBPParallel):
     """Convert single/multiple parallel series of HBPComposition."""
     contained_parent_class = HBPCompositionActivationLinear
 
-    def __init__(self, layer, num_blocks):
+    def __init__(self, layer, max_blocks):
         self.contained_class = layer.__class__
         if not issubclass(self.contained_class, self.contained_parent_class):
             raise ValueError('Expecting layers derived from {}, got {}'
                              .format(self.contained_parent_class,
                                      self.contained_class))
-        super().__init__(min(num_blocks, layer.linear.out_features))
+        self.max_blocks = max_blocks
+        super().__init__(len(layer.linear.weight.chunk(self.max_blocks, 0)))
 
         # disable exts hooks, buffers only in linear
         layer.linear.disable_exts()
@@ -37,10 +38,16 @@ class HBPParallelCompositionActivationLinear(HBPParallel):
         # register wrapped module
         self._register_wrapped_module(layer)
 
-        chunked_weight = layer.linear.weight.chunk(self.num_blocks, 0)
+        chunked_weight = layer.linear.weight.chunk(self.max_blocks, 0)
         chunked_bias = self.num_blocks * [None]\
                 if layer.linear.bias is None\
-                else layer.linear.bias.chunk(self.num_blocks, 0)
+                else layer.linear.bias.chunk(self.max_blocks, 0)
+
+        # checks, TODO: can be removed
+        assert self.max_blocks >= self.num_blocks
+        assert len(chunked_weight) == self.num_blocks
+        assert len(chunked_bias) == self.num_blocks
+        # ---
 
         for idx, (chunk_w, chunk_b) in enumerate(zip(chunked_weight,
                                                      chunked_bias)):
@@ -92,8 +99,8 @@ class HBPParallelCompositionActivationLinear(HBPParallel):
         parallel modules."""
         # split output_hessian 
         out_h_split = [(output_hessian.chunk(
-                          self.num_blocks, 0)[i]).chunk(
-                            self.num_blocks, 1)[i]
+                          self.max_blocks, 0)[i]).chunk(
+                            self.max_blocks, 1)[i]
                     for i in range(self.num_blocks)]
         # call parameter Hessian recursively
         for mod, out_h in zip(self.parallel_children(), out_h_split):
@@ -119,7 +126,7 @@ class HBPParallelCompositionActivationLinear(HBPParallel):
         """
         for mod, grad_out in zip(
                 self.parallel_children(),
-                self.main.activation.grad_output.chunk(self.num_blocks, 1)):
+                self.main.activation.grad_output.chunk(self.max_blocks, 1)):
             mod.activation.register_exts_buffer('grad_output', grad_out)
 
     def spread_grad_phi(self):
@@ -129,7 +136,7 @@ class HBPParallelCompositionActivationLinear(HBPParallel):
         """
         for mod, grad_phi in zip(
                 self.parallel_children(),
-                self.main.activation.grad_phi.chunk(self.num_blocks, 1)):
+                self.main.activation.grad_phi.chunk(self.max_blocks, 1)):
             mod.activation.register_exts_buffer('grad_phi', grad_phi)
 
     def spread_gradgrad_phi(self):
@@ -139,5 +146,5 @@ class HBPParallelCompositionActivationLinear(HBPParallel):
         """
         for mod, gradgrad_phi in zip(
                 self.parallel_children(),
-                self.main.activation.gradgrad_phi.chunk(self.num_blocks, 1)):
+                self.main.activation.gradgrad_phi.chunk(self.max_blocks, 1)):
             mod.activation.register_exts_buffer('gradgrad_phi', gradgrad_phi)

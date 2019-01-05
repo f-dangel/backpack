@@ -10,7 +10,7 @@ from ...hessian import exact
 
 
 in_features = 20
-num_blocks = 3
+max_blocks = 3
 out_features_list = [3, 3, 2]
 out_features = 8
 input = randn(1, in_features)
@@ -30,25 +30,28 @@ def example_linear():
                      out_features=out_features,
                      bias=True)
 
-def example_linear_parallel(num_blocks=num_blocks):
+def example_linear_parallel(max_blocks=max_blocks):
     """Return example layer of HBPParallelLinear."""
-    return HBPParallelLinear(example_linear(), num_blocks)
+    return HBPParallelLinear(example_linear(), max_blocks)
 
 
 def test_num_blocks():
     """Test number of blocks."""
     # smaller than out_features
-    parallel = example_linear_parallel(num_blocks=3)
+    parallel = example_linear_parallel(max_blocks=3)
     assert parallel.num_blocks == 3
+    # smaller than out_features
+    parallel = example_linear_parallel(max_blocks=5)
+    assert parallel.num_blocks == 4
     # larger than out_features
-    parallel = example_linear_parallel(num_blocks=10)
+    parallel = example_linear_parallel(max_blocks=10)
     assert parallel.num_blocks == out_features 
 
 
 def test_forward_pass():
     """Test whether parallel module is consistent with main module."""
     linear = example_linear()
-    parallel = example_linear_parallel(num_blocks=num_blocks)
+    parallel = example_linear_parallel(max_blocks=max_blocks)
     x = random_input()
     assert torch_allclose(linear(x), parallel(x))
     assert isinstance(parallel.main.mean_input, Tensor)
