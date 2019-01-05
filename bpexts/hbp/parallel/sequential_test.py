@@ -6,14 +6,33 @@ from ..sequential import HBPSequential
 from ..linear import HBPLinear
 from .linear import HBPParallelLinear
 from ..combined_sigmoid import HBPSigmoidLinear
+from ..combined_relu import HBPReLULinear
+from ..sigmoid import HBPSigmoid
+from ..relu import HBPReLU
 from .combined import HBPParallelCompositionActivationLinear
 from ...utils import (torch_allclose,
                       set_seeds,
                       memory_report)
 from ...hessian import exact
 
-in_features = [20, 10]
-out_features = [10, 8]
+in_features = [40, 30, 20, 10, 5]
+out_features = [30, 20, 10, 5, 2]
+# DO NOT MODIFY!
+classes = [
+        HBPLinear,
+        HBPSigmoidLinear,
+        HBPReLULinear,
+        HBPSigmoid,
+        HBPReLU
+        ]
+# DO NOT MODIFY!
+target_classes = [
+        HBPParallelLinear,
+        HBPParallelCompositionActivationLinear,
+        HBPParallelCompositionActivationLinear,
+        HBPSigmoid,
+        HBPReLU
+        ]
 num_blocks = 2
 num_layers = len(in_features)
 input = randn(1, in_features[0])
@@ -26,35 +45,50 @@ def random_input():
     return input_with_grad
 
 
-def test_init_from_sequential():
-    """Test initialization from HBPSequential."""
-    layers = [HBPSigmoidLinear(in_, out, bias=True)
-              for in_, out in zip(in_features, out_features)]
-    sequence = HBPSequential(*layers)
-    parallel = HBPParallelSequential(sequence)
-    for mod in parallel.children():
-        assert issubclass(mod.__class__, HBPParallelSequential)
-        for mod2 in mod.children():
-            assert issubclass(mod2.__class__,
-                              HBPParallelCompositionActivationLinear)
-
-
-def test_init_from_list():
-    """Test initialization from list."""
-    layers = [HBPLinear(in_, out, bias=True)
-              for in_, out in zip(in_features, out_features)]
-    parallel = HBPParallelSequential(*layers)
-    for mod in parallel.children():
-        assert issubclass(mod.__class__, HBPParallelLinear)
-
-
-def create_sequence():
-    """Return sequence of identical modules in parallel."""
-    # same seed
+def create_layers():
+    """Create list of layers for the example sequence."""
     set_seeds(0)
-    layers = [HBPSigmoidLinear(in_, out, bias=True)
-              for in_, out in zip(in_features, out_features)]
-    return HBPParallelSequential(*layers).split_into_blocks(num_blocks)
+    layers = []
+    for cls, in_, out in zip(classes[:3], in_features[:3], out_features[:3]):
+        layers.append(cls(in_features=in_,
+                          out_features=out,
+                          bias=True))
+    for cls in classes[3:]:
+        layers.append(cls())
+    return layers
+
+def example_sequence():
+    """Return example layer of HBPSequential."""
+    return HBPSequential(*create_layers())
+
+
+def example_sequence_parallel(num_blocks=num_blocks):
+    """Return example layer of HBPParallelCompositionActivation."""
+    return HBPParallelSequential(num_blocks, *create_layers())
+
+
+def test_conversion():
+    """Test conversion during initialization."""
+    sequence = example_sequence_parallel()
+    for mod, cls in zip(sequence.children(), target_classes):
+        assert issubclass(mod.__class__, cls)
+
+
+def test_num_blocks():
+    """Test number of blocks."""
+    # still possible for each layer
+    sequence = example_sequence_parallel(3)
+    for idx, parallel in enumerate(sequence.children()):
+        if idx < 3:
+            assert parallel.num_blocks == 3
+
+
+def test_forward_pass():
+    """Test for consistent behavior in forward pass."""
+    x = random_input()
+    sequence = example_sequence()
+    parallel = example_sequence_parallel()
+    assert torch_allclose(sequence(x), parallel(x))
 
 
 def forward(layer, input):
@@ -77,7 +111,7 @@ def hessian_backward():
 
     Return the layer.
     """
-    layer = create_sequence()
+    layer = example_sequence_parallel()
     x, loss = forward(layer, input)
     loss_hessian = 2 * eye(x.numel())
     loss.backward()
@@ -89,25 +123,39 @@ def hessian_backward():
 
 def brute_force_hessian(layer_idx, parallel_idx, which):
     """Compute Hessian of loss w.r.t. parameter in layer."""
-    sequence = create_sequence()
-    _, loss = forward(sequence, random_input())
+    if layer_idx > 2:
+        raise ValueError('Works only for indices from 0 to 2')
+    parallel = example_sequence_parallel()
+    _, loss = forward(parallel, random_input())
     if which == 'weight':
-        return exact.exact_hessian(loss,
-                                   [list(sequence.children())[layer_idx]
-                                    .get_submodule(parallel_idx)
-                                    .linear.weight])
+        if layer_idx == 0:
+            return exact.exact_hessian(loss,
+                                       [list(parallel.children())[layer_idx]
+                                        ._get_parallel_module(parallel_idx)
+                                        .weight])
+        else:
+             return exact.exact_hessian(loss,
+                                       [list(parallel.children())[layer_idx]
+                                        ._get_parallel_module(parallel_idx)
+                                        .linear.weight])
     elif which == 'bias':
-        return exact.exact_hessian(loss,
-                                   [list(sequence.children())[layer_idx]
-                                    .get_submodule(parallel_idx)
-                                    .linear.bias])
+        if layer_idx == 0:
+            return exact.exact_hessian(loss,
+                                       [list(parallel.children())[layer_idx]
+                                        ._get_parallel_module(parallel_idx)
+                                        .bias])
+        else:
+             return exact.exact_hessian(loss,
+                                       [list(parallel.children())[layer_idx]
+                                        ._get_parallel_module(parallel_idx)
+                                        .linear.bias])
     else:
         raise ValueError
 
 
 def brute_force_input_hessian():
     """Compute the Hessian with respect to the input by brute force."""
-    layer = create_sequence()
+    layer = example_sequence_parallel()
     input = random_input()
     _, loss = forward(layer, input)
     return exact.exact_hessian(loss, [input])
@@ -115,7 +163,7 @@ def brute_force_input_hessian():
 
 def test_input_hessians():
     """Test whether Hessian with respect to input is correctly reproduced."""
-    layer = create_sequence()
+    layer = example_sequence_parallel()
     out, loss = forward(layer, random_input())
     loss_hessian = 2 * eye(out.numel())
     loss.backward()
@@ -130,9 +178,15 @@ def test_parameter_hessians(random_vp=10):
     # test bias Hessians
     layer = hessian_backward()
     for idx, mod in enumerate(layer.children()):
+        if idx > 2:
+            continue
         layer_idx = list(layer.children())[idx]
         for n in range(num_blocks):
-            linear = layer_idx.get_submodule(n).linear
+            linear = None
+            if idx == 0:
+                linear = layer_idx._get_parallel_module(n)
+            else:
+                linear = layer_idx._get_parallel_module(n).linear
             b_hessian = linear.bias.hessian
             b_brute_force = brute_force_hessian(idx, n, 'bias')
             assert torch_allclose(b_hessian, b_brute_force, atol=1E-5)
@@ -144,9 +198,15 @@ def test_parameter_hessians(random_vp=10):
             assert torch_allclose(vp, vp_result, atol=1E-5)
     # test weight Hessians
     for idx, mod in enumerate(layer.children()):
+        if idx > 2:
+            continue
         layer_idx = list(layer.children())[idx]
         for n in range(num_blocks):
-            linear = layer_idx.get_submodule(n).linear
+            linear = None
+            if idx == 0:
+                linear = layer_idx._get_parallel_module(n)
+            else:
+                linear = layer_idx._get_parallel_module(n).linear
             w_hessian = linear.weight.hessian()
             w_brute_force = brute_force_hessian(idx, n, 'weight')
             assert torch_allclose(w_hessian, w_brute_force, atol=1E-5)
@@ -158,35 +218,22 @@ def test_parameter_hessians(random_vp=10):
                 assert torch_allclose(vp, vp_result, atol=1E-5)
 
 
-def create_non_split_sequence():
-    """Return sequence of identical modules in parallel."""
-    # same seed
-    set_seeds(0)
-    layers = [HBPSigmoidLinear(in_, out, bias=True)
-              for in_, out in zip(in_features, out_features)]
-    return HBPParallelSequential(*layers)
-
-
 def test_memory_consumption_before_backward_hessian():
     """Check memory consumption during splitting."""
-    layer = create_non_split_sequence()
+    layer = example_sequence()
     print('No splitting')
     mem_stat1 = memory_report()
 
-    layer = create_sequence()
+    layer = example_sequence_parallel()
     print('With splitting')
     mem_stat2 = memory_report()
     assert mem_stat1 == mem_stat2
 
-    layer = layer.unite()
-    print('After uniting')
-    mem_stat3 = memory_report()
-    assert mem_stat1 == mem_stat3
+    layer = example_sequence_parallel(10)
+    print('With splitting')
+    mem_stat2 = memory_report()
+    assert mem_stat1 == mem_stat2
 
-    layer = layer.split_into_blocks(3)
-    print('After splitting')
-    mem_stat4 = memory_report()
-    assert mem_stat1 == mem_stat4
 
 
 def example_loss(tensor):
@@ -202,7 +249,7 @@ def forward(layer, input):
 
 def test_memory_consumption_during_hbp():
     """Check memory consumption during Hessian backpropagation."""
-    sequential = create_sequence()
+    parallel = example_sequence_parallel()
 
     memory_report()
 
@@ -211,11 +258,11 @@ def test_memory_consumption_during_hbp():
     
     for i in range(10):
         input = random_input()
-        out, loss = forward(sequential, input)
+        out, loss = forward(parallel, input)
         loss_hessian = 2 * eye(out.numel())
         loss.backward()
         out_h = loss_hessian
-        sequential.backward_hessian(out_h)
+        parallel.backward_hessian(out_h)
         if i == 0:
             mem_stat = memory_report()
         if i == 9:
