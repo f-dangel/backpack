@@ -1,161 +1,23 @@
 """Test conversion/splitting HBPCompositionActivation to parallel."""
 
 from torch import randn, Tensor, eye
-from ..combined_relu_test import test_input_hessian\
-        as hbp_relulinear_after_hessian_backward
-from ..combined_sigmoid_test import test_input_hessian\
-        as hbp_sigmoidlinear_after_hessian_backward
 from ..combined_relu import HBPReLULinear
 from ..combined_sigmoid import HBPSigmoidLinear
 from .combined import HBPParallelCompositionActivationLinear
 from ...utils import (torch_allclose,
                       set_seeds,
                       memory_report)
+from ...hessian import exact
 
+
+test_classes = [HBPSigmoidLinear, HBPReLULinear]
 
 in_features = 20
-out_features_list = [2, 3, 4]
-out_features_list2 = [1, 8]
-num_layers = len(out_features_list)
+num_blocks = 3
+in_features_list = [7, 7, 6]
+out_features_list = [3, 3, 2]
+out_features = 8
 input = randn(1, in_features)
-
-
-def test_forward_pass_hbp_relulinear():
-    """Test whether single/split modules are consistent in forward."""
-    relu_linear = HBPReLULinear(in_features=in_features,
-                                out_features=sum(out_features_list),
-                                bias=True)
-    x = random_input()
-    parallel = HBPParallelCompositionActivationLinear(relu_linear)
-    assert torch_allclose(relu_linear(x), parallel(x))
-
-    parallel2 = parallel.split(out_features_list)
-    assert torch_allclose(relu_linear(x), parallel2(x))
-
-    parallel3 = parallel2.unite()
-    assert torch_allclose(relu_linear.linear.bias,
-                          parallel3.get_submodule(0).linear.bias)
-    assert torch_allclose(relu_linear.linear.weight,
-                          parallel3.get_submodule(0).linear.weight)
-    assert torch_allclose(relu_linear(x), parallel3(x))
-
-    parallel4 = parallel2.split(out_features_list2)
-    assert torch_allclose(relu_linear(x), parallel4(x))
-
-
-def test_forward_pass_hbp_sigmoidlinear():
-    """Test whether single/split modules are consistent in forward."""
-    sigma_linear = HBPSigmoidLinear(in_features=in_features,
-                                    out_features=sum(out_features_list),
-                                    bias=True)
-    x = random_input()
-    parallel = HBPParallelCompositionActivationLinear(sigma_linear)
-    assert torch_allclose(sigma_linear(x), parallel(x))
-
-    parallel2 = parallel.split(out_features_list)
-    assert torch_allclose(sigma_linear(x), parallel2(x))
-
-    parallel3 = parallel2.unite()
-    assert torch_allclose(sigma_linear.linear.bias,
-                          parallel3.get_submodule(0).linear.bias)
-    assert torch_allclose(sigma_linear.linear.weight,
-                          parallel3.get_submodule(0).linear.weight)
-    assert torch_allclose(sigma_linear(x), parallel3(x))
-
-    parallel4 = parallel2.split(out_features_list2)
-    assert torch_allclose(sigma_linear(x), parallel4(x))
-
-
-def test_buffer_split_hbp_relulinear_unite():
-    """Check if buffers are correctly copied over when uniting."""
-    layer = hbp_relulinear_after_hessian_backward()
-    parallel = HBPParallelCompositionActivationLinear(layer)
-
-    mod = parallel.get_submodule(0)
-    assert isinstance(mod.linear.mean_input, Tensor)
-    assert isinstance(mod.activation.grad_phi, Tensor)
-    assert isinstance(mod.activation.gradgrad_phi, Tensor)
-    assert isinstance(mod.activation.grad_output, Tensor)
-
-    parallel2 = parallel.split_into_blocks(2)
-    for i, mod in enumerate(parallel2.children()):
-        assert isinstance(mod.linear.mean_input, Tensor)
-        if i == 0:
-            assert hasattr(mod.activation, 'grad_phi')
-            assert hasattr(mod.activation, 'gradgrad_phi')
-            assert hasattr(mod.activation, 'grad_output')
-        else:
-            assert not hasattr(mod.activation, 'grad_phi')
-            assert not hasattr(mod.activation, 'gradgrad_phi')
-            assert not hasattr(mod.activation, 'grad_output')
- 
-    parallel3 = parallel.unite()
-    for i, mod in enumerate(parallel3.children()):
-        assert isinstance(mod.linear.mean_input, Tensor)
-        if i == 0:
-            assert hasattr(mod.activation, 'grad_phi')
-            assert hasattr(mod.activation, 'gradgrad_phi')
-            assert hasattr(mod.activation, 'grad_output')
-        else:
-            assert not hasattr(mod.activation, 'grad_phi')
-            assert not hasattr(mod.activation, 'gradgrad_phi')
-            assert not hasattr(mod.activation, 'grad_output')
-
-
-def test_buffer_split_hbp_sigmoidlinear_unite():
-    """Check if buffers are correctly copied over when uniting."""
-    layer = hbp_sigmoidlinear_after_hessian_backward()
-    parallel = HBPParallelCompositionActivationLinear(layer)
-
-    mod = parallel.get_submodule(0)
-    assert isinstance(mod.linear.mean_input, Tensor)
-    assert isinstance(mod.activation.grad_phi, Tensor)
-    assert isinstance(mod.activation.gradgrad_phi, Tensor)
-    assert isinstance(mod.activation.grad_output, Tensor)
-
-    parallel2 = parallel.split_into_blocks(2)
-    for i, mod in enumerate(parallel2.children()):
-        assert isinstance(mod.linear.mean_input, Tensor)
-        if i == 0:
-            assert hasattr(mod.activation, 'grad_phi')
-            assert hasattr(mod.activation, 'gradgrad_phi')
-            assert hasattr(mod.activation, 'grad_output')
-        else:
-            assert not hasattr(mod.activation, 'grad_phi')
-            assert not hasattr(mod.activation, 'gradgrad_phi')
-            assert not hasattr(mod.activation, 'grad_output')
- 
-    parallel3 = parallel.unite()
-    for i, mod in enumerate(parallel3.children()):
-        assert isinstance(mod.linear.mean_input, Tensor)
-        if i == 0:
-            assert hasattr(mod.activation, 'grad_phi')
-            assert hasattr(mod.activation, 'gradgrad_phi')
-            assert hasattr(mod.activation, 'grad_output')
-        else:
-            assert not hasattr(mod.activation, 'grad_phi')
-            assert not hasattr(mod.activation, 'gradgrad_phi')
-            assert not hasattr(mod.activation, 'grad_output')
-
-
-def test_memory_consumption():
-    """Check memory consumption during splitting."""
-    layer = hbp_sigmoidlinear_after_hessian_backward()
-    # delete Hessian quantities
-    del layer.linear.bias.hessian
-    del layer.linear.weight.hessian
-    del layer.linear.weight.hvp
-    print('Before conversion')
-    mem_stat1 = memory_report()
-
-    layer = HBPParallelCompositionActivationLinear(layer)
-    print('After conversion')
-    mem_stat2 = memory_report()
-
-    layer = layer.split_into_blocks(4)
-    print('After splitting')
-    mem_stat3 = memory_report()
-    assert mem_stat1 == mem_stat2 == mem_stat3
 
 
 def random_input():
@@ -165,10 +27,54 @@ def random_input():
     return new_input
 
 
+def example_layer(cls):
+    """Return example layer of HBPCompositionActivation."""
+    set_seeds(0)
+    return cls(in_features=in_features,
+               out_features=out_features,
+               bias=True)
+
+def example_layer_parallel(cls, num_blocks=num_blocks):
+    """Return example layer of HBPParallelCompositionActivation."""
+    return HBPParallelCompositionActivationLinear(example_layer(cls),
+                                                  num_blocks=num_blocks)
+
+
+def test_num_blocks():
+    """Test number of blocks."""
+    for cls in test_classes:
+        # smaller than out_features
+        parallel = example_layer_parallel(cls, num_blocks=3)
+        assert parallel.num_blocks == 3
+        # larger than out_features
+        parallel = example_layer_parallel(cls, num_blocks=10)
+        assert parallel.num_blocks == out_features 
+
+
+def test_forward_pass():
+    """Test whether parallel module is consistent with main module."""
+    for cls in test_classes:
+        layer = example_layer(cls)
+        parallel = example_layer_parallel(cls, num_blocks=num_blocks)
+        x = random_input()
+        assert torch_allclose(layer(x), parallel(x))
+        assert isinstance(parallel.main.linear.mean_input, Tensor)
+        assert isinstance(parallel.main.activation.grad_phi, Tensor)
+        assert isinstance(parallel.main.activation.gradgrad_phi, Tensor)
+        assert not hasattr(parallel.main.activation, 'grad_output')
+        # check HBP buffers
+        for child in parallel.parallel_children():
+            assert isinstance(child.linear.mean_input, Tensor)
+            assert child.linear.mean_input is parallel.main.linear.mean_input
+            assert not hasattr(child.activation, 'grad_phi')
+            assert not hasattr(child.activation, 'gradgrad_phi')
+            assert not hasattr(child.activation, 'grad_output')
+ 
+
 def example_loss(tensor):
     """Sum all square entries of a tensor."""
     return (tensor**2).view(-1).sum(0)
-
+ 
 
 def forward(layer, input):
     """Feed input through layers and loss. Return output and loss."""
@@ -176,27 +82,140 @@ def forward(layer, input):
     return out, example_loss(out)
 
 
+def test_backward_pass():
+    """Test whether parallel module is consistent with main module."""
+    for cls in test_classes:
+        parallel = example_layer_parallel(cls, num_blocks=num_blocks)
+        x = random_input()
+        out, loss = forward(parallel, x)
+        loss.backward()
+
+        assert isinstance(parallel.main.activation.grad_output, Tensor)
+        assert tuple(parallel.main.activation.grad_output.size()) == \
+                    (1, in_features)
+        # check HBP buffers
+        for idx, child in enumerate(parallel.parallel_children()):
+            assert not hasattr(child.activation, 'grad_output')
+ 
+
+def input_hessian(cls):
+    """Feed input through net and loss, backward the Hessian.
+
+    Return the layers and input Hessian.
+    """
+    parallel = example_layer_parallel(cls)
+    out, loss = forward(parallel, random_input())
+    loss_hessian = 2 * eye(out.numel())
+    loss.backward()
+    # call HBP recursively
+    out_h = loss_hessian
+    in_h = parallel.backward_hessian(out_h,
+                                     compute_input_hessian=True)
+    return parallel, in_h
+
+
+def brute_force_input_hessian(cls):
+    """Compute Hessian of loss w.r.t. input."""
+    parallel = example_layer_parallel(cls)
+    input = random_input()
+    _, loss = forward(parallel, input)
+    return exact.exact_hessian(loss, [input])
+
+
+def test_input_hessian():
+    """Check if input Hessian is computed correctly."""
+    for cls in test_classes:
+        layer, in_h = input_hessian(cls)
+        assert torch_allclose(in_h, brute_force_input_hessian(cls))
+        for buffer in [layer.main.linear.weight,
+                       layer.main.linear.bias]:
+            assert buffer.grad is None
+            assert not hasattr(buffer, 'hvp')
+            assert not hasattr(buffer, 'hessian')
+        for child in layer.parallel_children():
+            for buffer in [child.linear.weight, child.linear.bias]:
+                assert buffer.grad is not None
+                assert hasattr(buffer, 'hvp')
+                assert hasattr(buffer, 'hessian')
+     
+
+def brute_force_parameter_hessian(cls, which):
+    """Compute Hessian of loss w.r.t. the weights."""
+    layer = example_layer_parallel(cls)
+    input = random_input()
+    _, loss = forward(layer, input)
+    if which == 'weight':
+        return [exact.exact_hessian(loss, [child.linear.weight])
+                for child in layer.parallel_children()]
+    elif which == 'bias':
+        return [exact.exact_hessian(loss, [child.linear.bias])
+                for child in layer.parallel_children()]
+
+
+def test_weight_hessian():
+    """Check if weight Hessians are computed correctly."""
+    for cls in test_classes:
+        layer, _ = input_hessian(cls)
+        for i, w_hessian in enumerate(
+                brute_force_parameter_hessian(cls, 'weight')):
+            w_h = layer._get_parallel_module(i).linear.weight.hessian()
+            assert torch_allclose(w_h, w_hessian)
+
+
+def test_bias_hessian():
+    """Check if bias  Hessians are computed correctly."""
+    for cls in test_classes:
+        layer, _ = input_hessian(cls)
+        for i, b_hessian in enumerate(
+                brute_force_parameter_hessian(cls, 'bias')):
+            b_h = layer._get_parallel_module(i).linear.bias.hessian
+            assert torch_allclose(b_h, b_hessian)
+
+
+def test_memory_consumption_vs_hbpcomposition():
+    """Test if requires same amount of memory as HBPCompositionActivation."""
+    for cls in test_classes:
+        # HBPCompositionActivation
+        layer = example_layer(cls)
+        mem_stat1 = memory_report()
+        # HBPParallelCompositionActivationLinear
+        layer = example_layer_parallel(cls)
+        mem_stat2 = memory_report()
+        assert mem_stat1 == mem_stat2
+
+
+def test_memory_consumption_forward():
+    """Check memory consumption during splitting."""
+    for cls in test_classes:
+        # feed through HBPCompositionActivation
+        layer = example_layer(cls)
+        out = layer(random_input())
+        mem_stat1 = memory_report()
+        del layer, out
+        # feed through HBPParallelCompositionActivationLinear
+        layer = example_layer_parallel(cls)
+        out = layer(random_input())
+        mem_stat2 = memory_report()
+        assert mem_stat1 == mem_stat2
+
+
 def test_memory_consumption_during_hbp():
     """Check for constant memory consumption during HBP."""
-    sigma_linear = HBPSigmoidLinear(in_features=in_features,
-                                    out_features=sum(out_features_list),
-                                    bias=True)
-    sigma_linear = HBPParallelCompositionActivationLinear(
-            sigma_linear).split_into_blocks(4)
-
-    mem_stat = None
-    mem_stat_after = None
-    
-    for i in range(10):
-        input = random_input()
-        out, loss = forward(sigma_linear, input)
-        loss_hessian = 2 * eye(out.numel())
-        loss.backward()
-        out_h = loss_hessian
-        sigma_linear.backward_hessian(out_h)
-        if i == 0:
-            mem_stat = memory_report()
-        if i == 9:
-            mem_stat_after = memory_report()
-
-    assert mem_stat == mem_stat_after
+    for cls in test_classes:
+        # HBPParallelCompositionActivation layer
+        parallel = example_layer_parallel(cls)
+        # will be initialized at first/10th HBP run
+        mem_stat, mem_stat_after = None, None
+        # HBP run
+        for i in range(10):
+            input = random_input()
+            out, loss = forward(parallel, input)
+            loss_hessian = 2 * eye(out.numel())
+            loss.backward()
+            out_h = loss_hessian
+            parallel.backward_hessian(out_h)
+            if i == 0:
+                mem_stat = memory_report()
+            if i == 9:
+                mem_stat_after = memory_report()
+        assert mem_stat == mem_stat_after
