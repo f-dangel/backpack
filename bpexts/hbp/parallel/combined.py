@@ -12,7 +12,7 @@ class HBPParallelCompositionActivationLinear(HBPParallel):
     """Convert single/multiple parallel series of HBPComposition."""
     contained_parent_class = HBPCompositionActivationLinear
 
-    def __init__(self, layer, num_blocks=1):
+    def __init__(self, layer, num_blocks):
         self.contained_class = layer.__class__
         if not issubclass(self.contained_class, self.contained_parent_class):
             raise ValueError('Expecting layers derived from {}, got {}'

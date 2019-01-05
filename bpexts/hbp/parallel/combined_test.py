@@ -37,7 +37,7 @@ def example_layer(cls):
 def example_layer_parallel(cls, num_blocks=num_blocks):
     """Return example layer of HBPParallelCompositionActivation."""
     return HBPParallelCompositionActivationLinear(example_layer(cls),
-                                                  num_blocks=num_blocks)
+                                                  num_blocks)
 
 
 def test_num_blocks():

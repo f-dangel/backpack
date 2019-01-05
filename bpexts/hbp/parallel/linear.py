@@ -14,7 +14,7 @@ class HBPParallelLinear(HBPParallel):
     """
     contained_class = HBPLinear
 
-    def __init__(self, layer, num_blocks=1):
+    def __init__(self, layer, num_blocks):
         if not layer.__class__ == self.contained_class:
             raise ValueError('Expecting layer of type {}, got {}'
                              .format(self.contained_class,
