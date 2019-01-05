@@ -18,8 +18,7 @@ class HBPParallelCompositionActivationLinear(HBPParallel):
             raise ValueError('Expecting layers derived from {}, got {}'
                              .format(self.contained_parent_class,
                                      self.contained_class))
-        super().__init__(num_blocks=min(num_blocks,
-                                        layer.linear.out_features))
+        super().__init__(min(num_blocks, layer.linear.out_features))
 
         # disable exts hooks, buffers only in linear
         layer.linear.disable_exts()
@@ -41,7 +40,7 @@ class HBPParallelCompositionActivationLinear(HBPParallel):
         chunked_weight = layer.linear.weight.chunk(self.num_blocks, 0)
         chunked_bias = self.num_blocks * [None]\
                 if layer.linear.bias is None\
-                else layer.linear.bias.chunk(num_blocks, 0)
+                else layer.linear.bias.chunk(self.num_blocks, 0)
 
         for idx, (chunk_w, chunk_b) in enumerate(zip(chunked_weight,
                                                      chunked_bias)):

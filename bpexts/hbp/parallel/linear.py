@@ -19,7 +19,7 @@ class HBPParallelLinear(HBPParallel):
             raise ValueError('Expecting layer of type {}, got {}'
                              .format(self.contained_class,
                                      layer.__class__))
-        super().__init__(num_blocks=min(num_blocks, layer.out_features))
+        super().__init__(min(num_blocks, layer.out_features))
 
         # disable exts hooks, buffers
         layer.disable_exts()
@@ -40,7 +40,7 @@ class HBPParallelLinear(HBPParallel):
         chunked_weight = layer.weight.chunk(self.num_blocks, 0)
         chunked_bias = self.num_blocks * [None]\
                 if layer.bias is None\
-                else layer.bias.chunk(num_blocks, 0)
+                else layer.bias.chunk(self.num_blocks, 0)
 
         for idx, (chunk_w, chunk_b) in enumerate(zip(chunked_weight,
                                                      chunked_bias)):
