@@ -36,6 +36,20 @@ class HBPParallel(hbp_decorate(Module)):
         return 'parallel{}'.format(idx)
 
     # override
+    def backward_hessian(self, output_hessian,
+                         compute_input_hessian=True,
+                         modify_2nd_order_terms='none'):
+        self._before_backward_hessian()
+        return super().backward_hessian(
+                output_hessian,
+                compute_input_hessian=compute_input_hessian,
+                modify_2nd_order_terms=modify_2nd_order_terms)
+
+    def _before_backward_hessian(self):
+        """Do something before HBP."""
+        pass
+
+    # override
     def input_hessian(self, output_hessian, modify_2nd_order_terms='none'):
         """Use united layer to backward the Hessian."""
         return self.main.input_hessian(

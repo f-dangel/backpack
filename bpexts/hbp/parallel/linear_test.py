@@ -53,7 +53,7 @@ def test_forward_pass():
     assert torch_allclose(linear(x), parallel(x))
     assert isinstance(parallel.main.mean_input, Tensor)
     # check HBP buffers
-    for child in parallel.main.children():
+    for child in parallel.parallel_children():
         assert isinstance(child.mean_input, Tensor)
         assert child.mean_input is parallel.main.mean_input
 
@@ -102,7 +102,7 @@ def test_input_hessian():
         assert buffer.grad is None
         assert not hasattr(buffer, 'hvp')
         assert not hasattr(buffer, 'hessian')
-    for child in layer.main.children():
+    for child in layer.parallel_children():
         for buffer in [child.weight, child.bias]:
             assert buffer.grad is not None
             assert hasattr(buffer, 'hvp')
@@ -116,10 +116,10 @@ def brute_force_parameter_hessian(which):
     _, loss = forward(layer, input)
     if which == 'weight':
         return [exact.exact_hessian(loss, [child.weight])
-                for child in layer.main.children()]
+                for child in layer.parallel_children()]
     elif which == 'bias':
         return [exact.exact_hessian(loss, [child.bias])
-                for child in layer.main.children()]
+                for child in layer.parallel_children()]
 
 
 def test_weight_hessian():
