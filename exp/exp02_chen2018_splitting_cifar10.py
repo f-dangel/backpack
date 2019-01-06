@@ -1,5 +1,5 @@
 """
-Experiments performed in Chen et al.: BDA-PCH, figure 1,
+Experiments performed in Chen et al.: BDA-PCH, figure 2,
 with different parameter splitting.
 
 Link to the reference:
@@ -10,8 +10,8 @@ import torch
 from torch.nn import CrossEntropyLoss
 from os import path, makedirs
 import matplotlib.pyplot as plt
-from .models.chen2018 import original_mnist_model
-from .loading.load_mnist import MNISTLoader
+from .models.chen2018 import original_cifar10_model
+from .loading.load_cifar10 import CIFAR10Loader
 from .training.second_order import SecondOrderTraining
 from .training.runner import TrainingRunner
 from .plotting.plotting import OptimizationPlot
@@ -24,19 +24,20 @@ from bpexts.hbp.parallel.sequential import HBPParallelSequential
 
 # global hyperparameters
 batch = 500
-epochs = 20
+epochs = 100
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-dirname = 'exp02_chen_splitting/mnist'
+dirname = 'exp02_chen_splitting/cifar10'
 data_dir = directory_in_data(dirname)
 fig_dir = directory_in_fig(dirname)
-logs_per_epoch = 5
+logs_per_epoch = 1
 
 
-def mnist_cgnewton_train_fn(modify_2nd_order_terms, max_blocks):
-    """Create training instance for MNIST CG experiment.
+def cifar10_cgnewton_train_fn(modify_2nd_order_terms, max_blocks):
+    """Create training instance for CIFAR10 CG experiment
 
     Trainable parameters (weights and bias) will be split into
     subgroups during optimization.
+
 
     Parameters:
     -----------
@@ -73,15 +74,15 @@ def mnist_cgnewton_train_fn(modify_2nd_order_terms, max_blocks):
 
     # training procedure
     # ------------------
-    def train_fn():
+    def training_fn():
         """Training function setting up the train instance."""
         # set up training and run
-        model = original_mnist_model()
+        model = original_cifar10_model()
         # split into parallel modules
         model = HBPParallelSequential(max_blocks, *list(model.children()))
         loss_function = CrossEntropyLoss()
-        data_loader = MNISTLoader(train_batch_size=batch,
-                                  test_batch_size=batch)
+        data_loader = CIFAR10Loader(train_batch_size=batch,
+                                    test_batch_size=batch)
         optimizer = CGNewton(model.parameters(),
                              lr=lr,
                              alpha=alpha,
@@ -99,79 +100,32 @@ def mnist_cgnewton_train_fn(modify_2nd_order_terms, max_blocks):
                                     logs_per_epoch=logs_per_epoch,
                                     device=device)
         return train
-    return train_fn
+    return training_fn
 
 
 if __name__ == '__main__':
     max_blocks = [1, 2, 4, 16] #, 8, 32, 64, 128, 256, 512]
     seeds = range(10)
 
-    titles = [
-              'GGN',
-              'PCH, abs',
-              'PCH, clip',
-             ]
-    fig_subdirs = [
-                   'GGN',
-                   'PCH-abs',
-                   'PCH-clip'
-                  ]
-    modify_2nd_order_terms = [
-                              # 1) GGN, different splittings
-                              'zero',
-                              # 2) PCH, different splittings
-                              'abs',
-                              # 3) PCH alternative, different splittings
-                              'clip'
-                              ]
+    # run experiments
+    # ---------------
+    for block in max_blocks:
+        labels = [
+                  'CG (GGN)',
+                  'CG (PCH, abs)',
+                  #'CG (PCH, clip)',
+                 ]
+        experiments = [
+                       # 1) Generalized Gauss-Newton curve
+                       cifar10_cgnewton_train_fn('zero', block),
+                       # 2) BDA-PCH curve
+                       cifar10_cgnewton_train_fn('abs', block),
+                       # 3) alternative BDA-PCH curve
+                       # cifar10_cgnewton_train_fn('clip', block),
+                      ]
 
-    for title, mod2nd, fig_sub in zip(titles,
-                                      modify_2nd_order_terms,
-                                      fig_subdirs):
-        # dict of dicts stores same metrics for different blocks
-        metric_to_file_for_blocks = {}
 
-        for blocks in max_blocks:
-            train_fn = mnist_cgnewton_train_fn(mod2nd, blocks)
-
-            # run experiments
-            # ---------------
+        metric_to_files = None
+        for train_fn in experiments:
             runner = TrainingRunner(train_fn)
             runner.run(seeds)
-            metric_to_files = runner.merge_runs(seeds)
-
-            # initialize with empty dict for each metric if empty
-            if metric_to_file_for_blocks == {}:
-                for metric in metric_to_files.keys():
-                    metric_to_file_for_blocks[metric] = {}
-            # sort by blocks
-            for metric, files in metric_to_files.items():
-                metric_to_file_for_blocks[metric][blocks] = files
-
-        # plotting
-        # --------
-        for metric, block_dict in metric_to_file_for_blocks.items():
-            # output file
-            this_fig_dir = path.join(fig_dir, fig_sub)
-            out_file = path.join(this_fig_dir, metric)
-            makedirs(this_fig_dir, exist_ok=True)
-            # files for each metric with labels for blocks
-            files, labels = [], []
-            for b in sorted(block_dict.keys()):
-                files.append(block_dict[b])
-                labels.append('CG, {} block{}'.format(b, 's' if b != 1 else ''))
-            # figure
-            plt.figure()
-            plt.title(title)
-            OptimizationPlot.create_standard_plot('epoch',
-                                                  metric.replace('_', ' '),
-                                                  files,
-                                                  labels,
-                                                  plot_std=False,
-                                                  # scale by training set
-                                                  scale_steps=60000)
-            plt.legend()
-            # fine tuning
-            if '_loss' in metric:
-                plt.ylim(bottom=-0.05, top=1)
-            OptimizationPlot.save_as_tikz(out_file)
