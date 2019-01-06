@@ -152,7 +152,7 @@ if __name__ == '__main__':
     experiments = [
                    # 1) SGD curve
                    cifar10_sgd_train_fn(),
-                   # 2) Jacobian curve
+                   # 2) Generalized Gauss-Newton curve
                    cifar10_cgnewton_train_fn('zero'),
                    # 3) BDA-PCH curve
                    cifar10_cgnewton_train_fn('abs'),

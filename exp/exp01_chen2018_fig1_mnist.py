@@ -145,7 +145,7 @@ if __name__ == '__main__':
     experiments = [
                    # 1) SGD curve
                    mnist_sgd_train_fn(),
-                   # 2) Jacobian curve
+                   # 2) Generalized Gauss-Newton curve
                    mnist_cgnewton_train_fn('zero'),
                    # 3) BDA-PCH curve
                    mnist_cgnewton_train_fn('abs'),
