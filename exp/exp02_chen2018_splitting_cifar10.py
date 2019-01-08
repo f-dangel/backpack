@@ -104,28 +104,73 @@ def cifar10_cgnewton_train_fn(modify_2nd_order_terms, max_blocks):
 
 
 if __name__ == '__main__':
-    max_blocks = [1, 2, 4, 16] #, 8, 32, 64, 128, 256, 512]
+    max_blocks = [1, 2, 4, 16]  #, 8, 32, 64, 128, 256, 512]
     seeds = range(10)
 
-    # run experiments
-    # ---------------
-    for block in max_blocks:
-        labels = [
-                  'CG (GGN)',
-                  'CG (PCH, abs)',
-                  #'CG (PCH, clip)',
-                 ]
-        experiments = [
-                       # 1) Generalized Gauss-Newton curve
-                       cifar10_cgnewton_train_fn('zero', block),
-                       # 2) BDA-PCH curve
-                       cifar10_cgnewton_train_fn('abs', block),
-                       # 3) alternative BDA-PCH curve
-                       # cifar10_cgnewton_train_fn('clip', block),
-                      ]
+    titles = [
+              'GGN',
+              'PCH, abs',
+              'PCH, clip',
+             ]
+    fig_subdirs = [
+                   'GGN',
+                   'PCH-abs',
+                   'PCH-clip'
+                  ]
+    modify_2nd_order_terms = [
+                              # 1) GGN, different splittings
+                              'zero',
+                              # 2) PCH, different splittings
+                              'abs',
+                              # 3) PCH alternative, different splittings
+                              'clip'
+                              ]
 
+    for title, mod2nd, fig_sub in zip(titles,
+                                      modify_2nd_order_terms,
+                                      fig_subdirs):
+        # dict of dicts stores same metrics for different blocks
+        metric_to_file_for_blocks = {}
 
-        metric_to_files = None
-        for train_fn in experiments:
+        for blocks in max_blocks:
+            train_fn = cifar10_cgnewton_train_fn(mod2nd, blocks)
+
+            # run experiments
+            # ---------------
             runner = TrainingRunner(train_fn)
             runner.run(seeds)
+            metric_to_files = runner.merge_runs(seeds)
+
+            # initialize with empty dict for each metric if empty
+            if metric_to_file_for_blocks == {}:
+                for metric in metric_to_files.keys():
+                    metric_to_file_for_blocks[metric] = {}
+            # sort by blocks
+            for metric, files in metric_to_files.items():
+                metric_to_file_for_blocks[metric][blocks] = files
+
+        # plotting
+        # --------
+        for metric, block_dict in metric_to_file_for_blocks.items():
+            # output file
+            this_fig_dir = path.join(fig_dir, fig_sub)
+            out_file = path.join(this_fig_dir, metric)
+            makedirs(this_fig_dir, exist_ok=True)
+            # files for each metric with labels for blocks
+            files, labels = [], []
+            for b in sorted(block_dict.keys()):
+                files.append(block_dict[b])
+                labels.append('CG, {} block{}'.format(b,
+                                                      's' if b != 1 else ''))
+            # figure
+            plt.figure()
+            plt.title(title)
+            OptimizationPlot.create_standard_plot('epoch',
+                                                  metric.replace('_', ' '),
+                                                  files,
+                                                  labels,
+                                                  plot_std=False,
+                                                  # scale by training set
+                                                  scale_steps=50000)
+            plt.legend()
+            OptimizationPlot.save_as_tikz(out_file)
