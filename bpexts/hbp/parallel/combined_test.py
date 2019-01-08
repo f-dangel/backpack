@@ -1,6 +1,8 @@
 """Test conversion/splitting HBPCompositionActivation to parallel."""
 
-from torch import randn, Tensor, eye
+import torch
+from torch import randn, Tensor, eye, zeros_like
+from warnings import warn
 from ..combined_relu import HBPReLULinear
 from ..combined_sigmoid import HBPSigmoidLinear
 from .combined import HBPParallelCompositionActivationLinear
@@ -34,6 +36,7 @@ def example_layer(cls):
                out_features=out_features,
                bias=True)
 
+
 def example_layer_parallel(cls, max_blocks=max_blocks):
     """Return example layer of HBPParallelCompositionActivation."""
     return HBPParallelCompositionActivationLinear(example_layer(cls),
@@ -51,7 +54,7 @@ def test_num_blocks():
         assert parallel.num_blocks == 4
         # larger than out_features
         parallel = example_layer_parallel(cls, max_blocks=10)
-        assert parallel.num_blocks == out_features 
+        assert parallel.num_blocks == out_features
 
 
 def test_forward_pass():
@@ -222,3 +225,69 @@ def test_memory_consumption_during_hbp():
             if i == 9:
                 mem_stat_after = memory_report()
         assert mem_stat == mem_stat_after
+
+
+def compare_no_splitting_with_composition(device, cls, num_iters):
+    """Check if parallel composition layer with splitting of 1 behaves
+    exactly the same as HBPCompositionActivationLinear over multiple
+    iterations of HBP.
+    """
+    linear = example_layer(cls).to(device)
+    parallel = example_layer_parallel(cls, max_blocks=1).to(device)
+
+    # check equality of parameters
+    assert(len(list(linear.parameters())) ==
+           len(list(parallel.parameters())) ==
+           2)
+    for p1, p2 in zip(linear.parameters(), parallel.parameters()):
+        assert torch_allclose(p1, p2)
+
+    # check equality of gradients/hvp over multiple runs
+    for i in range(num_iters):
+        # 5 samples
+        input = randn(5, in_features, device=device)
+        input.requires_grad = True
+        # forward pass checking
+        out1, loss1 = forward(linear, input)
+        out2, loss2 = forward(parallel, input)
+        assert torch_allclose(out1, out2)
+        # gradient checking
+        loss1.backward()
+        loss2.backward()
+        for p1, p2 in zip(linear.parameters(), parallel.parameters()):
+            assert p1.grad is not None and p2.grad is not None
+            assert not torch.allclose(p1.grad, zeros_like(p1))
+            assert not torch.allclose(p2.grad, zeros_like(p2))
+            assert torch_allclose(p1.grad, p2.grad)
+        loss_hessian = randn(out_features, out_features, device=device)
+        # check input Hessians and Hessian-vector products
+        for mod2nd in ['zero', 'abs', 'clip', 'none']:
+            # input Hessian
+            in_h1 = linear.backward_hessian(loss_hessian,
+                                            compute_input_hessian=True,
+                                            modify_2nd_order_terms=mod2nd)
+            in_h2 = parallel.backward_hessian(loss_hessian,
+                                              compute_input_hessian=True,
+                                              modify_2nd_order_terms=mod2nd)
+            assert torch_allclose(in_h1, in_h2)
+            # parameter Hessians
+            for p1, p2 in zip(linear.parameters(), parallel.parameters()):
+                v = randn(p1.numel(), device=device)
+                assert torch_allclose(p1.hvp(v), p2.hvp(v))
+
+
+def test_comparison_no_splitting_with_composition_cpu(num_iters=10):
+    """Check if parallel single layer equals HBPLinear on CPU."""
+    device = torch.device('cpu')
+    for cls in test_classes:
+        compare_no_splitting_with_composition(device, cls, num_iters)
+
+
+def test_comparison_no_splitting_with_composition_gpu(num_iters=10):
+    """Check if parallel single layer equals HBPLinear on GPU."""
+    if torch.cuda.is_available():
+        device = torch.device('cuda:0')
+        for cls in test_classes:
+            compare_no_splitting_with_composition(device, cls, num_iters)
+    else:
+        warn('Could not find CUDA device')
