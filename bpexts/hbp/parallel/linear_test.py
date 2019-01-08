@@ -2,6 +2,7 @@
 
 import torch
 from torch import randn, Tensor, eye, zeros_like
+from warnings import warn
 from ..linear import HBPLinear
 from .linear import HBPParallelLinear
 from ...utils import (torch_allclose,
