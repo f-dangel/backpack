@@ -218,6 +218,8 @@ def compare_no_splitting_with_linear(device, num_iters):
         loss2.backward()
         for p1, p2 in zip(linear.parameters(), parallel.parameters()):
             assert p1.grad is not None and p2.grad is not None
+            assert not torch.allclose(p1.grad, zeros_like(p1))
+            assert not torch.allclose(p2.grad, zeros_like(p2))
             assert torch_allclose(p1.grad, p2.grad)
         loss_hessian = randn(out_features, out_features, device=device)
         # check input Hessians and Hessian-vector products
