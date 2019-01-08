@@ -15,6 +15,7 @@ from .combined import HBPParallelCompositionActivationLinear
 from ...utils import (torch_allclose,
                       set_seeds,
                       memory_report)
+from ...optim.cg_newton import CGNewton
 from ...hessian import exact
 
 in_features = [20, 15, 10]
@@ -322,5 +323,88 @@ def test_comparison_no_splitting_with_composition_gpu(num_iters=10):
     if torch.cuda.is_available():
         device = torch.device('cuda:0')
         compare_no_splitting_with_sequence(device, num_iters)
+    else:
+        warn('Could not find CUDA device')
+
+
+def compare_optimization_no_splitting_with_sequence(device, num_iters):
+    """Check if parallel sequence with splitting of 1 behaves
+    exactly the same as a normal sequence over multiple
+    iterations of CGNewton optimization.
+    """
+    sequence = example_sequence().to(device)
+    parallel = example_sequence_parallel(max_blocks=1).to(device)
+
+    # check equality of parameters
+    assert(len(list(sequence.parameters())) ==
+           len(list(parallel.parameters())) ==
+           6)
+    for p1, p2 in zip(sequence.parameters(), parallel.parameters()):
+        assert torch_allclose(p1, p2)
+
+    opt1 = CGNewton(sequence.parameters(), 0.1, 0.02, cg_atol=1E-8, cg_tol=1E-1)
+    opt2 = CGNewton(parallel.parameters(), 0.1, 0.02, cg_atol=1E-8, cg_tol=1E-1)
+
+    # check equality of gradients/hvp over multiple runs
+    for i in range(num_iters):
+        print(i)
+        # 5 samples
+        input = randn(5, in_features[0], device=device)
+        input.requires_grad = True
+        # forward pass checking
+        out1, loss1 = forward(sequence, input)
+        out2, loss2 = forward(parallel, input)
+        assert torch_allclose(out1, out2)
+        # gradient checking
+        loss1.backward()
+        loss2.backward()
+        for p1, p2 in zip(sequence.parameters(), parallel.parameters()):
+            assert p1.grad is not None and p2.grad is not None
+            assert not torch_allclose(p1.grad, zeros_like(p1))
+            assert not torch_allclose(p2.grad, zeros_like(p2))
+            assert torch_allclose(p1.grad, p2.grad)
+        loss_hessian = randn(out_features[-1], out_features[-1], device=device)
+        # PSD
+        loss_hessian = loss_hessian.t().matmul(loss_hessian)
+        # check input Hessians and Hessian-vector products
+        mod2nd = 'abs'
+        # input Hessian
+        in_h1 = sequence.backward_hessian(loss_hessian,
+                                          compute_input_hessian=True,
+                                          modify_2nd_order_terms=mod2nd)
+        in_h2 = parallel.backward_hessian(loss_hessian,
+                                          compute_input_hessian=True,
+                                          modify_2nd_order_terms=mod2nd)
+        assert torch_allclose(in_h1, in_h2)
+        # parameter Hessians
+        for p1, p2 in zip(sequence.parameters(), parallel.parameters()):
+            v = randn(p1.numel(), device=device)
+            assert torch_allclose(p1.hvp(v), p2.hvp(v))
+
+        opt1.step()
+        opt2.step()
+        opt1.zero_grad()
+        opt2.zero_grad()
+        for p1, p2 in zip(sequence.parameters(), parallel.parameters()):
+            assert p1.grad is not None and p2.grad is not None
+            assert torch_allclose(p1.grad, zeros_like(p1))
+            assert torch_allclose(p2.grad, zeros_like(p2))
+            assert torch_allclose(p1.grad, p2.grad)
+            assert torch_allclose(p1, p2)
+
+
+def test_compare_optimization_no_splitting_with_sequence_cpu(num_iters=2):
+    """Check if parallel sequence no-split equals HBPSequential on CPU
+    during optimization."""
+    device = torch.device('cpu')
+    compare_optimization_no_splitting_with_sequence(device, num_iters)
+
+
+def test_compare_optimization_no_splitting_with_sequence_gpu(num_iters=2):
+    """Check if parallel sequence no-split equals HBPSequential on GPU
+    during optimization."""
+    if torch.cuda.is_available():
+        device = torch.device('cuda:0')
+        compare_optimization_no_splitting_with_sequence(device, num_iters)
     else:
         warn('Could not find CUDA device')
