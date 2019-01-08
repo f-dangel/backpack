@@ -9,6 +9,8 @@ Link to the reference:
 import torch
 from torch.nn import CrossEntropyLoss
 from os import path, makedirs
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from .models.chen2018 import original_mnist_model
 from .loading.load_mnist import MNISTLoader

@@ -8,6 +8,8 @@ import torch
 from torch.nn import CrossEntropyLoss
 from torch.optim import SGD
 from os import path, makedirs
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from .models.chen2018 import original_cifar10_model
 from .loading.load_cifar10 import CIFAR10Loader

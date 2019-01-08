@@ -3,6 +3,8 @@
 import pandas
 from scipy.interpolate import InterpolatedUnivariateSpline
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 from matplotlib2tikz import save as tikz_save
 
