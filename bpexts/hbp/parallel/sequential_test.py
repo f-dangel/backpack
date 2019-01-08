@@ -57,6 +57,7 @@ def create_layers():
         layers.append(cls())
     return layers
 
+
 def example_sequence():
     """Return example layer of HBPSequential."""
     return HBPSequential(*create_layers())
@@ -235,18 +236,6 @@ def test_memory_consumption_before_backward_hessian():
     assert mem_stat1 == mem_stat2
 
 
-
-def example_loss(tensor):
-    """Sum all square entries of a tensor."""
-    return (tensor**2).view(-1).sum(0)
-
-
-def forward(layer, input):
-    """Feed input through layers and loss. Return output and loss."""
-    out = layer(input)
-    return out, example_loss(out)
-
-
 def test_memory_consumption_during_hbp():
     """Check memory consumption during Hessian backpropagation."""
     parallel = example_sequence_parallel()
@@ -255,7 +244,7 @@ def test_memory_consumption_during_hbp():
 
     mem_stat = None
     mem_stat_after = None
-    
+
     for i in range(10):
         input = random_input()
         out, loss = forward(parallel, input)
