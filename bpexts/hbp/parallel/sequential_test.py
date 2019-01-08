@@ -1,6 +1,8 @@
 """Test Hessian backpropagation of sequence of identical parallel modules"""
 
-from torch import randn, eye
+import torch
+from torch import randn, eye, zeros_like
+from warnings import warn
 from .sequential import HBPParallelSequential
 from ..sequential import HBPSequential
 from ..linear import HBPLinear
@@ -15,8 +17,8 @@ from ...utils import (torch_allclose,
                       memory_report)
 from ...hessian import exact
 
-in_features = [40, 30, 20, 10, 5]
-out_features = [30, 20, 10, 5, 2]
+in_features = [20, 15, 10]
+out_features = [15, 10, 5]
 # DO NOT MODIFY!
 classes = [
         HBPLinear,
@@ -49,7 +51,7 @@ def create_layers():
     """Create list of layers for the example sequence."""
     set_seeds(0)
     layers = []
-    for cls, in_, out in zip(classes[:3], in_features[:3], out_features[:3]):
+    for cls, in_, out in zip(classes, in_features, out_features):
         layers.append(cls(in_features=in_,
                           out_features=out,
                           bias=True))
@@ -258,3 +260,67 @@ def test_memory_consumption_during_hbp():
             mem_stat_after = memory_report()
 
     assert mem_stat == mem_stat_after
+
+
+def compare_no_splitting_with_sequence(device, num_iters):
+    """Check if parallel sequence with splitting of 1 behaves
+    exactly the same as a normal sequence over multiple
+    iterations of HBP.
+    """
+    sequence = example_sequence().to(device)
+    parallel = example_sequence_parallel(max_blocks=1).to(device)
+
+    # check equality of parameters
+    assert(len(list(sequence.parameters())) ==
+           len(list(parallel.parameters())) ==
+           6)
+    for p1, p2 in zip(sequence.parameters(), parallel.parameters()):
+        assert torch_allclose(p1, p2)
+
+    # check equality of gradients/hvp over multiple runs
+    for i in range(num_iters):
+        # 5 samples
+        input = randn(5, in_features[0], device=device)
+        input.requires_grad = True
+        # forward pass checking
+        out1, loss1 = forward(sequence, input)
+        out2, loss2 = forward(parallel, input)
+        assert torch_allclose(out1, out2)
+        # gradient checking
+        loss1.backward()
+        loss2.backward()
+        for p1, p2 in zip(sequence.parameters(), parallel.parameters()):
+            assert p1.grad is not None and p2.grad is not None
+            assert not torch_allclose(p1.grad, zeros_like(p1))
+            assert not torch_allclose(p2.grad, zeros_like(p2))
+            assert torch_allclose(p1.grad, p2.grad)
+        loss_hessian = randn(out_features[-1], out_features[-1], device=device)
+        # check input Hessians and Hessian-vector products
+        for mod2nd in ['zero', 'abs', 'clip', 'none']:
+            # input Hessian
+            in_h1 = sequence.backward_hessian(loss_hessian,
+                                              compute_input_hessian=True,
+                                              modify_2nd_order_terms=mod2nd)
+            in_h2 = parallel.backward_hessian(loss_hessian,
+                                              compute_input_hessian=True,
+                                              modify_2nd_order_terms=mod2nd)
+            assert torch_allclose(in_h1, in_h2)
+            # parameter Hessians
+            for p1, p2 in zip(sequence.parameters(), parallel.parameters()):
+                v = randn(p1.numel(), device=device)
+                assert torch_allclose(p1.hvp(v), p2.hvp(v))
+
+
+def test_comparison_no_splitting_with_sequence_cpu(num_iters=10):
+    """Check if parallel sequence no-split equals HBPSequential on CPU."""
+    device = torch.device('cpu')
+    compare_no_splitting_with_sequence(device, num_iters)
+
+
+def test_comparison_no_splitting_with_composition_gpu(num_iters=10):
+    """Check if parallel sequence no-split equals HBPSequential on GPU."""
+    if torch.cuda.is_available():
+        device = torch.device('cuda:0')
+        compare_no_splitting_with_sequence(device, num_iters)
+    else:
+        warn('Could not find CUDA device')
