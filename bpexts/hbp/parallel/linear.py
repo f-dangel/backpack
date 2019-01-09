@@ -38,10 +38,38 @@ class HBPParallelLinear(HBPParallel):
         # register wrapped module
         self._register_wrapped_module(layer)
 
-        chunked_weight = layer.weight.chunk(self.max_blocks, 0)
+        # register parameters as chunks of the main module buffers
+        # in parallel children
+        self._create_parallel_children()
+        self._reference_chunks_in_parallel_children()
+
+    def _create_parallel_children(self):
+        """Can only be called after _register_wrapped_module."""
+        out_features = [w.size()[1] for w in
+                        self.main.weight.chunk(self.max_blocks, 0)]
+
+        for idx, out in enumerate(out_features):
+            child_name = self._parallel_module_name(idx)
+            if hasattr(self.main, child_name):
+                raise ValueError('Child {} already exists'
+                                 .format(child_name))
+            parallel_idx = self.contained_class(
+                    in_features=self.main.in_features,
+                    out_features=out,
+                    bias=self.main.bias is not None)
+            # disable hooks, buffers (except 0th layer)
+            if idx != 0:
+                parallel_idx.disable_exts()
+            self.main.add_module(child_name, parallel_idx)
+
+    def _reference_chunks_in_parallel_children(self):
+        """ Can only be called after _create_parallel_children.
+        TODO: Warn if grads are non-zero or non-None
+        """
+        chunked_weight = self.main.weight.chunk(self.max_blocks, 0)
         chunked_bias = self.num_blocks * [None]\
-                if layer.bias is None\
-                else layer.bias.chunk(self.max_blocks, 0)
+            if self.main.bias is None\
+            else self.main.bias.chunk(self.max_blocks, 0)
 
         # checks, TODO: can be removed
         assert self.max_blocks >= self.num_blocks
@@ -49,24 +77,24 @@ class HBPParallelLinear(HBPParallel):
         assert len(chunked_bias) == self.num_blocks
         # ---
 
-        for idx, (chunk_w, chunk_b) in enumerate(zip(chunked_weight,
-                                                     chunked_bias)):
-            out_features = chunk_w.size()[0]
-            parallel_idx = self.contained_class(
-                    in_features=self.main.in_features,
-                    out_features=out_features,
-                    bias=layer.bias is not None)
-            # disable hooks, buffers (except 0th layer)
-            if idx != 0:
-                parallel_idx.disable_exts()
-
+        for idx, (chunk_w, chunk_b, parallel) in enumerate(
+                zip(chunked_weight,
+                    chunked_bias,
+                    self.parallel_children())):
             # copy weight
-            parallel_idx.weight.data = chunk_w
+            parallel.weight.data = chunk_w
             # copy bias
-            if layer.bias is not None:
-                parallel_idx.bias.data = chunk_b
-            self.main.add_module(self._parallel_module_name(idx),
-                                 parallel_idx)
+            if parallel.bias is not None:
+                parallel.bias.data = chunk_b
+
+    # override
+    def _apply(self, fn):
+        """Need to restore references to chunked weights and bias terms after
+        casting to different device/data type."""
+        self = super()._apply(fn)
+        # restore references
+        self._reference_chunks_in_parallel_children()
+        return self
 
     # override
     def hbp_hooks(self):
