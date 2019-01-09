@@ -393,14 +393,14 @@ def compare_optimization_no_splitting_with_sequence(device, num_iters):
             assert torch_allclose(p1, p2)
 
 
-def test_compare_optimization_no_splitting_with_sequence_cpu(num_iters=2):
+def test_compare_optimization_no_splitting_with_sequence_cpu(num_iters=50):
     """Check if parallel sequence no-split equals HBPSequential on CPU
     during optimization."""
     device = torch.device('cpu')
     compare_optimization_no_splitting_with_sequence(device, num_iters)
 
 
-def test_compare_optimization_no_splitting_with_sequence_gpu(num_iters=2):
+def test_compare_optimization_no_splitting_with_sequence_gpu(num_iters=50):
     """Check if parallel sequence no-split equals HBPSequential on GPU
     during optimization."""
     if torch.cuda.is_available():
