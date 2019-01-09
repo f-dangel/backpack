@@ -27,8 +27,7 @@ from bpexts.hbp.parallel.sequential import HBPParallelSequential
 # global hyperparameters
 batch = 500
 epochs = 100
-#device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-device = torch.device('cpu')
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 dirname = 'exp02_chen_splitting/cifar10'
 data_dir = directory_in_data(dirname)
 fig_dir = directory_in_fig(dirname)
@@ -111,22 +110,22 @@ if __name__ == '__main__':
     seeds = range(10)
 
     titles = [
-              'GGN',
+              # 'GGN',
               'PCH, abs',
-              'PCH, clip',
+              # 'PCH, clip',
              ]
     fig_subdirs = [
-                   'GGN',
+                   # 'GGN',
                    'PCH-abs',
-                   'PCH-clip'
+                   # 'PCH-clip'
                   ]
     modify_2nd_order_terms = [
                               # 1) GGN, different splittings
-                              'zero',
+                              # 'zero',
                               # 2) PCH, different splittings
                               'abs',
                               # 3) PCH alternative, different splittings
-                              'clip'
+                              # 'clip'
                               ]
 
     for title, mod2nd, fig_sub in zip(titles,
