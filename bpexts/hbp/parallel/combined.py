@@ -31,17 +31,47 @@ class HBPParallelCompositionActivationLinear(HBPParallel):
 
         # convert bias from parameter to buffer
         temp_bias = None if layer.linear.bias is None\
-                else layer.linear.bias.data
+            else layer.linear.bias.data
         del layer.linear.bias
         layer.linear.register_buffer('bias', temp_bias)
 
         # register wrapped module
         self._register_wrapped_module(layer)
 
-        chunked_weight = layer.linear.weight.chunk(self.max_blocks, 0)
+        # register parameters as chunks of the main module buffers
+        # in parallel children
+        self._create_parallel_children()
+        self._reference_chunks_in_parallel_children()
+
+    def _create_parallel_children(self):
+        """Can only be called after _register_wrapped_module."""
+        out_features = [w.size()[1] for w in
+                        self.main.linear.weight.chunk(self.max_blocks, 0)]
+
+        for idx, out in enumerate(out_features):
+            child_name = self._parallel_module_name(idx)
+            if hasattr(self.main, child_name):
+                raise ValueError('Child {} already exists'
+                                 .format(child_name))
+            parallel_idx = self.contained_class(
+                    in_features=self.main.linear.in_features,
+                    out_features=out,
+                    bias=self.main.linear.bias is not None)
+            # disable hooks, buffers
+            parallel_idx.activation.disable_exts()
+            if idx != 0:
+                # except 0th layer linear for mean_input
+                parallel_idx.linear.disable_exts()
+            self.main.add_module(child_name, parallel_idx)
+
+    def _reference_chunks_in_parallel_children(self):
+        """ Can only be called after _create_parallel_children.
+        TODO: Warn if grads are non-zero or non-None
+        """
+        chunked_weight = self.main.linear.weight.chunk(self.max_blocks, 0)
         chunked_bias = self.num_blocks * [None]\
-                if layer.linear.bias is None\
-                else layer.linear.bias.chunk(self.max_blocks, 0)
+            if self.main.linear.bias is None\
+            else self.main.linear.bias.chunk(self.max_blocks, 0)
 
         # checks, TODO: can be removed
         assert self.max_blocks >= self.num_blocks
@@ -49,31 +79,20 @@ class HBPParallelCompositionActivationLinear(HBPParallel):
         assert len(chunked_bias) == self.num_blocks
         # ---
 
-        for idx, (chunk_w, chunk_b) in enumerate(zip(chunked_weight,
-                                                     chunked_bias)):
-            out_features = chunk_w.size()[0]
-            parallel_idx = self.contained_class(
-                    in_features=self.main.linear.in_features,
-                    out_features=out_features,
-                    bias=layer.linear.bias is not None)
-
-            # disable hooks, buffers
-            parallel_idx.activation.disable_exts()
-            if idx != 0:
-                parallel_idx.linear.disable_exts()
-
+        for idx, (chunk_w, chunk_b, parallel) in enumerate(
+                zip(chunked_weight,
+                    chunked_bias,
+                    self.parallel_children())):
             # copy weight
-            parallel_idx.linear.weight.data = chunk_w
+            parallel.linear.weight.data = chunk_w
             # copy bias
-            if layer.linear.bias is not None:
-                parallel_idx.linear.bias.data = chunk_b
-            self.main.add_module(self._parallel_module_name(idx),
-                                 parallel_idx)
+            if parallel.linear.bias is not None:
+                parallel.linear.bias.data = chunk_b
 
     # override
     def hbp_hooks(self):
         """Get necessary buffers for main module from children.
-        
+
         Avoid unnecessary copies"""
         self.register_exts_forward_hook(self.reference_mean_input)
 
