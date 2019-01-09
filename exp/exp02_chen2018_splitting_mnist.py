@@ -27,7 +27,8 @@ from bpexts.hbp.parallel.sequential import HBPParallelSequential
 # global hyperparameters
 batch = 500
 epochs = 20
-device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+#device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cpu')
 dirname = 'exp02_chen_splitting/mnist'
 data_dir = directory_in_data(dirname)
 fig_dir = directory_in_fig(dirname)
