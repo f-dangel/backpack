@@ -90,6 +90,15 @@ class HBPParallelCompositionActivationLinear(HBPParallel):
                 parallel.linear.bias.data = chunk_b
 
     # override
+    def _apply(self, fn):
+        """Need to restore references to chunked weights and bias terms after
+        casting to different device/data type."""
+        self = super()._apply(fn)
+        # restore references
+        self._reference_chunks_in_parallel_children()
+        return self
+
+    # override
     def hbp_hooks(self):
         """Get necessary buffers for main module from children.
 
