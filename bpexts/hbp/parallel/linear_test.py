@@ -269,7 +269,7 @@ def optim_forward(layer, input):
     return output, optim_example_loss(output)
 
 
-def compare_sgd_optimization_no_splitting_with_linear(device, num_iters):
+def compare_sgd_optimization_no_split_with_linear(device, num_iters):
     """Check if parallel linear layer with splitting of 1 behaves
     exactly the same as a normal HBPParallel over multiple
     iterations of SGD optimization.
@@ -331,7 +331,7 @@ def test_compare_sgd_optimization_no_split_with_linear_cpu(num_iters=50):
     """Check if parallel linear layer without splitting behaves
     the same as HBPLinear during optimization with SGD on CPU."""
     device = torch.device('cpu')
-    compare_sgd_optimization_no_splitting_with_linear(device, num_iters)
+    compare_sgd_optimization_no_split_with_linear(device, num_iters)
 
 
 def test_compare_sgd_optimization_no_split_with_linear_gpu(num_iters=50):
@@ -339,8 +339,7 @@ def test_compare_sgd_optimization_no_split_with_linear_gpu(num_iters=50):
     the same as HBPLinear during optimization with SGD on GPU."""
     if torch.cuda.is_available():
         device = torch.device('cuda:0')
-        compare_sgd_optimization_no_splitting_with_linear(device,
-                                                          num_iters)
+        compare_sgd_optimization_no_split_with_linear(device, num_iters)
     else:
         warn('Could not find CUDA device')
 
