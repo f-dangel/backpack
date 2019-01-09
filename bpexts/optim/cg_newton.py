@@ -77,6 +77,8 @@ class CGNewton(CGSolver):
 
         for p in group['params']:
             if p.grad is None:
+                warn('User Warning: Encountered parameter with None'
+                     ' grad attribute of size {}'.format(p.size()))
                 continue
             # prepare linear system
             g = p.grad.data

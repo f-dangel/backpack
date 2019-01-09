@@ -17,6 +17,11 @@ def torch_allclose(a, b, *args, **kwargs):
     return allclose(a.data, b.data, *args, **kwargs)
 
 
+def torch_contains_nan(tensor):
+    """Return whether a tensor contains nan."""
+    return any(tensor.view(-1) != tensor.view(-1))
+
+
 def set_seeds(seed=None):
     """Set random seeds of pyTorch (+CUDA), NumPy and random modules.
 
