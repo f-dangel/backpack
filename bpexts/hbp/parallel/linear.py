@@ -66,7 +66,7 @@ class HBPParallelLinear(HBPParallel):
         has_bias = self.main.bias is not None
         del self.main.bias
         self.main.bias = None if not has_bias else\
-                cat([child.bias for child in self.parallel_children()])
+                cat([c.bias for c in self.parallel_children()])
         # point chunked parameters to concatenated location in memory
         w_chunks = self.main.weight.data.chunk(self.max_blocks, 0)
         b_chunks = [None] * self.num_blocks if self.main.bias is None\
@@ -132,14 +132,13 @@ class HBPParallelLinear(HBPParallel):
     # --- hooks ---
     @staticmethod
     def reference_mean_input(module, input, output):
-        """Save reference of mean_input from first child in others.
+        """Save reference of `mean_input` from `main` module in children,
+        avoiding copy.
 
         Intended use as forward hook.
-        Initialize module buffer 'mean_input' in all other children
-        and the main layer.
+        Initialize module buffer 'mean_input' in all children
         """
         mean_input = module.main.mean_input
-        module.main.register_exts_buffer('mean_input', mean_input)
         for idx, mod in enumerate(module.parallel_children()):
             mod.register_exts_buffer('mean_input', mean_input)
     # --- end of hooks ---
@@ -149,10 +148,8 @@ class HBPParallelLinear(HBPParallel):
         """Split output Hessian into blocks, compute parameter Hessian of
         parallel modules."""
         # split output_hessian
-        out_h_split = [(output_hessian.chunk(
-                          self.max_blocks, 0)[i]).chunk(
-                            self.max_blocks, 1)[i]
-                    for i in range(self.num_blocks)]
+        out_h_split = [(output_hessian.chunk(self.max_blocks, 0)[i]).chunk(
+            self.max_blocks, 1)[i] for i in range(self.num_blocks)]
         # call parameter Hessian recursively
         for mod, out_h in zip(self.parallel_children(), out_h_split):
             mod.parameter_hessian(out_h)

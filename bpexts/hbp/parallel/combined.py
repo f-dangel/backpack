@@ -1,93 +1,96 @@
 """Parallel series of HBPCompositionActivationLinear."""
 
+from torch.nn.parameter import Parameter
 from torch import cat
-from numpy import cumsum
-from warnings import warn
 from ..combined import HBPCompositionActivationLinear
 from .parallel import HBPParallel
-from .linear import HBPParallelLinear
 
 
 class HBPParallelCompositionActivationLinear(HBPParallel):
-    """Convert single/multiple parallel series of HBPComposition."""
+    """Handle HBP for parallel series of HBPCompositionActivationLinear."""
     contained_parent_class = HBPCompositionActivationLinear
 
     def __init__(self, layer, max_blocks):
+        # check class
         self.contained_class = layer.__class__
         if not issubclass(self.contained_class, self.contained_parent_class):
             raise ValueError('Expecting layers derived from {}, got {}'
                              .format(self.contained_parent_class,
                                      self.contained_class))
+        # find out actual number of parallel children
         self.max_blocks = max_blocks
         super().__init__(len(layer.linear.weight.chunk(self.max_blocks, 0)))
 
-        # disable exts hooks, buffers only in linear
-        layer.linear.disable_exts()
+        # create parallel children with chunked values of weights/bias
+        parallel_children = self._create_parallel_children(layer)
 
-        # convert weight from parameter to buffer
-        temp_weight = layer.linear.weight.data
-        del layer.linear.weight
-        layer.linear.register_buffer('weight', temp_weight)
+        # register the main layer, transform its parameters to usual buffers
+        self.add_module('main', layer)
+        for name, child in parallel_children.items():
+            self.main.add_module(name, child)
+        self._create_main_parameters()
 
-        # convert bias from parameter to buffer
-        temp_bias = None if layer.linear.bias is None\
-            else layer.linear.bias.data
-        del layer.linear.bias
-        layer.linear.register_buffer('bias', temp_bias)
+    def _create_main_parameters(self):
+        """Remove weight/bias `Parameters` from main module. Concatenate
+        weight/bias chunks from parallel children and initialize the
+        concatenated tensors as variable buffers. Make parameters of
+        children point to location in concatenated versions."""
+        # remove weight parameter from main layer, make variable
+        del self.main.linear.weight
+        self.main.linear.weight = cat([c.linear.weight for c
+                                       in self.parallel_children()])
+        # remove bias parameter from main layer, make variable
+        has_bias = self.main.linear.bias is not None
+        del self.main.linear.bias
+        self.main.linear.bias = None if not has_bias else\
+                cat([c.linear.bias for c in self.parallel_children()])
+        # point chunked parameters to concatenated location in memory
+        w_chunks = self.main.linear.weight.data.chunk(self.max_blocks, 0)
+        b_chunks = [None] * self.num_blocks if self.main.linear.bias is None\
+                else self.main.linear.bias.data.chunk(self.max_blocks, 0)
+        for w, b, child in zip(w_chunks, b_chunks, self.parallel_children()):
+            child.linear.weight.data = w
+            if child.linear.bias is not None:
+                child.linear.bias.data = b
 
-        # register wrapped module
-        self._register_wrapped_module(layer)
+    def _create_parallel_children(self, layer):
+        """Create parallel children, copy chunked values of weight/bias.
 
-        # register parameters as chunks of the main module buffers
-        # in parallel children
-        self._create_parallel_children()
-        self._reference_chunks_in_parallel_children()
+        Parameters:
+        -----------
+        layer : (HBPCompositionActivationLinear)
+            Composition layer whose weight/bias parameters are to be chunked
+            and copied over to the parallel children
 
-    def _create_parallel_children(self):
-        """Can only be called after _register_wrapped_module."""
-        out_features = [w.size()[1] for w in
-                        self.main.linear.weight.chunk(self.max_blocks, 0)]
-
-        for idx, out in enumerate(out_features):
-            child_name = self._parallel_module_name(idx)
-            if hasattr(self.main, child_name):
-                raise ValueError('Child {} already exists'
-                                 .format(child_name))
-            parallel_idx = self.contained_class(
-                    in_features=self.main.linear.in_features,
-                    out_features=out,
-                    bias=self.main.linear.bias is not None)
-            # disable hooks, buffers
-            parallel_idx.activation.disable_exts()
-            if idx != 0:
-                # except 0th layer linear for mean_input
-                parallel_idx.linear.disable_exts()
-            self.main.add_module(child_name, parallel_idx)
-
-    def _reference_chunks_in_parallel_children(self):
-        """ Can only be called after _create_parallel_children.
-        TODO: Warn if grads are non-zero or non-None
+        Returns:
+        --------
+        (dict)
+            Dictionary with (key, value) pairs corresponding to the name
+            of the child layer and the child layer itself.
         """
-        chunked_weight = self.main.linear.weight.chunk(self.max_blocks, 0)
-        chunked_bias = self.num_blocks * [None]\
-            if self.main.linear.bias is None\
-            else self.main.linear.bias.chunk(self.max_blocks, 0)
-
-        # checks, TODO: can be removed
-        assert self.max_blocks >= self.num_blocks
-        assert len(chunked_weight) == self.num_blocks
-        assert len(chunked_bias) == self.num_blocks
-        # ---
-
-        for idx, (chunk_w, chunk_b, parallel) in enumerate(
-                zip(chunked_weight,
-                    chunked_bias,
-                    self.parallel_children())):
-            # copy weight
-            parallel.linear.weight.data = chunk_w
-            # copy bias
-            if parallel.linear.bias is not None:
-                parallel.linear.bias.data = chunk_b
+        # chunk layer weights/bias
+        w_chunks = layer.linear.weight.data.chunk(self.max_blocks, 0)
+        b_chunks = [None] * self.num_blocks if layer.linear.bias is None\
+                else layer.linear.bias.data.chunk(self.max_blocks, 0)
+        out_features = [w.size()[1] for w in w_chunks]
+        in_features = layer.linear.in_features
+        # create parallel children
+        children = {}
+        for idx, (out, w, b) in enumerate(zip(out_features,
+                                              w_chunks,
+                                              b_chunks)):
+            name = self._parallel_module_name(idx)
+            parallel = self.contained_class(in_features=in_features,
+                                            out_features=out,
+                                            bias=b is not None)
+            # disable hooks, buffers
+            parallel.disable_exts()
+            # set parameters
+            parallel.linear.weight = Parameter(w)
+            if b is not None:
+                parallel.linear.bias = Parameter(b)
+            children[name] = parallel
+        return children
 
     # override
     def _apply(self, fn):
@@ -95,7 +98,7 @@ class HBPParallelCompositionActivationLinear(HBPParallel):
         casting to different device/data type."""
         self = super()._apply(fn)
         # restore references
-        self._reference_chunks_in_parallel_children()
+        self._create_main_parameters()
         return self
 
     # override
@@ -108,24 +111,23 @@ class HBPParallelCompositionActivationLinear(HBPParallel):
     # --- hooks ---
     @staticmethod
     def reference_mean_input(module, input, output):
-        """Save reference of mean_input from first child in others.
+        """Save reference of `mean_input` from `main` module in children,
+        avoiding copy.
 
         Intended use as forward hook.
-        Initialize module buffer 'mean_input' in all other children
-        and the main layer.
+        Initialize module buffer 'mean_input' in all children linear
+        submodules.
         """
-        mean_input = module._get_parallel_module(0).linear.mean_input
-        module.main.linear.register_exts_buffer('mean_input', mean_input)
+        mean_input = module.main.linear.mean_input
         for idx, mod in enumerate(module.parallel_children()):
-            if idx != 0:
-                mod.linear.register_exts_buffer('mean_input', mean_input)
+            mod.linear.register_exts_buffer('mean_input', mean_input)
     # --- end of hooks ---
 
     # override
     def parameter_hessian(self, output_hessian):
-        """Split output Hessian into blocks, compute parameter Hessian of 
+        """Split output Hessian into blocks, compute parameter Hessian of
         parallel modules."""
-        # split output_hessian 
+        # split output_hessian
         out_h_split = [(output_hessian.chunk(
                           self.max_blocks, 0)[i]).chunk(
                             self.max_blocks, 1)[i]
@@ -136,11 +138,9 @@ class HBPParallelCompositionActivationLinear(HBPParallel):
 
     # override
     def forward(self, input):
-        """Feed through each parallel layer, concatenate result."""
+        """Feed through main layer."""
         # feed through activation
-        activation = self.main.activation(input)
-        return cat([child.linear(activation) for child
-                    in self.parallel_children()], 1)
+        return self.main(input)
 
     def _before_backward_hessian(self):
         self.spread_grad_output()
