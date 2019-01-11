@@ -111,6 +111,7 @@ def test_input_hessian():
         assert buffer.grad is None
         assert not hasattr(buffer, 'hvp')
         assert not hasattr(buffer, 'hessian')
+    #layer.reference_gradients(layer, None, None)
     for child in layer.parallel_children():
         for buffer in [child.weight, child.bias]:
             assert buffer.grad is not None
@@ -374,6 +375,10 @@ def compare_newton_optimization_no_split_with_linear(device, num_iters):
         out2, loss2 = optim_forward(parallel, input)
         assert torch_allclose(out1, out2)
         assert torch_allclose(loss1, loss2)
+
+        # model parameter checks: same values
+        assert torch_allclose(linear.weight, parallel.main.weight)
+        assert torch_allclose(linear.bias, parallel.main.bias)
 
         # computing gradients
         opt1.zero_grad()
