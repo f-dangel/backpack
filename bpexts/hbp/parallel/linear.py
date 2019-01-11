@@ -1,5 +1,6 @@
 """Parallel series of linear layers."""
 
+from torch.nn.parameter import Parameter
 from torch import cat
 from ..linear import HBPLinear
 from .parallel import HBPParallel
@@ -8,84 +9,111 @@ from .parallel import HBPParallel
 class HBPParallelLinear(HBPParallel):
     """Handle backpropagation for a parallel series of linear layers.
 
-    The buffer `mean_input` is maintained in the first of all
-    parallel modules, with a reference to it being stored in
-    the other children.
+    This is done by storing a bunch of so called parallel children layers.
+    These layers contain the parameters that are optimized, but for the
+    forward pass performance suffers a lot when the input is fed through
+    each parallel child sequentially and the output is concatenated into
+    the output vector.
+
+    To overcome this, this layer has a submodule called `main`. It's job
+    is to use the concatenated versions of the weights and bias terms
+    in the forward pass and to make sure that quantities required for
+    HBP are correctly referenced in the children modules (otherwhise there
+    would be copies of the same quantities floating around, blowing up
+    memory consumption).
+
+    To be honest, the implementation is not very clean and requires
+    a lot of pointers (corresponding to the chunked parameters) that
+    have to point to the correct location of the concatenated parameters.
+
+    There were also some problems caused by PyTorch internals when the
+    module is loaded to a device or cast to a different type.
+    Consider this implementation to be very likely to break when being
+    modified. One should always check whether the tests are still running.
     """
     contained_class = HBPLinear
 
     def __init__(self, layer, max_blocks):
+        # check class
         if not layer.__class__ == self.contained_class:
             raise ValueError('Expecting layer of type {}, got {}'
                              .format(self.contained_class,
                                      layer.__class__))
+        # find out actual number of parallel children
         self.max_blocks = max_blocks
         super().__init__(len(layer.weight.chunk(self.max_blocks, 0)))
 
-        # disable exts hooks, buffers
-        layer.disable_exts()
+        # create parallel children with chunked values of weight/bias
+        parallel_children = self._create_parallel_children(layer)
 
-        # convert weight from parameter to buffer
-        temp_weight = layer.weight.data
-        del layer.weight
-        layer.register_buffer('weight', temp_weight)
+        # register the main layer, transform its parameters to usual
+        # buffer variables so they do not show up when calling
+        # `self.parameters()`
+        self.add_module('main', layer)
+        for name, child in parallel_children.items():
+            self.main.add_module(name, child)
+        self._create_main_parameters()
 
-        # convert bias from parameter to buffer
-        temp_bias = None if layer.bias is None else layer.bias.data
-        del layer.bias
-        layer.register_buffer('bias', temp_bias)
+    def _create_main_parameters(self):
+        """Remove weight/bias `Parameters` from main module. Concatenate
+        weight/bias chunks from parallel children and initialize the
+        concatenated tensors as variable buffers. Make parameters of
+        children point to location in concatenated versions."""
+        # remove weight parameter from main layer, make variable
+        del self.main.weight
+        self.main.weight = cat([c.weight for c in self.parallel_children()])
+        # remove bias parameter from main layer, make variable
+        has_bias = self.main.bias is not None
+        del self.main.bias
+        self.main.bias = None if not has_bias else\
+                cat([child.bias for child in self.parallel_children()])
+        # point chunked parameters to concatenated location in memory
+        w_chunks = self.main.weight.data.chunk(self.max_blocks, 0)
+        b_chunks = [None] * self.num_blocks if self.main.bias is None\
+                else self.main.bias.data.chunk(self.max_blocks, 0)
+        for w, b, child in zip(w_chunks, b_chunks, self.parallel_children()):
+            child.weight.data = w
+            if child.bias is not None:
+                child.bias.data = b
 
-        # register wrapped module
-        self._register_wrapped_module(layer)
+    def _create_parallel_children(self, layer):
+        """Create parallel children, copy chunked values of weight/bias.
 
-        # register parameters as chunks of the main module buffers
-        # in parallel children
-        self._create_parallel_children()
-        self._reference_chunks_in_parallel_children()
+        Parameters:
+        -----------
+        layer : (HBPLinear)
+            Linear layer whose weight/bias parameters are to be chunked
+            and copied over to the parallel children
 
-    def _create_parallel_children(self):
-        """Can only be called after _register_wrapped_module."""
-        out_features = [w.size()[1] for w in
-                        self.main.weight.chunk(self.max_blocks, 0)]
-
-        for idx, out in enumerate(out_features):
-            child_name = self._parallel_module_name(idx)
-            if hasattr(self.main, child_name):
-                raise ValueError('Child {} already exists'
-                                 .format(child_name))
-            parallel_idx = self.contained_class(
-                    in_features=self.main.in_features,
-                    out_features=out,
-                    bias=self.main.bias is not None)
-            # disable hooks, buffers (except 0th layer)
-            if idx != 0:
-                parallel_idx.disable_exts()
-            self.main.add_module(child_name, parallel_idx)
-
-    def _reference_chunks_in_parallel_children(self):
-        """ Can only be called after _create_parallel_children.
-        TODO: Warn if grads are non-zero or non-None
+        Returns:
+        --------
+        (dict)
+            Dictionary with (key, value) pairs corresponding to the name
+            of the child layer and the child layer itself.
         """
-        chunked_weight = self.main.weight.chunk(self.max_blocks, 0)
-        chunked_bias = self.num_blocks * [None]\
-            if self.main.bias is None\
-            else self.main.bias.chunk(self.max_blocks, 0)
-
-        # checks, TODO: can be removed
-        assert self.max_blocks >= self.num_blocks
-        assert len(chunked_weight) == self.num_blocks
-        assert len(chunked_bias) == self.num_blocks
-        # ---
-
-        for idx, (chunk_w, chunk_b, parallel) in enumerate(
-                zip(chunked_weight,
-                    chunked_bias,
-                    self.parallel_children())):
-            # copy weight
-            parallel.weight.data = chunk_w
-            # copy bias
-            if parallel.bias is not None:
-                parallel.bias.data = chunk_b
+        # chunk layer weights/bias
+        w_chunks = layer.weight.data.chunk(self.max_blocks, 0)
+        b_chunks = [None] * self.num_blocks if layer.bias is None\
+                else layer.bias.data.chunk(self.max_blocks, 0)
+        out_features = [w.size()[1] for w in w_chunks]
+        in_features = layer.in_features
+        # create parallel children
+        children = {}
+        for idx, (out, w, b) in enumerate(zip(out_features,
+                                              w_chunks,
+                                              b_chunks)):
+            name = self._parallel_module_name(idx)
+            parallel = self.contained_class(in_features=in_features,
+                                            out_features=out,
+                                            bias=b is not None)
+            # disable hooks, buffers
+            parallel.disable_exts()
+            # set parameters
+            parallel.weight = Parameter(w)
+            if b is not None:
+                parallel.bias = Parameter(b)
+            children[name] = parallel
+        return children
 
     # override
     def _apply(self, fn):
@@ -93,7 +121,7 @@ class HBPParallelLinear(HBPParallel):
         casting to different device/data type."""
         self = super()._apply(fn)
         # restore references
-        self._reference_chunks_in_parallel_children()
+        self._create_main_parameters()
         return self
 
     # override
@@ -110,18 +138,17 @@ class HBPParallelLinear(HBPParallel):
         Initialize module buffer 'mean_input' in all other children
         and the main layer.
         """
-        mean_input = module._get_parallel_module(0).mean_input
+        mean_input = module.main.mean_input
         module.main.register_exts_buffer('mean_input', mean_input)
         for idx, mod in enumerate(module.parallel_children()):
-            if idx != 0:
-                mod.register_exts_buffer('mean_input', mean_input)
-   # --- end of hooks ---
+            mod.register_exts_buffer('mean_input', mean_input)
+    # --- end of hooks ---
 
     # override
     def parameter_hessian(self, output_hessian):
-        """Split output Hessian into blocks, compute parameter Hessian of 
+        """Split output Hessian into blocks, compute parameter Hessian of
         parallel modules."""
-        # split output_hessian 
+        # split output_hessian
         out_h_split = [(output_hessian.chunk(
                           self.max_blocks, 0)[i]).chunk(
                             self.max_blocks, 1)[i]
@@ -130,7 +157,7 @@ class HBPParallelLinear(HBPParallel):
         for mod, out_h in zip(self.parallel_children(), out_h_split):
             mod.parameter_hessian(out_h)
 
-   # override
+    # override
     def forward(self, input):
-        """Feed through each parallel layer, concatenate result."""
-        return cat([layer(input) for layer in self.parallel_children()], 1)
+        """Feed through main layer."""
+        return self.main(input)
