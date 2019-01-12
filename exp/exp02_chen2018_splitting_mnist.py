@@ -105,26 +105,26 @@ def mnist_cgnewton_train_fn(modify_2nd_order_terms, max_blocks):
 
 
 if __name__ == '__main__':
-    max_blocks = [1, 2, 4, 16] #, 8, 32, 64, 128, 256, 512]
+    max_blocks = [1, 2, 4, 16]  # , 256]  # , 8, 32, 64, 128, 512]
     seeds = range(10)
 
     titles = [
-              'GGN',
+              # 'GGN',
               'PCH, abs',
-              'PCH, clip',
+              # 'PCH, clip',
              ]
     fig_subdirs = [
-                   'GGN',
+                   # 'GGN',
                    'PCH-abs',
-                   'PCH-clip'
+                   # 'PCH-clip'
                   ]
     modify_2nd_order_terms = [
                               # 1) GGN, different splittings
-                              'zero',
+                              # 'zero',
                               # 2) PCH, different splittings
                               'abs',
                               # 3) PCH alternative, different splittings
-                              'clip'
+                              # 'clip'
                               ]
 
     for title, mod2nd, fig_sub in zip(titles,

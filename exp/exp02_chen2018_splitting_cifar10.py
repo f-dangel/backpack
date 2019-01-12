@@ -106,7 +106,7 @@ def cifar10_cgnewton_train_fn(modify_2nd_order_terms, max_blocks):
 
 
 if __name__ == '__main__':
-    max_blocks = [1, 2, 4, 16]  #, 8, 32, 64, 128, 256, 512]
+    max_blocks = [1, 2, 4, 16]  # , 8, 32, 64, 128, 256, 512]
     seeds = range(10)
 
     titles = [
@@ -121,7 +121,7 @@ if __name__ == '__main__':
                   ]
     modify_2nd_order_terms = [
                               # 1) GGN, different splittings
-                              # 'zero',
+                              # 'hzero',
                               # 2) PCH, different splittings
                               'abs',
                               # 3) PCH alternative, different splittings
@@ -171,7 +171,7 @@ if __name__ == '__main__':
                                                   metric.replace('_', ' '),
                                                   files,
                                                   labels,
-                                                  plot_std=False,
+                                                  plot_std=True,
                                                   # scale by training set
                                                   scale_steps=50000)
             plt.legend()
