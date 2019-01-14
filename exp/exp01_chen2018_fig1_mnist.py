@@ -173,7 +173,7 @@ def main(run_experiments=True):
 
 def filenames():
     """Return filenames of the merged data.
-    
+
     Returns:
     --------
     (dict)
