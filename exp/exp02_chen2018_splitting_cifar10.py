@@ -8,17 +8,13 @@ Link to the reference:
 
 import torch
 from torch.nn import CrossEntropyLoss
-from os import path, makedirs
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
+from os import path
+from collections import OrderedDict
 from .models.chen2018 import original_cifar10_model
 from .loading.load_cifar10 import CIFAR10Loader
 from .training.second_order import SecondOrderTraining
 from .training.runner import TrainingRunner
-from .plotting.plotting import OptimizationPlot
 from .utils import (directory_in_data,
-                    directory_in_fig,
                     dirname_from_params)
 from bpexts.optim.cg_newton import CGNewton
 from bpexts.hbp.parallel.sequential import HBPParallelSequential
@@ -30,7 +26,6 @@ epochs = 100
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 dirname = 'exp02_chen_splitting/cifar10'
 data_dir = directory_in_data(dirname)
-fig_dir = directory_in_fig(dirname)
 logs_per_epoch = 1
 
 
@@ -105,20 +100,16 @@ def cifar10_cgnewton_train_fn(modify_2nd_order_terms, max_blocks):
     return training_fn
 
 
-if __name__ == '__main__':
+def main(run_experiments=True):
+    """Execute the experiments, return filenames of the merged runs."""
     max_blocks = [1, 2, 4, 16]  # , 8, 32, 64, 128, 256, 512]
     seeds = range(10)
 
-    titles = [
+    labels = [
               # 'GGN',
               'PCH, abs',
               # 'PCH, clip',
              ]
-    fig_subdirs = [
-                   # 'GGN',
-                   'PCH-abs',
-                   # 'PCH-clip'
-                  ]
     modify_2nd_order_terms = [
                               # 1) GGN, different splittings
                               # 'hzero',
@@ -128,51 +119,63 @@ if __name__ == '__main__':
                               # 'clip'
                               ]
 
-    for title, mod2nd, fig_sub in zip(titles,
-                                      modify_2nd_order_terms,
-                                      fig_subdirs):
-        # dict of dicts stores same metrics for different blocks
-        metric_to_file_for_blocks = {}
+    # expand the labels for the experiments
+    labels_expanded = []
+    mod2nd_expanded = []
+    blocks_expanded = []
+    for label, mod2nd in zip(labels, modify_2nd_order_terms):
+        labels_expanded += len(max_blocks) * [label]
+        mod2nd_expanded += len(max_blocks) * [mod2nd]
+        blocks_expanded += max_blocks
 
-        for blocks in max_blocks:
-            train_fn = cifar10_cgnewton_train_fn(mod2nd, blocks)
+    experiments = [cifar10_cgnewton_train_fn(mod2nd, blocks) for
+                   blocks, mod2nd in zip(blocks_expanded,
+                                         mod2nd_expanded)]
 
-            # run experiments
-            # ---------------
+    def run():
+        """Run the experiments."""
+        for train_fn in experiments:
             runner = TrainingRunner(train_fn)
             runner.run(seeds)
-            metric_to_files = runner.merge_runs(seeds)
 
-            # initialize with empty dict for each metric if empty
-            if metric_to_file_for_blocks == {}:
-                for metric in metric_to_files.keys():
-                    metric_to_file_for_blocks[metric] = {}
-            # sort by blocks
-            for metric, files in metric_to_files.items():
-                metric_to_file_for_blocks[metric][blocks] = files
+    def result_files():
+        """Merge runs and return files of the merged data."""
+        filenames = OrderedDict()
+        for label in labels:
+            filenames[label] = OrderedDict()
+        for label, block, train_fn in zip(labels_expanded,
+                                          blocks_expanded,
+                                          experiments):
+            runner = TrainingRunner(train_fn)
+            m_to_f = runner.merge_runs(seeds)
+            filenames[label][block] = m_to_f
+        return filenames
 
-        # plotting
-        # --------
-        for metric, block_dict in metric_to_file_for_blocks.items():
-            # output file
-            this_fig_dir = path.join(fig_dir, fig_sub)
-            out_file = path.join(this_fig_dir, metric)
-            makedirs(this_fig_dir, exist_ok=True)
-            # files for each metric with labels for blocks
-            files, labels = [], []
-            for b in sorted(block_dict.keys()):
-                files.append(block_dict[b])
-                labels.append('CG, {} block{}'.format(b,
-                                                      's' if b != 1 else ''))
-            # figure
-            plt.figure()
-            plt.title(title)
-            OptimizationPlot.create_standard_plot('epoch',
-                                                  metric.replace('_', ' '),
-                                                  files,
-                                                  labels,
-                                                  plot_std=True,
-                                                  # scale by training set
-                                                  scale_steps=50000)
-            plt.legend()
-            OptimizationPlot.save_as_tikz(out_file)
+    if run_experiments:
+        run()
+    return result_files()
+
+
+def filenames():
+    """Return filenames of the merged data.
+
+    Returns:
+    --------
+    (dict)
+        A dictionary with keys given by the label of the experiments.
+        The associated value itself is another dictionary with keys, values
+        corresponding to the block splitting which itself contains a dictionary
+        with metric and filename of the metric data
+        respectively.
+
+        file_list = files[label][max_blocks][metric]
+    """
+    try:
+        return main(run_experiments=False)
+    except Exception as e:
+        print("An error occured. Maybe try to re-run the experiments.")
+        raise e
+
+
+if __name__ == '__main__':
+    main()

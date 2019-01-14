@@ -29,7 +29,7 @@ filenames = [path.join(data_dir, f) for f in ['dummy_A.csv',
                                               'dummy_C.csv',
                                               'dummy_D.csv']]
 # labels in plot
-labels = [r'$\sin$', r'$\cos$', r'$\tanh$', r'$\exp(-x^2)$' ]
+labels = [r'$\sin$', r'$\cos$', r'$\tanh$', r'$\exp(-x^2)$']
 # dummy functions
 functions = [np.sin, np.cos, np.tanh, lambda x: np.exp(-x**2)]
 
