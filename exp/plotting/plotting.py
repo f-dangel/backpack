@@ -86,12 +86,9 @@ class OptimizationPlot():
         tex_file, pdf_file = ['{}.{}'.format(out_file, extension)
                               for extension in ['tex', 'pdf']]
         tikz_save(tex_file,
-                  override_externals = True,
-                  # define these two macros in your .tex document
-                  figureheight = r'\figheight',
-                  figurewidth = r'\figwidth',
-                  tex_relative_path_to_data = '../../fig/',
-                  extra_axis_parameters = {'mystyle'})
+                  override_externals=True,
+                  tex_relative_path_to_data='../../fig/',
+                  extra_axis_parameters={'mystyle'})
         if pdf_preview:
             plt.savefig(pdf_file, bbox_inches='tight')
 
@@ -123,3 +120,49 @@ class OptimizationPlot():
         _linestyles = ['-', '--', '-.', ':']
         for style in cycle(_linestyles):
             yield style
+
+    @staticmethod
+    def post_process(tikz_file):
+        """Remove from matplotlib2tikz export what should be configurable.
+
+        Write processed file to `tikz_file + '_processed.tex'`.
+        """
+        with open(tikz_file + '.tex', 'r') as f:
+            content = f.readlines()
+
+        # remove lines containing these specifications
+        to_remove = [r'x grid style',
+                     r'y grid style',
+                     r'tick align',
+                     r'\addlegendimage',
+                     r'legend cell align',
+                     r'legend style',
+                     r'tick pos',
+                     r'xmin',
+                     r'xmax',
+                     r'ymin',
+                     r'ymax',
+                     ]
+
+        for pattern in to_remove:
+            content = [c for c in content if pattern not in c]
+
+        content = ''.join(content)
+
+        # remove line width specifications
+        linewidths = [r'ultra thick',
+                      r'very thick',
+                      r'semithick',
+                      r'thick',
+                      r'very thin',
+                      r'ultra thin',
+                      r'thin',
+                      ]
+
+        for width in linewidths:
+            content = content.replace(width, '')
+
+        out_file = tikz_file + '_processed.tex'
+        with open(out_file, 'w') as f:
+            print(''.join(content))
+            f.write(''.join(content))
