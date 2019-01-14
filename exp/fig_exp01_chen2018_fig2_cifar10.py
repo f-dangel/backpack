@@ -1,4 +1,4 @@
-"""Plot the data computed in `exp01_chen2018_fig1_mnist.py`."""
+"""Plot the data computed in `exp01_chen2018_fig2_cifar10.py`."""
 
 
 from os import path, makedirs
