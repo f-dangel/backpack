@@ -164,5 +164,4 @@ class OptimizationPlot():
 
         out_file = tikz_file + '_processed.tex'
         with open(out_file, 'w') as f:
-            print(''.join(content))
-            f.write(''.join(content))
+            f.write(content)

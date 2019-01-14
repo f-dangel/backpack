@@ -37,6 +37,7 @@ def plot():
         if '_loss' in metric:
             plt.ylim(bottom=-0.05, top=1)
         OptimizationPlot.save_as_tikz(out_file)
+        OptimizationPlot.post_process(out_file)
 
 
 if __name__ == '__main__':

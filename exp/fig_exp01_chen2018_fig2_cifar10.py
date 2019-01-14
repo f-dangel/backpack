@@ -34,6 +34,7 @@ def plot():
                                               scale_steps=50000)
         plt.legend()
         OptimizationPlot.save_as_tikz(out_file)
+        OptimizationPlot.post_process(out_file)
 
 
 if __name__ == '__main__':
