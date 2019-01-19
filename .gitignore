@@ -9,3 +9,9 @@ __pycache__/
 dat/
 # figures
 fig/
+
+# documentation
+**/*.rst
+!README.rst
+!doc/source/index.rst
+doc/build
