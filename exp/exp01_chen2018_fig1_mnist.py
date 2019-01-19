@@ -7,16 +7,14 @@ Link to the reference:
 import torch
 from torch.nn import CrossEntropyLoss
 from torch.optim import SGD
-from os import path, makedirs
-import matplotlib.pyplot as plt
+from os import path
+from collections import OrderedDict
 from .models.chen2018 import original_mnist_model
 from .loading.load_mnist import MNISTLoader
 from .training.first_order import FirstOrderTraining
 from .training.second_order import SecondOrderTraining
 from .training.runner import TrainingRunner
-from .plotting.plotting import OptimizationPlot
 from .utils import (directory_in_data,
-                    directory_in_fig,
                     dirname_from_params)
 from bpexts.optim.cg_newton import CGNewton
 
@@ -27,7 +25,6 @@ epochs = 20
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 dirname = 'exp01_reproduce_chen_figures/mnist'
 data_dir = directory_in_data(dirname)
-fig_dir = directory_in_fig(dirname)
 logs_per_epoch = 5
 
 
@@ -134,7 +131,8 @@ def mnist_cgnewton_train_fn(modify_2nd_order_terms):
     return train_fn
 
 
-if __name__ == '__main__':
+def main(run_experiments=True):
+    """Execute the experiments, return filenames of the merged runs."""
     seeds = range(10)
     labels = [
               'SGD',
@@ -145,7 +143,7 @@ if __name__ == '__main__':
     experiments = [
                    # 1) SGD curve
                    mnist_sgd_train_fn(),
-                   # 2) Jacobian curve
+                   # 2) Generalized Gauss-Newton curve
                    mnist_cgnewton_train_fn('zero'),
                    # 3) BDA-PCH curve
                    mnist_cgnewton_train_fn('abs'),
@@ -153,34 +151,43 @@ if __name__ == '__main__':
                    mnist_cgnewton_train_fn('clip'),
                   ]
 
-    # run experiments
-    # ---------------
-    metric_to_files = None
-    for train_fn in experiments:
-        runner = TrainingRunner(train_fn)
-        runner.run(seeds)
-        m_to_f = runner.merge_runs(seeds)
-        if metric_to_files is None:
-            metric_to_files = {k : [v] for k, v in m_to_f.items()}
-        else:
-            for key, value in m_to_f.items():
-                metric_to_files[key].append(value)
+    def run():
+        """Run the experiments."""
+        for train_fn in experiments:
+            runner = TrainingRunner(train_fn)
+            runner.run(seeds)
 
-    # plotting
-    # --------
-    for metric, files in metric_to_files.items():
-        out_file = path.join(fig_dir, metric)
-        makedirs(fig_dir, exist_ok=True)
-        # figure
-        plt.figure()
-        OptimizationPlot.create_standard_plot('epoch',
-                                              metric.replace('_', ' '),
-                                              files,
-                                              labels,
-                                              # scale by training set
-                                              scale_steps=60000)
-        plt.legend()
-        # fine tuning
-        if '_loss' in metric:
-            plt.ylim(bottom=-0.05, top=1)
-        OptimizationPlot.save_as_tikz(out_file)
+    def result_files():
+        """Merge runs and return files of the merged data."""
+        filenames = OrderedDict()
+        for label, train_fn in zip(labels, experiments):
+            runner = TrainingRunner(train_fn)
+            m_to_f = runner.merge_runs(seeds)
+            filenames[label] = m_to_f
+        return filenames
+
+    if run_experiments:
+        run()
+    return result_files()
+
+
+def filenames():
+    """Return filenames of the merged data.
+
+    Returns:
+    --------
+    (dict)
+        A dictionary with keys given by the label of the experiments.
+        The associated value itself is another dictionary with keys, values
+        corresponding to the metric and filename of the metric data
+        respectively.
+    """
+    try:
+        return main(run_experiments=False)
+    except Exception as e:
+        print("An error occured. Maybe try to re-run the experiments.")
+        raise e
+
+
+if __name__ == '__main__':
+    main()

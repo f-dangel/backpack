@@ -14,7 +14,8 @@ class HBPSequential(hbp_decorate(Sequential)):
         pass
 
     # override
-    def backward_hessian(self, output_hessian, compute_input_hessian=False,
+    def backward_hessian(self, output_hessian,
+                         compute_input_hessian=False,
                          modify_2nd_order_terms='none'):
         """Propagate Hessian through the network.
 

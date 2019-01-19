@@ -45,14 +45,15 @@ def hbp_decorate(module_subclass):
                           ' during Hessian backpropagation.')
             pass
 
-        def backward_hessian(self, output_hessian, compute_input_hessian=True,
+        def backward_hessian(self, output_hessian,
+                             compute_input_hessian=True,
                              modify_2nd_order_terms='none'):
             """Propagate Hessian, optionally compute parameter Hessian.
 
             Backpropagation of the Hessian requires a layer to provide a method
             that, given the Hessian with respect to its output (output_hessian)
             computes the Hessian with respect to its input. During this
-            backward procedure, parameter Hessians can be computed.
+            backward procedure, parameter Hessians are computed.
 
             Classes inheriting from HPBModule must implement this backward
             method.
@@ -61,9 +62,9 @@ def hbp_decorate(module_subclass):
             -----------
             output_hessian (torch.Tensor): Hessian with respect to the layer's
                                            output
-            compute_input_hessian (bool): Compute the input with respect to the
-                                          layer's input (e.g not necessary for
-                                          the first layer in a network)
+            compute_input_hessian (bool): Compute the Hessian with respect to
+                                          the layer's input (e.g not necessary
+                                          for the first layer in a network)
             modify_2nd_order_terms : string ('none', 'clip', 'sign', 'zero')
                 String specifying the strategy for dealing with 2nd-order
                 module effects (only required if nonlinear layers are involved)

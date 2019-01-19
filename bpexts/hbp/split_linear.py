@@ -84,7 +84,8 @@ class HBPSplitLinear(hbp_decorate(Module)):
         pass
 
     # override
-    def backward_hessian(self, output_hessian, compute_input_hessian=True,
+    def backward_hessian(self, output_hessian,
+                         compute_input_hessian=True,
                          modify_2nd_order_terms='none'):
         """Compute Hessian w.r.t. input from Hessian w.r.t. output.
 

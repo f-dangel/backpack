@@ -3,8 +3,13 @@
 import pandas
 from scipy.interpolate import InterpolatedUnivariateSpline
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 from matplotlib2tikz import save as tikz_save
+from itertools import cycle
+
+
 
 class OptimizationPlot():
     """Collection of plotting commands for optimization plots."""
@@ -13,9 +18,10 @@ class OptimizationPlot():
                     plot_std=True,
                     std_alpha=0.5,
                     scale_steps=1,
-                    label=None): 
+                    label=None,
+                    linestyle=None):
         """Add plot of a metric.
-        
+
         Parameters:
         -----------
         csv_file : (str)
@@ -28,21 +34,31 @@ class OptimizationPlot():
             Transparency of the standard deviation shade plot
         label : (str)
             Label of the plot, no label if left None
+        linestyle : (str)
+            Line style for mean value, `'-'`, `'--'`, `'-.'`, or `':'`.
+            Default: `'-'`
         """
         step, mean, std = OptimizationPlot.read_csv(csv_file,
                                                     scale_steps=scale_steps)
-        OptimizationPlot.plot_mean(step, mean, label=label)
+        OptimizationPlot.plot_mean(step,
+                                   mean,
+                                   label=label,
+                                   linestyle=linestyle)
         if plot_std:
-            OptimizationPlot.plot_std(step, mean, std, alpha=std_alpha)
+            OptimizationPlot.plot_std(step,
+                                      mean,
+                                      std,
+                                      alpha=std_alpha)
 
     @staticmethod
-    def plot_mean(steps, mean, label=None):
+    def plot_mean(steps, mean, label=None, linestyle=None):
         """Plot the mean value."""
-        plt.plot(steps, mean, label=label)
+        linestyle = '-' if linestyle is None else linestyle
+        plt.plot(steps, mean, label=label, linestyle=linestyle)
 
     @staticmethod
     def plot_std(steps, mean, std, alpha=0.5):
-        """Plot sigma-interval around the mean.""" 
+        """Plot sigma-interval around the mean."""
         #spline_lower = InterpolatedUnivariateSpline(steps, mean - std, k=3)
         #spline_upper = InterpolatedUnivariateSpline(steps, mean + std, k=3)
         #steps_fine = np.linspace(np.min(steps),
@@ -69,13 +85,10 @@ class OptimizationPlot():
         """Save TikZ figure using matplotlib2tikz. Optional PDF out."""
         tex_file, pdf_file = ['{}.{}'.format(out_file, extension)
                               for extension in ['tex', 'pdf']]
-        tikz_save(tex_file, 
-                  override_externals = True,
-                  # define these two macros in your .tex document
-                  figureheight = r'\figheight',
-                  figurewidth = r'\figwidth',
-                  tex_relative_path_to_data = '../../fig/',
-                  extra_axis_parameters = {'mystyle'})
+        tikz_save(tex_file,
+                  override_externals=True,
+                  tex_relative_path_to_data='../../fig/',
+                  extra_axis_parameters={'mystyle'})
         if pdf_preview:
             plt.savefig(pdf_file, bbox_inches='tight')
 
@@ -91,9 +104,64 @@ class OptimizationPlot():
         """Standard plot of the same metric for different optimizers."""
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
-        for label, csv in zip(labels, csv_files):
+        for label, csv, linestyle in zip(labels,
+                                         csv_files,
+                                         OptimizationPlot.linestyles()):
             OptimizationPlot.plot_metric(csv,
                                          plot_std=plot_std,
                                          std_alpha=std_alpha,
                                          scale_steps=scale_steps,
-                                         label=label)
+                                         label=label,
+                                         linestyle=linestyle)
+
+    @staticmethod
+    def linestyles():
+        """Cycle through all different linestyles of `matplotlib`."""
+        _linestyles = ['-', '--', '-.', ':']
+        for style in cycle(_linestyles):
+            yield style
+
+    @staticmethod
+    def post_process(tikz_file):
+        """Remove from matplotlib2tikz export what should be configurable.
+
+        Write processed file to `tikz_file + '_processed.tex'`.
+        """
+        with open(tikz_file + '.tex', 'r') as f:
+            content = f.readlines()
+
+        # remove lines containing these specifications
+        to_remove = [r'x grid style',
+                     r'y grid style',
+                     r'tick align',
+                     r'\addlegendimage',
+                     r'legend cell align',
+                     r'legend style',
+                     r'tick pos',
+                     r'xmin',
+                     r'xmax',
+                     r'ymin',
+                     r'ymax',
+                     ]
+
+        for pattern in to_remove:
+            content = [c for c in content if pattern not in c]
+
+        content = ''.join(content)
+
+        # remove line width specifications
+        linewidths = [r'ultra thick',
+                      r'very thick',
+                      r'semithick',
+                      r'thick',
+                      r'very thin',
+                      r'ultra thin',
+                      r'thin',
+                      ]
+
+        for width in linewidths:
+            content = content.replace(width, '')
+
+        out_file = tikz_file + '_processed.tex'
+        with open(out_file, 'w') as f:
+            f.write(content)

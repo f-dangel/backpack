@@ -1,6 +1,7 @@
 -e git://github.com/fKunstner/quickbench.git@v0.1.0#egg=quickbench
 matplotlib==3.0.2
 matplotlib2tikz==0.6.18
+palettable==3.1.1
 pandas==0.23.4
 tensorboard==1.11.0
 tensorboard-logger==0.1.0
