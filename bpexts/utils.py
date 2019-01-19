@@ -10,25 +10,38 @@ from random import seed as random_seed
 
 
 def torch_allclose(a, b, *args, **kwargs):
-    """True if two tensors are element-wise equal within a tolerance.
+    """Return if two tensors are element-wise equal within a tolerance.
 
-    Internally, `numpy.allclose` is called.
+    TODO: Replace calls by ``torch.allclose``.
     """
     return allclose(a.data, b.data, *args, **kwargs)
 
 
 def torch_contains_nan(tensor):
-    """Return whether a tensor contains nan."""
+    """Return whether a tensor contains NaNs.
+    
+    Parameters
+    ----------
+    tensor : :obj:`torch.Tensor`
+        Tensor to be checked for NaNs.
+
+    Returns
+    -------
+    bool
+        If at least one NaN is contained in ``tensor``.
+    """
     return any(tensor.view(-1) != tensor.view(-1))
 
 
 def set_seeds(seed=None):
-    """Set random seeds of pyTorch (+CUDA), NumPy and random modules.
+    """Set random seeds of ``torch``, ``torch.cuda``, ``numpy``, ``random``.
 
-    Parameters:
-    -----------
-    seed : (int or None)
-        Seed initialization value, no reset if `None`
+    Per default, no reset will be performed.
+
+    Parameters
+    ----------
+    seed : :obj:`int` or :obj:`None`, optional
+        Seed initialization value, no reset if unspecified
     """
     if seed is not None:
         # PyTorch
@@ -40,33 +53,37 @@ def set_seeds(seed=None):
         random_seed(seed)
 
 
-# from https://gist.github.com/Stonesjtu/368ddf5d9eb56669269ecdf9b0d21cbe
 def memory_report():
-    """Report the memory usage of the tensor.storage in pytorch
-    Both on CPUs and GPUs are reported
+    """Report the memory usage of the :obj:`torch.tensor.storage` both
+    on CPUs and GPUs.
 
-    Returns:
-    --------
-    gpu_stats, cpu_stats : (tuple(int, float), tuple(int, float))
+    Returns
+    -------
+    tuple
         Two tuples, each consisting of the number of allocated tensor
-        elements and the total storage in MB on GPU and CPU respectively
+        elements and the total storage in MB on GPU and CPU, respectively.
+
+    Notes
+    -----
+    The code is a modified version from the snippet provided by
+        https://gist.github.com/Stonesjtu/368ddf5d9eb56669269ecdf9b0d21cbe
     """
 
     def _mem_report(tensors, mem_type):
         """Print the selected tensors of type. Ignore sparse tensors.
 
-        There are two major storage types in our major concern:
+        There are two major storage types in major concern:
             - GPU: tensors transferred to CUDA devices
-            - CPU: tensors remaining on the system memory (usually unimportant)
+            - CPU: tensors remaining on the system memory
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         tensors : (list(torch.Tensor))
             The tensors of specified type
         mem_type : (str)
             'CPU' or 'GPU' in current implementation
 
-        Return:
+        Returns
         -------
         total_numel, total_mem : (int, float)
             Total number of allocated elements and total memory reserved
