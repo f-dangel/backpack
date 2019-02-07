@@ -1,4 +1,5 @@
-#!/usr/bin/python3
+"""Extend module for HBP."""
+
 
 import warnings
 from ..decorator import decorate
