@@ -1,12 +1,9 @@
 """Utility functions."""
 
 import gc
-from numpy import allclose
-from numpy.random import seed as numpy_seed
-from torch import manual_seed as torch_manual_seed
-from torch import is_tensor
-from torch.cuda import manual_seed as torch_cuda_manual_seed
-from random import seed as random_seed
+import numpy
+import torch
+import random
 
 
 def torch_allclose(a, b, *args, **kwargs):
@@ -14,12 +11,12 @@ def torch_allclose(a, b, *args, **kwargs):
 
     TODO: Replace calls by ``torch.allclose``.
     """
-    return allclose(a.data, b.data, *args, **kwargs)
+    return numpy.allclose(a.data, b.data, *args, **kwargs)
 
 
 def torch_contains_nan(tensor):
     """Return whether a tensor contains NaNs.
-    
+
     Parameters
     ----------
     tensor : :obj:`torch.Tensor`
@@ -45,12 +42,12 @@ def set_seeds(seed=None):
     """
     if seed is not None:
         # PyTorch
-        torch_manual_seed(seed)
-        torch_cuda_manual_seed(seed)
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed(seed)
         # NumPy
-        numpy_seed(seed)
+        numpy.random.seed(seed)
         # random
-        random_seed(seed)
+        random.seed(seed)
 
 
 def memory_report():
@@ -92,8 +89,7 @@ def memory_report():
         total_numel, total_mem, visited_data = 0, 0., []
 
         # sort by size
-        sorted_tensors = sorted(tensors,
-                                key=lambda t: t.storage().data_ptr())
+        sorted_tensors = sorted(tensors, key=lambda t: t.storage().data_ptr())
 
         for tensor in sorted_tensors:
             if tensor.is_sparse:
@@ -103,12 +99,12 @@ def memory_report():
 
             numel = tensor.storage().size()
             element_size = tensor.storage().element_size()
-            mem = numel*element_size / 1024.**2  # 32bit = 4Byte, MByte
+            mem = numel * element_size / 1024.**2  # 32bit = 4Byte, MByte
             element_type = type(tensor).__name__
             size = tuple(tensor.size())
 
-            print('{}  \t{}\t\t{:.7f}\t\t{}'.format(element_type,
-                  size, mem, data_ptr))
+            print('{}  \t{}\t\t{:.7f}\t\t{}'.format(element_type, size, mem,
+                                                    data_ptr))
 
             if data_ptr not in visited_data:
                 total_numel += numel
@@ -116,21 +112,21 @@ def memory_report():
             visited_data.append(data_ptr)
 
         print('{}\nTotal Tensors (not counting shared multiple times):'
-              '{}\nUsed Memory Space: {:.7f} MB\n{}'
-              .format('-' * LEN, total_numel, total_mem, '-'*LEN))
+              '{}\nUsed Memory Space: {:.7f} MB\n{}'.format(
+                  '-' * LEN, total_numel, total_mem, '-' * LEN))
         return total_numel, total_mem
 
     gc.collect()
     LEN = 65
-    print('='*LEN)
+    print('=' * LEN)
     objects = gc.get_objects()
     print('{}\t{}\t\t\t{}'.format('Element type', 'Size', 'Used MEM(MB)'))
 
     tensors = []
     for obj in objects:
         try:
-            if is_tensor(obj) or (hasattr(obj, 'data')
-                                  and is_tensor(obj.data)):
+            if torch.is_tensor(obj) or (hasattr(obj, 'data')
+                                        and torch.is_tensor(obj.data)):
                 tensors.append(obj)
         except Exception:
             pass
@@ -139,6 +135,6 @@ def memory_report():
     host_tensors = [t for t in tensors if not t.is_cuda]
     gpu_stats = _mem_report(cuda_tensors, 'GPU')
     cpu_stats = _mem_report(host_tensors, 'CPU')
-    print('='*LEN)
+    print('=' * LEN)
 
     return gpu_stats, cpu_stats
