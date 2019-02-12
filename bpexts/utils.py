@@ -9,7 +9,7 @@ import random
 def torch_allclose(a, b, *args, **kwargs):
     """Return if two tensors are element-wise equal within a tolerance.
 
-    TODO: Replace calls by ``torch.allclose``.
+    TODO: Replace calls by :meth:`torch.allclose`.
     """
     return numpy.allclose(a.data, b.data, *args, **kwargs)
 
@@ -25,13 +25,14 @@ def torch_contains_nan(tensor):
     Returns
     -------
     bool
-        If at least one NaN is contained in ``tensor``.
+        If at least one NaN is contained in :obj:`tensor`.
     """
     return any(tensor.view(-1) != tensor.view(-1))
 
 
 def set_seeds(seed=None):
-    """Set random seeds of ``torch``, ``torch.cuda``, ``numpy``, ``random``.
+    """Set random seeds of :mod:`torch`, :mod:`torch.cuda`, :mod:`numpy`,
+    :mod:`random`.
 
     Per default, no reset will be performed.
 
@@ -62,8 +63,8 @@ def memory_report():
 
     Notes
     -----
-    The code is a modified version from the snippet provided by
-        https://gist.github.com/Stonesjtu/368ddf5d9eb56669269ecdf9b0d21cbe
+    * The code is a modified version from the snippet provided by
+      https://gist.github.com/Stonesjtu/368ddf5d9eb56669269ecdf9b0d21cbe
     """
 
     def _mem_report(tensors, mem_type):

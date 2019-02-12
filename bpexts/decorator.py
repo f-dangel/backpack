@@ -1,7 +1,7 @@
 """Decorator for instances of torch.nn.Module subclasses.
 
-Allows to add methods to a usual layer used in torch without
-having to reimplement backward/forward.
+Adds methods to a usual layer used in PyTorch without reimplementing
+the backward/forward pass.
 """
 
 from torch.nn import Module
@@ -17,20 +17,20 @@ def decorate(module_subclass):
 
     - buffers whose book-keeping is decoupled from the normal buffers
 
-    Implemented in this way, each subclass of nn.Module is decorated
-    separately, thereby avoiding double-inheritance from torch.nn.Module
-    in a diamond-like pattern.
+    Implemented in this way, each subclass of :obj:`torch.nn.Module`
+    is decorated separately, thereby avoiding double-inheritance from
+    :obj:`torch.nn.Module` in a diamond-like pattern.
 
     Parameters
     ----------
     module_subclass : torch.nn.Module subclass
-        A subclass of torch.nn.Module that will be extended with the
-        aforementioned functionality
+        A subclass of :obj:`torch.nn.Module `that will be extended
+        by the aforementioned functionality
 
     Returns
     -------
     class
-        Class which can be used exactly the same as the original class
+        Can be used exactly the same as the original class
         but has additional methods to implement extensions of
         backpropagation
     """
@@ -39,7 +39,7 @@ def decorate(module_subclass):
 
     class DecoratedModule(module_subclass):
         """Module decorated for backpropagation extension.
-        
+
         Attributes
         ----------
         exts_hooks : :obj:`list`
@@ -82,7 +82,7 @@ def decorate(module_subclass):
             """Register tracked buffer for extended backpropagation.
 
             If no tensor is specified, `None` is used as a placeholder.
-            
+
             Parameters
             ----------
             name : :obj:`str`
@@ -100,7 +100,7 @@ def decorate(module_subclass):
         # --- disable exts ---
         def disable_exts(self, keep_buffers=False):
             """Disable exts behavior, make module behave like torch.nn.
-            
+
             Parameters
             ----------
             keep_buffers: :obj:`bool`
@@ -129,10 +129,8 @@ def decorate(module_subclass):
             active_hooks = len(self.exts_hooks)
             active_buffers = len(self.exts_buffers)
             repr = '{}{}buffers: {}, hooks {}'.format(
-                    super().extra_repr(),
-                    ', ' if super().extra_repr() else '',
-                    active_buffers,
-                    active_hooks)
+                super().extra_repr(), ', ' if super().extra_repr() else '',
+                active_buffers, active_hooks)
             return repr
 
     DecoratedModule.__name__ = 'Decorated{}'.format(module_subclass.__name__)
