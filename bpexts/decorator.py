@@ -4,7 +4,7 @@ Adds methods to a usual layer used in PyTorch without reimplementing
 the backward/forward pass.
 """
 
-from torch.nn import Module
+import torch.nn
 
 
 def decorate(module_subclass):
@@ -34,7 +34,7 @@ def decorate(module_subclass):
         but has additional methods to implement extensions of
         backpropagation
     """
-    if not issubclass(module_subclass, Module):
+    if not issubclass(module_subclass, torch.nn.Module):
         raise ValueError('Can onĺy wrap subclasses of torch.nn.Module')
 
     class DecoratedModule(module_subclass):
