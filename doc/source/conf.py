@@ -29,14 +29,15 @@
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc',
+extensions = [
+    'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
     'sphinx.ext.coverage',
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
-    ]
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -45,9 +46,10 @@ templates_path = ['_templates']
 # You can specify multiple suffix as a list of string:
 #
 source_suffix = {
-        '.rst': 'restructuredtext',
-        '.txt': 'markdown',
-        '.md': 'markdown'}
+    '.rst': 'restructuredtext',
+    '.txt': 'markdown',
+    '.md': 'markdown'
+}
 #source_suffix = ['.rst', '.md']
 #source_suffix = '.rst'
 
@@ -86,7 +88,6 @@ pygments_style = 'sphinx'
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
 
-
 # -- Options for HTML output ----------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
@@ -117,12 +118,10 @@ html_sidebars = {
     ]
 }
 
-
 # -- Options for HTMLHelp output ------------------------------------------
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'backprop-extendeddoc'
-
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -152,16 +151,12 @@ latex_documents = [
      u'F. Dangel', 'manual'),
 ]
 
-
 # -- Options for manual page output ---------------------------------------
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    (master_doc, 'backprop-extended', u'backprop-extended Documentation',
-     [author], 1)
-]
-
+man_pages = [(master_doc, 'backprop-extended',
+              u'backprop-extended Documentation', [author], 1)]
 
 # -- Options for Texinfo output -------------------------------------------
 
@@ -173,9 +168,6 @@ texinfo_documents = [
      author, 'backprop-extended', 'One line description of project.',
      'Miscellaneous'),
 ]
-
-
-
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'https://docs.python.org/': None}
