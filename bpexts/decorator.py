@@ -1,24 +1,52 @@
 """Decorator for instances of torch.nn.Module subclasses.
 
-Allows to add methods to a usual layer used in torch without
-having to reimplement backward/forward.
+Adds methods to a usual layer used in PyTorch without reimplementing
+the backward/forward pass.
 """
 
-from torch.nn import Module
+import torch.nn
 
 
 def decorate(module_subclass):
-    """Add functionality to torch.nn.Module subclass.
+    """Extend functionality of a module.
 
-    Implemented in this way, each subclass of nn.Module is decorated
-    separately, thereby avoiding double-inheritance from torch.nn.Module
-    in a diamond-like pattern.
+    The functionality allows to install
+
+    - hooks whose book-keeping decoupled from the normal hooks and
+      allows them to be removed if desired.
+
+    - buffers whose book-keeping is decoupled from the normal buffers
+
+    Implemented in this way, each subclass of :obj:`torch.nn.Module`
+    is decorated separately, thereby avoiding double-inheritance from
+    :obj:`torch.nn.Module` in a diamond-like pattern.
+
+    Parameters
+    ----------
+    module_subclass : torch.nn.Module subclass
+        A subclass of :obj:`torch.nn.Module `that will be extended
+        by the aforementioned functionality
+
+    Returns
+    -------
+    class
+        Can be used exactly the same as the original class
+        but has additional methods to implement extensions of
+        backpropagation
     """
-    if not issubclass(module_subclass, Module):
+    if not issubclass(module_subclass, torch.nn.Module):
         raise ValueError('Can onĺy wrap subclasses of torch.nn.Module')
 
     class DecoratedModule(module_subclass):
-        """Module decorated for backpropagation extension."""
+        """Module decorated for backpropagation extension.
+
+        Attributes
+        ----------
+        exts_hooks : :obj:`list`
+            Stores handles of hooks that allow for easy removal
+        exts_buffers : :obj:`set`
+            Store buffers of backprop extension
+        """
         __doc__ = '[Decorated by bpexts] {}'.format(module_subclass.__doc__)
 
         def __init__(self, *args, **kwargs):
@@ -51,7 +79,17 @@ def decorate(module_subclass):
 
         # --- buffer tracking ---
         def register_exts_buffer(self, name, tensor=None):
-            """Register tracked buffer for extended backpropagation."""
+            """Register tracked buffer for extended backpropagation.
+
+            If no tensor is specified, `None` is used as a placeholder.
+
+            Parameters
+            ----------
+            name : :obj:`str`
+                Name of the buffer
+            tensor : torch.Tensor, optional
+                Tensor to store as buffer
+            """
             self.register_buffer(name, tensor)
             self._track_exts_buffer(name)
 
@@ -61,7 +99,13 @@ def decorate(module_subclass):
 
         # --- disable exts ---
         def disable_exts(self, keep_buffers=False):
-            """Disable exts behavior, make module behave like torch.nn."""
+            """Disable exts behavior, make module behave like torch.nn.
+
+            Parameters
+            ----------
+            keep_buffers: :obj:`bool`
+                Also remove buffers stored by backpropagation extension
+            """
             self.remove_exts_hooks()
             if not keep_buffers:
                 self.remove_exts_buffers()
@@ -69,13 +113,13 @@ def decorate(module_subclass):
                 module.disable_exts(keep_buffers=keep_buffers)
 
         def remove_exts_hooks(self):
-            """Remove all hooks tracked by exts."""
+            """Remove all hooks tracked by bpexts."""
             while self.exts_hooks:
                 handle = self.exts_hooks.pop()
                 handle.remove()
 
         def remove_exts_buffers(self):
-            """Remove all buffers introduced by exts."""
+            """Remove all buffers introduced by bpexts."""
             while self.exts_buffers:
                 name = self.exts_buffers.pop()
                 self._buffers.pop(name)
@@ -85,10 +129,8 @@ def decorate(module_subclass):
             active_hooks = len(self.exts_hooks)
             active_buffers = len(self.exts_buffers)
             repr = '{}{}buffers: {}, hooks {}'.format(
-                    super().extra_repr(),
-                    ', ' if super().extra_repr() else '',
-                    active_buffers,
-                    active_hooks)
+                super().extra_repr(), ', ' if super().extra_repr() else '',
+                active_buffers, active_hooks)
             return repr
 
     DecoratedModule.__name__ = 'Decorated{}'.format(module_subclass.__name__)

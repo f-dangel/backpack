@@ -11,20 +11,32 @@ class CGSolver(Optimizer):
     """PyTorch optimizer class extended by conjugate gradient method."""
     @staticmethod
     def solve(A, b, cg_atol, cg_tol, cg_maxiter):
-        """Solve A*x = b for x using CG.
+        r"""Solve :math:`Ax = b` for :math:`x` using conjugate gradient.
 
-        Parameters:
-        -----------
-        A : (torch.Tensor or function)
+        Parameters
+        ----------
+        A : torch.Tensor or function
             Matrix of the linear operator `A` or function implementing
-            matrix-vector multiplication by `A`
-        b : (torch.Tensor)
+            matrix-vector multiplication by `A`.
+        b : torch.Tensor
             Right-hand side of the linear system
+        cg_atol: float
+            Absolute tolerance to accept convergence. Stop if
+            :math:`|| A x - b || <` `cg_atol`
+        cg_tol: float
+            Relative tolerance to accept convergence. Stop if
+            :math:`|| A x - b || / || b || <` `cg_atol`.
+        cg_maxiter: int
+            Maximum number of iterations
 
-        Returns:
-        --------
-        x :  (torch.Tensor)
-            Approximate solution of the linear system
+        Note
+        ----
+        `A` has to provide a `matmul` function.
+
+        Returns
+        -------
+        torch.Tensor
+            Approximate solution :math:`x` of the linear system
         """
         x, info = cg(A, b, tol=cg_tol, atol=cg_atol, maxiter=cg_maxiter)
         if info != 0:
@@ -33,34 +45,62 @@ class CGSolver(Optimizer):
 
 
 class CGNewton(CGSolver):
-    """Solve for update d using CG to solve H * d = -g with gradient g."""
+    r"""Solve for update :math:`d` using CG to solve
+    :math:`[(1 - \alpha)H + \alpha I] d = -g`.
 
+    This update rule is inspired by the work of Chen et al.: BDA-PCH
+    (2018)
+    
+    Note
+    ----
+    Usually, :math:`H` is an approximation to the curvature matrix
+    (Hessian, Fisher, Generalized Gauss-Newton) and :math:`g` is the
+    gradient of the objective function with respect to the parameters.
+    """
     def __init__(self, params, lr, alpha, cg_atol=1E-8, cg_tol=1E-5,
                  cg_maxiter=None):
-        """Compute Newton updates by CG, use average of I and Hessian.
+        r"""Compute Newton updates, use average of identity and Hessian.
 
         Solves
-            [(1 - alpha) * H + alpha * I] * d = -g
-        Applies
-            param -> param + alpha * d
 
-        Parameters:
-        -----------
-        lr : (float)
-            Learning rate
-        alpha :  (float between 0 and 1)
-            Ratio for average of Hessian and Id
-        cg_atol, cg_tol : (float, float)
-            Convergence parameters, see `scipy.sparse.linalg.cg`
-        cg_maxiter :  (int)
-            Maximum number of iterations
+        .. math::
+
+            [(1 - \alpha) H + alpha * I] * d = -g
+
+        Applies
+        
+        .. math::
+
+            \theta \leftarrow \theta + \gamma d
+
+        with :math:`\gamma` given by `lr`.
+
+        Parameters
+        ----------
+        lr : float
+            Learning rate :math:`\gamma`
+        alpha :  float between 0 and 1
+            Ratio :math:`\alpha` for average of Hessian and identity matrix
+        cg_atol : float, optional
+            Absolute tolerance for CG convergence
+        cg_tol : float, optional
+            Relative tolerance for CG convergence
+        cg_maxiter :  int, optional
+            Maximum number of iterations. Per default, the number of
+            iterations is unlimited
         """
         defaults = dict(lr=lr, alpha=alpha, cg_atol=cg_atol, cg_tol=cg_tol,
                         cg_maxiter=cg_maxiter)
         super().__init__(params, defaults)
 
     def step(self, closure=None):
-        """Perform a single optimization step."""
+        """Perform a single optimization step.
+        
+        Parameters
+        ----------
+        closure : function, optional
+            See PyTorch documentation
+        """
         loss = None
         if closure is not None:
             loss = closure()
@@ -77,6 +117,8 @@ class CGNewton(CGSolver):
 
         for p in group['params']:
             if p.grad is None:
+                warn('User Warning: Encountered parameter with None'
+                     ' grad attribute of size {}'.format(p.size()))
                 continue
             # prepare linear system
             g = p.grad.data
@@ -89,47 +131,56 @@ class CGNewton(CGSolver):
             p.data.add_(group['lr'], solution)
 
     def hvp_for_update(self, mvp, alpha=0):
-        """Regularize Hessian-vector product with identity.
+        r"""Regularized Hessian-vector product with identity.
 
-        Parameters:
-        -----------
-        mvp : (function)
+        Parameters
+        ----------
+        mvp : function
             Implicit matrix-vector multiplication routine
-        alpha : (float between 0 and 1)
-            Averaging constant for the identity
+        alpha : float, between 0 and 1, optional
+            Averaging constant for the identity. Per default,
+            no additional regularization is applied
 
-        Returns:
-        --------
-        mvp_avg_id : (function)
+        Returns
+        -------
+        function
             Implicit matrix-vector multiplication with the
-            provided routine scaled (1 - alpha) plus multiplication
-            by alpha * I (I is the identity)
+            provided routine scaled by :math:`(1 - \alpha)` plus
+            multiplication by :math:`\alpha I` where :math:`I` denotes
+            the identity matrix
+
+            .. math::
+
+                (1 - \alpha) \mathrm{mvp}(v) + \alpha v.
         """
         def mvp_avg_id(v):
-            """Multiply vector by weighted average of identity and hvp.
+            r"""Multiply vector by weighted average of identity and `mvp`.
 
-            Parameters:
-            -----------
-            v : (torch.Tensor)
+            Parameters
+            ----------
+            v : torch.Tensor
                 One-dimensional tensor representing a vector
 
-            Returns:
-            --------
-            mvp_avg_id : (function)
-                Function representing implicit matrix vector multiplication
-                as follows: (1 - alpha) * mvp(v) + alpha * v.
+            Returns
+            -------
+            mvp_avg_id : function
+                Implicit matrix vector multiplication as follows:
+
+                .. math::
+
+                    (1 - \alpha) mvp(v) + \alpha v.
             """
             return self.matmul_average_identity(mvp, v, alpha=alpha)
         return mvp_avg_id
 
     @staticmethod
     def matmul_average_identity(mvp, v, alpha=0):
-        """Perform matrix multiplication by (1 - alpha) * mvp + alpha * Id.
+        r"""Perform matrix multiplication by (1 - alpha) * mvp + alpha * Id.
 
         Use weighted average between matrix and identity.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         mvp : (function)
             Function mapping v to matrix * v
         v : (torch.Tensor)
@@ -137,8 +188,8 @@ class CGNewton(CGSolver):
         alpha : (float between 0 and 1)
             Average ratio
 
-        Returns:
-        --------
+        Returns
+        -------
         mv : (torch.Tensor)
             Result of [(1 - alpha) linop + alpha * Id] * v
         """

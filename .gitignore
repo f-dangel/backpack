@@ -7,3 +7,16 @@ __pycache__/
 
 # datasets and logged data from experiments
 dat/
+
+# datasets for example
+examples/hbp/CIFAR10
+examples/hbp/MNIST
+
+# figures
+fig/
+
+# documentation
+**/*.rst
+!README.rst
+!doc/source/index.rst
+doc/build

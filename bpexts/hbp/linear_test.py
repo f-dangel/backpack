@@ -34,9 +34,7 @@ def test_mean_input_hook():
     x = tensor([[2, 4, 6],
                 [8, 10, 12],
                 [14, 16, 18]]).float()
-    mean_x = tensor([[8],
-                     [10],
-                     [12]])
+    mean_x = tensor([[8, 10, 12]])
     # forward, calls hook
     layer(x)
     assert torch_allclose(layer.mean_input, mean_x)

@@ -1,4 +1,4 @@
-"""Exact computation of full Hessian."""
+"""Exact computation of full Hessian using autodiff."""
 
 from torch import (cat, zeros)
 from torch.autograd import grad
@@ -6,29 +6,40 @@ from tqdm import tqdm
 
 
 def exact_hessian(f, parameters, show_progress=True):
-    """Compute all second derivatives of a scalar w.r.t. `parameters`.
+    r"""Compute all second derivatives of a scalar w.r.t. `parameters`.
 
     The order of parameters corresponds to a one-dimensional
-     vectorization followed by a concatenation of all tensors in
+    vectorization followed by a concatenation of all tensors in
     `parameters`.
 
-    Parameters:
-    -----------
-    f (scalar): Scalar PyTorch function/tensor.
-    parameters (list/tuple/iterator): iterable object containing all
-                tensors acting as variables of `f`
-    show_progress (bool): Show a progressbar which also estimates the
-                          remaining runtime
+    Parameters
+    ----------
+    f : scalar torch.Tensor
+        Scalar PyTorch function/tensor.
+    parameters : list or tuple or iterator of torch.Tensor
+        Iterable object containing all tensors acting as variables of `f`.
+    show_progress : bool
+        Show a progressbar while performing the computation.
 
-    Details:
-    --------
+    Returns
+    -------
+    torch.Tensor 
+        Hessian of `f` with respect to the concatenated version
+        of all flattened quantities in `parameters`
+       
+    Note
+    ----
     The parameters in the list are all flattened and concatenated
-    into one large vector `theta`. Return the matrix `d^2 E/ d^2 theta`
-    with `(d^2E / d^2 theta)[i, j]` =  (d^2E / d theta[i] d theta[j]).
+    into one large vector `theta`. Return the matrix :math:`d^2 E /
+    d \theta^2` with
+    
+    .. math::
 
-    Taken from
-        https://discuss.pytorch.org/t/compute-the-hessian-matrix-of-a-
-        network/15270/3
+        (d^2E / d \theta^2)[i, j] =  (d^2E / d \theta[i] d \theta[j]).
+
+    The code is a modified version of
+    https://discuss.pytorch.org/t/compute-the-hessian-matrix-of-a-
+    network/15270/3
     """
     params = list(parameters)
     if not all(p.requires_grad for p in params):
@@ -59,11 +70,25 @@ def exact_hessian(f, parameters, show_progress=True):
 def exact_hessian_diagonal_blocks(f, parameters, show_progress=True):
     """Compute diagonal blocks of a scalar function's Hessian.
 
-    Return a list of Hessian blocks.
-    The blocks are defined by the tensors in `parameters`. For each
-    parameter, `exact_hessian` is called.
+    Parameters
+    ----------
+    f : scalar of torch.Tensor
+        Scalar PyTorch function
+    parameters : list or tuple or iterator of torch.Tensor
+        List of parameters whose second derivatives are to be computed
+        in a blockwise manner
+    show_progress : bool, optional
+        Show a progressbar while performing the computation.
 
-    See `exact_hessian` for more information.
+    Returns
+    -------
+    list of torch.Tensor
+        Hessian blocks. The order is identical to the order specified
+        by `parameters`
+
+    Note
+    ----
+    For each parameter, `exact_hessian` is called.
     """
     return [exact_hessian(f, [p], show_progress=show_progress)
             for p in parameters]

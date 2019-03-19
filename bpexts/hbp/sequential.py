@@ -14,7 +14,8 @@ class HBPSequential(hbp_decorate(Sequential)):
         pass
 
     # override
-    def backward_hessian(self, output_hessian, compute_input_hessian=False,
+    def backward_hessian(self, output_hessian,
+                         compute_input_hessian=False,
                          modify_2nd_order_terms='none'):
         """Propagate Hessian through the network.
 
@@ -23,10 +24,10 @@ class HBPSequential(hbp_decorate(Sequential)):
         """
         out_h = output_hessian
         for idx in reversed(range(len(self))):
-                module = self[idx]
-                compute_in = True if (idx != 0) else compute_input_hessian
-                out_h = module.backward_hessian(
-                        out_h,
-                        compute_input_hessian=compute_in,
-                        modify_2nd_order_terms=modify_2nd_order_terms)
+            module = self[idx]
+            compute_in = True if (idx != 0) else compute_input_hessian
+            out_h = module.backward_hessian(
+                    out_h,
+                    compute_input_hessian=compute_in,
+                    modify_2nd_order_terms=modify_2nd_order_terms)
         return out_h
