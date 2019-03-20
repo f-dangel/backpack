@@ -16,6 +16,7 @@ examples/hbp/MNIST
 fig/
 
 # documentation
+**/*.html
 **/*.rst
 !README.rst
 !doc/source/index.rst
