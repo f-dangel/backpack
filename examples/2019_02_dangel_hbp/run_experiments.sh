@@ -39,8 +39,6 @@ NUMJOBS=1
 ###########################################################
 # kill tensorboard if it is still running
 killall tensorboard
-# change into directory
-cd code
 # clean up virtual environment and other files if last
 # launch of the script failed or was cancelled
 rm -rf .venv
