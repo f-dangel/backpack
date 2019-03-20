@@ -1,12 +1,12 @@
 from setuptools import setup
 
-setup(name='backprop-extended',
+setup(name='bpexts',
       version='0.1',
-      description='hidden',
-      url='hidden',
-      author='hidden',
-      author_email='hidden',
-      license='',
+      description='PyTorch extension for modified backward pass',
+      url='https://github.com/f-dangel/bpexts',
+      author='F. Dangel',
+      author_email='',
+      license='MIT',
       packages=['bpexts'],
       zip_safe=False
       )
