@@ -3,7 +3,11 @@ numpy==1.14.5
 pytest==4.0.1
 torch==0.4.0
 tqdm==4.28.1
-# requirements for running experiments
+# additional development tools
+-e git://github.com/fKunstner/quickbench.git@v0.1.0#egg=quickbench
+sphinx==1.8.3
+sphinx-rtd-theme==0.4.2
+# additional for running experiments
 matplotlib==3.0.2
 matplotlib2tikz==0.6.18
 palettable==3.1.1

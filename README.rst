@@ -34,57 +34,53 @@ Related papers (reproducing experiments)
     A step-by-step instruction is given in the README file in ``examples/2019_02_dangel_hbp/``.
 
 
-TODO: Clean up below
 
-developer notes
-===============
 
--  Please copy the ``pre-commit`` file to your ``.git/hooks/``
-   directory. It will run tests before accepting commits.
+Developer notes
+###############
 
-virtualenv notes
-================
+- **(Optional)** Run tests before committing: Copy the ``pre-commit`` file to your ``.git/hooks/`` directory.
 
--  Change into the repository directory and set up a virtualenv with
-   *Python 3*:
+- Virtual environment (assuming you are in the top directory of the repository)
 
-   .. code:: console
+  - Set up a virtual environment with
 
-       virtualenv --python=/usr/bin/python3 .venv
+    .. code:: console
 
--  Once you have set up the virtual environment, it can be activated by
+      $ virtualenv --python=/usr/bin/python3 .venv
 
-.. code:: console
+  - Activate it
 
-    source .venv/bin/activate
+    .. code:: console
 
--  After activating the environment, install dependencies
+      $ source .venv/bin/activate
 
-.. code:: console
+  - Install dependencies (also these for development/experiments)
 
-    pip3 install -r ./requirements.txt
+    .. code:: console
 
--  Additional dependencies for benchmarks, tests and experiments
+      $ pip3 install -r ./requirements.txt
+      $ # optional
+      $ pip3 install -r ./requirements_exp.txt
 
-.. code:: console
+  - Install the library (in editable mode)
 
-    pip3 install -r ./requirements_dev.txt
+    .. code:: console
 
--  Install the library (in editable mode)
+      pip3 install --editable .
 
-.. code:: console
+  - Deactivate the virtual environment by typing
 
-    pip3 install --editable .
+    .. code:: console
 
--  (Optional) run tests using the ``pre-commit`` script
+      deactivate
 
-.. code:: console
+- Run tests manually
 
-    chmod u+x ./pre-commit
-    ./pre-commit
+  .. code:: console
 
--  Deactivate the virtual environment by typing
-
-.. code:: console
-
-    deactivate
+    $ chmod u+x ./pre-commit
+    $ ./pre-commit
+    $ # alternative
+    $ pytest -v bpexts
+    $ pytest -v exp
