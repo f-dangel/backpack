@@ -3,7 +3,7 @@ Reproduce experiments
 
 This file provides a straightforward explanation on how to reproduce the experiment from
 
-- F. Dangel, P. Hennig: `A Modular Approach to Block-diagonal Hessian Approximations for Second-order Optimization <https://arxiv.org/abs/1902.01813>`_ (2019)
+- Dangel, F. and Hennig, P.: `A Modular Approach to Block-diagonal Hessian Approximations for Second-order Optimization <https://arxiv.org/abs/1902.01813>`_ (2019)
 
 We provide an executable ``run_experiments.sh`` script. It runs the experiments by setting up a virtual environment, that is removed again after execution.
 
@@ -50,7 +50,7 @@ Step 2/3: Preparing the files
 Step 3/3: Run experiment
 ************************
 
-.. note:: If you do not want to execute the script on your machine (method 1), you can also run it inside of a `docker` container (method 2). However, this solution runs experiments only on the CPU, even if a GPU is available.
+**Note:** If you do not want to execute the script on your machine (method 1), you can also run it inside of a `docker` container (method 2). However, this solution runs experiments only on the CPU, even if a GPU is available.
 
 
 Method 1: Run script
@@ -116,7 +116,7 @@ Method 2: Run inside a ``docker`` container
 
 - If you want to copy the results to your machine, ``docker`` provides a way for doing so. Check out
     
-        https://stackoverflow.com/questions/22049212/copying-files-from-docker-container-to-host
+  - https://stackoverflow.com/questions/22049212/copying-files-from-docker-container-to-host
         
   for more details.
 
