@@ -19,7 +19,27 @@ optimization methods.
 Installation
 ############
 
-TODO
+- Clone the repository
+
+  .. code:: console
+
+    $ git clone https://github.com/f-dangel/bpexts.git
+
+- Change into the directory
+
+  .. code:: console
+
+    $ cd bpexts/
+
+- Install dependencies and ``bpexts``
+
+  .. code:: console
+
+    $ pip3 install requirements.txt
+
+    $ pip3 install .
+
+  You should now be able to ``import bpexts`` in a ``pyhon3`` session.
 
 
 Related papers (reproducing experiments)
@@ -60,7 +80,9 @@ Developer notes
     .. code:: console
 
       $ pip3 install -r ./requirements.txt
+
       $ # optional
+
       $ pip3 install -r ./requirements_exp.txt
 
   - Install the library (in editable mode)
@@ -80,7 +102,11 @@ Developer notes
   .. code:: console
 
     $ chmod u+x ./pre-commit
+
     $ ./pre-commit
+
     $ # alternative
+
     $ pytest -v bpexts
+
     $ pytest -v exp
