@@ -1,5 +1,5 @@
-backprop-extended
-=================
+Backpropagation extensions (bpexts)
+###################################
 
 PyTorch extension to compute additional quantities such as
 
@@ -13,8 +13,28 @@ by backpropagation for employment in
  
 -   variance-adapted
 
-optimization methods..
+optimization methods.
 
+
+Installation
+############
+
+TODO
+
+
+Related papers (reproducing experiments)
+########################################
+
+- F. Dangel, P. Hennig: `A Modular Approach to Block-diagonal Hessian Approximations for Second-order Optimization <https://arxiv.org/abs/1902.01813>`_ (2019)
+
+  - the work presents an extended backpropagation procedure, referred to as *Hessian backpropagation (HBP)*,
+    for computing curvature approximations of feedforward neural networks.
+
+  - To reproduce the experiment (Figure 5) in the paper, we recommend using the script in ``examples/2019_02_dangel_hbp/``.
+    A step-by-step instruction is given in the README file in ``examples/2019_02_dangel_hbp/``.
+
+
+TODO: Clean up below
 
 developer notes
 ===============
