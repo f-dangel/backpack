@@ -25,18 +25,12 @@ dilation = (1, 1)
 bias = True
 
 # predefined kernel matrix
-kernel11 = [[1, 1],
-            [2, 2]]
-kernel12 = [[1, 1],
-            [1, 1]]
-kernel13 = [[0, 1],
-            [1, 0]]
-kernel21 = [[1, 0],
-            [0, 1]]
-kernel22 = [[2, 1],
-            [2, 1]]
-kernel23 = [[1, 2],
-            [2, 0]]
+kernel11 = [[1, 1], [2, 2]]
+kernel12 = [[1, 1], [1, 1]]
+kernel13 = [[0, 1], [1, 0]]
+kernel21 = [[1, 0], [0, 1]]
+kernel22 = [[2, 1], [2, 1]]
+kernel23 = [[1, 2], [2, 0]]
 kernel = Tensor([[kernel11, kernel12, kernel13],
                  [kernel21, kernel22, kernel23]]).float()
 
@@ -44,34 +38,25 @@ kernel = Tensor([[kernel11, kernel12, kernel13],
 b = Tensor([5, 10]).float()
 
 # input (1 sample)
-in_feature1 = [[1, 2, 0],
-               [1, 1, 3],
-               [0, 2, 2]]
-in_feature2 = [[0, 2, 1],
-               [0, 3, 2],
-               [1, 1, 0]]
-in_feature3 = [[1, 2, 1],
-               [0, 1, 3],
-               [3, 3, 2]]
-in1 = Tensor([[in_feature1,
-               in_feature2,
-               in_feature3]]).float()
-result1 = [[19, 25],
-           [20, 29]]
-result2 = [[22, 34],
-           [27, 36]]
+in_feature1 = [[1, 2, 0], [1, 1, 3], [0, 2, 2]]
+in_feature2 = [[0, 2, 1], [0, 3, 2], [1, 1, 0]]
+in_feature3 = [[1, 2, 1], [0, 1, 3], [3, 3, 2]]
+in1 = Tensor([[in_feature1, in_feature2, in_feature3]]).float()
+result1 = [[19, 25], [20, 29]]
+result2 = [[22, 34], [27, 36]]
 out1 = Tensor([[result1, result2]]).float()
 
 
 def torch_example_layer():
     """Return example layer as PyTorch.nn Module."""
-    conv2d = Conv2d(in_channels=in_channels,
-                    out_channels=out_channels,
-                    kernel_size=kernel_size,
-                    stride=stride,
-                    padding=padding,
-                    dilation=dilation,
-                    bias=bias)
+    conv2d = Conv2d(
+        in_channels=in_channels,
+        out_channels=out_channels,
+        kernel_size=kernel_size,
+        stride=stride,
+        padding=padding,
+        dilation=dilation,
+        bias=bias)
     conv2d.weight.data = kernel
     conv2d.bias.data = b
     return conv2d
@@ -79,13 +64,14 @@ def torch_example_layer():
 
 def example_layer():
     """Return example layer as HBP Module."""
-    hbp_conv2d = HBPConv2d(in_channels=in_channels,
-                           out_channels=out_channels,
-                           kernel_size=kernel_size,
-                           stride=stride,
-                           padding=padding,
-                           dilation=dilation,
-                           bias=bias)
+    hbp_conv2d = HBPConv2d(
+        in_channels=in_channels,
+        out_channels=out_channels,
+        kernel_size=kernel_size,
+        stride=stride,
+        padding=padding,
+        dilation=dilation,
+        bias=bias)
     hbp_conv2d.weight.data = kernel
     hbp_conv2d.bias.data = b
     return hbp_conv2d
@@ -148,8 +134,7 @@ def example_bias_hessian():
     """Compute the bias Hessian via brute force."""
     layer, x, out, loss = layer_with_input_output_and_loss()
     bias_hessian = exact.exact_hessian(loss, [layer.bias])
-    result = tensor([[8, 0],
-                     [0, 8]]).float()
+    result = tensor([[8, 0], [0, 8]]).float()
     assert torch_allclose(bias_hessian, result)
     return bias_hessian
 
@@ -193,3 +178,23 @@ def test_weight_hessian(random_vp=10):
         vp = layer.weight.hvp(v)
         result = w_hessian.matmul(v)
         assert torch_allclose(vp, result, atol=1E-5)
+
+
+def test_output_shape():
+    """Test the output dimension of a convolutional layer."""
+    # easy
+    assert HBPConv2d.output_shape(
+        input_size=(5, 1, 28, 28),
+        out_channels=7,
+        kernel_size=(3, 3),
+        stride=1,
+        padding=0,
+        dilation=1) == (5, 7, 26, 26)
+    # complicated
+    assert HBPConv2d.output_shape(
+        input_size=(4, 3, 10, 8),
+        out_channels=5,
+        kernel_size=(2, 3),
+        stride=(2, 1),
+        padding=1,
+        dilation=1) == (4, 5, 6, 8)
