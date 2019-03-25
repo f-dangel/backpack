@@ -2,26 +2,31 @@
 
 from torch import rand
 from torch.nn import (Module, Sigmoid, Linear, Conv2d)
-from .convolution import simplest_mnist_cnn
+from .convolution import c1d1
 from bpexts.utils import torch_allclose, set_seeds
 
 
-def test_simplest_mnist_cnn_output_size():
+def test_c1d1_output_size():
     """Check the output size of the simple CNN on MNIST
 
     For each batch sample, the output is a 10-dimensional vector.
     """
     x = rand(5, 1, 28, 28)
-    model = simplest_mnist_cnn()
+    model = c1d1()
     out = model(x)
     assert tuple(out.size()) == (5, 10)
 
+    x = rand(3, 1, 20, 24)
+    model = c1d1(input_size=(1, 20, 24), num_outputs=8)
+    out = model(x)
+    assert tuple(out.size()) == (3, 8)
 
-def torch_simplest_mnist_cnn(seed=None):
-    """A pure torch implementation of the simple CNN."""
+
+def torch_c1d1(seed=None):
+    """Torch implementation of the simple CNN for fixed hyperparameters."""
 
     class SimplestCNN(Module):
-        """PyTorch implementation of the simple CNN."""
+        """PyTorch implementation of the simple CNN for MNIST."""
 
         def __init__(self):
             super().__init__()
@@ -43,19 +48,19 @@ def torch_simplest_mnist_cnn(seed=None):
     return SimplestCNN()
 
 
-def test_compare_simplest_mnist_cnn_parameters():
+def test_compare_c1d1_parameters():
     """Compare the parameters of the HBP and PyTorch simplest MNIST CNNs."""
-    hbp_cnn = simplest_mnist_cnn(seed=1)
-    torch_cnn = torch_simplest_mnist_cnn(seed=1)
+    hbp_cnn = c1d1(seed=1)
+    torch_cnn = torch_c1d1(seed=1)
     assert len(list(hbp_cnn.parameters())) == len(list(torch_cnn.parameters()))
     for p1, p2 in zip(hbp_cnn.parameters(), torch_cnn.parameters()):
         assert torch_allclose(p1, p2)
 
 
-def test_simplest_mnist_cnn_forward():
+def test_c1d1_forward():
     """Compare forward pass of HBP model and PyTorch implementation."""
-    hbp_cnn = simplest_mnist_cnn(seed=0)
-    torch_cnn = torch_simplest_mnist_cnn(seed=0)
+    hbp_cnn = c1d1(seed=0)
+    torch_cnn = torch_c1d1(seed=0)
     x = rand(12, 1, 28, 28)
     out_torch = torch_cnn(x)
     out_hbp = hbp_cnn(x)

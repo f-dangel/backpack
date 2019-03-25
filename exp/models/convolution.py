@@ -10,21 +10,31 @@ from bpexts.hbp.sequential import HBPSequential
 from bpexts.utils import set_seeds
 
 
-def simplest_mnist_cnn(seed=None,
-                       conv_channels=8,
-                       kernel_size=4,
-                       padding=0,
-                       stride=1):
-    """A very simple CNN for image classification on MNIST without pooling.
+def c1d1(
+        # dimension of input and output of the net
+        input_size=(1, 28, 28),
+        num_outputs=10,
+        # random initialization
+        seed=None,
+        # convolution parameters
+        conv_channels=8,
+        kernel_size=4,
+        padding=0,
+        stride=1):
+    """A very simple CNN for image classification without pooling.
 
     The architecture uses the following structure:
 
-      - Convolution
+      - Convolution (aka c1)
       - Sigmoid activation
-      - Linear layer (fully-connected)
+      - Linear layer (fully-connected, aka d1)
 
     Parameters:
     -----------
+    input_size : tuple(int)
+        Shape of the input
+    num_outputs : int
+        Number of outputs (classes)
     seed : int
         Random seed used for initialization process of layers,
         No seed will be set if left `None`
@@ -39,9 +49,9 @@ def simplest_mnist_cnn(seed=None,
         `PyTorch` module behaving like `nn.Sequential` with HBP
         functionality
     """
-    # determine output features from convolution layer on 1x28x28 MNIST inputs
+    # determine output features from convolution layer on inputs
     output_size = HBPConv2d.output_shape(
-        input_size=(1, 1, 28, 28),
+        input_size=(1, ) + input_size,
         out_channels=conv_channels,
         kernel_size=kernel_size,
         stride=stride)
@@ -57,5 +67,6 @@ def simplest_mnist_cnn(seed=None,
             stride=stride),
         # need to flatten the image-shaped outputs of conv into vectors
         HBPViewBatchFlat(),
-        HBPSigmoidLinear(in_features=output_numel, out_features=10, bias=True))
+        HBPSigmoidLinear(
+            in_features=output_numel, out_features=num_outputs, bias=True))
     return model
