@@ -1,6 +1,9 @@
 # Python cache files
 __pycache__/
 *.egg-info/
+**/*.pyc
+.cache
+**/.ipynb_checkpoints
 
 # virtual environment files
 .venv/
