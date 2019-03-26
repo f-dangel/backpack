@@ -92,10 +92,18 @@ class HBPConv2d(hbp_decorate(Conv2d)):
         # unfolded indices (indicate which input unfolds to which index)
         idx_unfolded = self.unfold(idx).view(-1).long()
         # sum rows of all positions an input was unfolded to
-        acc_rows = zeros(idx_num, unfolded_input_hessian.size()[1])
+        acc_rows = zeros(
+            idx_num,
+            unfolded_input_hessian.size()[1],
+            device=unfolded_input_hessian.device,
+            dtype=unfolded_input_hessian.dtype)
         acc_rows.index_add_(0, idx_unfolded, unfolded_input_hessian)
         # sum columns of all positions an input was unfolded to
-        acc_cols = zeros(idx_num, idx_num)
+        acc_cols = zeros(
+            idx_num,
+            idx_num,
+            device=unfolded_intput_hessian.device,
+            dtype=unfolded_input_hessian.dtype)
         acc_cols.index_add_(1, idx_unfolded, acc_rows)
         # cut out dimension of padding elements (index 0)
         return acc_cols[1:, 1:]
@@ -114,7 +122,7 @@ class HBPConv2d(hbp_decorate(Conv2d)):
         # shape of out_h for tensor network contraction
         h_out_structure = self.h_out_tensor_structure()
         # identity matrix of dimension number of patches
-        id_num_patches = eye(h_out_structure[1])
+        id_num_patches = eye(h_out_structure[1], device=out_h.device)
         # perform tensor network contraction
         unfolded_hessian = einsum(
             'ij,kl,ilmn,mp,no->jkpo',
@@ -192,7 +200,7 @@ class HBPConv2d(hbp_decorate(Conv2d)):
             if not len(v.size()) == 1:
                 raise ValueError('Require one-dimensional tensor')
             batch = self.unfolded_input.size()[0]
-            id_out_channels = eye(self.out_channels)
+            id_out_channels = eye(self.out_channels, device=v.device)
             # reshape vector into (out_channels, -1)
             temp = v.view(self.out_channels, -1)
             # perform tensor network contraction
