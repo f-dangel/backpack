@@ -14,7 +14,7 @@ class HBPConv2d(hbp_decorate(Conv2d)):
     def hbp_hooks(self):
         """Install hook storing unfolded input."""
         self.register_exts_forward_pre_hook(
-            self.store_unfolded_input_and_sample_dimension)
+            self.store_mean_unfolded_input_and_sample_dimension)
 
     def unfold(self, input):
         """Unfold input using convolution hyperparameters."""
@@ -27,17 +27,17 @@ class HBPConv2d(hbp_decorate(Conv2d)):
 
     # --- hooks ---
     @staticmethod
-    def store_unfolded_input_and_sample_dimension(module, input):
-        """Save unfolded input and dimension of input sample.
+    def store_mean_unfolded_input_and_sample_dimension(module, input):
+        """Save mean of unfolded input and dimension of input sample.
 
         Indended use as pre-forward hook.
-        Initialize module buffer 'unfolded_input'.
+        Initialize module buffer 'mean_unfolded_input'.
         Initialize module buffer 'sample_dim'.
         """
         if not len(input) == 1:
             raise ValueError('Cannot handle multi-input scenario')
-        unfolded_input = module.unfold(input[0]).detach()
-        module.register_exts_buffer('unfolded_input', unfolded_input)
+        mean_unfolded_input = module.unfold(input[0]).detach().mean(0)
+        module.register_exts_buffer('mean_unfolded_input', mean_unfolded_input)
         # save number of elements in a single sample
         sample_dim = tensor(input[0].size()[1:])
         module.register_exts_buffer('sample_dim', sample_dim)
@@ -102,7 +102,7 @@ class HBPConv2d(hbp_decorate(Conv2d)):
         acc_cols = zeros(
             idx_num,
             idx_num,
-            device=unfolded_intput_hessian.device,
+            device=unfolded_input_hessian.device,
             dtype=unfolded_input_hessian.dtype)
         acc_cols.index_add_(1, idx_unfolded, acc_rows)
         # cut out dimension of padding elements (index 0)
@@ -129,7 +129,7 @@ class HBPConv2d(hbp_decorate(Conv2d)):
             (kernel_matrix, id_num_patches, out_h.view(h_out_structure),
              kernel_matrix, id_num_patches))
         # reshape into square matrix
-        shape = 2 * (prod(self.unfolded_input.size()[1:]), )
+        shape = 2 * (prod(self.mean_unfolded_input.size()), )
         return unfolded_hessian.view(shape)
 
     def init_bias_hessian(self, output_hessian):
@@ -199,16 +199,14 @@ class HBPConv2d(hbp_decorate(Conv2d)):
            """
             if not len(v.size()) == 1:
                 raise ValueError('Require one-dimensional tensor')
-            batch = self.unfolded_input.size()[0]
             id_out_channels = eye(self.out_channels, device=v.device)
             # reshape vector into (out_channels, -1)
             temp = v.view(self.out_channels, -1)
             # perform tensor network contraction
-            result = einsum(
-                'ij,bkl,jlmp,mn,bop,no->ik',
-                (id_out_channels, self.unfolded_input,
-                 out_h.view(self.h_out_tensor_structure()), id_out_channels,
-                 self.unfolded_input, temp)) / batch
+            result = einsum('ij,kl,jlmp,mn,op,no->ik',
+                            (id_out_channels, self.mean_unfolded_input,
+                             out_h.view(self.h_out_tensor_structure()),
+                             id_out_channels, self.mean_unfolded_input, temp))
             return result.view(v.size())
 
         return hvp
@@ -222,13 +220,12 @@ class HBPConv2d(hbp_decorate(Conv2d)):
 
         def weight_hessian():
             """Compute matrix form of the weight Hessian when called."""
-            batch = self.unfolded_input.size()[0]
             id_out_channels = eye(self.out_channels)
             # compute the weight Hessian
-            w_hessian = einsum('ij,bkl,jlmp,mn,bop->ikno',
-                               (id_out_channels, self.unfolded_input,
+            w_hessian = einsum('ij,kl,jlmp,mn,op->ikno',
+                               (id_out_channels, self.mean_unfolded_input,
                                 out_h.view(self.h_out_tensor_structure()),
-                                id_out_channels, self.unfolded_input)) / batch
+                                id_out_channels, self.mean_unfolded_input))
             # reshape into square matrix
             num_weight = self.weight.numel()
             return w_hessian.view(num_weight, num_weight)
@@ -240,7 +237,7 @@ class HBPConv2d(hbp_decorate(Conv2d)):
 
         The rank-4 shape is given by (out_channels, num_patches,
         out_channels, num_patches)."""
-        num_patches = self.unfolded_input.size()[2]
+        num_patches = self.mean_unfolded_input.size()[1]
         return 2 * (self.out_channels, num_patches)
 
     @staticmethod
