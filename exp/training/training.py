@@ -58,14 +58,8 @@ class Training(ABC):
         # initialize during run or point_to
         self.logger = None
 
-    def run(self, convert_to_csv=True):
-        """Run training, log values to logdir and convert to csv.
-        
-        Parameters:
-        -----------
-        convert_to_csv : (bool)
-            Convert the tensorboard logging file into a csv file
-        """
+    def run(self):
+        """Run training, log values to logdir."""
         if self.logger is None:
             self.point_logger_to_subdir('')
         training_set = self.data_loader.train_loader()
