@@ -50,7 +50,9 @@ def cg(A, b, x0=None, tol=1E-5, maxiter=None, atol=None):
     rs_old = r.matmul(r)
 
     # stopping criterion
-    norm_bound = torch.tensor([tol * torch.norm(b), atol], device=device)
+    norm_bound = torch.tensor([tol * torch.norm(b), atol],
+                              device=device,
+                              dtype=rs_old.dtype)
     norm_bound = torch.max(norm_bound)
 
     def stopping_criterion(rs, numiter):
