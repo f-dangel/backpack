@@ -1,7 +1,7 @@
 """Hessian backpropagation for 2D convolution."""
 
 from numpy import prod
-from torch import (eye, einsum, arange, zeros, tensor)
+from torch import (einsum, arange, zeros, tensor)
 from torch.nn import functional
 from torch.nn import Conv2d
 from .module import hbp_decorate
@@ -121,16 +121,15 @@ class HBPConv2d(hbp_decorate(Conv2d)):
         kernel_matrix = self.weight.view(self.out_channels, -1)
         # shape of out_h for tensor network contraction
         h_out_structure = self.h_out_tensor_structure()
-        # identity matrix of dimension number of patches
-        id_num_patches = eye(h_out_structure[1], device=out_h.device)
         # perform tensor network contraction
         unfolded_hessian = einsum(
-            'ij,kl,ilmn,mp,no->jkpo',
-            (kernel_matrix, id_num_patches, out_h.view(h_out_structure),
-             kernel_matrix, id_num_patches))
+            'ij,ilmn,mp->jlpn',
+            (kernel_matrix, out_h.view(h_out_structure), kernel_matrix))
+        print(unfolded_hessian.size())
+
         # reshape into square matrix
         shape = 2 * (prod(self.mean_unfolded_input.size()), )
-        return unfolded_hessian.view(shape)
+        return unfolded_hessian.contiguous().view(shape)
 
     def init_bias_hessian(self, output_hessian):
         """Initialized bias attributes hessian and hvp.
@@ -199,14 +198,13 @@ class HBPConv2d(hbp_decorate(Conv2d)):
            """
             if not len(v.size()) == 1:
                 raise ValueError('Require one-dimensional tensor')
-            id_out_channels = eye(self.out_channels, device=v.device)
             # reshape vector into (out_channels, -1)
             temp = v.view(self.out_channels, -1)
             # perform tensor network contraction
-            result = einsum('ij,kl,jlmp,mn,op,no->ik',
-                            (id_out_channels, self.mean_unfolded_input,
+            result = einsum('kl,jlmp,op,mo->jk',
+                            (self.mean_unfolded_input,
                              out_h.view(self.h_out_tensor_structure()),
-                             id_out_channels, self.mean_unfolded_input, temp))
+                             self.mean_unfolded_input, temp))
             return result.view(v.size())
 
         return hvp
@@ -220,12 +218,11 @@ class HBPConv2d(hbp_decorate(Conv2d)):
 
         def weight_hessian():
             """Compute matrix form of the weight Hessian when called."""
-            id_out_channels = eye(self.out_channels)
             # compute the weight Hessian
-            w_hessian = einsum('ij,kl,jlmp,mn,op->ikno',
-                               (id_out_channels, self.mean_unfolded_input,
+            w_hessian = einsum('kl,jlmp,op->jkmo',
+                               (self.mean_unfolded_input,
                                 out_h.view(self.h_out_tensor_structure()),
-                                id_out_channels, self.mean_unfolded_input))
+                                self.mean_unfolded_input))
             # reshape into square matrix
             num_weight = self.weight.numel()
             return w_hessian.view(num_weight, num_weight)
