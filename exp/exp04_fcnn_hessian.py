@@ -111,6 +111,30 @@ def main():
         fig_dir,
         prefix="trained_parameter_hessian")
 
+    # Untrained model, multiple inputs
+    ##################################
+    set_seeds(0)
+    model = fcnn_model()
+    loss_fn = CrossEntropyLoss()
+    train_loader = MNISTLoader(2, 2).train_loader()
+    input = next(iter(train_loader))
+    input[0].requires_grad = True
+
+    # save images of the input
+    save_input_images(input[0], fig_dir)
+
+    # save Hessians backpropagated through the graph
+    save_passed_hessians(
+        model, loss_fn, input, fig_dir, prefix="untrained_B_2_passed_hessian")
+
+    # save layerwise parameter Hessians
+    save_parameter_hessians_layerwise(
+        model,
+        loss_fn,
+        input,
+        fig_dir,
+        prefix="untrained_B_2_parameter_hessian")
+
 
 if __name__ == "__main__":
     main()
