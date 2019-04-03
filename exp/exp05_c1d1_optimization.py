@@ -1,38 +1,40 @@
-"""Experiments performed in Chen et al.: BDA-PCH, figure 1.
+"""Training of c1d1 from exp03 on MNIST with batch size 500."""
 
-Link to the reference:
-    https://arxiv.org/pdf/1802.06502v2.pdf
-"""
-
+import numpy
 import torch
 from torch.nn import CrossEntropyLoss
 from torch.optim import SGD
 from os import path
 from collections import OrderedDict
-from .models.chen2018 import original_mnist_model
-from .loading.load_mnist import MNISTLoader
-from .training.first_order import FirstOrderTraining
-from .training.second_order import SecondOrderTraining
-from .training.runner import TrainingRunner
-from .utils import (directory_in_data, dirname_from_params)
+from exp.loading.load_mnist import MNISTLoader
+from exp.training.first_order import FirstOrderTraining
+from exp.training.second_order import SecondOrderTraining
+from exp.training.runner import TrainingRunner
+from exp.utils import (directory_in_data, dirname_from_params)
 from bpexts.optim.cg_newton import CGNewton
+from exp03_c1d1_hessian import c1d1_model
+
+# directories
+dirname = 'exp05_c1d1_optimization'
+data_dir = directory_in_data(dirname)
 
 # global hyperparameters
-batch = 500
-epochs = 20
+batch, test_batch = 500, 1000
+epochs = 5
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-dirname = 'exp01_reproduce_chen_figures/mnist'
-data_dir = directory_in_data(dirname)
-logs_per_epoch = 5
+logs_per_epoch = 20
 
 
-def mnist_sgd_train_fn():
-    """Create training instance for MNIST SGD experiment."""
-    # hyper parameters
-    # ----------------
-    lr = 0.1
-    momentum = 0.9
+def mnist_sgd_train_fn(lr, momentum):
+    """Create training instance for MNIST SGD optimization.
 
+    Parameters:
+    -----------
+    lr : (float)
+        Learning rate for SGD
+    momentum : (float)
+        Momentum for SGD
+    """
     # logging directory
     # -----------------
     # directory of run
@@ -43,12 +45,12 @@ def mnist_sgd_train_fn():
     # ------------------
     def training_fn():
         """Training function setting up the train instance."""
-        model = original_mnist_model()
+        model = c1d1_model()
         # NOTE: Important line, deactivate extension hooks/buffers!
         model.disable_exts()
         loss_function = CrossEntropyLoss()
         data_loader = MNISTLoader(
-            train_batch_size=batch, test_batch_size=batch)
+            train_batch_size=batch, test_batch_size=test_batch)
         optimizer = SGD(model.parameters(), lr=lr, momentum=momentum)
         # initialize training
         train = FirstOrderTraining(
@@ -59,13 +61,27 @@ def mnist_sgd_train_fn():
             logdir,
             epochs,
             logs_per_epoch=logs_per_epoch,
-            device=device)
+            device=device,
+            input_shape=(1, 28, 28))
         return train
 
     return training_fn
 
 
-def mnist_cgnewton_train_fn(modify_2nd_order_terms):
+def sgd_grid_search():
+    """Define the grid search over the hyperparameters of SGD."""
+    # commented out: whole grid search
+    lrs = [0.1]
+    # lrs = numpy.logspace(-4, 0, 5)
+    momenta = [0.3]
+    # momenta = numpy.linspace(0, 0.9, 4)
+    return [
+        mnist_sgd_train_fn(lr=lr, momentum=momentum) for lr in lrs
+        for momentum in momenta
+    ]
+
+
+def mnist_cgnewton_train_fn(lr, alpha, modify_2nd_order_terms, cg_tol):
     """Create training instance for MNIST CG experiment.
 
     Parameters:
@@ -76,12 +92,9 @@ def mnist_cgnewton_train_fn(modify_2nd_order_terms):
         * `'abs'`: BDA-PCH approximation
         * `'clip'`: Different BDA-PCH approximation
     """
-    # hyper parameters
+    # fixed hyper parameters
     # ----------------
-    lr = 0.1
-    alpha = 0.02
     cg_maxiter = 50
-    cg_tol = 0.1
     cg_atol = 0
 
     # logging directory
@@ -103,10 +116,10 @@ def mnist_cgnewton_train_fn(modify_2nd_order_terms):
     def train_fn():
         """Training function setting up the train instance."""
         # set up training and run
-        model = original_mnist_model()
+        model = c1d1_model()
         loss_function = CrossEntropyLoss()
         data_loader = MNISTLoader(
-            train_batch_size=batch, test_batch_size=batch)
+            train_batch_size=batch, test_batch_size=test_batch)
         optimizer = CGNewton(
             model.parameters(),
             lr=lr,
@@ -124,30 +137,44 @@ def mnist_cgnewton_train_fn(modify_2nd_order_terms):
             epochs,
             modify_2nd_order_terms,
             logs_per_epoch=logs_per_epoch,
-            device=device)
+            device=device,
+            input_shape=(1, 28, 28))
         return train
 
     return train_fn
 
 
+def cgn_grid_search():
+    """Define the grid search over the hyperparameters of CGN."""
+    # commented out: grid search parameters
+    # need to convert to Python float for correct casting to torch
+    lrs = [0.1]
+    # lrs = numpy.logspace(-4, 0, 5)
+    lrs = list(map(float, lrs))
+    alphas = [0.1]
+    # alphas = numpy.logspace(-3, -1, 3)
+    alphas = list(map(float, alphas))
+    cg_tols = [0.001]
+    # cg_tols = numpy.logspace(-5, -1, 3)
+    cg_tols = list(map(float, cg_tols))
+    modify_2nd_order_terms = ["abs"]
+    return [
+        mnist_cgnewton_train_fn(
+            lr=lr, alpha=alpha, modify_2nd_order_terms=mod2nd, cg_tol=cg_tol)
+        for lr in lrs for alpha in alphas for mod2nd in modify_2nd_order_terms
+        for cg_tol in cg_tols
+    ]
+
+
 def main(run_experiments=True):
     """Execute the experiments, return filenames of the merged runs."""
     seeds = range(10)
-    labels = [
-        'SGD',
-        'CG (GGN)',
-        'CG (PCH, abs)',
-        'CG (PCH, clip)',
-    ]
+    labels = ['SGD', "PCH-abs"]
     experiments = [
-        # 1) SGD curve
-        mnist_sgd_train_fn(),
-        # 2) Generalized Gauss-Newton curve
-        mnist_cgnewton_train_fn('zero'),
-        # 3) BDA-PCH curve
-        mnist_cgnewton_train_fn('abs'),
-        # 4) alternative BDA-PCH curve
-        mnist_cgnewton_train_fn('clip'),
+        # 1) SGD grid search
+        *sgd_grid_search(),
+        # 2) CGN grid search
+        *cgn_grid_search()
     ]
 
     def run():

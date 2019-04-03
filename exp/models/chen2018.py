@@ -1,5 +1,5 @@
 """Model architectures used in Chen et al.: BDA-PCH (2018).
-
+A
 The same initialization method for the parameters was chosen.
 """
 
@@ -45,10 +45,9 @@ def original_mnist_model(seed=None):
                       nn.Linear(32, 10))
     """
     set_seeds(seed)
-    model = HBPSequential(HBPLinear(784, 512),
-                          HBPSigmoidLinear(512, 128),
-                          HBPSigmoidLinear(128, 32),
-                          HBPSigmoidLinear(32, 10))
+    model = HBPSequential(
+        HBPLinear(784, 512), HBPSigmoidLinear(512, 128),
+        HBPSigmoidLinear(128, 32), HBPSigmoidLinear(32, 10))
     xavier_init(model)
     return model
 
@@ -62,13 +61,9 @@ def separated_mnist_model(seed=None):
         Set seed before weight initialization, no reset if left `None`
     """
     set_seeds(seed)
-    model = HBPSequential(HBPLinear(784, 512),
-                          HBPSigmoid(),
-                          HBPLinear(512, 128),
-                          HBPSigmoid(),
-                          HBPLinear(128, 32),
-                          HBPSigmoid(),
-                          HBPLinear(32, 10))
+    model = HBPSequential(
+        HBPLinear(784, 512), HBPSigmoid(), HBPLinear(512, 128), HBPSigmoid(),
+        HBPLinear(128, 32), HBPSigmoid(), HBPLinear(32, 10))
     xavier_init(model)
     return model
 
@@ -114,14 +109,11 @@ def original_cifar10_model(seed=None):
                       nn.Linear(16, 10))
     """
     set_seeds(seed)
-    model = HBPSequential(HBPLinear(3072, 1024),
-                          HBPSigmoidLinear(1024, 512),
-                          HBPSigmoidLinear(512, 256),
-                          HBPSigmoidLinear(256, 128),
-                          HBPSigmoidLinear(128, 64),
-                          HBPSigmoidLinear(64, 32),
-                          HBPSigmoidLinear(32, 16),
-                          HBPSigmoidLinear(16, 10))
+    model = HBPSequential(
+        HBPLinear(3072, 1024), HBPSigmoidLinear(1024, 512),
+        HBPSigmoidLinear(512, 256), HBPSigmoidLinear(256, 128),
+        HBPSigmoidLinear(128, 64), HBPSigmoidLinear(64, 32),
+        HBPSigmoidLinear(32, 16), HBPSigmoidLinear(16, 10))
     xavier_init(model)
     return model
 
@@ -135,21 +127,11 @@ def separated_cifar10_model(seed=None):
         Set random seed before layer initialization, no reset if left `None`
     """
     set_seeds(seed)
-    model = HBPSequential(HBPLinear(3072, 1024),
-                          HBPSigmoid(),
-                          HBPLinear(1024, 512),
-                          HBPSigmoid(),
-                          HBPLinear(512, 256),
-                          HBPSigmoid(),
-                          HBPLinear(256, 128),
-                          HBPSigmoid(),
-                          HBPLinear(128, 64),
-                          HBPSigmoid(),
-                          HBPLinear(64, 32),
-                          HBPSigmoid(),
-                          HBPLinear(32, 16),
-                          HBPSigmoid(),
-                          HBPLinear(16, 10))
+    model = HBPSequential(
+        HBPLinear(3072, 1024), HBPSigmoid(), HBPLinear(1024, 512),
+        HBPSigmoid(), HBPLinear(512, 256), HBPSigmoid(), HBPLinear(256, 128),
+        HBPSigmoid(), HBPLinear(128, 64), HBPSigmoid(), HBPLinear(64, 32),
+        HBPSigmoid(), HBPLinear(32, 16), HBPSigmoid(), HBPLinear(16, 10))
     xavier_init(model)
     return model
 
