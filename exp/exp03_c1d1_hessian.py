@@ -242,6 +242,7 @@ def save_input_images(x, directory, prefix="input_image"):
         plt.figure()
         plt.imshow(input_image)
         plt.savefig(filename, bbox_inches="tight")
+        plt.close()
 
 
 def save_passed_hessians(model,
@@ -275,6 +276,7 @@ def save_passed_hessians(model,
         if colorbar == True:
             plt.colorbar()
         plt.savefig(filename, bbox_inches="tight")
+        plt.close()
 
 
 def save_parameter_hessians_layerwise(model,
@@ -305,6 +307,7 @@ def save_parameter_hessians_layerwise(model,
         imshow_hessian(hessian, log_abs=log_abs, magnitudes=magnitudes)
         plt.colorbar()
         plt.savefig(filename, bbox_inches="tight")
+        plt.close()
 
 
 def main():
