@@ -1,4 +1,4 @@
-"""Investigations of the Hessiasn of a FCNN on MNIST.
+"""Investigations of the Hessian of a FCNN on MNIST (downsampled to 16x16).
 
 Plot the Hessians during HBP for an MNIST image as .pdf file."""
 
@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import torch
 from torch.nn import CrossEntropyLoss
 from exp.models.fcnn import fcnn
-from exp.loading.load_mnist import MNISTLoader
+from exp.loading.load_mnist import MNISTDownsampledLoader
 
 from exp03_c1d1_hessian import (
     hbp_passed_hessians, parameter_hessians_layerwise, imshow_hessian,
@@ -27,7 +27,7 @@ data_dir = directory_in_data(dirname)
 
 def fcnn_model():
     """Create the model used in this experiment."""
-    return fcnn(input_size=(1, 28, 28), hidden_dims=[15], num_outputs=10)
+    return fcnn(input_size=(1, 16, 16), hidden_dims=[15], num_outputs=10)
 
 
 def trained_fcnn_model():
@@ -42,7 +42,7 @@ def trained_fcnn_model():
     model = fcnn_model()
     loss_function = CrossEntropyLoss()
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    data_loader = MNISTLoader(500, 500)
+    data_loader = MNISTDownsampledLoader(500, 500)
     optimizer = SGD(model.parameters(), lr=0.01, momentum=0.9)
     num_epochs, logs_per_epoch = 10, 5
     # initialize training
@@ -55,7 +55,7 @@ def trained_fcnn_model():
         num_epochs,
         logs_per_epoch=logs_per_epoch,
         device=device,
-        input_shape=(1, 28, 28))
+        input_shape=(1, 16, 16))
 
     # run training
     training.run()
@@ -72,7 +72,7 @@ def main():
     set_seeds(0)
     model = fcnn_model()
     loss_fn = CrossEntropyLoss()
-    train_loader = MNISTLoader(1, 1).train_loader()
+    train_loader = MNISTDownsampledLoader(1, 1).train_loader()
     input = next(iter(train_loader))
     input[0].requires_grad = True
 
@@ -116,7 +116,7 @@ def main():
     set_seeds(0)
     model = fcnn_model()
     loss_fn = CrossEntropyLoss()
-    train_loader = MNISTLoader(2, 2).train_loader()
+    train_loader = MNISTDownsampledLoader(2, 2).train_loader()
     input = next(iter(train_loader))
     input[0].requires_grad = True
 
