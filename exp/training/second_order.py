@@ -7,6 +7,7 @@ from bpexts.hbp.loss import batch_summed_hessian
 
 class SecondOrderTraining(Training):
     """Handle logging in training procedure with 2nd-order optimizers."""
+
     def __init__(self,
                  model,
                  loss_function,
@@ -17,7 +18,7 @@ class SecondOrderTraining(Training):
                  modify_2nd_order_terms,
                  logs_per_epoch=10,
                  device=torch.device('cpu'),
-                 ):
+                 input_shape=(-1, )):
         """Train a model, log loss values into logdir.
 
         See `Training` class in `training.py`
@@ -28,14 +29,16 @@ class SecondOrderTraining(Training):
                 String specifying the strategy for dealing with 2nd-order
                 module effects in Hessian backpropagation
         """
-        super().__init__(model,
-                         loss_function,
-                         optimizer,
-                         data_loader,
-                         logdir,
-                         num_epochs,
-                         logs_per_epoch=logs_per_epoch,
-                         device=device)
+        super().__init__(
+            model,
+            loss_function,
+            optimizer,
+            data_loader,
+            logdir,
+            num_epochs,
+            logs_per_epoch=logs_per_epoch,
+            device=device,
+            input_shape=input_shape)
         self.modify_2nd_order = modify_2nd_order_terms
 
     # override
@@ -55,6 +58,6 @@ class SecondOrderTraining(Training):
         super().backward_pass(outputs, loss)
         # backward Hessian
         self.model.backward_hessian(
-                output_hessian,
-                compute_input_hessian=False,
-                modify_2nd_order_terms=self.modify_2nd_order)
+            output_hessian,
+            compute_input_hessian=False,
+            modify_2nd_order_terms=self.modify_2nd_order)

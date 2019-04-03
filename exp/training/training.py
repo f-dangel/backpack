@@ -10,6 +10,7 @@ from .logger import Logger
 
 class Training(ABC):
     """Handle training and logging."""
+
     def __init__(self,
                  model,
                  loss_function,
@@ -19,7 +20,7 @@ class Training(ABC):
                  num_epochs,
                  logs_per_epoch=10,
                  device=torch.device('cpu'),
-                 ):
+                 input_shape=(-1, )):
         """Train a model, log loss values into logdir.
 
         Parameters:
@@ -39,7 +40,11 @@ class Training(ABC):
         logs_per_epoch : (int)
             Number of datapoints written into logdir per epoch
         device : (torch.Device)
-           Device to run the training on
+            Device to run the training on
+        input_shape : tuple(int)
+            Before the forward pass, the input quantity will be reshaped into
+            a tensor of size ``(batch_size, ) + input_shape``. Leave unchanged if
+            you want the input to be flattened (e. g. for a linear layer)
         """
         self.model = model.to(device)
         self.loss_function = loss_function
@@ -49,17 +54,12 @@ class Training(ABC):
         self.num_epochs = num_epochs
         self.logs_per_epoch = logs_per_epoch
         self.device = device
+        self.input_shape = input_shape
         # initialize during run or point_to
         self.logger = None
 
-    def run(self, convert_to_csv=True):
-        """Run training, log values to logdir and convert to csv.
-        
-        Parameters:
-        -----------
-        convert_to_csv : (bool)
-            Convert the tensorboard logging file into a csv file
-        """
+    def run(self):
+        """Run training, log values to logdir."""
         if self.logger is None:
             self.point_logger_to_subdir('')
         training_set = self.data_loader.train_loader()
@@ -89,12 +89,14 @@ class Training(ABC):
                     test_loss, test_acc = self.test_loss_and_accuracy()
                     train_loss, train_acc = self.train_loss_and_accuracy()
 
-                    summary = {'batch_loss': batch_loss,
-                               'batch_acc': batch_acc,
-                               'test_loss': test_loss,
-                               'test_acc': test_acc,
-                               'train_loss': train_loss,
-                               'train_acc': train_acc}
+                    summary = {
+                        'batch_loss': batch_loss,
+                        'batch_acc': batch_acc,
+                        'test_loss': test_loss,
+                        'test_acc': test_acc,
+                        'train_loss': train_loss,
+                        'train_acc': train_acc
+                    }
                     self.logger.log_scalar_values(summary, train_samples_seen)
 
                     status = '[epoch {}/{} | step {}/{}]'\
@@ -134,7 +136,7 @@ class Training(ABC):
         labels = labels.to(self.device)
         # reshape and load to device
         batch_size = inputs.size()[0]
-        inputs = inputs.view(batch_size, -1)
+        inputs = inputs.view((batch_size, ) + self.input_shape)
         # forward pass
         outputs = self.model(inputs)
         loss = self.loss_function(outputs, labels)
@@ -179,18 +181,16 @@ class Training(ABC):
 
     def load_training_set(self):
         """Return the train_loader."""
-        return self.data_loader.train_loader(
-                pin_memory=self.is_device_cuda())
+        return self.data_loader.train_loader(pin_memory=self.is_device_cuda())
 
     def load_test_set(self):
         """Return the test_loader."""
-        return self.data_loader.test_loader(
-                pin_memory=self.is_device_cuda())
+        return self.data_loader.test_loader(pin_memory=self.is_device_cuda())
 
     def load_training_loss_set(self):
         """Return the loader for the set to evaluate train loss."""
         return self.data_loader.train_loss_loader(
-                pin_memory=self.is_device_cuda())
+            pin_memory=self.is_device_cuda())
 
     def point_logger_to_subdir(self, subdir):
         """Point logger to subdirectory.
