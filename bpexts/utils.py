@@ -4,6 +4,7 @@ import gc
 import numpy
 import torch
 import random
+import math
 
 
 def torch_allclose(a, b, *args, **kwargs):
@@ -139,3 +140,36 @@ def memory_report():
     print('=' * LEN)
 
     return gpu_stats, cpu_stats
+
+
+def boxed_message(message):
+    """Draw a box around a message.
+
+    Parameters:
+    -----------
+    message : str
+        Message to be boxed
+
+    Returns:
+    --------
+    str
+        Boxed message
+
+    References:
+    -----------
+    - https://github.com/quapka/expecto-anything/blob/master/boxed_msg.py
+    """
+
+    def format_line(line, max_length):
+        half_diff = (max_length - len(line)) / 2
+        return "{}{}{}{}{}".format('| ', ' ' * math.ceil(half_diff), line,
+                                   ' ' * math.floor(half_diff), ' |\n')
+
+    lines = message.split('\n')
+    max_length = max([len(l) for l in lines])
+    horizontal = "{}{}{}".format('+', '-' * (max_length + 2), '+\n')
+    result = horizontal
+    for l in lines:
+        result += format_line(l, max_length)
+    result += horizontal
+    return result.strip()
