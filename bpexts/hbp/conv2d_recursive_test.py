@@ -84,7 +84,6 @@ def brute_force_hessian(layer_idx, which):
 
 def test_bias_hessian_vp(random_vp=10):
     """Test equality between bias Hessian VP and brute force method."""
-    # test bias Hessians
     layers = hessian_backward()
     for idx, layer in enumerate(reversed(layers), 1):
         assert not hasattr(layer.bias, "hessian")
@@ -96,17 +95,16 @@ def test_bias_hessian_vp(random_vp=10):
             vp = layer.bias.hvp(v)
             vp_result = b_brute_force.matmul(v)
             assert torch_allclose(vp, vp_result, atol=1E-5)
-    # TODO
-    """
-    # test weight Hessians
+
+
+def test_weight_hessian_vp(random_vp=10):
+    """Test equality between weight Hessian VP and brute force method."""
+    layers = hessian_backward()
     for idx, layer in enumerate(reversed(layers), 1):
-        w_hessian = layer.weight.hessian()
         w_brute_force = brute_force_hessian(-idx, 'weight')
-        assert torch_allclose(w_hessian, w_brute_force, atol=1E-5)
         # check weight Hessian-vector product
         for _ in range(random_vp):
             v = randn(layer.weight.numel())
             vp = layer.weight.hvp(v)
             vp_result = w_brute_force.matmul(v)
             assert torch_allclose(vp, vp_result, atol=1E-5)
-    """
