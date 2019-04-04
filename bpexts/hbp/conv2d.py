@@ -86,11 +86,8 @@ class HBPConv2d(hbp_decorate(Conv2d)):
         """
         sample_numel = int(prod(self.sample_dim.numpy()))
         idx_num = sample_numel + 1
-        # input image with pixels containing the index value (starting from 1)
-        # also take padding into account (will be indicated by index 0)
-        idx = arange(1, idx_num).view((1, ) + tuple(self.sample_dim))
-        # unfolded indices (indicate which input unfolds to which index)
-        idx_unfolded = self.unfold(idx).view(-1).long()
+        # index map from input to unfolded input
+        idx_unfolded = self._unfolded_index_map().view(-1)
         # sum rows of all positions an input was unfolded to
         acc_rows = zeros(
             idx_num,
@@ -107,6 +104,29 @@ class HBPConv2d(hbp_decorate(Conv2d)):
         acc_cols.index_add_(1, idx_unfolded, acc_rows)
         # cut out dimension of padding elements (index 0)
         return acc_cols[1:, 1:]
+
+    def _unfolded_index_map(self):
+        """Return the index map from input image to unfolded image.
+
+        Padded elements are assigned the index 0, and the pixels
+        from the input image are enumerated in ascending order starting
+        from 1.
+
+        Returns:
+        --------
+        torch.LongTensor
+            Tensor of the same size as an unfolded image containing
+            the indices of the original image.
+        """
+        sample_numel = int(prod(self.sample_dim.numpy()))
+        idx_num = sample_numel + 1
+        # input image with pixels containing the index value (starting from 1)
+        # also take padding into account (will be indicated by index 0)
+        # NOTE: Only works for padding with zeros!!
+        idx = arange(1, idx_num).view((1, ) + tuple(self.sample_dim))
+        # unfolded indices (indicate which input unfolds to which index)
+        idx_unfolded = self.unfold(idx).long()
+        return idx_unfolded
 
     def unfolded_input_hessian(self, out_h):
         """Compute Hessian with respect to the layer's unfolded input.
