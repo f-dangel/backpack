@@ -2,11 +2,86 @@
 
 import collections
 from .conv2d import HBPConv2d
-from torch import Tensor, einsum
+from torch import (Tensor, einsum, zeros)
+from numpy import prod
 
 
 class HBPConv2dRecursive(HBPConv2d):
     """2d Convolution with recursive Hessian-vector products."""
+
+    # override
+    def input_hessian(self,
+                      output_hessian,
+                      compute_input_hessian=True,
+                      modify_2nd_order_terms='none'):
+        """Return Hessian-vector product with the input Hessian."""
+        if compute_input_hessian is False:
+            return None
+        output_hessian_vp = None
+        if isinstance(output_hessian, Tensor):
+            output_hessian_vp = output_hessian.detach().matmul
+        elif isinstance(output_hessian, collections.Callable):
+            output_hessian_vp = output_hessian
+        else:
+            raise ValueError(
+                "Expecting torch.Tensor or function, but got\n{}".format(
+                    output_hessian))
+        return self.input_hessian_vp(output_hessian_vp)
+
+    def input_hessian_vp(self, output_hessian_vp):
+        """Return matrix-vector multiplication routine with the input Hessian.
+
+        Parameters:
+        -----------
+        output_hessian_vp : function
+            Matrix-vector multiplication routine with the output Hessian.
+
+        Returns:
+        --------
+        function
+            Matrix-vector multiplication routine with the input Hessian.
+        """
+        out_channels, num_patches, _, _ = self.h_out_tensor_structure()
+
+        def _unfolded_input_hessian_vp(v):
+            """Multiplication by the Hessian w.r.t. unfolded input."""
+            # apply the Jacobian
+            result = v.view(self.weight.numel() // out_channels, num_patches)
+            result = einsum('ij,jk->ik',
+                            (self.weight.view(out_channels, -1), result))
+            result = result.view(-1)
+            # apply the output Hessian
+            result = output_hessian_vp(result)
+            # apply the transposed Jacobian
+            result = result.view(out_channels, num_patches)
+            result = einsum('ij,ik->jk',
+                            (self.weight.view(out_channels, -1), result))
+            result = result.view(-1)
+            return result
+
+        def _input_hessian_vp(v):
+            """Multiplication by the Hessian w.r.t. input."""
+            idx_unfolded = self._unfolded_index_map().view(-1)
+            sample_numel = int(prod(self.sample_dim.numpy()))
+            assert tuple(v.size()) == (sample_numel, )
+            result = v.view((1, ) + tuple(self.sample_dim))
+            # apply the Jacobian
+            result = self.unfold(result)
+            assert tuple(
+                result.size()) == (1, self.weight.numel() // out_channels,
+                                   num_patches)
+            result = result.view(-1)
+            # apply the unfolded output Hessian
+            result = _unfolded_input_hessian_vp(result)
+            assert tuple(result.size()) == (
+                self.weight.numel() // out_channels * num_patches, )
+            # apply the transposed Jacobian
+            summed_result = zeros(sample_numel + 1)
+            summed_result.index_add_(0, idx_unfolded, result)
+            assert tuple(summed_result.size()) == (sample_numel + 1, )
+            return summed_result[1:]
+
+        return _input_hessian_vp
 
     # override
     def parameter_hessian(self, output_hessian):

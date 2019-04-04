@@ -5,11 +5,11 @@ from torch import (randn, eye)
 from ..hessian import exact
 from ..utils import (torch_allclose, set_seeds)
 
-in_channels = [3]  #, 5, 4]
-out_channels = [5]  # , 4, 2]
-kernel_sizes = [(4, 4)]  # , (3, 2), (1, 3)]
-paddings = [2]  #, 3, 1]
-strides = [2]  #, 2, 1]
+in_channels = [3, 5, 4]
+out_channels = [5, 4, 2]
+kernel_sizes = [(4, 4), (3, 2), (1, 3)]
+paddings = [2, 3, 1]
+strides = [2, 2, 1]
 
 input_size = (7, 7)
 input = randn((1, in_channels[0]) + input_size)
@@ -67,7 +67,7 @@ def hessian_backward():
     out_h = loss_hessian
     for layer in reversed(layers):
         out_h = layer.backward_hessian(out_h)
-    return layers
+    return layers, out_h
 
 
 def brute_force_hessian(layer_idx, which):
@@ -84,7 +84,7 @@ def brute_force_hessian(layer_idx, which):
 
 def test_bias_hessian_vp(random_vp=10):
     """Test equality between bias Hessian VP and brute force method."""
-    layers = hessian_backward()
+    layers, _ = hessian_backward()
     for idx, layer in enumerate(reversed(layers), 1):
         assert not hasattr(layer.bias, "hessian")
         assert hasattr(layer.bias, "hvp")
@@ -99,7 +99,7 @@ def test_bias_hessian_vp(random_vp=10):
 
 def test_weight_hessian_vp(random_vp=10):
     """Test equality between weight Hessian VP and brute force method."""
-    layers = hessian_backward()
+    layers, _ = hessian_backward()
     for idx, layer in enumerate(reversed(layers), 1):
         w_brute_force = brute_force_hessian(-idx, 'weight')
         # check weight Hessian-vector product
@@ -108,3 +108,20 @@ def test_weight_hessian_vp(random_vp=10):
             vp = layer.weight.hvp(v)
             vp_result = w_brute_force.matmul(v)
             assert torch_allclose(vp, vp_result, atol=1E-5)
+
+
+def test_input_hessian_vp(random_vp=10):
+    """Test equality between input Hessian VP and brute force method."""
+    _, out_hessian_vp = hessian_backward()
+
+    layers = create_layers()
+    x = random_input()
+    x.requires_grad = True
+    _, loss = forward(layers, x)
+    x_brute_force = exact.exact_hessian(loss, [x])
+
+    for _ in range(random_vp):
+        v = randn(x.numel())
+        vp = out_hessian_vp(v)
+        vp_result = x_brute_force.matmul(v)
+        assert torch_allclose(vp, vp_result, atol=1E-5)
