@@ -6,15 +6,16 @@ from torch.nn import Linear
 from bpexts.hbp.linear import HBPLinear
 from bpexts.hbp.loss import batch_summed_hessian
 from bpexts.utils import set_seeds
-from hbp_test import hbp_test
+from hbp_test import set_up_hbp_tests
 
 # hyper-parameters
-in_features = 100
+in_features = 50
 out_features = 10
 bias = True
 input_size = (1, in_features)
-atol = 1e-4
-num_hvp = 100
+atol = 4e-5
+rtol = 4e-5
+num_hvp = 10
 
 
 def torch_fn():
@@ -31,31 +32,16 @@ def hbp_fn():
         in_features=in_features, out_features=out_features, bias=bias)
 
 
-class HBPLinearCPUTest(
-        hbp_test(
-            torch_fn,
-            hbp_fn,
-            input_size,
-            device=torch.device('cpu'),
-            atol=atol,
-            num_hvp=num_hvp)):
-    """Compare torch Linear and HBPLinear on CPU."""
-    pass
-
-
-if torch.cuda.is_available():
-    device = torch.device('cpu')
-
-    class HBPLinearGPUTest(
-            hbp_test(
-                torch_fn,
-                hbp_fn,
-                input_size,
-                device=torch.device('cuda:0'),
-                atol=atol,
-                num_hvp=num_hvp)):
-        """Compare torch Linear and HBPLinear on GPU."""
-        pass
+for name, test_cls in set_up_hbp_tests(
+        torch_fn,
+        hbp_fn,
+        'HBPLinear',
+        input_size=input_size,
+        atol=atol,
+        rtol=rtol,
+        num_hvp=num_hvp):
+    exec('{} = test_cls'.format(name))
+    del test_cls
 
 
 class HBPLinearHardcodedTest(unittest.TestCase):

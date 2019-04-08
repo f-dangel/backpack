@@ -14,7 +14,8 @@ def hbp_test(torch_fn,
              device,
              seed=0,
              atol=1e-5,
-             num_hvp=100):
+             rtol=1e-8,
+             num_hvp=10):
     """Create unittest for checking behavior of torch layer and correct HBP.
 
     Checks for the following aspects:
@@ -37,6 +38,8 @@ def hbp_test(torch_fn,
         Device to run the tests on
     atol : float
         Absolute tolerance for elementwise comparison of HVP results
+    rtol : float
+        Relative tolerance for elementwise comparison of HVP results
     num_hvp : int
         Number of tested Hessian-vector with random vectors
 
@@ -46,11 +49,12 @@ def hbp_test(torch_fn,
         test case for comparing the functionalities of torch and hbp layers
     """
 
-    class HBPTest(unittest.TestCase):
+    class HBPTest0(unittest.TestCase):
         SEED = seed
         DEVICE = torch.device('cpu')
         INPUT_SIZE = input_size
         ATOL = atol
+        RTOL = rtol
         NUM_HVP = num_hvp
 
         def torch_fn(self):
@@ -60,6 +64,13 @@ def hbp_test(torch_fn,
         def hbp_fn(self):
             """Create the HBP layer."""
             return hbp_fn()
+
+        def _loss_fn(self, x):
+            """Dummy loss function: Normalized sum of squared elements.
+
+            The loss Hessian of this function is constant and diagonal.
+            """
+            return (x**2).contiguous().view(-1).sum() / x.numel()
 
         def test_same_parameters(self):
             """Check if parameters are initialized the same way."""
@@ -103,7 +114,10 @@ def hbp_test(torch_fn,
                     torch_result = torch_hvp(v)
                     print(self._residuum(hbp_result, torch_result))
                     assert torch.allclose(
-                        hbp_result, torch_result, atol=self.ATOL)
+                        hbp_result,
+                        torch_result,
+                        atol=self.ATOL,
+                        rtol=self.RTOL)
 
         def test_input_hvp(self):
             """Compare HVP with respect to the input."""
@@ -115,16 +129,13 @@ def hbp_test(torch_fn,
                 torch_result = torch_hvp(v)
                 hbp_result = hbp_hvp(v)
                 print(self._residuum(hbp_result, torch_result))
-                assert torch.allclose(torch_result, hbp_result, atol=self.ATOL)
+                assert torch.allclose(
+                    torch_result, hbp_result, atol=self.ATOL, rtol=self.RTOL)
 
         @staticmethod
         def _residuum(x, y):
             """Maximum of absolute value difference."""
             return torch.max(torch.abs(x - y))
-
-        def _loss_fn(self, x):
-            """Dummy loss function: Sum of squared elements."""
-            return (x**2).contiguous().view(-1).sum()
 
         def _torch_input_hvp(self):
             """Create Hessian-vector product routine for torch layer."""
@@ -189,4 +200,55 @@ def hbp_test(torch_fn,
             """Create the HBP layer."""
             return self.hbp_fn().to(self.DEVICE)
 
-    return HBPTest
+    class HBPTest1(HBPTest0):
+        def _loss_fn(self, x):
+            """Dummy loss function: Normalized cubed sum.
+
+            The loss Hessian of this function is non-constant and non-diagonal.
+            """
+            return (x.contiguous().view(-1).sum())**3 / x.numel()
+
+    class HBPTest2(HBPTest0):
+        def _loss_fn(self, x):
+            """Dummy loss function: Sum of log10 of shifted normalized abs.
+
+            The loss Hessian of this function is non-constant and non-diagonal.
+            """
+            return ((torch.log10(torch.abs(x) + 0.1) /
+                     x.numel()).contiguous().view(-1).sum())**2
+
+    return HBPTest0, HBPTest1, HBPTest2
+
+
+def set_up_hbp_tests(torch_fn,
+                     hbp_fn,
+                     layer_name,
+                     input_size,
+                     atol=1e-8,
+                     rtol=1e-5,
+                     num_hvp=10):
+    """Yield the names and classes for the unittests."""
+    # create CPU tests
+    for idx, cpu_test in enumerate(
+            hbp_test(
+                torch_fn,
+                hbp_fn,
+                input_size,
+                device=torch.device('cpu'),
+                atol=atol,
+                rtol=rtol,
+                num_hvp=num_hvp)):
+        yield '{}CPUTest{}'.format(layer_name, idx), cpu_test
+
+    # create GPU tests if available
+    if torch.cuda.is_available():
+        for idx, gpu_test in enumerate(
+                hbp_test(
+                    torch_fn,
+                    hbp_fn,
+                    input_size,
+                    device=torch.device('cuda:0'),
+                    atol=atol,
+                    rtol=rtol,
+                    num_hvp=num_hvp)):
+            yield '{}GPUTest{}'.format(layer_name, idx), gpu_test
