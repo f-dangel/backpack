@@ -18,6 +18,8 @@ def hbp_test(torch_fn,
              num_hvp=10):
     """Create unittest for checking behavior of torch layer and correct HBP.
 
+    For HBP to be exact, the batch size has to be 1!
+
     Checks for the following aspects:
 
     - same initialization of parameters
@@ -51,7 +53,7 @@ def hbp_test(torch_fn,
 
     class HBPTest0(unittest.TestCase):
         SEED = seed
-        DEVICE = torch.device('cpu')
+        DEVICE = device
         INPUT_SIZE = input_size
         ATOL = atol
         RTOL = rtol
