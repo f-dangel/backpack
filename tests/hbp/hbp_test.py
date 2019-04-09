@@ -94,12 +94,15 @@ def hbp_test(torch_fn,
         def test_backward_pass(self):
             """Check for same backward pass."""
             torch_in, hbp_in = self._create_input(), self._create_input()
+            torch_in.requires_grad = True
+            hbp_in.requires_grad = True
             torch_layer, hbp_layer = self._create_layers()
             torch_out, hbp_out = torch_layer(torch_in), hbp_layer(hbp_in)
             torch_loss, hbp_loss = self._loss_fn(torch_out), self._loss_fn(
                 hbp_out)
             torch_loss.backward()
             hbp_loss.backward()
+            assert torch.allclose(torch_in.grad, hbp_in.grad)
             for torch_param, hbp_param in zip(torch_layer.parameters(),
                                               hbp_layer.parameters()):
                 assert torch.allclose(torch_param.grad, hbp_param.grad)
