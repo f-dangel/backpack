@@ -6,8 +6,6 @@ import unittest
 from bpexts.utils import set_seeds
 from bpexts.hessian.exact import exact_hessian
 
-# TODO: Implement batch-wise Hessian
-
 
 def cvp_test(torch_fn,
              cvp_fn,
@@ -148,7 +146,7 @@ def cvp_test(torch_fn,
             x.requires_grad = True
             out = layer(x)
             loss = self._loss_fn(out)
-            hessian_x = exact_hessian(loss, [x]).to(self.DEVICE)
+            hessian_x = exact_hessian(loss, [x]).detach().to(self.DEVICE)
             return hessian_x.matmul
 
         def _torch_parameter_hvp(self):
@@ -159,7 +157,7 @@ def cvp_test(torch_fn,
             out = layer(x)
             loss = self._loss_fn(out)
             for p in layer.parameters():
-                yield exact_hessian(loss, [p]).to(self.DEVICE)
+                yield exact_hessian(loss, [p]).detach().to(self.DEVICE)
 
         def _cvp_input_hvp(self):
             """Create Hessian-vector product routine for CVP layer."""
@@ -169,7 +167,8 @@ def cvp_test(torch_fn,
             out = layer(x)
             loss = self._loss_fn(out)
             # required for nonlinear layers (need to save backprop quantities)
-            loss_hessian_vp = exact_hessian(loss, [out]).to(self.DEVICE).matmul
+            loss_hessian_vp = exact_hessian(loss, [out]).detach().to(
+                self.DEVICE).matmul
             loss.backward()
             hessian_x = layer.backward_hessian(loss_hessian_vp)
             return hessian_x
@@ -182,7 +181,8 @@ def cvp_test(torch_fn,
             out = layer(x)
             loss = self._loss_fn(out)
             # required for nonlinear layers (need to save backprop quantities)
-            loss_hessian_vp = exact_hessian(loss, [out]).to(self.DEVICE).matmul
+            loss_hessian_vp = exact_hessian(loss, [out]).detach().to(
+                self.DEVICE).matmul
             loss.backward()
             layer.backward_hessian(loss_hessian_vp)
             return layer
