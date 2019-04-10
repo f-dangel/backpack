@@ -7,7 +7,7 @@ from torch.nn import Sigmoid
 from bpexts.hbp.sigmoid import HBPSigmoid
 from bpexts.hbp.loss import batch_summed_hessian
 from bpexts.hessian.exact import exact_hessian
-from hbp_test import set_up_hbp_tests
+from .hbp_test import set_up_hbp_tests
 
 # hyper-parameters
 in_features = 30

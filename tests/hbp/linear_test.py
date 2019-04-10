@@ -6,7 +6,7 @@ from torch.nn import Linear
 from bpexts.hbp.linear import HBPLinear
 from bpexts.hbp.loss import batch_summed_hessian
 from bpexts.utils import set_seeds
-from hbp_test import set_up_hbp_tests
+from .hbp_test import set_up_hbp_tests
 
 # hyper-parameters
 in_features = 50
