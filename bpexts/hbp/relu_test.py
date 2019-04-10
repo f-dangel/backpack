@@ -9,33 +9,29 @@ from ..utils import torch_allclose
 
 def example_loss(tensor):
     """Sum squared entries of a tensor."""
-    return (tensor ** 2).view(-1).sum(0)
+    return (tensor**2).view(-1).sum(0)
 
 
 def test_relu_derivatives():
     """Test first and second derivative of ReLU."""
     layer = HBPReLU()
-    x = tensor([[1, 0, -1],
-                [2, 5, -3]]).float()
+    x = tensor([[1., 0., -1.], [2., 5., -3.]])
     # forward, calls hook
     out = layer(x)
-    relu_x = tensor([[1, 0, 0],
-                     [2, 5, 0]])
+    relu_x = tensor([[1., 0., 0.], [2., 5., 0.]])
     assert torch_allclose(out, relu_x)
     # check first derivative
-    grad_relu = tensor([[1, 0, 0],
-                        [1, 1, 0]])
+    grad_relu = tensor([[1., 0., 0.], [1., 1., 0.]])
     assert torch_allclose(grad_relu, layer.grad_phi)
     # check second derivative
-    gradgrad_relu = tensor([[0, 0, 0],
-                            [0, 0, 0]])
+    gradgrad_relu = tensor([[0., 0., 0.], [0., 0., 0.]])
     assert torch_allclose(gradgrad_relu, layer.gradgrad_phi)
 
 
 def layer_with_input_output_and_loss():
     """Return layer with input, output and loss."""
     layer = HBPReLU()
-    x = tensor([[-1, 2, -3]], requires_grad=True).float()
+    x = tensor([[-1., 2., -3.]], requires_grad=True)
     out = layer(x)
     loss = example_loss(out)
     return layer, x, out, loss
@@ -58,7 +54,5 @@ def test_sigmoid_input_hessian():
     loss_hessian = batch_summed_hessian(loss, out)
     loss.backward()
     input_hessian = layer.backward_hessian(loss_hessian)
-    x_hessian = tensor([[0, 0, 0],
-                        [0, 2, 0],
-                        [0, 0, 0]])
+    x_hessian = tensor([[0., 0., 0.], [0., 2., 0.], [0., 0., 0.]])
     assert torch_allclose(x_hessian, input_hessian)

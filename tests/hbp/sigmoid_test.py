@@ -63,7 +63,7 @@ def test_sigmoid_derivatives():
 def layer_with_input_output_and_loss():
     """Return layer with input, output and loss."""
     layer = HBPSigmoid()
-    x = tensor([[1, 2, 3]], requires_grad=True).float()
+    x = tensor([[1., 2., 3.]], requires_grad=True)
     out = layer(x)
     loss = example_loss(out)
     return layer, x, out, loss

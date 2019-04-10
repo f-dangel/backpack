@@ -3,7 +3,6 @@
 import torch
 from warnings import warn
 from .conjugate_gradient import cg
-from ..utils import torch_allclose
 
 
 def simple(use_gpu=False):
@@ -16,8 +15,7 @@ def simple(use_gpu=False):
     device = torch.device('cuda:0' if use_gpu else 'cpu')
 
     # Wikipedia example
-    A = torch.tensor([[4., 1.],
-                      [1., 3.]], device=device)
+    A = torch.tensor([[4., 1.], [1., 3.]], device=device)
     b = torch.tensor([1., 2.], device=device)
     x0 = torch.tensor([2., 1.], device=device)
 
@@ -25,8 +23,8 @@ def simple(use_gpu=False):
     x, info = cg(A, b, x0=x0, maxiter=10)
 
     # check
-    x_correct = torch.tensor([1./11., 7./11.], device=device)
-    assert torch_allclose(x, x_correct)
+    x_correct = torch.tensor([1. / 11., 7. / 11.], device=device)
+    assert torch.allclose(x, x_correct)
 
 
 def test_simple_on_cpu():
@@ -79,7 +77,7 @@ def random(dim=10, use_gpu=False):
     A, b = random_task(dim, use_gpu=use_gpu)
     x, info = cg(A, b, maxiter=dim)
     res = torch.norm(A.matmul(x) - b) / torch.norm(b)
-    assert torch_allclose(res, torch.zeros_like(res), atol=1E-5)
+    assert torch.allclose(res, torch.zeros_like(res), atol=1E-5)
 
 
 def test_random_on_cpu():
@@ -120,7 +118,7 @@ def implicit(dim=10, use_gpu=False):
 
     x, info = cg(A_matmul, b, maxiter=dim)
     res = torch.norm(A_matmul(x) - b) / torch.norm(b)
-    assert torch_allclose(res, torch.zeros_like(res), atol=1E-5)
+    assert torch.allclose(res, torch.zeros_like(res), atol=1E-5)
 
 
 def test_implicit_on_cpu():

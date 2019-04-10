@@ -12,30 +12,19 @@ from ..combined_relu import HBPReLULinear
 from ..sigmoid import HBPSigmoid
 from ..relu import HBPReLU
 from .combined import HBPParallelCompositionActivationLinear
-from ...utils import (torch_allclose,
-                      set_seeds,
-                      memory_report)
+from ...utils import (set_seeds, memory_report)
 from ...optim.cg_newton import CGNewton
 from ...hessian import exact
 
 in_features = [20, 15, 10]
 out_features = [15, 10, 5]
 # DO NOT MODIFY!
-classes = [
-        HBPLinear,
-        HBPSigmoidLinear,
-        HBPReLULinear,
-        HBPSigmoid,
-        HBPReLU
-        ]
+classes = [HBPLinear, HBPSigmoidLinear, HBPReLULinear, HBPSigmoid, HBPReLU]
 # DO NOT MODIFY!
 target_classes = [
-        HBPParallelLinear,
-        HBPParallelCompositionActivationLinear,
-        HBPParallelCompositionActivationLinear,
-        HBPSigmoid,
-        HBPReLU
-        ]
+    HBPParallelLinear, HBPParallelCompositionActivationLinear,
+    HBPParallelCompositionActivationLinear, HBPSigmoid, HBPReLU
+]
 max_blocks = 2
 num_layers = len(in_features)
 input = randn(1, in_features[0])
@@ -53,9 +42,7 @@ def create_layers():
     set_seeds(0)
     layers = []
     for cls, in_, out in zip(classes, in_features, out_features):
-        layers.append(cls(in_features=in_,
-                          out_features=out,
-                          bias=True))
+        layers.append(cls(in_features=in_, out_features=out, bias=True))
     for cls in classes[3:]:
         layers.append(cls())
     return layers
@@ -92,7 +79,7 @@ def test_forward_pass():
     x = random_input()
     sequence = example_sequence()
     parallel = example_sequence_parallel()
-    assert torch_allclose(sequence(x), parallel(x))
+    assert torch.allclose(sequence(x), parallel(x))
 
 
 def forward(layer, input):
@@ -133,26 +120,26 @@ def brute_force_hessian(layer_idx, parallel_idx, which):
     _, loss = forward(parallel, random_input())
     if which == 'weight':
         if layer_idx == 0:
-            return exact.exact_hessian(loss,
-                                       [list(parallel.children())[layer_idx]
-                                        ._get_parallel_module(parallel_idx)
-                                        .weight])
+            return exact.exact_hessian(loss, [
+                list(parallel.children())[layer_idx]._get_parallel_module(
+                    parallel_idx).weight
+            ])
         else:
-             return exact.exact_hessian(loss,
-                                       [list(parallel.children())[layer_idx]
-                                        ._get_parallel_module(parallel_idx)
-                                        .linear.weight])
+            return exact.exact_hessian(loss, [
+                list(parallel.children())[layer_idx]._get_parallel_module(
+                    parallel_idx).linear.weight
+            ])
     elif which == 'bias':
         if layer_idx == 0:
-            return exact.exact_hessian(loss,
-                                       [list(parallel.children())[layer_idx]
-                                        ._get_parallel_module(parallel_idx)
-                                        .bias])
+            return exact.exact_hessian(loss, [
+                list(parallel.children())[layer_idx]._get_parallel_module(
+                    parallel_idx).bias
+            ])
         else:
-             return exact.exact_hessian(loss,
-                                       [list(parallel.children())[layer_idx]
-                                        ._get_parallel_module(parallel_idx)
-                                        .linear.bias])
+            return exact.exact_hessian(loss, [
+                list(parallel.children())[layer_idx]._get_parallel_module(
+                    parallel_idx).linear.bias
+            ])
     else:
         raise ValueError
 
@@ -173,7 +160,7 @@ def test_input_hessians():
     loss.backward()
     # call HBP recursively
     in_h = layer.backward_hessian(loss_hessian, compute_input_hessian=True)
-    assert torch_allclose(in_h, brute_force_input_hessian())
+    assert torch.allclose(in_h, brute_force_input_hessian())
 
 
 def test_parameter_hessians(random_vp=10):
@@ -193,13 +180,13 @@ def test_parameter_hessians(random_vp=10):
                 linear = layer_idx._get_parallel_module(n).linear
             b_hessian = linear.bias.hessian
             b_brute_force = brute_force_hessian(idx, n, 'bias')
-            assert torch_allclose(b_hessian, b_brute_force, atol=1E-5)
+            assert torch.allclose(b_hessian, b_brute_force, atol=1E-5)
             # check bias Hessian-veector product
             for _ in range(random_vp):
                 v = randn(linear.bias.numel())
             vp = linear.bias.hvp(v)
             vp_result = b_brute_force.matmul(v)
-            assert torch_allclose(vp, vp_result, atol=1E-5)
+            assert torch.allclose(vp, vp_result, atol=1E-5)
     # test weight Hessians
     for idx, mod in enumerate(layer.children()):
         if idx > 2:
@@ -213,13 +200,13 @@ def test_parameter_hessians(random_vp=10):
                 linear = layer_idx._get_parallel_module(n).linear
             w_hessian = linear.weight.hessian()
             w_brute_force = brute_force_hessian(idx, n, 'weight')
-            assert torch_allclose(w_hessian, w_brute_force, atol=1E-5)
+            assert torch.allclose(w_hessian, w_brute_force, atol=1E-5)
             # check weight Hessian-vector product
             for _ in range(random_vp):
                 v = randn(linear.weight.numel())
                 vp = linear.weight.hvp(v)
                 vp_result = w_brute_force.matmul(v)
-                assert torch_allclose(vp, vp_result, atol=1E-5)
+                assert torch.allclose(vp, vp_result, atol=1E-5)
 
 
 def test_memory_consumption_before_backward_hessian():
@@ -272,11 +259,10 @@ def compare_no_splitting_with_sequence(device, num_iters):
     parallel = example_sequence_parallel(max_blocks=1).to(device)
 
     # check equality of parameters
-    assert(len(list(sequence.parameters())) ==
-           len(list(parallel.parameters())) ==
-           6)
+    assert (len(list(sequence.parameters())) == len(
+        list(parallel.parameters())) == 6)
     for p1, p2 in zip(sequence.parameters(), parallel.parameters()):
-        assert torch_allclose(p1, p2)
+        assert torch.allclose(p1, p2)
 
     # check equality of gradients/hvp over multiple runs
     for i in range(num_iters):
@@ -286,30 +272,32 @@ def compare_no_splitting_with_sequence(device, num_iters):
         # forward pass checking
         out1, loss1 = forward(sequence, input)
         out2, loss2 = forward(parallel, input)
-        assert torch_allclose(out1, out2)
+        assert torch.allclose(out1, out2)
         # gradient checking
         loss1.backward()
         loss2.backward()
         for p1, p2 in zip(sequence.parameters(), parallel.parameters()):
             assert p1.grad is not None and p2.grad is not None
-            assert not torch_allclose(p1.grad, zeros_like(p1))
-            assert not torch_allclose(p2.grad, zeros_like(p2))
-            assert torch_allclose(p1.grad, p2.grad)
+            assert not torch.allclose(p1.grad, zeros_like(p1))
+            assert not torch.allclose(p2.grad, zeros_like(p2))
+            assert torch.allclose(p1.grad, p2.grad)
         loss_hessian = randn(out_features[-1], out_features[-1], device=device)
         # check input Hessians and Hessian-vector products
         for mod2nd in ['zero', 'abs', 'clip', 'none']:
             # input Hessian
-            in_h1 = sequence.backward_hessian(loss_hessian,
-                                              compute_input_hessian=True,
-                                              modify_2nd_order_terms=mod2nd)
-            in_h2 = parallel.backward_hessian(loss_hessian,
-                                              compute_input_hessian=True,
-                                              modify_2nd_order_terms=mod2nd)
-            assert torch_allclose(in_h1, in_h2)
+            in_h1 = sequence.backward_hessian(
+                loss_hessian,
+                compute_input_hessian=True,
+                modify_2nd_order_terms=mod2nd)
+            in_h2 = parallel.backward_hessian(
+                loss_hessian,
+                compute_input_hessian=True,
+                modify_2nd_order_terms=mod2nd)
+            assert torch.allclose(in_h1, in_h2)
             # parameter Hessians
             for p1, p2 in zip(sequence.parameters(), parallel.parameters()):
                 v = randn(p1.numel(), device=device)
-                assert torch_allclose(p1.hvp(v), p2.hvp(v))
+                assert torch.allclose(p1.hvp(v), p2.hvp(v))
 
 
 def test_comparison_no_splitting_with_sequence_cpu(num_iters=10):
@@ -336,14 +324,15 @@ def compare_optimization_no_splitting_with_sequence(device, num_iters):
     parallel = example_sequence_parallel(max_blocks=1).to(device)
 
     # check equality of parameters
-    assert(len(list(sequence.parameters())) ==
-           len(list(parallel.parameters())) ==
-           6)
+    assert (len(list(sequence.parameters())) == len(
+        list(parallel.parameters())) == 6)
     for p1, p2 in zip(sequence.parameters(), parallel.parameters()):
-        assert torch_allclose(p1, p2)
+        assert torch.allclose(p1, p2)
 
-    opt1 = CGNewton(sequence.parameters(), 0.1, 0.02, cg_atol=1E-8, cg_tol=1E-1)
-    opt2 = CGNewton(parallel.parameters(), 0.1, 0.02, cg_atol=1E-8, cg_tol=1E-1)
+    opt1 = CGNewton(
+        sequence.parameters(), 0.1, 0.02, cg_atol=1E-8, cg_tol=1E-1)
+    opt2 = CGNewton(
+        parallel.parameters(), 0.1, 0.02, cg_atol=1E-8, cg_tol=1E-1)
 
     # check equality of gradients/hvp over multiple runs
     for i in range(num_iters):
@@ -354,32 +343,34 @@ def compare_optimization_no_splitting_with_sequence(device, num_iters):
         # forward pass checking
         out1, loss1 = forward(sequence, input)
         out2, loss2 = forward(parallel, input)
-        assert torch_allclose(out1, out2)
+        assert torch.allclose(out1, out2)
         # gradient checking
         loss1.backward()
         loss2.backward()
         for p1, p2 in zip(sequence.parameters(), parallel.parameters()):
             assert p1.grad is not None and p2.grad is not None
-            assert not torch_allclose(p1.grad, zeros_like(p1))
-            assert not torch_allclose(p2.grad, zeros_like(p2))
-            assert torch_allclose(p1.grad, p2.grad)
+            assert not torch.allclose(p1.grad, zeros_like(p1))
+            assert not torch.allclose(p2.grad, zeros_like(p2))
+            assert torch.allclose(p1.grad, p2.grad)
         loss_hessian = randn(out_features[-1], out_features[-1], device=device)
         # PSD
         loss_hessian = loss_hessian.t().matmul(loss_hessian)
         # check input Hessians and Hessian-vector products
         mod2nd = 'abs'
         # input Hessian
-        in_h1 = sequence.backward_hessian(loss_hessian,
-                                          compute_input_hessian=True,
-                                          modify_2nd_order_terms=mod2nd)
-        in_h2 = parallel.backward_hessian(loss_hessian,
-                                          compute_input_hessian=True,
-                                          modify_2nd_order_terms=mod2nd)
-        assert torch_allclose(in_h1, in_h2)
+        in_h1 = sequence.backward_hessian(
+            loss_hessian,
+            compute_input_hessian=True,
+            modify_2nd_order_terms=mod2nd)
+        in_h2 = parallel.backward_hessian(
+            loss_hessian,
+            compute_input_hessian=True,
+            modify_2nd_order_terms=mod2nd)
+        assert torch.allclose(in_h1, in_h2)
         # parameter Hessians
         for p1, p2 in zip(sequence.parameters(), parallel.parameters()):
             v = randn(p1.numel(), device=device)
-            assert torch_allclose(p1.hvp(v), p2.hvp(v))
+            assert torch.allclose(p1.hvp(v), p2.hvp(v))
 
         opt1.step()
         opt2.step()
@@ -387,10 +378,10 @@ def compare_optimization_no_splitting_with_sequence(device, num_iters):
         opt2.zero_grad()
         for p1, p2 in zip(sequence.parameters(), parallel.parameters()):
             assert p1.grad is not None and p2.grad is not None
-            assert torch_allclose(p1.grad, zeros_like(p1))
-            assert torch_allclose(p2.grad, zeros_like(p2))
-            assert torch_allclose(p1.grad, p2.grad)
-            assert torch_allclose(p1, p2)
+            assert torch.allclose(p1.grad, zeros_like(p1))
+            assert torch.allclose(p2.grad, zeros_like(p2))
+            assert torch.allclose(p1.grad, p2.grad)
+            assert torch.allclose(p1, p2)
 
 
 def test_compare_optimization_no_splitting_with_sequence_cpu(num_iters=50):
