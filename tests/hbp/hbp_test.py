@@ -113,7 +113,7 @@ def hbp_test(torch_fn,
             torch_parameter_hessians = list(self._torch_parameter_hvp())
             for _ in range(self.NUM_HVP):
                 for idx, p in enumerate(hbp_layer.parameters()):
-                    v = torch.randn(p.numel())
+                    v = torch.randn(p.numel()).to(self.DEVICE)
                     torch_hvp = torch_parameter_hessians[idx].matmul
                     hbp_result = p.hvp(v)
                     torch_result = torch_hvp(v)
@@ -149,7 +149,7 @@ def hbp_test(torch_fn,
             x.requires_grad = True
             out = layer(x)
             loss = self._loss_fn(out)
-            hessian_x = exact_hessian(loss, [x])
+            hessian_x = exact_hessian(loss, [x]).to(self.DEVICE)
             return hessian_x.matmul
 
         def _torch_parameter_hvp(self):
@@ -160,7 +160,7 @@ def hbp_test(torch_fn,
             out = layer(x)
             loss = self._loss_fn(out)
             for p in layer.parameters():
-                yield exact_hessian(loss, [p])
+                yield exact_hessian(loss, [p]).to(self.DEVICE)
 
         def _hbp_input_hvp(self):
             """Create Hessian-vector product routine for HBP layer."""
@@ -195,7 +195,7 @@ def hbp_test(torch_fn,
 
         def _create_layers(self):
             """Create both torch and the HBP layer."""
-            return self.torch_fn(), self.hbp_fn()
+            return self._create_torch_layer(), self._create_hbp_layer()
 
         def _create_torch_layer(self):
             """Create the torch layer."""
@@ -243,6 +243,7 @@ def set_up_hbp_tests(torch_fn,
                 atol=atol,
                 rtol=rtol,
                 num_hvp=num_hvp)):
+        print(cpu_test.DEVICE)
         yield '{}CPUTest{}'.format(layer_name, idx), cpu_test
 
     # create GPU tests if available
@@ -256,4 +257,5 @@ def set_up_hbp_tests(torch_fn,
                     atol=atol,
                     rtol=rtol,
                     num_hvp=num_hvp)):
+            print(gpu_test.DEVICE)
             yield '{}GPUTest{}'.format(layer_name, idx), gpu_test
