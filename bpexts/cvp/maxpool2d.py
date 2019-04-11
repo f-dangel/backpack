@@ -11,8 +11,7 @@ class CVPMaxPool2d(hbp_decorate(MaxPool2d)):
     """2d Max pooling with recursive curvature-vector products.
 
     Todo:
-    --------
-
+    -----
     CVP fails if ``dilation != 1`` or ``stride != None``.
     I do not know the reason for that. The current solution is that
     initialization of ``CVPMaxPool2d`` is not allowed with these
@@ -23,9 +22,6 @@ class CVPMaxPool2d(hbp_decorate(MaxPool2d)):
     1) The problem only occurs if the max pooling areas overlap.
     The gather or unpool operations in the Jacobians could be
     responsible for this behavior.
-
-    I'm pretty sure, the gather operation does not accumulate
-    values if the same index is selected multiple times.
 
     Reference:
     ----------
@@ -40,16 +36,13 @@ class CVPMaxPool2d(hbp_decorate(MaxPool2d)):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        """
+        error_msg = 'There is a bug for overlapping patches in max-pooling!'
         if self.stride != self.kernel_size:
-            raise ValueError(
-                'For stride != kernel_size, the application of Jacobians does not work properly for unknown reasons.'
-            )
+            error_msg += '\nFor stride != kernel_size, the application of Jacobians does not work for unknown reasons.'
+            raise ValueError(error_msg)
         if self.dilation != 1:
-            raise ValueError(
-                'For dilation != 1, the application of Jacobians does not work properly for unknown reasons.'
-            )
-        """
+            error_msg += '\nFor dilation != 1, the application of Jacobians does not work for unknown reasons.'
+            raise ValueError(error_msg)
 
     # override
     def hbp_hooks(self):
@@ -95,10 +88,6 @@ class CVPMaxPool2d(hbp_decorate(MaxPool2d)):
         assert tuple(v.size()) == (batch * channels * in_x * in_y, )
         result = v.view(batch, channels, -1)
         result = result.gather(2, self.pool_indices.view(batch, channels, -1))
-        # temp = v.view(batch, channels, -1)
-        # result = torch.zeros(batch, channels, out_x * out_y)
-        # result.scatter_add_(2, self.pool_indices.view(batch, channels, -1),
-        #                    temp)
         assert tuple(result.size()) == (batch, channels, out_x * out_y)
         return result.view(-1)
 

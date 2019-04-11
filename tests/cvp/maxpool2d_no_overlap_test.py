@@ -1,4 +1,4 @@
-"""Test CVP of 2d max pool layer."""
+"""Test CVP of 2d max pool layer (non-overlapping)."""
 
 import torch
 from torch.nn import MaxPool2d
@@ -6,9 +6,9 @@ from bpexts.cvp.maxpool2d import CVPMaxPool2d
 from .cvp_test import set_up_cvp_tests
 
 # hyper-parameters
-input_size = (1, 3, 8, 8)
-kernel_size = (4, 4)
-padding = 2
+input_size = (4, 3, 7, 7)
+kernel_size = (3, 3)
+padding = 1
 stride = None
 dilation = 1
 atol = 1e-5
