@@ -125,7 +125,7 @@ class HBPConv2d(hbp_decorate(Conv2d)):
         # NOTE: Only works for padding with zeros!!
         idx = arange(1, idx_num).view((1, ) + tuple(self.sample_dim))
         # unfolded indices (indicate which input unfolds to which index)
-        idx_unfolded = self.unfold(idx).long()
+        idx_unfolded = self.unfold(idx.float()).long()
         return idx_unfolded
 
     def unfolded_input_hessian(self, out_h):

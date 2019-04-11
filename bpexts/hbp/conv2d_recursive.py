@@ -10,22 +10,16 @@ class HBPConv2dRecursive(HBPConv2d):
     """2d Convolution with recursive Hessian-vector products."""
 
     # override
-    def input_hessian(self,
-                      output_hessian,
-                      compute_input_hessian=True,
-                      modify_2nd_order_terms='none'):
+    def input_hessian(self, output_hessian, modify_2nd_order_terms='none'):
         """Return Hessian-vector product with the input Hessian."""
-        if compute_input_hessian is False:
-            return None
         output_hessian_vp = None
         if isinstance(output_hessian, Tensor):
             output_hessian_vp = output_hessian.detach().matmul
         elif isinstance(output_hessian, collections.Callable):
             output_hessian_vp = output_hessian
         else:
-            raise ValueError(
-                "Expecting torch.Tensor or function, but got\n{}".format(
-                    output_hessian))
+            raise ValueError("Expecting torch.Tensor or function, but got\n{}".
+                             format(output_hessian))
         return self.input_hessian_vp(output_hessian_vp)
 
     def input_hessian_vp(self, output_hessian_vp):
@@ -97,9 +91,8 @@ class HBPConv2dRecursive(HBPConv2d):
         elif isinstance(output_hessian, collections.Callable):
             output_hessian_vp = output_hessian
         else:
-            raise ValueError(
-                "Expecting torch.Tensor or function, but got\n{}".format(
-                    output_hessian))
+            raise ValueError("Expecting torch.Tensor or function, but got\n{}".
+                             format(output_hessian))
         if self.bias is not None:
             self.init_bias_hessian_vp(output_hessian_vp)
         self.init_weight_hessian(output_hessian_vp)

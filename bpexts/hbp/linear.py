@@ -31,6 +31,7 @@ class HBPLinear(hbp_decorate(Linear)):
     iii) the Hessian with respect to the inputs is given by
          input_hessian = weight^T * output_hessian * weight.
     """
+
     # override
     def hbp_hooks(self):
         """Install hooks required for Hessian backward pass.
@@ -65,10 +66,10 @@ class HBPLinear(hbp_decorate(Linear)):
         if not len(input) == 1:
             raise ValueError('Cannot handle multi-input scenario')
         batch = input[0].size()[0]
-        mean_input_outer = einsum('bi,bj->ij',
-                                  (input[0].detach(),
-                                   input[0].detach())) / batch
+        mean_input_outer = einsum(
+            'bi,bj->ij', (input[0].detach(), input[0].detach())) / batch
         module.register_exts_buffer('mean_input_outer', mean_input_outer)
+
     # --- end of hooks ---
 
     # override
@@ -95,8 +96,7 @@ class HBPLinear(hbp_decorate(Linear)):
         self.init_weight_hessian(output_hessian.detach())
 
     # override
-    def input_hessian(self, output_hessian,
-                      modify_2nd_order_terms='none'):
+    def input_hessian(self, output_hessian, modify_2nd_order_terms='none'):
         """Compute the Hessian with respect to the layer input.
 
         Exploited relation:
@@ -158,6 +158,7 @@ class HBPLinear(hbp_decorate(Linear)):
     def _weight_hessian_vp(self, out_h):
         """Matrix multiplication by weight Hessian.
         """
+
         def hvp(v):
             """Matrix-vector product with weight Hessian.
 
@@ -181,6 +182,7 @@ class HBPLinear(hbp_decorate(Linear)):
             temp = out_h.matmul(result)
             temp = temp.matmul(self.mean_input.t())
             return temp.matmul(self.mean_input).reshape(v.size())
+
         return hvp
 
     def _compute_weight_hessian(self, output_hessian):
@@ -189,14 +191,15 @@ class HBPLinear(hbp_decorate(Linear)):
         Use approximation
         weight_hessian = output_hessian \otimes mean(input \otimes input^T).
         """
+
         def weight_hessian():
             """Compute matrix form of the weight Hessian when called.
             """
             w_hessian = einsum('ij,k,l->ikjl',
-                               (output_hessian,
-                                self.mean_input.squeeze(),
+                               (output_hessian, self.mean_input.squeeze(),
                                 self.mean_input.squeeze()))
             dim_i, dim_k, _, _ = w_hessian.size()
             dim = dim_i * dim_k
             return w_hessian.reshape(dim, dim)
+
         return weight_hessian

@@ -3,7 +3,6 @@
 import torch
 from warnings import warn
 from .cg_newton import CGNewton
-from ..utils import torch_allclose
 
 
 def simple(use_gpu=False):
@@ -16,12 +15,9 @@ def simple(use_gpu=False):
     device = torch.device('cuda:0' if use_gpu else 'cpu')
 
     # Wikipedia example: Minimize 0.5 * x^T * A * x - b^T * x
-    A = torch.tensor([[4., 1.],
-                      [1., 3.]], device=device)
-    b = torch.tensor([[1.],
-                      [2.]], device=device)
-    x = torch.tensor([[2.],
-                      [1.]], device=device)
+    A = torch.tensor([[4., 1.], [1., 3.]], device=device)
+    b = torch.tensor([[1.], [2.]], device=device)
+    x = torch.tensor([[2.], [1.]], device=device)
     x.requires_grad = True
 
     optimizer = CGNewton([x], lr=1., alpha=0., cg_maxiter=10)
@@ -33,9 +29,8 @@ def simple(use_gpu=False):
         # Hessian-vector product
         x.hvp = A.matmul
         optimizer.step()
-    x_correct = torch.tensor([[1./11.],
-                              [7./11.]], device=device)
-    assert torch_allclose(x, x_correct, atol=1E-5)
+    x_correct = torch.tensor([[1. / 11.], [7. / 11.]], device=device)
+    assert torch.allclose(x, x_correct, atol=1E-5)
 
 
 def test_simple_on_cpu():

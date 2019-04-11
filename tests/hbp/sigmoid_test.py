@@ -1,16 +1,48 @@
-"""Test Hessian backpropagation for Sigmoid layer."""
+"""Test HBP of sigmoid layer."""
 
+import torch
 from torch import randn, tensor, sigmoid
 from torch.autograd import grad
-from .sigmoid import HBPSigmoid
-from .loss import batch_summed_hessian
-from ..utils import torch_allclose
-from ..hessian.exact import exact_hessian
+from torch.nn import Sigmoid
+from bpexts.hbp.sigmoid import HBPSigmoid
+from bpexts.hbp.loss import batch_summed_hessian
+from bpexts.hessian.exact import exact_hessian
+from .hbp_test import set_up_hbp_tests
+
+# hyper-parameters
+in_features = 30
+bias = True
+input_size = (1, in_features)
+atol = 5e-6
+rtol = 1e-5
+num_hvp = 10
+
+
+def torch_fn():
+    """Create a sigmoid layer in torch."""
+    return Sigmoid()
+
+
+def hbp_fn():
+    """Create a sigmoid layer with HBP functionality."""
+    return HBPSigmoid()
+
+
+for name, test_cls in set_up_hbp_tests(
+        torch_fn,
+        hbp_fn,
+        'HBPSigmoid',
+        input_size=input_size,
+        atol=atol,
+        rtol=rtol,
+        num_hvp=num_hvp):
+    exec('{} = test_cls'.format(name))
+    del test_cls
 
 
 def example_loss(tensor):
     """Sum squared entries of a tensor."""
-    return (tensor ** 2).view(-1).sum(0)
+    return (tensor**2).view(-1).sum(0)
 
 
 def test_sigmoid_derivatives():
@@ -19,19 +51,19 @@ def test_sigmoid_derivatives():
     # forward, calls hook
     out = layer(x)
     sigma = sigmoid(x)
-    assert torch_allclose(out, sigma)
+    assert torch.allclose(out, sigma)
     # check first derivative
     grad_sigma = sigma * (1 - sigma)
-    assert torch_allclose(grad_sigma, layer.grad_phi)
+    assert torch.allclose(grad_sigma, layer.grad_phi)
     # check second derivative
     gradgrad_sigma = sigma * (1 - sigma) * (1 - 2 * sigma)
-    assert torch_allclose(gradgrad_sigma, layer.gradgrad_phi)
+    assert torch.allclose(gradgrad_sigma, layer.gradgrad_phi)
 
 
 def layer_with_input_output_and_loss():
     """Return layer with input, output and loss."""
     layer = HBPSigmoid()
-    x = tensor([[1, 2, 3]], requires_grad=True).float()
+    x = tensor([[1., 2., 3.]], requires_grad=True)
     out = layer(x)
     loss = example_loss(out)
     return layer, x, out, loss
@@ -51,7 +83,7 @@ def test_sigmoid_grad_output():
     out_grad, = grad(loss, out, create_graph=True)
     # call backward to trigger backward hook
     loss.backward()
-    assert torch_allclose(out_grad, layer.grad_output)
+    assert torch.allclose(out_grad, layer.grad_output)
 
 
 def test_sigmoid_input_hessian():
@@ -62,4 +94,4 @@ def test_sigmoid_input_hessian():
     loss.backward()
     input_hessian = layer.backward_hessian(loss_hessian)
     x_hessian = layer_input_hessian()
-    assert torch_allclose(x_hessian, input_hessian)
+    assert torch.allclose(x_hessian, input_hessian)
