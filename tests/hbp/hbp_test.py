@@ -50,6 +50,8 @@ def hbp_test(torch_fn,
     unittest.TestCase
         test case for comparing the functionalities of torch and hbp layers
     """
+    if not input_size[0] == 1:
+        raise ValueError('HBP is only exact for a single sample.')
 
     class HBPTest0(unittest.TestCase):
         SEED = seed
@@ -211,7 +213,10 @@ def hbp_test(torch_fn,
 
             The loss Hessian of this function is non-constant and non-diagonal.
             """
-            return (x.contiguous().view(-1).sum())**3 / x.numel()
+            loss = torch.zeros(1).to(self.DEVICE)
+            for b in range(x.size(0)):
+                loss += (x[b, :].view(-1).sum())**3 / x.numel()
+            return loss
 
     class HBPTest2(HBPTest0):
         def _loss_fn(self, x):
@@ -219,8 +224,11 @@ def hbp_test(torch_fn,
 
             The loss Hessian of this function is non-constant and non-diagonal.
             """
-            return ((torch.log10(torch.abs(x) + 0.1) /
-                     x.numel()).contiguous().view(-1).sum())**2
+            loss = torch.zeros(1).to(self.DEVICE)
+            for b in range(x.size(0)):
+                loss += ((torch.log10(torch.abs(x[b, :]) + 0.1) /
+                          x.numel()).view(-1).sum())**2
+            return loss
 
     return HBPTest0, HBPTest1, HBPTest2
 
