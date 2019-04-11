@@ -13,8 +13,8 @@ in_features = 50
 out_features = 10
 bias = True
 input_size = (1, in_features)
-atol = 4e-5
-rtol = 4e-5
+atol = 5e-5
+rtol = 1e-5
 num_hvp = 10
 
 

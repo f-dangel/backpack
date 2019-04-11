@@ -12,8 +12,8 @@ out_features = 10
 batch = 3
 bias = True
 input_size = (batch, in_features)
-atol = 4e-5
-rtol = 4e-5
+atol = 1e-5
+rtol = 1e-5
 num_hvp = 10
 
 

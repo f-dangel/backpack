@@ -13,7 +13,7 @@ from .hbp_test import set_up_hbp_tests
 in_features = 30
 bias = True
 input_size = (1, in_features)
-atol = 1e-6
+atol = 5e-6
 rtol = 1e-5
 num_hvp = 10
 

@@ -13,8 +13,8 @@ from .cvp_test import set_up_cvp_tests
 in_channels, out_channels = 3, 2
 input_size = (3, in_channels, 7, 5)
 bias = True
-atol = 1e-4
-rtol = 1e-4
+atol = 5e-5
+rtol = 1e-5
 num_hvp = 10
 kernel_size = (3, 2)
 padding = (3, 2)

@@ -8,7 +8,7 @@ from .cvp_test import set_up_cvp_tests
 # hyper-parameters
 input_size = (3, 4, 5)
 output_size = (6, 5, 2)
-atol = 1e-8
+atol = 1e-7
 rtol = 1e-5
 num_hvp = 10
 
