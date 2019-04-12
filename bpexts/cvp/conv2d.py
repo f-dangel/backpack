@@ -5,6 +5,7 @@ from torch import (einsum, arange, zeros, tensor)
 from torch.nn import functional
 from torch.nn import Conv2d
 from ..hbp.module import hbp_decorate
+from ..utils import same_padding2d_before_forward
 
 
 class CVPConv2d(hbp_decorate(Conv2d)):
@@ -148,3 +149,9 @@ class CVPConv2d(hbp_decorate(Conv2d)):
         result = result.contiguous().view(-1)
         assert tuple(result.size()) == (self.weight.numel(), )
         return result
+
+
+class CVPConv2dSame(same_padding2d_before_forward(CVPConv2d)):
+    """2D Convolution with padding same and recursive Hessian-vector
+    products."""
+    pass

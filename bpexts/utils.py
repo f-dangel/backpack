@@ -218,3 +218,25 @@ def same_padding2d(input_dim, kernel_dim, stride_dim):
     pad_right = pad_along_width - pad_left
 
     return (pad_left, pad_right, pad_top, pad_bottom)
+
+
+def same_padding2d_before_forward(Layer):
+    """Set padding parameters before forward pass."""
+
+    class LayerSamePadding(Layer):
+        def forward(self, x):
+            pad_left, pad_right, pad_top, pad_bottom = same_padding2d(
+                input_dim=(x.size(2), x.size(3)),
+                kernel_dim=self.kernel_size,
+                stride_dim=self.stride)
+            if pad_left != pad_right or pad_top != pad_bottom:
+                raise ValueError('Asymmetric padding not suported.')
+            self.padding = (pad_left, pad_bottom)
+            return super().forward(x)
+
+    return LayerSamePadding
+
+
+class Conv2dSame(same_padding2d_before_forward(torch.nn.Conv2d)):
+    """2d Convolution with padding same."""
+    pass
