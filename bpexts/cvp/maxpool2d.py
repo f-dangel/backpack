@@ -10,39 +10,12 @@ from ..utils import set_seeds
 class CVPMaxPool2d(hbp_decorate(MaxPool2d)):
     """2d Max pooling with recursive curvature-vector products.
 
-    Todo:
-    -----
-    CVP fails if ``dilation != 1`` or ``stride != None``.
-    I do not know the reason for that. The current solution is that
-    initialization of ``CVPMaxPool2d`` is not allowed with these
-    kind of hyper-parameters.
-
-    Ideas:
-    ------
-    1) The problem only occurs if the max pooling areas overlap.
-    The gather or unpool operations in the Jacobians could be
-    responsible for this behavior.
-
-    Reference:
-    ----------
-    https://github.com/pytorch/pytorch/issues/1631
-
     Note:
     -----
     For convenience, the module does not return the indices after
     the forward pass. Instead, they can be accessed by the module
     attribute ``pool_indices``.
     """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        error_msg = 'There is a bug for overlapping patches in max-pooling!'
-        if self.stride != self.kernel_size:
-            error_msg += '\nFor stride != kernel_size, the application of Jacobians does not work for unknown reasons.'
-            raise ValueError(error_msg)
-        if self.dilation != 1:
-            error_msg += '\nFor dilation != 1, the application of Jacobians does not work for unknown reasons.'
-            raise ValueError(error_msg)
 
     # override
     def hbp_hooks(self):
@@ -54,9 +27,10 @@ class CVPMaxPool2d(hbp_decorate(MaxPool2d)):
 
         Initialize module buffer ``self.pool_indices``.
         """
-        self.input_shape = tuple(x.size())
         self.return_indices = True
         out, idx = super().forward(x)
+        # save quantities
+        self.input_shape = tuple(x.size())
         self.output_shape = tuple(out.size())
         self.register_exts_buffer("pool_indices", idx)
         return out
@@ -92,20 +66,11 @@ class CVPMaxPool2d(hbp_decorate(MaxPool2d)):
         return result.view(-1)
 
     def _input_jacobian_transpose(self, v):
-        """Apply the transposed Jacobian with respect to the input.
-
-        Unpool according to the pooling indices.
-        """
+        """Apply the transposed Jacobian with respect to the input."""
         batch, channels, in_x, in_y = self.input_shape
         _, _, out_x, out_y = self.output_shape
         assert tuple(v.size()) == (batch * channels * out_x * out_y, )
-        result = v.view(*self.output_shape)
-        result = functional.max_unpool2d(
-            result,
-            self.pool_indices,
-            self.kernel_size,
-            stride=self.stride,
-            padding=self.padding,
-            output_size=self.input_shape)
-        assert tuple(result.size()) == self.input_shape
+        result = torch.zeros(batch, channels, in_x * in_y, device=v.device)
+        result.scatter_add_(2, self.pool_indices.view(batch, channels, -1),
+                            v.view(batch, channels, -1))
         return result.view(-1)

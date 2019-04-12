@@ -9,9 +9,9 @@ from .cvp_test import set_up_cvp_tests
 input_size = (4, 3, 7, 7)
 kernel_size = (3, 3)
 padding = 1
-stride = None
+stride = (2, 2)
 dilation = 1
-atol = 1e-5
+atol = 5e-5
 rtol = 1e-5
 num_hvp = 10
 
@@ -31,7 +31,7 @@ def cvp_fn():
 for name, test_cls in set_up_cvp_tests(
         torch_fn,
         cvp_fn,
-        'CVPMaxPool2dNoOverlap',
+        'CVPMaxPool2dOverlap',
         input_size=input_size,
         atol=atol,
         rtol=rtol,
