@@ -10,23 +10,6 @@ from ..utils import set_seeds
 class CVPMaxPool2d(hbp_decorate(MaxPool2d)):
     """2d Max pooling with recursive curvature-vector products.
 
-    Todo:
-    -----
-    CVP fails if ``dilation != 1`` or ``stride != None``.
-    I do not know the reason for that. The current solution is that
-    initialization of ``CVPMaxPool2d`` is not allowed with these
-    kind of hyper-parameters.
-
-    Ideas:
-    ------
-    1) The problem only occurs if the max pooling areas overlap.
-    The gather or unpool operations in the Jacobians could be
-    responsible for this behavior.
-
-    Reference:
-    ----------
-    https://github.com/pytorch/pytorch/issues/1631
-
     Note:
     -----
     For convenience, the module does not return the indices after
@@ -36,14 +19,6 @@ class CVPMaxPool2d(hbp_decorate(MaxPool2d)):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        return
-        error_msg = 'There is a bug for overlapping patches in max-pooling!'
-        if self.stride != self.kernel_size:
-            error_msg += '\nFor stride != kernel_size, the application of Jacobians does not work for unknown reasons.'
-            raise ValueError(error_msg)
-        if self.dilation != 1:
-            error_msg += '\nFor dilation != 1, the application of Jacobians does not work for unknown reasons.'
-            raise ValueError(error_msg)
 
     # override
     def hbp_hooks(self):
@@ -117,12 +92,6 @@ class CVPMaxPool2d(hbp_decorate(MaxPool2d)):
             for i in range(channels):
                 idx[b, i, :, :] += i * in_x * in_y
         idx = idx.view(-1)
-        #result = torch.zeros(batch * channels * in_x * in_y).to(v.device)
-        #result.index_put_((idx, ), v, accumulate=True)
-        # """
         result = torch.zeros(batch * channels * in_x * in_y).to(v.device)
-        for i, v in zip(idx, v):
-            print(i, v)
-            result[i] += v
-        # """
+        result.index_put_((idx, ), v, accumulate=True)
         return result
