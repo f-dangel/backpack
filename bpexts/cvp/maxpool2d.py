@@ -30,12 +30,28 @@ class CVPMaxPool2d(hbp_decorate(MaxPool2d)):
 
         Initialize module buffer ``self.pool_indices``.
         """
-        self.input_shape = tuple(x.size())
         self.return_indices = True
         out, idx = super().forward(x)
+        # save quantities
+        self.input_shape = tuple(x.size())
         self.output_shape = tuple(out.size())
         self.register_exts_buffer("pool_indices", idx)
+        self.register_exts_buffer("pool_indices_1d",
+                                  self._convert_pooling_indices(idx))
         return out
+
+    def _convert_pooling_indices(self, idx):
+        """Convert the pooling indices returned from the forward pass into
+        the one-dimensional index scheme."""
+        batch, channels, in_x, in_y = self.input_shape
+        # convert values pool_indices to one-dimensional indices
+        idx_batch_offset = (channels * in_x * in_y * torch.arange(batch)).to(
+            idx.device).view(batch, 1, 1, 1)
+        idx_channel_offset = (in_x * in_y * torch.arange(channels)).to(
+            idx.device).view(1, channels, 1, 1)
+        idx_1d = idx + idx_batch_offset.expand(
+            *self.output_shape) + idx_channel_offset.expand(*self.output_shape)
+        return idx_1d.view(-1)
 
     # --- Hessian-vector product with the input Hessian ---
     # override
@@ -68,30 +84,11 @@ class CVPMaxPool2d(hbp_decorate(MaxPool2d)):
         return result.view(-1)
 
     def _input_jacobian_transpose(self, v):
-        """Apply the transposed Jacobian with respect to the input.
-
-        Unpool according to the pooling indices.
-        """
+        """Apply the transposed Jacobian with respect to the input."""
         batch, channels, in_x, in_y = self.input_shape
         _, _, out_x, out_y = self.output_shape
         assert tuple(v.size()) == (batch * channels * out_x * out_y, )
-        """
-        result = v.view(*self.output_shape)
-        result = functional.max_unpool2d(
-            result,
-            self.pool_indices,
-            self.kernel_size,
-            stride=self.stride,
-            padding=self.padding,
-            output_size=self.input_shape)
-        assert tuple(result.size()) == self.input_shape
-        """
-        idx = self.pool_indices.clone()
-        for b in range(batch):
-            idx[b, :, :, :] += b * channels * in_x * in_y
-            for i in range(channels):
-                idx[b, i, :, :] += i * in_x * in_y
-        idx = idx.view(-1)
-        result = torch.zeros(batch * channels * in_x * in_y).to(v.device)
-        result.index_put_((idx, ), v, accumulate=True)
+        # accumulate values in v according to the 1d indices
+        result = torch.zeros(batch * channels * in_x * in_y, device=v.device)
+        result.index_put_((self.pool_indices_1d, ), v, accumulate=True)
         return result

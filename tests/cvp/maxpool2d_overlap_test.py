@@ -11,9 +11,9 @@ kernel_size = (3, 3)
 padding = 1
 stride = (2, 2)
 dilation = 1
-atol = 1e-5
+atol = 5e-5
 rtol = 1e-5
-num_hvp = 100
+num_hvp = 10
 
 
 def torch_fn():
