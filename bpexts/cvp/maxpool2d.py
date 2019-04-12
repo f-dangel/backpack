@@ -17,9 +17,6 @@ class CVPMaxPool2d(hbp_decorate(MaxPool2d)):
     attribute ``pool_indices``.
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     # override
     def hbp_hooks(self):
         """Pooling indices and in/out dimensions are saved in forward."""
@@ -36,22 +33,7 @@ class CVPMaxPool2d(hbp_decorate(MaxPool2d)):
         self.input_shape = tuple(x.size())
         self.output_shape = tuple(out.size())
         self.register_exts_buffer("pool_indices", idx)
-        self.register_exts_buffer("pool_indices_1d",
-                                  self._convert_pooling_indices(idx))
         return out
-
-    def _convert_pooling_indices(self, idx):
-        """Convert the pooling indices returned from the forward pass into
-        the one-dimensional index scheme."""
-        batch, channels, in_x, in_y = self.input_shape
-        # convert values pool_indices to one-dimensional indices
-        idx_batch_offset = (channels * in_x * in_y * torch.arange(batch)).to(
-            idx.device).view(batch, 1, 1, 1)
-        idx_channel_offset = (in_x * in_y * torch.arange(channels)).to(
-            idx.device).view(1, channels, 1, 1)
-        idx_1d = idx + idx_batch_offset.expand(
-            *self.output_shape) + idx_channel_offset.expand(*self.output_shape)
-        return idx_1d.view(-1)
 
     # --- Hessian-vector product with the input Hessian ---
     # override
@@ -88,7 +70,7 @@ class CVPMaxPool2d(hbp_decorate(MaxPool2d)):
         batch, channels, in_x, in_y = self.input_shape
         _, _, out_x, out_y = self.output_shape
         assert tuple(v.size()) == (batch * channels * out_x * out_y, )
-        # accumulate values in v according to the 1d indices
-        result = torch.zeros(batch * channels * in_x * in_y, device=v.device)
-        result.index_put_((self.pool_indices_1d, ), v, accumulate=True)
-        return result
+        result = torch.zeros(batch, channels, in_x * in_y, device=v.device)
+        result.scatter_add_(2, self.pool_indices.view(batch, channels, -1),
+                            v.view(batch, channels, -1))
+        return result.view(-1)
