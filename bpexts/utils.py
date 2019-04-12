@@ -173,3 +173,48 @@ def boxed_message(message):
         result += format_line(l, max_length)
     result += horizontal
     return result.strip()
+
+
+def same_padding2d(input_dim, kernel_dim, stride_dim):
+    """Determine 2d padding parameters for same output size.
+
+    Implementation modified from A. Bahde.
+
+    Parameters:
+    -----------
+    input_dim : tuple(int)
+        Width and height of the input image
+    kernel_dim : tuple(int) or int
+        Width and height of the kernel filter, assume quadratic
+        filter size if ``int``.
+    stride_dim : tuple(int) or int
+        Stride dimensions, assume same in both directions if ``int``.
+
+    Returns:
+    --------
+    tuple(int)
+        Padding for left, right, top, and bottom margin.
+    """
+    in_height, in_width = input_dim
+    kernel_height, kernel_width = 2 * (kernel_dim, ) if isinstance(
+        kernel_dim, int) else kernel_dim
+    stride_height, stride_width = 2 * (stride_dim, ) if isinstance(
+        stride_dim, int) else stride_dim
+
+    # output size to be achieved by padding
+    out_height = math.ceil(in_height / stride_height)
+    out_width = math.ceil(in_width / stride_width)
+
+    # pad size along each dimension
+    pad_along_height = max(
+        (out_height - 1) * stride_height + kernel_height - in_height, 0)
+    pad_along_width = max(
+        (out_width - 1) * stride_width + kernel_width - in_width, 0)
+
+    # determine padding 4-tuple (can be asymmetric)
+    pad_top = pad_along_height // 2
+    pad_bottom = pad_along_height - pad_top
+    pad_left = pad_along_width // 2
+    pad_right = pad_along_width - pad_left
+
+    return (pad_left, pad_right, pad_top, pad_bottom)
