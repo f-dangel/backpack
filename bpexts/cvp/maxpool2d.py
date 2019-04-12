@@ -36,6 +36,7 @@ class CVPMaxPool2d(hbp_decorate(MaxPool2d)):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        return
         error_msg = 'There is a bug for overlapping patches in max-pooling!'
         if self.stride != self.kernel_size:
             error_msg += '\nFor stride != kernel_size, the application of Jacobians does not work for unknown reasons.'
@@ -99,6 +100,7 @@ class CVPMaxPool2d(hbp_decorate(MaxPool2d)):
         batch, channels, in_x, in_y = self.input_shape
         _, _, out_x, out_y = self.output_shape
         assert tuple(v.size()) == (batch * channels * out_x * out_y, )
+        """
         result = v.view(*self.output_shape)
         result = functional.max_unpool2d(
             result,
@@ -108,4 +110,19 @@ class CVPMaxPool2d(hbp_decorate(MaxPool2d)):
             padding=self.padding,
             output_size=self.input_shape)
         assert tuple(result.size()) == self.input_shape
-        return result.view(-1)
+        """
+        idx = self.pool_indices.clone()
+        for b in range(batch):
+            idx[b, :, :, :] += b * channels * in_x * in_y
+            for i in range(channels):
+                idx[b, i, :, :] += i * in_x * in_y
+        idx = idx.view(-1)
+        #result = torch.zeros(batch * channels * in_x * in_y).to(v.device)
+        #result.index_put_((idx, ), v, accumulate=True)
+        # """
+        result = torch.zeros(batch * channels * in_x * in_y).to(v.device)
+        for i, v in zip(idx, v):
+            print(i, v)
+            result[i] += v
+        # """
+        return result
