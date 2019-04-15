@@ -216,11 +216,11 @@ def hbp_test(torch_fn,
         def _loss_fn(self, x):
             """Dummy loss function: Normalized cubed sum.
 
-            The loss Hessian of this function is non-constant and non-diagonal.
+            The loss Hessian of this function is constant and non-diagonal.
             """
             loss = torch.zeros(1).to(self.DEVICE)
             for b in range(x.size(0)):
-                loss += (x[b, :].view(-1).sum())**3 / x.numel()
+                loss += (x[b, :].view(-1).sum())**2 / x.numel()
             return loss
 
     class HBPTest2(HBPTest0):
