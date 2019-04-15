@@ -225,6 +225,7 @@ def same_padding2d_before_forward(Layer):
 
     class LayerSamePadding(Layer):
         def forward(self, x):
+            assert self.stride == 1 or self.stride == (1, 1)
             pad_left, pad_right, pad_top, pad_bottom = same_padding2d(
                 input_dim=(x.size(2), x.size(3)),
                 kernel_dim=self.kernel_size,
@@ -232,7 +233,11 @@ def same_padding2d_before_forward(Layer):
             if pad_left != pad_right or pad_top != pad_bottom:
                 raise ValueError('Asymmetric padding not suported.')
             self.padding = (pad_left, pad_bottom)
-            return super().forward(x)
+            out = super().forward(x)
+            if not x.size()[2:] == out.size()[2:]:
+                raise ValueError("Expect same sizes, but got {}, {}".format(
+                    x.size(), out.size()))
+            return out
 
     return LayerSamePadding
 
