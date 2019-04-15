@@ -119,7 +119,7 @@ def hbp_test(torch_fn,
                     torch_hvp = torch_parameter_hessians[idx].matmul
                     hbp_result = p.hvp(v)
                     torch_result = torch_hvp(v)
-                    print(self._residuum(hbp_result, torch_result))
+                    self._residuum_report(hbp_result, torch_result)
                     assert torch.allclose(
                         hbp_result,
                         torch_result,
@@ -135,14 +135,19 @@ def hbp_test(torch_fn,
                 v = torch.randn(input_numel).to(self.DEVICE)
                 torch_result = torch_hvp(v)
                 hbp_result = hbp_hvp(v)
-                print(self._residuum(hbp_result, torch_result))
+                self._residuum_report(hbp_result, torch_result)
                 assert torch.allclose(
                     torch_result, hbp_result, atol=self.ATOL, rtol=self.RTOL)
 
-        @staticmethod
-        def _residuum(x, y):
-            """Maximum of absolute value difference."""
-            return torch.max(torch.abs(x - y))
+        def _residuum_report(self, x, y):
+            """Report values with mismatch in allclose check."""
+            x_numpy = x.data.cpu().numpy()
+            y_numpy = y.data.cpu().numpy()
+            close = numpy.isclose(
+                x_numpy, y_numpy, atol=self.ATOL, rtol=self.RTOL)
+            where_not_close = numpy.argwhere(numpy.logical_not(close))
+            for idx in where_not_close:
+                print('{} versus {}'.format(x_numpy[idx], y_numpy[idx]))
 
         def _torch_input_hvp(self):
             """Create Hessian-vector product routine for torch layer."""
