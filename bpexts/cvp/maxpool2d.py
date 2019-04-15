@@ -4,7 +4,7 @@ import torch
 from torch import Tensor
 from torch.nn import MaxPool2d, functional
 from ..hbp.module import hbp_decorate
-from ..utils import set_seeds
+from ..utils import same_padding2d_before_forward
 
 
 class CVPMaxPool2d(hbp_decorate(MaxPool2d)):
@@ -74,3 +74,9 @@ class CVPMaxPool2d(hbp_decorate(MaxPool2d)):
         result.scatter_add_(2, self.pool_indices.view(batch, channels, -1),
                             v.view(batch, channels, -1))
         return result.view(-1)
+
+
+class CVPMaxPool2dSame(same_padding2d_before_forward(CVPMaxPool2d)):
+    """2D Max pooling with padding same and recursive Hessian-vector
+    products."""
+    pass

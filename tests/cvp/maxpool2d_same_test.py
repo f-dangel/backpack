@@ -1,0 +1,60 @@
+"""Test CVP of MaxPool2d layer with padding same."""
+
+import torch
+from bpexts.cvp.maxpool2d import CVPMaxPool2dSame
+from bpexts.utils import set_seeds, MaxPool2dSame
+from .cvp_test import set_up_cvp_tests
+
+# hyper-parameters
+input_size = (4, 3, 8, 8)
+kernel_size = (3, 3)
+padding = 1
+stride = (1, 1)
+dilation = 1
+atol = 1e-5
+rtol = 1e-5
+num_hvp = 1000
+
+
+def torch_fn():
+    """Create a 2d maxpool layer with same padding in torch."""
+    return MaxPool2dSame(
+        kernel_size, stride=stride, padding=padding, dilation=dilation)
+
+
+def cvp_fn():
+    """Create 2d maxpool layer with same padding and CVP functionality."""
+    return CVPMaxPool2dSame(
+        kernel_size, stride=stride, padding=padding, dilation=dilation)
+
+
+for name, test_cls in set_up_cvp_tests(
+        torch_fn,
+        cvp_fn,
+        'CVPMaxPool2dSame',
+        input_size=input_size,
+        atol=atol,
+        rtol=rtol,
+        num_hvp=num_hvp):
+    exec('{} = test_cls'.format(name))
+    del test_cls
+
+
+def test_MaxPool2dSame_same_output_size():
+    """Check if input and output have same size for MaxPool2dSame."""
+    input = torch.randn(*input_size)
+    layer = torch_fn()
+    output = layer(input)
+    print(input.size(), output.size())
+    print(layer)
+    assert input.size(2) == output.size(2)
+    assert input.size(3) == output.size(3)
+
+
+def test_CVPMaxPool2dSame_layer_same_output_size():
+    """Check if input and output have same size for CVPMaxPool2dSame."""
+    input = torch.randn(*input_size)
+    layer = cvp_fn()
+    output = layer(input)
+    assert input.size(2) == output.size(2)
+    assert input.size(3) == output.size(3)
