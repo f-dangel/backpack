@@ -31,7 +31,25 @@ def cvp_fn():
 for name, test_cls in set_up_cvp_tests(
         torch_fn,
         cvp_fn,
-        'CVPMaxPool2dNoOverlap',
+        'CVPMaxPool2d',
+        input_size=input_size,
+        atol=atol,
+        rtol=rtol,
+        num_hvp=num_hvp):
+    exec('{} = test_cls'.format(name))
+    del test_cls
+
+
+def cvp_from_torch_fn():
+    """Create CVPMaxPool2d from torch layer."""
+    torch_layer = torch_fn()
+    return CVPMaxPool2d.from_torch(torch_layer)
+
+
+for name, test_cls in set_up_cvp_tests(
+        torch_fn,
+        cvp_from_torch_fn,
+        'CVPMaxPool2dFromTorch',
         input_size=input_size,
         atol=atol,
         rtol=rtol,
