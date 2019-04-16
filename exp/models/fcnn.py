@@ -3,7 +3,7 @@
 import torch.nn as nn
 from numpy import prod
 from bpexts.hbp.linear import HBPLinear
-from bpexts.hbp.view import HBPViewBatchFlat
+from bpexts.hbp.flatten import HBPFlatten
 from bpexts.hbp.combined_sigmoid import HBPSigmoidLinear
 from bpexts.hbp.sequential import HBPSequential
 
@@ -31,7 +31,7 @@ def fcnn(
         Number of outputs (classes)
     """
     in_features = prod(input_size)
-    layers = [HBPViewBatchFlat()]
+    layers = [HBPFlatten()]
     out_dims = hidden_dims + [num_outputs]
     for idx, out_dim in enumerate(out_dims):
         if idx == 0:

@@ -3,7 +3,7 @@
 import torch.nn as nn
 from numpy import prod
 from bpexts.hbp.linear import HBPLinear
-from bpexts.hbp.view import HBPViewBatchFlat
+from bpexts.hbp.flatten import HBPFlatten
 from bpexts.hbp.conv2d import HBPConv2d
 from bpexts.hbp.combined_sigmoid import HBPSigmoidLinear
 from bpexts.hbp.sequential import HBPSequential
@@ -53,7 +53,7 @@ def c1d1(
             padding=padding,
             stride=stride),
         # need to flatten the image-shaped outputs of conv into vectors
-        HBPViewBatchFlat(),
+        HBPFlatten(),
         HBPSigmoidLinear(
             in_features=output_numel, out_features=num_outputs, bias=True))
     return model
