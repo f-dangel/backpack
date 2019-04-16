@@ -43,7 +43,7 @@ def cvp_from_torch_fn():
 for name, test_cls in set_up_cvp_tests(
         torch_fn,
         cvp_from_torch_fn,
-        'CVPReLUfromTorch',
+        'CVPReLUFromTorch',
         input_size=input_size,
         atol=atol,
         rtol=rtol,
