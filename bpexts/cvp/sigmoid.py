@@ -9,6 +9,15 @@ class CVPSigmoid(cvp_elementwise_nonlinear(Sigmoid)):
 
     Applies sigma(x) = 1 / (1 + exp(-x)) elementwise.
     """
+    # override
+    @classmethod
+    def from_torch(cls, torch_layer):
+        if not isinstance(torch_layer, Sigmoid):
+            raise ValueError("Expecting torch.nn.Sigmoid, got {}".format(
+                torch_layer.__class__))
+        # create instance
+        sigmoid = cls()
+        return sigmoid
 
     # override
     def cvp_derivative_hooks(self):
