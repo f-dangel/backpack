@@ -2,7 +2,8 @@
 
 from ..hbp.module import hbp_decorate
 # torch layers
-from torch.nn import (ReLU, Sigmoid, Linear, Conv2d, MaxPool2d, Sequential)
+from torch.nn import (ReLU, Sigmoid, Linear, Conv2d, MaxPool2d, Sequential,
+                      CrossEntropyLoss)
 from ..utils import Flatten
 # CVP layers
 from .relu import CVPReLU
@@ -11,6 +12,7 @@ from .linear import CVPLinear
 from .conv2d import CVPConv2d
 from .maxpool2d import CVPMaxPool2d
 from .flatten import CVPFlatten
+from .crossentropy import CVPCrossEntropyLoss
 
 
 class CVPSequential(hbp_decorate(Sequential)):
@@ -55,7 +57,8 @@ class CVPSequential(hbp_decorate(Sequential)):
 # supported conversions
 conversions = [(ReLU, CVPReLU), (Sigmoid, CVPSigmoid), (Linear, CVPLinear),
                (Conv2d, CVPConv2d), (MaxPool2d, CVPMaxPool2d),
-               (Sequential, CVPSequential), (Flatten, CVPFlatten)]
+               (Sequential, CVPSequential), (Flatten, CVPFlatten),
+               (CrossEntropyLoss, CVPCrossEntropyLoss)]
 
 
 def convert_torch_to_cvp(layer):

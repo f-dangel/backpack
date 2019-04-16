@@ -8,22 +8,29 @@ from ..hbp.module import hbp_decorate
 class CVPCrossEntropyLoss(hbp_decorate(CrossEntropyLoss)):
     """Cross-entropy loss with recursive Hessian-vector products."""
 
-    def __init__(self,
-                 weight=None,
-                 size_average=None,
-                 ignore_index=-100,
-                 reduce=None,
-                 reduction='mean'):
+    def __init__(self, weight=None, ignore_index=-100, reduction='mean'):
         if weight is not None:
             raise NotImplementedError('Only supports weight = None')
         if ignore_index != -100:
             raise NotImplementedError('Only supports ignore_index = -100')
-        if reduce is not None:
-            raise NotImplementedError('Only supports reduce = None')
         if reduction is not 'mean':
             raise NotImplementedError(r"Only supports reduction = 'mean'")
-        super().__init__(weight, size_average, reduce, reduction)
-        self.ignore_index = ignore_index
+        super().__init__(
+            weight=weight, ignore_index=ignore_index, reduction=reduction)
+
+    # override
+    @classmethod
+    def from_torch(cls, torch_layer):
+        if not isinstance(torch_layer, CrossEntropyLoss):
+            raise ValueError(
+                "Expecting torch.nn.CrossEntropyLoss, got {}".format(
+                    torch_layer.__class__))
+        # create instance
+        cross_entropy = cls(
+            weight=torch_layer.weight,
+            ignore_index=torch_layer.ignore_index,
+            reduction=torch_layer.reduction)
+        return cross_entropy
 
     # override
     def hbp_hooks(self):
