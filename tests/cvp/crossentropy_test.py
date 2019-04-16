@@ -11,7 +11,7 @@ features = 20
 input_size = (batch, features)
 atol = 1e-8
 rtol = 1e-5
-num_hvp = 10000
+num_hvp = 10
 
 
 def torch_fn():
