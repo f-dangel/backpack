@@ -61,7 +61,20 @@ class CVPConv2d(hbp_decorate(Conv2d)):
         return result.view(-1)
 
     def _input_jacobian_transpose(self, v):
-        """Apply the transposed Jacobian with respect to the input."""
+        """Apply the transposed Jacobian with respect to the input.
+
+        Note
+        ----
+        The transpose Jacobian is implemented with ``conv_transpose2d``.
+        For strides larger than one, this can currently lead to failing
+        assertion statements. It is cause by different shapes being
+        mapped to the same output dimension by conv/conv_transpose.
+
+        Reference
+        ---------
+        https://github.com/keras-team/keras/issues/9883
+
+        """
         batch, in_channels, in_x, in_y = tuple(self.layer_input.size())
         assert tuple(v.size()) == (prod(self.output_size), )
         result = v.view(*self.output_size)
@@ -72,7 +85,13 @@ class CVPConv2d(hbp_decorate(Conv2d)):
             padding=self.padding,
             dilation=self.dilation,
             groups=self.groups)
-        assert tuple(result.size()) == tuple(self.layer_input.size())
+        if tuple(result.size()) != tuple(self.layer_input.size()):
+            raise ValueError(
+                "Size after conv_transpose does not match",
+                " the input size. This occurs for strides",
+                " larger than 1. TO BE FIXED. Got {}, expected {}".format(
+                    result.size(), self.layer_input.size()))
+
         return result.view(-1)
 
     # --- Hessian-vector products with the parameter Hessians ---
