@@ -40,6 +40,24 @@ for name, test_cls in set_up_hbp_tests(
     del test_cls
 
 
+def hbp_from_torch_fn():
+    """Create HBPSigmoid from Sigmoid."""
+    torch_layer = torch_fn()
+    return HBPSigmoid.from_torch(torch_layer)
+
+
+for name, test_cls in set_up_hbp_tests(
+        torch_fn,
+        hbp_from_torch_fn,
+        'HBPSigmoidFromTorch',
+        input_size=input_size,
+        atol=atol,
+        rtol=rtol,
+        num_hvp=num_hvp):
+    exec('{} = test_cls'.format(name))
+    del test_cls
+
+
 def example_loss(tensor):
     """Sum squared entries of a tensor."""
     return (tensor**2).view(-1).sum(0)

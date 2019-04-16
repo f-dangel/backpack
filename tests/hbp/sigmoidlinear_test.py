@@ -41,7 +41,7 @@ for name, test_cls in set_up_hbp_tests(
 
 
 def hbp_from_torch_fn():
-    """Create HBPReLULinear from ReLULinear."""
+    """Create HBPSigmoidLinear from SigmoidLinear."""
     torch_layer = torch_fn()
     return HBPSigmoidLinear.from_torch(torch_layer)
 

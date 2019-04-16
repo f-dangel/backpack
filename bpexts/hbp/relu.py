@@ -11,6 +11,16 @@ class HBPReLU(hbp_elementwise_nonlinear(ReLU)):
     Applies ReLU(x) = max(x, 0) elementwise.
     """
     # override
+    @classmethod
+    def from_torch(cls, torch_layer):
+        if not isinstance(torch_layer, ReLU):
+            raise ValueError("Expecting torch.nn.ReLU, got {}".format(
+                torch_layer.__class__))
+        # create instance
+        relu = cls()
+        return relu
+
+    # override
     def hbp_derivative_hooks(self):
         """Hooks for access to first and second derivative."""
         self.register_exts_forward_hook(self.store_relu_derivatives)
