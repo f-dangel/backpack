@@ -110,7 +110,8 @@ def cvp_test(torch_fn,
             torch_parameter_hessians = list(self._torch_parameter_hvp())
             for _ in range(self.NUM_HVP):
                 for idx, p in enumerate(cvp_layer.parameters()):
-                    v = torch.randn(p.numel()).to(self.DEVICE)
+                    v = torch.randn(
+                        p.numel(), requires_grad=False).to(self.DEVICE)
                     torch_hvp = torch_parameter_hessians[idx].matmul
                     cvp_result = p.hvp(v)
                     torch_result = torch_hvp(v)
@@ -127,7 +128,8 @@ def cvp_test(torch_fn,
             cvp_hvp = self._cvp_input_hvp()
             for _ in range(self.NUM_HVP):
                 input_numel = int(numpy.prod(self.INPUT_SIZE))
-                v = torch.randn(input_numel).to(self.DEVICE)
+                v = torch.randn(
+                    input_numel, requires_grad=False).to(self.DEVICE)
                 torch_result = torch_hvp(v)
                 cvp_result = cvp_hvp(v)
                 self._residuum_report(cvp_result, torch_result)
@@ -175,7 +177,8 @@ def cvp_test(torch_fn,
             loss_hessian_vp = exact_hessian(loss, [out]).detach().to(
                 self.DEVICE).matmul
             loss.backward()
-            hessian_x = layer.backward_hessian(loss_hessian_vp)
+            hessian_x = layer.backward_hessian(
+                loss_hessian_vp, compute_input_hessian=True)
             return hessian_x
 
         def _cvp_after_hessian_backward(self):

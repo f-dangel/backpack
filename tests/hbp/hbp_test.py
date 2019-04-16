@@ -115,7 +115,8 @@ def hbp_test(torch_fn,
             torch_parameter_hessians = list(self._torch_parameter_hvp())
             for _ in range(self.NUM_HVP):
                 for idx, p in enumerate(hbp_layer.parameters()):
-                    v = torch.randn(p.numel()).to(self.DEVICE)
+                    v = torch.randn(
+                        p.numel(), requires_grad=False).to(self.DEVICE)
                     torch_hvp = torch_parameter_hessians[idx].matmul
                     hbp_result = p.hvp(v)
                     torch_result = torch_hvp(v)
@@ -132,7 +133,8 @@ def hbp_test(torch_fn,
             hbp_hvp = self._hbp_input_hvp()
             for _ in range(self.NUM_HVP):
                 input_numel = int(numpy.prod(self.INPUT_SIZE))
-                v = torch.randn(input_numel).to(self.DEVICE)
+                v = torch.randn(
+                    input_numel, requires_grad=False).to(self.DEVICE)
                 torch_result = torch_hvp(v)
                 hbp_result = hbp_hvp(v)
                 self._residuum_report(hbp_result, torch_result)
