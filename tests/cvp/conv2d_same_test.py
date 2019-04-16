@@ -1,0 +1,74 @@
+"""Test CVP of Conv2d layer with padding same."""
+
+import torch
+from bpexts.cvp.conv2d import CVPConv2dSame
+from bpexts.utils import set_seeds, Conv2dSame
+from .cvp_test import set_up_cvp_tests
+
+# hyper-parameters
+in_channels, out_channels = 3, 2
+input_size = (3, in_channels, 7, 5)
+bias = True
+atol = 5e-5
+rtol = 5e-5
+num_hvp = 10
+kernel_size = (3, 3)
+padding = 0
+stride = 1
+dilation = 1
+
+
+def torch_fn():
+    """Create a 2d convolution layer with same padding in torch."""
+    set_seeds(0)
+    return Conv2dSame(
+        in_channels,
+        out_channels,
+        kernel_size,
+        stride=stride,
+        padding=padding,
+        dilation=dilation,
+        bias=bias)
+
+
+def cvp_fn():
+    """Create 2d convolution layer with same padding and CVP functionality."""
+    set_seeds(0)
+    return CVPConv2dSame(
+        in_channels,
+        out_channels,
+        kernel_size,
+        stride=stride,
+        padding=padding,
+        dilation=dilation,
+        bias=bias)
+
+
+for name, test_cls in set_up_cvp_tests(
+        torch_fn,
+        cvp_fn,
+        'CVPConv2dSame',
+        input_size=input_size,
+        atol=atol,
+        rtol=rtol,
+        num_hvp=num_hvp):
+    exec('{} = test_cls'.format(name))
+    del test_cls
+
+
+def test_Conv2dSame_same_output_size():
+    """Check if input and output have same size for Conv2dSame."""
+    input = torch.randn(*input_size)
+    layer = torch_fn()
+    output = layer(input)
+    assert input.size(2) == output.size(2)
+    assert input.size(3) == output.size(3)
+
+
+def test_CVPConv2dSame_layer_same_output_size():
+    """Check if input and output have same size for CVPConv2dSame."""
+    input = torch.randn(*input_size)
+    layer = cvp_fn()
+    output = layer(input)
+    assert input.size(2) == output.size(2)
+    assert input.size(3) == output.size(3)

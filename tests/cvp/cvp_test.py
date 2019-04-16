@@ -110,11 +110,12 @@ def cvp_test(torch_fn,
             torch_parameter_hessians = list(self._torch_parameter_hvp())
             for _ in range(self.NUM_HVP):
                 for idx, p in enumerate(cvp_layer.parameters()):
-                    v = torch.randn(p.numel()).to(self.DEVICE)
+                    v = torch.randn(
+                        p.numel(), requires_grad=False).to(self.DEVICE)
                     torch_hvp = torch_parameter_hessians[idx].matmul
                     cvp_result = p.hvp(v)
                     torch_result = torch_hvp(v)
-                    print(self._residuum(cvp_result, torch_result))
+                    self._residuum_report(cvp_result, torch_result)
                     assert torch.allclose(
                         cvp_result,
                         torch_result,
@@ -127,17 +128,23 @@ def cvp_test(torch_fn,
             cvp_hvp = self._cvp_input_hvp()
             for _ in range(self.NUM_HVP):
                 input_numel = int(numpy.prod(self.INPUT_SIZE))
-                v = torch.randn(input_numel).to(self.DEVICE)
+                v = torch.randn(
+                    input_numel, requires_grad=False).to(self.DEVICE)
                 torch_result = torch_hvp(v)
                 cvp_result = cvp_hvp(v)
-                print(self._residuum(cvp_result, torch_result))
+                self._residuum_report(cvp_result, torch_result)
                 assert torch.allclose(
                     torch_result, cvp_result, atol=self.ATOL, rtol=self.RTOL)
 
-        @staticmethod
-        def _residuum(x, y):
-            """Maximum of absolute value difference."""
-            return torch.max(torch.abs(x - y))
+        def _residuum_report(self, x, y):
+            """Report values with mismatch in allclose check."""
+            x_numpy = x.data.cpu().numpy()
+            y_numpy = y.data.cpu().numpy()
+            close = numpy.isclose(
+                x_numpy, y_numpy, atol=self.ATOL, rtol=self.RTOL)
+            where_not_close = numpy.argwhere(numpy.logical_not(close))
+            for idx in where_not_close:
+                print('{} versus {}'.format(x_numpy[idx], y_numpy[idx]))
 
         def _torch_input_hvp(self):
             """Create Hessian-vector product routine for torch layer."""
@@ -170,7 +177,8 @@ def cvp_test(torch_fn,
             loss_hessian_vp = exact_hessian(loss, [out]).detach().to(
                 self.DEVICE).matmul
             loss.backward()
-            hessian_x = layer.backward_hessian(loss_hessian_vp)
+            hessian_x = layer.backward_hessian(
+                loss_hessian_vp, compute_input_hessian=True)
             return hessian_x
 
         def _cvp_after_hessian_backward(self):
@@ -208,11 +216,11 @@ def cvp_test(torch_fn,
         def _loss_fn(self, x):
             """Dummy loss function: Normalized cubed sum.
 
-            The loss Hessian of this function is non-constant and non-diagonal.
+            The loss Hessian of this function is constant and non-diagonal.
             """
             loss = torch.zeros(1).to(self.DEVICE)
             for b in range(x.size(0)):
-                loss += (x[b, :].view(-1).sum())**3 / x.numel()
+                loss += (x[b, :].view(-1).sum())**2 / x.numel()
             return loss
 
     class CVPTest2(CVPTest0):
