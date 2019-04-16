@@ -257,3 +257,18 @@ class Flatten(torch.nn.Module):
 
     def forward(self, input):
         return input.view(input.size(0), -1)
+
+
+class ReLULinear(torch.nn.Linear):
+    """Apply ReLU first, then affine transformation."""
+
+    def forward(self, x):
+        x = torch.nn.functional.relu(x)
+        return super().forward(torch.nn.functional.relu(x))
+
+
+class SigmoidLinear(torch.nn.Linear):
+    """Apply Sigmoid first, then affine transformation."""
+
+    def forward(self, x):
+        return super().forward(torch.sigmoid(x))
