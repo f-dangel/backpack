@@ -1,15 +1,25 @@
 """Curvature-vector products of batch-wise flatten operation."""
 
-from .view import CVPView
+from ..hbp.module import hbp_decorate
+from ..utils import Flatten
 
 
-class CVPFlatten(CVPView):
-    """Keep dimension 1, flatten dimensions 2, 3, ... into one dimension."""
+class CVPFlatten(hbp_decorate(Flatten)):
+    """Flatten all dimensions except batch dimension, with CVP supoprt."""
 
-    def __init__(self):
-        super().__init__(shape=None)
+    @classmethod
+    def from_torch(cls, torch_layer):
+        if not isinstance(torch_layer, Flatten):
+            raise ValueError("Expecting bpexts.utils.Flatten, got {}".format(
+                torch_layer.__class__))
+        return cls()
 
-    def forward(self, input):
-        """Apply the matricization along dimensions 2, 3, ... ."""
-        new_shape = (input.size()[0], -1)
-        return input.view(*new_shape)
+    # override
+    def hbp_hooks(self):
+        """No hooks required."""
+        pass
+
+    # override
+    def input_hessian(self, output_hessian, modify_2nd_order_terms='none'):
+        """Pass on the Hessian with respect to the layer input."""
+        return output_hessian
