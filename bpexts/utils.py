@@ -250,3 +250,10 @@ class Conv2dSame(same_padding2d_before_forward(torch.nn.Conv2d)):
 class MaxPool2dSame(same_padding2d_before_forward(torch.nn.MaxPool2d)):
     """2d Convolution with padding same."""
     pass
+
+
+class Flatten(torch.nn.Module):
+    """Flatten all dimensions except batch dimension."""
+
+    def forward(self, input):
+        return input.view(input.size(0), -1)

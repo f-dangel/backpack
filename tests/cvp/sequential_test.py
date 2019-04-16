@@ -3,8 +3,7 @@
 import torch
 import numpy
 # torch layers
-from torch.nn import (Linear, Sigmoid, ReLU, Conv2d, MaxPool2d, Module,
-                      Sequential)
+from torch.nn import (Linear, Sigmoid, ReLU, Conv2d, MaxPool2d, Sequential)
 # CVP layers
 from bpexts.cvp.linear import CVPLinear
 from bpexts.cvp.sigmoid import CVPSigmoid
@@ -13,17 +12,9 @@ from bpexts.cvp.conv2d import CVPConv2d
 from bpexts.cvp.maxpool2d import CVPMaxPool2d
 from bpexts.cvp.flatten import CVPFlatten
 from bpexts.cvp.sequential import CVPSequential
-from bpexts.utils import set_seeds
+from bpexts.utils import set_seeds, Flatten
 from bpexts.hbp.conv2d import HBPConv2d
 from .cvp_test import set_up_cvp_tests
-
-
-class Flatten(Module):
-    """Flatten all dimensions except batch dimension."""
-
-    def forward(self, input):
-        return input.view(input.size(0), -1)
-
 
 # number of tests and accuracy
 atol = 1e-6
@@ -105,6 +96,24 @@ for name, test_cls in set_up_cvp_tests(
         torch_fn,
         cvp_fn,
         'CVPSequential',
+        input_size=input_size,
+        atol=atol,
+        rtol=rtol,
+        num_hvp=num_hvp):
+    exec('{} = test_cls'.format(name))
+    del test_cls
+
+
+def cvp_from_torch_fn():
+    """Create CVPSequential from torch layer."""
+    torch_layer = torch_fn()
+    return CVPSequential.from_torch(torch_layer)
+
+
+for name, test_cls in set_up_cvp_tests(
+        torch_fn,
+        cvp_from_torch_fn,
+        'CVPSequentialFromTorch',
         input_size=input_size,
         atol=atol,
         rtol=rtol,

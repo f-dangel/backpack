@@ -10,6 +10,15 @@ class CVPReLU(cvp_elementwise_nonlinear(ReLU)):
 
     Applies ReLU(x) = max(x, 0) elementwise.
     """
+    # override
+    @classmethod
+    def from_torch(cls, torch_layer):
+        if not isinstance(torch_layer, ReLU):
+            raise ValueError("Expecting torch.nn.ReLU, got {}".format(
+                torch_layer.__class__))
+        # create instance
+        relu = cls()
+        return relu
 
     # override
     def cvp_derivative_hooks(self):

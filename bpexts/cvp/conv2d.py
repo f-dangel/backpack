@@ -10,6 +10,26 @@ from ..utils import same_padding2d_before_forward
 
 class CVPConv2d(hbp_decorate(Conv2d)):
     """2D Convolution with recursive Hessian-vector products."""
+    # override
+    @classmethod
+    def from_torch(cls, torch_layer):
+        if not isinstance(torch_layer, Conv2d):
+            raise ValueError("Expecting torch.nn.Conv2d, got {}".format(
+                torch_layer.__class__))
+        # create instance
+        conv2d = cls(
+            torch_layer.in_channels,
+            torch_layer.out_channels,
+            torch_layer.kernel_size,
+            stride=torch_layer.stride,
+            padding=torch_layer.padding,
+            dilation=torch_layer.dilation,
+            groups=torch_layer.groups,
+            bias=torch_layer.bias is not None)
+        # copy parameters
+        conv2d.weight = torch_layer.weight
+        conv2d.bias = torch_layer.bias
+        return conv2d
 
     # override
     def hbp_hooks(self):

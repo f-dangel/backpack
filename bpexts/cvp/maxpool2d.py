@@ -16,6 +16,21 @@ class CVPMaxPool2d(hbp_decorate(MaxPool2d)):
     the forward pass. Instead, they can be accessed by the module
     attribute ``pool_indices``.
     """
+    # override
+    @classmethod
+    def from_torch(cls, torch_layer):
+        if not isinstance(torch_layer, MaxPool2d):
+            raise ValueError("Expecting torch.nn.MaxPool2d, got {}".format(
+                torch_layer.__class__))
+        # create instance
+        maxpool2d = cls(
+            torch_layer.kernel_size,
+            stride=torch_layer.stride,
+            padding=torch_layer.padding,
+            dilation=torch_layer.dilation,
+            return_indices=torch_layer.return_indices,
+            ceil_mode=torch_layer.ceil_mode)
+        return maxpool2d
 
     # override
     def hbp_hooks(self):

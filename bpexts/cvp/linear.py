@@ -7,6 +7,21 @@ from ..hbp.module import hbp_decorate
 
 class CVPLinear(hbp_decorate(Linear)):
     """Linear layer with recursive Hessian-vector products."""
+    # override
+    @classmethod
+    def from_torch(cls, torch_layer):
+        if not isinstance(torch_layer, Linear):
+            raise ValueError("Expecting torch.nn.Linear, got {}".format(
+                torch_layer.__class__))
+        # create instance
+        linear = cls(
+            in_features=torch_layer.in_features,
+            out_features=torch_layer.out_features,
+            bias=torch_layer.bias is not None)
+        # copy parameters
+        linear.weight = torch_layer.weight
+        linear.bias = torch_layer.bias
+        return linear
 
     # override
     def hbp_hooks(self):
