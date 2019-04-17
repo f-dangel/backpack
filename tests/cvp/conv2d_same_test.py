@@ -1,7 +1,7 @@
 """Test CVP of Conv2d layer with padding same."""
 
 import torch
-from bpexts.cvp.conv2d import CVPConv2dSame
+from bpexts.cvp.sequential import CVPConv2dSame
 from bpexts.utils import set_seeds, Conv2dSame
 from .cvp_test import set_up_cvp_tests
 
@@ -13,7 +13,6 @@ atol = 5e-5
 rtol = 5e-5
 num_hvp = 10
 kernel_size = (3, 3)
-padding = 0
 stride = 1
 dilation = 1
 
@@ -26,7 +25,6 @@ def torch_fn():
         out_channels,
         kernel_size,
         stride=stride,
-        padding=padding,
         dilation=dilation,
         bias=bias)
 
@@ -39,7 +37,6 @@ def cvp_fn():
         out_channels,
         kernel_size,
         stride=stride,
-        padding=padding,
         dilation=dilation,
         bias=bias)
 
