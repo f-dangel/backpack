@@ -4,13 +4,13 @@ from ..hbp.module import hbp_decorate
 # torch layers
 from torch.nn import (ReLU, Sigmoid, Linear, Conv2d, MaxPool2d, Sequential,
                       CrossEntropyLoss)
-from ..utils import Flatten
+from ..utils import Flatten, Conv2dSame, MaxPool2dSame
 # CVP layers
 from .relu import CVPReLU
 from .sigmoid import CVPSigmoid
 from .linear import CVPLinear
-from .conv2d import CVPConv2d
-from .maxpool2d import CVPMaxPool2d
+from .conv2d import CVPConv2d, CVPConv2dSame
+from .maxpool2d import CVPMaxPool2d, CVPMaxPool2dSame
 from .flatten import CVPFlatten
 from .crossentropy import CVPCrossEntropyLoss
 
@@ -58,6 +58,7 @@ class CVPSequential(hbp_decorate(Sequential)):
 conversions = [(ReLU, CVPReLU), (Sigmoid, CVPSigmoid), (Linear, CVPLinear),
                (Conv2d, CVPConv2d), (MaxPool2d, CVPMaxPool2d),
                (Sequential, CVPSequential), (Flatten, CVPFlatten),
+               (MaxPool2dSame, CVPMaxPool2dSame), (Conv2dSame, CVPConv2dSame),
                (CrossEntropyLoss, CVPCrossEntropyLoss)]
 
 
