@@ -4,7 +4,7 @@ import torch
 from torch import Tensor
 from torch.nn import MaxPool2d, functional
 from ..hbp.module import hbp_decorate
-from ..utils import same_padding2d_before_forward
+from ..utils import same_padding2d_before_forward, MaxPool2dSame
 
 
 class CVPMaxPool2d(hbp_decorate(MaxPool2d)):
@@ -94,4 +94,19 @@ class CVPMaxPool2d(hbp_decorate(MaxPool2d)):
 class CVPMaxPool2dSame(same_padding2d_before_forward(CVPMaxPool2d)):
     """2D Max pooling with padding same and recursive Hessian-vector
     products."""
-    pass
+    # override
+    @classmethod
+    def from_torch(cls, torch_layer):
+        if not isinstance(torch_layer, MaxPool2dSame):
+            raise ValueError(
+                "Expecting bpexts.utils.MaxPool2dSame, got {}".format(
+                    torch_layer.__class__))
+        # create instance
+        maxpool2dsame = cls(
+            torch_layer.kernel_size,
+            stride=torch_layer.stride,
+            padding=torch_layer.padding,
+            dilation=torch_layer.dilation,
+            return_indices=torch_layer.return_indices,
+            ceil_mode=torch_layer.ceil_mode)
+        return maxpool2dsame
