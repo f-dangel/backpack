@@ -220,46 +220,87 @@ def same_padding2d(input_dim, kernel_dim, stride_dim):
     return (pad_left, pad_right, pad_top, pad_bottom)
 
 
-def same_padding2d_before_forward(Layer):
-    """Set padding parameters before forward pass."""
+class MaxPool2dSame(torch.nn.Sequential):
+    """2d max pooling with padding same and support for asymmetric padding."""
 
-    class LayerSamePadding(Layer):
-        def forward(self, x):
-            # dilation is not supported
-            if not (self.dilation == 1 or self.dilation == (1, 1)):
+    def __init__(self,
+                 kernel_size,
+                 stride=None,
+                 dilation=1,
+                 return_indices=False,
+                 ceil_mode=False):
+        super().__init__(
+            torch.nn.ZeroPad2d(0),
+            torch.nn.MaxPool2d(
+                kernel_size,
+                stride=stride,
+                padding=0,
+                dilation=dilation,
+                return_indices=return_indices,
+                ceil_mode=ceil_mode))
+
+    def forward(self, x):
+        self._adapt_padding(x)
+        out = super().forward(x)
+        # remove after proper testing
+        if self[1].stride == 1 or self[1].stride == (1, 1):
+            if not x.size()[2:] == out.size()[2:]:
                 raise ValueError(
-                    'Expect dilation 1 or (1, 1), but got {}'.format(
-                        self.dilation))
-            # asymmetric padding is not supported
-            pad_left, pad_right, pad_top, pad_bottom = same_padding2d(
-                input_dim=(x.size(2), x.size(3)),
-                kernel_dim=self.kernel_size,
-                stride_dim=self.stride)
-            if pad_left != pad_right or pad_top != pad_bottom:
+                    "Expect same sizes for input and output, got {}, {}".
+                    format(x.size(), out.size()))
+        return out
+
+    def _adapt_padding(self, x):
+        """Adapt the parameters of zero padding depending on input size."""
+        assert self[1].dilation == 1 or self[1].dilation == (1, 1)
+        padding = same_padding2d(
+            input_dim=(x.size(2), x.size(3)),
+            kernel_dim=self[1].kernel_size,
+            stride_dim=self[1].stride)
+        self[0].padding = padding
+
+
+class Conv2dSame(torch.nn.Sequential):
+    """2d convolution with padding same and support for asymmetric padding."""
+
+    def __init__(self,
+                 in_channels,
+                 out_channels,
+                 kernel_size,
+                 stride=1,
+                 dilation=1,
+                 groups=1,
+                 bias=True):
+        super().__init__(
+            torch.nn.ZeroPad2d(0),
+            torch.nn.Conv2d(
+                in_channels,
+                out_channels,
+                kernel_size,
+                padding=0,
+                dilation=dilation,
+                groups=groups,
+                bias=bias))
+
+    def forward(self, x):
+        self._adapt_padding(x)
+        out = super().forward(x)
+        # remove after proper testing
+        if self[1].stride == 1 or self[1].stride == (1, 1):
+            if not x.size()[2:] == out.size()[2:]:
                 raise ValueError(
-                    'Asymmetric padding not suported. Got ({}, {}, {}, {})'.
-                    format(pad_left, pad_right, pad_top, pad_bottom))
-            self.padding = (pad_left, pad_bottom)
-            out = super().forward(x)
-            # remove after proper testing
-            if self.stride == 1 or self.stride == (1, 1):
-                if not x.size()[2:] == out.size()[2:]:
-                    raise ValueError(
-                        "Expect same sizes for input and output, got {}, {}".
-                        format(x.size(), out.size()))
-            return out
+                    "Expect same sizes for input and output, got {}, {}".
+                    format(x.size(), out.size()))
+        return out
 
-    return LayerSamePadding
-
-
-class Conv2dSame(same_padding2d_before_forward(torch.nn.Conv2d)):
-    """2d Convolution with padding same."""
-    pass
-
-
-class MaxPool2dSame(same_padding2d_before_forward(torch.nn.MaxPool2d)):
-    """2d Convolution with padding same."""
-    pass
+    def _adapt_padding(self, x):
+        """Adapt the parameters of zero padding depending on input size."""
+        assert self[1].dilation == 1 or self[1].dilation == (1, 1)
+        padding = same_padding2d(
+            input_dim=(x.size(2), x.size(3)),
+            kernel_dim=self[1].kernel_size,
+            stride_dim=self[1].stride)
+        self[0].padding = padding
 
 
 class Flatten(torch.nn.Module):

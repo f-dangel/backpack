@@ -1,14 +1,13 @@
 """Test CVP of MaxPool2d layer with padding same."""
 
 import torch
-from bpexts.cvp.maxpool2d import CVPMaxPool2dSame
+from bpexts.cvp.sequential import CVPMaxPool2dSame
 from bpexts.utils import set_seeds, MaxPool2dSame
 from .cvp_test import set_up_cvp_tests
 
 # hyper-parameters
 input_size = (4, 3, 8, 8)
 kernel_size = (3, 3)
-padding = 1
 stride = (1, 1)
 dilation = 1
 atol = 1e-5
@@ -18,14 +17,12 @@ num_hvp = 10
 
 def torch_fn():
     """Create a 2d maxpool layer with same padding in torch."""
-    return MaxPool2dSame(
-        kernel_size, stride=stride, padding=padding, dilation=dilation)
+    return MaxPool2dSame(kernel_size, stride=stride, dilation=dilation)
 
 
 def cvp_fn():
     """Create 2d maxpool layer with same padding and CVP functionality."""
-    return CVPMaxPool2dSame(
-        kernel_size, stride=stride, padding=padding, dilation=dilation)
+    return CVPMaxPool2dSame(kernel_size, stride=stride, dilation=dilation)
 
 
 for name, test_cls in set_up_cvp_tests(
