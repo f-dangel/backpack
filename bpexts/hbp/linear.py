@@ -6,7 +6,7 @@ from .module import hbp_decorate
 
 
 class HBPLinear(hbp_decorate(Linear)):
-    """Linear layer with Hessian backpropagation functionality.
+    r"""Linear layer with Hessian backpropagation functionality.
 
     Applies x A^T + b to a given input x. A is the weight matrix,
     b the bias term.
@@ -31,6 +31,21 @@ class HBPLinear(hbp_decorate(Linear)):
     iii) the Hessian with respect to the inputs is given by
          input_hessian = weight^T * output_hessian * weight.
     """
+    # override
+    @classmethod
+    def from_torch(cls, torch_layer):
+        if not isinstance(torch_layer, Linear):
+            raise ValueError("Expecting torch.nn.Linear, got {}".format(
+                torch_layer.__class__))
+        # create instance
+        linear = cls(
+            in_features=torch_layer.in_features,
+            out_features=torch_layer.out_features,
+            bias=torch_layer.bias is not None)
+        # copy parameters
+        linear.weight = torch_layer.weight
+        linear.bias = torch_layer.bias
+        return linear
 
     # override
     def hbp_hooks(self):
@@ -74,7 +89,7 @@ class HBPLinear(hbp_decorate(Linear)):
 
     # override
     def parameter_hessian(self, output_hessian):
-        """Compute parameter Hessian.
+        r"""Compute parameter Hessian.
 
         The Hessian of the bias (if existent) is stored in the attribute
         self.bias.hessian. Hessian-vector product function is stored in
@@ -160,7 +175,7 @@ class HBPLinear(hbp_decorate(Linear)):
         """
 
         def hvp(v):
-            """Matrix-vector product with weight Hessian.
+            r"""Matrix-vector product with weight Hessian.
 
             Use approximation
              weight_hessian = output_hessian \otimes
@@ -186,7 +201,7 @@ class HBPLinear(hbp_decorate(Linear)):
         return hvp
 
     def _compute_weight_hessian(self, output_hessian):
-        """Compute weight Hessian from output Hessian.
+        r"""Compute weight Hessian from output Hessian.
 
         Use approximation
         weight_hessian = output_hessian \otimes mean(input \otimes input^T).

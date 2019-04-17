@@ -5,7 +5,7 @@ from torch import (einsum, arange, zeros, tensor)
 from torch.nn import functional
 from torch.nn import Conv2d
 from ..hbp.module import hbp_decorate
-from ..utils import same_padding2d_before_forward
+from ..utils import same_padding2d_before_forward, Conv2dSame
 
 
 class CVPConv2d(hbp_decorate(Conv2d)):
@@ -193,4 +193,24 @@ class CVPConv2d(hbp_decorate(Conv2d)):
 class CVPConv2dSame(same_padding2d_before_forward(CVPConv2d)):
     """2D Convolution with padding same and recursive Hessian-vector
     products."""
-    pass
+    # override
+    @classmethod
+    def from_torch(cls, torch_layer):
+        if not isinstance(torch_layer, Conv2dSame):
+            raise ValueError(
+                "Expecting bpexts.utils.Conv2dSame, got {}".format(
+                    torch_layer.__class__))
+        # create instance
+        conv2dsame = cls(
+            torch_layer.in_channels,
+            torch_layer.out_channels,
+            torch_layer.kernel_size,
+            stride=torch_layer.stride,
+            padding=torch_layer.padding,
+            dilation=torch_layer.dilation,
+            groups=torch_layer.groups,
+            bias=torch_layer.bias is not None)
+        # copy parameters
+        conv2dsame.weight = torch_layer.weight
+        conv2dsame.bias = torch_layer.bias
+        return conv2dsame

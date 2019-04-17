@@ -13,7 +13,7 @@ stride = (1, 1)
 dilation = 1
 atol = 1e-5
 rtol = 1e-5
-num_hvp = 1000
+num_hvp = 10
 
 
 def torch_fn():
@@ -40,21 +40,19 @@ for name, test_cls in set_up_cvp_tests(
     del test_cls
 
 
-def test_MaxPool2dSame_same_output_size():
-    """Check if input and output have same size for MaxPool2dSame."""
-    input = torch.randn(*input_size)
-    layer = torch_fn()
-    output = layer(input)
-    print(input.size(), output.size())
-    print(layer)
-    assert input.size(2) == output.size(2)
-    assert input.size(3) == output.size(3)
+def cvp_from_torch_fn():
+    """Create 2d maxpool layer with CVP from torch layer."""
+    torch_layer = torch_fn()
+    return CVPMaxPool2dSame.from_torch(torch_layer)
 
 
-def test_CVPMaxPool2dSame_layer_same_output_size():
-    """Check if input and output have same size for CVPMaxPool2dSame."""
-    input = torch.randn(*input_size)
-    layer = cvp_fn()
-    output = layer(input)
-    assert input.size(2) == output.size(2)
-    assert input.size(3) == output.size(3)
+for name, test_cls in set_up_cvp_tests(
+        torch_fn,
+        cvp_from_torch_fn,
+        'CVPMaxPool2dSameFromTorch',
+        input_size=input_size,
+        atol=atol,
+        rtol=rtol,
+        num_hvp=num_hvp):
+    exec('{} = test_cls'.format(name))
+    del test_cls

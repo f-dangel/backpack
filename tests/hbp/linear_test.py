@@ -44,6 +44,24 @@ for name, test_cls in set_up_hbp_tests(
     del test_cls
 
 
+def hbp_from_torch_fn():
+    """Create HBLinear from Linear."""
+    torch_layer = torch_fn()
+    return HBPLinear.from_torch(torch_layer)
+
+
+for name, test_cls in set_up_hbp_tests(
+        torch_fn,
+        hbp_from_torch_fn,
+        'HBPLinearFromTorch',
+        input_size=input_size,
+        atol=atol,
+        rtol=rtol,
+        num_hvp=num_hvp):
+    exec('{} = test_cls'.format(name))
+    del test_cls
+
+
 class HBPLinearHardcodedTest(unittest.TestCase):
     """Hardcoded test of ``HBPLinear``."""
 
