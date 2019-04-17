@@ -1,12 +1,31 @@
-"""Hessian backpropagation implementation of torch.nn.Sequential."""
-
+"""Hessian backpropagation implementation of torch.nn.Sequential. and conversion of torch.nn layers to HBP layers."""
 
 from .module import hbp_decorate
-from torch.nn import Sequential
+# torch layers
+from torch.nn import (ReLU, Sigmoid, Linear, Conv2d, Sequential)
+from ..utils import Flatten, SigmoidLinear, ReLULinear
+# CVP layers
+from .combined_relu import HBPReLULinear
+from .combined_sigmoid import HBPSigmoidLinear
+from .relu import HBPReLU
+from .sigmoid import HBPSigmoid
+from .linear import HBPLinear
+from .conv2d import HBPConv2d
+from .flatten import HBPFlatten
 
 
 class HBPSequential(hbp_decorate(Sequential)):
     """A sequence of HBP modules."""
+    # override
+    @classmethod
+    def from_torch(cls, torch_layer):
+        if not isinstance(torch_layer, Sequential):
+            raise ValueError("Expecting torch.nn.Sequential, got {}".format(
+                torch_layer.__class__))
+        layers = []
+        for mod in torch_layer:
+            layers.append(convert_torch_to_hbp(mod))
+        return cls(*layers)
 
     # override
     def hbp_hooks(self):
@@ -14,7 +33,8 @@ class HBPSequential(hbp_decorate(Sequential)):
         pass
 
     # override
-    def backward_hessian(self, output_hessian,
+    def backward_hessian(self,
+                         output_hessian,
                          compute_input_hessian=False,
                          modify_2nd_order_terms='none'):
         """Propagate Hessian through the network.
@@ -27,7 +47,31 @@ class HBPSequential(hbp_decorate(Sequential)):
             module = self[idx]
             compute_in = True if (idx != 0) else compute_input_hessian
             out_h = module.backward_hessian(
-                    out_h,
-                    compute_input_hessian=compute_in,
-                    modify_2nd_order_terms=modify_2nd_order_terms)
+                out_h,
+                compute_input_hessian=compute_in,
+                modify_2nd_order_terms=modify_2nd_order_terms)
         return out_h
+
+
+# supported conversions
+conversions = [(ReLU, HBPReLU), (Sigmoid, HBPSigmoid), (Linear, HBPLinear),
+               (ReLULinear, HBPReLULinear), (SigmoidLinear, HBPSigmoidLinear),
+               (Conv2d, HBPConv2d), (Sequential, HBPSequential),
+               (Flatten, HBPFlatten)]
+
+
+def convert_torch_to_hbp(layer):
+    """Convert torch layer to corresponding HBP layer."""
+    for (torch_cls, hbp_cls) in conversions:
+        if isinstance(layer, torch_cls):
+            return hbp_cls.from_torch(layer)
+    _print_conversions()
+    raise ValueError("Class {} cannot be converted to HBP.".format(
+        layer.__class__))
+
+
+def _print_conversions():
+    """Print all possible conversions."""
+    print("Supported conversions:")
+    for torch_cls, hbp_cls in conversions:
+        print("{}\t->\t{}".format(torch_cls.__name__, hbp_cls.__name__))

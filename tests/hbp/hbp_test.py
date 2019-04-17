@@ -181,7 +181,8 @@ def hbp_test(torch_fn,
             # required for nonlinear layers (need to save backprop quantities)
             loss_hessian = batch_summed_hessian(loss, out).detach()
             loss.backward()
-            hessian_x = layer.backward_hessian(loss_hessian)
+            hessian_x = layer.backward_hessian(
+                loss_hessian, compute_input_hessian=True)
             return hessian_x.matmul
 
         def _hbp_after_hessian_backward(self):
