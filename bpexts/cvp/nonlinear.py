@@ -76,8 +76,8 @@ def cvp_elementwise_nonlinear(module_subclass):
 
         def _input_jacobian(self, v):
             """Apply the Jacobian with respect to the input."""
-            batch = self.grad_output.size(0)
-            features = self.grad_output.numel() // batch
+            batch = self.grad_phi.size(0)
+            features = self.grad_phi.numel() // batch
             assert tuple(v.size()) == (batch * features, )
             result = einsum(
                 'bj,bj->bj',
@@ -87,8 +87,8 @@ def cvp_elementwise_nonlinear(module_subclass):
 
         def _input_jacobian_transpose(self, v):
             """Apply the transposed Jacobian with respect to the input."""
-            batch = self.grad_output.size(0)
-            features = self.grad_output.numel() // batch
+            batch = self.grad_phi.size(0)
+            features = self.grad_phi.numel() // batch
             assert tuple(v.size()) == (batch * features, )
             result = einsum(
                 'bj,bj->bj',

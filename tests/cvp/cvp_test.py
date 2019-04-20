@@ -5,6 +5,9 @@ import numpy
 import unittest
 from bpexts.utils import set_seeds
 from bpexts.hessian.exact import exact_hessian
+from bpexts.cvp.sequential import CVPSequential
+from bpexts.cvp.flatten import Flatten
+from bpexts.hessian.free import transposed_jacobian_vector_product
 
 
 def cvp_test(torch_fn,
@@ -135,6 +138,30 @@ def cvp_test(torch_fn,
                 self._residuum_report(cvp_result, torch_result)
                 assert torch.allclose(
                     torch_result, cvp_result, atol=self.ATOL, rtol=self.RTOL)
+
+        def test_input_jacobian_transpose(self):
+            """Test multiplication by the transposed input Jacobian.
+
+            Compare with result of L-operator.
+            """
+            # create input
+            cvp_in = self._create_input()
+            cvp_in.requires_grad = True
+            cvp_layer = self._create_cvp_layer()
+            # skip for Sequential:
+            if isinstance(cvp_layer, (Flatten, CVPSequential)):
+                return
+            cvp_out = cvp_layer(cvp_in)
+            for _ in range(self.NUM_HVP):
+                v = torch.randn(cvp_out.numel(), requires_grad=False)
+                JTv = cvp_layer._input_jacobian_transpose(v)
+                # compute via L-operator
+                result, = transposed_jacobian_vector_product(
+                    cvp_out, cvp_in, v.view(cvp_out.size()))
+                print(JTv.size())
+                print(result.size())
+                assert torch.allclose(
+                    JTv, result.view(-1), atol=self.ATOL, rtol=self.RTOL)
 
         def _residuum_report(self, x, y):
             """Report values with mismatch in allclose check."""
