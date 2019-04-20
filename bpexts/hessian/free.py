@@ -122,3 +122,10 @@ def transposed_jacobian_vector_product(f, x, v):
 
     Corresponds to the application of the L-operator."""
     return L_op(f, x, v)
+
+
+def jacobian_vector_product(f, x, v):
+    """Multiply a vector by the Jacobian.
+
+    Corresponds to the application of the R-operator."""
+    return R_op(f, x, v)
