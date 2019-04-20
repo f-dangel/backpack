@@ -110,13 +110,6 @@ def L_op(ys, xs, ws):
     return tuple([j.detach() for j in vJ])
 
 
-def hessian_vector_product(f, x, v):
-    """Compute Hessian-vector product Hf(x) * v."""
-    df_dx = torch.autograd.grad(f, x, create_graph=True, retain_graph=True)
-    Hv = R_op(df_dx, x, v)
-    return tuple([j.detach() for j in Hv])
-
-
 def transposed_jacobian_vector_product(f, x, v):
     """Multiply a vector by the Jacobian.
 
@@ -129,3 +122,29 @@ def jacobian_vector_product(f, x, v):
 
     Corresponds to the application of the R-operator."""
     return R_op(f, x, v)
+
+
+def hessian_vector_product(f, x, v):
+    """Compute Hessian-vector product Hf(x) * v."""
+    df_dx = torch.autograd.grad(f, x, create_graph=True, retain_graph=True)
+    Hv = R_op(df_dx, x, v)
+    return tuple([j.detach() for j in Hv])
+
+
+def ggn_vector_product(loss, output, model, vp):
+    """Compute GGN-vector product G loss(x) * v."""
+
+    Jv = R_op(output, list(model.parameters()), vp)
+    batch, dims = output.size(0), output.size(1)
+    if loss.grad_fn.__class__.__name__ == 'NllLossBackward':
+        outputsoftmax = torch.nn.functional.softmax(output, dim=1)
+        M = torch.zeros(batch, dims,
+                        dims).cuda() if outputsoftmax.is_cuda else torch.zeros(
+                            batch, dims, dims)
+        M.reshape(batch, -1)[:, ::dims + 1] = outputsoftmax
+        H = M - torch.einsum('bi,bj->bij', (outputsoftmax, outputsoftmax))
+        HJv = [torch.squeeze(H @ torch.unsqueeze(Jv[0], -1)) / batch]
+    else:
+        HJv = hessian_vector_product(loss, output, Jv)
+    JHJv = L_op(output, list(model.parameters()), HJv)
+    return JHJv
