@@ -1,7 +1,6 @@
 """Tests for conjugate gradient solver."""
 
 import torch
-from warnings import warn
 from .conjugate_gradient import cg
 
 
@@ -36,8 +35,6 @@ def test_simple_on_gpu():
     """Try running simple test on GPU."""
     if torch.cuda.is_available():
         simple(use_gpu=True)
-    else:
-        warn('Could not find CUDA device')
 
 
 def random_task(dim, use_gpu=False):
@@ -89,8 +86,6 @@ def test_random_on_gpu():
     """Try running random test on GPU."""
     if torch.cuda.is_available():
         random(use_gpu=True)
-    else:
-        warn('Could not find CUDA device')
 
 
 def implicit(dim=10, use_gpu=False):
@@ -130,5 +125,3 @@ def test_implicit_on_gpu():
     """Try running implicit test on GPU."""
     if torch.cuda.is_available():
         implicit(use_gpu=True)
-    else:
-        warn('Could not find CUDA device')
