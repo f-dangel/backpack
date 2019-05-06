@@ -7,6 +7,7 @@ from bpexts.hbp.flatten import HBPFlatten
 from bpexts.hbp.conv2d import HBPConv2d
 from bpexts.hbp.combined_sigmoid import HBPSigmoidLinear
 from bpexts.hbp.sequential import HBPSequential
+from bpexts.utils import Flatten
 
 
 def c1d1(
@@ -57,3 +58,43 @@ def c1d1(
         HBPSigmoidLinear(
             in_features=output_numel, out_features=num_outputs, bias=True))
     return model
+
+
+def cifar10_c6d3(conv_activation=nn.ReLU, dense_activation=nn.ReLU):
+    """CNN for CIFAR-10 dataset with 6 convolutional and 3 fc layers.
+
+    Modified from:
+    https://github.com/Zhenye-Na/deep-learning-uiuc/tree/master/assignments/mp3
+    (remove Dropout, Dropout2d and BatchNorm2d)
+    """
+    return nn.Sequential(
+        # Conv Layer block 1
+        nn.Conv2d(in_channels=3, out_channels=32, kernel_size=3, padding=1),
+        conv_activation(),
+        nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, padding=1),
+        conv_activation(),
+        nn.MaxPool2d(kernel_size=2, stride=2),
+
+        # Conv Layer block 2
+        nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, padding=1),
+        conv_activation(),
+        nn.Conv2d(in_channels=128, out_channels=128, kernel_size=3, padding=1),
+        conv_activation(),
+        nn.MaxPool2d(kernel_size=2, stride=2),
+
+        # Conv Layer block 3
+        nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, padding=1),
+        conv_activation(),
+        nn.Conv2d(in_channels=256, out_channels=256, kernel_size=3, padding=1),
+        conv_activation(),
+        nn.MaxPool2d(kernel_size=2, stride=2),
+
+        # Flatten
+        Flatten(),
+
+        # Dense layers
+        nn.Linear(4096, 1024),
+        dense_activation(),
+        nn.Linear(1024, 512),
+        dense_activation(),
+        nn.Linear(512, 10))
