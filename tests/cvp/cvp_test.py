@@ -153,7 +153,8 @@ def cvp_test(torch_fn,
                 return
             cvp_out = cvp_layer(cvp_in)
             for _ in range(self.NUM_HVP):
-                v = torch.randn(cvp_in.numel(), requires_grad=False)
+                v = torch.randn(
+                    cvp_in.numel(), requires_grad=False).to(self.DEVICE)
                 Jv = cvp_layer._input_jacobian(v)
                 # compute via R-operator
                 result, = jacobian_vector_product(cvp_out, cvp_in,
@@ -175,7 +176,8 @@ def cvp_test(torch_fn,
                 return
             cvp_out = cvp_layer(cvp_in)
             for _ in range(self.NUM_HVP):
-                v = torch.randn(cvp_out.numel(), requires_grad=False)
+                v = torch.randn(
+                    cvp_out.numel(), requires_grad=False).to(self.DEVICE)
                 JTv = cvp_layer._input_jacobian_transpose(v)
                 # compute via L-operator
                 result, = transposed_jacobian_vector_product(
