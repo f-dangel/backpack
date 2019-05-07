@@ -9,16 +9,14 @@ from torch.nn import CrossEntropyLoss
 from torch.optim import SGD
 from os import path
 from collections import OrderedDict
-from .models.chen2018 import original_cifar10_model
-from .loading.load_cifar10 import CIFAR10Loader
-from .training.first_order import FirstOrderTraining
-from .training.second_order import SecondOrderTraining
-from .training.runner import TrainingRunner
-from .plotting.plotting import OptimizationPlot
-from .utils import (directory_in_data,
-                    dirname_from_params)
+from exp.models.chen2018 import original_cifar10_model
+from exp.loading.load_cifar10 import CIFAR10Loader
+from exp.training.first_order import FirstOrderTraining
+from exp.training.second_order import SecondOrderTraining
+from exp.training.runner import TrainingRunner
+from exp.plotting.plotting import OptimizationPlot
+from exp.utils import (directory_in_data, dirname_from_params)
 from bpexts.optim.cg_newton import CGNewton
-
 
 # global hyperparameters
 batch = 500
@@ -39,10 +37,7 @@ def cifar10_sgd_train_fn():
     # logging directory
     # -----------------
     # directory of run
-    run_name = dirname_from_params(opt='sgd',
-                                   batch=batch,
-                                   lr=lr,
-                                   mom=momentum)
+    run_name = dirname_from_params(opt='sgd', batch=batch, lr=lr, mom=momentum)
     logdir = path.join(data_dir, run_name)
 
     # training procedure
@@ -54,21 +49,21 @@ def cifar10_sgd_train_fn():
         # NOTE: Important line, deactivate extension hooks/buffers!
         model.disable_exts()
         loss_function = CrossEntropyLoss()
-        data_loader = CIFAR10Loader(train_batch_size=batch,
-                                    test_batch_size=batch)
-        optimizer = SGD(model.parameters(),
-                        lr=lr,
-                        momentum=momentum)
+        data_loader = CIFAR10Loader(
+            train_batch_size=batch, test_batch_size=batch)
+        optimizer = SGD(model.parameters(), lr=lr, momentum=momentum)
         # initialize training
-        train = FirstOrderTraining(model,
-                                   loss_function,
-                                   optimizer,
-                                   data_loader,
-                                   logdir,
-                                   epochs,
-                                   logs_per_epoch=logs_per_epoch,
-                                   device=device)
+        train = FirstOrderTraining(
+            model,
+            loss_function,
+            optimizer,
+            data_loader,
+            logdir,
+            epochs,
+            logs_per_epoch=logs_per_epoch,
+            device=device)
         return train
+
     return training_fn
 
 
@@ -94,14 +89,15 @@ def cifar10_cgnewton_train_fn(modify_2nd_order_terms):
     # logging directory
     # -----------------
     # directory of run
-    run_name = dirname_from_params(opt='cgn',
-                                   batch=batch,
-                                   lr=lr,
-                                   alpha=alpha,
-                                   maxiter=cg_maxiter,
-                                   tol=cg_tol,
-                                   atol=cg_atol,
-                                   mod2nd=modify_2nd_order_terms)
+    run_name = dirname_from_params(
+        opt='cgn',
+        batch=batch,
+        lr=lr,
+        alpha=alpha,
+        maxiter=cg_maxiter,
+        tol=cg_tol,
+        atol=cg_atol,
+        mod2nd=modify_2nd_order_terms)
     logdir = path.join(data_dir, run_name)
 
     # training procedure
@@ -111,25 +107,28 @@ def cifar10_cgnewton_train_fn(modify_2nd_order_terms):
         # set up training and run
         model = original_cifar10_model()
         loss_function = CrossEntropyLoss()
-        data_loader = CIFAR10Loader(train_batch_size=batch,
-                                    test_batch_size=batch)
-        optimizer = CGNewton(model.parameters(),
-                             lr=lr,
-                             alpha=alpha,
-                             cg_atol=cg_atol,
-                             cg_tol=cg_tol,
-                             cg_maxiter=cg_maxiter)
+        data_loader = CIFAR10Loader(
+            train_batch_size=batch, test_batch_size=batch)
+        optimizer = CGNewton(
+            model.parameters(),
+            lr=lr,
+            alpha=alpha,
+            cg_atol=cg_atol,
+            cg_tol=cg_tol,
+            cg_maxiter=cg_maxiter)
         # initialize training
-        train = SecondOrderTraining(model,
-                                    loss_function,
-                                    optimizer,
-                                    data_loader,
-                                    logdir,
-                                    epochs,
-                                    modify_2nd_order_terms,
-                                    logs_per_epoch=logs_per_epoch,
-                                    device=device)
+        train = SecondOrderTraining(
+            model,
+            loss_function,
+            optimizer,
+            data_loader,
+            logdir,
+            epochs,
+            modify_2nd_order_terms,
+            logs_per_epoch=logs_per_epoch,
+            device=device)
         return train
+
     return training_fn
 
 
@@ -137,21 +136,21 @@ def main(run_experiments=True):
     """Execute the experiments, return filenames of the merged runs."""
     seeds = range(10)
     labels = [
-              'SGD',
-              # 'CG (GGN)',
-              # 'CG (PCH, abs)',
-              # 'CG (PCH, clip)',
-             ]
+        'SGD',
+        # 'CG (GGN)',
+        # 'CG (PCH, abs)',
+        # 'CG (PCH, clip)',
+    ]
     experiments = [
-                   # 1) SGD curve
-                   cifar10_sgd_train_fn(),
-                   # 2) Generalized Gauss-Newton curve
-                   # cifar10_cgnewton_train_fn('zero'),
-                   # 3) BDA-PCH curve
-                   # cifar10_cgnewton_train_fn('abs'),
-                   # 4) alternative BDA-PCH curve
-                   # cifar10_cgnewton_train_fn('clip'),
-                  ]
+        # 1) SGD curve
+        cifar10_sgd_train_fn(),
+        # 2) Generalized Gauss-Newton curve
+        # cifar10_cgnewton_train_fn('zero'),
+        # 3) BDA-PCH curve
+        # cifar10_cgnewton_train_fn('abs'),
+        # 4) alternative BDA-PCH curve
+        # cifar10_cgnewton_train_fn('clip'),
+    ]
 
     def run():
         """Run the experiments."""

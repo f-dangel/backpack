@@ -93,10 +93,10 @@ do
     if  [ "$i" -eq "1" ]
     then
         printf "Downloading CIFAR-10:\n"
-        python3 -m exp.exp01_chen2018_fig2_cifar10 &
+        python3 exp/exp01_chen2018_fig2_cifar10.py &
         sleep 10m
     else
-        python3 -m exp.exp01_chen2018_fig2_cifar10 &
+        python3 exp/exp01_chen2018_fig2_cifar10.py &
         sleep 10s
     fi
 done
@@ -115,7 +115,7 @@ printf "###########################################\n\n"
 for i in `seq 1 $NUMJOBS`
 do
     printf "\nStarting parallel process $i / $NUMJOBS\n"
-    python3 -m exp.exp02_chen2018_splitting_cifar10 &
+    python3 exp/exp02_chen2018_splitting_cifar10 &
     sleep 10s
 done
 # wait for jobs to finish
@@ -129,7 +129,7 @@ wait
 printf "\n\n###########################\n"
 printf "# CREATING FIGURE (1 MIN) #\n"
 printf "###########################\n\n"
-python3 -m exp.fig_exp02_chen2018_splitting_cifar10
+python3 exp/fig_exp02_chen2018_splitting_cifar10.py
 ###########################################################
 
 
