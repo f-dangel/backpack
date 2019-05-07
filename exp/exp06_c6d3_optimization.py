@@ -2,7 +2,7 @@
 
 import numpy
 import torch
-from torch.nn import CrossEntropyLoss
+from torch.nn import CrossEntropyLoss, ReLU, Sigmoid
 from torch.optim import SGD
 from os import path
 from collections import OrderedDict
@@ -23,7 +23,7 @@ logs_per_epoch = 5
 test_batch = 100
 
 
-def cifar10_sgd_train_fn(batch, lr, momentum):
+def cifar10_sgd_train_fn(batch, lr, momentum, activation):
     """Create training instance for CIFAR-10 SGD optimization.
 
     Parameters:
@@ -36,14 +36,17 @@ def cifar10_sgd_train_fn(batch, lr, momentum):
     # logging directory
     # -----------------
     # directory of run
-    run_name = dirname_from_params(opt='sgd', batch=batch, lr=lr, mom=momentum)
+    run_name = dirname_from_params(
+        act=activation, opt='sgd', batch=batch, lr=lr, mom=momentum)
     logdir = path.join(data_dir, run_name)
 
     # training procedure
     # ------------------
     def training_fn():
         """Training function setting up the train instance."""
-        model = cifar10_c6d3()
+        assert activation == 'relu' or activation == 'sigmoid'
+        act = ReLU if activation == 'relu' else Sigmoid
+        model = cifar10_c6d3(conv_activation=act, dense_activation=act)
         loss_function = CrossEntropyLoss()
         data_loader = CIFAR10Loader(
             train_batch_size=batch, test_batch_size=test_batch)
@@ -66,12 +69,15 @@ def cifar10_sgd_train_fn(batch, lr, momentum):
 
 def sgd_grid_search():
     """Define the grid search over the hyperparameters of SGD."""
-    batch_sizes = [int(2**x) for x in numpy.arange(5, 10)]
-    lrs = numpy.logspace(-3, -1, 3)
+    activations = ['relu', 'sigmoid']
+    batch_sizes = [int(2**x) for x in numpy.arange(4, 8)]
+    lrs = numpy.logspace(-4, 0, 5)
     momenta = numpy.linspace(0, 0.9, 4)
     return [
-        cifar10_sgd_train_fn(batch=batch, lr=lr, momentum=momentum)
+        cifar10_sgd_train_fn(
+            batch=batch, lr=lr, momentum=momentum, activation=activation)
         for batch in batch_sizes for lr in lrs for momentum in momenta
+        for activation in activations
     ]
 
 
