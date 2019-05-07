@@ -173,3 +173,153 @@ def boxed_message(message):
         result += format_line(l, max_length)
     result += horizontal
     return result.strip()
+
+
+def same_padding2d(input_dim, kernel_dim, stride_dim):
+    """Determine 2d padding parameters for same output size.
+
+    Implementation modified from A. Bahde.
+
+    Parameters:
+    -----------
+    input_dim : tuple(int)
+        Width and height of the input image
+    kernel_dim : tuple(int) or int
+        Width and height of the kernel filter, assume quadratic
+        filter size if ``int``.
+    stride_dim : tuple(int) or int
+        Stride dimensions, assume same in both directions if ``int``.
+
+    Returns:
+    --------
+    tuple(int)
+        Padding for left, right, top, and bottom margin.
+    """
+    in_height, in_width = input_dim
+    kernel_height, kernel_width = 2 * (kernel_dim, ) if isinstance(
+        kernel_dim, int) else kernel_dim
+    stride_height, stride_width = 2 * (stride_dim, ) if isinstance(
+        stride_dim, int) else stride_dim
+
+    # output size to be achieved by padding
+    out_height = math.ceil(in_height / stride_height)
+    out_width = math.ceil(in_width / stride_width)
+
+    # pad size along each dimension
+    pad_along_height = max(
+        (out_height - 1) * stride_height + kernel_height - in_height, 0)
+    pad_along_width = max(
+        (out_width - 1) * stride_width + kernel_width - in_width, 0)
+
+    # determine padding 4-tuple (can be asymmetric)
+    pad_top = pad_along_height // 2
+    pad_bottom = pad_along_height - pad_top
+    pad_left = pad_along_width // 2
+    pad_right = pad_along_width - pad_left
+
+    return (pad_left, pad_right, pad_top, pad_bottom)
+
+
+class MaxPool2dSame(torch.nn.Sequential):
+    """2d max pooling with padding same and support for asymmetric padding."""
+
+    def __init__(self,
+                 kernel_size,
+                 stride=None,
+                 dilation=1,
+                 return_indices=False,
+                 ceil_mode=False):
+        super().__init__(
+            torch.nn.ZeroPad2d(0),
+            torch.nn.MaxPool2d(
+                kernel_size,
+                stride=stride,
+                padding=0,
+                dilation=dilation,
+                return_indices=return_indices,
+                ceil_mode=ceil_mode))
+
+    def forward(self, x):
+        self._adapt_padding(x)
+        out = super().forward(x)
+        # remove after proper testing
+        if self[1].stride == 1 or self[1].stride == (1, 1):
+            if not x.size()[2:] == out.size()[2:]:
+                raise ValueError(
+                    "Expect same sizes for input and output, got {}, {}".
+                    format(x.size(), out.size()))
+        return out
+
+    def _adapt_padding(self, x):
+        """Adapt the parameters of zero padding depending on input size."""
+        assert self[1].dilation == 1 or self[1].dilation == (1, 1)
+        padding = same_padding2d(
+            input_dim=(x.size(2), x.size(3)),
+            kernel_dim=self[1].kernel_size,
+            stride_dim=self[1].stride)
+        self[0].padding = padding
+
+
+class Conv2dSame(torch.nn.Sequential):
+    """2d convolution with padding same and support for asymmetric padding."""
+
+    def __init__(self,
+                 in_channels,
+                 out_channels,
+                 kernel_size,
+                 stride=1,
+                 dilation=1,
+                 groups=1,
+                 bias=True):
+        super().__init__(
+            torch.nn.ZeroPad2d(0),
+            torch.nn.Conv2d(
+                in_channels,
+                out_channels,
+                kernel_size,
+                padding=0,
+                dilation=dilation,
+                groups=groups,
+                bias=bias))
+
+    def forward(self, x):
+        self._adapt_padding(x)
+        out = super().forward(x)
+        # remove after proper testing
+        if self[1].stride == 1 or self[1].stride == (1, 1):
+            if not x.size()[2:] == out.size()[2:]:
+                raise ValueError(
+                    "Expect same sizes for input and output, got {}, {}".
+                    format(x.size(), out.size()))
+        return out
+
+    def _adapt_padding(self, x):
+        """Adapt the parameters of zero padding depending on input size."""
+        assert self[1].dilation == 1 or self[1].dilation == (1, 1)
+        padding = same_padding2d(
+            input_dim=(x.size(2), x.size(3)),
+            kernel_dim=self[1].kernel_size,
+            stride_dim=self[1].stride)
+        self[0].padding = padding
+
+
+class Flatten(torch.nn.Module):
+    """Flatten all dimensions except batch dimension."""
+
+    def forward(self, input):
+        return input.view(input.size(0), -1)
+
+
+class ReLULinear(torch.nn.Linear):
+    """Apply ReLU first, then affine transformation."""
+
+    def forward(self, x):
+        x = torch.nn.functional.relu(x)
+        return super().forward(torch.nn.functional.relu(x))
+
+
+class SigmoidLinear(torch.nn.Linear):
+    """Apply Sigmoid first, then affine transformation."""
+
+    def forward(self, x):
+        return super().forward(torch.sigmoid(x))

@@ -9,6 +9,26 @@ from .module import hbp_decorate
 
 class HBPConv2d(hbp_decorate(Conv2d)):
     """2D Convolution with Hessian backpropagation functionality."""
+    # override
+    @classmethod
+    def from_torch(cls, torch_layer):
+        if not isinstance(torch_layer, Conv2d):
+            raise ValueError("Expecting torch.nn.Conv2d, got {}".format(
+                torch_layer.__class__))
+        # create instance
+        conv2d = cls(
+            torch_layer.in_channels,
+            torch_layer.out_channels,
+            torch_layer.kernel_size,
+            stride=torch_layer.stride,
+            padding=torch_layer.padding,
+            dilation=torch_layer.dilation,
+            groups=torch_layer.groups,
+            bias=torch_layer.bias is not None)
+        # copy parameters
+        conv2d.weight = torch_layer.weight
+        conv2d.bias = torch_layer.bias
+        return conv2d
 
     # override
     def hbp_hooks(self):
@@ -123,9 +143,11 @@ class HBPConv2d(hbp_decorate(Conv2d)):
         # input image with pixels containing the index value (starting from 1)
         # also take padding into account (will be indicated by index 0)
         # NOTE: Only works for padding with zeros!!
-        idx = arange(1, idx_num).view((1, ) + tuple(self.sample_dim))
+        idx = arange(
+            1, idx_num, device=self.mean_unfolded_input.device).view(
+                (1, ) + tuple(self.sample_dim), )
         # unfolded indices (indicate which input unfolds to which index)
-        idx_unfolded = self.unfold(idx).long()
+        idx_unfolded = self.unfold(idx.float()).long()
         return idx_unfolded
 
     def unfolded_input_hessian(self, out_h):
@@ -207,7 +229,7 @@ class HBPConv2d(hbp_decorate(Conv2d)):
         """
 
         def hvp(v):
-            """Matrix-vector product with weight Hessian.
+            r"""Matrix-vector product with weight Hessian.
 
             Use approximation
             weight_hessian = (I \otimes X) output_hessian (I \otimes X^T).
@@ -215,7 +237,7 @@ class HBPConv2d(hbp_decorate(Conv2d)):
             Parameters:
             -----------
             v (torch.Tensor): Vector which is multiplied by the Hessian
-           """
+            """
             if not len(v.size()) == 1:
                 raise ValueError('Require one-dimensional tensor')
             # reshape vector into (out_channels, -1)
@@ -230,7 +252,7 @@ class HBPConv2d(hbp_decorate(Conv2d)):
         return hvp
 
     def _compute_weight_hessian(self, out_h):
-        """Compute weight Hessian from output Hessian.
+        r"""Compute weight Hessian from output Hessian.
 
         Use approximation
         weight_hessian = (I \otimes X) output_hessian (I \otimes X^T).

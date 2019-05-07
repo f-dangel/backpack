@@ -84,7 +84,7 @@ def example_loss(tensor):
 
 def example_input():
     """Return example input."""
-    return tensor(in1, requires_grad=True)
+    return in1.clone().detach().requires_grad_(True)
 
 
 def test_forward():

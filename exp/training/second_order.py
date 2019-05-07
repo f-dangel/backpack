@@ -52,8 +52,8 @@ class SecondOrderTraining(Training):
         loss : (torch.Tensor)
             Scalar value of the loss function evaluated on the outputs
         """
-        # Hessian of loss function w.r.t. outputs
-        output_hessian = batch_summed_hessian(loss, outputs)
+        # Hessian w.r.t the outputs
+        output_hessian = self._compute_loss_hessian(outputs, loss)
         # compute gradients
         super().backward_pass(outputs, loss)
         # backward Hessian
@@ -61,3 +61,15 @@ class SecondOrderTraining(Training):
             output_hessian,
             compute_input_hessian=False,
             modify_2nd_order_terms=self.modify_2nd_order)
+
+    def _compute_loss_hessian(self, outputs, loss):
+        """Hessian of the loss with respect to the outputs.
+
+        For torch losses, computes the batch-averaged Hessian.
+        For CVP losses, computes exact Hessian-vector routines.
+        """
+        try:
+            return self.loss_function.backward_hessian(
+                None, compute_input_hessian=True)
+        except AttributeError:
+            return batch_summed_hessian(loss, outputs)

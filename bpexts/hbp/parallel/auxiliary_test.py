@@ -10,9 +10,10 @@ from torch.nn.parameter import Parameter
 from torch import cat, tensor, allclose
 
 
-class TestLayer(Module):
+class Layer(Module):
     """Small testing module to understand computation of gradients
     when using concatenated tensors."""
+
     def __init__(self):
         super().__init__()
         # weight matrix rows
@@ -31,7 +32,7 @@ class TestLayer(Module):
 
 def test_understanding_grad_computation():
     """Test understanding of gradient computation."""
-    layer = TestLayer()
+    layer = Layer()
     x = tensor([1., 2.])
     y = layer(x)
     loss = y.sum()

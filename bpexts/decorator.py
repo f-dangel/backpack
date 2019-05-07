@@ -56,6 +56,13 @@ def decorate(module_subclass):
 
         __init__.__doc__ = module_subclass.__init__.__doc__
 
+        # construction from torch layer
+        @classmethod
+        def from_torch(cls, torch_layer):
+            """Build the layer from a torch layer."""
+            raise NotImplementedError(
+                "Please implement a conversion method for {}".format(cls))
+
         # --- hook tracking ---
         def register_exts_forward_pre_hook(self, hook):
             """Register forward pre hook for extended backpropgation."""

@@ -12,9 +12,8 @@ from ..utils import torch_allclose
 
 def example_parameters():
     """Return example parameters w, b."""
-    w = tensor([[1, 2, 3],
-                [4, 5, 6]], requires_grad=True).float()
-    b = tensor([7, 8], requires_grad=True).float()
+    w = tensor([[1., 2., 3.], [4., 5., 6.]], requires_grad=True)
+    b = tensor([7., 8.], requires_grad=True)
     return w, b
 
 
