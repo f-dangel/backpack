@@ -9,12 +9,12 @@ from torch.nn import CrossEntropyLoss
 from torch.optim import SGD
 from os import path
 from collections import OrderedDict
-from .models.chen2018 import original_mnist_model
-from .loading.load_mnist import MNISTLoader
-from .training.first_order import FirstOrderTraining
-from .training.second_order import SecondOrderTraining
-from .training.runner import TrainingRunner
-from .utils import (directory_in_data, dirname_from_params)
+from exp.models.chen2018 import original_mnist_model
+from exp.loading.load_mnist import MNISTLoader
+from exp.training.first_order import FirstOrderTraining
+from exp.training.second_order import SecondOrderTraining
+from exp.training.runner import TrainingRunner
+from exp.utils import (directory_in_data, dirname_from_params)
 from bpexts.optim.cg_newton import CGNewton
 
 # global hyperparameters
