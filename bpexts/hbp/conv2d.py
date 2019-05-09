@@ -164,10 +164,9 @@ class HBPConv2d(hbp_decorate(Conv2d)):
         # shape of out_h for tensor network contraction
         h_out_structure = self.h_out_tensor_structure()
         # perform tensor network contraction
-        unfolded_hessian = einsum(
-            'ij,ilmn,mp->jlpn',
-            (kernel_matrix, out_h.view(h_out_structure), kernel_matrix))
-        print(unfolded_hessian.size())
+        unfolded_hessian = einsum('ij,ilmn,mp->jlpn',
+                                  (kernel_matrix, out_h.view(h_out_structure),
+                                   kernel_matrix)).detach()
 
         # reshape into square matrix
         shape = 2 * (prod(self.mean_unfolded_input.size()), )

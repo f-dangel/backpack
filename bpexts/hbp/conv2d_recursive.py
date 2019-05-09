@@ -42,15 +42,17 @@ class HBPConv2dRecursive(HBPConv2d):
             """Multiplication by the Hessian w.r.t. unfolded input."""
             # apply the Jacobian
             result = v.view(self.weight.numel() // out_channels, num_patches)
-            result = einsum('ij,jk->ik',
-                            (self.weight.view(out_channels, -1), result))
+            result = einsum(
+                'ij,jk->ik',
+                (self.weight.view(out_channels, -1), result)).detach()
             result = result.view(-1)
             # apply the output Hessian
             result = output_hessian_vp(result)
             # apply the transposed Jacobian
             result = result.view(out_channels, num_patches)
-            result = einsum('ij,ik->jk',
-                            (self.weight.view(out_channels, -1), result))
+            result = einsum(
+                'ij,ik->jk',
+                (self.weight.view(out_channels, -1), result)).detach()
             result = result.view(-1)
             return result
 

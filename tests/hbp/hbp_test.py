@@ -120,7 +120,9 @@ def hbp_test(torch_fn,
                         p.numel(), requires_grad=False).to(self.DEVICE)
                     torch_hvp = torch_parameter_hessians[idx].matmul
                     hbp_result = p.hvp(v)
+                    assert hbp_result.requires_grad == False
                     torch_result = torch_hvp(v)
+                    assert torch_result.requires_grad == False
                     self._residuum_report(hbp_result, torch_result)
                     assert torch.allclose(
                         hbp_result,
@@ -137,7 +139,9 @@ def hbp_test(torch_fn,
                 v = torch.randn(
                     input_numel, requires_grad=False).to(self.DEVICE)
                 torch_result = torch_hvp(v)
+                assert torch_result.requires_grad == False
                 hbp_result = hbp_hvp(v)
+                assert hbp_result.requires_grad == False
                 self._residuum_report(hbp_result, torch_result)
                 assert torch.allclose(
                     torch_result, hbp_result, atol=self.ATOL, rtol=self.RTOL)

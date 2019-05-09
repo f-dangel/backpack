@@ -28,13 +28,13 @@ class HBPCompositionActivationLinear(hbp_decorate(Module)):
     out_features (int): Number of output features
     bias (bool): Use a bias term
     """
+
     def __init__(self, nonlinear_hbp_cls, in_features, out_features,
                  bias=True):
         super().__init__()
         self.activation = nonlinear_hbp_cls()
-        self.linear = HBPLinear(in_features=in_features,
-                                out_features=out_features,
-                                bias=bias)
+        self.linear = HBPLinear(
+            in_features=in_features, out_features=out_features, bias=bias)
 
     # override
     def hbp_hooks(self):
@@ -60,8 +60,7 @@ class HBPCompositionActivationLinear(hbp_decorate(Module)):
         self.linear.parameter_hessian(output_hessian)
 
     # override
-    def input_hessian(self, output_hessian,
-                      modify_2nd_order_terms='none'):
+    def input_hessian(self, output_hessian, modify_2nd_order_terms='none'):
         """Compute the Hessian with respect to the layer input.
 
         Exploited relation: recursion in BDA-PCH paper.
@@ -80,7 +79,8 @@ class HBPCompositionActivationLinear(hbp_decorate(Module)):
         where J denotes the Jacobian.
         """
         jacobian_t = self._compute_jacobian_t()
-        return jacobian_t.matmul(output_hessian).matmul(jacobian_t.t())
+        ggn = jacobian_t.matmul(output_hessian).matmul(jacobian_t.t())
+        return ggn.detach()
 
     def _compute_jacobian_t(self):
         """Compute the transpose Jacobian mean(d_output / d_input)^T.
@@ -88,12 +88,13 @@ class HBPCompositionActivationLinear(hbp_decorate(Module)):
         The Jacobian J^T is given by (W \odot phi'), see Chen 2018 paper.
         """
         batch = self.activation.grad_phi.size()[0]
-        jacobian = einsum('ij,bi->ij', (self.linear.weight.t(),
-                                        self.activation.grad_phi)) / batch
+        jacobian = einsum(
+            'ij,bi->ij',
+            (self.linear.weight.t(), self.activation.grad_phi)) / batch
         return jacobian
 
     def _compute_residuum(self, modify_2nd_order_terms):
-        """Compute the Hessian residuum accounting for 2nd-order layer effects.
+        r"""Compute the Hessian residuum accounting for 2nd-order layer effects.
 
         The residuum (res) is given by:
             res = diag(phi'') \odot grad_output,
@@ -106,8 +107,9 @@ class HBPCompositionActivationLinear(hbp_decorate(Module)):
             Diagonal term of the quadratic term (corresponding to the only
             nonzero elements)
         """
-        residuum_diag = einsum('bi,bi->i', (self.activation.gradgrad_phi,
-                                            self.activation.grad_output))
+        residuum_diag = einsum('bi,bi->i',
+                               (self.activation.gradgrad_phi,
+                                self.activation.grad_output)).detach()
         if modify_2nd_order_terms == 'none':
             pass
         elif modify_2nd_order_terms == 'clip':
@@ -117,6 +119,6 @@ class HBPCompositionActivationLinear(hbp_decorate(Module)):
         elif modify_2nd_order_terms == 'zero':
             residuum_diag.zero_()
         else:
-            raise ValueError('Unknown 2nd-order term strategy {}'
-                             .format(modify_2nd_order_terms))
+            raise ValueError('Unknown 2nd-order term strategy {}'.format(
+                modify_2nd_order_terms))
         return residuum_diag

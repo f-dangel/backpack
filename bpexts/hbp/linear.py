@@ -117,7 +117,8 @@ class HBPLinear(hbp_decorate(Linear)):
         Exploited relation:
          input_hessian = weight * output_hessian * weight^T.
         """
-        return self.weight.t().matmul(output_hessian).matmul(self.weight)
+        in_hessian = self.weight.t().matmul(output_hessian).matmul(self.weight)
+        return in_hessian.detach()
 
     def init_bias_hessian(self, output_hessian):
         """Initialized bias attributes hessian and hvp.
