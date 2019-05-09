@@ -53,7 +53,7 @@ class HBPMaxPool2dRecursive(HBPMaxPool2d):
         """Apply the batch-averaged Jacobian with respect to the input."""
         batch, channels, in_x, in_y = self.input_shape
         _, _, out_x, out_y = self.output_shape
-        assert tuple(v.size()) == (batch * channels * in_x * in_y, )
+        assert tuple(v.size()) == (channels * in_x * in_y, )
         result = v.view(1, channels, -1)
         result = result.expand(batch, channels, -1)
         result = result.gather(2, self.pool_indices.view(batch, channels, -1))
