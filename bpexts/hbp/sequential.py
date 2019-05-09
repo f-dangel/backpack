@@ -78,7 +78,10 @@ def convert_torch_to_hbp(layer, use_recursive=True):
     conversions = _supported_conversions(use_recursive)
     for (torch_cls, hbp_cls) in conversions:
         if isinstance(layer, torch_cls):
-            return hbp_cls.from_torch(layer)
+            if isinstance(layer, Sequential):
+                return hbp_cls.from_torch(layer, use_recursive=use_recursive)
+            else:
+                return hbp_cls.from_torch(layer)
     _print_conversions()
     raise ValueError("Class {} cannot be converted to HBP.".format(
         layer.__class__))
