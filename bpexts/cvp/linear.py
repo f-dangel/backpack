@@ -51,7 +51,7 @@ class CVPLinear(hbp_decorate(Linear)):
         def _input_hessian_vp(v):
             """Multiplication by the Hessian w.r.t. the input."""
             return self._input_jacobian_transpose(
-                output_hessian(self._input_jacobian(v)))
+                output_hessian(self._input_jacobian(v))).detach()
 
         return _input_hessian_vp
 

@@ -117,7 +117,9 @@ def cvp_test(torch_fn,
                         p.numel(), requires_grad=False).to(self.DEVICE)
                     torch_hvp = torch_parameter_hessians[idx].matmul
                     cvp_result = p.hvp(v)
+                    assert cvp_result.requires_grad == False
                     torch_result = torch_hvp(v)
+                    assert torch_result.requires_grad == False
                     self._residuum_report(cvp_result, torch_result)
                     assert torch.allclose(
                         cvp_result,
@@ -134,7 +136,9 @@ def cvp_test(torch_fn,
                 v = torch.randn(
                     input_numel, requires_grad=False).to(self.DEVICE)
                 torch_result = torch_hvp(v)
+                assert torch_result.requires_grad == False
                 cvp_result = cvp_hvp(v)
+                assert cvp_result.requires_grad == False
                 self._residuum_report(cvp_result, torch_result)
                 assert torch.allclose(
                     torch_result, cvp_result, atol=self.ATOL, rtol=self.RTOL)
