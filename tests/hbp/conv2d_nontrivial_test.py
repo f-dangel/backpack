@@ -1,17 +1,17 @@
-"""Test CVP of Conv2d layer with non-trivial hyper parameters.
+"""Test HBP of Conv2d layer with non-trivial hyper parameters.
 
 Nontrivial padding, stride, dilation, kernel size
 """
 
 import torch
 from torch.nn import Conv2d
-from bpexts.cvp.conv2d import CVPConv2d
+from bpexts.hbp.conv2d import HBPConv2d
 from bpexts.utils import set_seeds
-from .cvp_test import set_up_cvp_tests
+from .hbp_test import set_up_hbp_tests
 
 # hyper-parameters
 in_channels, out_channels = 3, 2
-input_size = (3, in_channels, 7, 5)
+input_size = (1, in_channels, 7, 5)
 bias = True
 atol = 5e-5
 rtol = 1e-5
@@ -35,10 +35,10 @@ def torch_fn():
         bias=bias)
 
 
-def cvp_fn():
-    """Create a 2d convolution layer with CVP functionality."""
+def hbp_fn():
+    """Create a 2d convolution layer with HBP functionality."""
     set_seeds(0)
-    return CVPConv2d(
+    return HBPConv2d(
         in_channels,
         out_channels,
         kernel_size,
@@ -48,10 +48,10 @@ def cvp_fn():
         bias=bias)
 
 
-for name, test_cls in set_up_cvp_tests(
+for name, test_cls in set_up_hbp_tests(
         torch_fn,
-        cvp_fn,
-        'CVPConv2d',
+        hbp_fn,
+        'HBPConv2d',
         input_size=input_size,
         atol=atol,
         rtol=rtol,
@@ -60,16 +60,16 @@ for name, test_cls in set_up_cvp_tests(
     del test_cls
 
 
-def cvp_from_torch_fn():
-    """Create CVPConv2d from Conv2d."""
+def hbp_from_torch_fn():
+    """Create HBPConv2d from Conv2d."""
     torch_layer = torch_fn()
-    return CVPConv2d.from_torch(torch_layer)
+    return HBPConv2d.from_torch(torch_layer)
 
 
-for name, test_cls in set_up_cvp_tests(
+for name, test_cls in set_up_hbp_tests(
         torch_fn,
-        cvp_from_torch_fn,
-        'CVPConv2dFromTorch',
+        hbp_from_torch_fn,
+        'HBPConv2dFromTorch',
         input_size=input_size,
         atol=atol,
         rtol=rtol,

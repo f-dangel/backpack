@@ -2,7 +2,7 @@
 
 from .module import hbp_decorate
 # torch layers
-from torch.nn import (ReLU, Sigmoid, Linear, Conv2d, Sequential)
+from torch.nn import (ReLU, Sigmoid, Linear, Conv2d, MaxPool2d, Sequential)
 from ..utils import Flatten, SigmoidLinear, ReLULinear
 # CVP layers
 from .combined_relu import HBPReLULinear
@@ -11,6 +11,9 @@ from .relu import HBPReLU
 from .sigmoid import HBPSigmoid
 from .linear import HBPLinear
 from .conv2d import HBPConv2d
+from .conv2d_recursive import HBPConv2dRecursive
+from .maxpool2d import HBPMaxPool2d
+from .maxpool2d_recursive import HBPMaxPool2dRecursive
 from .flatten import HBPFlatten
 
 
@@ -53,15 +56,25 @@ class HBPSequential(hbp_decorate(Sequential)):
         return out_h
 
 
-# supported conversions
-conversions = [(ReLU, HBPReLU), (Sigmoid, HBPSigmoid), (Linear, HBPLinear),
-               (ReLULinear, HBPReLULinear), (SigmoidLinear, HBPSigmoidLinear),
-               (Conv2d, HBPConv2d), (Sequential, HBPSequential),
-               (Flatten, HBPFlatten)]
+def _supported_conversions(use_recursive):
+    """Return supported conversions."""
+    return [(ReLU, HBPReLU), (Sigmoid, HBPSigmoid), (Linear, HBPLinear),
+            (ReLULinear, HBPReLULinear), (SigmoidLinear, HBPSigmoidLinear),
+            (Conv2d, HBPConv2dRecursive if use_recursive else HBPConv2d),
+            (MaxPool2d,
+             HBPMaxPool2dRecursive if use_recursive else HBPMaxPool2d),
+            (Sequential, HBPSequential), (Flatten, HBPFlatten)]
 
 
-def convert_torch_to_hbp(layer):
-    """Convert torch layer to corresponding HBP layer."""
+def convert_torch_to_hbp(layer, use_recursive=False):
+    """Convert torch layer to corresponding HBP layer.
+
+    Parameters:
+    -----------
+    use_recursive : bool
+        Use recursive layers for convolution and max pooling.
+    """
+    conversions = _supported_conversions(use_recursive)
     for (torch_cls, hbp_cls) in conversions:
         if isinstance(layer, torch_cls):
             return hbp_cls.from_torch(layer)
@@ -72,6 +85,8 @@ def convert_torch_to_hbp(layer):
 
 def _print_conversions():
     """Print all possible conversions."""
-    print("Supported conversions:")
-    for torch_cls, hbp_cls in conversions:
-        print("{}\t->\t{}".format(torch_cls.__name__, hbp_cls.__name__))
+    for recursion in [False, True]:
+        print("\nSupported conversions (recursion = {}):".format(recursion))
+        for torch_cls, hbp_cls in _supported_conversions(recursion):
+            print("{:>20}\t->{:>25}".format(torch_cls.__name__,
+                                            hbp_cls.__name__))

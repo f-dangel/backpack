@@ -3,6 +3,7 @@
 import torch
 import numpy
 import unittest
+import collections
 from bpexts.utils import set_seeds
 from bpexts.hessian.exact import exact_hessian
 from bpexts.hbp.loss import batch_summed_hessian
@@ -183,7 +184,16 @@ def hbp_test(torch_fn,
             loss.backward()
             hessian_x = layer.backward_hessian(
                 loss_hessian, compute_input_hessian=True)
-            return hessian_x.matmul
+
+            # for implicit layers, no tensor is returned, but a MVP function
+            if isinstance(hessian_x, torch.Tensor):
+                return hessian_x.matmul
+            elif isinstance(hessian_x, collections.Callable):
+                return hessian_x
+            else:
+                raise ValueError(
+                    "Expecting torch.Tensor or function, but got\n{}".format(
+                        hessian_x))
 
         def _hbp_after_hessian_backward(self):
             """Return the HBP layer after performing HBP."""

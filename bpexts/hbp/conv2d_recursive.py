@@ -18,8 +18,9 @@ class HBPConv2dRecursive(HBPConv2d):
         elif isinstance(output_hessian, collections.Callable):
             output_hessian_vp = output_hessian
         else:
-            raise ValueError("Expecting torch.Tensor or function, but got\n{}".
-                             format(output_hessian))
+            raise ValueError(
+                "Expecting torch.Tensor or function, but got\n{}".format(
+                    output_hessian))
         return self.input_hessian_vp(output_hessian_vp)
 
     def input_hessian_vp(self, output_hessian_vp):
@@ -70,7 +71,7 @@ class HBPConv2dRecursive(HBPConv2d):
             assert tuple(result.size()) == (
                 self.weight.numel() // out_channels * num_patches, )
             # apply the transposed Jacobian
-            summed_result = zeros(sample_numel + 1)
+            summed_result = zeros(sample_numel + 1, device=idx_unfolded.device)
             summed_result.index_add_(0, idx_unfolded, result)
             assert tuple(summed_result.size()) == (sample_numel + 1, )
             return summed_result[1:]
@@ -91,8 +92,9 @@ class HBPConv2dRecursive(HBPConv2d):
         elif isinstance(output_hessian, collections.Callable):
             output_hessian_vp = output_hessian
         else:
-            raise ValueError("Expecting torch.Tensor or function, but got\n{}".
-                             format(output_hessian))
+            raise ValueError(
+                "Expecting torch.Tensor or function, but got\n{}".format(
+                    output_hessian))
         if self.bias is not None:
             self.init_bias_hessian_vp(output_hessian_vp)
         self.init_weight_hessian(output_hessian_vp)
