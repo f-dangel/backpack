@@ -1,8 +1,8 @@
-"""Test HBP of MaxPool2d layer."""
+"""Test HBP of recursive MaxPool2d layer."""
 
 import torch
 from torch.nn import MaxPool2d
-from bpexts.hbp.maxpool2d import HBPMaxPool2d
+from bpexts.hbp.maxpool2d_recursive import HBPMaxPool2dRecursive
 from .hbp_test import set_up_hbp_tests
 
 # hyper-parameters
@@ -25,14 +25,14 @@ def torch_fn():
 
 def hbp_fn():
     """Create a 2d max pool layer with HBP functionality."""
-    return HBPMaxPool2d(
+    return HBPMaxPool2dRecursive(
         kernel_size, stride=stride, padding=padding, dilation=dilation)
 
 
 for name, test_cls in set_up_hbp_tests(
         torch_fn,
         hbp_fn,
-        'HBPMaxPool2d',
+        'HBPMaxPool2dRecursive',
         input_size=input_size,
         atol=atol,
         rtol=rtol,
@@ -44,13 +44,15 @@ for name, test_cls in set_up_hbp_tests(
 def hbp_from_torch_fn():
     """Create HBPMaxPool2d from MaxPool2d."""
     torch_layer = torch_fn()
-    return HBPMaxPool2d.from_torch(torch_layer)
+    layer = HBPMaxPool2dRecursive.from_torch(torch_layer)
+    assert isinstance(layer, HBPMaxPool2dRecursive)
+    return layer
 
 
 for name, test_cls in set_up_hbp_tests(
         torch_fn,
         hbp_from_torch_fn,
-        'HBPMaxPool2dFromTorch',
+        'HBPMaxPool2dRecursiveFromTorch',
         input_size=input_size,
         atol=atol,
         rtol=rtol,
