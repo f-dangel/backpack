@@ -4,7 +4,7 @@ from .module import hbp_decorate
 # torch layers
 from torch.nn import (ReLU, Sigmoid, Linear, Conv2d, MaxPool2d, Sequential)
 from ..utils import Flatten, SigmoidLinear, ReLULinear
-# CVP layers
+# HBP layers
 from .combined_relu import HBPReLULinear
 from .combined_sigmoid import HBPSigmoidLinear
 from .relu import HBPReLU
@@ -21,13 +21,14 @@ class HBPSequential(hbp_decorate(Sequential)):
     """A sequence of HBP modules."""
     # override
     @classmethod
-    def from_torch(cls, torch_layer):
+    def from_torch(cls, torch_layer, use_recursive=True):
         if not isinstance(torch_layer, Sequential):
             raise ValueError("Expecting torch.nn.Sequential, got {}".format(
                 torch_layer.__class__))
         layers = []
         for mod in torch_layer:
-            layers.append(convert_torch_to_hbp(mod))
+            layers.append(
+                convert_torch_to_hbp(mod, use_recursive=use_recursive))
         return cls(*layers)
 
     # override
@@ -66,7 +67,7 @@ def _supported_conversions(use_recursive):
             (Sequential, HBPSequential), (Flatten, HBPFlatten)]
 
 
-def convert_torch_to_hbp(layer, use_recursive=False):
+def convert_torch_to_hbp(layer, use_recursive=True):
     """Convert torch layer to corresponding HBP layer.
 
     Parameters:
