@@ -3,43 +3,40 @@
 import torch
 import numpy
 # torch layers
-from torch.nn import (Linear, Sigmoid, ReLU, Conv2d, Sequential)
+from torch.nn import (Linear, Sigmoid, ReLU, Conv2d, MaxPool2d, Sequential)
 # CVP layers
 from bpexts.hbp.linear import HBPLinear
 from bpexts.hbp.sigmoid import HBPSigmoid
 from bpexts.hbp.relu import HBPReLU
 from bpexts.hbp.conv2d import HBPConv2d
+from bpexts.hbp.maxpool2d import HBPMaxPool2d
 from bpexts.hbp.flatten import HBPFlatten
 from bpexts.hbp.sequential import HBPSequential
 from bpexts.utils import set_seeds, Flatten
 from .hbp_test import set_up_hbp_tests
 
 # number of tests and accuracy
-atol = 1e-6
+atol = 5e-6
 rtol = 1e-5
 num_hvp = 10
 
 # convolution parameters
 in_channels = 3
-input_size = (1, in_channels, 6, 4)
+input_size = (1, in_channels, 8, 6)
 out_channels = 4
 kernel_size = (3, 3)
 stride = (1, 1)
 padding = (1, 1)
 dilation = 1
-# output of convolution
-out1_shape = HBPConv2d.output_shape(
-    input_size,
-    out_channels,
-    kernel_size,
-    stride=stride,
-    padding=padding,
-    dilation=dilation)
-out1_features = numpy.prod(out1_shape)
-# output of linear layer
-out2_features = out1_features // 2 + 1
-# final output
-out3_features = 10
+
+# maxpool2d parameters
+pool_kernel = 2
+pool_padding = 1
+
+# output size
+out1 = 80
+out2 = out1 // 2
+out3 = 10
 
 
 def torch_fn():
@@ -53,9 +50,9 @@ def torch_fn():
             stride=stride,
             padding=padding,
             dilation=dilation,
-            bias=True), ReLU(), Flatten(),
-        Linear(out1_features, out2_features, bias=False), Sigmoid(),
-        Linear(out2_features, out3_features, bias=True))
+            bias=True), ReLU(), MaxPool2d(pool_kernel, padding=pool_padding),
+        Flatten(), Linear(out1, out2, bias=False), Sigmoid(),
+        Linear(out2, out3, bias=True))
 
 
 def hbp_fn():
@@ -69,9 +66,10 @@ def hbp_fn():
             stride=stride,
             padding=padding,
             dilation=dilation,
-            bias=True), HBPReLU(), HBPFlatten(),
-        HBPLinear(out1_features, out2_features, bias=False), HBPSigmoid(),
-        HBPLinear(out2_features, out3_features, bias=True))
+            bias=True), HBPReLU(),
+        HBPMaxPool2d(pool_kernel, padding=pool_padding), HBPFlatten(),
+        HBPLinear(out1, out2, bias=False), HBPSigmoid(),
+        HBPLinear(out2, out3, bias=True))
 
 
 for name, test_cls in set_up_hbp_tests(
@@ -89,7 +87,7 @@ for name, test_cls in set_up_hbp_tests(
 def hbp_from_torch_fn():
     """Create HBPSequential from torch layer."""
     torch_layer = torch_fn()
-    return HBPSequential.from_torch(torch_layer)
+    return HBPSequential.from_torch(torch_layer, use_recursive=False)
 
 
 for name, test_cls in set_up_hbp_tests(
@@ -103,6 +101,25 @@ for name, test_cls in set_up_hbp_tests(
     exec('{} = test_cls'.format(name))
     del test_cls
 
+
+def hbp_recursive_from_torch_fn():
+    """Create HBPSequential from torch layer using recursive pool/conv."""
+    torch_layer = torch_fn()
+    return HBPSequential.from_torch(torch_layer, use_recursive=True)
+
+
+for name, test_cls in set_up_hbp_tests(
+        torch_fn,
+        hbp_recursive_from_torch_fn,
+        'HBPSequentialRecursiveFromTorch',
+        input_size=input_size,
+        atol=atol,
+        rtol=rtol,
+        num_hvp=num_hvp):
+    exec('{} = test_cls'.format(name))
+    del test_cls
+
 print(torch_fn())
 print(hbp_fn())
 print(hbp_from_torch_fn())
+print(hbp_recursive_from_torch_fn())

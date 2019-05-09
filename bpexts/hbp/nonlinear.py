@@ -1,6 +1,8 @@
 """Base class for elementwise activation layer with HBP functionality."""
 
-from torch import (einsum, diagflat)
+import collections
+from torch import (einsum, diagflat, Tensor)
+from numpy import prod
 from .module import hbp_decorate
 
 
@@ -64,8 +66,7 @@ def hbp_elementwise_nonlinear(module_subclass):
             module.register_exts_buffer('grad_output', grad_output[0].detach())
 
         # override
-        def input_hessian(self, output_hessian,
-                          modify_2nd_order_terms='none'):
+        def input_hessian(self, output_hessian, modify_2nd_order_terms='none'):
             """Compute input Hessian.
 
             The input Hessian consists of two parts:
@@ -75,11 +76,51 @@ def hbp_elementwise_nonlinear(module_subclass):
             i) gauss_newton = diag(grad_phi) * output_hessian * diag(grad_phi)
             ii) residuum = diag(gradgrad_phi) \odot grad_output
             """
-            in_hessian = self._gauss_newton(output_hessian)
-            idx = list(range(in_hessian.size()[0]))
-            in_hessian[idx, idx] = in_hessian[idx, idx] +\
-                self._residuum(modify_2nd_order_terms)
-            return in_hessian
+            if isinstance(output_hessian, Tensor):
+                in_hessian = self._gauss_newton(output_hessian)
+                idx = list(range(in_hessian.size()[0]))
+                in_hessian[idx, idx] = in_hessian[idx, idx] +\
+                    self._residuum(modify_2nd_order_terms)
+                return in_hessian
+            elif isinstance(output_hessian, collections.Callable):
+                return self.input_hessian_vp(
+                    output_hessian,
+                    modify_2nd_order_terms=modify_2nd_order_terms)
+            else:
+                raise ValueError(
+                    "Expecting torch.Tensor or function, but got\n{}".format(
+                        output_hessian))
+
+        def input_hessian_vp(self, output_hessian_vp, modify_2nd_order_terms):
+            """Matrix-vector multiplication by the input Hessian."""
+            num_features = prod(self.grad_output.size()[1:])
+            res = self._residuum(modify_2nd_order_terms)
+
+            # use cheapest approximation E(J^T) * E(H) * E(J) for Jacobians
+            mean_grad_phi = self.grad_phi.mean(0)
+
+            def _ggn_vp(v):
+                """Multiply batch-averaged Jacobian from left and right."""
+                assert tuple(v.size()) == (num_features, )
+                # apply batch-averaged Jacobian
+                Jv = einsum('i,i->i', (mean_grad_phi.view(-1), v))
+                # apply output Hessian
+                assert tuple(Jv.size()) == (num_features, )
+                HJv = output_hessian_vp(Jv)
+                assert tuple(Jv.size()) == (num_features, )
+                # apply batch-averaged transpose Jacobian
+                JHJv = einsum('i,i->i', (mean_grad_phi.view(-1), HJv))
+                assert tuple(JHJv.size()) == (num_features, )
+                return JHJv
+
+            def _input_hessian_vp(v):
+                """Multiply vector by the input Hessian."""
+                assert tuple(v.size()) == (num_features, )
+                result = _ggn_vp(v) + einsum('i,i->i', (res, v))
+                assert tuple(v.size()) == (num_features, )
+                return result
+
+            return _input_hessian_vp
 
         def _gauss_newton(self, output_hessian):
             """Compute the Gauss-Newton matrix.
@@ -100,9 +141,8 @@ def hbp_elementwise_nonlinear(module_subclass):
             """
             batch = self.grad_phi.size()[0]
             jacobian = self.grad_phi.view(batch, -1)
-            return einsum('bi,ij,bj->ij', (jacobian,
-                                           output_hessian,
-                                           jacobian)) / batch
+            return einsum('bi,ij,bj->ij',
+                          (jacobian, output_hessian, jacobian)) / batch
 
         def _residuum(self, modify_2nd_order_terms):
             """Residuum of the input Hessian matrix.
@@ -118,9 +158,8 @@ def hbp_elementwise_nonlinear(module_subclass):
             (torch.Tensor): Residuum Hessian matrix, averaged over batch
             """
             batch = self.gradgrad_phi.size()[0]
-            residuum_diag = einsum('bi,bi->i',
-                                   (self.gradgrad_phi.view(batch, -1),
-                                    self.grad_output.view(batch, -1)))
+            residuum_diag = einsum('bi,bi->i', (self.gradgrad_phi.view(
+                batch, -1), self.grad_output.view(batch, -1)))
             if modify_2nd_order_terms == 'none':
                 pass
             elif modify_2nd_order_terms == 'clip':
@@ -130,11 +169,11 @@ def hbp_elementwise_nonlinear(module_subclass):
             elif modify_2nd_order_terms == 'zero':
                 residuum_diag.zero_()
             else:
-                raise ValueError('Unknown 2nd-order term strategy {}'
-                                 .format(modify_2nd_order_terms))
+                raise ValueError('Unknown 2nd-order term strategy {}'.format(
+                    modify_2nd_order_terms))
             return residuum_diag
 
     HBPElementwiseNonlinear.__name__ = 'HBPElementwiseNonlinear{}'.format(
-            module_subclass.__name__)
+        module_subclass.__name__)
 
     return HBPElementwiseNonlinear
