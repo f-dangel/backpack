@@ -1,5 +1,6 @@
 """Class for handling training and logging metrics."""
 
+from warnings import warn
 from abc import ABC, abstractmethod
 from os import path
 from tqdm import tqdm
@@ -78,6 +79,12 @@ class Training(ABC):
                 self.optimizer.step()
                 batch_size = inputs.size()[0]
                 train_samples_seen += batch_size
+
+                # stop training if loss function is NaN
+                if torch.isnan(loss):
+                    print('Stopping training because loss is {}'.format(loss))
+                    warn('Stopping training because loss is {}'.format(loss))
+                    return
 
                 # logging of metrics
                 ####################
