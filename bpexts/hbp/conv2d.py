@@ -56,7 +56,8 @@ class HBPConv2d(hbp_decorate(Conv2d)):
         """
         if not len(input) == 1:
             raise ValueError('Cannot handle multi-input scenario')
-        mean_unfolded_input = module.unfold(input[0]).detach().mean(0)
+        mean_input = input[0].mean(0).unsqueeze(0).detach()
+        mean_unfolded_input = module.unfold(mean_input)[0, :]
         module.register_exts_buffer('mean_unfolded_input', mean_unfolded_input)
         # save number of elements in a single sample
         sample_dim = tensor(input[0].size()[1:])
