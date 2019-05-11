@@ -2,13 +2,15 @@
 
 from .module import hbp_decorate
 # torch layers
-from torch.nn import (ReLU, Sigmoid, Linear, Conv2d, MaxPool2d, Sequential)
+from torch.nn import (ReLU, Sigmoid, Tanh, Linear, Conv2d, MaxPool2d,
+                      Sequential)
 from ..utils import Flatten, SigmoidLinear, ReLULinear
 # HBP layers
 from .combined_relu import HBPReLULinear
 from .combined_sigmoid import HBPSigmoidLinear
 from .relu import HBPReLU
 from .sigmoid import HBPSigmoid
+from .tanh import HBPTanh
 from .linear import HBPLinear
 from .conv2d import HBPConv2d
 from .conv2d_recursive import HBPConv2dRecursive
@@ -59,8 +61,9 @@ class HBPSequential(hbp_decorate(Sequential)):
 
 def _supported_conversions(use_recursive):
     """Return supported conversions."""
-    return [(ReLU, HBPReLU), (Sigmoid, HBPSigmoid), (Linear, HBPLinear),
-            (ReLULinear, HBPReLULinear), (SigmoidLinear, HBPSigmoidLinear),
+    return [(ReLU, HBPReLU), (Sigmoid, HBPSigmoid), (Tanh, HBPTanh),
+            (Linear, HBPLinear), (ReLULinear, HBPReLULinear),
+            (SigmoidLinear, HBPSigmoidLinear),
             (Conv2d, HBPConv2dRecursive if use_recursive else HBPConv2d),
             (MaxPool2d,
              HBPMaxPool2dRecursive if use_recursive else HBPMaxPool2d),
