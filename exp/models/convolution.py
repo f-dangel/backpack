@@ -60,6 +60,30 @@ def c1d1(
     return model
 
 
+def mnist_c2d2(conv_activation=nn.ReLU, dense_activation=nn.ReLU):
+    """CNN for MNIST with 2 convolutional and 2 fc layers.
+
+    Modified from:
+    https://towardsdatascience.com/a-simple-2d-cnn-for-mnist-digit-recognition-a998dbc1e79a
+    (remove Dropout)
+    """
+    return nn.Sequential(
+        # Conv Layer block 1
+        nn.Conv2d(in_channels=1, out_channels=32, kernel_size=3, padding=0),
+        conv_activation(),
+        nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, padding=0),
+        conv_activation(),
+        nn.MaxPool2d(kernel_size=2, stride=2),
+
+        # Flatten
+        Flatten(),
+
+        # Dense layers
+        nn.Linear(9216, 128),
+        dense_activation(),
+        nn.Linear(128, 10))
+
+
 def cifar10_c6d3(conv_activation=nn.ReLU, dense_activation=nn.ReLU):
     """CNN for CIFAR-10 dataset with 6 convolutional and 3 fc layers.
 
