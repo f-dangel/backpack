@@ -94,24 +94,55 @@ def hbp_elementwise_nonlinear(module_subclass):
         def input_hessian_vp(self, output_hessian_vp, modify_2nd_order_terms):
             """Matrix-vector multiplication by the input Hessian."""
             num_features = prod(self.grad_output.size()[1:])
+
+            # residual part
             res = self._residuum(modify_2nd_order_terms)
 
-            # use cheapest approximation E(J^T) * E(H) * E(J) for Jacobians
-            mean_grad_phi = self.grad_phi.mean(0)
+            if self.input_hessian_approximation == 'strong':
+                jacobian = self.grad_phi.mean(0)
 
-            def _ggn_vp(v):
-                """Multiply batch-averaged Jacobian from left and right."""
-                assert tuple(v.size()) == (num_features, )
-                # apply batch-averaged Jacobian
-                Jv = einsum('i,i->i', (mean_grad_phi.view(-1), v))
-                # apply output Hessian
-                assert tuple(Jv.size()) == (num_features, )
-                HJv = output_hessian_vp(Jv)
-                assert tuple(Jv.size()) == (num_features, )
-                # apply batch-averaged transpose Jacobian
-                JHJv = einsum('i,i->i', (mean_grad_phi.view(-1), HJv))
-                assert tuple(JHJv.size()) == (num_features, )
-                return JHJv
+                def _ggn_vp(v):
+                    """Multiply batch-averaged Jacobian from left and right.
+
+                    Use cheapest approximation E(J^T) * E(H) * E(J).
+                    """
+                    assert tuple(v.size()) == (num_features, )
+                    # apply batch-averaged Jacobian
+                    Jv = einsum('i,i->i', (jacobian.view(-1), v))
+                    # apply output Hessian
+                    assert tuple(Jv.size()) == (num_features, )
+                    HJv = output_hessian_vp(Jv)
+                    assert tuple(HJv.size()) == (num_features, )
+                    # apply batch-averaged transpose Jacobian
+                    JHJv = einsum('i,i->i', (jacobian.view(-1), HJv))
+                    assert tuple(JHJv.size()) == (num_features, )
+                    return JHJv
+
+            elif self.input_hessian_approximation == 'weak':
+                batch = self.grad_phi.size(0)
+                jacobian = self.grad_phi.view(batch, -1)
+
+                def _ggn_vp(v):
+                    """Multiply with Jacobian from left and right, then average.
+
+                    Use more accurate approximation E[J^T * E(H) * J].
+                    """
+                    assert tuple(v.size()) == (num_features, )
+                    # apply Jacobian
+                    Jv = einsum('bi,i->bi', (jacobian, v))
+                    # apply output Hessian
+                    assert tuple(Jv.size()) == (batch, num_features)
+                    for b in range(batch):
+                        Jv[b, :] = output_hessian_vp(Jv[b, :])
+                    HJv = Jv
+                    assert tuple(HJv.size()) == (batch, num_features)
+                    # apply transpose Jacobian and average
+                    JHJv = einsum('bi,bi->i', (jacobian, HJv)) / batch
+                    assert tuple(JHJv.size()) == (num_features, )
+                    return JHJv
+
+            else:
+                raise ValueError
 
             def _input_hessian_vp(v):
                 """Multiply vector by the input Hessian."""
@@ -140,9 +171,18 @@ def hbp_elementwise_nonlinear(module_subclass):
             (torch.Tensor): Gauss-Newton matrix, batch-averaged
             """
             batch = self.grad_phi.size()[0]
-            jacobian = self.grad_phi.view(batch, -1)
-            return einsum('bi,ij,bj->ij',
-                          (jacobian, output_hessian, jacobian)) / batch
+            if self.input_hessian_approximation == 'weak':
+                # expensive but more accurate: E[J^T * E(H) * J]
+                jacobian = self.grad_phi.view(batch, -1)
+                return einsum('bi,ij,bj->ij',
+                              (jacobian, output_hessian, jacobian)) / batch
+            elif self.input_hessian_approximation == 'strong':
+                # use cheapest approximation E(J^T) * E(H) * E(J) for Jacobians
+                jacobian = self.grad_phi.mean(0).view(-1, 1)
+                return einsum('i,ij,j->ij',
+                              (jacobian, output_hessian, jacobian))
+            else:
+                raise ValueError
 
         def _residuum(self, modify_2nd_order_terms):
             """Residuum of the input Hessian matrix.
