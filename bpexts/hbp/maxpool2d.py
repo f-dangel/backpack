@@ -51,6 +51,8 @@ class HBPMaxPool2d(hbp_decorate(MaxPool2d)):
     # override
     def input_hessian(self, output_hessian, modify_2nd_order_terms='none'):
         """Return Hessian with respect to the input."""
+        if self.input_hessian_approximation == 'strong':
+            raise NotImplementedError
         # shape information
         batch, channels, in_x, in_y = self.input_shape
         _, _, out_x, out_y = self.output_shape
@@ -85,4 +87,4 @@ class HBPMaxPool2d(hbp_decorate(MaxPool2d)):
             for n, idx in enumerate(idx_map):
                 temp2[:, idx] += temp[:, n]
             h_in += temp2
-        return h_in / batch**2
+        return h_in / batch
