@@ -3,89 +3,28 @@
 import numpy
 import torch
 from torch.nn import CrossEntropyLoss, ReLU, Sigmoid, Tanh
-from torch.optim import SGD
 from os import path
 from collections import OrderedDict
 from exp.loading.load_mnist import MNISTLoader
-from exp.training.first_order import FirstOrderTraining
 from exp.training.second_order import SecondOrderTraining
 from bpexts.optim.cg_newton import CGNewton
-from bpexts.hbp.sequential import convert_torch_to_hbp
+from bpexts.cvp.sequential import convert_torch_to_cvp
 from exp.training.runner import TrainingRunner
 from exp.utils import (directory_in_data, dirname_from_params)
 from exp.models.convolution import mnist_c2d2
 
 # directories
-dirname = 'exp07_c2d2_optimization'
+dirname = 'exp07_c2d2_optimization/cvp'
 data_dir = directory_in_data(dirname)
 
 # global hyperparameters
-epochs = 8
+epochs = 5
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 logs_per_epoch = 10
 test_batch = 500
 
 # mapping from strings to activation functions
 activation_dict = {'relu': ReLU, 'sigmoid': Sigmoid, 'tanh': Tanh}
-
-
-def mnist_sgd_train_fn(batch, lr, momentum, activation):
-    """Create training instance for MNIST SGD optimization.
-
-    Parameters:
-    -----------
-    lr : float
-        Learning rate for SGD
-    momentum : float
-        Momentum for SGD
-    activation : str, 'relu' or 'sigmoid' or 'tanh'
-        Activation function
-    """
-    # logging directory
-    # -----------------
-    # directory of run
-    run_name = dirname_from_params(
-        act=activation, opt='sgd', batch=batch, lr=lr, mom=momentum)
-    logdir = path.join(data_dir, run_name)
-
-    # training procedure
-    # ------------------
-    def training_fn():
-        """Training function setting up the train instance."""
-        act = activation_dict[activation]
-        model = mnist_c2d2(conv_activation=act, dense_activation=act)
-        loss_function = CrossEntropyLoss()
-        data_loader = MNISTLoader(
-            train_batch_size=batch, test_batch_size=test_batch)
-        optimizer = SGD(model.parameters(), lr=lr, momentum=momentum)
-        # initialize training
-        train = FirstOrderTraining(
-            model,
-            loss_function,
-            optimizer,
-            data_loader,
-            logdir,
-            epochs,
-            logs_per_epoch=logs_per_epoch,
-            device=device,
-            input_shape=(1, 28, 28))
-        return train
-
-    return training_fn
-
-
-def sgd_grid_search():
-    """Define the grid search over the hyperparameters of SGD."""
-    activations = ['tanh', 'sigmoid', 'relu']
-    batch_sizes = [250, 500]
-    lrs = numpy.logspace(-3, 0, 4)
-    momenta = numpy.linspace(0, 0.9, 4)
-    return [
-        mnist_sgd_train_fn(
-            batch=batch, lr=lr, momentum=momentum, activation=activation)
-        for batch in batch_sizes for lr in lrs for momentum in momenta
-        for activation in activations
-    ]
 
 
 def mnist_cgnewton_train_fn(batch, modify_2nd_order_terms, activation, lr,
@@ -137,8 +76,8 @@ def mnist_cgnewton_train_fn(batch, modify_2nd_order_terms, activation, lr,
         # set up training and run
         act = activation_dict[activation]
         model = mnist_c2d2(conv_activation=act, dense_activation=act)
-        model = convert_torch_to_hbp(model, use_recursive=True)
-        loss_function = CrossEntropyLoss()
+        model = convert_torch_to_cvp(model)
+        loss_function = convert_torch_to_cvp(CrossEntropyLoss())
         data_loader = MNISTLoader(
             train_batch_size=batch, test_batch_size=test_batch)
         optimizer = CGNewton(
@@ -165,40 +104,16 @@ def mnist_cgnewton_train_fn(batch, modify_2nd_order_terms, activation, lr,
     return training_fn
 
 
-# def cgn_grid_search():
-#     """Define the grid search over the hyperparameters of SGD."""
-#     batch_sizes = [250]  #,256, 500]
-#     mod2nds = ['abs']
-#     activations = ['tanh', 'sigmoid']  #['relu', 'sigmoid']  #, 'tanh']
-#     lrs = numpy.logspace(-3, -1, 3)
-#     alphas = numpy.logspace(-4, 0, 5)  #[0.01, 0.02, 0.05]
-#     cg_atol = 0.
-#     cg_maxiter = 50
-#     cg_tols = [1e-5]
-#     return [
-#         mnist_cgnewton_train_fn(
-#             batch=batch,
-#             modify_2nd_order_terms=mod2nd,
-#             activation=activation,
-#             lr=lr,
-#             alpha=alpha,
-#             cg_maxiter=cg_maxiter,
-#             cg_tol=cg_tol,
-#             cg_atol=cg_atol) for batch in batch_sizes for mod2nd in mod2nds
-#         for activation in activations for lr in lrs for alpha in alphas
-#         for cg_tol in cg_tols
-#     ]
-
-
 def cgn_grid_search():
     """Define the grid search over the hyperparameters of SGD."""
-    batch_sizes = [250]  #[256, 500]
-    mod2nds = ['abs']
-    activations = ['tanh']  #['relu']  #, 'sigmoid', 'tanh']
-    lr_alphas = [(0.1 / 10.**i, 1. / 10**i) for i in range(4)]
+    batch_sizes = [2000, 1000, 500]
+    mod2nds = ['zero']
+    activations = ['tanh', 'relu', 'sigmoid']
+    lrs = [0.05, 0.1, 0.2]
+    alphas = [0.1, 0.02, 0.01]
     cg_atol = 0.
     cg_maxiter = 100
-    cg_tols = [1e-1]
+    cg_tols = [1e-1, 1e-5]
     return [
         mnist_cgnewton_train_fn(
             batch=batch,
@@ -209,7 +124,7 @@ def cgn_grid_search():
             cg_maxiter=cg_maxiter,
             cg_tol=cg_tol,
             cg_atol=cg_atol) for batch in batch_sizes for mod2nd in mod2nds
-        for activation in activations for (lr, alpha) in lr_alphas
+        for activation in activations for lr in lrs for alpha in alphas
         for cg_tol in cg_tols
     ]
 
@@ -217,13 +132,8 @@ def cgn_grid_search():
 def main(run_experiments=True):
     """Execute the experiments, return filenames of the merged runs."""
     seeds = range(1)
-    labels = ['SGD']
-    experiments = [
-        # 1) SGD grid search
-        *sgd_grid_search(),
-        # 2) CGN grid search
-        # *cgn_grid_search()
-    ]
+    labels = ['CGN-CVP']
+    experiments = cgn_grid_search()
 
     def run():
         """Run the experiments."""
