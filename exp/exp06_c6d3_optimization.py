@@ -20,9 +20,9 @@ dirname = 'exp06_c6d3_optimization'
 data_dir = directory_in_data(dirname)
 
 # global hyperparameters
-epochs = 10
+epochs = 15
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-logs_per_epoch = 5
+logs_per_epoch = 10
 test_batch = 100
 
 # mapping from strings to activation functions
@@ -76,10 +76,10 @@ def cifar10_sgd_train_fn(batch, lr, momentum, activation):
 
 def sgd_grid_search():
     """Define the grid search over the hyperparameters of SGD."""
-    activations = ['sigmoid', 'relu', 'tanh']
-    batch_sizes = centered_list([int(2**x) for x in numpy.arange(4, 8)])
-    lrs = centered_list(numpy.logspace(-4, 0, 5))
-    momenta = centered_list(numpy.linspace(0, 0.9, 4))
+    activations = ['tanh', 'relu', 'sigmoid']
+    batch_sizes = [250, 500]
+    lrs = numpy.logspace(-3, 0, 4)
+    momenta = numpy.linspace(0, 0.9, 4)
     return [
         cifar10_sgd_train_fn(
             batch=batch, lr=lr, momentum=momentum, activation=activation)
@@ -170,14 +170,16 @@ def cifar10_cgnewton_train_fn(batch, modify_2nd_order_terms, activation, lr,
 
 def cgn_grid_search():
     """Define the grid search over the hyperparameters of SGD."""
-    batch_sizes = centered_list([int(2**x) for x in numpy.arange(4, 8)])
+    batch_sizes = [250]  #[256, 500]
     mod2nds = ['abs']
-    activations = ['sigmoid', 'relu', 'tanh']
-    lrs = centered_list(numpy.logspace(-3, -1, 3))
-    alphas = centered_list([0.01, 0.02, 0.05, 0.1])
+    activations = ['tanh']  #['relu']  #, 'sigmoid', 'tanh']
+    lrs = [0.1]  #numpy.logspace(-4, 0, 5)
+    alphas = [
+        0.1
+    ]  # [0.02, 0.05, 0.1]  #numpy.logspace(-5, -1, 5)  #[0.01, 0.02, 0.05]
     cg_atol = 0.
-    cg_maxiter = 50
-    cg_tols = centered_list([1e-5, 1e-1])
+    cg_maxiter = 500
+    cg_tols = [1e-1]
     return [
         cifar10_cgnewton_train_fn(
             batch=batch,
@@ -193,6 +195,30 @@ def cgn_grid_search():
     ]
 
 
+# def cgn_grid_search():
+#     """Define the grid search over the hyperparameters of SGD."""
+#     batch_sizes = [250]  #[256, 500]
+#     mod2nds = ['abs']
+#     activations = ['tanh']  #['relu']  #, 'sigmoid', 'tanh']
+#     lr_alphas = [(0.1 / 10.**i, 1. / 10**i) for i in range(0, 4)]
+#     cg_atol = 0.
+#     cg_maxiter = 100
+#     cg_tols = [1e-5]
+#     return [
+#         cifar10_cgnewton_train_fn(
+#             batch=batch,
+#             modify_2nd_order_terms=mod2nd,
+#             activation=activation,
+#             lr=lr,
+#             alpha=alpha,
+#             cg_maxiter=cg_maxiter,
+#             cg_tol=cg_tol,
+#             cg_atol=cg_atol) for batch in batch_sizes for mod2nd in mod2nds
+#         for activation in activations for (lr, alpha) in lr_alphas
+#         for cg_tol in cg_tols
+#     ]
+
+
 def main(run_experiments=True):
     """Execute the experiments, return filenames of the merged runs."""
     seeds = range(1)
@@ -201,7 +227,7 @@ def main(run_experiments=True):
         # 1) SGD grid search
         *sgd_grid_search(),
         # 2) CGN grid search
-        *cgn_grid_search()
+        # *cgn_grid_search()
     ]
 
     def run():
