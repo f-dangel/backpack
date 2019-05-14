@@ -2,12 +2,13 @@
 
 from ..hbp.module import hbp_decorate
 # torch layers
-from torch.nn import (ReLU, Sigmoid, Linear, Conv2d, MaxPool2d, Sequential,
-                      ZeroPad2d, CrossEntropyLoss)
+from torch.nn import (ReLU, Sigmoid, Tanh, Linear, Conv2d, MaxPool2d,
+                      Sequential, ZeroPad2d, CrossEntropyLoss)
 from ..utils import Flatten, Conv2dSame, MaxPool2dSame, same_padding2d
 # CVP layers
 from .relu import CVPReLU
 from .sigmoid import CVPSigmoid
+from .tanh import CVPTanh
 from .linear import CVPLinear
 from .conv2d import CVPConv2d
 from .padding import CVPZeroPad2d
@@ -178,10 +179,11 @@ class CVPMaxPool2dSame(CVPSequential):
 
 
 # supported conversions
-conversions = [(ReLU, CVPReLU), (Sigmoid, CVPSigmoid), (Linear, CVPLinear),
-               (Conv2d, CVPConv2d), (MaxPool2d, CVPMaxPool2d),
-               (Sequential, CVPSequential), (Flatten, CVPFlatten),
-               (MaxPool2dSame, CVPMaxPool2dSame), (Conv2dSame, CVPConv2dSame),
+conversions = [(ReLU, CVPReLU), (Sigmoid, CVPSigmoid), (Tanh, CVPTanh),
+               (Linear, CVPLinear), (Conv2d, CVPConv2d),
+               (MaxPool2d, CVPMaxPool2d), (Sequential, CVPSequential),
+               (Flatten, CVPFlatten), (MaxPool2dSame, CVPMaxPool2dSame),
+               (Conv2dSame, CVPConv2dSame),
                (CrossEntropyLoss, CVPCrossEntropyLoss)]
 
 

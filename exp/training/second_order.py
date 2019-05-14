@@ -69,7 +69,8 @@ class SecondOrderTraining(Training):
         For CVP losses, computes exact Hessian-vector routines.
         """
         try:
-            return self.loss_function.backward_hessian(
+            loss_hessian_vp = self.loss_function.backward_hessian(
                 None, compute_input_hessian=True)
+            return loss_hessian_vp
         except AttributeError:
             return batch_summed_hessian(loss, outputs)
