@@ -84,6 +84,37 @@ def mnist_c2d2(conv_activation=nn.ReLU, dense_activation=nn.ReLU):
         nn.Linear(128, 10))
 
 
+def cifar10_c4d3(conv_activation=nn.ReLU, dense_activation=nn.ReLU):
+    """CNN for CIFAR-10 dataset with 4 convolutional and 3 fc layers.
+
+    Modified from c6d3.
+    """
+    return nn.Sequential(
+        # Conv Layer block 1
+        nn.Conv2d(in_channels=3, out_channels=16, kernel_size=3, padding=1),
+        conv_activation(),
+        nn.Conv2d(in_channels=16, out_channels=16, kernel_size=3, padding=1),
+        conv_activation(),
+        nn.MaxPool2d(kernel_size=2, stride=2),
+
+        # Conv Layer block 2
+        nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, padding=1),
+        conv_activation(),
+        nn.Conv2d(in_channels=32, out_channels=32, kernel_size=3, padding=1),
+        conv_activation(),
+        nn.MaxPool2d(kernel_size=2, stride=2),
+
+        # Flatten
+        Flatten(),
+
+        # Dense layers
+        nn.Linear(2048, 512),
+        dense_activation(),
+        nn.Linear(512, 64),
+        dense_activation(),
+        nn.Linear(64, 10))
+
+
 def cifar10_c6d3(conv_activation=nn.ReLU, dense_activation=nn.ReLU):
     """CNN for CIFAR-10 dataset with 6 convolutional and 3 fc layers.
 
