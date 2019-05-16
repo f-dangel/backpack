@@ -79,9 +79,13 @@ def cifar10_adam_train_fn(batch, lr, betas, activation):
 
 def adam_grid_search():
     """Define the grid search over the hyperparameters of Adam."""
+    # grid search:  ['sigmoid']
     activations = ['sigmoid']
-    batch_sizes = [100, 200, 500]
-    lrs = numpy.logspace(-4, 1, 6)
+    # grid search: [100, 200, 500]
+    batch_sizes = [100]
+    # grid search: numpy.logspace(-4, 1, 6)
+    lrs = [0.001]
+    # grid search:  [(0.9, 0.999)]
     betas = [(0.9, 0.999)]
     return [
         cifar10_adam_train_fn(
@@ -93,7 +97,7 @@ def adam_grid_search():
 
 def main(run_experiments=True):
     """Execute the experiments, return filenames of the merged runs."""
-    seeds = range(1)
+    seeds = range(10)
     labels = ['Adam']
     experiments = adam_grid_search()
 
