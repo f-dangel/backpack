@@ -73,11 +73,21 @@ def cifar10_sgd_train_fn(batch, lr, momentum, activation):
 
 
 def sgd_grid_search():
-    """Define the grid search over the hyperparameters of SGD."""
+    r"""Define the grid search over the hyperparameters of SGD.
+
+    Note on 'best' parameter:
+    -------------------------
+    SGD is not possible to optimize this net, so choose the parameter
+    set which is close to Adam
+    """
+    # grid search: ['sigmoid']
     activations = ['sigmoid']
-    batch_sizes = [100, 200, 500]
-    lrs = numpy.logspace(-3, 1, 5)
-    momenta = numpy.linspace(0, 0.9, 3)
+    # grid search: [100, 200, 500]
+    batch_sizes = [100]
+    # grid search: numpy.logspace(-3, 1, 5)
+    lrs = [0.001]
+    # grid search: numpy.linspace(0, 0.9, 3)
+    momenta = [0.9]
     return [
         cifar10_sgd_train_fn(
             batch=batch, lr=lr, momentum=momentum, activation=activation)
@@ -88,7 +98,7 @@ def sgd_grid_search():
 
 def main(run_experiments=True):
     """Execute the experiments, return filenames of the merged runs."""
-    seeds = range(1)
+    seeds = range(10)
     labels = ['SGD']
     experiments = sgd_grid_search()
 
