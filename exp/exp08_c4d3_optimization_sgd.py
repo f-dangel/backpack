@@ -14,11 +14,12 @@ from exp.utils import (directory_in_data, dirname_from_params, centered_list)
 from exp.models.convolution import cifar10_c4d3
 
 # directories
-dirname = 'exp08_c4d3_optimization/sgd'
+parent_dir = 'exp08_c4d3_optimization/'
+dirname = path.join(parent_dir, 'sgd')
 data_dir = directory_in_data(dirname)
 
 # global hyperparameters
-epochs = 30
+epochs = 20
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 logs_per_epoch = 4
 test_batch = 100
@@ -99,6 +100,7 @@ def sgd_grid_search():
 def main(run_experiments=True):
     """Execute the experiments, return filenames of the merged runs."""
     seeds = range(10)
+    # seeds = range(1)
     labels = ['SGD']
     experiments = sgd_grid_search()
 

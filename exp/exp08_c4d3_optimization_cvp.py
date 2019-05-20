@@ -18,7 +18,7 @@ dirname = 'exp08_c4d3_optimization/cvp'
 data_dir = directory_in_data(dirname)
 
 # global hyperparameters
-epochs = 30
+epochs = 20
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 logs_per_epoch = 4
 test_batch = 100
@@ -106,18 +106,41 @@ def cifar10_cgnewton_train_fn(batch, modify_2nd_order_terms, activation, lr,
 def cgn_grid_search():
     """Define the grid search over the hyperparameters of SGD."""
     # grid search: [200, 500, 1000]
-    batch_sizes = [1000, 1000]
-    # grid search: ['zero']
-    mod2nds = ['zero', 'abs', 'clip']
+    batch_sizes = [
+        1000,
+    ]
+    # batch_sizes = [1000, 1000]
+    # grid search: ['zero', 'abs', 'clip']
+    mod2nds = [
+        'zero',
+        'abs',
+        'clip',
+    ]
     # grid search: ['sigmoid']
     activations = ['sigmoid']
-    # grid search: [0.05, 0.1, 0.2]
-    lrs = [0.1, 0.05]
+    # grid search: [0.05, 0.1, 0.2,]
+    lrs = [
+        # 0.2,
+        0.1,
+        # 0.05,
+    ]
     # grid search: [0.0001, 0.001, 0.01, 0.1]
-    alphas = [0.001, 0.0001]
+    alphas = [
+        # 0.00001
+        0.0001,
+        # 0.001,
+        # 0.01,
+        # 0.1,
+    ]
+    # alphas = [
+    #    0.001,
+    #    0.0001,
+    # ]
     cg_atol = 0.
-    cg_maxiter = 100
-    cg_tols = [1e-1]
+    cg_maxiter = 200
+    cg_tols = [
+        1e-1,
+    ]
     return [
         cifar10_cgnewton_train_fn(
             batch=batch,
@@ -127,20 +150,20 @@ def cgn_grid_search():
             alpha=alpha,
             cg_maxiter=cg_maxiter,
             cg_tol=cg_tol,
-            cg_atol=cg_atol)
-        # for batch in batch_sizes for mod2nd in mod2nds
-        # for activation in activations for lr in lrs for alpha in alphas
-        # for cg_tol in cg_tols
-        for mod2nd in mod2nds for cg_tol in cg_tols
-        for activation in activations
-        for batch, lr, alpha, in zip(batch_sizes, lrs, alphas)
+            cg_atol=cg_atol) for batch in batch_sizes for mod2nd in mod2nds
+        for activation in activations for lr in lrs for alpha in alphas
+        for cg_tol in cg_tols
+        # for mod2nd in mod2nds for cg_tol in cg_tols
+        # for activation in activations
+        # for batch, lr, alpha, in zip(batch_sizes, lrs, alphas)
     ]
 
 
 def main(run_experiments=True):
     """Execute the experiments, return filenames of the merged runs."""
+    # seeds = range(1)
     seeds = range(10)
-    labels = ['CGN-CVP']
+    labels = ['CG, GGN', 'CG, PCH (abs)', 'CG, PCH (clip)']
     experiments = cgn_grid_search()
 
     def run():

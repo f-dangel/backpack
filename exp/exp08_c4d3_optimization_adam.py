@@ -18,7 +18,7 @@ dirname = 'exp08_c4d3_optimization/adam'
 data_dir = directory_in_data(dirname)
 
 # global hyperparameters
-epochs = 30
+epochs = 20
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 logs_per_epoch = 4
 test_batch = 100
@@ -98,6 +98,7 @@ def adam_grid_search():
 def main(run_experiments=True):
     """Execute the experiments, return filenames of the merged runs."""
     seeds = range(10)
+    # seeds = range(1)
     labels = ['Adam']
     experiments = adam_grid_search()
 
