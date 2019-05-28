@@ -112,25 +112,47 @@ def cgn_grid_search():
     # batch_sizes = [1000, 1000]
     # grid search: ['zero', 'abs', 'clip']
     mod2nds = [
+        # grid search
+        # 'zero',
+        # 'abs',
+        # 'clip',
+
+        # fixed runs
         'zero',
+        'zero',
+        # 'abs',
         'abs',
-        'clip',
+        'clip'
     ]
     # grid search: ['sigmoid']
     activations = ['sigmoid']
     # grid search: [0.05, 0.1, 0.2,]
     lrs = [
+        # grid search
         # 0.2,
-        0.1,
+        # 0.1,
         # 0.05,
+
+        # fixed runs
+        0.1,
+        0.1,
+        # 0.1,
+        0.2,
+        0.1
     ]
     # grid search: [0.0001, 0.001, 0.01, 0.1]
     alphas = [
-        # 0.00001
-        0.0001,
+        # grid search
+        # 0.0001,
         # 0.001,
         # 0.01,
-        # 0.1,
+
+        # fixed runs
+        0.0001,
+        0.001,
+        # 0.0001,
+        0.001,
+        0.0001
     ]
     # alphas = [
     #    0.001,
@@ -150,12 +172,13 @@ def cgn_grid_search():
             alpha=alpha,
             cg_maxiter=cg_maxiter,
             cg_tol=cg_tol,
-            cg_atol=cg_atol) for batch in batch_sizes for mod2nd in mod2nds
-        for activation in activations for lr in lrs for alpha in alphas
-        for cg_tol in cg_tols
-        # for mod2nd in mod2nds for cg_tol in cg_tols
-        # for activation in activations
-        # for batch, lr, alpha, in zip(batch_sizes, lrs, alphas)
+            cg_atol=cg_atol)
+        # for batch in batch_sizes for mod2nd in mod2nds
+        # for activation in activations for lr in lrs for alpha in alphas
+        # for cg_tol in cg_tols
+        for cg_tol in cg_tols for activation in activations
+        for batch in batch_sizes
+        for mod2nd, lr, alpha, in zip(mod2nds, lrs, alphas)
     ]
 
 
@@ -163,7 +186,13 @@ def main(run_experiments=True):
     """Execute the experiments, return filenames of the merged runs."""
     # seeds = range(1)
     seeds = range(10)
-    labels = ['CG, GGN', 'CG, PCH (abs)', 'CG, PCH (clip)']
+    labels = [
+        r'GGN, $\alpha_1$',
+        r'GGN, $\alpha_2$',
+        # 'PCH-abs1',
+        'PCH-abs',
+        'PCH-clip',
+    ]
     experiments = cgn_grid_search()
 
     def run():

@@ -4,7 +4,7 @@ from os import path, makedirs
 import matplotlib
 matplotlib.use('agg')
 import matplotlib.pyplot as plt
-from palettable.colorbrewer.sequential import YlGnBu_4, YlOrRd_5
+from palettable.colorbrewer.sequential import YlGnBu_5, YlOrRd_5
 from exp.plotting.plotting import OptimizationPlot
 from exp.exp08_c4d3_optimization_cvp import filenames as exp08_cvp_files
 from exp.exp08_c4d3_optimization_sgd import filenames as exp08_sgd_files
@@ -15,7 +15,7 @@ from exp.utils import directory_in_fig
 # define colors
 sgd_color = YlOrRd_5.mpl_colors[2]
 adam_color = YlOrRd_5.mpl_colors[4]
-cvp_colors = YlGnBu_4.mpl_colors[1:]  #[1:][::-1]
+cvp_colors = YlGnBu_5.mpl_colors[1:][::-1]
 colors = [sgd_color] + [adam_color] + cvp_colors
 # set color cycle
 matplotlib.rcParams['axes.prop_cycle'] = matplotlib.cycler(color=colors)
@@ -63,8 +63,18 @@ def plot():
                 scale_steps=50000)
 
             # collect plots for different curvature matrices
-            plot_labels = ['CG, GGN', 'CG, PCH (abs)', 'CG, PCH (clip)']
+            plot_labels = [
+                r'GGN, $\alpha_1$',
+                r'GGN, $\alpha_2$',
+                # 'PCH-abs1',
+                'PCH-abs',
+                'PCH-clip',
+            ]
+            # plot_labels = ['CG, GGN', 'CG, PCH (abs)', 'CG, PCH (clip)']
             plot_files = [files_cvp[l][metric] for l in plot_labels]
+            idx = [2, 3, 0, 1]
+            plot_files = [plot_files[i] for i in idx]
+            plot_labels = [plot_labels[i] for i in idx]
             # plot CGN curvature matrices
             OptimizationPlot.create_standard_plot(
                 'epoch',
