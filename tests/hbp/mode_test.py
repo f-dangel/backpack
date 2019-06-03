@@ -1,11 +1,11 @@
 """Hessian backpropagation tests for different modes."""
 
-from ..utils import torch_allclose, set_seeds, matrix_from_mvp
-from torch import randn, eye
+from bpexts.utils import set_seeds, matrix_from_mvp
+from torch import randn, eye, allclose
 from numpy import all as numpy_all
-from .linear import HBPLinear
-from .relu import HBPReLU
-from .sigmoid import HBPSigmoid
+from bpexts.hbp.linear import HBPLinear
+from bpexts.hbp.relu import HBPReLU
+from bpexts.hbp.sigmoid import HBPSigmoid
 
 in_features = [10, 5, 4]
 out_features = [5, 4, 2]
@@ -68,10 +68,10 @@ def compare_layer_hessians(layers1, layers2):
     for l1, l2 in zip(layers1, layers2):
         assert (l1.__class__ is l2.__class__)
         if isinstance(l1, HBPLinear) and isinstance(l2, HBPLinear):
-            assert torch_allclose(
+            assert allclose(
                 matrix_from_mvp(l1.bias.hvp, dims=2 * (l1.bias.numel(), )),
                 matrix_from_mvp(l2.bias.hvp, dims=2 * (l2.bias.numel(), )))
-            assert torch_allclose(
+            assert allclose(
                 matrix_from_mvp(l1.weight.hvp, dims=2 * (l1.weight.numel(), )),
                 matrix_from_mvp(l2.weight.hvp, dims=2 * (l2.weight.numel(), )))
 
