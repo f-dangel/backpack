@@ -3,7 +3,7 @@
 import torch
 from torch import (tensor, cat)
 from torch.nn import Linear
-from .jacobian import jacobian
+from bpexts.hessian.jacobian import jacobian
 
 
 def simple_example():
