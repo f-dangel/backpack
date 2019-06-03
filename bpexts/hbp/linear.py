@@ -60,9 +60,6 @@ class HBPLinear(hbp_decorate(Linear)):
         The computation of the Hessian usually involves quantities that
         need to be computed during a forward or backward pass.
         """
-        # more accurate approximation
-        # self.register_exts_forward_pre_hook(self.store_input_mean_outer)
-        # rough but more efficient
         self.register_exts_forward_pre_hook(self.store_mean_input)
 
     # --- hooks ---
@@ -77,19 +74,6 @@ class HBPLinear(hbp_decorate(Linear)):
             raise ValueError('Cannot handle multi-input scenario')
         mean_input = input[0].detach().mean(0).unsqueeze_(0)
         module.register_exts_buffer('mean_input', mean_input)
-
-    def store_mean_input_outer(module, input):
-        """Save mean(input * input^T) of layer input.
-
-        Intended use as pre-forward hook.
-        Initialize module buffer 'mean_input_outer'.
-        """
-        if not len(input) == 1:
-            raise ValueError('Cannot handle multi-input scenario')
-        batch = input[0].size()[0]
-        mean_input_outer = einsum(
-            'bi,bj->ij', (input[0].detach(), input[0].detach())) / batch
-        module.register_exts_buffer('mean_input_outer', mean_input_outer)
 
     # --- end of hooks ---
 

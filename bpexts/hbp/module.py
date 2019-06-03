@@ -17,8 +17,6 @@ def hbp_decorate(module_subclass):
         - parameter_hessian()
         - input_hessian()
         """
-        # batch approximation strategies
-        APPROXIMATION_MODES = ['weak', 'strong']
 
         __doc__ = '[Decorated by bpexts for HBP] {}'.format(
             module_subclass.__doc__)
@@ -26,30 +24,6 @@ def hbp_decorate(module_subclass):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.enable_hbp()
-            self.input_hessian_approximation = 'weak'
-
-        def set_input_hessian_approximation(self, mode):
-            """Set batch approximation mode for backpropagation of Hessian.
-
-            Possible values for `mode` (with increasing computational cost):
-             * `'strong'`: Use approximation E(Hx) = E(J)^T * E(Hz) * E(J)
-             * `'weak'`: Use approximation E(Hx) = E[J^T * E(Hz) * J]
-
-            TODO: Think about if it would be better to use
-            B * E(J)^T * E(Hz) * E(J) for the approximation.
-
-            Parameters:
-            -----------
-            mode : str
-                String for the approximation strategy of HBP.
-            """
-            if mode not in self.APPROXIMATION_MODES:
-                raise ValueError(
-                    'Unknown approximation mode, please choose one of {}'.
-                    format(APPROXIMATION_MODES))
-            self.input_hessian_approximation = mode
-            for mod in self.children():
-                mod.set_input_hessian_approximation(mode)
 
         def enable_hbp(self):
             """Enable Hessian backpropagation functionality.
@@ -159,13 +133,6 @@ def hbp_decorate(module_subclass):
             raise NotImplementedError('Hessian backpropagation modules'
                                       'must implement this method to be'
                                       'able to pass Hessians backward')
-
-        def extra_repr(self):
-            """Additionally show approximation mode for input Hessian."""
-            repr = '{}{}Hx approximation: {}'.format(
-                super().extra_repr(), ', ' if super().extra_repr() else '',
-                self.input_hessian_approximation)
-            return repr
 
     HBPModule.__name__ = 'HBP{}'.format(module_subclass.__name__)
     return HBPModule

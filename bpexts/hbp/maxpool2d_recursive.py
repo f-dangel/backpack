@@ -16,8 +16,9 @@ class HBPMaxPool2dRecursive(HBPMaxPool2d):
         elif isinstance(output_hessian, collections.Callable):
             output_hessian_vp = output_hessian
         else:
-            raise ValueError("Expecting torch.Tensor or function, but got\n{}".
-                             format(output_hessian))
+            raise ValueError(
+                "Expecting torch.Tensor or function, but got\n{}".format(
+                    output_hessian))
         return self.input_hessian_vp(output_hessian_vp)
 
     def input_hessian_vp(self, output_hessian_vp):
@@ -36,51 +37,20 @@ class HBPMaxPool2dRecursive(HBPMaxPool2d):
         batch, channels, in_x, in_y = self.input_shape
         _, _, out_x, out_y = self.output_shape
 
-        if self.input_hessian_approximation == 'strong':
-
-            def _input_hessian_vp(v):
-                """Multiplication by the Hessian w.r.t. input."""
-                # apply batch-averaged Jacobian
-                result = self._mean_input_jacobian(v)
-                # apply output Hessian
-                result = output_hessian_vp(result)
-                # apply batch-averaged transpose Jacobian
-                result = self._mean_input_jacobian_transpose(result)
-                return result
-
-        elif self.input_hessian_approximation == 'weak':
-
-            def _input_hessian_vp(v):
-                """Multiplication by the Hessian w.r.t. input."""
-                # apply Jacobian
-                result = self._input_jacobian(v)
-                # apply output Hessian
-                batch = result.size(0)
-                for b in range(batch):
-                    result[b, :] = output_hessian_vp(result[b, :])
-                # apply transpose Jacobian and average
-                result = self._input_jacobian_transpose(result)
-                return result.mean(0)
-
-        else:
-            raise ValueError
+        def _input_hessian_vp(v):
+            """Multiplication by the Hessian w.r.t. input."""
+            # apply Jacobian
+            result = self._mean_input_jacobian(v)
+            # apply output Hessian
+            result = output_hessian_vp(result)
+            # apply transpose Jacobian and average
+            result = self._mean_input_jacobian_transpose(result)
+            return result
 
         return _input_hessian_vp
 
-    def _input_jacobian(self, v):
-        """Apply the Jacobian with respect to the input."""
-        batch, channels, in_x, in_y = self.input_shape
-        _, _, out_x, out_y = self.output_shape
-        assert tuple(v.size()) == (channels * in_x * in_y, )
-        result = v.view(1, channels, -1)
-        result = result.expand(batch, channels, -1)
-        result = result.gather(2, self.pool_indices.view(batch, channels, -1))
-        assert tuple(result.size()) == (batch, channels, out_x * out_y)
-        return result.view(batch, -1)
-
     def _mean_input_jacobian(self, v):
         """Apply the batch-averaged Jacobian with respect to the input."""
-        # TODO: Express in terms of self._input_jacobian
         batch, channels, in_x, in_y = self.input_shape
         _, _, out_x, out_y = self.output_shape
         assert tuple(v.size()) == (channels * in_x * in_y, )
@@ -90,25 +60,8 @@ class HBPMaxPool2dRecursive(HBPMaxPool2d):
         assert tuple(result.size()) == (batch, channels, out_x * out_y)
         return result.mean(0).view(-1)
 
-    def _input_jacobian_transpose(self, v):
-        """Apply the tranpose Jacobian w.r.t. the input."""
-        batch, channels, in_x, in_y = self.input_shape
-        _, _, out_x, out_y = self.output_shape
-        assert tuple(v.size()) == (batch, channels * out_x * out_y)
-        result = zeros(batch, channels, in_x * in_y, device=v.device)
-        result.scatter_add_(
-            2, self.pool_indices.view(batch, channels, -1),
-            v.view(1, channels, -1).expand(batch, channels, -1))
-        assert tuple(result.size()) == (
-            batch,
-            channels,
-            in_x * in_y,
-        )
-        return result.view(batch, -1)
-
     def _mean_input_jacobian_transpose(self, v):
         """Apply the batch-averaged tranpose Jacobian w.r.t. the input."""
-        # TODO: Express in terms of self._input_jacobian_transpose
         batch, channels, in_x, in_y = self.input_shape
         _, _, out_x, out_y = self.output_shape
         assert tuple(v.size()) == (channels * out_x * out_y, )
