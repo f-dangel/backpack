@@ -4,11 +4,11 @@ import torch
 from torch import randn, Tensor, eye, zeros_like, ones_like
 from torch.optim import SGD
 from warnings import warn
-from ..linear import HBPLinear
-from .linear import HBPParallelLinear
-from ...utils import (torch_contains_nan, set_seeds, memory_report)
-from ...optim.cg_newton import CGNewton
-from ...hessian import exact
+from bpexts.hbp.linear import HBPLinear
+from bpexts.hbp.parallel.linear import HBPParallelLinear
+from bpexts.utils import (torch_contains_nan, set_seeds, memory_report)
+from bpexts.optim.cg_newton import CGNewton
+from bpexts.hessian import exact
 
 in_features = 20
 max_blocks = 3

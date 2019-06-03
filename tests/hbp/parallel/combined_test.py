@@ -4,12 +4,12 @@ import torch
 from torch import randn, Tensor, eye, zeros_like, ones_like
 from torch.optim import SGD
 from warnings import warn
-from ..combined_relu import HBPReLULinear
-from ..combined_sigmoid import HBPSigmoidLinear
-from .combined import HBPParallelCompositionActivationLinear
-from ...utils import (torch_contains_nan, set_seeds, memory_report)
-from ...hessian import exact
-from ...optim.cg_newton import CGNewton
+from bpexts.hbp.combined_relu import HBPReLULinear
+from bpexts.hbp.combined_sigmoid import HBPSigmoidLinear
+from bpexts.hbp.parallel.combined import HBPParallelCompositionActivationLinear
+from bpexts.utils import (torch_contains_nan, set_seeds, memory_report)
+from bpexts.hessian import exact
+from bpexts.optim.cg_newton import CGNewton
 
 test_classes = [HBPSigmoidLinear, HBPReLULinear]
 

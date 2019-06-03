@@ -3,18 +3,18 @@
 import torch
 from torch import randn, eye, zeros_like
 from warnings import warn
-from .sequential import HBPParallelSequential
-from ..sequential import HBPSequential
-from ..linear import HBPLinear
-from .linear import HBPParallelLinear
-from ..combined_sigmoid import HBPSigmoidLinear
-from ..combined_relu import HBPReLULinear
-from ..sigmoid import HBPSigmoid
-from ..relu import HBPReLU
-from .combined import HBPParallelCompositionActivationLinear
-from ...utils import (set_seeds, memory_report)
-from ...optim.cg_newton import CGNewton
-from ...hessian import exact
+from bpexts.hbp.parallel.sequential import HBPParallelSequential
+from bpexts.hbp.sequential import HBPSequential
+from bpexts.hbp.linear import HBPLinear
+from bpexts.hbp.parallel.linear import HBPParallelLinear
+from bpexts.hbp.combined_sigmoid import HBPSigmoidLinear
+from bpexts.hbp.combined_relu import HBPReLULinear
+from bpexts.hbp.sigmoid import HBPSigmoid
+from bpexts.hbp.relu import HBPReLU
+from bpexts.hbp.parallel.combined import HBPParallelCompositionActivationLinear
+from bpexts.utils import (set_seeds, memory_report)
+from bpexts.optim.cg_newton import CGNewton
+from bpexts.hessian import exact
 
 in_features = [20, 15, 10]
 out_features = [15, 10, 5]
