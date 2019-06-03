@@ -178,9 +178,7 @@ def test_parameter_hessians(random_vp=10):
                 linear = layer_idx._get_parallel_module(n)
             else:
                 linear = layer_idx._get_parallel_module(n).linear
-            b_hessian = linear.bias.hessian
             b_brute_force = brute_force_hessian(idx, n, 'bias')
-            assert torch.allclose(b_hessian, b_brute_force, atol=1E-5)
             # check bias Hessian-veector product
             for _ in range(random_vp):
                 v = randn(linear.bias.numel())
@@ -198,9 +196,7 @@ def test_parameter_hessians(random_vp=10):
                 linear = layer_idx._get_parallel_module(n)
             else:
                 linear = layer_idx._get_parallel_module(n).linear
-            w_hessian = linear.weight.hessian()
             w_brute_force = brute_force_hessian(idx, n, 'weight')
-            assert torch.allclose(w_hessian, w_brute_force, atol=1E-5)
             # check weight Hessian-vector product
             for _ in range(random_vp):
                 v = randn(linear.weight.numel())

@@ -97,8 +97,8 @@ class HBPLinear(hbp_decorate(Linear)):
             weight_hessian = output_hessian \otimes input \otimes input^T
         """
         if self.bias is not None:
-            self.init_bias_hessian(output_hessian.detach())
-        self.init_weight_hessian(output_hessian.detach())
+            self.bias_hessian(output_hessian.detach())
+        self.weight_hessian(output_hessian.detach())
 
     # override
     def input_hessian(self, output_hessian, modify_2nd_order_terms='none'):
@@ -124,7 +124,7 @@ class HBPLinear(hbp_decorate(Linear)):
                 self.weight)
             return in_hessian.detach()
 
-    def init_bias_hessian(self, output_hessian):
+    def bias_hessian(self, output_hessian):
         """Initialized bias attributes hessian and hvp.
 
         Initializes:
@@ -139,10 +139,9 @@ class HBPLinear(hbp_decorate(Linear)):
         out_h (torch.Tensor): Batch-averaged Hessian with respect to
                               the layer's outputs
         """
-        self.bias.hessian = output_hessian
-        self.bias.hvp = self._bias_hessian_vp
+        self.bias.hvp = output_hessian.matmul
 
-    def init_weight_hessian(self, out_h):
+    def weight_hessian(self, out_h):
         """Create weight attributes hessian and hvp.
 
         Initializes:
@@ -158,25 +157,6 @@ class HBPLinear(hbp_decorate(Linear)):
         out_h (torch.Tensor): Batch-averaged Hessian with respect to
                               the layer's outputs
 
-        """
-        self.weight.hessian = self._compute_weight_hessian(out_h)
-        self.weight.hvp = self._weight_hessian_vp(out_h)
-
-    def _bias_hessian_vp(self, v):
-        """Matrix multiplication by bias Hessian.
-
-        Parameters:
-        -----------
-        v (torch.Tensor): Vector which is to be multiplied by the Hessian
-
-        Returns:
-        --------
-        result (torch.Tensor): bias_hessian * v
-        """
-        return self.bias.hessian.matmul(v)
-
-    def _weight_hessian_vp(self, out_h):
-        """Matrix multiplication by weight Hessian.
         """
 
         def hvp(v):
@@ -203,23 +183,4 @@ class HBPLinear(hbp_decorate(Linear)):
             temp = temp.matmul(self.mean_input.t())
             return temp.matmul(self.mean_input).reshape(v.size())
 
-        return hvp
-
-    def _compute_weight_hessian(self, output_hessian):
-        r"""Compute weight Hessian from output Hessian.
-
-        Use approximation
-        weight_hessian = output_hessian \otimes mean(input \otimes input^T).
-        """
-
-        def weight_hessian():
-            """Compute matrix form of the weight Hessian when called.
-            """
-            w_hessian = einsum('ij,k,l->ikjl',
-                               (output_hessian, self.mean_input.squeeze(),
-                                self.mean_input.squeeze()))
-            dim_i, dim_k, _, _ = w_hessian.size()
-            dim = dim_i * dim_k
-            return w_hessian.reshape(dim, dim)
-
-        return weight_hessian
+        self.weight.hvp = hvp

@@ -2,8 +2,7 @@
 
 from torch import randn, eye
 from .split_linear import HBPSplitLinear
-from ..utils import (torch_allclose,
-                     set_seeds)
+from ..utils import (torch_allclose, set_seeds)
 from ..hessian import exact
 
 in_features_list = [3, 4, 5]
@@ -22,9 +21,10 @@ def create_layer():
     """Return example linear layer."""
     # same seed
     set_seeds(0)
-    return HBPSplitLinear(in_features_list=in_features_list,
-                          out_features_list=out_features_list,
-                          bias=True)
+    return HBPSplitLinear(
+        in_features_list=in_features_list,
+        out_features_list=out_features_list,
+        bias=True)
 
 
 def forward(layer, input):
@@ -65,8 +65,7 @@ def brute_force_hessian(layer_idx, which):
         return exact.exact_hessian(loss,
                                    [layer.get_submodule(layer_idx).weight])
     elif which == 'bias':
-        return exact.exact_hessian(loss,
-                                   [layer.get_submodule(layer_idx).bias])
+        return exact.exact_hessian(loss, [layer.get_submodule(layer_idx).bias])
     else:
         raise ValueError
 
@@ -77,10 +76,8 @@ def test_parameter_hessians(random_vp=10):
     # test bias Hessians
     layer = hessian_backward()
     for idx in range(num_layers):
-        b_hessian = layer.get_submodule(idx).bias.hessian
         b_brute_force = brute_force_hessian(idx, 'bias')
-        assert torch_allclose(b_hessian, b_brute_force, atol=1E-5)
-        # check bias Hessian-veector product
+        # check bias Hessian-vector product
         for _ in range(random_vp):
             v = randn(layer.get_submodule(idx).bias.numel())
             vp = layer.get_submodule(idx).bias.hvp(v)
@@ -88,9 +85,7 @@ def test_parameter_hessians(random_vp=10):
             assert torch_allclose(vp, vp_result, atol=1E-5)
     # test weight Hessians
     for idx in range(num_layers):
-        w_hessian = layer.get_submodule(idx).weight.hessian()
         w_brute_force = brute_force_hessian(idx, 'weight')
-        assert torch_allclose(w_hessian, w_brute_force, atol=1E-5)
         # check weight Hessian-vector product
         for _ in range(random_vp):
             v = randn(layer.get_submodule(idx).weight.numel())

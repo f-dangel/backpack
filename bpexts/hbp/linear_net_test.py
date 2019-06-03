@@ -9,14 +9,12 @@ from .linear import HBPLinear
 from .sigmoid import HBPSigmoid
 from .relu import HBPReLU
 from ..hessian import exact
-from ..utils import (torch_allclose,
-                     set_seeds)
-
+from ..utils import (torch_allclose, set_seeds)
 
 in_features = [20, 10, 5]
 out_features = [10, 5, 2]
-input_size = (20,)
-input = randn((1,) + input_size)
+input_size = (20, )
+input = randn((1, ) + input_size)
 
 
 def random_input():
@@ -30,8 +28,7 @@ def create_layers(activation):
     set_seeds(0)
     layers = []
     for (in_, out) in zip(in_features, out_features):
-        layers.append(HBPLinear(in_features=in_,
-                                out_features=out))
+        layers.append(HBPLinear(in_features=in_, out_features=out))
         layers.append(activation())
     return layers
 
@@ -90,9 +87,7 @@ def check_network_parameter_hessians(random_vp, activation):
         # ignore activation layers
         if idx % 2 == 1:
             continue
-        b_hessian = layer.bias.hessian
         b_brute_force = brute_force_hessian(-idx, 'bias', activation)
-        assert torch_allclose(b_hessian, b_brute_force, atol=1E-5)
         # check bias Hessian-veector product
         for _ in range(random_vp):
             v = randn(layer.bias.numel())
@@ -104,9 +99,7 @@ def check_network_parameter_hessians(random_vp, activation):
         # ignore activation layers
         if idx % 2 == 1:
             continue
-        w_hessian = layer.weight.hessian()
         w_brute_force = brute_force_hessian(-idx, 'weight', activation)
-        assert torch_allclose(w_hessian, w_brute_force, atol=1E-5)
         # check weight Hessian-vector product
         for _ in range(random_vp):
             v = randn(layer.weight.numel())

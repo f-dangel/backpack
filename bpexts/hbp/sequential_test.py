@@ -4,10 +4,8 @@ from torch import randn, eye
 from .sequential import HBPSequential
 from .sigmoid import HBPSigmoid
 from .linear import HBPLinear
-from ..utils import (torch_allclose,
-                     set_seeds)
+from ..utils import (torch_allclose, set_seeds)
 from ..hessian import exact
-
 
 in_features_list = [10, 5, 4]
 out_features_list = [5, 4, 2]
@@ -26,9 +24,7 @@ def create_layers():
     set_seeds(0)
     layers = []
     for in_, out in zip(in_features_list, out_features_list):
-        layers.append(HBPLinear(in_features=in_,
-                                out_features=out,
-                                bias=True))
+        layers.append(HBPLinear(in_features=in_, out_features=out, bias=True))
         layers.append(HBPSigmoid())
     return HBPSequential(*layers)
 
@@ -76,9 +72,7 @@ def test_parameter_hessians(random_vp=10):
     # test bias Hessians
     sequence = hessian_backward()
     for idx in range(0, len(sequence), 2):
-        b_hessian = sequence[idx].bias.hessian
         b_brute_force = brute_force_hessian(idx, 'bias')
-        assert torch_allclose(b_hessian, b_brute_force, atol=1E-5)
         # check bias Hessian-veector product
         for _ in range(random_vp):
             v = randn(sequence[idx].bias.numel())
@@ -87,9 +81,7 @@ def test_parameter_hessians(random_vp=10):
             assert torch_allclose(vp, vp_result, atol=1E-5)
     # test weight Hessians
     for idx in range(0, len(sequence), 2):
-        w_hessian = sequence[idx].weight.hessian()
         w_brute_force = brute_force_hessian(idx, 'weight')
-        assert torch_allclose(w_hessian, w_brute_force, atol=1E-5)
         # check weight Hessian-vector product
         for _ in range(random_vp):
             v = randn(sequence[idx].weight.numel())
