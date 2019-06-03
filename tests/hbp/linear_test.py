@@ -5,7 +5,7 @@ import torch
 from torch.nn import Linear
 from bpexts.hbp.linear import HBPLinear
 from bpexts.hbp.loss import batch_summed_hessian
-from bpexts.utils import set_seeds
+from bpexts.utils import set_seeds, matrix_from_mvp
 from .hbp_test import set_up_hbp_tests
 
 # hyper-parameters
@@ -118,7 +118,9 @@ class HBPLinearHardcodedTest(unittest.TestCase):
         layer = self.test_input_hessian()
         # Hessian with respect to layer bias
         bias_hessian = torch.tensor([[2., 0.], [0., 2.]])
-        assert torch.allclose(layer.bias.hessian, bias_hessian)
+        b_hessian = matrix_from_mvp(
+            layer.bias.hvp, dims=2 * (layer.bias.numel(), ))
+        assert torch.allclose(b_hessian, bias_hessian)
         # check Hessian-vector product
         for _ in range(random_vp):
             v = torch.randn(2)
@@ -137,8 +139,10 @@ class HBPLinearHardcodedTest(unittest.TestCase):
                                        [0., 0., 0., 2., 6., 10.],
                                        [0., 0., 0., 6., 18., 30.],
                                        [0., 0., 0., 10., 30., 50.]])
-        print(layer.weight.hessian())
-        assert torch.allclose(layer.weight.hessian(), weight_hessian)
+        w_hessian = matrix_from_mvp(
+            layer.weight.hvp, dims=2 * (layer.weight.numel(), ))
+        print(w_hessian)
+        assert torch.allclose(w_hessian, weight_hessian)
         # check Hessian-vector product
         for _ in range(random_vp):
             v = torch.randn(6)
