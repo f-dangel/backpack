@@ -1,7 +1,7 @@
 """Test of conjugate gradient Newton style optimizer."""
 
 import torch
-from .cg_newton import CGNewton
+from bpexts.optim.cg_newton import CGNewton
 
 
 def simple(use_gpu=False):

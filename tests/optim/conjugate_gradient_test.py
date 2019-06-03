@@ -1,7 +1,7 @@
 """Tests for conjugate gradient solver."""
 
 import torch
-from .conjugate_gradient import cg
+from bpexts.optim.conjugate_gradient import cg
 
 
 def simple(use_gpu=False):

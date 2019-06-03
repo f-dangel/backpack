@@ -3,19 +3,19 @@ Tests the computation of sum-of-squared gradients
 """
 
 import torch
-from torch.nn import Conv2d
-from .conv2d import SumGradSquared_Conv2d as SGS_Conv2d
+from torch.nn import Linear
+from bpexts.sumgradsquared.linear import SumGradSquared_Linear as SGS_Linear
 
 torch.manual_seed(0)
-X1 = torch.rand(1, 3, 28, 28)
-X2 = torch.rand(2, 3, 28, 28)
-X4 = torch.rand(4, 3, 28, 28)
+X1 = torch.rand(1, 256)
+X2 = torch.rand(2, 256)
+X4 = torch.rand(4, 256)
 inputs = [X1, X2, X4]
 
 torch.manual_seed(0)
-nn_layer = Conv2d(3, 64, 5, 2)
+nn_layer = Linear(256, 16)
 torch.manual_seed(0)
-sgs_layer = SGS_Conv2d(3, 64, 5, 2)
+sgs_layer = SGS_Linear(256, 16)
 
 
 def test_forward():
@@ -36,17 +36,17 @@ def test_backward():
             assert torch.allclose(p1.grad, p2.grad)
 
 
-def forloopSGS(x, conv):
+def forloopSGS(x, layer):
     batch_grads = []
 
     # init
-    for p in conv.parameters():
+    for p in layer.parameters():
         batch_grads.append(torch.zeros(x.shape[0], *p.shape))
 
     # individual gradients
     for n in range(x.shape[0]):
-        loss = conv(x[n, :].unsqueeze(0)).norm(2)**2
-        grad = torch.autograd.grad(loss, conv.parameters())
+        loss = layer(x[n, :].unsqueeze(0)).norm(2)**2
+        grad = torch.autograd.grad(loss, layer.parameters())
 
         for i, g in enumerate(grad):
             print(g)
