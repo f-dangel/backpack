@@ -1,6 +1,6 @@
 """Test HBP decoration of torch.nn.Module subclasses."""
 
-from bpexts.module import hbp_decorate
+from bpexts.hbp.module import hbp_decorate
 from torch.nn import Linear
 
 
