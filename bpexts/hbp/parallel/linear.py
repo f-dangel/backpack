@@ -36,9 +36,8 @@ class HBPParallelLinear(HBPParallel):
     def __init__(self, layer, max_blocks):
         # check class
         if not layer.__class__ == self.contained_class:
-            raise ValueError('Expecting layer of type {}, got {}'
-                             .format(self.contained_class,
-                                     layer.__class__))
+            raise ValueError('Expecting layer of type {}, got {}'.format(
+                self.contained_class, layer.__class__))
         # find out actual number of parallel children
         self.max_blocks = max_blocks
         super().__init__(len(layer.weight.chunk(self.max_blocks, 0)))
@@ -95,17 +94,15 @@ class HBPParallelLinear(HBPParallel):
         w_chunks = layer.weight.data.chunk(self.max_blocks, 0)
         b_chunks = [None] * self.num_blocks if layer.bias is None\
                 else layer.bias.data.chunk(self.max_blocks, 0)
-        out_features = [w.size()[1] for w in w_chunks]
+        out_features = [w.size(0) for w in w_chunks]
         in_features = layer.in_features
         # create parallel children
         children = {}
-        for idx, (out, w, b) in enumerate(zip(out_features,
-                                              w_chunks,
-                                              b_chunks)):
+        for idx, (out, w, b) in enumerate(
+                zip(out_features, w_chunks, b_chunks)):
             name = self._parallel_module_name(idx)
-            parallel = self.contained_class(in_features=in_features,
-                                            out_features=out,
-                                            bias=b is not None)
+            parallel = self.contained_class(
+                in_features=in_features, out_features=out, bias=b is not None)
             # disable hooks, buffers
             parallel.disable_exts()
             # set parameters
