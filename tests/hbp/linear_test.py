@@ -86,14 +86,25 @@ class HBPLinearHardcodedTest(unittest.TestCase):
         """Sum all square entries of a tensor."""
         return (tensor**2).view(-1).sum(0)
 
-    def test_mean_input_hook(self):
-        """Check storing of mean_input hook."""
+    def test_hook(self):
+        """Check storing of input hook."""
         layer = self.example_layer()
         x = torch.tensor([[2., 4., 6.], [8., 10., 12.], [14., 16., 18.]])
-        mean_x = torch.tensor([[8., 10., 12.]])
-        # forward, calls hook
+        x_flat = x.view(x.size(0), -1)
+        x_mean = x_flat.mean(0)
+        # check of approximation 1
+        layer.set_hbp_approximation(
+            average_input_jacobian=None, average_parameter_jacobian=True)
         layer(x)
-        assert torch.allclose(layer.mean_input, mean_x)
+        assert torch.allclose(layer.mean_input, x_mean)
+        # check of approximation 2
+        x_kron_mean = torch.einsum('bi,bj->ij', (x_flat, x_flat)) / x.size(0)
+        layer.set_hbp_approximation(
+            average_input_jacobian=None, average_parameter_jacobian=False)
+        layer(x)
+        assert torch.allclose(layer.input_kron_mean, x_kron_mean)
+        # make sure the old buffer has been deleted
+        assert not hasattr(layer, 'mean_input')
 
     def test_input_hessian(self):
         """Return layer after backward_hessian, check input Hessian."""

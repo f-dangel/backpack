@@ -34,6 +34,7 @@ class HBPLinear(hbp_decorate(Linear)):
     # Do not compute input Hessian for dimensions larger than
     # (instead, return a matrix-vector product function)
     H_IN_THRESHOLD = 5000
+
     # TODO: Layer should also be able to accept MVP routines with the
     # output Hessian as input during HBP
 
@@ -60,19 +61,40 @@ class HBPLinear(hbp_decorate(Linear)):
         The computation of the Hessian usually involves quantities that
         need to be computed during a forward or backward pass.
         """
-        self.register_exts_forward_pre_hook(self.store_mean_input)
+        if self.average_param_jac == True:
+            self.register_exts_forward_pre_hook(self.store_mean_input)
+        elif self.average_param_jac == False:
+            self.register_exts_forward_pre_hook(self.store_input_kron_mean)
+        else:
+            raise ValueError('Unknown value for average_param_jac : {}'.format(
+                self.average_param_jac))
 
     # --- hooks ---
     @staticmethod
+    def store_input_kron_mean(module, input):
+        """Save mean value of flattened input's Kronecker product.
+
+        Intended use as pre-forward hook.
+        Initialize module buffer 'input_kron_mean'.
+        """
+        if not len(input) == 1:
+            raise ValueError('Cannot handle multi-input scenario')
+        batch = input[0].size(0)
+        input_flat = input[0].detach().view(batch, -1)
+        input_kron_mean = einsum('bi,bj->ij', (input_flat, input_flat)) / batch
+        module.register_exts_buffer('input_kron_mean', input_kron_mean)
+
+    @staticmethod
     def store_mean_input(module, input):
-        """Save batch average of input of layer.
+        """Save batch average of flattened input of layer.
 
         Intended use as pre-forward hook.
         Initialize module buffer 'mean_input'.
         """
         if not len(input) == 1:
             raise ValueError('Cannot handle multi-input scenario')
-        mean_input = input[0].detach().mean(0).unsqueeze_(0)
+        batch = input[0].size(0)
+        mean_input = input[0].detach().view(batch, -1).mean(0)
         module.register_exts_buffer('mean_input', mean_input)
 
     # --- end of hooks ---
@@ -156,31 +178,36 @@ class HBPLinear(hbp_decorate(Linear)):
         -----------
         out_h (torch.Tensor): Batch-averaged Hessian with respect to
                               the layer's outputs
-
         """
 
         def hvp(v):
             r"""Matrix-vector product with weight Hessian.
 
             Use approximation
-             weight_hessian = output_hessian \otimes
-                              mean(input) \otimes mean(input^T)
+            weight_hessian = output_hessian \otimes
+                            mean(input) \otimes mean(input^T)
 
             Parameters:
             -----------
             v (torch.Tensor): Vector which is multiplied by the Hessian
-           """
-            if not len(v.size()) == 1:
-                raise ValueError('Require one-dimensional tensor')
-            num_outputs = out_h.size()[0]
-            num_inputs = self.mean_input.size()[1]
-            result = v.reshape(num_outputs, num_inputs)
-            # order matters for memory consumption:
-            #   - mean_input has shape (num_inputs, 1)
-            #   - out_h has shape (num_outputs, num_outputs)
-            # assume num_outputs is smaller than num_inputs
-            temp = out_h.matmul(result)
-            temp = temp.matmul(self.mean_input.t())
-            return temp.matmul(self.mean_input).reshape(v.size())
+            """
+            assert tuple(v.size()) == (self.weight.numel(), )
+            if self.average_param_jac == True:
+                result = einsum(
+                    'ij,jk,k,l->il',
+                    (out_h, v.view(self.out_features, self.in_features),
+                     self.mean_input, self.mean_input))
+            elif self.average_param_jac == False:
+                result = einsum(
+                    'ij,jk,kl->il',
+                    (out_h, v.view(self.out_features, self.in_features),
+                     self.input_kron_mean))
+            else:
+                raise ValueError(
+                    'Unknown value for average_param_jac : {}'.format(
+                        self.average_param_jac))
+            result = result.view(-1)
+            assert tuple(v.size()) == (self.weight.numel(), )
+            return result
 
         self.weight.hvp = hvp
