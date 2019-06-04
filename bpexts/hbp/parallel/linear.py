@@ -33,6 +33,9 @@ class HBPParallelLinear(HBPParallel):
     """
     contained_class = HBPLinear
 
+    # TODO: The approximation mode of the children has to be synced
+    # with the main module. Will throw exceptions if changing the approximation
+
     def __init__(self, layer, max_blocks):
         # check class
         if not layer.__class__ == self.contained_class:
@@ -124,7 +127,13 @@ class HBPParallelLinear(HBPParallel):
     # override
     def hbp_hooks(self):
         """Remove input hook in children, use a single copy instead."""
-        self.register_exts_forward_hook(self.reference_mean_input)
+        if self.average_param_jac == True:
+            self.register_exts_forward_hook(self.reference_mean_input)
+        elif self.average_param_jac == False:
+            self.register_exts_forward_pre_hook(self.reference_input_kron_mean)
+        else:
+            raise ValueError('Unknown value for average_param_jac : {}'.format(
+                self.average_param_jac))
 
     # --- hooks ---
     @staticmethod
@@ -138,6 +147,19 @@ class HBPParallelLinear(HBPParallel):
         mean_input = module.main.mean_input
         for idx, mod in enumerate(module.parallel_children()):
             mod.register_exts_buffer('mean_input', mean_input)
+
+    @staticmethod
+    def reference_input_kron_mean(module, input, output):
+        """Save reference of `input_kron_mean` from `main` module in children,
+        avoiding copy.
+
+        Intended use as forward hook.
+        Initialize module buffer 'input_kron_mean' in all children
+        """
+        input_kron_mean = module.main.input_kron_mean
+        for idx, mod in enumerate(module.parallel_children()):
+            mod.register_exts_buffer('input_kron_mean', input_kron_mean)
+
     # --- end of hooks ---
 
     # override
