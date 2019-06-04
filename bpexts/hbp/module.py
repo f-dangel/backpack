@@ -23,6 +23,35 @@ def hbp_decorate(module_subclass):
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
+            # determine approximation mode for backward pass in HBP
+            self.average_input_jac = False
+            self.average_param_jac = (
+                None if not self.has_trainable_parameters() else True)
+            self.enable_hbp()
+
+        def set_hbp_approximation(self,
+                                  average_input_jacobian=False,
+                                  average_parameter_jacobian=True):
+            """Set approximation mode for HBP.
+
+            If ``average_*_jacobians`` is set to ``True``, the Jacobian that
+            was averaged in advance will be used to backpropagate the input
+            and parameter Hessian.
+
+            Parameters:
+            -----------
+            average_input_jacobian : bool
+                Use batch averaged Jacobian to compute the input Hessian
+            average_parameter_jacobian : bool
+                Use batch averaged Jacobian to compute the parameter Hessian.
+                (Will be ignored if the module does not possess parameters)
+            """
+            # hooks might be specific to the mode, remove the old ones
+            self.disable_hbp()
+            self.average_input_jac = average_input_jacobian
+            self.average_param_jac = (
+                None if not self.has_trainable_parameters() else True)
+            # enable hooks
             self.enable_hbp()
 
         def enable_hbp(self):
@@ -133,6 +162,13 @@ def hbp_decorate(module_subclass):
             raise NotImplementedError('Hessian backpropagation modules'
                                       'must implement this method to be'
                                       'able to pass Hessians backward')
+
+        def extra_repr(self):
+            """Show HBP approximation mode."""
+            repr = '{}{}avg_input_jac : {}, avg_param_jac : {}'.format(
+                super().extra_repr(), ', ' if super().extra_repr() else '',
+                self.average_input_jac, self.average_param_jac)
+            return repr
 
     HBPModule.__name__ = 'HBP{}'.format(module_subclass.__name__)
     return HBPModule
