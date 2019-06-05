@@ -2,8 +2,7 @@
 
 from torch import Tensor
 from torch.nn import Linear
-from .decorator import decorate
-
+from bpexts.decorator import decorate
 
 # decorated linear layer
 DecoratedAffine = decorate(Linear)
@@ -38,15 +37,15 @@ def test_exts_hooking():
     """
     layer = DecoratedAffine(in_features=5, out_features=5)
     # exts and nn hook registration functions
-    hooks = [dummy_backward_hook,
-             dummy_forward_hook,
-             dummy_pre_forward_hook]
-    exts_register = [layer.register_exts_backward_hook,
-                     layer.register_exts_forward_hook,
-                     layer.register_exts_forward_pre_hook]
-    nn_register = [layer.register_backward_hook,
-                   layer.register_forward_hook,
-                   layer.register_forward_pre_hook]
+    hooks = [dummy_backward_hook, dummy_forward_hook, dummy_pre_forward_hook]
+    exts_register = [
+        layer.register_exts_backward_hook, layer.register_exts_forward_hook,
+        layer.register_exts_forward_pre_hook
+    ]
+    nn_register = [
+        layer.register_backward_hook, layer.register_forward_hook,
+        layer.register_forward_pre_hook
+    ]
     hooks_and_register = zip(hooks, exts_register, nn_register)
     # iterate over hooks and registration methods
     for i, (hook, exts_func, nn_func) in enumerate(hooks_and_register, 1):
@@ -57,9 +56,10 @@ def test_exts_hooking():
         nn_func(hook)
         assert len(layer.exts_hooks) == i
     # each hook type occurs twice (once from nn, once from exts)
-    for hook_type in [layer._backward_hooks,
-                      layer._forward_hooks,
-                      layer._forward_pre_hooks]:
+    for hook_type in [
+            layer._backward_hooks, layer._forward_hooks,
+            layer._forward_pre_hooks
+    ]:
         assert len(hook_type) == 2
     return layer
 
@@ -82,9 +82,10 @@ def test_hook_removing():
     layer.remove_exts_hooks()
     assert len(layer.exts_hooks) == 0
     # module has one forward, pre forward and backward hook each.
-    for hook_type in [layer._backward_hooks,
-                      layer._forward_hooks,
-                      layer._forward_pre_hooks]:
+    for hook_type in [
+            layer._backward_hooks, layer._forward_hooks,
+            layer._forward_pre_hooks
+    ]:
         assert len(hook_type) == 1
 
 

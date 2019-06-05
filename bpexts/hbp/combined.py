@@ -37,6 +37,27 @@ class HBPCompositionActivationLinear(hbp_decorate(Module)):
             in_features=in_features, out_features=out_features, bias=bias)
 
     # override
+    def set_hbp_approximation(self,
+                              average_input_jacobian=True,
+                              average_parameter_jacobian=True):
+        """Not sure if useful to implement"""
+        if average_input_jacobian is not True:
+            raise NotImplementedError
+        if average_parameter_jacobian is not True:
+            raise NotImplementedError
+        super().set_hbp_approximation(
+            average_input_jacobian=average_input_jacobian,
+            average_parameter_jacobian=average_parameter_jacobian)
+
+    def enable_hbp(self):
+        super().enable_hbp()
+        try:
+            self.activation.enable_hbp()
+            self.linear.enable_hbp()
+        except AttributeError:
+            pass
+
+    # override
     def hbp_hooks(self):
         """No hooks required."""
         pass

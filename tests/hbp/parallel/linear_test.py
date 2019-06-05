@@ -4,11 +4,11 @@ import torch
 from torch import randn, Tensor, eye, zeros_like, ones_like
 from torch.optim import SGD
 from warnings import warn
-from ..linear import HBPLinear
-from .linear import HBPParallelLinear
-from ...utils import (torch_contains_nan, set_seeds, memory_report)
-from ...optim.cg_newton import CGNewton
-from ...hessian import exact
+from bpexts.hbp.linear import HBPLinear
+from bpexts.hbp.parallel.linear import HBPParallelLinear
+from bpexts.utils import (torch_contains_nan, set_seeds, memory_report)
+from bpexts.optim.cg_newton import CGNewton
+from bpexts.hessian import exact
 
 in_features = 20
 max_blocks = 3
@@ -33,7 +33,13 @@ def example_linear():
 
 def example_linear_parallel(max_blocks=max_blocks):
     """Return example layer of HBPParallelLinear."""
-    return HBPParallelLinear(example_linear(), max_blocks)
+    layer = HBPParallelLinear(example_linear(), max_blocks)
+    print(layer)
+    layer.disable_hbp()
+    print(layer)
+    layer.enable_hbp()
+    print(layer)
+    return layer
 
 
 def test_num_blocks():
@@ -103,13 +109,11 @@ def test_input_hessian():
     for buffer in [layer.main.weight, layer.main.bias]:
         assert buffer.grad is None
         assert not hasattr(buffer, 'hvp')
-        assert not hasattr(buffer, 'hessian')
     #layer.reference_gradients(layer, None, None)
     for child in layer.parallel_children():
         for buffer in [child.weight, child.bias]:
             assert buffer.grad is not None
             assert hasattr(buffer, 'hvp')
-            assert hasattr(buffer, 'hessian')
 
 
 def brute_force_parameter_hessian(which):
@@ -127,22 +131,6 @@ def brute_force_parameter_hessian(which):
             exact.exact_hessian(loss, [child.bias])
             for child in layer.parallel_children()
         ]
-
-
-def test_weight_hessian():
-    """Check if weight Hessians are computed correctly."""
-    layer, _ = input_hessian()
-    for i, w_hessian in enumerate(brute_force_parameter_hessian('weight')):
-        w_h = layer._get_parallel_module(i).weight.hessian()
-        assert torch.allclose(w_h, w_hessian)
-
-
-def test_bias_hessian():
-    """Check if bias  Hessians are computed correctly."""
-    layer, _ = input_hessian()
-    for i, b_hessian in enumerate(brute_force_parameter_hessian('bias')):
-        b_h = layer._get_parallel_module(i).bias.hessian
-        assert torch.allclose(b_h, b_hessian)
 
 
 def test_memory_consumption_vs_hbplinear():

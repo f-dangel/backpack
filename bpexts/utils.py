@@ -7,6 +7,30 @@ import random
 import math
 
 
+def matrix_from_mvp(mvp, dims, device=torch.device('cpu')):
+    """Compute matrix representation from matrix-vector product.
+
+    Parameters:
+    -----------
+    mvp : function
+        Matrix-vector multiplication routine.
+    dims : tuple(int)
+        Dimensions of the matrix
+
+    Returns:
+    --------
+    torch.Tensor
+        Matrix representation on ``device``
+    """
+    assert len(dims) == 2
+    matrix = torch.zeros(*dims).to(device)
+    for i in range(dims[1]):
+        v = torch.zeros(dims[0]).to(device)
+        v[i] = 1.
+        matrix[:, i] = mvp(v)
+    return matrix
+
+
 def torch_allclose(a, b, *args, **kwargs):
     """Return if two tensors are element-wise equal within a tolerance.
 

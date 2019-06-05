@@ -9,9 +9,8 @@ The example is taken from
 from torch import (Tensor, randn)
 from torch.nn import Conv2d
 from random import (randint, choice)
-from .conv2d import G_Conv2d
-from ..utils import torch_allclose
-
+from bpexts.gradient.conv2d import G_Conv2d
+from bpexts.utils import torch_allclose
 
 # convolution parameters
 in_channels = 3
@@ -23,60 +22,45 @@ dilation = (1, 1)
 bias = False
 
 # predefined kernel matrix
-kernel11 = [[1, 1],
-            [2, 2]]
-kernel12 = [[1, 1],
-            [1, 1]]
-kernel13 = [[0, 1],
-            [1, 0]]
-kernel21 = [[1, 0],
-            [0, 1]]
-kernel22 = [[2, 1],
-            [2, 1]]
-kernel23 = [[1, 2],
-            [2, 0]]
+kernel11 = [[1, 1], [2, 2]]
+kernel12 = [[1, 1], [1, 1]]
+kernel13 = [[0, 1], [1, 0]]
+kernel21 = [[1, 0], [0, 1]]
+kernel22 = [[2, 1], [2, 1]]
+kernel23 = [[1, 2], [2, 0]]
 kernel = Tensor([[kernel11, kernel12, kernel13],
                  [kernel21, kernel22, kernel23]]).float()
 
 # input (1 sample)
-in_feature1 = [[1, 2, 0],
-               [1, 1, 3],
-               [0, 2, 2]]
-in_feature2 = [[0, 2, 1],
-               [0, 3, 2],
-               [1, 1, 0]]
-in_feature3 = [[1, 2, 1],
-               [0, 1, 3],
-               [3, 3, 2]]
-in1 = Tensor([[in_feature1,
-               in_feature2,
-               in_feature3]]).float()
-result1 = [[14, 20],
-           [15, 24]]
-result2 = [[12, 24],
-           [17, 26]]
+in_feature1 = [[1, 2, 0], [1, 1, 3], [0, 2, 2]]
+in_feature2 = [[0, 2, 1], [0, 3, 2], [1, 1, 0]]
+in_feature3 = [[1, 2, 1], [0, 1, 3], [3, 3, 2]]
+in1 = Tensor([[in_feature1, in_feature2, in_feature3]]).float()
+result1 = [[14, 20], [15, 24]]
+result2 = [[12, 24], [17, 26]]
 out1 = Tensor([[result1, result2]]).float()
 
 # convolution layer from torch.nn
-conv2d = Conv2d(in_channels=in_channels,
-                out_channels=out_channels,
-                kernel_size=kernel_size,
-                stride=stride,
-                padding=padding,
-                dilation=dilation,
-                bias=bias)
+conv2d = Conv2d(
+    in_channels=in_channels,
+    out_channels=out_channels,
+    kernel_size=kernel_size,
+    stride=stride,
+    padding=padding,
+    dilation=dilation,
+    bias=bias)
 conv2d.weight.data = kernel
 
 # extended convolution layer
-g_conv2d = G_Conv2d(in_channels=in_channels,
-                    out_channels=out_channels,
-                    kernel_size=kernel_size,
-                    stride=stride,
-                    padding=padding,
-                    dilation=dilation,
-                    bias=bias)
+g_conv2d = G_Conv2d(
+    in_channels=in_channels,
+    out_channels=out_channels,
+    kernel_size=kernel_size,
+    stride=stride,
+    padding=padding,
+    dilation=dilation,
+    bias=bias)
 g_conv2d.weight.data = kernel
-
 
 # as lists for zipping
 inputs = [in1]
@@ -135,22 +119,24 @@ def random_convolutions_and_inputs(in_channels=None,
     in_shape = (batch_size, in_channels) + in_size
     input = randn(in_shape)
     # torch.nn convolution
-    conv2d = Conv2d(in_channels=in_channels,
-                    out_channels=out_channels,
-                    kernel_size=kernel_size,
-                    stride=stride,
-                    padding=padding,
-                    dilation=dilation,
-                    bias=bias)
+    conv2d = Conv2d(
+        in_channels=in_channels,
+        out_channels=out_channels,
+        kernel_size=kernel_size,
+        stride=stride,
+        padding=padding,
+        dilation=dilation,
+        bias=bias)
     conv2d.weight.data = kernel
     # extended convolution layer
-    g_conv2d = G_Conv2d(in_channels=in_channels,
-                        out_channels=out_channels,
-                        kernel_size=kernel_size,
-                        stride=stride,
-                        padding=padding,
-                        dilation=dilation,
-                        bias=bias)
+    g_conv2d = G_Conv2d(
+        in_channels=in_channels,
+        out_channels=out_channels,
+        kernel_size=kernel_size,
+        stride=stride,
+        padding=padding,
+        dilation=dilation,
+        bias=bias)
     g_conv2d.weight.data = kernel
     # random bias
     if bias is True:
@@ -173,26 +159,19 @@ def compare_grads(conv2d, g_conv2d, input):
     loss_g = loss_function(out_g_conv2d)
     loss_g.backward()
     # need to choose lower precision for some reason
-    assert torch_allclose(g_conv2d.bias.grad,
-                          conv2d.bias.grad,
-                          atol=1E-4)
-    assert torch_allclose(g_conv2d.weight.grad,
-                          conv2d.weight.grad,
-                          atol=1E-4)
-    assert torch_allclose(g_conv2d.bias.grad_batch.sum(0),
-                          conv2d.bias.grad,
-                          atol=1E-4)
-    assert torch_allclose(g_conv2d.weight.grad_batch.sum(0),
-                          conv2d.weight.grad,
-                          atol=1E-4)
+    assert torch_allclose(g_conv2d.bias.grad, conv2d.bias.grad, atol=1E-4)
+    assert torch_allclose(g_conv2d.weight.grad, conv2d.weight.grad, atol=1E-4)
+    assert torch_allclose(
+        g_conv2d.bias.grad_batch.sum(0), conv2d.bias.grad, atol=1E-4)
+    assert torch_allclose(
+        g_conv2d.weight.grad_batch.sum(0), conv2d.weight.grad, atol=1E-4)
 
 
 def test_random_grad(random_runs=10):
     """Compare bias gradients for a single sample."""
     for i in range(random_runs):
         conv2d, g_conv2d, input = random_convolutions_and_inputs(
-                bias=True,
-                batch_size=1)
+            bias=True, batch_size=1)
         compare_grads(conv2d, g_conv2d, input)
 
 

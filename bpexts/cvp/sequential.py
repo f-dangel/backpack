@@ -31,6 +31,11 @@ class CVPSequential(hbp_decorate(Sequential)):
         return cls(*layers)
 
     # override
+    def enable_hbp(self):
+        for mod in self.children():
+            mod.enable_hbp()
+
+    # override
     def hbp_hooks(self):
         """No hooks required."""
         pass

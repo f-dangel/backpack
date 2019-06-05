@@ -31,6 +31,17 @@ class HBPMaxPool2d(hbp_decorate(MaxPool2d)):
         return maxpool2d
 
     # override
+    def set_hbp_approximation(self,
+                              average_input_jacobian=False,
+                              average_parameter_jacobian=None):
+        """Not sure if useful to implement"""
+        if average_input_jacobian is not False:
+            raise NotImplementedError
+        super().set_hbp_approximation(
+            average_input_jacobian=average_input_jacobian,
+            average_parameter_jacobian=average_parameter_jacobian)
+
+    # override
     def hbp_hooks(self):
         """Pooling indices and in/out dimensions are saved in forward."""
         pass
@@ -85,4 +96,4 @@ class HBPMaxPool2d(hbp_decorate(MaxPool2d)):
             for n, idx in enumerate(idx_map):
                 temp2[:, idx] += temp[:, n]
             h_in += temp2
-        return h_in / batch**2
+        return h_in / batch

@@ -31,6 +31,17 @@ class HBPConv2d(hbp_decorate(Conv2d)):
         return conv2d
 
     # override
+    def set_hbp_approximation(self,
+                              average_input_jacobian=None,
+                              average_parameter_jacobian=True):
+        """Not sure if useful to implement"""
+        if average_parameter_jacobian is not True:
+            raise NotImplementedError
+        super().set_hbp_approximation(
+            average_input_jacobian=None,
+            average_parameter_jacobian=average_parameter_jacobian)
+
+    # override
     def hbp_hooks(self):
         """Install hook storing unfolded input."""
         self.register_exts_forward_pre_hook(

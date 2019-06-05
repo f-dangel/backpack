@@ -2,7 +2,7 @@
 
 import torch
 from torch import tensor
-from .exact import (exact_hessian, exact_hessian_diagonal_blocks)
+from bpexts.hessian.exact import (exact_hessian, exact_hessian_diagonal_blocks)
 
 
 def simple_function_with_parameters():

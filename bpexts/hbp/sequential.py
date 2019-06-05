@@ -13,9 +13,7 @@ from .sigmoid import HBPSigmoid
 from .tanh import HBPTanh
 from .linear import HBPLinear
 from .conv2d import HBPConv2d
-from .conv2d_recursive import HBPConv2dRecursive
 from .maxpool2d import HBPMaxPool2d
-from .maxpool2d_recursive import HBPMaxPool2dRecursive
 from .flatten import HBPFlatten
 
 
@@ -23,20 +21,24 @@ class HBPSequential(hbp_decorate(Sequential)):
     """A sequence of HBP modules."""
     # override
     @classmethod
-    def from_torch(cls, torch_layer, use_recursive=True):
+    def from_torch(cls, torch_layer):
         if not isinstance(torch_layer, Sequential):
             raise ValueError("Expecting torch.nn.Sequential, got {}".format(
                 torch_layer.__class__))
         layers = []
         for mod in torch_layer:
-            layers.append(
-                convert_torch_to_hbp(mod, use_recursive=use_recursive))
+            layers.append(convert_torch_to_hbp(mod))
         return cls(*layers)
 
     # override
     def hbp_hooks(self):
         """No hooks required."""
         pass
+
+    # override
+    def enable_hbp(self):
+        for mod in self.children():
+            mod.enable_hbp()
 
     # override
     def backward_hessian(self,
@@ -59,32 +61,21 @@ class HBPSequential(hbp_decorate(Sequential)):
         return out_h
 
 
-def _supported_conversions(use_recursive):
+def _supported_conversions():
     """Return supported conversions."""
     return [(ReLU, HBPReLU), (Sigmoid, HBPSigmoid), (Tanh, HBPTanh),
             (Linear, HBPLinear), (ReLULinear, HBPReLULinear),
-            (SigmoidLinear, HBPSigmoidLinear),
-            (Conv2d, HBPConv2dRecursive if use_recursive else HBPConv2d),
-            (MaxPool2d,
-             HBPMaxPool2dRecursive if use_recursive else HBPMaxPool2d),
-            (Sequential, HBPSequential), (Flatten, HBPFlatten)]
+            (SigmoidLinear, HBPSigmoidLinear), (Conv2d, HBPConv2d),
+            (MaxPool2d, HBPMaxPool2d), (Sequential, HBPSequential),
+            (Flatten, HBPFlatten)]
 
 
-def convert_torch_to_hbp(layer, use_recursive=True):
-    """Convert torch layer to corresponding HBP layer.
-
-    Parameters:
-    -----------
-    use_recursive : bool
-        Use recursive layers for convolution and max pooling.
-    """
-    conversions = _supported_conversions(use_recursive)
+def convert_torch_to_hbp(layer):
+    """Convert torch layer to corresponding HBP layer."""
+    conversions = _supported_conversions()
     for (torch_cls, hbp_cls) in conversions:
         if isinstance(layer, torch_cls):
-            if isinstance(layer, Sequential):
-                return hbp_cls.from_torch(layer, use_recursive=use_recursive)
-            else:
-                return hbp_cls.from_torch(layer)
+            return hbp_cls.from_torch(layer)
     _print_conversions()
     raise ValueError("Class {} cannot be converted to HBP.".format(
         layer.__class__))
@@ -92,8 +83,6 @@ def convert_torch_to_hbp(layer, use_recursive=True):
 
 def _print_conversions():
     """Print all possible conversions."""
-    for recursion in [False, True]:
-        print("\nSupported conversions (recursion = {}):".format(recursion))
-        for torch_cls, hbp_cls in _supported_conversions(recursion):
-            print("{:>20}\t->{:>25}".format(torch_cls.__name__,
-                                            hbp_cls.__name__))
+    print("\nSupported conversions:")
+    for torch_cls, hbp_cls in _supported_conversions():
+        print("{:>20}\t->{:>25}".format(torch_cls.__name__, hbp_cls.__name__))

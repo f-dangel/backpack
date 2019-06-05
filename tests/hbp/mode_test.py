@@ -1,17 +1,16 @@
 """Hessian backpropagation tests for different modes."""
 
-from ..utils import torch_allclose, set_seeds
-from torch import randn, eye
+from bpexts.utils import set_seeds, matrix_from_mvp
+from torch import randn, eye, allclose
 from numpy import all as numpy_all
-from .linear import HBPLinear
-from .relu import HBPReLU
-from .sigmoid import HBPSigmoid
-
+from bpexts.hbp.linear import HBPLinear
+from bpexts.hbp.relu import HBPReLU
+from bpexts.hbp.sigmoid import HBPSigmoid
 
 in_features = [10, 5, 4]
 out_features = [5, 4, 2]
-input_size = (10,)
-input = randn((3,) + input_size)
+input_size = (10, )
+input = randn((3, ) + input_size)
 
 
 def random_input():
@@ -25,8 +24,7 @@ def create_layers(activation):
     set_seeds(0)
     layers = []
     for (in_, out) in zip(in_features, out_features):
-        layers.append(HBPLinear(in_features=in_,
-                                out_features=out))
+        layers.append(HBPLinear(in_features=in_, out_features=out))
         layers.append(activation())
     return layers
 
@@ -60,26 +58,32 @@ def hessian_backward(activation, modify_2nd):
     # call HBP recursively
     out_h = loss_hessian
     for layer in reversed(layers):
-        out_h = layer.backward_hessian(out_h,
-                                       modify_2nd_order_terms=modify_2nd)
+        out_h = layer.backward_hessian(
+            out_h, modify_2nd_order_terms=modify_2nd)
     return layers
 
 
 def compare_layer_hessians(layers1, layers2):
     """Compare the Hessians of both layers."""
     for l1, l2 in zip(layers1, layers2):
-        assert(l1.__class__ is l2.__class__)
+        assert (l1.__class__ is l2.__class__)
         if isinstance(l1, HBPLinear) and isinstance(l2, HBPLinear):
-            assert torch_allclose(l1.bias.hessian, l2.bias.hessian)
-            assert torch_allclose(l1.weight.hessian(), l2.weight.hessian())
+            assert allclose(
+                matrix_from_mvp(l1.bias.hvp, dims=2 * (l1.bias.numel(), )),
+                matrix_from_mvp(l2.bias.hvp, dims=2 * (l2.bias.numel(), )))
+            assert allclose(
+                matrix_from_mvp(l1.weight.hvp, dims=2 * (l1.weight.numel(), )),
+                matrix_from_mvp(l2.weight.hvp, dims=2 * (l2.weight.numel(), )))
 
 
 def check_layer_hessians_psd(layers):
     """Check layer Hessians for positive semi-definiteness."""
     for l in layers:
         if isinstance(l, HBPLinear):
-            assert all_eigvals_nonnegative(l.bias.hessian)
-            assert all_eigvals_nonnegative(l.weight.hessian())
+            assert all_eigvals_nonnegative(
+                matrix_from_mvp(l.bias.hvp, dims=2 * (l.bias.numel(), )))
+            assert all_eigvals_nonnegative(
+                matrix_from_mvp(l.weight.hvp, dims=2 * (l.weight.numel(), )))
 
 
 def all_eigvals_nonnegative(matrix):

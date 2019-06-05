@@ -2,13 +2,11 @@
 
 from torch import Tensor
 from torch.nn import Linear
-from .linear import G_Linear
-from ..utils import torch_allclose
-
+from bpexts.gradient.linear import G_Linear
+from bpexts.utils import torch_allclose
 
 # predefined weight matrix and bias
-weight = Tensor([[1, 2, 3],
-                 [4, 5, 6]]).float()
+weight = Tensor([[1, 2, 3], [4, 5, 6]]).float()
 bias = Tensor([7, 8]).float()
 in_features, out_features = 3, 2
 
@@ -34,25 +32,18 @@ out1 = Tensor([[6 + 7, 15 + 8]]).float()
 loss1 = 13**2 + 23**2
 bias_grad1 = Tensor([2 * 13, 2 * 23]).float()
 bias_grad_batch1 = bias_grad1
-weight_grad1 = Tensor([[26, 26, 26],
-                       [46, 46, 46]]).float()
+weight_grad1 = Tensor([[26, 26, 26], [46, 46, 46]]).float()
 weight_grad_batch1 = weight_grad1
 
 # input (2 samples)
-in2 = Tensor([[1, 0, 1],
-              [0, 1, 0]]).float()
-out2 = Tensor([[4 + 7, 10 + 8],
-               [2 + 7, 5 + 8]]).float()
+in2 = Tensor([[1, 0, 1], [0, 1, 0]]).float()
+out2 = Tensor([[4 + 7, 10 + 8], [2 + 7, 5 + 8]]).float()
 loss2 = 11**2 + 18**2 + 9**2 + 13**2
 bias_grad2 = Tensor([2 * (11 + 9), 2 * (18 + 13)])
-bias_grad_batch2 = Tensor([[2 * 11, 2 * 18],
-                           [2 * 9, 2 * 13]]).float()
-weight_grad2 = Tensor([[22, 18, 22],
-                       [36, 26, 36]]).float()
-weight_grad_batch2 = Tensor([[[22, 0, 22],
-                              [36, 0, 36]],
-                             [[0, 18, 0],
-                              [0, 26, 0]]]).float()
+bias_grad_batch2 = Tensor([[2 * 11, 2 * 18], [2 * 9, 2 * 13]]).float()
+weight_grad2 = Tensor([[22, 18, 22], [36, 26, 36]]).float()
+weight_grad_batch2 = Tensor([[[22, 0, 22], [36, 0, 36]],
+                             [[0, 18, 0], [0, 26, 0]]]).float()
 
 # as lists for zipping
 inputs = [in1, in2]
@@ -85,9 +76,7 @@ def test_losses():
 
 def test_grad():
     """Test computation of bias/weight gradients."""
-    for input, b_grad, w_grad in zip(inputs,
-                                     bias_grads,
-                                     weight_grads):
+    for input, b_grad, w_grad in zip(inputs, bias_grads, weight_grads):
         out = g_lin(input)
         loss = loss_function(out)
         loss.backward()
@@ -100,8 +89,7 @@ def test_grad():
 
 def test_grad_batch():
     """Test computation of bias/weight batch gradients."""
-    for input, b_grad_batch, w_grad_batch in zip(inputs,
-                                                 bias_grads_batch,
+    for input, b_grad_batch, w_grad_batch in zip(inputs, bias_grads_batch,
                                                  weight_grads_batch):
         out = g_lin(input)
         loss = loss_function(out)

@@ -33,12 +33,14 @@ class HBPParallelLinear(HBPParallel):
     """
     contained_class = HBPLinear
 
+    # TODO: The approximation mode of the children has to be synced
+    # with the main module. Will throw exceptions if changing the approximation
+
     def __init__(self, layer, max_blocks):
         # check class
         if not layer.__class__ == self.contained_class:
-            raise ValueError('Expecting layer of type {}, got {}'
-                             .format(self.contained_class,
-                                     layer.__class__))
+            raise ValueError('Expecting layer of type {}, got {}'.format(
+                self.contained_class, layer.__class__))
         # find out actual number of parallel children
         self.max_blocks = max_blocks
         super().__init__(len(layer.weight.chunk(self.max_blocks, 0)))
@@ -53,6 +55,28 @@ class HBPParallelLinear(HBPParallel):
         for name, child in parallel_children.items():
             self.main.add_module(name, child)
         self._create_main_parameters()
+
+    # override
+    def enable_hbp(self):
+        # do not enable HBP of children
+        super().enable_hbp()
+        # try to enable main layer HBP
+        try:
+            self.main.enable_hbp()
+        except AttributeError:
+            pass
+
+    # override
+    def set_hbp_approximation(self,
+                              average_input_jacobian=True,
+                              average_parameter_jacobian=True):
+        """Not sure if useful to implement"""
+        if average_parameter_jacobian is not True:
+            raise NotImplementedError
+        # very dirty workaround as the approximation modes of this
+        # layer will never be different
+        self.average_input_jac = None
+        self.average_param_jac = average_parameter_jacobian
 
     def _create_main_parameters(self):
         """Remove weight/bias `Parameters` from main module. Concatenate
@@ -95,17 +119,15 @@ class HBPParallelLinear(HBPParallel):
         w_chunks = layer.weight.data.chunk(self.max_blocks, 0)
         b_chunks = [None] * self.num_blocks if layer.bias is None\
                 else layer.bias.data.chunk(self.max_blocks, 0)
-        out_features = [w.size()[1] for w in w_chunks]
+        out_features = [w.size(0) for w in w_chunks]
         in_features = layer.in_features
         # create parallel children
         children = {}
-        for idx, (out, w, b) in enumerate(zip(out_features,
-                                              w_chunks,
-                                              b_chunks)):
+        for idx, (out, w, b) in enumerate(
+                zip(out_features, w_chunks, b_chunks)):
             name = self._parallel_module_name(idx)
-            parallel = self.contained_class(in_features=in_features,
-                                            out_features=out,
-                                            bias=b is not None)
+            parallel = self.contained_class(
+                in_features=in_features, out_features=out, bias=b is not None)
             # disable hooks, buffers
             parallel.disable_exts()
             # set parameters
@@ -127,7 +149,13 @@ class HBPParallelLinear(HBPParallel):
     # override
     def hbp_hooks(self):
         """Remove input hook in children, use a single copy instead."""
-        self.register_exts_forward_hook(self.reference_mean_input)
+        if self.average_param_jac == True:
+            self.register_exts_forward_hook(self.reference_mean_input)
+        elif self.average_param_jac == False:
+            self.register_exts_forward_hook(self.reference_input_kron_mean)
+        else:
+            raise ValueError('Unknown value for average_param_jac : {}'.format(
+                self.average_param_jac))
 
     # --- hooks ---
     @staticmethod
@@ -141,6 +169,19 @@ class HBPParallelLinear(HBPParallel):
         mean_input = module.main.mean_input
         for idx, mod in enumerate(module.parallel_children()):
             mod.register_exts_buffer('mean_input', mean_input)
+
+    @staticmethod
+    def reference_input_kron_mean(module, input, output):
+        """Save reference of `input_kron_mean` from `main` module in children,
+        avoiding copy.
+
+        Intended use as forward hook.
+        Initialize module buffer 'input_kron_mean' in all children
+        """
+        input_kron_mean = module.main.input_kron_mean
+        for idx, mod in enumerate(module.parallel_children()):
+            mod.register_exts_buffer('input_kron_mean', input_kron_mean)
+
     # --- end of hooks ---
 
     # override

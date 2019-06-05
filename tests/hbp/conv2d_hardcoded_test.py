@@ -6,12 +6,11 @@ The example is taken from
 """
 
 import torch
-from torch import (Tensor, tensor, eye, randn, einsum)
+from torch import (Tensor, tensor, eye, randn, einsum, allclose)
 from torch.nn import (Conv2d, functional)
-from .conv2d import HBPConv2d
-from .loss import batch_summed_hessian
-from ..hessian import exact
-from ..utils import torch_allclose
+from bpexts.hbp.conv2d import HBPConv2d
+from bpexts.hbp.loss import batch_summed_hessian
+from bpexts.hessian import exact
 
 torch.set_printoptions(linewidth=300, threshold=10000)
 
@@ -93,9 +92,9 @@ def test_forward():
     Handles only single instance batch.
     """
     out_conv2d = torch_example_layer()(in1)
-    assert torch_allclose(out_conv2d, out1)
+    assert allclose(out_conv2d, out1)
     out_hbp_conv2d = example_layer()(in1)
-    assert torch_allclose(out_hbp_conv2d, out1)
+    assert allclose(out_hbp_conv2d, out1)
 
 
 def layer_with_input_output_and_loss():
@@ -121,13 +120,13 @@ def test_input_hessian():
     # Hessian of loss function w.r.t layer output
     output_hessian = batch_summed_hessian(loss, out)
     loss_hessian = 2 * eye(8)
-    assert torch_allclose(loss_hessian, output_hessian)
+    assert allclose(loss_hessian, output_hessian)
     # Hessian with respect to layer inputs
     h_in_result = layer_input_hessian()
     # call hessian backward
     loss.backward()
     input_hessian = layer.backward_hessian(loss_hessian)
-    assert torch_allclose(input_hessian, h_in_result)
+    assert allclose(input_hessian, h_in_result)
 
 
 def example_bias_hessian():
@@ -135,7 +134,7 @@ def example_bias_hessian():
     layer, x, out, loss = layer_with_input_output_and_loss()
     bias_hessian = exact.exact_hessian(loss, [layer.bias])
     result = tensor([[8, 0], [0, 8]]).float()
-    assert torch_allclose(bias_hessian, result)
+    assert allclose(bias_hessian, result)
     return bias_hessian
 
 
@@ -147,13 +146,13 @@ def test_bias_hessian(random_vp=10):
     loss.backward()
     layer.backward_hessian(output_hessian, compute_input_hessian=False)
     b_hessian = example_bias_hessian()
-    assert torch_allclose(layer.bias.hessian, b_hessian)
+    assert allclose(layer.bias.hessian, b_hessian)
     # check Hessian-vector product
     for _ in range(random_vp):
         v = randn(2)
         vp = layer.bias.hvp(v)
         result = b_hessian.matmul(v)
-        assert torch_allclose(vp, result, atol=1E-5)
+        assert allclose(vp, result, atol=1E-5)
 
 
 def example_weight_hessian():
@@ -171,13 +170,13 @@ def test_weight_hessian(random_vp=10):
     loss.backward()
     layer.backward_hessian(output_hessian, compute_input_hessian=False)
     w_hessian = example_weight_hessian()
-    assert torch_allclose(layer.weight.hessian(), w_hessian)
+    assert allclose(layer.weight.hessian(), w_hessian)
     # check Hessian-vector product
     for _ in range(random_vp):
         v = randn(24)
         vp = layer.weight.hvp(v)
         result = w_hessian.matmul(v)
-        assert torch_allclose(vp, result, atol=1E-5)
+        assert allclose(vp, result, atol=1E-5)
 
 
 def test_output_shape():

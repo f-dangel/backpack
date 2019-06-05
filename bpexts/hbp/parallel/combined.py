@@ -14,9 +14,8 @@ class HBPParallelCompositionActivationLinear(HBPParallel):
         # check class
         self.contained_class = layer.__class__
         if not issubclass(self.contained_class, self.contained_parent_class):
-            raise ValueError('Expecting layers derived from {}, got {}'
-                             .format(self.contained_parent_class,
-                                     self.contained_class))
+            raise ValueError('Expecting layers derived from {}, got {}'.format(
+                self.contained_parent_class, self.contained_class))
         # find out actual number of parallel children
         self.max_blocks = max_blocks
         super().__init__(len(layer.linear.weight.chunk(self.max_blocks, 0)))
@@ -30,6 +29,31 @@ class HBPParallelCompositionActivationLinear(HBPParallel):
             self.main.add_module(name, child)
         self._create_main_parameters()
 
+    # override
+    def enable_hbp(self):
+        # do not enable HBP of children
+        super().enable_hbp()
+        # try to enable main layer HBP
+        try:
+            self.main.linear.enable_hbp()
+            self.main.activation.enable_hbp()
+        except AttributeError:
+            pass
+
+    # override
+    def set_hbp_approximation(self,
+                              average_input_jacobian=True,
+                              average_parameter_jacobian=True):
+        """Not sure if useful to implement"""
+        if average_input_jacobian is not True:
+            raise NotImplementedError
+        if average_parameter_jacobian is not True:
+            raise NotImplementedError
+        # very dirty workaround as the approximation modes of this
+        # layer will never be different from this
+        self.average_input_jac = average_input_jacobian
+        self.average_param_jac = average_parameter_jacobian
+
     def _create_main_parameters(self):
         """Remove weight/bias `Parameters` from main module. Concatenate
         weight/bias chunks from parallel children and initialize the
@@ -37,8 +61,8 @@ class HBPParallelCompositionActivationLinear(HBPParallel):
         children point to location in concatenated versions."""
         # remove weight parameter from main layer, make variable
         del self.main.linear.weight
-        self.main.linear.weight = cat([c.linear.weight for c
-                                       in self.parallel_children()])
+        self.main.linear.weight = cat(
+            [c.linear.weight for c in self.parallel_children()])
         # remove bias parameter from main layer, make variable
         has_bias = self.main.linear.bias is not None
         del self.main.linear.bias
@@ -72,17 +96,15 @@ class HBPParallelCompositionActivationLinear(HBPParallel):
         w_chunks = layer.linear.weight.data.chunk(self.max_blocks, 0)
         b_chunks = [None] * self.num_blocks if layer.linear.bias is None\
                 else layer.linear.bias.data.chunk(self.max_blocks, 0)
-        out_features = [w.size()[1] for w in w_chunks]
+        out_features = [w.size(0) for w in w_chunks]
         in_features = layer.linear.in_features
         # create parallel children
         children = {}
-        for idx, (out, w, b) in enumerate(zip(out_features,
-                                              w_chunks,
-                                              b_chunks)):
+        for idx, (out, w, b) in enumerate(
+                zip(out_features, w_chunks, b_chunks)):
             name = self._parallel_module_name(idx)
-            parallel = self.contained_class(in_features=in_features,
-                                            out_features=out,
-                                            bias=b is not None)
+            parallel = self.contained_class(
+                in_features=in_features, out_features=out, bias=b is not None)
             # disable hooks, buffers
             parallel.disable_exts()
             # set parameters
@@ -121,6 +143,7 @@ class HBPParallelCompositionActivationLinear(HBPParallel):
         mean_input = module.main.linear.mean_input
         for idx, mod in enumerate(module.parallel_children()):
             mod.linear.register_exts_buffer('mean_input', mean_input)
+
     # --- end of hooks ---
 
     # override
@@ -128,10 +151,8 @@ class HBPParallelCompositionActivationLinear(HBPParallel):
         """Split output Hessian into blocks, compute parameter Hessian of
         parallel modules."""
         # split output_hessian
-        out_h_split = [(output_hessian.chunk(
-                          self.max_blocks, 0)[i]).chunk(
-                            self.max_blocks, 1)[i]
-                    for i in range(self.num_blocks)]
+        out_h_split = [(output_hessian.chunk(self.max_blocks, 0)[i]).chunk(
+            self.max_blocks, 1)[i] for i in range(self.num_blocks)]
         # call parameter Hessian recursively
         for mod, out_h in zip(self.parallel_children(), out_h_split):
             mod.parameter_hessian(out_h)
