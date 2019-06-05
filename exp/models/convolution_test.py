@@ -89,10 +89,3 @@ def test_c1d1_forward():
     out_torch = torch_cnn(x)
     out_hbp = hbp_cnn(x)
     assert torch_allclose(out_torch, out_hbp)
-
-
-def test_c6d3_forward():
-    model = cifar10_c6d3()
-    x = rand(8, 3, 32, 32)
-    out = model(x)
-    assert tuple(out.size()) == (8, 10)

@@ -1,5 +1,5 @@
 """Model architectures used in Chen et al.: BDA-PCH (2018).
-A
+
 The same initialization method for the parameters was chosen.
 """
 
@@ -54,7 +54,7 @@ def original_mnist_model(seed=None):
 
 def separated_mnist_model(seed=None):
     """Original MNIST model with activations treated separately in HBP.
-    
+
     Parameters:
     -----------
     seed : (int)
@@ -120,7 +120,7 @@ def original_cifar10_model(seed=None):
 
 def separated_cifar10_model(seed=None):
     """Original CIFAR-10 model with activations treated separately in HBP.
-    
+
     Parameters:
     -----------
     seed : (int)
