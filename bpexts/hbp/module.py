@@ -26,8 +26,6 @@ def hbp_decorate(module_subclass):
             # determine approximation mode for backward pass in HBP
             self.set_hbp_approximation()
             self.disable_hbp()
-            # self.average_input_jac = False
-            # self.average_param_jac = True
             self.enable_hbp()
 
         def set_hbp_approximation(self,
@@ -167,9 +165,10 @@ def hbp_decorate(module_subclass):
 
         def extra_repr(self):
             """Show HBP approximation mode."""
-            repr = '{}{}avg_input_jac: {}'.format(
-                super().extra_repr(), ', ' if super().extra_repr() else '',
-                self.average_input_jac)
+            repr = super().extra_repr()
+            if self.average_input_jac is not None:
+                repr = '{}, avg_input_jac: {}'.format(repr,
+                                                      self.average_input_jac)
             if self.has_trainable_parameters(
             ) or self.average_param_jac is not None:
                 repr = '{}, avg_param_jac: {}'.format(repr,
