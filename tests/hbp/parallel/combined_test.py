@@ -36,8 +36,14 @@ def example_layer(cls):
 
 def example_layer_parallel(cls, max_blocks=max_blocks):
     """Return example layer of HBPParallelCompositionActivation."""
-    return HBPParallelCompositionActivationLinear(
+    layer = HBPParallelCompositionActivationLinear(
         example_layer(cls), max_blocks)
+    print(layer)
+    layer.disable_hbp()
+    print(layer)
+    layer.enable_hbp()
+    print(layer)
+    return layer
 
 
 def test_num_blocks():

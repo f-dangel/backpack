@@ -49,6 +49,14 @@ class HBPCompositionActivationLinear(hbp_decorate(Module)):
             average_input_jacobian=average_input_jacobian,
             average_parameter_jacobian=average_parameter_jacobian)
 
+    def enable_hbp(self):
+        super().enable_hbp()
+        try:
+            self.activation.enable_hbp()
+            self.linear.enable_hbp()
+        except AttributeError:
+            pass
+
     # override
     def hbp_hooks(self):
         """No hooks required."""

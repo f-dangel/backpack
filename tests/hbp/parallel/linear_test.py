@@ -33,7 +33,13 @@ def example_linear():
 
 def example_linear_parallel(max_blocks=max_blocks):
     """Return example layer of HBPParallelLinear."""
-    return HBPParallelLinear(example_linear(), max_blocks)
+    layer = HBPParallelLinear(example_linear(), max_blocks)
+    print(layer)
+    layer.disable_hbp()
+    print(layer)
+    layer.enable_hbp()
+    print(layer)
+    return layer
 
 
 def test_num_blocks():

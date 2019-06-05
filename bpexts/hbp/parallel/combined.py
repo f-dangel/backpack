@@ -29,6 +29,31 @@ class HBPParallelCompositionActivationLinear(HBPParallel):
             self.main.add_module(name, child)
         self._create_main_parameters()
 
+    # override
+    def enable_hbp(self):
+        # do not enable HBP of children
+        super().enable_hbp()
+        # try to enable main layer HBP
+        try:
+            self.main.linear.enable_hbp()
+            self.main.activation.enable_hbp()
+        except AttributeError:
+            pass
+
+    # override
+    def set_hbp_approximation(self,
+                              average_input_jacobian=True,
+                              average_parameter_jacobian=True):
+        """Not sure if useful to implement"""
+        if average_input_jacobian is not True:
+            raise NotImplementedError
+        if average_parameter_jacobian is not True:
+            raise NotImplementedError
+        # very dirty workaround as the approximation modes of this
+        # layer will never be different from this
+        self.average_input_jac = average_input_jacobian
+        self.average_param_jac = average_parameter_jacobian
+
     def _create_main_parameters(self):
         """Remove weight/bias `Parameters` from main module. Concatenate
         weight/bias chunks from parallel children and initialize the

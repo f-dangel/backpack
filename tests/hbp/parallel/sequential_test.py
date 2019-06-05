@@ -55,7 +55,13 @@ def example_sequence():
 
 def example_sequence_parallel(max_blocks=max_blocks):
     """Return example layer of HBPParallelCompositionActivation."""
-    return HBPParallelSequential(max_blocks, *create_layers())
+    layer = HBPParallelSequential(max_blocks, *create_layers())
+    print('Init\n:', layer)
+    layer.disable_hbp()
+    # print('Disable\n:', layer)
+    layer.enable_hbp()
+    print('Enable\n:', layer)
+    return layer
 
 
 def test_conversion():
@@ -281,10 +287,12 @@ def compare_no_splitting_with_sequence(device, num_iters):
         # check input Hessians and Hessian-vector products
         for mod2nd in ['zero', 'abs', 'clip', 'none']:
             # input Hessian
+            print(sequence)
             in_h1 = sequence.backward_hessian(
                 loss_hessian,
                 compute_input_hessian=True,
                 modify_2nd_order_terms=mod2nd)
+            print(parallel)
             in_h2 = parallel.backward_hessian(
                 loss_hessian,
                 compute_input_hessian=True,
