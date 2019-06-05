@@ -55,6 +55,15 @@ class HBPLinear(hbp_decorate(Linear)):
         return linear
 
     # override
+    def set_hbp_approximation(self,
+                              average_input_jacobian=None,
+                              average_parameter_jacobian=True):
+        """Not sure if useful to implement"""
+        super().set_hbp_approximation(
+            average_input_jacobian=None,
+            average_parameter_jacobian=average_parameter_jacobian)
+
+    # override
     def hbp_hooks(self):
         """Install hooks required for Hessian backward pass.
 
