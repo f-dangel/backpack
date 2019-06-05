@@ -32,6 +32,14 @@ def hbp_elementwise_nonlinear(module_subclass):
         """
         __doc__ = as_hbp_module.__doc__
 
+        # override
+        def set_hbp_approximation(self,
+                                  average_input_jacobian=False,
+                                  average_parameter_jacobian=None):
+            super().set_hbp_approximation(
+                average_input_jacobian=average_input_jacobian,
+                average_parameter_jacobian=None)
+
         def hbp_derivative_hooks(self):
             """Register hooks computing first and second derivative of phi.
 

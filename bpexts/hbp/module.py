@@ -29,8 +29,8 @@ def hbp_decorate(module_subclass):
             self.enable_hbp()
 
         def set_hbp_approximation(self,
-                                  average_input_jacobian=False,
-                                  average_parameter_jacobian=True):
+                                  average_input_jacobian=None,
+                                  average_parameter_jacobian=None):
             """Set approximation mode for HBP.
 
             If ``average_*_jacobians`` is set to ``True``, the Jacobian that
@@ -48,9 +48,7 @@ def hbp_decorate(module_subclass):
             # hooks might be specific to the mode, remove the old ones
             self.disable_hbp()
             self.average_input_jac = average_input_jacobian
-            self.average_param_jac = (None
-                                      if not self.has_trainable_parameters()
-                                      else average_parameter_jacobian)
+            self.average_param_jac = average_parameter_jacobian
             # enable hooks
             self.enable_hbp()
 
