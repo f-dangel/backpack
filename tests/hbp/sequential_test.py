@@ -87,7 +87,7 @@ for name, test_cls in set_up_hbp_tests(
 def hbp_from_torch_fn():
     """Create HBPSequential from torch layer."""
     torch_layer = torch_fn()
-    return HBPSequential.from_torch(torch_layer, use_recursive=False)
+    return HBPSequential.from_torch(torch_layer)
 
 
 for name, test_cls in set_up_hbp_tests(
@@ -101,25 +101,6 @@ for name, test_cls in set_up_hbp_tests(
     exec('{} = test_cls'.format(name))
     del test_cls
 
-
-def hbp_recursive_from_torch_fn():
-    """Create HBPSequential from torch layer using recursive pool/conv."""
-    torch_layer = torch_fn()
-    return HBPSequential.from_torch(torch_layer, use_recursive=True)
-
-
-for name, test_cls in set_up_hbp_tests(
-        torch_fn,
-        hbp_recursive_from_torch_fn,
-        'HBPSequentialRecursiveFromTorch',
-        input_size=input_size,
-        atol=atol,
-        rtol=rtol,
-        num_hvp=num_hvp):
-    exec('{} = test_cls'.format(name))
-    del test_cls
-
 print(torch_fn())
 print(hbp_fn())
 print(hbp_from_torch_fn())
-print(hbp_recursive_from_torch_fn())
