@@ -49,6 +49,13 @@ def original_mnist_model(seed=None):
         HBPLinear(784, 512), HBPSigmoidLinear(512, 128),
         HBPSigmoidLinear(128, 32), HBPSigmoidLinear(32, 10))
     xavier_init(model)
+    # make sure it's using the right HBP approximations
+    for idx, mod in enumerate(model.children()):
+        if idx == 0:
+            assert mod.average_input_jac == None
+        else:
+            assert mod.average_input_jac == True
+        assert mod.average_param_jac == True
     return model
 
 
@@ -115,6 +122,13 @@ def original_cifar10_model(seed=None):
         HBPSigmoidLinear(128, 64), HBPSigmoidLinear(64, 32),
         HBPSigmoidLinear(32, 16), HBPSigmoidLinear(16, 10))
     xavier_init(model)
+    # make sure it's using the right HBP approximations
+    for idx, mod in enumerate(model.children()):
+        if idx == 0:
+            assert mod.average_input_jac == None
+        else:
+            assert mod.average_input_jac == True
+        assert mod.average_param_jac == True
     return model
 
 
