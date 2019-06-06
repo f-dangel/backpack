@@ -137,19 +137,19 @@ def main(run_experiments=True):
     seeds = range(10)
     labels = [
         'SGD',
-        # 'CG (GGN)',
-        # 'CG (PCH, abs)',
-        # 'CG (PCH, clip)',
+        'CG (GGN)',
+        'CG (PCH, abs)',
+        'CG (PCH, clip)',
     ]
     experiments = [
         # 1) SGD curve
         cifar10_sgd_train_fn(),
         # 2) Generalized Gauss-Newton curve
-        # cifar10_cgnewton_train_fn('zero'),
+        cifar10_cgnewton_train_fn('zero'),
         # 3) BDA-PCH curve
-        # cifar10_cgnewton_train_fn('abs'),
+        cifar10_cgnewton_train_fn('abs'),
         # 4) alternative BDA-PCH curve
-        # cifar10_cgnewton_train_fn('clip'),
+        cifar10_cgnewton_train_fn('clip'),
     ]
 
     def run():
