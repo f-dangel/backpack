@@ -14,7 +14,8 @@ from exp.models.chen2018 import original_mnist_model
 from exp.loading.load_mnist import MNISTLoader
 from exp.training.second_order import SecondOrderTraining
 from exp.training.runner import TrainingRunner
-from exp.utils import (directory_in_data, dirname_from_params)
+from exp.utils import (directory_in_data, dirname_from_params,
+                       directory_in_fig)
 from bpexts.optim.cg_newton import CGNewton
 from bpexts.hbp.parallel.sequential import HBPParallelSequential
 
@@ -108,17 +109,17 @@ def main(run_experiments=True):
     seeds = range(10)
 
     labels = [
-        # 'GGN',
+        'GGN',
         'PCH, abs',
-        # 'PCH, clip',
+        'PCH, clip',
     ]
     modify_2nd_order_terms = [
         # 1) GGN, different splittings
-        # 'hzero',
+        'zero',
         # 2) PCH, different splittings
         'abs',
         # 3) PCH alternative, different splittings
-        # 'clip'
+        'clip'
     ]
 
     # expand the labels for the experiments
