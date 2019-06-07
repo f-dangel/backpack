@@ -96,12 +96,18 @@ class HBPLinearHardcodedTest(unittest.TestCase):
         layer.set_hbp_approximation(
             average_input_jacobian=None, average_parameter_jacobian=True)
         layer(x)
+        layer.backward_hessian(
+            torch.randn(layer.out_features, layer.out_features))
         assert torch.allclose(layer.mean_input, x_mean)
         # check of approximation 2
         x_kron_mean = torch.einsum('bi,bj->ij', (x_flat, x_flat)) / x.size(0)
         layer.set_hbp_approximation(
             average_input_jacobian=None, average_parameter_jacobian=False)
+        layer.disable_hbp()
+        layer.enable_hbp()
         layer(x)
+        layer.backward_hessian(
+            torch.randn(layer.out_features, layer.out_features))
         assert torch.allclose(layer.input_kron_mean, x_kron_mean)
         # make sure the old buffer has been deleted
         assert not hasattr(layer, 'mean_input')
