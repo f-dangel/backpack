@@ -31,13 +31,6 @@ class HBPLinear(hbp_decorate(Linear)):
     iii) the Hessian with respect to the inputs is given by
          input_hessian = weight^T * output_hessian * weight.
     """
-    # Do not compute input Hessian for dimensions larger than
-    # (instead, return a matrix-vector product function)
-    H_IN_THRESHOLD = 5000
-
-    # TODO: Layer should also be able to accept MVP routines with the
-    # output Hessian as input during HBP
-
     # override
     @classmethod
     def from_torch(cls, torch_layer):
@@ -139,21 +132,8 @@ class HBPLinear(hbp_decorate(Linear)):
          input_hessian = weight * output_hessian * weight^T.
         """
         assert isinstance(output_hessian, Tensor)
-        if self.in_features >= self.H_IN_THRESHOLD:
-
-            def input_hessian_vp(v):
-                """Multiplication with the input Hessian."""
-                assert tuple(v.size()) == (self.in_features, )
-                result = self.weight.matmul(v)
-                result = output_hessian.matmul(result)
-                result = self.weight.t().matmul(result)
-                return result.detach()
-
-            return input_hessian_vp
-        else:
-            in_hessian = self.weight.t().matmul(output_hessian).matmul(
-                self.weight)
-            return in_hessian.detach()
+        in_hessian = self.weight.t().matmul(output_hessian).matmul(self.weight)
+        return in_hessian.detach()
 
     def bias_hessian(self, output_hessian):
         """Initialized bias attributes hessian and hvp.
