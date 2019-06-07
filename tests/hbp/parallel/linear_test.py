@@ -61,10 +61,13 @@ def test_forward_pass():
     parallel = example_linear_parallel(max_blocks=max_blocks)
     x = random_input()
     assert torch.allclose(linear(x), parallel(x))
+    hessian = torch.rand(2 * (linear.out_features, ))
+    linear.backward_hessian(hessian)
+    parallel.backward_hessian(hessian)
     assert isinstance(parallel.main.mean_input, Tensor)
     # check HBP buffers
     for child in parallel.parallel_children():
-        assert isinstance(child.mean_input, Tensor)
+        assert hasattr(child, 'mean_input')
         assert child.mean_input is parallel.main.mean_input
 
 
@@ -194,23 +197,23 @@ def compare_no_splitting_with_linear(device, num_iters):
 
     # check equality of gradients/hvp over multiple runs
     for i in range(num_iters):
-        # 5 samples
-        input = randn(5, in_features, device=device)
-        # forward pass checking
-        out1, loss1 = forward(linear, input)
-        out2, loss2 = forward(parallel, input)
-        assert torch.allclose(out1, out2)
-        # gradient checking
-        loss1.backward()
-        loss2.backward()
-        for p1, p2 in zip(linear.parameters(), parallel.parameters()):
-            assert p1.grad is not None and p2.grad is not None
-            assert not torch.allclose(p1.grad, zeros_like(p1))
-            assert not torch.allclose(p2.grad, zeros_like(p2))
-            assert torch.allclose(p1.grad, p2.grad)
-        loss_hessian = randn(out_features, out_features, device=device)
         # check input Hessians and Hessian-vector products
         for mod2nd in ['zero', 'abs', 'clip', 'none']:
+            # 5 samples
+            input = randn(5, in_features, device=device)
+            # forward pass checking
+            out1, loss1 = forward(linear, input)
+            out2, loss2 = forward(parallel, input)
+            assert torch.allclose(out1, out2)
+            # gradient checking
+            loss1.backward()
+            loss2.backward()
+            for p1, p2 in zip(linear.parameters(), parallel.parameters()):
+                assert p1.grad is not None and p2.grad is not None
+                assert not torch.allclose(p1.grad, zeros_like(p1))
+                assert not torch.allclose(p2.grad, zeros_like(p2))
+                assert torch.allclose(p1.grad, p2.grad)
+            loss_hessian = randn(out_features, out_features, device=device)
             # input Hessian
             in_h1 = linear.backward_hessian(
                 loss_hessian,

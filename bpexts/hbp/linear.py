@@ -82,8 +82,6 @@ class HBPLinear(hbp_decorate(Linear)):
         else:
             raise ValueError('Unknown value for average_param_jac : {}'.format(
                 self.average_param_jac))
-        # free input
-        self.input = None
 
     def _mean_input(self):
         """Compute batch average of module input. Return flat."""

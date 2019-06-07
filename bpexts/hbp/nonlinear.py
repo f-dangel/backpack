@@ -90,9 +90,6 @@ def hbp_elementwise_nonlinear(module_subclass):
             idx = list(range(in_hessian.size()[0]))
             in_hessian[idx, idx] = in_hessian[idx, idx] + self._residuum(
                 modify_2nd_order_terms)
-            # free buffers
-            self.grad_output = None
-            self.grad_phi, self.gradgrad_phi = None, None
             return in_hessian
 
         def _gauss_newton(self, output_hessian):

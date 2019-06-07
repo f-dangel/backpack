@@ -106,10 +106,10 @@ def hbp_decorate(module_subclass):
             self.compute_backward_hessian_quantities()
             if self.has_trainable_parameters():
                 self.parameter_hessian(output_hessian)
-            return None if compute_input_hessian is False else\
-                self.input_hessian(
-                    output_hessian,
-                    modify_2nd_order_terms=modify_2nd_order_terms)
+            return (None
+                    if compute_input_hessian is False else self.input_hessian(
+                        output_hessian,
+                        modify_2nd_order_terms=modify_2nd_order_terms))
 
         def compute_backward_hessian_quantities(self):
             """Compute quantities required for backprop of the Hessian."""
