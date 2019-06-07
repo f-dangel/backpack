@@ -45,12 +45,11 @@ def hbp_decorate(module_subclass):
                 Use batch averaged Jacobian to compute the parameter Hessian.
                 (Will be ignored if the module does not possess parameters)
             """
-            # hooks might be specific to the mode, remove the old ones
-            self.disable_hbp()
+            allowed = [True, False, None]
+            assert average_input_jacobian in allowed
+            assert average_parameter_jacobian in allowed
             self.average_input_jac = average_input_jacobian
             self.average_param_jac = average_parameter_jacobian
-            # enable hooks
-            self.enable_hbp()
 
         def enable_hbp(self):
             """Enable Hessian backpropagation functionality.
@@ -104,12 +103,17 @@ def hbp_decorate(module_subclass):
                                           If compute_input_hessian is False,
                                           return None.
             """
+            self.compute_backward_hessian_quantities()
             if self.has_trainable_parameters():
                 self.parameter_hessian(output_hessian)
             return None if compute_input_hessian is False else\
                 self.input_hessian(
-                        output_hessian,
-                        modify_2nd_order_terms=modify_2nd_order_terms)
+                    output_hessian,
+                    modify_2nd_order_terms=modify_2nd_order_terms)
+
+        def compute_backward_hessian_quantities(self):
+            """Compute quantities required for backprop of the Hessian."""
+            pass
 
         def has_trainable_parameters(self):
             """Check if there are trainable parameters.
@@ -173,5 +177,19 @@ def hbp_decorate(module_subclass):
                                                       self.average_param_jac)
             return repr
 
+        # --- hooks ---
+        @staticmethod
+        def store_input(module, input):
+            """Save reference to input of layer.
+
+            Intended use as pre-forward hook.
+
+            Initialize module buffer 'input'.
+            """
+            if not len(input) == 1:
+                raise ValueError('Cannot handle multi-input scenario')
+            module.register_exts_buffer('input', input[0])
+
     HBPModule.__name__ = 'HBP{}'.format(module_subclass.__name__)
+
     return HBPModule
