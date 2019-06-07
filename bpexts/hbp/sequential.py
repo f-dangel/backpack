@@ -4,10 +4,8 @@ from .module import hbp_decorate
 # torch layers
 from torch.nn import (ReLU, Sigmoid, Tanh, Linear, Conv2d, MaxPool2d,
                       Sequential)
-from ..utils import Flatten, SigmoidLinear, ReLULinear
+from ..utils import Flatten
 # HBP layers
-from .combined_relu import HBPReLULinear
-from .combined_sigmoid import HBPSigmoidLinear
 from .relu import HBPReLU
 from .sigmoid import HBPSigmoid
 from .tanh import HBPTanh
@@ -64,10 +62,9 @@ class HBPSequential(hbp_decorate(Sequential)):
 def _supported_conversions():
     """Return supported conversions."""
     return [(ReLU, HBPReLU), (Sigmoid, HBPSigmoid), (Tanh, HBPTanh),
-            (Linear, HBPLinear), (ReLULinear, HBPReLULinear),
-            (SigmoidLinear, HBPSigmoidLinear), (Conv2d, HBPConv2d),
-            (MaxPool2d, HBPMaxPool2d), (Sequential, HBPSequential),
-            (Flatten, HBPFlatten)]
+            (Linear, HBPLinear), (Conv2d, HBPConv2d), (MaxPool2d,
+                                                       HBPMaxPool2d),
+            (Sequential, HBPSequential), (Flatten, HBPFlatten)]
 
 
 def convert_torch_to_hbp(layer):
