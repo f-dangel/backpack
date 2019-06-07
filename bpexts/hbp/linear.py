@@ -1,5 +1,6 @@
 """Hessian backpropagation for a linear layer."""
 
+from warnings import warn
 from torch import einsum, Tensor
 from torch.nn import Linear
 from .module import hbp_decorate
@@ -52,6 +53,11 @@ class HBPLinear(hbp_decorate(Linear)):
                               average_input_jacobian=None,
                               average_parameter_jacobian=True):
         """Not sure if useful to implement"""
+        if average_input_jacobian is not None:
+            warn(
+                'HBPLinear: You tried to set the input Hessian approximation',
+                ' to {}, but both approximations yield the same behavior.'.
+                format(average_input_jacobian), 'Resetting to None.')
         super().set_hbp_approximation(
             average_input_jacobian=None,
             average_parameter_jacobian=average_parameter_jacobian)
@@ -63,43 +69,31 @@ class HBPLinear(hbp_decorate(Linear)):
         The computation of the Hessian usually involves quantities that
         need to be computed during a forward or backward pass.
         """
+        self.register_exts_forward_pre_hook(self.store_input)
+
+    # override
+    def compute_backward_hessian_quantities(self):
+        """Compute quantities for weight Hessian depending on approximation."""
         if self.average_param_jac == True:
-            self.register_exts_forward_pre_hook(self.store_mean_input)
+            self.register_exts_buffer('mean_input', self._mean_input())
         elif self.average_param_jac == False:
-            self.register_exts_forward_pre_hook(self.store_input_kron_mean)
+            self.register_exts_buffer('input_kron_mean',
+                                      self._input_kron_mean())
         else:
             raise ValueError('Unknown value for average_param_jac : {}'.format(
                 self.average_param_jac))
+        # free input
+        self.input = None
 
-    # --- hooks ---
-    @staticmethod
-    def store_input_kron_mean(module, input):
-        """Save mean value of flattened input's Kronecker product.
+    def _mean_input(self):
+        """Compute batch average of module input. Return flat."""
+        return self.input.mean(0).detach().view(-1)
 
-        Intended use as pre-forward hook.
-        Initialize module buffer 'input_kron_mean'.
-        """
-        if not len(input) == 1:
-            raise ValueError('Cannot handle multi-input scenario')
-        batch = input[0].size(0)
-        input_flat = input[0].detach().view(batch, -1)
-        input_kron_mean = einsum('bi,bj->ij', (input_flat, input_flat)) / batch
-        module.register_exts_buffer('input_kron_mean', input_kron_mean)
-
-    @staticmethod
-    def store_mean_input(module, input):
-        """Save batch average of flattened input of layer.
-
-        Intended use as pre-forward hook.
-        Initialize module buffer 'mean_input'.
-        """
-        if not len(input) == 1:
-            raise ValueError('Cannot handle multi-input scenario')
-        batch = input[0].size(0)
-        mean_input = input[0].detach().view(batch, -1).mean(0)
-        module.register_exts_buffer('mean_input', mean_input)
-
-    # --- end of hooks ---
+    def _input_kron_mean(self):
+        """Compute batch average of input outer product."""
+        batch = self.input.size(0)
+        return einsum('bi,bj->ij', (self.input.view(
+            batch, -1), self.input.view(batch, -1))).detach() / batch
 
     # override
     def parameter_hessian(self, output_hessian):
