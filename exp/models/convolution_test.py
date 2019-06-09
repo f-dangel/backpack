@@ -1,9 +1,9 @@
 """Test the convolutional neural network architectures for the experiments."""
 
-from torch import rand
+from torch import rand, allclose
 from torch.nn import (Module, Sigmoid, Linear, Conv2d)
-from .convolution import c1d1, cifar10_c6d3
-from bpexts.utils import torch_allclose, set_seeds
+from .convolution import c1d1
+from bpexts.utils import set_seeds
 from bpexts.hbp.conv2d import HBPConv2d
 from numpy import prod
 
@@ -76,7 +76,7 @@ def test_compare_c1d1_parameters():
     torch_cnn = torch_c1d1()
     assert len(list(hbp_cnn.parameters())) == len(list(torch_cnn.parameters()))
     for p1, p2 in zip(hbp_cnn.parameters(), torch_cnn.parameters()):
-        assert torch_allclose(p1, p2)
+        assert allclose(p1, p2)
 
 
 def test_c1d1_forward():
@@ -88,4 +88,4 @@ def test_c1d1_forward():
     x = rand(12, 1, 28, 28)
     out_torch = torch_cnn(x)
     out_hbp = hbp_cnn(x)
-    assert torch_allclose(out_torch, out_hbp)
+    assert allclose(out_torch, out_hbp)

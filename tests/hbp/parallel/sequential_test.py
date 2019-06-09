@@ -7,11 +7,8 @@ from bpexts.hbp.parallel.sequential import HBPParallelSequential
 from bpexts.hbp.sequential import HBPSequential
 from bpexts.hbp.linear import HBPLinear
 from bpexts.hbp.parallel.linear import HBPParallelLinear
-from bpexts.hbp.combined_sigmoid import HBPSigmoidLinear
-from bpexts.hbp.combined_relu import HBPReLULinear
 from bpexts.hbp.sigmoid import HBPSigmoid
 from bpexts.hbp.relu import HBPReLU
-from bpexts.hbp.parallel.combined import HBPParallelCompositionActivationLinear
 from bpexts.utils import (set_seeds, memory_report)
 from bpexts.optim.cg_newton import CGNewton
 from bpexts.hessian import exact
@@ -19,11 +16,11 @@ from bpexts.hessian import exact
 in_features = [20, 15, 10]
 out_features = [15, 10, 5]
 # DO NOT MODIFY!
-classes = [HBPLinear, HBPSigmoidLinear, HBPReLULinear, HBPSigmoid, HBPReLU]
+classes = [HBPLinear, HBPLinear, HBPLinear, HBPSigmoid, HBPReLU]
 # DO NOT MODIFY!
 target_classes = [
-    HBPParallelLinear, HBPParallelCompositionActivationLinear,
-    HBPParallelCompositionActivationLinear, HBPSigmoid, HBPReLU
+    HBPParallelLinear, HBPParallelLinear, HBPParallelLinear, HBPSigmoid,
+    HBPReLU
 ]
 max_blocks = 2
 num_layers = len(in_features)
@@ -125,27 +122,15 @@ def brute_force_hessian(layer_idx, parallel_idx, which):
     parallel = example_sequence_parallel()
     _, loss = forward(parallel, random_input())
     if which == 'weight':
-        if layer_idx == 0:
-            return exact.exact_hessian(loss, [
-                list(parallel.children())[layer_idx]._get_parallel_module(
-                    parallel_idx).weight
-            ])
-        else:
-            return exact.exact_hessian(loss, [
-                list(parallel.children())[layer_idx]._get_parallel_module(
-                    parallel_idx).linear.weight
-            ])
+        return exact.exact_hessian(loss, [
+            list(parallel.children())[layer_idx]._get_parallel_module(
+                parallel_idx).weight
+        ])
     elif which == 'bias':
-        if layer_idx == 0:
-            return exact.exact_hessian(loss, [
-                list(parallel.children())[layer_idx]._get_parallel_module(
-                    parallel_idx).bias
-            ])
-        else:
-            return exact.exact_hessian(loss, [
-                list(parallel.children())[layer_idx]._get_parallel_module(
-                    parallel_idx).linear.bias
-            ])
+        return exact.exact_hessian(loss, [
+            list(parallel.children())[layer_idx]._get_parallel_module(
+                parallel_idx).bias
+        ])
     else:
         raise ValueError
 
@@ -180,10 +165,7 @@ def test_parameter_hessians(random_vp=10):
         layer_idx = list(layer.children())[idx]
         for n in range(layer_idx.num_blocks):
             linear = None
-            if idx == 0:
-                linear = layer_idx._get_parallel_module(n)
-            else:
-                linear = layer_idx._get_parallel_module(n).linear
+            linear = layer_idx._get_parallel_module(n)
             b_brute_force = brute_force_hessian(idx, n, 'bias')
             # check bias Hessian-veector product
             for _ in range(random_vp):
@@ -197,11 +179,7 @@ def test_parameter_hessians(random_vp=10):
             continue
         layer_idx = list(layer.children())[idx]
         for n in range(layer_idx.num_blocks):
-            linear = None
-            if idx == 0:
-                linear = layer_idx._get_parallel_module(n)
-            else:
-                linear = layer_idx._get_parallel_module(n).linear
+            linear = layer_idx._get_parallel_module(n)
             w_brute_force = brute_force_hessian(idx, n, 'weight')
             # check weight Hessian-vector product
             for _ in range(random_vp):
@@ -334,9 +312,9 @@ def compare_optimization_no_splitting_with_sequence(device, num_iters):
         assert torch.allclose(p1, p2)
 
     opt1 = CGNewton(
-        sequence.parameters(), 0.1, 0.02, cg_atol=1E-8, cg_tol=1E-1)
+        sequence.parameters(), 0.01, 0.02, cg_atol=1E-8, cg_tol=1E-1)
     opt2 = CGNewton(
-        parallel.parameters(), 0.1, 0.02, cg_atol=1E-8, cg_tol=1E-1)
+        parallel.parameters(), 0.01, 0.02, cg_atol=1E-8, cg_tol=1E-1)
 
     # check equality of gradients/hvp over multiple runs
     for i in range(num_iters):
@@ -353,9 +331,9 @@ def compare_optimization_no_splitting_with_sequence(device, num_iters):
         loss2.backward()
         for p1, p2 in zip(sequence.parameters(), parallel.parameters()):
             assert p1.grad is not None and p2.grad is not None
+            assert torch.allclose(p1.grad, p2.grad)
             assert not torch.allclose(p1.grad, zeros_like(p1))
             assert not torch.allclose(p2.grad, zeros_like(p2))
-            assert torch.allclose(p1.grad, p2.grad)
         loss_hessian = randn(out_features[-1], out_features[-1], device=device)
         # PSD
         loss_hessian = loss_hessian.t().matmul(loss_hessian)

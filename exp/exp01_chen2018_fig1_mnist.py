@@ -9,7 +9,7 @@ from torch.nn import CrossEntropyLoss
 from torch.optim import SGD
 from os import path
 from collections import OrderedDict
-from exp.models.chen2018 import original_mnist_model
+from exp.models.chen2018 import mnist_model, hbp_mnist_model
 from exp.loading.load_mnist import MNISTLoader
 from exp.training.first_order import FirstOrderTraining
 from exp.training.second_order import SecondOrderTraining
@@ -43,9 +43,7 @@ def mnist_sgd_train_fn():
     # ------------------
     def training_fn():
         """Training function setting up the train instance."""
-        model = original_mnist_model()
-        # NOTE: Important line, deactivate extension hooks/buffers!
-        model.disable_exts()
+        model = mnist_model()
         loss_function = CrossEntropyLoss()
         data_loader = MNISTLoader(
             train_batch_size=batch, test_batch_size=batch)
@@ -103,7 +101,8 @@ def mnist_cgnewton_train_fn(modify_2nd_order_terms):
     def train_fn():
         """Training function setting up the train instance."""
         # set up training and run
-        model = original_mnist_model()
+        model = hbp_mnist_model(
+            average_input_jacobian=True, average_parameter_jacobian=True)
         loss_function = CrossEntropyLoss()
         data_loader = MNISTLoader(
             train_batch_size=batch, test_batch_size=batch)

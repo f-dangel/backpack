@@ -7,8 +7,6 @@ from ..linear import HBPLinear
 from .linear import HBPParallelLinear
 from ..relu import HBPReLU
 from ..sigmoid import HBPSigmoid
-from ..combined import HBPCompositionActivationLinear
-from .combined import HBPParallelCompositionActivationLinear
 
 
 class HBPParallelSequential(HBPSequential):
@@ -39,7 +37,6 @@ class HBPParallelSequential(HBPSequential):
     # known conversions for layers to parallel equivalents
     conversions = {
         HBPLinear: HBPParallelLinear,
-        HBPCompositionActivationLinear: HBPParallelCompositionActivationLinear,
     }
     # no conversions will happen for these layers
     no_conversion = [

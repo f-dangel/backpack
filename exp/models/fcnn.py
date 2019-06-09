@@ -4,7 +4,7 @@ import torch.nn as nn
 from numpy import prod
 from bpexts.hbp.linear import HBPLinear
 from bpexts.hbp.flatten import HBPFlatten
-from bpexts.hbp.combined_sigmoid import HBPSigmoidLinear
+from bpexts.hbp.sigmoid import HBPSigmoid
 from bpexts.hbp.sequential import HBPSequential
 
 
@@ -34,15 +34,11 @@ def fcnn(
     layers = [HBPFlatten()]
     out_dims = hidden_dims + [num_outputs]
     for idx, out_dim in enumerate(out_dims):
-        if idx == 0:
-            layers.append(
-                HBPLinear(
-                    in_features=in_features, out_features=out_dim, bias=True))
-        else:
-            layers.append(
-                HBPSigmoidLinear(
-                    in_features=in_features, out_features=out_dim, bias=True))
-
+        if idx != 0:
+            layers.append(HBPSigmoid())
+        layers.append(
+            HBPLinear(
+                in_features=in_features, out_features=out_dim, bias=True))
         in_features = out_dim
     model = HBPSequential(*layers)
     return model
