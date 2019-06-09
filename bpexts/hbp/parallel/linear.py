@@ -128,13 +128,13 @@ class HBPParallelLinear(HBPParallel):
     # override
     def compute_backward_hessian_quantities(self):
         self.main.compute_backward_hessian_quantities()
-        if self.average_param_jac == True:
+        if self.main.average_param_jac == True:
             self._reference_mean_input()
-        elif self.average_param_jac == False:
+        elif self.main.average_param_jac == False:
             self._reference_input_kron_mean()
         else:
             raise ValueError('Unknown value for average_param_jac : {}'.format(
-                self.average_param_jac))
+                self.main.average_param_jac))
 
     def _reference_mean_input(self):
         """Save reference of `mean_input` in children."""
