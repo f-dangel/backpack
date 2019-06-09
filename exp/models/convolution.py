@@ -5,7 +5,7 @@ from numpy import prod
 from bpexts.hbp.linear import HBPLinear
 from bpexts.hbp.flatten import HBPFlatten
 from bpexts.hbp.conv2d import HBPConv2d
-from bpexts.hbp.combined_sigmoid import HBPSigmoidLinear
+from bpexts.hbp.sigmoid import HBPSigmoid
 from bpexts.hbp.sequential import HBPSequential
 from bpexts.utils import Flatten
 
@@ -55,7 +55,8 @@ def c1d1(
             stride=stride),
         # need to flatten the image-shaped outputs of conv into vectors
         HBPFlatten(),
-        HBPSigmoidLinear(
+        HBPSigmoid(),
+        HBPLinear(
             in_features=output_numel, out_features=num_outputs, bias=True))
     return model
 
