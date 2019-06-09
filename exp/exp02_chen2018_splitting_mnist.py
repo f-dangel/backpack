@@ -10,14 +10,12 @@ import torch
 from torch.nn import CrossEntropyLoss
 from os import path
 from collections import OrderedDict
-from exp.models.chen2018 import original_mnist_model
+from exp.models.chen2018 import hbp_split_mnist_model
 from exp.loading.load_mnist import MNISTLoader
 from exp.training.second_order import SecondOrderTraining
 from exp.training.runner import TrainingRunner
-from exp.utils import (directory_in_data, dirname_from_params,
-                       directory_in_fig)
+from exp.utils import (directory_in_data, dirname_from_params)
 from bpexts.optim.cg_newton import CGNewton
-from bpexts.hbp.parallel.sequential import HBPParallelSequential
 
 # global hyperparameters
 batch = 500
@@ -25,7 +23,6 @@ epochs = 20
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 dirname = 'exp02_chen_splitting/mnist'
 data_dir = directory_in_data(dirname)
-fig_dir = directory_in_fig(dirname)
 logs_per_epoch = 5
 
 
@@ -74,9 +71,10 @@ def mnist_cgnewton_train_fn(modify_2nd_order_terms, max_blocks):
     def train_fn():
         """Training function setting up the train instance."""
         # set up training and run
-        model = original_mnist_model()
-        # split into parallel modules
-        model = HBPParallelSequential(max_blocks, *list(model.children()))
+        model = hbp_split_mnist_model(
+            max_blocks,
+            average_input_jacobian=True,
+            average_parameter_jacobian=True)
         loss_function = CrossEntropyLoss()
         data_loader = MNISTLoader(
             train_batch_size=batch, test_batch_size=batch)

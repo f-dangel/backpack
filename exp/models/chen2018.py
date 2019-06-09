@@ -6,6 +6,8 @@ The same initialization method for the parameters is chosen.
 import torch
 import torch.nn as nn
 from torch.nn import Sequential, Linear, Sigmoid
+from bpexts.hbp.sequential import convert_torch_to_hbp
+from bpexts.hbp.parallel.sequential import HBPParallelSequential
 
 
 def mnist_model():
@@ -24,6 +26,32 @@ def mnist_model():
     return model
 
 
+def hbp_mnist_model(average_input_jacobian=True,
+                    average_parameter_jacobian=True):
+    """Same model as ``mnist_model``, but with HBP functionality."""
+    torch_model = mnist_model()
+    hbp_model = convert_torch_to_hbp(torch_model)
+    hbp_model.set_hbp_approximation(
+        average_input_jacobian=average_input_jacobian,
+        average_parameter_jacobian=average_parameter_jacobian)
+    return hbp_model
+
+
+def hbp_split_mnist_model(max_blocks,
+                          average_input_jacobian=True,
+                          average_parameter_jacobian=True):
+    """Same model as ``mnist_model`` with HBP and split parameters."""
+    hbp_model = hbp_mnist_model(
+        average_input_jacobian=average_input_jacobian,
+        average_parameter_jacobian=average_parameter_jacobian)
+    split_hbp_model = HBPParallelSequential(max_blocks,
+                                            *list(hbp_model.children()))
+    split_hbp_model.set_hbp_approximation(
+        average_input_jacobian=average_input_jacobian,
+        average_parameter_jacobian=average_parameter_jacobian)
+    return split_hbp_model
+
+
 def cifar10_model():
     """FCNN architecture used by Chen et al on CIFAR-10.
 
@@ -40,6 +68,32 @@ def cifar10_model():
         Sigmoid(), Linear(16, 10))
     xavier_init(model)
     return model
+
+
+def hbp_cifar10_model(average_input_jacobian=True,
+                      average_parameter_jacobian=True):
+    """Same model as ``cifar10_model``, but with HBP functionality."""
+    torch_model = cifar10_model()
+    hbp_model = convert_torch_to_hbp(torch_model)
+    hbp_model.set_hbp_approximation(
+        average_input_jacobian=average_input_jacobian,
+        average_parameter_jacobian=average_parameter_jacobian)
+    return hbp_model
+
+
+def hbp_split_cifar10_model(max_blocks,
+                            average_input_jacobian=True,
+                            average_parameter_jacobian=True):
+    """Same model as ``mnist_model`` with HBP and split parameters."""
+    hbp_model = hbp_cifar10_model(
+        average_input_jacobian=average_input_jacobian,
+        average_parameter_jacobian=average_parameter_jacobian)
+    split_hbp_model = HBPParallelSequential(max_blocks,
+                                            *list(hbp_model.children()))
+    split_hbp_model.set_hbp_approximation(
+        average_input_jacobian=average_input_jacobian,
+        average_parameter_jacobian=average_parameter_jacobian)
+    return split_hbp_model
 
 
 def xavier_init(model):

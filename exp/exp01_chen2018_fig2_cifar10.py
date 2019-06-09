@@ -9,12 +9,11 @@ from torch.nn import CrossEntropyLoss
 from torch.optim import SGD
 from os import path
 from collections import OrderedDict
-from exp.models.chen2018 import original_cifar10_model
+from exp.models.chen2018 import cifar10_model, hbp_cifar10_model
 from exp.loading.load_cifar10 import CIFAR10Loader
 from exp.training.first_order import FirstOrderTraining
 from exp.training.second_order import SecondOrderTraining
 from exp.training.runner import TrainingRunner
-from exp.plotting.plotting import OptimizationPlot
 from exp.utils import (directory_in_data, dirname_from_params)
 from bpexts.optim.cg_newton import CGNewton
 
@@ -45,9 +44,7 @@ def cifar10_sgd_train_fn():
     def training_fn():
         """Training function setting up the train instance."""
         # setting up training and run
-        model = original_cifar10_model()
-        # NOTE: Important line, deactivate extension hooks/buffers!
-        model.disable_exts()
+        model = cifar10_model()
         loss_function = CrossEntropyLoss()
         data_loader = CIFAR10Loader(
             train_batch_size=batch, test_batch_size=batch)
@@ -105,7 +102,8 @@ def cifar10_cgnewton_train_fn(modify_2nd_order_terms):
     def training_fn():
         """Training function setting up the train instance."""
         # set up training and run
-        model = original_cifar10_model()
+        model = hbp_cifar10_model(
+            average_input_jacobian=True, average_parameter_jacobian=True)
         loss_function = CrossEntropyLoss()
         data_loader = CIFAR10Loader(
             train_batch_size=batch, test_batch_size=batch)
