@@ -34,12 +34,10 @@ class HBPMaxPool2d(hbp_decorate(MaxPool2d)):
     def set_hbp_approximation(self,
                               average_input_jacobian=False,
                               average_parameter_jacobian=None):
-        """Not sure if useful to implement"""
-        if average_input_jacobian is not False:
-            raise NotImplementedError
+        """No approximation for parameter Hessian required."""
         super().set_hbp_approximation(
             average_input_jacobian=average_input_jacobian,
-            average_parameter_jacobian=average_parameter_jacobian)
+            average_parameter_jacobian=None)
 
     # override
     def hbp_hooks(self):
@@ -71,29 +69,55 @@ class HBPMaxPool2d(hbp_decorate(MaxPool2d)):
             dtype=self.pool_indices.dtype,
             device=self.pool_indices.device) * (in_x * in_y)).view(-1, 1, 1)
         offset = offset.expand(-1, out_x, out_y)
-        # Hessian
-        h_in = zeros(
-            channels * in_x * in_y,
-            channels * in_x * in_y,
-            device=output_hessian.device)
         # average over batch
-        for b in range(self.pool_indices.size(0)):
-            idx_map = self.pool_indices[b, :] + offset
-            idx_map = idx_map.view(-1)
-            # TODO: Express more efficiently
-            # sum rows
+        if self.average_input_jac is False:
+            # Hessian
+            h_in = zeros(
+                channels * in_x * in_y,
+                channels * in_x * in_y,
+                device=output_hessian.device)
+            for b in range(self.pool_indices.size(0)):
+                idx_map = self.pool_indices[b, :] + offset
+                idx_map = idx_map.view(-1)
+                # TODO: Express more efficiently
+                # sum rows
+                temp = zeros(
+                    channels * in_x * in_y,
+                    channels * out_x * out_y,
+                    device=output_hessian.device)
+                for n, idx in enumerate(idx_map):
+                    temp[idx, :] += output_hessian[n, :]
+                # sum columns
+                temp2 = zeros(
+                    channels * in_x * in_y,
+                    channels * in_x * in_y,
+                    device=output_hessian.device)
+                for n, idx in enumerate(idx_map):
+                    temp2[:, idx] += temp[:, n]
+                h_in += temp2
+            return h_in / batch
+        elif self.average_input_jac is True:
             temp = zeros(
                 channels * in_x * in_y,
                 channels * out_x * out_y,
                 device=output_hessian.device)
-            for n, idx in enumerate(idx_map):
-                temp[idx, :] += output_hessian[n, :]
-            # sum columns
-            temp2 = zeros(
+            # average over lines
+            for b in range(self.pool_indices.size(0)):
+                idx_map = self.pool_indices[b, :] + offset
+                idx_map = idx_map.view(-1)
+                for n, idx in enumerate(idx_map):
+                    temp[idx, :] += output_hessian[n, :]
+            h_in = zeros(
                 channels * in_x * in_y,
                 channels * in_x * in_y,
                 device=output_hessian.device)
-            for n, idx in enumerate(idx_map):
-                temp2[:, idx] += temp[:, n]
-            h_in += temp2
-        return h_in / batch
+            # average over columns
+            for b in range(self.pool_indices.size(0)):
+                idx_map = self.pool_indices[b, :] + offset
+                idx_map = idx_map.view(-1)
+                for n, idx in enumerate(idx_map):
+                    h_in[:, idx] += temp[:, n]
+            return h_in / batch**2
+        else:
+            raise ValueError('Unknown value for average_input_jac : {}'.format(
+                self.average_input_jac))
