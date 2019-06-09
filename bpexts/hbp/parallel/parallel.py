@@ -44,6 +44,20 @@ class HBPParallel(hbp_decorate(Module)):
             pass
 
     # override
+    def uses_hbp_approximation(self, average_input_jacobian,
+                               average_parameter_jacobian):
+        """Check if module applies the specified HBP approximation."""
+        uses_same = [
+            self.main.uses_hbp_approximation(average_input_jacobian,
+                                             average_parameter_jacobian)
+        ]
+        for mod in self.parallel_children():
+            uses_same.append(
+                mod.uses_hbp_approximation(average_input_jacobian,
+                                           average_parameter_jacobian))
+        return all(uses_same)
+
+    # override
     def set_hbp_approximation(self,
                               average_input_jacobian=None,
                               average_parameter_jacobian=True):
@@ -61,8 +75,7 @@ class HBPParallel(hbp_decorate(Module)):
         except AttributeError:
             pass
         super().set_hbp_approximation(
-            average_input_jacobian=average_input_jacobian,
-            average_parameter_jacobian=average_parameter_jacobian)
+            average_input_jacobian=None, average_parameter_jacobian=None)
 
     def parallel_children(self):
         """Iterate over all parallel children."""

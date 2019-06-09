@@ -171,11 +171,19 @@ def hbp_decorate(module_subclass):
             if self.average_input_jac is not None:
                 repr = '{}, avg_input_jac: {}'.format(repr,
                                                       self.average_input_jac)
-            if self.has_trainable_parameters(
-            ) or self.average_param_jac is not None:
+            if self.average_param_jac is not None:
                 repr = '{}, avg_param_jac: {}'.format(repr,
                                                       self.average_param_jac)
             return repr
+
+        def uses_hbp_approximation(self, average_input_jacobian,
+                                   average_parameter_jacobian):
+            """Check if module applies the specified HBP approximation."""
+            same_param_approx = (
+                average_parameter_jacobian == self.average_param_jac)
+            same_input_approx = (
+                average_input_jacobian == self.average_input_jac)
+            return (same_param_approx == same_input_approx)
 
         # --- hooks ---
         @staticmethod
