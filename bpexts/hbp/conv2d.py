@@ -35,8 +35,13 @@ class HBPConv2d(hbp_decorate(Conv2d)):
                               average_input_jacobian=None,
                               average_parameter_jacobian=True):
         """Not sure if useful to implement"""
-        if average_parameter_jacobian is not True:
+        if average_parameter_jacobian is False:
             raise NotImplementedError
+        if average_input_jacobian is not None:
+            print(
+                'HBPConv2d: You tried to set the input Hessian approximation',
+                'to {}, but both approximations yield the same behavior.'.
+                format(average_input_jacobian), 'Resetting to None.')
         super().set_hbp_approximation(
             average_input_jacobian=None,
             average_parameter_jacobian=average_parameter_jacobian)

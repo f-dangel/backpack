@@ -1,6 +1,5 @@
 """Hessian backpropagation for a linear layer."""
 
-from warnings import warn
 from torch import einsum, Tensor
 from torch.nn import Linear
 from .module import hbp_decorate
@@ -54,9 +53,9 @@ class HBPLinear(hbp_decorate(Linear)):
                               average_parameter_jacobian=True):
         """Not sure if useful to implement"""
         if average_input_jacobian is not None:
-            warn(
+            print(
                 'HBPLinear: You tried to set the input Hessian approximation',
-                ' to {}, but both approximations yield the same behavior.'.
+                'to {}, but both approximations yield the same behavior.'.
                 format(average_input_jacobian), 'Resetting to None.')
         super().set_hbp_approximation(
             average_input_jacobian=None,
