@@ -38,6 +38,16 @@ class HBPSequential(hbp_decorate(Sequential)):
         for mod in self.children():
             mod.enable_hbp()
 
+    def set_hbp_approximation(self,
+                              average_input_jacobian=True,
+                              average_parameter_jacobian=True):
+        super().set_hbp_approximation(
+            average_input_jacobian=None, average_parameter_jacobian=None)
+        for mod in self.children():
+            mod.set_hbp_approximation(
+                average_input_jacobian=average_input_jacobian,
+                average_parameter_jacobian=average_parameter_jacobian)
+
     # override
     def backward_hessian(self,
                          output_hessian,
