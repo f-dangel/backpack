@@ -41,6 +41,12 @@ Installation
 
   You should now be able to ``import bpexts`` in a ``pyhon3`` session.
 
+Subpackage description
+######################
+
+* ``bpexts.sgs`` -- Sum of Gradients Squared: For a minibatch over N samples, instead of computing the gradient $g$ (i.e., the sum of the gradient of individual samples $g = \sum_n g_n$), computes the sum of the individual gradients, squared element-wise $g_2 = \sum_n g_n \circ g_n$.
+Given the gradient $g$ and the sgs $g_2$, this makes it easy to compute the element-wise variance of the gradient over the minimatch as $g_2 - g \circ g$
+
 
 Related papers (reproducing experiments)
 ########################################
