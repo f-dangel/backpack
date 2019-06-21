@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #+STARTUP: indent
 #+AUTHOR: Felix Dangel
+# export using org-gfm-export-to-markdown
 
 * Backpropagation extensions (~bpexts~) for ~PyTorch~
 ~bpexts~ provides extended ~PyTorch~ layers capable of computing different quantities than just the gradient.
@@ -25,7 +26,7 @@ Modules are designed in such a way that they can be used as drop-in replacement 
  can thus be formulated in a more elegant fashion.
 
 ** Getting started
-*** <<install>> Installation
+*** Installation
    1) Clone the repository
       #+BEGIN_SRC bash:
       git clone https://github.com/f-dangel/bpexts.git
@@ -87,7 +88,7 @@ Modules are designed in such a way that they can be used as drop-in replacement 
   - ~bpexts.optim~ :: Optimizers
     - Implements conjugate gradients and the Newton-style optimizer used in [[hbp:paper]]
 ** Related work
-   - <<hbp:paper>> [[hbp:paper]] Dangel, F. and Hennig, P.: [[https://arxiv.org/abs/1902.01813][A Modular Approach to Block-diagonal Hessian Approximations for Second-order Optimization]] (2019) 
+   - <<hbp:paper>> [[[hbp:paper]]] Dangel, F. and Hennig, P.: [[https://arxiv.org/abs/1902.01813][A Modular Approach to Block-diagonal Hessian Approximations for Second-order Optimization]] (2019) 
     - The work presents an extended backpropagation procedure, referred to as *Hessian backpropagation (HBP)*,
       for computing curvature approximations of feedforward neural networks.
     - To **reproduce the experiment** (Figure 5) in the paper, we recommend using our script.
@@ -106,7 +107,11 @@ Modules are designed in such a way that they can be used as drop-in replacement 
        #+BEGIN_SRC bash:
        source .venv/bin/activate
        #+END_SRC
-     - [[install][Install dependencies]] (also these for development/experiments)
+     - Install dependencies (also these for development/experiments)
+       #+BEGIN_SRC bash:
+       pip3 install -r ./requirements.txt
+       pip3 install -r ./requirements_exp.txt
+       #+END_SRC
      - Install the library (in editable mode)
        #+BEGIN_SRC bash:
        pip3 install --editable .
