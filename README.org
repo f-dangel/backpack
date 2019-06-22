@@ -62,10 +62,11 @@ Modules are designed in such a way that they can be used as drop-in replacement 
      - TODO
    - Second-order information
      - [[file:examples/hbp/01_single_layer_mnist.md][Second-order optimization with HBP for a single layer on MNIST]]
+     - [[file:examples/hbp/02_sequential_cifar10.md][Second-order optimization with HBP for a sequential model on CIFAR-10]]
    - Auxiliary
      - TODO
 
-   We plan to add further illustrative examples in the future.
+   We plan to add further tutorials in the future.
    
 ** Functionality 
   - ~bpexts.gradient~ :: Batch gradients
