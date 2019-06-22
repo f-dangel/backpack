@@ -55,13 +55,13 @@ Modules are designed in such a way that they can be used as drop-in replacement 
 
 *** Check out the tutorials
    One main goal of ~bpexts~ is to simplify the computation of quantities in the backward pass.
-   You can find explanations on how to use the code in the [[file:./tutorials][tutorials]] directory.
+   You can find explanations on how to use the code in the [[file:./examples][examples]] directory.
 
    Available tutorials:
    - First-order information
      - TODO
    - Second-order information
-     - TODO
+     - [[file:examples/hbp/01_single_layer_mnist.md][Second-order optimization with HBP for a single layer on MNIST]]
    - Auxiliary
      - TODO
 
