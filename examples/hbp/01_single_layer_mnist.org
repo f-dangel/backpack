@@ -1,0 +1,251 @@
+# -*- coding: utf-8 -*-
+#+STARTUP: indent
+#+AUTHOR: Felix Dangel
+# export using org-gfm-export-to-markdown
+# export .py script using org-babel-tangle
+
+* Second-order optimization of a simple network on MNIST
+(Get the ~Python~ script [[file:01_single_layer_mnist.py][here]])
+
+This tutorial illustrates how to use Hessian backpropagation (HBP) for
+training a simple neural networks on the MNIST dataset with a second-order method.
+
+In particular, we focus on the additional lines that have to be added to an
+already existing training procedure for out-of-the-box ~PyTorch~ optimizers.
+
+Let's do this! First, some imports (ignore them, we will come back to them soon).
+
+#+BEGIN_SRC python :session :tangle 01_single_layer_mnist.py
+# data loading
+import torchvision
+import torchvision.transforms as transforms
+from os import path
+
+# layers
+import torch
+from torch.nn import CrossEntropyLoss
+from bpexts.hbp.linear import HBPLinear
+
+# for HBP
+from bpexts.hbp.loss import batch_summed_hessian
+
+# optimizer
+from bpexts.optim.cg_newton import CGNewton
+
+# auxiliary
+from bpexts.utils import set_seeds
+#+END_SRC
+
+
+
+- If there is a GPU on your device, we can make use of it
+  
+  #+BEGIN_SRC python :session :tangle 01_single_layer_mnist.py
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+  #+END_SRC
+
+  #+RESULTS:
+
+- For reproducibility, let us fix the random seed
+  #+BEGIN_SRC python :session :tangle 01_single_layer_mnist.py
+    set_seeds(0)
+  #+END_SRC
+
+  #+RESULTS:
+
+** Load MNIST
+  The MNIST dataset contains images of 28x28=784 pixels categorized into 10 different classes.
+  We specify the download path of MNIST and define the training data loader with a batch size of 500.
+  This is a standard procedure in training neural networks
+  #+BEGIN_SRC python :session :tangle 01_single_layer_mnist.py
+    batch_size = 500
+
+    # download directory
+    data_dir = '~/tmp/MNIST'
+
+    # training set loader
+    train_set = torchvision.datasets.MNIST(
+        root=data_dir, train=True, transform=transforms.ToTensor(), download=True)
+    train_loader = torch.utils.data.DataLoader(
+        dataset=train_set, batch_size=batch_size, shuffle=True)
+  #+END_SRC
+
+  #+RESULTS:
+
+** Model
+  For simplicity, our model will be a linear layer mapping the 784-dimensional images to 10-dimensional outputs.
+  Note that instead of ~torch.nn.Linear~, we use the extended layer provided by ~bpexts.hbp.linear~.
+  The signature of the constructor is identical.
+  #+BEGIN_SRC python :results output :exports both :session :tangle 01_single_layer_mnist.py
+    # layer parameters
+    in_features = 784
+    out_features = 10
+    bias = True
+
+    # linear layer
+    model = HBPLinear(in_features=in_features, out_features=out_features, bias=bias)
+    # load to device
+    model.to(device)
+    print(model)
+  #+END_SRC
+
+  #+RESULTS:
+  : HBPLinear(in_features=784, out_features=10, bias=True, buffers: 0, hooks: 1, avg_param_jac: True)
+
+  ~HBPLinear~ implements the computation of curvature matrix estimates. The forward pass and gradient computation are in complete analogy to ~torch.nn.Linear~.
+  Moreover, the ~print~ statement of the module shows some additional parameters:
+
+  - It is decorated with ~hooks~ that will store ~buffers~ during the forward/backward pass in order to perform HBP
+  - There are different approximation modes (indicated by ~avg_param_jac~) for HBP
+ 
+  For more details, please refer to our [[hbp:paper][paper]].
+** Loss function
+  Let us use cross-entropy as loss function.
+  #+BEGIN_SRC python :session :tangle 01_single_layer_mnist.py
+    loss_func = CrossEntropyLoss()
+  #+END_SRC
+  #+RESULTS:
+** Optimizer
+We will use a Newton-Style optimizer that solves for the parameter update with the method of conjugate gradients (CG).
+The update rule is described in our [[hbp:paper][paper]]. It can be used in the same way as ~torch.optim.Optimizer~s
+and involves a regularization parameter \alpha \in [0, 1] and a learning rate.
+Stopping criteria for when CG is supposed to stop can be specified by additional parameters.
+  #+BEGIN_SRC python :session :tangle 01_single_layer_mnist.py
+    # learning rate
+    lr = 0.1
+
+    # regularization
+    alpha = 0.02
+
+    # convergence criteria for CG
+    cg_maxiter = 50
+    cg_atol = 0.
+    cg_tol = 0.1
+
+    # construct the optimizer
+    optimizer = CGNewton(
+        model.parameters(),
+        lr=lr,
+        alpha=alpha,
+        cg_atol=cg_atol,
+        cg_tol=cg_tol,
+        cg_maxiter=cg_maxiter)
+  #+END_SRC
+
+  #+RESULTS:
+
+** Run training 
+That's it! We are almost ready to run the training procedure.
+
+During the training loop, we will
+1) Perform the forward pass
+2) Compute the Hessian of the loss function with respect to the output (the 'output Hessian')
+3) Perform the backward pass to compute gradients
+4) Perform HBP of the output Hessian to obtain curvature estimates
+5) Solve for the parameter update and apply it
+
+*** Specify the curvature matrix
+We can choose the curvature matrix that shall be used by the optimizer in the HBP procedure.
+To do so, one needs to specify a parameter that tells HBP how to proceed with second-order effects introduced by the module function.
+#+BEGIN_SRC python :session :tangle 01_single_layer_mnist.py
+  # use the GGN
+  modify_2nd_order_terms = 'zero'
+#+END_SRC
+We can obtain approximations of different curvature matrices by choosing ~modify_2nd_order_terms~:
+- ~None~: Hessian
+- ~zero~: Generalized Gauss-Newton matrix
+- ~abs~: Positive-curvature Hessian with second-order absolute values
+- ~clip~: Positive curvature Hessian with second-order clipped values
+*Note:* For our model, a *single* linear layer, all choices will yield the same curvature estimate.
+
+*** The training loop
+Here is the code for the training loop. Note the two additional lines 2) and 4) required for the backpropagation of the Hessian.
+  #+BEGIN_SRC python :results output :exports both :session :tangle 01_single_layer_mnist.py
+
+    # train for two epochs
+    num_epochs = 2
+
+    # log some metrics
+    train_epoch = [ ] 
+    batch_loss = [ ]
+    batch_acc = [ ]
+
+    samples = 0
+    samples_per_epoch = 50000.
+    for epoch in range(num_epochs):
+        iters = len(train_loader)
+
+        for i, (images, labels) in enumerate(train_loader):
+            # reshape and load to device
+            images = images.reshape(-1, in_features).to(device)
+            labels = labels.to(device)
+
+            # 1) forward pass
+            outputs = model(images)
+            loss = loss_func(outputs, labels)
+
+            # set gradients to zero
+            optimizer.zero_grad()
+
+            # Hessian backpropagation and backward pass
+            # 2) batch average of Hessian of loss w.r.t. model output
+            output_hessian = batch_summed_hessian(loss, outputs)
+            # 3) compute gradients
+            loss.backward()
+            # 4) propagate Hessian back through the graph
+            model.backward_hessian(
+                output_hessian, modify_2nd_order_terms=modify_2nd_order_terms)
+
+            # 5) second-order optimization step
+            optimizer.step()
+
+            # compute statistics
+            total = labels.size(0)
+            _, predicted = torch.max(outputs, 1)
+            correct = (predicted == labels).sum().item()
+            accuracy = correct / total
+  
+            # update lists
+            samples += total
+            train_epoch.append(samples / samples_per_epoch)
+            batch_loss.append(loss.item())
+            batch_acc.append(accuracy)
+
+            # print every 5 iterations
+            if i % 5 == 0:
+                print(
+                    'Epoch [{}/{}], Iter. [{}/{}], Loss: {:.4f}, Acc.: {:.4f}'.
+                    format(epoch + 1, num_epochs, i + 1, iters, loss.item(),
+                           accuracy))
+  #+END_SRC
+
+Let's plot our results.
+#+BEGIN_SRC python :session :results output silent :tangle 01_single_layer_mnist.py
+  # plotting
+  import matplotlib
+  matplotlib.use('Agg')
+  import matplotlib.pyplot as plt
+
+  plt.subplots(121, figsize=(7,3))
+  
+  # plot batch loss
+  plt.subplot(121)
+  plt.plot(train_epoch, batch_loss, color='darkorange')
+  plt.xlabel('epoch')
+  plt.ylabel('batch loss')
+  
+  # plot batch accuracy
+  plt.subplot(122)
+  plt.plot(train_epoch, batch_acc, color='darkblue')
+  plt.xlabel('epoch')
+  plt.ylabel('batch accuracy')
+
+  # save plot
+  plt.tight_layout()
+  plt.savefig('01_single_layer_mnist_metrics.png')
+#+END_SRC
+
+[[./01_single_layer_mnist_metrics.png]]
+
+** References
+- <<hbp:paper>> [[[hbp:paper]]] Dangel, F. and Hennig, P.: [[https://arxiv.org/abs/1902.01813][A Modular Approach to Block-diagonal Hessian Approximations for Second-order Optimization]] (2019) 
