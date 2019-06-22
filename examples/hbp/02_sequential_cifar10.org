@@ -1,0 +1,388 @@
+# -*- coding: utf-8 -*-
+#+STARTUP: indent
+#+AUTHOR: Felix Dangel
+# export using org-gfm-export-to-markdown
+# export .py script using org-babel-tangle
+
+* Second-order optimization of a sequential network on CIFAR-10
+(Get the ~Python~ script [[file:02_sequential_cifar10.py][here]])
+
+In this tutorial, we will extend the [[file:01_single_layer_mnist.md][previous example]] and use a larger network as well as the CIFAR-10 dataset.
+Again, this code aims to illustrate second-order optimization with curvature estimates obtained by Hessian backpropagation.
+
+Let's import the stuff we need 
+
+#+BEGIN_SRC python :session :tangle 02_sequential_cifar10.py
+# data loading
+import torchvision
+import torchvision.transforms as transforms
+from os import path
+
+# layers
+import torch
+from torch.nn import CrossEntropyLoss
+from bpexts.hbp.linear import HBPLinear
+from bpexts.hbp.sigmoid import HBPSigmoid
+from bpexts.hbp.relu import HBPReLU
+from bpexts.hbp.sequential import HBPSequential
+
+# for HBP
+from bpexts.hbp.loss import batch_summed_hessian
+
+# optimizer
+from bpexts.optim.cg_newton import CGNewton
+
+# auxiliary
+from bpexts.utils import set_seeds
+#+END_SRC
+
+#+RESULTS:
+
+- If there is a GPU on your device, we can make use of it
+  
+  #+BEGIN_SRC python :session :tangle 02_sequential_cifar10.py
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+  #+END_SRC
+
+  #+RESULTS:
+
+- For reproducibility, let us fix the random seed
+  #+BEGIN_SRC python :session :tangle 02_sequential_cifar10.py
+    set_seeds(0)
+  #+END_SRC
+
+  #+RESULTS:
+
+** Load CIFAR-10
+  CIFAR-10 images have a resolution of 3x32x32 = 3072 pixels and are categorized into 10 different classes.
+  Next, the dataset is downloaded and the training set loader is defined with a batch size of 500.
+  #+BEGIN_SRC python :session :tangle 02_sequential_cifar10.py
+    batch_size = 500
+
+    # download directory
+    data_dir = '~/tmp/CIFAR10'
+
+    # training set loader
+    train_set = torchvision.datasets.CIFAR10(
+        root=data_dir, train=True, transform=transforms.ToTensor(), download=True)
+    train_loader = torch.utils.data.DataLoader(
+        dataset=train_set, batch_size=batch_size, shuffle=True)
+  #+END_SRC
+
+  #+RESULTS:
+
+** Model
+  We use a fully-connected network with 5 linear layers followed by activations (except for the last layer).
+  ~bpexts~ defines the layers with HBP functionality in ~bpexts.hbp.linear~, ~bpexts.hbp.relu~, and ~bpexts.hbp.sigmoid~.
+  #+BEGIN_SRC python :session :tangle 02_sequential_cifar10.py
+    # layers
+    linear1 = HBPLinear(in_features=3072, out_features=1024, bias=True)
+    activation1= HBPSigmoid()
+    linear2 = HBPLinear(in_features=1024, out_features=512, bias=True)
+    activation2 = HBPSigmoid()
+    linear3 = HBPLinear(in_features=512, out_features=256, bias=True)
+    activation3 = HBPReLU()
+    linear4 = HBPLinear(in_features=256, out_features=128, bias=True)
+    activation4 = HBPReLU()
+    linear5 = HBPLinear(in_features=128, out_features=10, bias=True)
+  #+END_SRC
+
+  #+RESULTS:
+
+  *Note:* Because a model has to know how to backpropagate the Hessian, we need to construct a sequence of modules
+  using the analogue to ~torch.nn.Sequential~, namely the HBP version.
+  #+BEGIN_SRC python :results output :exports both :session :tangle 02_sequential_cifar10.py
+    # sequential model
+    model = HBPSequential(linear1,
+                          sigmoid1,
+                          linear2,
+                          sigmoid2,
+                          linear3,
+                          sigmoid3,
+                          linear4,
+                          sigmoid4,
+                          linear5)
+    # load to device
+    model.to(device)
+    print(model)
+  #+END_SRC
+
+  #+RESULTS:
+  #+begin_example
+  HBPLinear: You tried to set the input Hessian approximation to True, but both approximations yield the same behavior. Resetting to None.
+  HBPLinear: You tried to set the input Hessian approximation to True, but both approximations yield the same behavior. Resetting to None.
+  HBPLinear: You tried to set the input Hessian approximation to True, but both approximations yield the same behavior. Resetting to None.
+  HBPLinear: You tried to set the input Hessian approximation to True, but both approximations yield the same behavior. Resetting to None.
+  HBPLinear: You tried to set the input Hessian approximation to True, but both approximations yield the same behavior. Resetting to None.
+  HBPSequential(
+    buffers: 0, hooks: 0
+    (0): HBPLinear(in_features=3072, out_features=1024, bias=True, buffers: 0, hooks: 1, avg_param_jac: True)
+    (1): HBPSigmoid(buffers: 0, hooks: 2, avg_input_jac: True)
+    (2): HBPLinear(in_features=1024, out_features=512, bias=True, buffers: 0, hooks: 1, avg_param_jac: True)
+    (3): HBPSigmoid(buffers: 0, hooks: 2, avg_input_jac: True)
+    (4): HBPLinear(in_features=512, out_features=256, bias=True, buffers: 0, hooks: 1, avg_param_jac: True)
+    (5): HBPSigmoid(buffers: 0, hooks: 2, avg_input_jac: True)
+    (6): HBPLinear(in_features=256, out_features=128, bias=True, buffers: 0, hooks: 1, avg_param_jac: True)
+    (7): HBPSigmoid(buffers: 0, hooks: 2, avg_input_jac: True)
+    (8): HBPLinear(in_features=128, out_features=10, bias=True, buffers: 0, hooks: 1, avg_param_jac: True)
+  )
+  #+end_example
+
+  (Ignore the messages from ~HBPLinear~)
+
+** Loss function
+  Let us use cross-entropy as loss function.
+  #+BEGIN_SRC python :session :tangle 02_sequential_cifar10.py
+    loss_func = CrossEntropyLoss()
+  #+END_SRC
+  #+RESULTS:
+** Optimizer
+We will use a Newton-Style optimizer that solves for the parameter update with the method of conjugate gradients (CG).
+The update rule is described in our [[hbp:paper][paper]]. It can be used in the same way as ~torch.optim.Optimizer~ s
+and involves a regularization parameter \alpha \in [0, 1] and a learning rate.
+Stopping criteria for when CG is supposed to stop can be specified by additional parameters.
+  #+BEGIN_SRC python :session :tangle 02_sequential_cifar10.py
+    # learning rate
+    lr = 0.15
+
+    # regularization
+    alpha = 0.02
+
+    # convergence criteria for CG
+    cg_maxiter = 50
+    cg_atol = 0.
+    cg_tol = 0.1
+
+    # construct the optimizer
+    optimizer = CGNewton(
+        model.parameters(),
+        lr=lr,
+        alpha=alpha,
+        cg_atol=cg_atol,
+        cg_tol=cg_tol,
+        cg_maxiter=cg_maxiter)
+  #+END_SRC
+
+  #+RESULTS:
+
+** Run training 
+That's it! We are almost ready to run the training procedure.
+
+During the training loop, we will
+1) Perform the forward pass
+2) Compute the Hessian of the loss function with respect to the output (the 'output Hessian')
+3) Perform the backward pass to compute gradients
+4) Perform HBP of the output Hessian to obtain curvature estimates
+5) Solve for the parameter update and apply it
+
+*** Specify the curvature matrix
+We can choose the curvature matrix that shall be used by the optimizer in the HBP procedure.
+To do so, one needs to specify a parameter that tells HBP how to proceed with second-order effects introduced by the module function.
+#+BEGIN_SRC python :session :tangle 02_sequential_cifar10.py
+  # use the PCH with absolute values of second-order module effects
+  modify_2nd_order_terms = 'abs' 
+#+END_SRC
+
+#+RESULTS:
+
+We can obtain approximations of different curvature matrices by choosing ~modify_2nd_order_terms~:
+- ~None~: Hessian (careful, it *might not be positive semi-definite*)
+- ~zero~: Generalized Gauss-Newton matrix
+- ~abs~: Positive-curvature Hessian with second-order absolute values
+- ~clip~: Positive curvature Hessian with second-order clipped values
+
+*** The training loop
+Here is the code for the training loop. Note the two additional lines 2) and 4) required for the backpropagation of the Hessian.
+  #+BEGIN_SRC python :results output :exports both :session :tangle 02_sequential_cifar10.py
+    # train for thirty epochs
+    num_epochs = 30
+
+    # log some metrics
+    train_epoch = [ ] 
+    batch_loss = [ ]
+    batch_acc = [ ]
+
+    samples = 0
+    samples_per_epoch = 50000.
+    for epoch in range(num_epochs):
+        iters = len(train_loader)
+
+        for i, (images, labels) in enumerate(train_loader):
+            # reshape and load to device
+            images = images.reshape(-1, 3072).to(device)
+            labels = labels.to(device)
+
+            # 1) forward pass
+            outputs = model(images)
+            loss = loss_func(outputs, labels)
+
+            # set gradients to zero
+            optimizer.zero_grad()
+
+            # Hessian backpropagation and backward pass
+            # 2) batch average of Hessian of loss w.r.t. model output
+            output_hessian = batch_summed_hessian(loss, outputs)
+            # 3) compute gradients
+            loss.backward()
+            # 4) propagate Hessian back through the graph
+            model.backward_hessian(
+                output_hessian, modify_2nd_order_terms=modify_2nd_order_terms)
+
+            # 5) second-order optimization step
+            optimizer.step()
+
+            # compute statistics
+            total = labels.size(0)
+            _, predicted = torch.max(outputs, 1)
+            correct = (predicted == labels).sum().item()
+            accuracy = correct / total
+  
+            # update lists every 15 iterations
+            samples += total
+            if i % 15 == 0:
+                train_epoch.append(samples / samples_per_epoch)
+                batch_loss.append(loss.item())
+                batch_acc.append(accuracy)
+
+            # print every 20 iterations
+            if i % 20 == 0:
+                print(
+                    'Epoch [{}/{}], Iter. [{}/{}], Loss: {:.4f}, Acc.: {:.4f}'.
+                    format(epoch + 1, num_epochs, i + 1, iters, loss.item(),
+                           accuracy))
+  #+END_SRC
+
+  #+RESULTS:
+  #+begin_example
+  Epoch [1/20], Iter. [1/100], Loss: 2.3376, Acc.: 0.0960
+  Epoch [1/20], Iter. [21/100], Loss: 2.3061, Acc.: 0.1000
+  Epoch [1/20], Iter. [41/100], Loss: 2.3008, Acc.: 0.0940
+  Epoch [1/20], Iter. [61/100], Loss: 2.3055, Acc.: 0.0740
+  Epoch [1/20], Iter. [81/100], Loss: 2.3045, Acc.: 0.0860
+  Epoch [2/20], Iter. [1/100], Loss: 2.3067, Acc.: 0.1000
+  Epoch [2/20], Iter. [21/100], Loss: 2.3014, Acc.: 0.1120
+  Epoch [2/20], Iter. [41/100], Loss: 2.3064, Acc.: 0.1060
+  Epoch [2/20], Iter. [61/100], Loss: 2.3019, Acc.: 0.0980
+  Epoch [2/20], Iter. [81/100], Loss: 2.3035, Acc.: 0.1020
+  Epoch [3/20], Iter. [1/100], Loss: 2.3007, Acc.: 0.0960
+  Epoch [3/20], Iter. [21/100], Loss: 2.3091, Acc.: 0.0760
+  Epoch [3/20], Iter. [41/100], Loss: 2.3024, Acc.: 0.1140
+  Epoch [3/20], Iter. [61/100], Loss: 2.3064, Acc.: 0.1100
+  Epoch [3/20], Iter. [81/100], Loss: 2.3057, Acc.: 0.1000
+  Epoch [4/20], Iter. [1/100], Loss: 2.3015, Acc.: 0.1140
+  Epoch [4/20], Iter. [21/100], Loss: 2.3008, Acc.: 0.1160
+  Epoch [4/20], Iter. [41/100], Loss: 2.3086, Acc.: 0.0840
+  Epoch [4/20], Iter. [61/100], Loss: 2.3024, Acc.: 0.0860
+  Epoch [4/20], Iter. [81/100], Loss: 2.3074, Acc.: 0.1000
+  Epoch [5/20], Iter. [1/100], Loss: 2.3006, Acc.: 0.1060
+  Epoch [5/20], Iter. [21/100], Loss: 2.3042, Acc.: 0.1160
+  Epoch [5/20], Iter. [41/100], Loss: 2.3037, Acc.: 0.1060
+  Epoch [5/20], Iter. [61/100], Loss: 2.3075, Acc.: 0.0900
+  Epoch [5/20], Iter. [81/100], Loss: 2.3100, Acc.: 0.0760
+  Epoch [6/20], Iter. [1/100], Loss: 2.3017, Acc.: 0.0980
+  Epoch [6/20], Iter. [21/100], Loss: 2.3022, Acc.: 0.0860
+  Epoch [6/20], Iter. [41/100], Loss: 2.3052, Acc.: 0.0980
+  Epoch [6/20], Iter. [61/100], Loss: 2.3028, Acc.: 0.0940
+  Epoch [6/20], Iter. [81/100], Loss: 2.3029, Acc.: 0.0800
+  Epoch [7/20], Iter. [1/100], Loss: 2.2987, Acc.: 0.1520
+  Epoch [7/20], Iter. [21/100], Loss: 2.3046, Acc.: 0.0800
+  Epoch [7/20], Iter. [41/100], Loss: 2.3023, Acc.: 0.1080
+  Epoch [7/20], Iter. [61/100], Loss: 2.2975, Acc.: 0.1360
+  Epoch [7/20], Iter. [81/100], Loss: 2.2991, Acc.: 0.0920
+  Epoch [8/20], Iter. [1/100], Loss: 2.3025, Acc.: 0.1400
+  Epoch [8/20], Iter. [21/100], Loss: 2.2969, Acc.: 0.1380
+  Epoch [8/20], Iter. [41/100], Loss: 2.2897, Acc.: 0.1340
+  Epoch [8/20], Iter. [61/100], Loss: 2.2079, Acc.: 0.1340
+  Epoch [8/20], Iter. [81/100], Loss: 2.0819, Acc.: 0.1980
+  Epoch [9/20], Iter. [1/100], Loss: 2.0560, Acc.: 0.1800
+  Epoch [9/20], Iter. [21/100], Loss: 2.0498, Acc.: 0.2020
+  Epoch [9/20], Iter. [41/100], Loss: 2.0035, Acc.: 0.2080
+  Epoch [9/20], Iter. [61/100], Loss: 2.0338, Acc.: 0.2040
+  Epoch [9/20], Iter. [81/100], Loss: 2.0849, Acc.: 0.1760
+  Epoch [10/20], Iter. [1/100], Loss: 2.0324, Acc.: 0.2060
+  Epoch [10/20], Iter. [21/100], Loss: 2.0496, Acc.: 0.2000
+  Epoch [10/20], Iter. [41/100], Loss: 2.0230, Acc.: 0.1780
+  Epoch [10/20], Iter. [61/100], Loss: 2.0540, Acc.: 0.1840
+  Epoch [10/20], Iter. [81/100], Loss: 2.0834, Acc.: 0.2140
+  Epoch [11/20], Iter. [1/100], Loss: 2.0268, Acc.: 0.1920
+  Epoch [11/20], Iter. [21/100], Loss: 2.0313, Acc.: 0.1920
+  Epoch [11/20], Iter. [41/100], Loss: 2.0183, Acc.: 0.1980
+  Epoch [11/20], Iter. [61/100], Loss: 1.9910, Acc.: 0.2040
+  Epoch [11/20], Iter. [81/100], Loss: 2.0182, Acc.: 0.1880
+  Epoch [12/20], Iter. [1/100], Loss: 2.0427, Acc.: 0.1840
+  Epoch [12/20], Iter. [21/100], Loss: 2.0161, Acc.: 0.1980
+  Epoch [12/20], Iter. [41/100], Loss: 2.0241, Acc.: 0.2240
+  Epoch [12/20], Iter. [61/100], Loss: 1.9972, Acc.: 0.2040
+  Epoch [12/20], Iter. [81/100], Loss: 1.9931, Acc.: 0.1800
+  Epoch [13/20], Iter. [1/100], Loss: 1.9890, Acc.: 0.1820
+  Epoch [13/20], Iter. [21/100], Loss: 1.9627, Acc.: 0.2180
+  Epoch [13/20], Iter. [41/100], Loss: 1.9657, Acc.: 0.1980
+  Epoch [13/20], Iter. [61/100], Loss: 2.0694, Acc.: 0.1860
+  Epoch [13/20], Iter. [81/100], Loss: 1.9569, Acc.: 0.2920
+  Epoch [14/20], Iter. [1/100], Loss: 1.9588, Acc.: 0.2320
+  Epoch [14/20], Iter. [21/100], Loss: 1.8838, Acc.: 0.2400
+  Epoch [14/20], Iter. [41/100], Loss: 1.8262, Acc.: 0.3140
+  Epoch [14/20], Iter. [61/100], Loss: 1.9066, Acc.: 0.2780
+  Epoch [14/20], Iter. [81/100], Loss: 1.8085, Acc.: 0.2960
+  Epoch [15/20], Iter. [1/100], Loss: 1.9477, Acc.: 0.2520
+  Epoch [15/20], Iter. [21/100], Loss: 1.8765, Acc.: 0.2900
+  Epoch [15/20], Iter. [41/100], Loss: 1.8616, Acc.: 0.2800
+  Epoch [15/20], Iter. [61/100], Loss: 1.9069, Acc.: 0.2220
+  Epoch [15/20], Iter. [81/100], Loss: 1.8444, Acc.: 0.2580
+  Epoch [16/20], Iter. [1/100], Loss: 1.8352, Acc.: 0.2940
+  Epoch [16/20], Iter. [21/100], Loss: 1.8614, Acc.: 0.2880
+  Epoch [16/20], Iter. [41/100], Loss: 1.8327, Acc.: 0.2820
+  Epoch [16/20], Iter. [61/100], Loss: 1.8887, Acc.: 0.2960
+  Epoch [16/20], Iter. [81/100], Loss: 1.9044, Acc.: 0.2640
+  Epoch [17/20], Iter. [1/100], Loss: 1.8627, Acc.: 0.2920
+  Epoch [17/20], Iter. [21/100], Loss: 1.8344, Acc.: 0.3180
+  Epoch [17/20], Iter. [41/100], Loss: 1.8279, Acc.: 0.3120
+  Epoch [17/20], Iter. [61/100], Loss: 1.7630, Acc.: 0.3540
+  Epoch [17/20], Iter. [81/100], Loss: 1.8103, Acc.: 0.3280
+  Epoch [18/20], Iter. [1/100], Loss: 1.7683, Acc.: 0.3140
+  Epoch [18/20], Iter. [21/100], Loss: 1.7368, Acc.: 0.3880
+  Epoch [18/20], Iter. [41/100], Loss: 1.7644, Acc.: 0.3240
+  Epoch [18/20], Iter. [61/100], Loss: 1.7642, Acc.: 0.3580
+  Epoch [18/20], Iter. [81/100], Loss: 1.6982, Acc.: 0.3620
+  Epoch [19/20], Iter. [1/100], Loss: 1.6282, Acc.: 0.4040
+  Epoch [19/20], Iter. [21/100], Loss: 1.6845, Acc.: 0.3840
+  Epoch [19/20], Iter. [41/100], Loss: 1.7489, Acc.: 0.3680
+  Epoch [19/20], Iter. [61/100], Loss: 1.6511, Acc.: 0.3720
+  Epoch [19/20], Iter. [81/100], Loss: 1.7160, Acc.: 0.3520
+  Epoch [20/20], Iter. [1/100], Loss: 1.7366, Acc.: 0.3580
+  Epoch [20/20], Iter. [21/100], Loss: 1.6726, Acc.: 0.3760
+  Epoch [20/20], Iter. [41/100], Loss: 1.6724, Acc.: 0.4000
+  Epoch [20/20], Iter. [61/100], Loss: 1.6865, Acc.: 0.3840
+  Epoch [20/20], Iter. [81/100], Loss: 1.6824, Acc.: 0.3940
+  #+end_example
+
+Let's plot our results.
+#+BEGIN_SRC python :session :results output silent :tangle 02_sequential_cifar10.py
+  # plotting
+  import matplotlib
+  matplotlib.use('Agg')
+  import matplotlib.pyplot as plt
+
+  plt.subplots(121, figsize=(7,3))
+  
+  # plot batch loss
+  plt.subplot(121)
+  plt.plot(train_epoch, batch_loss, color='darkorange')
+  plt.xlabel('epoch')
+  plt.ylabel('batch loss')
+  
+  # plot batch accuracy
+  plt.subplot(122)
+  plt.plot(train_epoch, batch_acc, color='darkblue')
+  plt.xlabel('epoch')
+  plt.ylabel('batch accuracy')
+
+  # save plot
+  plt.tight_layout()
+  plt.savefig('02_sequential_cifar10_metrics.png')
+#+END_SRC
+
+[[./02_sequential_cifar10_metrics.png]]
+
+** References
+- <<hbp:paper>> [[[hbp:paper]]] Dangel, F. and Hennig, P.: [[https://arxiv.org/abs/1902.01813][A Modular Approach to Block-diagonal Hessian Approximations for Second-order Optimization]] (2019) 
