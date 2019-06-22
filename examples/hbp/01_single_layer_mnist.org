@@ -107,7 +107,7 @@ from bpexts.utils import set_seeds
   #+RESULTS:
 ** Optimizer
 We will use a Newton-Style optimizer that solves for the parameter update with the method of conjugate gradients (CG).
-The update rule is described in our [[hbp:paper][paper]]. It can be used in the same way as ~torch.optim.Optimizer~s
+The update rule is described in our [[hbp:paper][paper]]. It can be used in the same way as ~torch.optim.Optimizer~ s
 and involves a regularization parameter \alpha \in [0, 1] and a learning rate.
 Stopping criteria for when CG is supposed to stop can be specified by additional parameters.
   #+BEGIN_SRC python :session :tangle 01_single_layer_mnist.py
@@ -171,7 +171,7 @@ Here is the code for the training loop. Note the two additional lines 2) and 4) 
     batch_acc = [ ]
 
     samples = 0
-    samples_per_epoch = 50000.
+    samples_per_epoch = 60000.
     for epoch in range(num_epochs):
         iters = len(train_loader)
 

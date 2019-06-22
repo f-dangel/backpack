@@ -1,16 +1,16 @@
-- [Second-order optimization of a simple network on MNIST](#org20ae2e8)
-  - [Load MNIST](#org8c5a12c)
-  - [Model](#orgdab1243)
-  - [Loss function](#orgabfd5d7)
-  - [Optimizer](#orgb4e1f86)
-  - [Run training](#orga7c3ea6)
-    - [Specify the curvature matrix](#orgd0e2caf)
-    - [The training loop](#org067ce4e)
-  - [References](#org518108a)
+- [Second-order optimization of a simple network on MNIST](#orgdbb5591)
+  - [Load MNIST](#orga1ba8d5)
+  - [Model](#orgc5de75e)
+  - [Loss function](#org1b68cc4)
+  - [Optimizer](#org41e0b87)
+  - [Run training](#org9a3ed98)
+    - [Specify the curvature matrix](#orgd8ec83f)
+    - [The training loop](#org269a017)
+  - [References](#org3d2f967)
 
 
 
-<a id="org20ae2e8"></a>
+<a id="orgdbb5591"></a>
 
 # Second-order optimization of a simple network on MNIST
 
@@ -56,7 +56,7 @@ from bpexts.utils import set_seeds
     ```
 
 
-<a id="org8c5a12c"></a>
+<a id="orga1ba8d5"></a>
 
 ## Load MNIST
 
@@ -76,7 +76,7 @@ train_loader = torch.utils.data.DataLoader(
 ```
 
 
-<a id="orgdab1243"></a>
+<a id="orgc5de75e"></a>
 
 ## Model
 
@@ -102,10 +102,10 @@ print(model)
 -   It is decorated with `hooks` that will store `buffers` during the forward/backward pass in order to perform HBP
 -   There are different approximation modes (indicated by `avg_param_jac`) for HBP
 
-For more details, please refer to our [paper](#org243d929).
+For more details, please refer to our [paper](#org22a7785).
 
 
-<a id="orgabfd5d7"></a>
+<a id="org1b68cc4"></a>
 
 ## Loss function
 
@@ -116,11 +116,11 @@ loss_func = CrossEntropyLoss()
 ```
 
 
-<a id="orgb4e1f86"></a>
+<a id="org41e0b87"></a>
 
 ## Optimizer
 
-We will use a Newton-Style optimizer that solves for the parameter update with the method of conjugate gradients (CG). The update rule is described in our [paper](#org243d929). It can be used in the same way as ~torch.optim.Optimizer~s and involves a regularization parameter &alpha; &isin; [0, 1] and a learning rate. Stopping criteria for when CG is supposed to stop can be specified by additional parameters.
+We will use a Newton-Style optimizer that solves for the parameter update with the method of conjugate gradients (CG). The update rule is described in our [paper](#org22a7785). It can be used in the same way as `torch.optim.Optimizer` s and involves a regularization parameter &alpha; &isin; [0, 1] and a learning rate. Stopping criteria for when CG is supposed to stop can be specified by additional parameters.
 
 ```python
 # learning rate
@@ -145,7 +145,7 @@ optimizer = CGNewton(
 ```
 
 
-<a id="orga7c3ea6"></a>
+<a id="org9a3ed98"></a>
 
 ## Run training
 
@@ -160,7 +160,7 @@ During the training loop, we will
 5.  Solve for the parameter update and apply it
 
 
-<a id="orgd0e2caf"></a>
+<a id="orgd8ec83f"></a>
 
 ### Specify the curvature matrix
 
@@ -181,7 +181,7 @@ We can obtain approximations of different curvature matrices by choosing `modify
 **Note:** For our model, a **single** linear layer, all choices will yield the same curvature estimate.
 
 
-<a id="org067ce4e"></a>
+<a id="org269a017"></a>
 
 ### The training loop
 
@@ -198,7 +198,7 @@ batch_loss = [ ]
 batch_acc = [ ]
 
 samples = 0
-samples_per_epoch = 50000.
+samples_per_epoch = 60000.
 for epoch in range(num_epochs):
     iters = len(train_loader)
 
@@ -325,8 +325,8 @@ plt.savefig('01_single_layer_mnist_metrics.png')
 ![img](./01_single_layer_mnist_metrics.png)
 
 
-<a id="org518108a"></a>
+<a id="org3d2f967"></a>
 
 ## References
 
--   <a id="org243d929"></a> [[1](#org243d929)] Dangel, F. and Hennig, P.: [A Modular Approach to Block-diagonal Hessian Approximations for Second-order Optimization](https://arxiv.org/abs/1902.01813) (2019)
+-   <a id="org22a7785"></a> [[1](#org22a7785)] Dangel, F. and Hennig, P.: [A Modular Approach to Block-diagonal Hessian Approximations for Second-order Optimization](https://arxiv.org/abs/1902.01813) (2019)

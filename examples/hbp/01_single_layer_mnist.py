@@ -77,7 +77,7 @@ batch_loss = [ ]
 batch_acc = [ ]
 
 samples = 0
-samples_per_epoch = 50000.
+samples_per_epoch = 60000.
 for epoch in range(num_epochs):
     iters = len(train_loader)
 
