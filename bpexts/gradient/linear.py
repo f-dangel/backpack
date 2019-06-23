@@ -1,20 +1,34 @@
-"""Extension of torch.nn.Linear for computing batch gradients."""
+"""Extension of torch.nn.Linear for computing first-order information."""
 
 from torch.nn import Linear
 from torch import einsum
 from ..decorator import decorate
-
+from .config import CTX
 
 # decorated torch.nn.Linear module
 DecoratedLinear = decorate(Linear)
 
 
-class G_Linear(DecoratedLinear):
+class Linear(DecoratedLinear):
     """Extended gradient backpropagation for torch.nn.Linear."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.register_exts_forward_pre_hook(self.store_input)
-        self.register_exts_backward_hook(self.compute_grad_batch)
+        self.register_backward_hook(self.compute_first_order_info)
+
+    @staticmethod
+    def compute_first_order_info(module, grad_input, grad_output):
+        """Check which quantities need to be computed and evaluate them."""
+        if not len(grad_output) == 1:
+            raise ValueError('Cannot handle multi-output scenario')
+        # only values required
+        grad_out = grad_output[0].clone().detach()
+        # run computations
+        if CTX.batch_grad:
+            self.compute_grad_batch(grad_out)
+        if CTX.SGS:
+            self.compute_sum_grad_squared(grad_out)
 
     @staticmethod
     def store_input(module, input):
@@ -28,34 +42,27 @@ class G_Linear(DecoratedLinear):
             raise ValueError('Expecting 2D input (batch, data)')
         module.register_exts_buffer('input', input[0].clone().detach())
 
-    @staticmethod
-    def compute_grad_batch(module, grad_input, grad_output):
-        """Backward hook for computing batch gradients.
+    def compute_grad_batch(self, grad_output):
+        """Compute batchwise gradients of module parameters.
 
         Store bias batch gradients in `module.bias.batch_grad` and
         weight batch gradients in `module.weight.batch_grad`.
         """
-        if not len(grad_output) == 1:
-            raise ValueError('Cannot handle multi-output scenario')
-        if module.bias is not None:
-            if module.bias.requires_grad:
-                module.bias.grad_batch = module.compute_bias_grad_batch(
-                    module, grad_output[0])
-        if module.weight.requires_grad:
-            module.weight.grad_batch = module.compute_weight_grad_batch(
-                    module, grad_output[0])
+        if self.bias is not None and self.bias.requires_grad:
+            self.bias.grad_batch = self._compute_bias_grad_batch(grad_output)
+        if self.weight.requires_grad:
+            self.weight.grad_batch = self._compute_weight_grad_batch(
+                grad_output)
 
-    @staticmethod
-    def compute_bias_grad_batch(module, grad_output):
+    def _compute_bias_grad_batch(self, grad_output):
         """Compute bias batch gradients from grad w.r.t. layer outputs.
 
         The batchwise gradient of a linear layer is simply given
         by the gradient with respect to the layer's output.
         """
-        return grad_output.clone().detach()
+        return grad_output
 
-    @staticmethod
-    def compute_weight_grad_batch(module, grad_output):
+    def _compute_weight_grad_batch(self, grad_output):
         """Compute weight batch gradients from grad w.r.t layer outputs.
 
         The linear layer applies
@@ -79,12 +86,24 @@ class G_Linear(DecoratedLinear):
         (index notation)
         dy[i] / dW[j,k] = delta(i,j) x[k]    (index notation).
         """
-        if module.weight.requires_grad:
-            batch_size = grad_output.size()[0]
-            in_dim, out_dim = module.weight.size()
-            weight_grad_batch = einsum('bi,bj->bij', (grad_output,
-                                                      module.input))
-            return weight_grad_batch.reshape(batch_size, in_dim, out_dim)
+        batch = grad_output.size(0)
+        weight_grad_batch = einsum('bi,bj->bij', (grad_output, self.input))
+        return weight_grad_batch.view(batch_size, self.out_features,
+                                      self.in_features)
+
+    def compute_sum_grad_squared(self, grad_output):
+        """Square the gradients for each sample and sum over the batch."""
+        if self.bias is not None and self.bias.requires_grad:
+            self.bias.sum_grad_squared = self._compute_bias_sgs(grad_output)
+        if self.weight.requires_grad:
+            self.weight.sum_grad_squared = self._compute_weight_sgs(
+                grad_output)
+
+    def _compute_weight_sgs(self, grad_output):
+        return einsum('bi,bj->ij', (grad_output**2, self.input**2))
+
+    def _compute_bias_sgs(self, grad_output):
+        return (grad_output**2).sum(0)
 
     def clear_grad_batch(self):
         """Delete batch gradients."""
@@ -94,5 +113,16 @@ class G_Linear(DecoratedLinear):
             pass
         try:
             del self.bias.grad_batch
+        except AttributeError:
+            pass
+
+    def clear_sum_grad_squared(self):
+        """Delete sum of squared gradients."""
+        try:
+            del self.weight.sum_grad_squared
+        except AttributeError:
+            pass
+        try:
+            del self.bias.sum_grad_squared
         except AttributeError:
             pass
