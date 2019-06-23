@@ -4,22 +4,24 @@ from torch.nn import (Conv2d, Unfold)
 from torch import einsum
 from numpy import prod
 from ..decorator import decorate
-
+from .config import CTX
 
 # decorated torch.nn.Conv2d module
 DecoratedConv2d = decorate(Conv2d)
 
 
-class G_Conv2d(DecoratedConv2d):
+class Conv2d(DecoratedConv2d):
     """Extended backpropagation for torch.nn.Conv2d."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.unfold = Unfold(kernel_size=self.kernel_size,
-                             dilation=self.dilation,
-                             padding=self.padding,
-                             stride=self.stride)
+        self.unfold = Unfold(
+            kernel_size=self.kernel_size,
+            dilation=self.dilation,
+            padding=self.padding,
+            stride=self.stride)
         self.register_forward_pre_hook(self.store_input)
-        self.register_backward_hook(self.compute_grad_batch)
+        self.register_backward_hook(self.compute_first_order_info)
 
     @staticmethod
     def store_input(module, input):
@@ -34,25 +36,32 @@ class G_Conv2d(DecoratedConv2d):
         module.register_exts_buffer('input', input[0].clone().detach())
 
     @staticmethod
-    def compute_grad_batch(module, grad_input, grad_output):
-        """Backward hook for computing batch gradients.
+    def compute_first_order_info(module, grad_input, grad_output):
+        """Check which quantities need to be computed and evaluate them."""
+        if not len(grad_output) == 1:
+            raise ValueError('Cannot handle multi-output scenario')
+        # only values required
+        grad_out = grad_output[0].clone().detach()
+        # run computations
+        if CTX.batch_grad:
+            self.compute_grad_batch(grad_out)
+        if CTX.SGS:
+            self.compute_sum_grad_squared(grad_out)
+
+    def compute_grad_batch(self, grad_output):
+        """Compute individual gradients for module parameters.
 
         Store bias batch gradients in `module.bias.batch_grad` and
         weight batch gradients in `module.weight.batch_grad`.
         """
-        if not len(grad_output) == 1:
-            raise ValueError('Cannot handle multi-output scenario')
-        if module.bias is not None:
-            if module.bias.requires_grad:
-                module.bias.grad_batch = module.compute_bias_grad_batch(
-                    module, grad_output[0])
-        if module.weight.requires_grad:
-            module.weight.grad_batch = module.compute_weight_grad_batch(
-                    module, grad_output[0])
+        if self.bias is not None and self.bias.requires_grad:
+            self.bias.grad_batch = self._compute_bias_grad_batch(grad_output)
+        if self.weight.requires_grad:
+            self.weight.grad_batch = self._compute_weight_grad_batch(
+                grad_output)
 
-    @staticmethod
-    def compute_bias_grad_batch(module, grad_output):
-        """Compute bias batch gradients from grad w.r.t. layer outputs.
+    def _compute_bias_grad_batch(self, grad_output):
+        """Compute bias batch gradients.
 
         The batchwise gradient of a linear layer is simply given
         by the gradient with respect to the layer's output, summed over
@@ -61,9 +70,8 @@ class G_Conv2d(DecoratedConv2d):
         """
         return grad_output.sum(3).sum(2)
 
-    @staticmethod
-    def compute_weight_grad_batch(module, grad_output):
-        """Compute weight batch gradients from grad w.r.t layer outputs.
+    def _compute_weight_grad_batch(self, grad_output):
+        """Compute weight batch gradients.
 
         The linear layer applies
         Y = W * X
@@ -102,16 +110,33 @@ class G_Conv2d(DecoratedConv2d):
         -------
         dE/dw = view(dE/dW)
         """
-        batch_size = grad_output.size()[0]
-        dE_dw_shape = (batch_size,) + module.weight.size()
+        batch = grad_output.size(0)
+        dE_dw_shape = (batch, ) + module.weight.size()
         # expand patches
-        X = module.unfold(module.input)
+        X = self.unfold(self.input)
         # view of matmul result batch gradients
-        dE_dY = grad_output.view(batch_size, module.out_channels, -1)
+        dE_dY = grad_output.view(batch_size, self.out_channels, -1)
         # weight batch gradients dE/dW
         dE_dW = einsum('blj,bkj->bkl', (X, dE_dY))
         # reshape dE/dW into dE/dw
         return dE_dW.view(dE_dw_shape)
+
+    def compute_sum_grad_squared(self, grad_output):
+        """Square the gradients for each sample and sum over the batch."""
+        if self.bias is not None and self.bias.requires_grad:
+            self.bias.sum_grad_squared = self._compute_bias_sgs(grad_output)
+        if self.weight.requires_grad:
+            self.weight.sum_grad_squared = self._compute_weight_sgs(
+                grad_output)
+
+    def _compute_weight_sgs(self, grad_output):
+        X = self.unfold(self.input)
+        dE_dY = grad_output.view(grad_output.size(0), self.out_channels, -1)
+        return (einsum('bml,bkl->bmk',
+                       (dE_dY, X))**2).sum(0).view(self.weight.size())
+
+    def _compute_bias_sgs(self, grad_output):
+        return (grad_output.sum(3).sum(2)**2).sum(0)
 
     def clear_grad_batch(self):
         """Delete batch gradients."""
@@ -121,5 +146,16 @@ class G_Conv2d(DecoratedConv2d):
             pass
         try:
             del self.bias.grad_batch
+        except AttributeError:
+            pass
+
+    def clear_sum_grad_squared(self):
+        """Delete sum of squared gradients."""
+        try:
+            del self.weight.sum_grad_squared
+        except AttributeError:
+            pass
+        try:
+            del self.bias.sum_grad_squared
         except AttributeError:
             pass
