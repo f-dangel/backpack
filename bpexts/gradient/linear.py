@@ -3,6 +3,7 @@
 from torch.nn import Linear
 from torch import einsum
 from ..decorator import decorate
+from . import config
 from .config import CTX
 
 # decorated torch.nn.Linear module
@@ -25,10 +26,10 @@ class Linear(DecoratedLinear):
         # only values required
         grad_out = grad_output[0].clone().detach()
         # run computations
-        if CTX.batch_grad:
-            self.compute_grad_batch(grad_out)
-        if CTX.SGS:
-            self.compute_sum_grad_squared(grad_out)
+        if CTX.is_active(config.BATCH_GRAD):
+            module.compute_grad_batch(grad_out)
+        if CTX.is_active(config.SUM_GRAD_SQUARED):
+            module.compute_sum_grad_squared(grad_out)
 
     @staticmethod
     def store_input(module, input):
@@ -86,7 +87,7 @@ class Linear(DecoratedLinear):
         (index notation)
         dy[i] / dW[j,k] = delta(i,j) x[k]    (index notation).
         """
-        batch = grad_output.size(0)
+        batch_size = grad_output.size(0)
         weight_grad_batch = einsum('bi,bj->bij', (grad_output, self.input))
         return weight_grad_batch.view(batch_size, self.out_features,
                                       self.in_features)

@@ -2,8 +2,8 @@
 
 from torch.nn import (Conv2d, Unfold)
 from torch import einsum
-from numpy import prod
 from ..decorator import decorate
+from . import config
 from .config import CTX
 
 # decorated torch.nn.Conv2d module
@@ -21,7 +21,7 @@ class Conv2d(DecoratedConv2d):
             padding=self.padding,
             stride=self.stride)
         self.register_forward_pre_hook(self.store_input)
-        self.register_backward_hook(self.compute_first_order_info)
+        self.register_backward_hook(Conv2d.compute_first_order_info)
 
     @staticmethod
     def store_input(module, input):
@@ -43,10 +43,10 @@ class Conv2d(DecoratedConv2d):
         # only values required
         grad_out = grad_output[0].clone().detach()
         # run computations
-        if CTX.batch_grad:
-            self.compute_grad_batch(grad_out)
-        if CTX.SGS:
-            self.compute_sum_grad_squared(grad_out)
+        if CTX.is_active(config.BATCH_GRAD):
+            module.compute_grad_batch(grad_out)
+        if CTX.is_active(config.SUM_GRAD_SQUARED):
+            module.compute_sum_grad_squared(grad_out)
 
     def compute_grad_batch(self, grad_output):
         """Compute individual gradients for module parameters.
@@ -110,8 +110,8 @@ class Conv2d(DecoratedConv2d):
         -------
         dE/dw = view(dE/dW)
         """
-        batch = grad_output.size(0)
-        dE_dw_shape = (batch, ) + module.weight.size()
+        batch_size = grad_output.size(0)
+        dE_dw_shape = (batch_size, ) + self.weight.size()
         # expand patches
         X = self.unfold(self.input)
         # view of matmul result batch gradients

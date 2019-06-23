@@ -2,7 +2,8 @@
 
 from torch import Tensor
 from torch.nn import Linear
-from bpexts.gradient.linear import G_Linear
+from bpexts.gradient.linear import Linear as G_Linear
+import bpexts.gradient.config as config
 from bpexts.utils import torch_allclose
 
 # predefined weight matrix and bias
@@ -79,7 +80,8 @@ def test_grad():
     for input, b_grad, w_grad in zip(inputs, bias_grads, weight_grads):
         out = g_lin(input)
         loss = loss_function(out)
-        loss.backward()
+        with config.bpexts(config.GRAD):
+            loss.backward()
         assert torch_allclose(g_lin.bias.grad, b_grad)
         assert torch_allclose(g_lin.weight.grad, w_grad)
         g_lin.zero_grad()
@@ -93,7 +95,8 @@ def test_grad_batch():
                                                  weight_grads_batch):
         out = g_lin(input)
         loss = loss_function(out)
-        loss.backward()
+        with config.bpexts(config.BATCH_GRAD):
+            loss.backward()
         assert torch_allclose(g_lin.bias.grad_batch, b_grad_batch)
         print(g_lin.weight.grad_batch)
         print(w_grad_batch)

@@ -9,7 +9,8 @@ The example is taken from
 from torch import (Tensor, randn)
 from torch.nn import Conv2d
 from random import (randint, choice)
-from bpexts.gradient.conv2d import G_Conv2d
+from bpexts.gradient.conv2d import Conv2d as G_Conv2d
+import bpexts.gradient.config as config
 from bpexts.utils import torch_allclose
 
 # convolution parameters
@@ -157,7 +158,8 @@ def compare_grads(conv2d, g_conv2d, input):
     # backward for exts conv2d
     out_g_conv2d = g_conv2d(input)
     loss_g = loss_function(out_g_conv2d)
-    loss_g.backward()
+    with config.bpexts(config.BATCH_GRAD):
+        loss_g.backward()
     # need to choose lower precision for some reason
     assert torch_allclose(g_conv2d.bias.grad, conv2d.bias.grad, atol=1E-4)
     assert torch_allclose(g_conv2d.weight.grad, conv2d.weight.grad, atol=1E-4)
