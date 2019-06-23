@@ -1,7 +1,7 @@
 """Hessian backpropagation for 2D convolution."""
 
 from numpy import prod
-from torch import (eye, einsum, arange, zeros, tensor)
+from torch import (einsum, arange, zeros, tensor)
 from torch.nn import functional
 from torch.nn import Conv2d
 from .module import hbp_decorate
@@ -10,35 +10,75 @@ from .module import hbp_decorate
 class HBPConv2d(hbp_decorate(Conv2d)):
     """2D Convolution with Hessian backpropagation functionality."""
     # override
+    @classmethod
+    def from_torch(cls, torch_layer):
+        if not isinstance(torch_layer, Conv2d):
+            raise ValueError("Expecting torch.nn.Conv2d, got {}".format(
+                torch_layer.__class__))
+        # create instance
+        conv2d = cls(
+            torch_layer.in_channels,
+            torch_layer.out_channels,
+            torch_layer.kernel_size,
+            stride=torch_layer.stride,
+            padding=torch_layer.padding,
+            dilation=torch_layer.dilation,
+            groups=torch_layer.groups,
+            bias=torch_layer.bias is not None)
+        # copy parameters
+        conv2d.weight = torch_layer.weight
+        conv2d.bias = torch_layer.bias
+        return conv2d
+
+    # override
+    def set_hbp_approximation(self,
+                              average_input_jacobian=None,
+                              average_parameter_jacobian=True):
+        """Not sure if useful to implement"""
+        if average_parameter_jacobian is False:
+            raise NotImplementedError
+        if average_input_jacobian is not None:
+            print(
+                'HBPConv2d: You tried to set the input Hessian approximation',
+                'to {}, but both approximations yield the same behavior.'.
+                format(average_input_jacobian), 'Resetting to None.')
+        super().set_hbp_approximation(
+            average_input_jacobian=None,
+            average_parameter_jacobian=average_parameter_jacobian)
+
+    # override
     def hbp_hooks(self):
         """Install hook storing unfolded input."""
         self.register_exts_forward_pre_hook(
-                self.store_unfolded_input_and_sample_dimension)
+            self.store_mean_unfolded_input_and_sample_dimension)
 
     def unfold(self, input):
         """Unfold input using convolution hyperparameters."""
-        return functional.unfold(input,
-                                 kernel_size=self.kernel_size,
-                                 dilation=self.dilation,
-                                 padding=self.padding,
-                                 stride=self.stride)
+        return functional.unfold(
+            input,
+            kernel_size=self.kernel_size,
+            dilation=self.dilation,
+            padding=self.padding,
+            stride=self.stride)
 
     # --- hooks ---
     @staticmethod
-    def store_unfolded_input_and_sample_dimension(module, input):
-        """Save unfolded input and dimension of input sample.
+    def store_mean_unfolded_input_and_sample_dimension(module, input):
+        """Save mean of unfolded input and dimension of input sample.
 
         Indended use as pre-forward hook.
-        Initialize module buffer 'unfolded_input'.
+        Initialize module buffer 'mean_unfolded_input'.
         Initialize module buffer 'sample_dim'.
         """
         if not len(input) == 1:
             raise ValueError('Cannot handle multi-input scenario')
-        unfolded_input = module.unfold(input[0]).detach()
-        module.register_exts_buffer('unfolded_input', unfolded_input)
+        mean_input = input[0].mean(0).unsqueeze(0).detach()
+        mean_unfolded_input = module.unfold(mean_input)[0, :]
+        module.register_exts_buffer('mean_unfolded_input', mean_unfolded_input)
         # save number of elements in a single sample
         sample_dim = tensor(input[0].size()[1:])
         module.register_exts_buffer('sample_dim', sample_dim)
+
     # --- end of hooks ---
 
     # override
@@ -59,14 +99,16 @@ class HBPConv2d(hbp_decorate(Conv2d)):
         self.init_weight_hessian(output_hessian.detach())
 
     # override
-    def input_hessian(self, output_hessian, compute_input_hessian=True,
+    def input_hessian(self,
+                      output_hessian,
+                      compute_input_hessian=True,
                       modify_2nd_order_terms='none'):
         """Compute the Hessian with respect to the layer input."""
         if compute_input_hessian is False:
             return None
         else:
             unfolded_hessian = self.unfolded_input_hessian(
-                    output_hessian.detach())
+                output_hessian.detach())
             return self.sum_shared_inputs(unfolded_hessian)
 
     def sum_shared_inputs(self, unfolded_input_hessian):
@@ -81,19 +123,49 @@ class HBPConv2d(hbp_decorate(Conv2d)):
         """
         sample_numel = int(prod(self.sample_dim.numpy()))
         idx_num = sample_numel + 1
-        # input image with pixels containing the index value (starting from 1)
-        # also take padding into account (will be indicated by index 0)
-        idx = arange(1, idx_num).view((1,) + tuple(self.sample_dim))
-        # unfolded indices (indicate which input unfolds to which index)
-        idx_unfolded = self.unfold(idx).view(-1).long()
+        # index map from input to unfolded input
+        idx_unfolded = self._unfolded_index_map().view(-1)
         # sum rows of all positions an input was unfolded to
-        acc_rows = zeros(idx_num, unfolded_input_hessian.size()[1])
+        acc_rows = zeros(
+            idx_num,
+            unfolded_input_hessian.size()[1],
+            device=unfolded_input_hessian.device,
+            dtype=unfolded_input_hessian.dtype)
         acc_rows.index_add_(0, idx_unfolded, unfolded_input_hessian)
         # sum columns of all positions an input was unfolded to
-        acc_cols = zeros(idx_num, idx_num)
+        acc_cols = zeros(
+            idx_num,
+            idx_num,
+            device=unfolded_input_hessian.device,
+            dtype=unfolded_input_hessian.dtype)
         acc_cols.index_add_(1, idx_unfolded, acc_rows)
         # cut out dimension of padding elements (index 0)
         return acc_cols[1:, 1:]
+
+    def _unfolded_index_map(self):
+        """Return the index map from input image to unfolded image.
+
+        Padded elements are assigned the index 0, and the pixels
+        from the input image are enumerated in ascending order starting
+        from 1.
+
+        Returns:
+        --------
+        torch.LongTensor
+            Tensor of the same size as an unfolded image containing
+            the indices of the original image.
+        """
+        sample_numel = int(prod(self.sample_dim.numpy()))
+        idx_num = sample_numel + 1
+        # input image with pixels containing the index value (starting from 1)
+        # also take padding into account (will be indicated by index 0)
+        # NOTE: Only works for padding with zeros!!
+        idx = arange(
+            1, idx_num, device=self.mean_unfolded_input.device).view(
+                (1, ) + tuple(self.sample_dim), )
+        # unfolded indices (indicate which input unfolds to which index)
+        idx_unfolded = self.unfold(idx.float()).long()
+        return idx_unfolded
 
     def unfolded_input_hessian(self, out_h):
         """Compute Hessian with respect to the layer's unfolded input.
@@ -108,18 +180,14 @@ class HBPConv2d(hbp_decorate(Conv2d)):
         kernel_matrix = self.weight.view(self.out_channels, -1)
         # shape of out_h for tensor network contraction
         h_out_structure = self.h_out_tensor_structure()
-        # identity matrix of dimension number of patches
-        id_num_patches = eye(h_out_structure[1])
         # perform tensor network contraction
-        unfolded_hessian = einsum('ij,kl,ilmn,mp,no->jkpo',
-                                  (kernel_matrix,
-                                   id_num_patches,
-                                   out_h.view(h_out_structure),
-                                   kernel_matrix,
-                                   id_num_patches))
+        unfolded_hessian = einsum('ij,ilmn,mp->jlpn',
+                                  (kernel_matrix, out_h.view(h_out_structure),
+                                   kernel_matrix)).detach()
+
         # reshape into square matrix
-        shape = 2 * (prod(self.unfolded_input.size()[1:]),)
-        return unfolded_hessian.view(shape)
+        shape = 2 * (prod(self.mean_unfolded_input.size()), )
+        return unfolded_hessian.contiguous().view(shape)
 
     def init_bias_hessian(self, output_hessian):
         """Initialized bias attributes hessian and hvp.
@@ -175,8 +243,9 @@ class HBPConv2d(hbp_decorate(Conv2d)):
     def _weight_hessian_vp(self, out_h):
         """Matrix multiplication by weight Hessian.
         """
+
         def hvp(v):
-            """Matrix-vector product with weight Hessian.
+            r"""Matrix-vector product with weight Hessian.
 
             Use approximation
             weight_hessian = (I \otimes X) output_hessian (I \otimes X^T).
@@ -184,44 +253,38 @@ class HBPConv2d(hbp_decorate(Conv2d)):
             Parameters:
             -----------
             v (torch.Tensor): Vector which is multiplied by the Hessian
-           """
+            """
             if not len(v.size()) == 1:
                 raise ValueError('Require one-dimensional tensor')
-            batch = self.unfolded_input.size()[0]
-            id_out_channels = eye(self.out_channels)
             # reshape vector into (out_channels, -1)
             temp = v.view(self.out_channels, -1)
             # perform tensor network contraction
-            result = einsum('ij,bkl,jlmp,mn,bop,no->ik',
-                            (id_out_channels,
-                             self.unfolded_input,
+            result = einsum('kl,jlmp,op,mo->jk',
+                            (self.mean_unfolded_input,
                              out_h.view(self.h_out_tensor_structure()),
-                             id_out_channels,
-                             self.unfolded_input,
-                             temp)) / batch
+                             self.mean_unfolded_input, temp))
             return result.view(v.size())
+
         return hvp
 
     def _compute_weight_hessian(self, out_h):
-        """Compute weight Hessian from output Hessian.
+        r"""Compute weight Hessian from output Hessian.
 
         Use approximation
         weight_hessian = (I \otimes X) output_hessian (I \otimes X^T).
         """
+
         def weight_hessian():
             """Compute matrix form of the weight Hessian when called."""
-            batch = self.unfolded_input.size()[0]
-            id_out_channels = eye(self.out_channels)
             # compute the weight Hessian
-            w_hessian = einsum('ij,bkl,jlmp,mn,bop->ikno',
-                               (id_out_channels,
-                                self.unfolded_input,
+            w_hessian = einsum('kl,jlmp,op->jkmo',
+                               (self.mean_unfolded_input,
                                 out_h.view(self.h_out_tensor_structure()),
-                                id_out_channels,
-                                self.unfolded_input)) / batch
+                                self.mean_unfolded_input))
             # reshape into square matrix
             num_weight = self.weight.numel()
             return w_hessian.view(num_weight, num_weight)
+
         return weight_hessian
 
     def h_out_tensor_structure(self):
@@ -229,5 +292,40 @@ class HBPConv2d(hbp_decorate(Conv2d)):
 
         The rank-4 shape is given by (out_channels, num_patches,
         out_channels, num_patches)."""
-        num_patches = self.unfolded_input.size()[2]
+        num_patches = self.mean_unfolded_input.size()[1]
         return 2 * (self.out_channels, num_patches)
+
+    @staticmethod
+    def output_shape(input_size,
+                     out_channels,
+                     kernel_size,
+                     stride=1,
+                     padding=0,
+                     dilation=1):
+        """Compute the size of the output from a forward pass.
+
+        Parameters:
+        -----------
+        input_size : tuple(int)
+            4-dimensional tuple containing the dimensions of the input.
+
+        The remaining parameters are the same as for ``Conv2d``.
+
+        Returns:
+        --------
+        tuple(int) :
+            Dimension of the output
+        """
+        if not len(input_size) == 4:
+            raise ValueError(
+                "Expecting 4-dimensional input, but got {} dimensions".format(
+                    len(input_size)))
+        layer = Conv2d(
+            in_channels=input_size[1],
+            out_channels=out_channels,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=padding,
+            dilation=dilation)
+        output = layer(zeros(*input_size))
+        return tuple(output.size())

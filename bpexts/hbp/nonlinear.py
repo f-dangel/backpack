@@ -1,6 +1,8 @@
 """Base class for elementwise activation layer with HBP functionality."""
 
-from torch import (einsum, diagflat)
+import collections
+from torch import (einsum, diagflat, Tensor)
+from numpy import prod
 from .module import hbp_decorate
 
 
@@ -29,6 +31,14 @@ def hbp_elementwise_nonlinear(module_subclass):
                                      on the input, phi''(input)
         """
         __doc__ = as_hbp_module.__doc__
+
+        # override
+        def set_hbp_approximation(self,
+                                  average_input_jacobian=False,
+                                  average_parameter_jacobian=None):
+            super().set_hbp_approximation(
+                average_input_jacobian=average_input_jacobian,
+                average_parameter_jacobian=None)
 
         def hbp_derivative_hooks(self):
             """Register hooks computing first and second derivative of phi.
@@ -64,8 +74,7 @@ def hbp_elementwise_nonlinear(module_subclass):
             module.register_exts_buffer('grad_output', grad_output[0].detach())
 
         # override
-        def input_hessian(self, output_hessian,
-                          modify_2nd_order_terms='none'):
+        def input_hessian(self, output_hessian, modify_2nd_order_terms='none'):
             """Compute input Hessian.
 
             The input Hessian consists of two parts:
@@ -75,10 +84,12 @@ def hbp_elementwise_nonlinear(module_subclass):
             i) gauss_newton = diag(grad_phi) * output_hessian * diag(grad_phi)
             ii) residuum = diag(gradgrad_phi) \odot grad_output
             """
+            assert isinstance(output_hessian, Tensor)
+            # compute input Hessian
             in_hessian = self._gauss_newton(output_hessian)
             idx = list(range(in_hessian.size()[0]))
-            in_hessian[idx, idx] = in_hessian[idx, idx] +\
-                self._residuum(modify_2nd_order_terms)
+            in_hessian[idx, idx] = in_hessian[idx, idx] + self._residuum(
+                modify_2nd_order_terms)
             return in_hessian
 
         def _gauss_newton(self, output_hessian):
@@ -99,10 +110,21 @@ def hbp_elementwise_nonlinear(module_subclass):
             (torch.Tensor): Gauss-Newton matrix, batch-averaged
             """
             batch = self.grad_phi.size()[0]
-            jacobian = self.grad_phi.view(batch, -1)
-            return einsum('bi,ij,bj->ij', (jacobian,
-                                           output_hessian,
-                                           jacobian)) / batch
+            if self.average_input_jac == True:
+                # cheap approximation
+                jacobian = self.grad_phi.view(batch, -1).mean(0).detach()
+                return einsum('i,ij,j->ij',
+                              (jacobian, output_hessian, jacobian))
+            elif self.average_input_jac == False:
+                # expensive but more accurate: E[J^T * E(H) * J]
+                jacobian = self.grad_phi.view(batch, -1)
+                return einsum(
+                    'bi,ij,bj->ij',
+                    (jacobian, output_hessian, jacobian)).detach() / batch
+            else:
+                raise ValueError(
+                    'Unknown value for average_input_jac : {}'.format(
+                        self.average_input_jac))
 
         def _residuum(self, modify_2nd_order_terms):
             """Residuum of the input Hessian matrix.
@@ -118,9 +140,8 @@ def hbp_elementwise_nonlinear(module_subclass):
             (torch.Tensor): Residuum Hessian matrix, averaged over batch
             """
             batch = self.gradgrad_phi.size()[0]
-            residuum_diag = einsum('bi,bi->i',
-                                   (self.gradgrad_phi.view(batch, -1),
-                                    self.grad_output.view(batch, -1)))
+            residuum_diag = einsum('bi,bi->i', (self.gradgrad_phi.view(
+                batch, -1), self.grad_output.view(batch, -1))).detach()
             if modify_2nd_order_terms == 'none':
                 pass
             elif modify_2nd_order_terms == 'clip':
@@ -130,11 +151,11 @@ def hbp_elementwise_nonlinear(module_subclass):
             elif modify_2nd_order_terms == 'zero':
                 residuum_diag.zero_()
             else:
-                raise ValueError('Unknown 2nd-order term strategy {}'
-                                 .format(modify_2nd_order_terms))
+                raise ValueError('Unknown 2nd-order term strategy {}'.format(
+                    modify_2nd_order_terms))
             return residuum_diag
 
     HBPElementwiseNonlinear.__name__ = 'HBPElementwiseNonlinear{}'.format(
-            module_subclass.__name__)
+        module_subclass.__name__)
 
     return HBPElementwiseNonlinear

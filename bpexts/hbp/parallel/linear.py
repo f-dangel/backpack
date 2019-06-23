@@ -33,16 +33,18 @@ class HBPParallelLinear(HBPParallel):
     """
     contained_class = HBPLinear
 
+    # override
     def __init__(self, layer, max_blocks):
         # check class
         if not layer.__class__ == self.contained_class:
-            raise ValueError('Expecting layer of type {}, got {}'
-                             .format(self.contained_class,
-                                     layer.__class__))
-        # find out actual number of parallel children
+            raise ValueError('Expecting layer of type {}, got {}'.format(
+                self.contained_class, layer.__class__))
         self.max_blocks = max_blocks
-        super().__init__(len(layer.weight.chunk(self.max_blocks, 0)))
+        num_blocks = len(layer.weight.chunk(self.max_blocks, 0))
+        super().__init__(layer, num_blocks)
 
+    # override
+    def create_main_and_children(self, layer):
         # create parallel children with chunked values of weight/bias
         parallel_children = self._create_parallel_children(layer)
 
@@ -53,6 +55,7 @@ class HBPParallelLinear(HBPParallel):
         for name, child in parallel_children.items():
             self.main.add_module(name, child)
         self._create_main_parameters()
+        self.set_hbp_approximation()
 
     def _create_main_parameters(self):
         """Remove weight/bias `Parameters` from main module. Concatenate
@@ -95,19 +98,17 @@ class HBPParallelLinear(HBPParallel):
         w_chunks = layer.weight.data.chunk(self.max_blocks, 0)
         b_chunks = [None] * self.num_blocks if layer.bias is None\
                 else layer.bias.data.chunk(self.max_blocks, 0)
-        out_features = [w.size()[1] for w in w_chunks]
+        out_features = [w.size(0) for w in w_chunks]
         in_features = layer.in_features
         # create parallel children
         children = {}
-        for idx, (out, w, b) in enumerate(zip(out_features,
-                                              w_chunks,
-                                              b_chunks)):
+        for idx, (out, w, b) in enumerate(
+                zip(out_features, w_chunks, b_chunks)):
             name = self._parallel_module_name(idx)
-            parallel = self.contained_class(in_features=in_features,
-                                            out_features=out,
-                                            bias=b is not None)
+            parallel = self.contained_class(
+                in_features=in_features, out_features=out, bias=b is not None)
             # disable hooks, buffers
-            parallel.disable_exts()
+            parallel.disable_hbp()
             # set parameters
             parallel.weight = Parameter(w)
             if b is not None:
@@ -125,23 +126,27 @@ class HBPParallelLinear(HBPParallel):
         return self
 
     # override
-    def hbp_hooks(self):
-        """Remove input hook in children, use a single copy instead."""
-        self.register_exts_forward_hook(self.reference_mean_input)
+    def compute_backward_hessian_quantities(self):
+        self.main.compute_backward_hessian_quantities()
+        if self.main.average_param_jac == True:
+            self._reference_mean_input()
+        elif self.main.average_param_jac == False:
+            self._reference_input_kron_mean()
+        else:
+            raise ValueError('Unknown value for average_param_jac : {}'.format(
+                self.main.average_param_jac))
 
-    # --- hooks ---
-    @staticmethod
-    def reference_mean_input(module, input, output):
-        """Save reference of `mean_input` from `main` module in children,
-        avoiding copy.
-
-        Intended use as forward hook.
-        Initialize module buffer 'mean_input' in all children
-        """
-        mean_input = module.main.mean_input
-        for idx, mod in enumerate(module.parallel_children()):
+    def _reference_mean_input(self):
+        """Save reference of `mean_input` in children."""
+        mean_input = self.main.mean_input
+        for idx, mod in enumerate(self.parallel_children()):
             mod.register_exts_buffer('mean_input', mean_input)
-    # --- end of hooks ---
+
+    def reference_input_kron_mean(self):
+        """Save reference of `input_kron_mean` in children."""
+        input_kron_mean = self.main.input_kron_mean
+        for idx, mod in enumerate(self.parallel_children()):
+            mod.register_exts_buffer('input_kron_mean', input_kron_mean)
 
     # override
     def parameter_hessian(self, output_hessian):
@@ -153,8 +158,3 @@ class HBPParallelLinear(HBPParallel):
         # call parameter Hessian recursively
         for mod, out_h in zip(self.parallel_children(), out_h_split):
             mod.parameter_hessian(out_h)
-
-    # override
-    def forward(self, input):
-        """Feed through main layer."""
-        return self.main(input)

@@ -10,15 +10,12 @@ import torch
 from torch.nn import CrossEntropyLoss
 from os import path
 from collections import OrderedDict
-from .models.chen2018 import original_cifar10_model
-from .loading.load_cifar10 import CIFAR10Loader
-from .training.second_order import SecondOrderTraining
-from .training.runner import TrainingRunner
-from .utils import (directory_in_data,
-                    dirname_from_params)
+from exp.models.chen2018 import hbp_split_cifar10_model
+from exp.loading.load_cifar10 import CIFAR10Loader
+from exp.training.second_order import SecondOrderTraining
+from exp.training.runner import TrainingRunner
+from exp.utils import (directory_in_data, dirname_from_params)
 from bpexts.optim.cg_newton import CGNewton
-from bpexts.hbp.parallel.sequential import HBPParallelSequential
-
 
 # global hyperparameters
 batch = 500
@@ -34,7 +31,6 @@ def cifar10_cgnewton_train_fn(modify_2nd_order_terms, max_blocks):
 
     Trainable parameters (weights and bias) will be split into
     subgroups during optimization.
-
 
     Parameters:
     -----------
@@ -58,15 +54,16 @@ def cifar10_cgnewton_train_fn(modify_2nd_order_terms, max_blocks):
     # logging directory
     # -----------------
     # directory of run
-    run_name = dirname_from_params(opt='cgn',
-                                   batch=batch,
-                                   lr=lr,
-                                   alpha=alpha,
-                                   maxiter=cg_maxiter,
-                                   tol=cg_tol,
-                                   atol=cg_atol,
-                                   mod2nd=modify_2nd_order_terms,
-                                   blocks=max_blocks)
+    run_name = dirname_from_params(
+        opt='cgn',
+        batch=batch,
+        lr=lr,
+        alpha=alpha,
+        maxiter=cg_maxiter,
+        tol=cg_tol,
+        atol=cg_atol,
+        mod2nd=modify_2nd_order_terms,
+        blocks=max_blocks)
     logdir = path.join(data_dir, run_name)
 
     # training procedure
@@ -74,29 +71,33 @@ def cifar10_cgnewton_train_fn(modify_2nd_order_terms, max_blocks):
     def training_fn():
         """Training function setting up the train instance."""
         # set up training and run
-        model = original_cifar10_model()
-        # split into parallel modules
-        model = HBPParallelSequential(max_blocks, *list(model.children()))
+        model = hbp_split_cifar10_model(
+            max_blocks,
+            average_input_jacobian=True,
+            average_parameter_jacobian=True)
         loss_function = CrossEntropyLoss()
-        data_loader = CIFAR10Loader(train_batch_size=batch,
-                                    test_batch_size=batch)
-        optimizer = CGNewton(model.parameters(),
-                             lr=lr,
-                             alpha=alpha,
-                             cg_atol=cg_atol,
-                             cg_tol=cg_tol,
-                             cg_maxiter=cg_maxiter)
+        data_loader = CIFAR10Loader(
+            train_batch_size=batch, test_batch_size=batch)
+        optimizer = CGNewton(
+            model.parameters(),
+            lr=lr,
+            alpha=alpha,
+            cg_atol=cg_atol,
+            cg_tol=cg_tol,
+            cg_maxiter=cg_maxiter)
         # initialize training
-        train = SecondOrderTraining(model,
-                                    loss_function,
-                                    optimizer,
-                                    data_loader,
-                                    logdir,
-                                    epochs,
-                                    modify_2nd_order_terms,
-                                    logs_per_epoch=logs_per_epoch,
-                                    device=device)
+        train = SecondOrderTraining(
+            model,
+            loss_function,
+            optimizer,
+            data_loader,
+            logdir,
+            epochs,
+            modify_2nd_order_terms,
+            logs_per_epoch=logs_per_epoch,
+            device=device)
         return train
+
     return training_fn
 
 
@@ -106,18 +107,18 @@ def main(run_experiments=True):
     seeds = range(10)
 
     labels = [
-              # 'GGN',
-              'PCH, abs',
-              # 'PCH, clip',
-             ]
+        # 'GGN',
+        'PCH, abs',
+        # 'PCH, clip',
+    ]
     modify_2nd_order_terms = [
-                              # 1) GGN, different splittings
-                              # 'hzero',
-                              # 2) PCH, different splittings
-                              'abs',
-                              # 3) PCH alternative, different splittings
-                              # 'clip'
-                              ]
+        # 1) GGN, different splittings
+        # 'hzero',
+        # 2) PCH, different splittings
+        'abs',
+        # 3) PCH alternative, different splittings
+        # 'clip'
+    ]
 
     # expand the labels for the experiments
     labels_expanded = []
@@ -128,9 +129,10 @@ def main(run_experiments=True):
         mod2nd_expanded += len(max_blocks) * [mod2nd]
         blocks_expanded += max_blocks
 
-    experiments = [cifar10_cgnewton_train_fn(mod2nd, blocks) for
-                   blocks, mod2nd in zip(blocks_expanded,
-                                         mod2nd_expanded)]
+    experiments = [
+        cifar10_cgnewton_train_fn(mod2nd, blocks)
+        for blocks, mod2nd in zip(blocks_expanded, mod2nd_expanded)
+    ]
 
     def run():
         """Run the experiments."""
@@ -143,8 +145,7 @@ def main(run_experiments=True):
         filenames = OrderedDict()
         for label in labels:
             filenames[label] = OrderedDict()
-        for label, block, train_fn in zip(labels_expanded,
-                                          blocks_expanded,
+        for label, block, train_fn in zip(labels_expanded, blocks_expanded,
                                           experiments):
             runner = TrainingRunner(train_fn)
             m_to_f = runner.merge_runs(seeds)

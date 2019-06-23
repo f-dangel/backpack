@@ -10,6 +10,16 @@ class HBPSigmoid(hbp_elementwise_nonlinear(Sigmoid)):
     Applies sigma(x) = 1 / (1 + exp(-x)) elementwise.
     """
     # override
+    @classmethod
+    def from_torch(cls, torch_layer):
+        if not isinstance(torch_layer, Sigmoid):
+            raise ValueError("Expecting torch.nn.Sigmoid, got {}".format(
+                torch_layer.__class__))
+        # create instance
+        sigmoid = cls()
+        return sigmoid
+
+    # override
     def hbp_derivative_hooks(self):
         """Hooks for access to first and second derivative."""
         self.register_exts_forward_hook(self.store_sigmoid_derivatives)

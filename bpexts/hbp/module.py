@@ -1,6 +1,5 @@
 """Extend module for HBP."""
 
-
 import warnings
 from ..decorator import decorate
 
@@ -18,12 +17,39 @@ def hbp_decorate(module_subclass):
         - parameter_hessian()
         - input_hessian()
         """
+
         __doc__ = '[Decorated by bpexts for HBP] {}'.format(
-                module_subclass.__doc__)
+            module_subclass.__doc__)
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
+            # determine approximation mode for backward pass in HBP
+            self.set_hbp_approximation()
+            self.disable_hbp()
             self.enable_hbp()
+
+        def set_hbp_approximation(self,
+                                  average_input_jacobian=None,
+                                  average_parameter_jacobian=None):
+            """Set approximation mode for HBP.
+
+            If ``average_*_jacobians`` is set to ``True``, the Jacobian that
+            was averaged in advance will be used to backpropagate the input
+            and parameter Hessian.
+
+            Parameters:
+            -----------
+            average_input_jacobian : bool
+                Use batch averaged Jacobian to compute the input Hessian
+            average_parameter_jacobian : bool
+                Use batch averaged Jacobian to compute the parameter Hessian.
+                (Will be ignored if the module does not possess parameters)
+            """
+            allowed = [True, False, None]
+            assert average_input_jacobian in allowed
+            assert average_parameter_jacobian in allowed
+            self.average_input_jac = average_input_jacobian
+            self.average_param_jac = average_parameter_jacobian
 
         def enable_hbp(self):
             """Enable Hessian backpropagation functionality.
@@ -46,7 +72,8 @@ def hbp_decorate(module_subclass):
                           ' during Hessian backpropagation.')
             pass
 
-        def backward_hessian(self, output_hessian,
+        def backward_hessian(self,
+                             output_hessian,
                              compute_input_hessian=True,
                              modify_2nd_order_terms='none'):
             """Propagate Hessian, optionally compute parameter Hessian.
@@ -76,12 +103,17 @@ def hbp_decorate(module_subclass):
                                           If compute_input_hessian is False,
                                           return None.
             """
+            self.compute_backward_hessian_quantities()
             if self.has_trainable_parameters():
                 self.parameter_hessian(output_hessian)
-            return None if compute_input_hessian is False else\
-                self.input_hessian(
+            return (None
+                    if compute_input_hessian is False else self.input_hessian(
                         output_hessian,
-                        modify_2nd_order_terms=modify_2nd_order_terms)
+                        modify_2nd_order_terms=modify_2nd_order_terms))
+
+        def compute_backward_hessian_quantities(self):
+            """Compute quantities required for backprop of the Hessian."""
+            pass
 
         def has_trainable_parameters(self):
             """Check if there are trainable parameters.
@@ -133,5 +165,39 @@ def hbp_decorate(module_subclass):
                                       'must implement this method to be'
                                       'able to pass Hessians backward')
 
+        def extra_repr(self):
+            """Show HBP approximation mode."""
+            repr = super().extra_repr()
+            if self.average_input_jac is not None:
+                repr = '{}, avg_input_jac: {}'.format(repr,
+                                                      self.average_input_jac)
+            if self.average_param_jac is not None:
+                repr = '{}, avg_param_jac: {}'.format(repr,
+                                                      self.average_param_jac)
+            return repr
+
+        def uses_hbp_approximation(self, average_input_jacobian,
+                                   average_parameter_jacobian):
+            """Check if module applies the specified HBP approximation."""
+            same_param_approx = (
+                average_parameter_jacobian == self.average_param_jac)
+            same_input_approx = (
+                average_input_jacobian == self.average_input_jac)
+            return (same_param_approx == same_input_approx)
+
+        # --- hooks ---
+        @staticmethod
+        def store_input(module, input):
+            """Save reference to input of layer.
+
+            Intended use as pre-forward hook.
+
+            Initialize module buffer 'input'.
+            """
+            if not len(input) == 1:
+                raise ValueError('Cannot handle multi-input scenario')
+            module.register_exts_buffer('input', input[0])
+
     HBPModule.__name__ = 'HBP{}'.format(module_subclass.__name__)
+
     return HBPModule

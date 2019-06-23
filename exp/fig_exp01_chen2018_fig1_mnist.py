@@ -1,14 +1,13 @@
 """Plot the data computed in `exp01_chen2018_fig1_mnist.py`."""
 
-
 from os import path, makedirs
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from .plotting.plotting import OptimizationPlot
-from .exp01_chen2018_fig1_mnist import filenames as exp01_files
-from .exp01_chen2018_fig1_mnist import dirname as exp01_dirname
-from .utils import directory_in_fig
+from exp.plotting.plotting import OptimizationPlot
+from exp.exp01_chen2018_fig1_mnist import filenames as exp01_files
+from exp.exp01_chen2018_fig1_mnist import dirname as exp01_dirname
+from exp.utils import directory_in_fig
 
 
 def plot():
@@ -26,12 +25,13 @@ def plot():
         plot_files = [filenames[label][metric] for label in plot_labels]
         # figure
         plt.figure()
-        OptimizationPlot.create_standard_plot('epoch',
-                                              metric.replace('_', ' '),
-                                              plot_files,
-                                              plot_labels,
-                                              # scale by training set
-                                              scale_steps=60000)
+        OptimizationPlot.create_standard_plot(
+            'epoch',
+            metric.replace('_', ' '),
+            plot_files,
+            plot_labels,
+            # scale by training set
+            scale_steps=60000)
         plt.legend()
         # fine tuning
         if '_loss' in metric:

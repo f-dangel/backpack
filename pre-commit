@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Hook for git to run before commit
-pytest -v bpexts
 # Optional: Test experiments
 pytest -v exp
+# Test bpexts packages
+pytest -v tests

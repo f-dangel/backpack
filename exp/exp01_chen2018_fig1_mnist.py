@@ -9,15 +9,13 @@ from torch.nn import CrossEntropyLoss
 from torch.optim import SGD
 from os import path
 from collections import OrderedDict
-from .models.chen2018 import original_mnist_model
-from .loading.load_mnist import MNISTLoader
-from .training.first_order import FirstOrderTraining
-from .training.second_order import SecondOrderTraining
-from .training.runner import TrainingRunner
-from .utils import (directory_in_data,
-                    dirname_from_params)
+from exp.models.chen2018 import mnist_model, hbp_mnist_model
+from exp.loading.load_mnist import MNISTLoader
+from exp.training.first_order import FirstOrderTraining
+from exp.training.second_order import SecondOrderTraining
+from exp.training.runner import TrainingRunner
+from exp.utils import (directory_in_data, dirname_from_params)
 from bpexts.optim.cg_newton import CGNewton
-
 
 # global hyperparameters
 batch = 500
@@ -38,35 +36,30 @@ def mnist_sgd_train_fn():
     # logging directory
     # -----------------
     # directory of run
-    run_name = dirname_from_params(opt='sgd',
-                                   batch=batch,
-                                   lr=lr,
-                                   mom=momentum)
+    run_name = dirname_from_params(opt='sgd', batch=batch, lr=lr, mom=momentum)
     logdir = path.join(data_dir, run_name)
 
     # training procedure
     # ------------------
     def training_fn():
         """Training function setting up the train instance."""
-        model = original_mnist_model()
-        # NOTE: Important line, deactivate extension hooks/buffers!
-        model.disable_exts()
+        model = mnist_model()
         loss_function = CrossEntropyLoss()
-        data_loader = MNISTLoader(train_batch_size=batch,
-                                  test_batch_size=batch)
-        optimizer = SGD(model.parameters(),
-                        lr=lr,
-                        momentum=momentum)
+        data_loader = MNISTLoader(
+            train_batch_size=batch, test_batch_size=batch)
+        optimizer = SGD(model.parameters(), lr=lr, momentum=momentum)
         # initialize training
-        train = FirstOrderTraining(model,
-                                   loss_function,
-                                   optimizer,
-                                   data_loader,
-                                   logdir,
-                                   epochs,
-                                   logs_per_epoch=logs_per_epoch,
-                                   device=device)
+        train = FirstOrderTraining(
+            model,
+            loss_function,
+            optimizer,
+            data_loader,
+            logdir,
+            epochs,
+            logs_per_epoch=logs_per_epoch,
+            device=device)
         return train
+
     return training_fn
 
 
@@ -77,7 +70,7 @@ def mnist_cgnewton_train_fn(modify_2nd_order_terms):
     -----------
     modify_2nd_order_terms : (str)
         Strategy for treating 2nd-order effects of module functions:
-        * `'zero'`: Yields the Generalizes Gauss Newton matrix
+        * `'zero'`: Yields the Generalized Gauss-Newton matrix
         * `'abs'`: BDA-PCH approximation
         * `'clip'`: Different BDA-PCH approximation
     """
@@ -92,14 +85,15 @@ def mnist_cgnewton_train_fn(modify_2nd_order_terms):
     # logging directory
     # -----------------
     # directory of run
-    run_name = dirname_from_params(opt='cgn',
-                                   batch=batch,
-                                   lr=lr,
-                                   alpha=alpha,
-                                   maxiter=cg_maxiter,
-                                   tol=cg_tol,
-                                   atol=cg_atol,
-                                   mod2nd=modify_2nd_order_terms)
+    run_name = dirname_from_params(
+        opt='cgn',
+        batch=batch,
+        lr=lr,
+        alpha=alpha,
+        maxiter=cg_maxiter,
+        tol=cg_tol,
+        atol=cg_atol,
+        mod2nd=modify_2nd_order_terms)
     logdir = path.join(data_dir, run_name)
 
     # training procedure
@@ -107,27 +101,31 @@ def mnist_cgnewton_train_fn(modify_2nd_order_terms):
     def train_fn():
         """Training function setting up the train instance."""
         # set up training and run
-        model = original_mnist_model()
+        model = hbp_mnist_model(
+            average_input_jacobian=True, average_parameter_jacobian=True)
         loss_function = CrossEntropyLoss()
-        data_loader = MNISTLoader(train_batch_size=batch,
-                                  test_batch_size=batch)
-        optimizer = CGNewton(model.parameters(),
-                             lr=lr,
-                             alpha=alpha,
-                             cg_atol=cg_atol,
-                             cg_tol=cg_tol,
-                             cg_maxiter=cg_maxiter)
+        data_loader = MNISTLoader(
+            train_batch_size=batch, test_batch_size=batch)
+        optimizer = CGNewton(
+            model.parameters(),
+            lr=lr,
+            alpha=alpha,
+            cg_atol=cg_atol,
+            cg_tol=cg_tol,
+            cg_maxiter=cg_maxiter)
         # initialize training
-        train = SecondOrderTraining(model,
-                                    loss_function,
-                                    optimizer,
-                                    data_loader,
-                                    logdir,
-                                    epochs,
-                                    modify_2nd_order_terms,
-                                    logs_per_epoch=logs_per_epoch,
-                                    device=device)
+        train = SecondOrderTraining(
+            model,
+            loss_function,
+            optimizer,
+            data_loader,
+            logdir,
+            epochs,
+            modify_2nd_order_terms,
+            logs_per_epoch=logs_per_epoch,
+            device=device)
         return train
+
     return train_fn
 
 
@@ -135,21 +133,21 @@ def main(run_experiments=True):
     """Execute the experiments, return filenames of the merged runs."""
     seeds = range(10)
     labels = [
-              'SGD',
-              'CG (GGN)',
-              'CG (PCH, abs)',
-              'CG (PCH, clip)',
-             ]
+        'SGD',
+        'CG (GGN)',
+        'CG (PCH, abs)',
+        'CG (PCH, clip)',
+    ]
     experiments = [
-                   # 1) SGD curve
-                   mnist_sgd_train_fn(),
-                   # 2) Generalized Gauss-Newton curve
-                   mnist_cgnewton_train_fn('zero'),
-                   # 3) BDA-PCH curve
-                   mnist_cgnewton_train_fn('abs'),
-                   # 4) alternative BDA-PCH curve
-                   mnist_cgnewton_train_fn('clip'),
-                  ]
+        # 1) SGD curve
+        mnist_sgd_train_fn(),
+        # 2) Generalized Gauss-Newton curve
+        mnist_cgnewton_train_fn('zero'),
+        # 3) BDA-PCH curve
+        mnist_cgnewton_train_fn('abs'),
+        # 4) alternative BDA-PCH curve
+        mnist_cgnewton_train_fn('clip'),
+    ]
 
     def run():
         """Run the experiments."""

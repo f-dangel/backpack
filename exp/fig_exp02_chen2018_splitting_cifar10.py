@@ -1,17 +1,15 @@
-"""Plot experiment figure of ICML 2019 paper."""
-
+"""Plot experiment figure of block-splitting."""
 
 from os import path, makedirs
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from palettable.colorbrewer.sequential import YlGnBu_5, YlOrRd_5
-from .plotting.plotting import OptimizationPlot
-from .exp01_chen2018_fig2_cifar10 import filenames as exp01_files
-from .exp02_chen2018_splitting_cifar10 import filenames as exp02_files
-from .exp02_chen2018_splitting_cifar10 import dirname as exp02_dirname
-from .utils import directory_in_fig
-
+from exp.plotting.plotting import OptimizationPlot
+from exp.exp01_chen2018_fig2_cifar10 import filenames as exp01_files
+from exp.exp02_chen2018_splitting_cifar10 import filenames as exp02_files
+from exp.exp02_chen2018_splitting_cifar10 import dirname as exp02_dirname
+from exp.utils import directory_in_fig
 
 # define colors
 sgd_color = YlOrRd_5.mpl_colors[2]
@@ -45,27 +43,28 @@ def plot():
             # plot SGD
             plot_labels = ['SGD']
             plot_files = [files01['SGD'][metric]]
-            OptimizationPlot.create_standard_plot('epoch',
-                                                  metric.replace('_', ' '),
-                                                  plot_files,
-                                                  plot_labels,
-                                                  # scale by training set
-                                                  scale_steps=50000)
+            OptimizationPlot.create_standard_plot(
+                'epoch',
+                metric.replace('_', ' '),
+                plot_files,
+                plot_labels,
+                # scale by training set
+                scale_steps=50000)
 
             # collect plots for block splitting
             plot_labels = []
             plot_files = []
             for b in sorted(block_dict.keys()):
                 plot_files.append(block_dict[b][metric])
-                plot_labels.append('CG, {} block{}'
-                                   .format(b, 's' * (b != 1)))
+                plot_labels.append('CG, {} block{}'.format(b, 's' * (b != 1)))
             # plot block splitting
-            OptimizationPlot.create_standard_plot('epoch',
-                                                  metric.replace('_', ' '),
-                                                  plot_files,
-                                                  plot_labels,
-                                                  # scale by training set
-                                                  scale_steps=50000)
+            OptimizationPlot.create_standard_plot(
+                'epoch',
+                metric.replace('_', ' '),
+                plot_files,
+                plot_labels,
+                # scale by training set
+                scale_steps=50000)
             plt.legend()
             OptimizationPlot.save_as_tikz(out_file)
             OptimizationPlot.post_process(out_file)

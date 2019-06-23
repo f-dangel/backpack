@@ -7,22 +7,21 @@ from ..linear import HBPLinear
 from .linear import HBPParallelLinear
 from ..relu import HBPReLU
 from ..sigmoid import HBPSigmoid
-from ..combined import HBPCompositionActivationLinear
-from .combined import HBPParallelCompositionActivationLinear
 
 
 class HBPParallelSequential(HBPSequential):
     """Handle splitting for a sequence of parallel modules."""
+
     def __init__(self, num_blocks, *layers):
         """Convert to parallel before if known."""
-        converted = [self._convert_to_parallel(layer,
-                                               num_blocks)
-                     for layer in layers]
+        converted = [
+            self._convert_to_parallel(layer, num_blocks) for layer in layers
+        ]
         super().__init__(*converted)
 
     def _convert_to_parallel(self, layer, num_blocks):
         """Convert a layer to a parallelized form.
-        
+
         Layers that will not be converted do not end up with the
         specified split into `num_blocks`.
         """
@@ -37,18 +36,15 @@ class HBPParallelSequential(HBPSequential):
 
     # known conversions for layers to parallel equivalents
     conversions = {
-                   HBPLinear:
-                    HBPParallelLinear,
-                   HBPCompositionActivationLinear:
-                    HBPParallelCompositionActivationLinear,
-                  }
+        HBPLinear: HBPParallelLinear,
+    }
     # no conversions will happen for these layers
     no_conversion = [
-                     HBPReLU,
-                     HBPSigmoid,
-                     HBPParallel,
-                     HBPSequential,
-                    ]
+        HBPReLU,
+        HBPSigmoid,
+        HBPParallel,
+        HBPSequential,
+    ]
 
     @classmethod
     def _find_target_class(cls, layer_cls):
@@ -69,20 +65,22 @@ class HBPParallelSequential(HBPSequential):
         # check if in no conversion
         if layer_cls in cls.no_conversion:
             return None
-        subcls = [cls.conversions[sub] for sub in cls.conversions.keys()
-                  if issubclass(layer_cls, sub)]
+        subcls = [
+            cls.conversions[sub] for sub in cls.conversions.keys()
+            if issubclass(layer_cls, sub)
+        ]
         if len(subcls) == 1:
             return subcls[0]
         elif len(subcls) > 1:
             raise ValueError('Found multiple target classes to convert'
-                             '{} to: {}\nSupported conversions:\n{}'
-                             .format(layer_cls, subcls,
-                                     cls._supported_conversions()))
+                             '{} to: {}\nSupported conversions:\n{}'.format(
+                                 layer_cls, subcls,
+                                 cls._supported_conversions()))
         else:
             raise ValueError('No conversion strategy found. Supported'
-                             ' conversions:\n{}'
-                             .format(cls._supported_conversions()))
- 
+                             ' conversions:\n{}'.format(
+                                 cls._supported_conversions()))
+
     @classmethod
     def _supported_conversions(cls):
         """Return a string listing the conversions."""

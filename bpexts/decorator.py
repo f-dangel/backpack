@@ -56,6 +56,13 @@ def decorate(module_subclass):
 
         __init__.__doc__ = module_subclass.__init__.__doc__
 
+        # construction from torch layer
+        @classmethod
+        def from_torch(cls, torch_layer):
+            """Build the layer from a torch layer."""
+            raise NotImplementedError(
+                "Please implement a conversion method for {}".format(cls))
+
         # --- hook tracking ---
         def register_exts_forward_pre_hook(self, hook):
             """Register forward pre hook for extended backpropgation."""
@@ -128,7 +135,7 @@ def decorate(module_subclass):
             """Show number of active extension buffers and hooks."""
             active_hooks = len(self.exts_hooks)
             active_buffers = len(self.exts_buffers)
-            repr = '{}{}buffers: {}, hooks {}'.format(
+            repr = '{}{}buffers: {}, hooks: {}'.format(
                 super().extra_repr(), ', ' if super().extra_repr() else '',
                 active_buffers, active_hooks)
             return repr
