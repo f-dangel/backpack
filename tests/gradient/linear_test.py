@@ -4,7 +4,8 @@ from torch import Tensor
 from torch.nn import Linear
 from bpexts.gradient.linear import Linear as G_Linear
 import bpexts.gradient.config as config
-from bpexts.utils import torch_allclose
+from bpexts.utils import torch_allclose, set_seeds
+from .gradient_test import set_up_gradient_tests
 
 # predefined weight matrix and bias
 weight = Tensor([[1, 2, 3], [4, 5, 6]]).float()
@@ -102,3 +103,26 @@ def test_grad_batch():
         assert torch_allclose(g_lin.weight.grad_batch, w_grad_batch)
         g_lin.zero_grad()
         g_lin.clear_grad_batch()
+
+
+# automated test
+# hyper-parameters
+in_features = 20
+out_features = 10
+bias = True
+batch = 13
+input_size = (batch, in_features)
+atol = 1e-5
+rtol = 1e-5
+
+
+def layer_fn():
+    set_seeds(0)
+    return G_Linear(
+        in_features=in_features, out_features=out_features, bias=bias)
+
+
+for name, test_cls in set_up_gradient_tests(
+        layer_fn, 'Linear', input_size=input_size, atol=atol, rtol=rtol):
+    exec('{} = test_cls'.format(name))
+    del test_cls
