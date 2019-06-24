@@ -4,7 +4,8 @@ Tests the computation of sum-of-squared gradients
 
 import torch
 from torch.nn import Conv2d
-from bpexts.sumgradsquared.conv2d import SumGradSquared_Conv2d as SGS_Conv2d
+import bpexts.gradient.config as config
+from bpexts.gradient.conv2d import Conv2d as SGS_Conv2d
 
 torch.manual_seed(0)
 X1 = torch.rand(1, 3, 28, 28)
@@ -62,7 +63,9 @@ def forloopSGS(x, conv):
 def test_sum_grad_squared():
     for X in inputs:
         baseline = forloopSGS(X, nn_layer)
-        (sgs_layer(X).norm(2)**2).backward()
-
-        for (p1, p2) in zip(baseline, sgs_layer.parameters()):
-            assert torch.allclose(p1, p2.sum_grad_squared)
+        with config.bpexts(config.SUM_GRAD_SQUARED):
+            (sgs_layer(X).norm(2)**2).backward()
+            for (p1, p2) in zip(baseline, sgs_layer.parameters()):
+                assert torch.allclose(p1, p2.sum_grad_squared)
+            sgs_layer.clear_grad_batch()
+            sgs_layer.clear_sum_grad_squared()
