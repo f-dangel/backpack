@@ -1,21 +1,17 @@
 """Extension of torch.nn.Linear for computing first-order information."""
 
-from torch.nn import Linear
+import torch.nn
 from torch import einsum
-from ..decorator import decorate
 from . import config
 from .config import CTX
 
-# decorated torch.nn.Linear module
-DecoratedLinear = decorate(Linear)
 
-
-class Linear(DecoratedLinear):
+class Linear(torch.nn.Linear):
     """Extended gradient backpropagation for torch.nn.Linear."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.register_exts_forward_pre_hook(self.store_input)
+        self.register_forward_pre_hook(self.store_input)
         self.register_backward_hook(self.compute_first_order_info)
 
     @staticmethod
@@ -41,7 +37,7 @@ class Linear(DecoratedLinear):
             raise ValueError('Cannot handle multi-input scenario')
         if not len(input[0].size()) == 2:
             raise ValueError('Expecting 2D input (batch, data)')
-        module.register_exts_buffer('input', input[0].clone().detach())
+        module.register_buffer('input', input[0].clone().detach())
 
     def compute_grad_batch(self, grad_output):
         """Compute batchwise gradients of module parameters.

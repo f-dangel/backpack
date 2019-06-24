@@ -1,21 +1,17 @@
 """Extension of torch.nn.Conv2d for computing batch gradients."""
 
-from torch.nn import (Conv2d, Unfold)
+import torch.nn
 from torch import einsum
-from ..decorator import decorate
 from . import config
 from .config import CTX
 
-# decorated torch.nn.Conv2d module
-DecoratedConv2d = decorate(Conv2d)
 
-
-class Conv2d(DecoratedConv2d):
+class Conv2d(torch.nn.Conv2d):
     """Extended backpropagation for torch.nn.Conv2d."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.unfold = Unfold(
+        self.unfold = torch.nn.Unfold(
             kernel_size=self.kernel_size,
             dilation=self.dilation,
             padding=self.padding,
@@ -33,7 +29,7 @@ class Conv2d(DecoratedConv2d):
             raise ValueError('Cannot handle multi-input scenario')
         if not len(input[0].size()) == 4:
             raise ValueError('Expecting 4D input (batch, channel, x, y)')
-        module.register_exts_buffer('input', input[0].clone().detach())
+        module.register_buffer('input', input[0].clone().detach())
 
     @staticmethod
     def compute_first_order_info(module, grad_input, grad_output):
