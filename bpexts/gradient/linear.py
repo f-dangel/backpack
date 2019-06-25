@@ -100,7 +100,7 @@ class Linear(torch.nn.Linear):
         return einsum('bi,bj->ij', (grad_output**2, self.input**2))
 
     def _compute_bias_sgs(self, grad_output):
-        return (grad_output**2).sum(0)
+        return (self._compute_bias_grad_batch(grad_output)**2).sum(0)
 
     def clear_grad_batch(self):
         if hasattr(self.weight, "grad_batch"):

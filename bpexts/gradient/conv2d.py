@@ -122,13 +122,10 @@ class Conv2d(torch.nn.Conv2d):
                 grad_output)
 
     def _compute_weight_sgs(self, grad_output):
-        X = self.unfold(self.input)
-        dE_dY = grad_output.view(grad_output.size(0), self.out_channels, -1)
-        return (einsum('bml,bkl->bmk',
-                       (dE_dY, X))**2).sum(0).view(self.weight.size())
+        return (self._compute_weight_grad_batch(grad_output)**2).sum(0)
 
     def _compute_bias_sgs(self, grad_output):
-        return (grad_output.sum(3).sum(2)**2).sum(0)
+        return (self._compute_bias_grad_batch(grad_output)**2).sum(0)
 
     def clear_grad_batch(self):
         if hasattr(self.weight, "grad_batch"):
