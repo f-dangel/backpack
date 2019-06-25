@@ -36,9 +36,9 @@ class Conv2d(torch.nn.Conv2d):
         """Check which quantities need to be computed and evaluate them."""
         if not len(grad_output) == 1:
             raise ValueError('Cannot handle multi-output scenario')
-        # only values required
+
         grad_out = grad_output[0].clone().detach()
-        # run computations
+
         if CTX.is_active(config.BATCH_GRAD):
             module.compute_grad_batch(grad_out)
         if CTX.is_active(config.SUM_GRAD_SQUARED):
@@ -108,13 +108,9 @@ class Conv2d(torch.nn.Conv2d):
         """
         batch_size = grad_output.size(0)
         dE_dw_shape = (batch_size, ) + self.weight.size()
-        # expand patches
         X = self.unfold(self.input)
-        # view of matmul result batch gradients
         dE_dY = grad_output.view(batch_size, self.out_channels, -1)
-        # weight batch gradients dE/dW
         dE_dW = einsum('blj,bkj->bkl', (X, dE_dY))
-        # reshape dE/dW into dE/dw
         return dE_dW.view(dE_dw_shape)
 
     def compute_sum_grad_squared(self, grad_output):
@@ -135,23 +131,13 @@ class Conv2d(torch.nn.Conv2d):
         return (grad_output.sum(3).sum(2)**2).sum(0)
 
     def clear_grad_batch(self):
-        """Delete batch gradients."""
-        try:
+        if hasattr(self.weight, "grad_batch"):
             del self.weight.grad_batch
-        except AttributeError:
-            pass
-        try:
+        if hasattr(self.bias, "grad_batch"):
             del self.bias.grad_batch
-        except AttributeError:
-            pass
 
     def clear_sum_grad_squared(self):
-        """Delete sum of squared gradients."""
-        try:
+        if hasattr(self.weight, "sum_grad_squared"):
             del self.weight.sum_grad_squared
-        except AttributeError:
-            pass
-        try:
+        if hasattr(self.bias, "sum_grad_squared"):
             del self.bias.sum_grad_squared
-        except AttributeError:
-            pass

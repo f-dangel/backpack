@@ -15,19 +15,6 @@ class Linear(torch.nn.Linear):
         self.register_backward_hook(self.compute_first_order_info)
 
     @staticmethod
-    def compute_first_order_info(module, grad_input, grad_output):
-        """Check which quantities need to be computed and evaluate them."""
-        if not len(grad_output) == 1:
-            raise ValueError('Cannot handle multi-output scenario')
-        # only values required
-        grad_out = grad_output[0].clone().detach()
-        # run computations
-        if CTX.is_active(config.BATCH_GRAD):
-            module.compute_grad_batch(grad_out)
-        if CTX.is_active(config.SUM_GRAD_SQUARED):
-            module.compute_sum_grad_squared(grad_out)
-
-    @staticmethod
     def store_input(module, input):
         """Pre forward hook saving layer input as buffer.
 
@@ -38,6 +25,19 @@ class Linear(torch.nn.Linear):
         if not len(input[0].size()) == 2:
             raise ValueError('Expecting 2D input (batch, data)')
         module.register_buffer('input', input[0].clone().detach())
+
+    @staticmethod
+    def compute_first_order_info(module, grad_input, grad_output):
+        """Check which quantities need to be computed and evaluate them."""
+        if not len(grad_output) == 1:
+            raise ValueError('Cannot handle multi-output scenario')
+
+        grad_out = grad_output[0].clone().detach()
+
+        if CTX.is_active(config.BATCH_GRAD):
+            module.compute_grad_batch(grad_out)
+        if CTX.is_active(config.SUM_GRAD_SQUARED):
+            module.compute_sum_grad_squared(grad_out)
 
     def compute_grad_batch(self, grad_output):
         """Compute batchwise gradients of module parameters.
@@ -103,23 +103,13 @@ class Linear(torch.nn.Linear):
         return (grad_output**2).sum(0)
 
     def clear_grad_batch(self):
-        """Delete batch gradients."""
-        try:
+        if hasattr(self.weight, "grad_batch"):
             del self.weight.grad_batch
-        except AttributeError:
-            pass
-        try:
+        if hasattr(self.bias, "grad_batch"):
             del self.bias.grad_batch
-        except AttributeError:
-            pass
 
     def clear_sum_grad_squared(self):
-        """Delete sum of squared gradients."""
-        try:
+        if hasattr(self.weight, "sum_grad_squared"):
             del self.weight.sum_grad_squared
-        except AttributeError:
-            pass
-        try:
+        if hasattr(self.bias, "sum_grad_squared"):
             del self.bias.sum_grad_squared
-        except AttributeError:
-            pass
