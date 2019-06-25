@@ -56,6 +56,7 @@ def gradient_test(layer_fn, input_size, device, seed=0, atol=1e-5, rtol=1e-8):
             for g1, g2, p in zip(autograd_res, bpexts_res, layer.parameters()):
                 assert tuple(g1.size()) == tuple(
                     g2.size()) == (self.INPUT_SIZE[0], ) + tuple(p.size())
+                self._residuum_report(g1, g2)
                 assert torch.allclose(g1, g2, atol=self.ATOL, rtol=self.RTOL)
 
         def _compute_batch_gradients_autograd(self):
@@ -98,6 +99,7 @@ def gradient_test(layer_fn, input_size, device, seed=0, atol=1e-5, rtol=1e-8):
                     layer.parameters()):
                 bpexts_g = batch_g.sum(0)
                 assert g.size() == bpexts_g.size() == p.size()
+                self._residuum_report(g, bpexts_g)
                 assert torch.allclose(
                     g, bpexts_g, atol=self.ATOL, rtol=self.RTOL)
 
@@ -119,6 +121,7 @@ def gradient_test(layer_fn, input_size, device, seed=0, atol=1e-5, rtol=1e-8):
                 list(layer.parameters()))
             for g1, g2, p in zip(autograd_res, bpexts_res, layer.parameters()):
                 assert g1.size() == g2.size() == p.size()
+                self._residuum_report(g1, g2)
                 assert torch.allclose(g1, g2, atol=self.ATOL, rtol=self.RTOL)
 
         def _compute_sgs_autograd(self):
@@ -148,6 +151,16 @@ def gradient_test(layer_fn, input_size, device, seed=0, atol=1e-5, rtol=1e-8):
             """Return same random input (reset seed before)."""
             set_seeds(self.SEED)
             return torch.randn(*self.INPUT_SIZE).to(self.DEVICE)
+
+        def _residuum_report(self, x, y):
+            """Report values with mismatch in allclose check."""
+            x_numpy = x.data.cpu().numpy().flatten()
+            y_numpy = y.data.cpu().numpy().flatten()
+            close = numpy.isclose(
+                x_numpy, y_numpy, atol=self.ATOL, rtol=self.RTOL)
+            where_not_close = numpy.argwhere(numpy.logical_not(close))
+            for idx in where_not_close:
+                print('{} versus {}'.format(x_numpy[idx], y_numpy[idx]))
 
     class GradientTest1(GradientTest0):
         def _loss_fn(self, x):
