@@ -110,7 +110,7 @@ class Conv2d(torch.nn.Conv2d):
         dE_dw_shape = (batch_size, ) + self.weight.size()
         X = self.unfold(self.input)
         dE_dY = grad_output.view(batch_size, self.out_channels, -1)
-        dE_dW = einsum('blj,bkj->bkl', (X, dE_dY))
+        dE_dW = einsum('bml,bkl->bmk', (dE_dY, X))
         return dE_dW.view(dE_dw_shape)
 
     def compute_sum_grad_squared(self, grad_output):
