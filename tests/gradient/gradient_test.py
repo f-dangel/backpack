@@ -13,7 +13,7 @@ def gradient_test(layer_fn, input_size, device, seed=0, atol=1e-5, rtol=1e-8):
 
     Checks for the following aspects:
     - batchwise gradients
-    - TODO sum of gradients squared
+    - sum of gradients squared
 
     Parameters:
     -----------
@@ -41,27 +41,25 @@ def gradient_test(layer_fn, input_size, device, seed=0, atol=1e-5, rtol=1e-8):
         ATOL = atol
         RTOL = rtol
 
-        def _create_layer(self):
-            return layer_fn().to(self.DEVICE)
-
         def _loss_fn(self, x):
-            """Dummy loss function: Normalized sum of squared elements.
-
-            The loss Hessian of this function is constant and diagonal.
-            """
+            """Dummy loss function: Normalized sum of squared elements."""
             return (x**2).contiguous().view(x.size(0), -1).mean(0).sum()
 
         def test_batch_gradients(self):
-            """Check for same forward pass."""
+            """Check for same batch gradients."""
             # create input
             autograd_res = self._compute_batch_gradients_autograd()
             bpexts_res = self._compute_batch_gradients_bpexts()
-            assert len(autograd_res) == len(bpexts_res)
-            for g1, g2 in zip(autograd_res, bpexts_res):
-                assert g1.size() == g2.size()
+            layer = self._create_layer()
+            assert len(autograd_res) == len(bpexts_res) == len(
+                list(layer.parameters()))
+            for g1, g2, p in zip(autograd_res, bpexts_res, layer.parameters()):
+                assert tuple(g1.size()) == tuple(
+                    g2.size()) == (self.INPUT_SIZE[0], ) + tuple(p.size())
                 assert torch.allclose(g1, g2, atol=self.ATOL, rtol=self.RTOL)
 
         def _compute_batch_gradients_autograd(self):
+            """Batch gradients via torch.autograd."""
             layer = self._create_layer()
             inputs = self._create_input()
             batch_grads = [
@@ -77,6 +75,7 @@ def gradient_test(layer_fn, input_size, device, seed=0, atol=1e-5, rtol=1e-8):
             return batch_grads
 
         def _compute_batch_gradients_bpexts(self):
+            """Batch gradients via bpexts."""
             layer = self._create_layer()
             inputs = self._create_input()
             loss = self._loss_fn(layer(inputs))
@@ -86,6 +85,64 @@ def gradient_test(layer_fn, input_size, device, seed=0, atol=1e-5, rtol=1e-8):
                 layer.zero_grad()
                 layer.clear_grad_batch()
             return batch_grads
+
+        def test_batch_gradients_sum_to_grad(self):
+            """Check if the batch sum of gradients yields the gradient."""
+            layer = self._create_layer()
+            autograd_gradients = self._compute_gradients_autograd()
+            bpexts_batch_gradients = self._compute_batch_gradients_bpexts()
+            assert len(autograd_gradients) == len(
+                bpexts_batch_gradients) == len(list(layer.parameters()))
+            for g, batch_g, p in zip(
+                    autograd_gradients, bpexts_batch_gradients,
+                    layer.parameters()):
+                bpexts_g = batch_g.sum(0)
+                assert g.size() == bpexts_g.size() == p.size()
+                assert torch.allclose(
+                    g, bpexts_g, atol=self.ATOL, rtol=self.RTOL)
+
+        def _compute_gradients_autograd(self):
+            """Gradients via torch.autograd."""
+            layer = self._create_layer()
+            inputs = self._create_input()
+            loss = self._loss_fn(layer(inputs))
+            gradients = torch.autograd.grad(loss, layer.parameters())
+            return list(gradients)
+
+        def test_sgs(self):
+            """Check for same sum of gradients squared."""
+            # create input
+            autograd_res = self._compute_sgs_autograd()
+            bpexts_res = self._compute_sgs_bpexts()
+            layer = self._create_layer()
+            assert len(autograd_res) == len(bpexts_res) == len(
+                list(layer.parameters()))
+            for g1, g2, p in zip(autograd_res, bpexts_res, layer.parameters()):
+                assert g1.size() == g2.size() == p.size()
+                assert torch.allclose(g1, g2, atol=self.ATOL, rtol=self.RTOL)
+
+        def _compute_sgs_autograd(self):
+            """Sum of squared gradients via torch.autograd."""
+            batch_grad = self._compute_batch_gradients_autograd()
+            sgs = [(g**2).sum(0) for g in batch_grad]
+            return sgs
+
+        def _compute_sgs_bpexts(self):
+            """Sum of squared gradients via bpexts."""
+            layer = self._create_layer()
+            inputs = self._create_input()
+            loss = self._loss_fn(layer(inputs))
+            with config.bpexts(config.SUM_GRAD_SQUARED):
+                loss.backward()
+                sgs = [p.sum_grad_squared for p in layer.parameters()]
+                layer.zero_grad()
+                layer.clear_grad_batch()
+                layer.clear_sum_grad_squared()
+            return sgs
+
+        def _create_layer(self):
+            """Create layer and load to device."""
+            return layer_fn().to(self.DEVICE)
 
         def _create_input(self):
             """Return same random input (reset seed before)."""
@@ -102,10 +159,7 @@ def gradient_test(layer_fn, input_size, device, seed=0, atol=1e-5, rtol=1e-8):
 
     class GradientTest2(GradientTest0):
         def _loss_fn(self, x):
-            """Dummy loss function: Sum of log10 of shifted normalized abs.
-
-            The loss Hessian of this function is non-constant and non-diagonal.
-            """
+            """Dummy loss function: Sum of log10 of shifted normalized abs."""
             loss = torch.zeros(1).to(self.DEVICE)
             for b in range(x.size(0)):
                 loss += (
