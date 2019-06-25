@@ -11,7 +11,8 @@ from torch.nn import Conv2d
 from random import (randint, choice)
 from bpexts.gradient.conv2d import Conv2d as G_Conv2d
 import bpexts.gradient.config as config
-from bpexts.utils import torch_allclose as allclose
+from bpexts.utils import torch_allclose as allclose, set_seeds
+from .gradient_test import set_up_gradient_tests
 
 TEST_ATOL = 1e-4
 
@@ -62,7 +63,7 @@ CONV_PARAMS = make_conv_params(
     kernel_size=(2, 2),
     stride=(1, 1),
     padding=(0, 0),
-    dilatation=(1, 1),
+    dilation=(1, 1),
     bias=False,
     kernel=kernel)
 
@@ -105,7 +106,7 @@ def random_convolutions_and_inputs(
         kernel_size=(randint(1, 3), randint(1, 3)),
         stride=(randint(1, 3), randint(1, 3)),
         padding=(randint(0, 2), randint(0, 2)),
-        dilatation=(randint(1, 3), randint(1, 3)),
+        dilation=(randint(1, 3), randint(1, 3)),
         bias=choice([True, False]),
         batch_size=randint(1, 3),
         in_size=(randint(8, 12), randint(8, 12))):
@@ -124,7 +125,7 @@ def random_convolutions_and_inputs(
         kernel_size=kernel_size,
         stride=stride,
         padding=padding,
-        dilatation=dilatation,
+        dilation=dilation,
         bias=bias,
         kernel=kernel)
 
@@ -174,29 +175,22 @@ def test_random_grad_batch(random_runs=10):
 
 
 TEST_SETTINGS = {
-    "in_features": (3, 12, 10),
-    "out_channels": 7,
-    "kernel_size" : (3,2),
-    "padding" : (1,1),
+    "in_features": (3, 8, 9),
+    "out_channels": 10,
+    "kernel_size": (3, 2),
+    "padding": (1, 1),
     "bias": True,
     "batch": 13,
     "rtol": 1e-5,
-    "atol": 1e-5
+    "atol": 5e-4
 }
-        in_channels=randint(1, 3),
-        out_channels=randint(1, 3),
-        kernel_size=(randint(1, 3), randint(1, 3)),
-        stride=(randint(1, 3), randint(1, 3)),
-        padding=(randint(0, 2), randint(0, 2)),
-        dilatation=(randint(1, 3), randint(1, 3)),
-        bias=choice([True, False]),
 
 
 def layer_fn():
     set_seeds(0)
     return G_Conv2d(
         in_channels=TEST_SETTINGS["in_features"][0],
-        out_channels= TEST_SETTINGS["out_features"],
+        out_channels=TEST_SETTINGS["out_channels"],
         kernel_size=TEST_SETTINGS["kernel_size"],
         padding=TEST_SETTINGS["padding"],
         bias=TEST_SETTINGS["bias"])
@@ -205,7 +199,7 @@ def layer_fn():
 gradient_tests = set_up_gradient_tests(
     layer_fn,
     'Conv2d',
-    input_size=(TEST_SETTINGS["batch"], *TEST_SETTINGS["in_features"]),
+    input_size=(TEST_SETTINGS["batch"], ) + TEST_SETTINGS["in_features"],
     atol=TEST_SETTINGS["atol"],
     rtol=TEST_SETTINGS["rtol"])
 
