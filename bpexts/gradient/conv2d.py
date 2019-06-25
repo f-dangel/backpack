@@ -17,7 +17,7 @@ class Conv2d(torch.nn.Conv2d):
             padding=self.padding,
             stride=self.stride)
         self.register_forward_pre_hook(self.store_input)
-        self.register_backward_hook(Conv2d.compute_first_order_info)
+        self.register_backward_hook(self.compute_first_order_info)
 
     @staticmethod
     def store_input(module, input):
