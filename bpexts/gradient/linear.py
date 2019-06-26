@@ -43,12 +43,12 @@ class Linear(torch.nn.Linear):
             # some sanity checks
             shape = tuple(sqrt_ggn_out.size())
             assert len(shape) == 3
-            assert shape[0] == self.input.size(0)
-            assert shape[1] == self.out_features
+            assert shape[0] == module.input.size(0)
+            assert shape[1] == module.out_features
             # compute the diagonal of the GGN
-            self._extract_diag_ggn(sqrt_ggn_out)
+            module._extract_diag_ggn(sqrt_ggn_out)
             # update the backpropagated quantity by application of the Jacobian
-            self._update_backpropagated_sqrt_ggn(sqrt_ggn_out)
+            module._update_backpropagated_sqrt_ggn(sqrt_ggn_out)
 
     def _extract_diag_ggn(self, sqrt_ggn_out):
         """Obtain sqrt representation of GGN. Extract diagonal.
@@ -57,14 +57,14 @@ class Linear(torch.nn.Linear):
         """
         if self.bias is not None and self.bias.requires_grad:
             sqrt_ggn_bias = sqrt_ggn_out
-            bias.diag_ggn = einsum('bic,bic->i',
-                                   (sqrt_ggn_bias, sqrt_ggn_bias))
+            self.bias.diag_ggn = einsum('bic,bic->i',
+                                        (sqrt_ggn_bias, sqrt_ggn_bias))
         if self.weight.requires_grad:
             # TODO: Combine into a single (more memory-efficient) einsum
             sqrt_ggn_weight = einsum('bic,bj->bijc',
                                      (sqrt_ggn_out, self.input))
-            weight.diag_ggn = einsum('bijc,bijc->ij',
-                                     (sqrt_ggn_weigt, sqrt_ggn_out))
+            self.weight.diag_ggn = einsum('bijc,bijc->ij',
+                                          (sqrt_ggn_weight, sqrt_ggn_weight))
 
     def _update_backpropagated_sqrt_ggn(self, sqrt_ggn_out):
         """Apply transposed Jacobian of module output with respect to input.
@@ -95,7 +95,7 @@ class Linear(torch.nn.Linear):
         return grad_output
 
     def _compute_weight_grad_batch(self, grad_output):
-        """Compute weight batch gradients from grad w.r.t layer outputs.
+        r"""Compute weight batch gradients from grad w.r.t layer outputs.
 
         The linear layer applies
         y = W x + b.
