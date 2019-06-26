@@ -6,6 +6,8 @@ import numpy
 import unittest
 from bpexts.utils import set_seeds
 import bpexts.gradient.config as config
+import bpexts.hessian.free as hessian_free
+import bpexts.utils as utils
 
 
 def gradient_test(layer_fn, input_size, device, seed=0, atol=1e-5, rtol=1e-8):
@@ -40,6 +42,8 @@ def gradient_test(layer_fn, input_size, device, seed=0, atol=1e-5, rtol=1e-8):
         INPUT_SIZE = input_size
         ATOL = atol
         RTOL = rtol
+        # test the computation of the GGN diagonal (only for PD-loss)
+        TEST_DIAG_GGN = True
 
         def _loss_fn(self, x):
             """Dummy loss function: Normalized sum of squared elements."""
@@ -143,6 +147,113 @@ def gradient_test(layer_fn, input_size, device, seed=0, atol=1e-5, rtol=1e-8):
                 layer.clear_sum_grad_squared()
             return sgs
 
+        def test_diag_ggn(self):
+            """Test the diagonal of the GGN."""
+            if self.TEST_DIAG_GGN is False:
+                return
+            layer = self._create_layer()
+            autograd_res = self._compute_diag_ggn_autograd()
+            bpexts_res = self._compute_diag_ggn_bpexts()
+            assert len(autograd_res) == len(bpexts_res) == len(
+                list(layer.parameters()))
+            for ggn1, ggn2, p in zip(autograd_res, bpexts_res,
+                                     layer.parameters()):
+                assert ggn1.size() == ggn2.size() == p.size()
+                self._residuum_report(ggn1, ggn2)
+                assert torch.allclose(
+                    ggn1, ggn2, atol=self.ATOL, rtol=self.RTOL)
+
+        def _compute_diag_ggn_autograd(self):
+            """Diagonal of the GGN matrix via autodiff."""
+            layer = self._create_layer()
+            inputs = self._create_input()
+            outputs = layer(inputs)
+            loss = self._loss_fn(outputs)
+
+            tot_params = sum([p.numel() for p in layer.parameters()])
+            i = 0
+            diag_ggns = []
+
+            for num_p, p in enumerate(layer.parameters()):
+                diag_ggn_p = torch.zeros_like(p).view(-1)
+                # extract i.th column of the GGN, store diagonal entry
+                for i_p in range(p.numel()):
+                    vs = [
+                        torch.zeros_like(param).view(-1)
+                        for param in layer.parameters()
+                    ]
+                    vs[num_p][i] = 1.
+                    vs = [
+                        v.view(param.size())
+                        for v, param in zip(vs, layer.parameters())
+                    ]
+
+                    # GGN-vector product
+                    GGN_v = hessian_free.ggn_vector_product(
+                        loss, outputs, layer, vs)
+
+                    vs = [v.view(-1) for v in vs]
+                    diag_ggn_p[i_p] = GGN_v[num_p][i]
+                    i += 1
+                # reshape into parameter dimension and append
+                diag_ggns.append(diag_ggn_p.view(p.size()))
+            return diag_ggns
+
+        def _compute_diag_ggn_bpexts(self):
+            """Diagonal of the GGN matrix via bpexts.
+
+            Only works for loss functions with PD Hessian w.r.t.
+            the model output.
+            """
+            layer = self._create_layer()
+            inputs = self._create_input()
+            outputs = layer(inputs)
+            loss = self._loss_fn(outputs)
+            with config.bpexts(config.DIAG_GGN):
+                # need to set manually
+                sqrt_loss_hessian = self._compute_loss_hessian_cholesky()
+                config.CTX._backpropagated_sqrt_ggn = sqrt_loss_hessian
+                # do the backward pass
+                loss.backward()
+                diag_ggns = [p.diag_ggn for p in layer.parameters]
+            return diag_ggns
+
+        def _compute_loss_hessian_autograd(self):
+            """Compute the Hessian of the individual loss w.r.t. the output.
+
+            Return a tensor storing the loss Hessians for each sample along
+            the first dimension.
+            """
+            layer = self._create_layer()
+            inputs = self._create_input()
+            loss_hessians = []
+            for b in range(inputs.size(0)):
+                input = inputs[i, :].unsqueeze(0)
+                output = layer(input)
+                loss = self._loss_fn / inputs.size(0)
+
+                # Hessian-vector product
+                def hvp(v):
+                    return hessian_free.hessian_vector_product(loss, output, v)
+
+                # build Hessian matrix from vector product
+                h = utils.matrix_from_mvp(
+                    hvp,
+                    dims=(output.numel(), output.numel()),
+                    device=self.DEVICE)
+                loss_hessians.append(h.detach())
+
+            loss_hessians = torch.stack(loss_hessians)
+            assert tuple(loss_hessians.size()) == (input.size(0),
+                                                   output.numel(),
+                                                   output.numel())
+            return loss_hessians
+
+        def _compute_loss_hessian_cholesky(self):
+            """Return batch-wise matrix sqrt of the loss Hessian."""
+            loss_hessian = self._compute_loss_hessian_autograd()
+            return torch.cholesky(loss_hessian)
+
         def _create_layer(self):
             """Create layer and load to device."""
             return layer_fn().to(self.DEVICE)
@@ -163,6 +274,9 @@ def gradient_test(layer_fn, input_size, device, seed=0, atol=1e-5, rtol=1e-8):
                 print('{} versus {}'.format(x_numpy[idx], y_numpy[idx]))
 
     class GradientTest1(GradientTest0):
+        # loss Hessian is not PD
+        TEST_DIAG_GGN = False
+
         def _loss_fn(self, x):
             """Dummy loss function: Normalized squared sum."""
             loss = torch.zeros(1).to(self.DEVICE)
@@ -171,6 +285,9 @@ def gradient_test(layer_fn, input_size, device, seed=0, atol=1e-5, rtol=1e-8):
             return loss
 
     class GradientTest2(GradientTest0):
+        # loss Hessian is not PD
+        TEST_DIAG_GGN = False
+
         def _loss_fn(self, x):
             """Dummy loss function: Sum of log10 of shifted normalized abs."""
             loss = torch.zeros(1).to(self.DEVICE)
