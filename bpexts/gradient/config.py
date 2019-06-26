@@ -2,12 +2,14 @@ GRAD = "GRAD"
 BATCH_GRAD = "BATCH_GRAD"
 SUM_GRAD_SQUARED = "SUM_GRAD_SQUARED"
 GRAD_VAR = "GRAD_VAR"
+DIAG_GGN = 'DIAG_GGN'
 
 EXTENSIONS = [
     GRAD,
     BATCH_GRAD,
     SUM_GRAD_SQUARED,
-    GRAD_VAR
+    GRAD_VAR,
+    DIAG_GGN,
 ]
 
 
@@ -20,6 +22,7 @@ class CTX:
     """
     Global Class holding the configuration of the backward pass
     """
+
     @staticmethod
     def as_dict():
         return {ext: getattr(CTX, ext, False) for ext in EXTENSIONS}
