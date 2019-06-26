@@ -148,3 +148,9 @@ class Linear(torch.nn.Linear):
             del self.weight.sum_grad_squared
         if hasattr(self.bias, "sum_grad_squared"):
             del self.bias.sum_grad_squared
+
+    def clear_diag_ggn(self):
+        if hasattr(self.weight, "diag_ggn"):
+            del self.weight.diag_ggn
+        if hasattr(self.bias, "diag_ggn"):
+            del self.bias.diag_ggn
