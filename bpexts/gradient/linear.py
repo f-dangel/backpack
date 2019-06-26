@@ -38,6 +38,41 @@ class Linear(torch.nn.Linear):
             module.compute_grad_batch(grad_out)
         if CTX.is_active(config.SUM_GRAD_SQUARED):
             module.compute_sum_grad_squared(grad_out)
+        if CTX.is_active(config.DIAG_GGN):
+            sqrt_ggn_out = CTX._backpropagated_sqrt_ggn
+            # some sanity checks
+            shape = tuple(sqrt_ggn_out.size())
+            assert len(shape) == 3
+            assert shape[0] == self.input.size(0)
+            assert shape[1] == self.out_features
+            # compute the diagonal of the GGN
+            self._extract_diag_ggn(sqrt_ggn_out)
+            # update the backpropagated quantity by application of the Jacobian
+            self._update_backpropagated_sqrt_ggn(sqrt_ggn_out)
+
+    def _extract_diag_ggn(self, sqrt_ggn_out):
+        """Obtain sqrt representation of GGN. Extract diagonal.
+
+        Initialize ``weight.diag_ggn`` and ``bias.diag_ggn``.
+        """
+        if self.bias is not None and self.bias.requires_grad:
+            sqrt_ggn_bias = sqrt_ggn_out
+            bias.diag_ggn = einsum('bic,bic->i',
+                                   (sqrt_ggn_bias, sqrt_ggn_bias))
+        if self.weight.requires_grad:
+            # TODO: Combine into a single (more memory-efficient) einsum
+            sqrt_ggn_weight = einsum('bic,bj->bijc',
+                                     (sqrt_ggn_out, self.input))
+            weight.diag_ggn = einsum('bijc,bijc->ij',
+                                     (sqrt_ggn_weigt, sqrt_ggn_out))
+
+    def _update_backpropagated_sqrt_ggn(self, sqrt_ggn_out):
+        """Apply transposed Jacobian of module output with respect to input.
+
+        Update ``CTX._backpropagated_sqrt_ggn``.
+        """
+        CTX._backpropagated_sqrt_ggn = einsum('ij,bic->bjc',
+                                              (self.weight, sqrt_ggn_out))
 
     def compute_grad_batch(self, grad_output):
         """Compute batchwise gradients of module parameters.
