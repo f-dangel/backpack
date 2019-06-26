@@ -7,6 +7,7 @@ import unittest
 from bpexts.utils import set_seeds
 import bpexts.gradient.config as config
 import bpexts.hessian.free as hessian_free
+import bpexts.hessian.exact as exact
 import bpexts.utils as utils
 
 
@@ -42,7 +43,6 @@ def gradient_test(layer_fn, input_size, device, seed=0, atol=1e-5, rtol=1e-8):
         INPUT_SIZE = input_size
         ATOL = atol
         RTOL = rtol
-        # test the computation of the GGN diagonal (only for PD-loss)
         TEST_DIAG_GGN = True
 
         def _loss_fn(self, x):
@@ -174,26 +174,22 @@ def gradient_test(layer_fn, input_size, device, seed=0, atol=1e-5, rtol=1e-8):
             i = 0
             diag_ggns = []
 
-            for num_p, p in enumerate(layer.parameters()):
+            for p in list(layer.parameters()):
                 diag_ggn_p = torch.zeros_like(p).view(-1)
                 # extract i.th column of the GGN, store diagonal entry
                 for i_p in range(p.numel()):
-                    vs = [
-                        torch.zeros_like(param).view(-1)
-                        for param in layer.parameters()
-                    ]
-                    vs[num_p][i] = 1.
-                    vs = [
-                        v.view(param.size())
-                        for v, param in zip(vs, layer.parameters())
-                    ]
+                    v = torch.zeros(tot_params).to(self.DEVICE)
+                    v[i] = 1.
+
+                    vs = hessian_free.vector_to_parameter_list(
+                        v, list(layer.parameters()))
 
                     # GGN-vector product
                     GGN_v = hessian_free.ggn_vector_product(
                         loss, outputs, layer, vs)
+                    GGN_v = torch.cat([g.detach().view(-1) for g in GGN_v])
 
-                    vs = [v.view(-1) for v in vs]
-                    diag_ggn_p[i_p] = GGN_v[num_p][i]
+                    diag_ggn_p[i_p] = GGN_v[i]
                     i += 1
                 # reshape into parameter dimension and append
                 diag_ggns.append(diag_ggn_p.view(p.size()))
@@ -215,7 +211,7 @@ def gradient_test(layer_fn, input_size, device, seed=0, atol=1e-5, rtol=1e-8):
                 config.CTX._backpropagated_sqrt_ggn = sqrt_loss_hessian
                 # do the backward pass
                 loss.backward()
-                diag_ggns = [p.diag_ggn for p in layer.parameters]
+                diag_ggns = [p.diag_ggn for p in layer.parameters()]
             return diag_ggns
 
         def _compute_loss_hessian_autograd(self):
@@ -228,23 +224,15 @@ def gradient_test(layer_fn, input_size, device, seed=0, atol=1e-5, rtol=1e-8):
             inputs = self._create_input()
             loss_hessians = []
             for b in range(inputs.size(0)):
-                input = inputs[i, :].unsqueeze(0)
+                input = inputs[b, :].unsqueeze(0)
                 output = layer(input)
-                loss = self._loss_fn / inputs.size(0)
+                loss = self._loss_fn(output) / inputs.size(0)
 
-                # Hessian-vector product
-                def hvp(v):
-                    return hessian_free.hessian_vector_product(loss, output, v)
-
-                # build Hessian matrix from vector product
-                h = utils.matrix_from_mvp(
-                    hvp,
-                    dims=(output.numel(), output.numel()),
-                    device=self.DEVICE)
+                h = exact.exact_hessian(loss, [output]).detach()
                 loss_hessians.append(h.detach())
 
             loss_hessians = torch.stack(loss_hessians)
-            assert tuple(loss_hessians.size()) == (input.size(0),
+            assert tuple(loss_hessians.size()) == (inputs.size(0),
                                                    output.numel(),
                                                    output.numel())
             return loss_hessians
@@ -261,7 +249,7 @@ def gradient_test(layer_fn, input_size, device, seed=0, atol=1e-5, rtol=1e-8):
         def _create_input(self):
             """Return same random input (reset seed before)."""
             set_seeds(self.SEED)
-            return torch.randn(*self.INPUT_SIZE).to(self.DEVICE)
+            return torch.randn(self.INPUT_SIZE).to(self.DEVICE)
 
         def _residuum_report(self, x, y):
             """Report values with mismatch in allclose check."""
