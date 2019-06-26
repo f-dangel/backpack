@@ -11,20 +11,16 @@ class Sigmoid(torch.nn.Sigmoid):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.register_forward_pre_hook(self.store_input)
+        self.register_forward_hook(self.store_output)
         self.register_backward_hook(self.compute_first_order_info)
 
     @staticmethod
-    def store_input(module, input):
-        """Pre forward hook saving layer input as buffer.
+    def store_output(module, input, output):
+        """Forward hook saving layer output as buffer.
 
-        Initialize module buffer `ìnput`.
+        Initialize module buffer `output`.
         """
-        if not len(input) == 1:
-            raise ValueError('Cannot handle multi-input scenario')
-        if not len(input[0].size()) == 2:
-            raise ValueError('Expecting 2D input (batch, data)')
-        module.register_buffer('input', input[0].clone().detach())
+        module.register_buffer('output', output.clone().detach())
 
     @staticmethod
     def compute_first_order_info(module, grad_input, grad_output):
@@ -34,8 +30,8 @@ class Sigmoid(torch.nn.Sigmoid):
             # some sanity checks
             shape = tuple(sqrt_ggn_out.size())
             assert len(shape) == 3
-            assert shape[0] == module.input.size(0)
-            assert shape[1] == module.input.size(1)
+            assert shape[0] == module.output.size(0)
+            assert shape[1] == module.output.size(1)
             # update the backpropagated quantity by application of the Jacobian
             module._update_backpropagated_sqrt_ggn(sqrt_ggn_out)
 
@@ -44,6 +40,6 @@ class Sigmoid(torch.nn.Sigmoid):
 
         Update ``CTX._backpropagated_sqrt_ggn``.
         """
-        d_sigma = self.input * (1. - self.input)
+        d_sigma = self.output * (1. - self.output)
         CTX._backpropagated_sqrt_ggn = einsum('bi,bic->bic',
                                               (d_sigma, sqrt_ggn_out))
