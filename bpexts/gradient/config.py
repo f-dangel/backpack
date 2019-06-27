@@ -1,67 +1,6 @@
-import warnings
-from . import batchgrad, sumgradsquared
-
-
-GRAD = "GRAD"
-BATCH_GRAD = "BATCH_GRAD"
-SUM_GRAD_SQUARED = "SUM_GRAD_SQUARED"
-GRAD_VAR = "GRAD_VAR"
-DIAG_GGN = 'DIAG_GGN'
-
-
-class Extensions:
-
-    EXTENSIONS = [
-        GRAD,
-        BATCH_GRAD,
-        SUM_GRAD_SQUARED,
-        GRAD_VAR,
-        DIAG_GGN,
-    ]
-
-    registeredExtensions = {}
-
-    @staticmethod
-    def ext_list():
-        return Extensions.EXTENSIONS
-
-    @staticmethod
-    def register(LayerClass, ext, func):
-        Extensions.check_exists(ext)
-        key = (LayerClass, ext)
-        print("REGISTER")
-        if key in Extensions.registeredExtensions:
-            warnings.warn("Extension {} for layer {} already registered".format(ext, LayerClass), category=RuntimeWarning)
-        Extensions.registeredExtensions[key] = func
-
-    @staticmethod
-    def check_exists(ext):
-        if ext not in Extensions.EXTENSIONS:
-            raise ValueError("Backprop extension [{}] unknown".format(ext))
-
-
-class CTX:
-    """
-    Global Class holding the configuration of the backward pass
-    """
-
-    @staticmethod
-    def as_dict():
-        return {ext: getattr(CTX, ext, False) for ext in Extensions.ext_list()}
-
-    @staticmethod
-    def from_dict(dic):
-        for key, val in dic.items():
-            setattr(CTX, key, val)
-
-    @staticmethod
-    def is_active(ext):
-        Extensions.check_exists(ext)
-        return getattr(CTX, ext, False)
-
-    @staticmethod
-    def active_exts():
-        return [ext for ext, active in CTX.as_dict().items() if active]
+from .context import CTX
+from .extensions import Extensions
+from . import batchgrad, sumgradsquared, diagggn
 
 
 def set_bpexts(*args):
@@ -118,5 +57,5 @@ def extend(module):
     return module
 
 
-for ModuleClass, extension, func in batchgrad.SIGNATURE + sumgradsquared.SIGNATURE:
+for ModuleClass, extension, func in batchgrad.SIGNATURE + sumgradsquared.SIGNATURE + diagggn.SIGNATURE:
     Extensions.register(ModuleClass, extension, func)

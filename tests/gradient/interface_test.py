@@ -6,6 +6,8 @@ import torch
 import pytest
 from torch.nn import Conv2d, Linear
 import bpexts.gradient.config as config
+import bpexts.gradient.extensions as extensions
+from bpexts.gradient.extensions import Extensions as ext
 from bpexts.gradient.config import extend
 
 
@@ -44,9 +46,9 @@ forward_func, weights = dummy_forward_pass()
 
 
 FEATURES_TO_ATTRIBUTES = {
-    config.GRAD: "grad",
-    config.BATCH_GRAD: "grad_batch",
-    config.SUM_GRAD_SQUARED: "sum_grad_squared",
+    extensions.GRAD: "grad",
+    extensions.BATCH_GRAD: "grad_batch",
+    extensions.SUM_GRAD_SQUARED: "sum_grad_squared",
 }
 
 
@@ -59,13 +61,12 @@ def interface_test(feature):
 
 @pytest.mark.skip()
 def test_interface_grad():
-    interface_test(config.GRAD)
+    interface_test(extensions.GRAD)
 
 
 def test_interface_batch_grad():
-    interface_test(config.BATCH_GRAD)
+    interface_test(extensions.BATCH_GRAD)
 
 
 def test_interface_sum_grad_squared():
-    interface_test(config.SUM_GRAD_SQUARED)
-
+    interface_test(extensions.SUM_GRAD_SQUARED)

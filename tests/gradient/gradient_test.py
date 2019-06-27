@@ -10,6 +10,7 @@ import bpexts.gradient.config as config
 import bpexts.hessian.free as hessian_free
 import bpexts.hessian.exact as exact
 import bpexts.utils as utils
+from bpexts.gradient.extensions import Extensions as ext
 
 
 def gradient_test(layer_fn, input_size, device, seed=0, atol=1e-5, rtol=1e-8):
@@ -86,7 +87,7 @@ def gradient_test(layer_fn, input_size, device, seed=0, atol=1e-5, rtol=1e-8):
             layer = self._create_layer()
             inputs = self._create_input()
             loss = self._loss_fn(layer(inputs))
-            with config.bpexts(config.BATCH_GRAD):
+            with config.bpexts(ext.BATCH_GRAD):
                 loss.backward()
                 batch_grads = [p.grad_batch for p in layer.parameters()]
                 for p in layer.parameters():
@@ -144,7 +145,7 @@ def gradient_test(layer_fn, input_size, device, seed=0, atol=1e-5, rtol=1e-8):
             layer = self._create_layer()
             inputs = self._create_input()
             loss = self._loss_fn(layer(inputs))
-            with config.bpexts(config.SUM_GRAD_SQUARED):
+            with config.bpexts(ext.SUM_GRAD_SQUARED):
                 loss.backward()
                 sgs = [p.sum_grad_squared for p in layer.parameters()]
 
@@ -211,7 +212,7 @@ def gradient_test(layer_fn, input_size, device, seed=0, atol=1e-5, rtol=1e-8):
             inputs = self._create_input()
             outputs = layer(inputs)
             loss = self._loss_fn(outputs)
-            with config.bpexts(config.DIAG_GGN):
+            with config.bpexts(ext.DIAG_GGN):
                 # need to set manually
                 sqrt_loss_hessian = self._compute_loss_hessian_cholesky()
                 config.CTX._backpropagated_sqrt_ggn = sqrt_loss_hessian

@@ -13,6 +13,7 @@ from random import (randint, choice)
 import bpexts.gradient.config as config
 from bpexts.utils import torch_allclose as allclose, set_seeds
 from .gradient_test import set_up_gradient_tests
+from bpexts.gradient.extensions import Extensions as ext
 
 
 def G_Conv2d(*args, **kwargs):
@@ -153,7 +154,7 @@ def compare_grads(conv2d, g_conv2d, input):
     loss.backward()
 
     loss_g = loss_function(g_conv2d(input))
-    with config.bpexts(config.BATCH_GRAD):
+    with config.bpexts(ext.BATCH_GRAD):
         loss_g.backward()
 
     assert allclose(g_conv2d.bias.grad, conv2d.bias.grad, atol=TEST_ATOL)
