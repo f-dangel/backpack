@@ -43,6 +43,41 @@ class Conv2d(torch.nn.Conv2d):
             module.compute_grad_batch(grad_out)
         if CTX.is_active(config.SUM_GRAD_SQUARED):
             module.compute_sum_grad_squared(grad_out)
+        if CTX.is_active(config.DIAG_GGN):
+            sqrt_ggn_out = CTX._backpropagated_sqrt_ggn
+            # some sanity checks
+            shape = tuple(sqrt_ggn_out.size())
+            # assume the matrix has three axes (batch, output, classes)
+            assert len(shape) == 3
+            assert shape[0] == module.input.size(0)
+            # compute the diagonal of the GGN
+            module._extract_diag_ggn(sqrt_ggn_out)
+            # update the backpropagated quantity by application of the Jacobian
+            module._update_backpropagated_sqrt_ggn(sqrt_ggn_out)
+
+    def _extract_diag_ggn(self, sqrt_ggn_out):
+        """Obtain sqrt representation of GGN. Extract diagonal.
+
+        Initialize ``weight.diag_ggn`` and ``bias.diag_ggn``.
+        """
+        if self.bias is not None and self.bias.requires_grad:
+            sqrt_ggn_bias = sqrt_ggn_out
+            self.bias.diag_ggn = einsum('bic->i', (sqrt_ggn_bias**2))
+        raise NotImplementedError
+        if self.weight.requires_grad:
+            # TODO: Combine into a single (more memory-efficient) einsum
+            self.weight.diag_ggn = einsum('bic,bj->ij',
+                                          (sqrt_ggn_out**2, self.input**2))
+
+    def _update_backpropagated_sqrt_ggn(self, sqrt_ggn_out):
+        """Apply transposed Jacobian of module output with respect to input.
+
+        Update ``CTX._backpropagated_sqrt_ggn``.
+        """
+        # TODO need access to dimensions of input AND output
+        raise NotImplementedError
+        CTX._backpropagated_sqrt_ggn = einsum('ij,bic->bjc',
+                                              (self.weight, sqrt_ggn_out))
 
     def compute_grad_batch(self, grad_output):
         """Compute individual gradients for module parameters.
