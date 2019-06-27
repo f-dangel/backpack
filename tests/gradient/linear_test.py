@@ -5,10 +5,10 @@ from torch.nn import Linear
 import bpexts.gradient.config as config
 from bpexts.gradient.extensions import Extensions as ext
 from bpexts.utils import torch_allclose as allclose, set_seeds
-from .gradient_test import set_up_gradient_tests
+from .automated_tests import set_up_tests
 
 
-def G_Linear(*args, **kwargs):
+def ExtLinear(*args, **kwargs):
     return config.extend(Linear(*args, **kwargs))
 
 
@@ -31,7 +31,7 @@ def make_lin_layer(LayerClass, in_features, out_features, weight, bias):
 
 
 lin = make_lin_layer(Linear, in_features, out_features, weight, bias)
-g_lin = make_lin_layer(G_Linear, in_features, out_features, weight, bias)
+g_lin = make_lin_layer(ExtLinear, in_features, out_features, weight, bias)
 
 
 def loss_function(tensor):
@@ -69,8 +69,7 @@ EXAMPLES = [EXAMPLE_1, EXAMPLE_2]
 
 
 def test_forward():
-    """Compare forward of torch.nn.Linear and exts.gradient.G_Linear.
-
+    """Compare forward of torch.nn.Linear and bpexts.
     Handles single-instance and batch mode."""
     for ex in EXAMPLES:
         input, result = ex["in"], ex["out"]
@@ -133,14 +132,14 @@ TEST_SETTINGS = {
 
 def layer_fn():
     set_seeds(0)
-    return G_Linear(
+    return ExtLinear(
         in_features=TEST_SETTINGS["in_features"],
         out_features=TEST_SETTINGS["out_features"],
         bias=TEST_SETTINGS["bias"]
     )
 
 
-gradient_tests = set_up_gradient_tests(
+gradient_tests = set_up_tests(
     layer_fn, 'Linear',
     input_size=(TEST_SETTINGS["batch"], TEST_SETTINGS["in_features"]),
     atol=TEST_SETTINGS["atol"],

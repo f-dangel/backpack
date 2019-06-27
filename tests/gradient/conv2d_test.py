@@ -9,14 +9,13 @@ The example is taken from
 from torch import (Tensor, randn)
 from torch.nn import Conv2d
 from random import (randint, choice)
-#from bpexts.gradient.conv2d import Conv2d as G_Conv2d
 import bpexts.gradient.config as config
 from bpexts.utils import torch_allclose as allclose, set_seeds
-from .gradient_test import set_up_gradient_tests
 from bpexts.gradient.extensions import Extensions as ext
+from .automated_tests import set_up_tests
 
 
-def G_Conv2d(*args, **kwargs):
+def ExtConv2d(*args, **kwargs):
     return config.extend(Conv2d(*args, **kwargs))
 
 
@@ -83,7 +82,7 @@ result2 = [[12, 24], [17, 26]]
 out1 = Tensor([[result1, result2]]).float()
 
 conv2d = make_conv_layer(Conv2d, CONV_PARAMS)
-g_conv2d = make_conv_layer(G_Conv2d, CONV_PARAMS)
+g_conv2d = make_conv_layer(ExtConv2d, CONV_PARAMS)
 
 inputs = [in1]
 results = [out1]
@@ -95,8 +94,7 @@ def loss_function(tensor):
 
 
 def test_forward():
-    """Compare forward of torch.nn.Conv2d and exts.gradient.G_Conv2d.
-
+    """Compare forward
     Handles only single instance batch.
     """
     for input, result in zip(inputs, results):
@@ -136,7 +134,7 @@ def random_convolutions_and_inputs(
         kernel=kernel)
 
     conv2d = make_conv_layer(Conv2d, conv_params)
-    g_conv2d = make_conv_layer(G_Conv2d, conv_params)
+    g_conv2d = make_conv_layer(ExtConv2d, conv_params)
 
     if bias is True:
         bias_vals = randn(out_channels)
@@ -194,7 +192,7 @@ TEST_SETTINGS = {
 
 def layer_fn():
     set_seeds(0)
-    return G_Conv2d(
+    return ExtConv2d(
         in_channels=TEST_SETTINGS["in_features"][0],
         out_channels=TEST_SETTINGS["out_channels"],
         kernel_size=TEST_SETTINGS["kernel_size"],
@@ -202,7 +200,7 @@ def layer_fn():
         bias=TEST_SETTINGS["bias"])
 
 
-gradient_tests = set_up_gradient_tests(
+gradient_tests = set_up_tests(
     layer_fn,
     'Conv2d',
     input_size=(TEST_SETTINGS["batch"], ) + TEST_SETTINGS["in_features"],
