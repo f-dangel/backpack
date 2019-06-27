@@ -2,10 +2,13 @@
 
 from torch import Tensor
 from torch.nn import Linear
-from bpexts.gradient.linear import Linear as G_Linear
 import bpexts.gradient.config as config
 from bpexts.utils import torch_allclose as allclose, set_seeds
 from .gradient_test import set_up_gradient_tests
+
+
+def G_Linear(*args, **kwargs):
+    return config.extend(Linear(*args, **kwargs))
 
 
 ##
@@ -97,8 +100,8 @@ def test_grad():
         assert allclose(g_lin.bias.grad, b_grad)
         assert allclose(g_lin.weight.grad, w_grad)
 
-        g_lin.zero_grad()
-        g_lin.clear_grad_batch()
+        del g_lin.bias.grad
+        del g_lin.weight.grad
 
 
 def test_grad_batch():
@@ -113,8 +116,8 @@ def test_grad_batch():
         assert allclose(g_lin.bias.grad_batch, b_grad_batch), "{} ≠ {}".format(g_lin.bias.grad_batch, b_grad_batch)
         assert allclose(g_lin.weight.grad_batch, w_grad_batch), "{} ≠ {}".format(g_lin.weight.grad_batch, w_grad_batch)
 
-        g_lin.zero_grad()
-        g_lin.clear_grad_batch()
+        del g_lin.bias.grad
+        del g_lin.weight.grad
 
 
 TEST_SETTINGS = {

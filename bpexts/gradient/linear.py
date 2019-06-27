@@ -4,6 +4,7 @@ import torch.nn
 from torch import einsum
 from . import config
 from .config import CTX
+from .batchgrad.linear import bias_grad_batch
 
 
 class Linear(torch.nn.Linear):
@@ -34,8 +35,6 @@ class Linear(torch.nn.Linear):
 
         grad_out = grad_output[0].clone().detach()
 
-        if CTX.is_active(config.BATCH_GRAD):
-            module.compute_grad_batch(grad_out)
         if CTX.is_active(config.SUM_GRAD_SQUARED):
             module.compute_sum_grad_squared(grad_out)
         if CTX.is_active(config.DIAG_GGN):
@@ -74,55 +73,6 @@ class Linear(torch.nn.Linear):
         CTX._backpropagated_sqrt_ggn = einsum('ij,bic->bjc',
                                               (self.weight, sqrt_ggn_out))
 
-    def compute_grad_batch(self, grad_output):
-        """Compute batchwise gradients of module parameters.
-
-        Store bias batch gradients in `module.bias.batch_grad` and
-        weight batch gradients in `module.weight.batch_grad`.
-        """
-        if self.bias is not None and self.bias.requires_grad:
-            self.bias.grad_batch = self._compute_bias_grad_batch(grad_output)
-        if self.weight.requires_grad:
-            self.weight.grad_batch = self._compute_weight_grad_batch(
-                grad_output)
-
-    def _compute_bias_grad_batch(self, grad_output):
-        """Compute bias batch gradients from grad w.r.t. layer outputs.
-
-        The batchwise gradient of a linear layer is simply given
-        by the gradient with respect to the layer's output.
-        """
-        return grad_output
-
-    def _compute_weight_grad_batch(self, grad_output):
-        r"""Compute weight batch gradients from grad w.r.t layer outputs.
-
-        The linear layer applies
-        y = W x + b.
-        to a single sample x, where W denotes the weight and b the bias.
-
-        Result:
-        -------
-        Finally, this yields
-        dE / d vec(W) = (dy / d vec(W))^T dy  (vec denotes row stacking)
-                      = dy \otimes x^T
-
-        Derivation:
-        -----------
-        The Jacobian for W is given by
-        (matrix derivative notation)
-        dy / d vec(W) = x^T \otimes I    (vec denotes column stacking),
-        dy / d vec(W) = I \otimes x      (vec denotes row stacking),
-        (dy / d vec(W))^T = I \otimes x^T  (vec denotes row stacking)
-        or
-        (index notation)
-        dy[i] / dW[j,k] = delta(i,j) x[k]    (index notation).
-        """
-        batch_size = grad_output.size(0)
-        weight_grad_batch = einsum('bi,bj->bij', (grad_output, self.input))
-        return weight_grad_batch.view(batch_size, self.out_features,
-                                      self.in_features)
-
     def compute_sum_grad_squared(self, grad_output):
         """Square the gradients for each sample and sum over the batch."""
         if self.bias is not None and self.bias.requires_grad:
@@ -135,7 +85,7 @@ class Linear(torch.nn.Linear):
         return einsum('bi,bj->ij', (grad_output**2, self.input**2))
 
     def _compute_bias_sgs(self, grad_output):
-        return (self._compute_bias_grad_batch(grad_output)**2).sum(0)
+        return (bias_grad_batch(self, grad_output)**2).sum(0)
 
     def clear_grad_batch(self):
         if hasattr(self.weight, "grad_batch"):

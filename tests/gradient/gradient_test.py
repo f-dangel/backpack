@@ -2,6 +2,7 @@
  auto-differentiation."""
 
 import torch
+import pytest
 import numpy
 import unittest
 from bpexts.utils import set_seeds
@@ -43,7 +44,8 @@ def gradient_test(layer_fn, input_size, device, seed=0, atol=1e-5, rtol=1e-8):
         INPUT_SIZE = input_size
         ATOL = atol
         RTOL = rtol
-        TEST_DIAG_GGN = True
+        TEST_SUM_GRAD_SQUARED = False
+        TEST_DIAG_GGN = False
 
         def _loss_fn(self, x):
             """Dummy loss function: Normalized sum of squared elements."""
@@ -87,8 +89,9 @@ def gradient_test(layer_fn, input_size, device, seed=0, atol=1e-5, rtol=1e-8):
             with config.bpexts(config.BATCH_GRAD):
                 loss.backward()
                 batch_grads = [p.grad_batch for p in layer.parameters()]
-                layer.zero_grad()
-                layer.clear_grad_batch()
+                for p in layer.parameters():
+                    del p.grad
+                    del p.grad_batch
             return batch_grads
 
         def test_batch_gradients_sum_to_grad(self):
@@ -117,6 +120,8 @@ def gradient_test(layer_fn, input_size, device, seed=0, atol=1e-5, rtol=1e-8):
 
         def test_sgs(self):
             """Check for same sum of gradients squared."""
+            if self.TEST_SUM_GRAD_SQUARED is False:
+                pytest.skip()
             # create input
             autograd_res = self._compute_sgs_autograd()
             bpexts_res = self._compute_sgs_bpexts()
@@ -150,7 +155,7 @@ def gradient_test(layer_fn, input_size, device, seed=0, atol=1e-5, rtol=1e-8):
         def test_diag_ggn(self):
             """Test the diagonal of the GGN."""
             if self.TEST_DIAG_GGN is False:
-                return
+                pytest.skip()
             layer = self._create_layer()
             autograd_res = self._compute_diag_ggn_autograd()
             bpexts_res = self._compute_diag_ggn_bpexts()
