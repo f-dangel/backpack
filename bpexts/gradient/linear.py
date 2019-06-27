@@ -57,14 +57,11 @@ class Linear(torch.nn.Linear):
         """
         if self.bias is not None and self.bias.requires_grad:
             sqrt_ggn_bias = sqrt_ggn_out
-            self.bias.diag_ggn = einsum('bic,bic->i',
-                                        (sqrt_ggn_bias, sqrt_ggn_bias))
+            self.bias.diag_ggn = einsum('bic->i', (sqrt_ggn_bias**2))
         if self.weight.requires_grad:
             # TODO: Combine into a single (more memory-efficient) einsum
-            sqrt_ggn_weight = einsum('bic,bj->bijc',
-                                     (sqrt_ggn_out, self.input))
-            self.weight.diag_ggn = einsum('bijc,bijc->ij',
-                                          (sqrt_ggn_weight, sqrt_ggn_weight))
+            self.weight.diag_ggn = einsum('bic,bj->ij',
+                                          (sqrt_ggn_out**2, self.input**2))
 
     def _update_backpropagated_sqrt_ggn(self, sqrt_ggn_out):
         """Apply transposed Jacobian of module output with respect to input.
