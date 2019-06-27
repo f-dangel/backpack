@@ -61,5 +61,11 @@ def extend(module):
     return module
 
 
+def extended(moduleFunc):
+    def instanciate_and_extend(*args, **kwargs):
+        return extend(moduleFunc(*args, **kwargs))
+    return instanciate_and_extend
+
+
 for ModuleClass, extension, func in batchgrad.SIGNATURE + sumgradsquared.SIGNATURE + diagggn.SIGNATURE:
     Extensions.register(ModuleClass, extension, func)
