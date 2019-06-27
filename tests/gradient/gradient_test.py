@@ -44,7 +44,7 @@ def gradient_test(layer_fn, input_size, device, seed=0, atol=1e-5, rtol=1e-8):
         INPUT_SIZE = input_size
         ATOL = atol
         RTOL = rtol
-        TEST_SUM_GRAD_SQUARED = False
+        TEST_SUM_GRAD_SQUARED = True
         TEST_DIAG_GGN = False
 
         def _loss_fn(self, x):
@@ -147,9 +147,10 @@ def gradient_test(layer_fn, input_size, device, seed=0, atol=1e-5, rtol=1e-8):
             with config.bpexts(config.SUM_GRAD_SQUARED):
                 loss.backward()
                 sgs = [p.sum_grad_squared for p in layer.parameters()]
-                layer.zero_grad()
-                layer.clear_grad_batch()
-                layer.clear_sum_grad_squared()
+
+                for p in layer.parameters():
+                    del p.grad
+                    del p.sum_grad_squared
             return sgs
 
         def test_diag_ggn(self):

@@ -66,7 +66,6 @@ def test_interface_batch_grad():
     interface_test(config.BATCH_GRAD)
 
 
-@pytest.mark.skip()
 def test_interface_sum_grad_squared():
     interface_test(config.SUM_GRAD_SQUARED)
 

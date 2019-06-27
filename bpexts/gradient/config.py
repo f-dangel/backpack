@@ -1,5 +1,5 @@
 import warnings
-from . import batchgrad
+from . import batchgrad, sumgradsquared
 
 
 GRAD = "GRAD"
@@ -118,5 +118,5 @@ def extend(module):
     return module
 
 
-for ModuleClass, extension, func in batchgrad.SIGNATURE:
+for ModuleClass, extension, func in batchgrad.SIGNATURE + sumgradsquared.SIGNATURE:
     Extensions.register(ModuleClass, extension, func)

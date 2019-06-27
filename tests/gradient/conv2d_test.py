@@ -9,10 +9,15 @@ The example is taken from
 from torch import (Tensor, randn)
 from torch.nn import Conv2d
 from random import (randint, choice)
-from bpexts.gradient.conv2d import Conv2d as G_Conv2d
+#from bpexts.gradient.conv2d import Conv2d as G_Conv2d
 import bpexts.gradient.config as config
 from bpexts.utils import torch_allclose as allclose, set_seeds
 from .gradient_test import set_up_gradient_tests
+
+
+def G_Conv2d(*args, **kwargs):
+    return config.extend(Conv2d(*args, **kwargs))
+
 
 TEST_ATOL = 1e-4
 
