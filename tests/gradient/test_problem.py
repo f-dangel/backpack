@@ -1,12 +1,6 @@
 import torch
-import pytest
-import numpy
-import unittest
-from bpexts.utils import set_seeds
 import bpexts.gradient.config as config
 import bpexts.hessian.free as HF
-import bpexts.hessian.exact as exact
-import bpexts.utils as utils
 from bpexts.gradient.extensions import Extensions as ext
 
 
@@ -63,7 +57,7 @@ class TestProblem():
 
     def sgs_autograd(self):
         """Sum of squared gradients via torch.autograd."""
-        batch_grad = self._compute_batch_gradients_autograd()
+        batch_grad = self.batch_gradients_autograd()
         sgs = [(g**2).sum(0) for g in batch_grad]
         return sgs
 
@@ -105,35 +99,12 @@ class TestProblem():
             diag_ggns.append(diag_ggn_p.view(p.size()))
         return diag_ggns
 
-        def _compute_diag_ggn_bpexts(self):
-            """Diagonal of the GGN matrix via bpexts."""
-            with config.bpexts(ext.DIAG_GGN):
-                self.compute_loss().backward()
-                diag_ggns = [p.diag_ggn for p in self.model.parameters()]
-            return diag_ggns
-
-        def _compute_loss_hessian_autograd(self):
-            """Compute the Hessian of the individual loss w.r.t. the output.
-
-            Return a tensor storing the loss Hessians for each sample along
-            the first dimension.
-            """
-            layer = self._create_layer()
-            inputs = self._create_input()
-            loss_hessians = []
-            for b in range(inputs.size(0)):
-                input = inputs[b, :].unsqueeze(0)
-                output = layer(input)
-                loss = self._loss_fn(output) / inputs.size(0)
-
-                h = exact.exact_hessian(loss, [output]).detach()
-                loss_hessians.append(h.detach())
-
-            loss_hessians = torch.stack(loss_hessians)
-            assert tuple(loss_hessians.size()) == (inputs.size(0),
-                                                   output.numel(),
-                                                   output.numel())
-            return loss_hessians
+    def _compute_diag_ggn_bpexts(self):
+        """Diagonal of the GGN matrix via bpexts."""
+        with config.bpexts(ext.DIAG_GGN):
+            self.compute_loss().backward()
+            diag_ggns = [p.diag_ggn for p in self.model.parameters()]
+        return diag_ggns
 
     def clear(self):
         """
