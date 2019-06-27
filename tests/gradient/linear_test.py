@@ -2,10 +2,14 @@
 
 from torch import Tensor
 from torch.nn import Linear
-from bpexts.gradient.linear import Linear as G_Linear
 import bpexts.gradient.config as config
+from bpexts.gradient.extensions import Extensions as ext
 from bpexts.utils import torch_allclose as allclose, set_seeds
-from .gradient_test import set_up_gradient_tests
+from .automated_tests import set_up_tests
+
+
+def ExtLinear(*args, **kwargs):
+    return config.extend(Linear(*args, **kwargs))
 
 
 ##
@@ -27,7 +31,7 @@ def make_lin_layer(LayerClass, in_features, out_features, weight, bias):
 
 
 lin = make_lin_layer(Linear, in_features, out_features, weight, bias)
-g_lin = make_lin_layer(G_Linear, in_features, out_features, weight, bias)
+g_lin = make_lin_layer(ExtLinear, in_features, out_features, weight, bias)
 
 
 def loss_function(tensor):
@@ -65,8 +69,7 @@ EXAMPLES = [EXAMPLE_1, EXAMPLE_2]
 
 
 def test_forward():
-    """Compare forward of torch.nn.Linear and exts.gradient.G_Linear.
-
+    """Compare forward of torch.nn.Linear and bpexts.
     Handles single-instance and batch mode."""
     for ex in EXAMPLES:
         input, result = ex["in"], ex["out"]
@@ -91,14 +94,14 @@ def test_grad():
         input, b_grad, w_grad = ex["in"], ex["bias_grad"], ex["weight_grad"]
 
         loss = loss_function(g_lin(input))
-        with config.bpexts(config.GRAD):
+        with config.bpexts(ext.GRAD):
             loss.backward()
 
         assert allclose(g_lin.bias.grad, b_grad)
         assert allclose(g_lin.weight.grad, w_grad)
 
-        g_lin.zero_grad()
-        g_lin.clear_grad_batch()
+        del g_lin.bias.grad
+        del g_lin.weight.grad
 
 
 def test_grad_batch():
@@ -107,14 +110,14 @@ def test_grad_batch():
         input, b_grad_batch, w_grad_batch = ex["in"], ex["bias_grad_batch"], ex["weight_grad_batch"]
 
         loss = loss_function(g_lin(input))
-        with config.bpexts(config.BATCH_GRAD):
+        with config.bpexts(ext.BATCH_GRAD):
             loss.backward()
 
         assert allclose(g_lin.bias.grad_batch, b_grad_batch), "{} ≠ {}".format(g_lin.bias.grad_batch, b_grad_batch)
         assert allclose(g_lin.weight.grad_batch, w_grad_batch), "{} ≠ {}".format(g_lin.weight.grad_batch, w_grad_batch)
 
-        g_lin.zero_grad()
-        g_lin.clear_grad_batch()
+        del g_lin.bias.grad
+        del g_lin.weight.grad
 
 
 TEST_SETTINGS = {
@@ -129,14 +132,14 @@ TEST_SETTINGS = {
 
 def layer_fn():
     set_seeds(0)
-    return G_Linear(
+    return ExtLinear(
         in_features=TEST_SETTINGS["in_features"],
         out_features=TEST_SETTINGS["out_features"],
         bias=TEST_SETTINGS["bias"]
     )
 
 
-gradient_tests = set_up_gradient_tests(
+gradient_tests = set_up_tests(
     layer_fn, 'Linear',
     input_size=(TEST_SETTINGS["batch"], TEST_SETTINGS["in_features"]),
     atol=TEST_SETTINGS["atol"],

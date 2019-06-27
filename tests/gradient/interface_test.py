@@ -3,9 +3,11 @@ Test of the interface - calls every method that needs implementation
 """
 
 import torch
-from bpexts.gradient.conv2d import Conv2d as Conv2d
-from bpexts.gradient.linear import Linear as Linear
+import pytest
+from torch.nn import Conv2d, Linear
 import bpexts.gradient.config as config
+from bpexts.gradient.extensions import Extensions as ext
+from bpexts.gradient.config import extend
 
 
 def dummy_forward_pass():
@@ -21,17 +23,17 @@ def dummy_forward_pass():
 
     input = torch.randn(N, CONV_IN, DIM_X, DIM_Y)
 
-    conv = Conv2d(
+    conv = extend(Conv2d(
         in_channels=CONV_IN, out_channels=CONV_OUT,
         kernel_size=(K, K), stride=(S, S), padding=(P, P), bias=True
-    )
+    ))
 
     act = torch.nn.functional.relu
 
-    lin = Linear(
+    lin = extend(Linear(
         in_features=CONV_OUT * (DIM_X - S) * (DIM_Y - S),
         out_features=D_OUT, bias=True
-    )
+    ))
 
     def forward():
         return torch.sum(lin(act(conv(input)).view(N, -1))**2)
@@ -43,10 +45,9 @@ forward_func, weights = dummy_forward_pass()
 
 
 FEATURES_TO_ATTRIBUTES = {
-    config.GRAD: "grad",
-    config.BATCH_GRAD: "grad_batch",
-    config.SUM_GRAD_SQUARED: "sum_grad_squared",
-    config.GRAD_VAR: "grad_var",
+    ext.GRAD: "grad",
+    ext.BATCH_GRAD: "grad_batch",
+    ext.SUM_GRAD_SQUARED: "sum_grad_squared",
 }
 
 
@@ -58,16 +59,17 @@ def interface_test(feature):
 
 
 def test_interface_grad():
-    interface_test(config.GRAD)
+    interface_test(ext.GRAD)
 
 
 def test_interface_batch_grad():
-    interface_test(config.BATCH_GRAD)
+    interface_test(ext.BATCH_GRAD)
 
 
 def test_interface_sum_grad_squared():
-    interface_test(config.SUM_GRAD_SQUARED)
+    interface_test(ext.SUM_GRAD_SQUARED)
 
 
-def test_interface_grad_var():
-    interface_test(config.GRAD_VAR)
+@pytest.mark.skip(reason="GGN not ready")
+def test_interface_diag_ggn():
+    interface_test(ext.DIAG_GGN)
