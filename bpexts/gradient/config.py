@@ -39,7 +39,7 @@ def extend(module):
         for i in range(len(input)):
             module.register_buffer('input{}'.format(i), input[i].clone().detach())
 
-    def store_output(module, output):
+    def store_output(module, input, output):
         """Post-forward hook saving layer output as buffer."""
         for i in range(len(input)):
             module.register_buffer('output{}'.format(i), input[i].clone().detach())
