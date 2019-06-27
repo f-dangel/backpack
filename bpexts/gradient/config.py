@@ -51,8 +51,8 @@ def extend(module):
             if key in Extensions.registeredExtensions:
                 Extensions.registeredExtensions[key](module, grad_out)
 
-    module.register_forward_pre_hook(store_input)
-    module.register_backward_hook(run_extensions)
+    CTX.add_hook_handle(module.register_forward_pre_hook(store_input))
+    CTX.add_hook_handle(module.register_backward_hook(run_extensions))
 
     return module
 

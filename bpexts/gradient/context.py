@@ -23,3 +23,15 @@ class CTX:
     @staticmethod
     def active_exts():
         return [ext for ext, active in CTX.as_dict().items() if active]
+
+    @staticmethod
+    def add_hook_handle(hook_handle):
+        if getattr(CTX, "hook_handles", None) is None:
+            CTX.hook_handles = []
+        CTX.hook_handles.append(hook_handle)
+
+    @staticmethod
+    def remove_hooks():
+        for handle in CTX.hook_handles:
+            handle.remove()
+        CTX.hook_handles = []
