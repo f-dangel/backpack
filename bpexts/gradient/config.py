@@ -38,8 +38,11 @@ def extend(module):
         """
         for i in range(len(input)):
             module.register_buffer('input{}'.format(i), input[i].clone().detach())
-            # store output
-            # module.register_buffer('input{}'.format(i), input[i].clone().detach())
+
+    def store_output(module, output):
+        """Post-forward hook saving layer output as buffer."""
+        for i in range(len(input)):
+            module.register_buffer('output{}'.format(i), input[i].clone().detach())
 
     def run_extensions(module, grad_input, grad_output):
         """Check which quantities need to be computed and evaluate them."""
@@ -52,6 +55,7 @@ def extend(module):
                 Extensions.registeredExtensions[key](module, grad_out)
 
     CTX.add_hook_handle(module.register_forward_pre_hook(store_input))
+    CTX.add_hook_handle(module.register_forward_hook(store_output))
     CTX.add_hook_handle(module.register_backward_hook(run_extensions))
 
     return module
