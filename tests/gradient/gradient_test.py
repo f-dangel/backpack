@@ -11,6 +11,36 @@ import bpexts.hessian.free as hessian_free
 import bpexts.hessian.exact as exact
 import bpexts.utils as utils
 from bpexts.gradient.extensions import Extensions as ext
+from .test_problem import TestProblem
+
+
+def loss0(x, y=None):
+    """Dummy loss function: Normalized sum of squared elements."""
+    return (x**2).contiguous().view(x.size(0), -1).mean(0).sum()
+
+
+def loss1(x, y=None):
+    loss = torch.zeros(1).to(x.device)
+    for b in range(x.size(0)):
+        loss += (x[b, :].view(-1).sum())**2 / x.size(0)
+    return loss
+
+
+def loss2(x, y=None):
+    loss = torch.zeros(1).to(x.device)
+    for b in range(x.size(0)):
+        loss += (
+            torch.log10(torch.abs(x[b, :]) + 0.1).sum())**2 / x.size(0)
+    return loss
+
+
+def make_test_problem(seed, layer_fn, input_size, loss, device):
+    set_seeds(seed)
+    model = layer_fn()
+    set_seeds(seed)
+    X = torch.randn(input_size)
+    Y = 1 - model(X)
+    return TestProblem(X, Y, model, loss, device=device)
 
 
 def gradient_test(layer_fn, input_size, device, seed=0, atol=1e-5, rtol=1e-8):
@@ -48,9 +78,11 @@ def gradient_test(layer_fn, input_size, device, seed=0, atol=1e-5, rtol=1e-8):
         TEST_SUM_GRAD_SQUARED = True
         TEST_DIAG_GGN = False
 
+        test_problem = make_test_problem(seed, layer_fn, input_size, loss0, device)
+
         def _loss_fn(self, x):
             """Dummy loss function: Normalized sum of squared elements."""
-            return (x**2).contiguous().view(x.size(0), -1).mean(0).sum()
+            return loss0(x)
 
         def test_batch_gradients(self):
             """Check for same batch gradients."""
@@ -68,6 +100,7 @@ def gradient_test(layer_fn, input_size, device, seed=0, atol=1e-5, rtol=1e-8):
 
         def _compute_batch_gradients_autograd(self):
             """Batch gradients via torch.autograd."""
+            return self.test_problem.batch_gradients_autograd()
             layer = self._create_layer()
             inputs = self._create_input()
             batch_grads = [
@@ -266,30 +299,28 @@ def gradient_test(layer_fn, input_size, device, seed=0, atol=1e-5, rtol=1e-8):
                 x_numpy, y_numpy, atol=self.ATOL, rtol=self.RTOL)
             where_not_close = numpy.argwhere(numpy.logical_not(close))
             for idx in where_not_close:
-                print('{} versus {}'.format(x_numpy[idx], y_numpy[idx]))
+                print('{} versus {}, {}, {}'.format(x_numpy[idx], y_numpy[idx], x_numpy[idx] / y_numpy[idx], y_numpy[idx] / x_numpy[idx]))
+                break
 
     class GradientTest1(GradientTest0):
         # loss Hessian is not PD
         TEST_DIAG_GGN = False
 
+        test_problem = make_test_problem(seed, layer_fn, input_size, loss1, device)
+
         def _loss_fn(self, x):
             """Dummy loss function: Normalized squared sum."""
-            loss = torch.zeros(1).to(self.DEVICE)
-            for b in range(x.size(0)):
-                loss += (x[b, :].view(-1).sum())**2 / x.size(0)
-            return loss
+            return loss1(x)
 
     class GradientTest2(GradientTest0):
         # loss Hessian is not PD
         TEST_DIAG_GGN = False
 
+        test_problem = make_test_problem(seed, layer_fn, input_size, loss2, device)
+
         def _loss_fn(self, x):
             """Dummy loss function: Sum of log10 of shifted normalized abs."""
-            loss = torch.zeros(1).to(self.DEVICE)
-            for b in range(x.size(0)):
-                loss += (
-                    torch.log10(torch.abs(x[b, :]) + 0.1).sum())**2 / x.size(0)
-            return loss
+            return loss2(x)
 
     return GradientTest0, GradientTest1, GradientTest2
 
