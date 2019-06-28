@@ -6,6 +6,7 @@ The example is taken from
     for Document Processing (2007).
 """
 
+import torch
 from torch import (Tensor, randn)
 from torch.nn import Conv2d
 from random import (randint, choice)
@@ -179,12 +180,12 @@ def test_random_grad_batch(random_runs=10):
 
 
 TEST_SETTINGS = {
-    "in_features": (3, 8, 9),
-    "out_channels": 10,
+    "in_features": (3, 4, 5),
+    "out_channels": 6,
     "kernel_size": (3, 2),
     "padding": (1, 1),
     "bias": True,
-    "batch": 13,
+    "batch": 5,
     "rtol": 1e-5,
     "atol": 5e-4
 }
@@ -192,12 +193,22 @@ TEST_SETTINGS = {
 
 def layer_fn():
     set_seeds(0)
-    return ExtConv2d(
+    convlayer = ExtConv2d(
         in_channels=TEST_SETTINGS["in_features"][0],
         out_channels=TEST_SETTINGS["out_channels"],
         kernel_size=TEST_SETTINGS["kernel_size"],
         padding=TEST_SETTINGS["padding"],
-        bias=TEST_SETTINGS["bias"])
+        bias=TEST_SETTINGS["bias"]
+    )
+
+    class To2D(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+
+        def forward(self, input):
+            return input.view((input.shape[0], -1))
+
+    return torch.nn.Sequential(convlayer, To2D())
 
 
 gradient_tests = set_up_tests(
