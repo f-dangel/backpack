@@ -1,11 +1,12 @@
+import numpy as np
 import torch
-from bpexts.utils import set_seeds
+from bpexts.utils import set_seeds, Flatten
 import bpexts.gradient.config as config
 from .test_problem import TestProblem
 
 TEST_SETTINGS = {
     "in_features": (3, 4, 5),
-    "out_channels": 6,
+    "out_channels": 4,
     "kernel_size": (3, 2),
     "padding": (1, 1),
     "bias": True,
@@ -28,23 +29,17 @@ input_size = (TEST_SETTINGS["batch"], ) + TEST_SETTINGS["in_features"]
 X = torch.randn(size=input_size)
 
 linearlayer = config.extend(torch.nn.Linear(
-    in_features=144,
+    in_features=np.prod(
+        [f - TEST_SETTINGS["padding"][0] for f in TEST_SETTINGS["in_features"]]
+    ) * TEST_SETTINGS["out_channels"],
     out_features=1
 ))
-
-
-class To2D(torch.nn.Module):
-    def __init__(self):
-        super().__init__()
-
-    def forward(self, input):
-        return input.view(input.shape[0], -1)
 
 
 def make_regression_problem():
     model = torch.nn.Sequential(
         convlayer,
-        To2D(),
+        Flatten(),
         linearlayer
     )
 
@@ -58,7 +53,7 @@ def make_regression_problem():
 def make_classification_problem():
     model = torch.nn.Sequential(
         convlayer,
-        To2D()
+        Flatten()
     )
 
     Y = torch.randint(high=X.shape[1], size=(model(X).shape[0],))
