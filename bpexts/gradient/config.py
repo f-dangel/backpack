@@ -62,6 +62,12 @@ def extend(module):
         for ext in CTX.active_exts():
             key = (module.__class__, ext)
             if key in Extensions.registeredExtensions:
+
+                print(
+                    module.__class__,
+                    CTX._backpropagated_sqrt_ggn.shape if hasattr(CTX, "_backpropagated_sqrt_ggn") else None
+                )
+
                 Extensions.registeredExtensions[key](module, grad_out)
 
     CTX.add_hook_handle(module.register_forward_pre_hook(store_input))
