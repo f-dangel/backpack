@@ -1,4 +1,5 @@
 import torch
+import math
 import torch.nn.functional as F
 from torch import einsum
 from ..config import CTX
@@ -14,6 +15,11 @@ def backpropagate_sqrt_ggn(module):
     Id = torch.diag_embed(torch.ones_like(probs))
     Id_tautau = Id - einsum('ni,nj->nij', tau, tau)
     sqrt_ggn_in = einsum('ni,nij->nij', tau, Id_tautau)
+
+    if module.reduction is "mean":
+        print("REDUC")
+        sqrt_ggn_in /= math.sqrt(module.input0.shape[0])
+
     CTX._backpropagated_sqrt_ggn = sqrt_ggn_in
 
 

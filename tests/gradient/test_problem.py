@@ -35,7 +35,11 @@ class TestProblem():
         if b is None:
             return self.lossfunc(self.model(self.X), self.Y)
         else:
-            Xb, Yb = self.X[b, :].unsqueeze(0), self.Y[b, :].unsqueeze(0)
+            Xb = self.X[b, :].unsqueeze(0)
+            if len(self.Y.shape) > 1:
+                Yb = self.Y[b, :].unsqueeze(0)
+            else:
+                Yb = self.Y[b].unsqueeze(0)
             return self.lossfunc(self.model(Xb), Yb)
 
     def gradient_autograd(self):
@@ -134,6 +138,12 @@ class TestProblem():
                 safeclear(p, attr)
 
 
+def dummyCrossEntropy(x, y=None):
+    print(x.shape, y.shape)
+    print(x, y)
+    return config.extend(torch.nn.CrossEntropyLoss())(x, y)
+
+
 def loss0(x, y=None):
     """Dummy loss function: Normalized sum of squared elements."""
     return (x**2).contiguous().view(x.size(0), -1).mean(0).sum()
@@ -154,4 +164,4 @@ def loss2(x, y=None):
     return loss
 
 
-losses = [loss0, loss1, loss2]
+losses = [dummyCrossEntropy, loss0, loss1, loss2]

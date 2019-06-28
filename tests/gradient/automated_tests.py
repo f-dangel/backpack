@@ -12,7 +12,7 @@ def make_test_problem(layer_fn, input_size, loss, device, seed=0):
     model = layer_fn()
     set_seeds(seed)
     X = torch.randn(input_size)
-    Y = 1 - model(X)
+    Y = torch.randint(model(X).shape[1], size=(X.shape[0], ))
     return TestProblem(X, Y, model, loss, device=device)
 
 
