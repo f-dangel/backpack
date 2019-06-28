@@ -4,8 +4,7 @@ from torch import Tensor
 from torch.nn import Linear
 import bpexts.gradient.config as config
 from bpexts.gradient.extensions import Extensions as ext
-from bpexts.utils import torch_allclose as allclose, set_seeds
-from .automated_tests import set_up_tests
+from bpexts.utils import torch_allclose as allclose
 
 
 def ExtLinear(*args, **kwargs):
@@ -118,34 +117,3 @@ def test_grad_batch():
 
         del g_lin.bias.grad
         del g_lin.weight.grad
-
-
-TEST_SETTINGS = {
-    "in_features": 20,
-    "out_features": 10,
-    "bias": True,
-    "batch": 13,
-    "rtol": 1e-5,
-    "atol": 1e-5
-}
-
-
-def layer_fn():
-    set_seeds(0)
-    return ExtLinear(
-        in_features=TEST_SETTINGS["in_features"],
-        out_features=TEST_SETTINGS["out_features"],
-        bias=TEST_SETTINGS["bias"]
-    )
-
-
-gradient_tests = set_up_tests(
-    layer_fn, 'Linear',
-    input_size=(TEST_SETTINGS["batch"], TEST_SETTINGS["in_features"]),
-    atol=TEST_SETTINGS["atol"],
-    rtol=TEST_SETTINGS["rtol"]
-)
-
-for name, test_cls in gradient_tests:
-    exec('{} = test_cls'.format(name))
-    del test_cls

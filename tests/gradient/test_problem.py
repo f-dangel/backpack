@@ -20,12 +20,21 @@ class TestProblem():
         model: [N x D_X] -> [N x D_out]
         loss: [N x D_out] x [N x D_y] -> scalar
         """
-        self.X = X.to(device)
-        self.Y = Y.to(device)
-        self.model = model.to(device)
+        self.X = X
+        self.Y = Y
+        self.model = model
         self.lossfunc = lossfunc
         self.device = device
+        self.to(device)
         self.N = self.X.shape[0]
+
+    def to(self, device):
+        self.X = self.X.to(device)
+        self.Y = self.Y.to(device)
+        self.model = self.model.to(device)
+        self.lossfunc = self.lossfunc.to(device)
+        self.device = device
+        return self
 
     def loss(self, b=None):
         """
@@ -138,7 +147,5 @@ class TestProblem():
                 safeclear(p, attr)
 
 
-def dummyCrossEntropy(x, y=None):
-    return config.extend(torch.nn.CrossEntropyLoss())(x, y)
 
-losses = [dummyCrossEntropy]
+
