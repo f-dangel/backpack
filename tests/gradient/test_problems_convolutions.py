@@ -27,18 +27,25 @@ convlayer = config.extend(torch.nn.Conv2d(
 input_size = (TEST_SETTINGS["batch"], ) + TEST_SETTINGS["in_features"]
 X = torch.randn(size=input_size)
 
+linearlayer = config.extend(torch.nn.Linear(
+    in_features=144,
+    out_features=1
+))
+
+
+class To2D(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, input):
+        return input.view(input.shape[0], -1)
+
 
 def make_regression_problem():
-    class SumAll(torch.nn.Module):
-        def __init__(self):
-            super().__init__()
-
-        def forward(self, input):
-            return input.sum(dim=list(range(1, len(input.shape)))).unsqueeze(1)
-
     model = torch.nn.Sequential(
         convlayer,
-        SumAll()
+        To2D(),
+        linearlayer
     )
 
     Y = torch.randn(size=(model(X).shape[0], 1))
@@ -49,13 +56,6 @@ def make_regression_problem():
 
 
 def make_classification_problem():
-    class To2D(torch.nn.Module):
-        def __init__(self):
-            super().__init__()
-
-        def forward(self, input):
-            return input.view(input.shape[0], -1)
-
     model = torch.nn.Sequential(
         convlayer,
         To2D()
