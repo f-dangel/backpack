@@ -2,6 +2,7 @@ import torch.nn
 from torch import einsum
 from ..config import CTX
 from ..batchgrad.conv2d import unfold_func
+from ..jmp.conv2d import jac_mat_prod
 
 
 def diag_ggn(module, grad_input, grad_output):
@@ -11,8 +12,8 @@ def diag_ggn(module, grad_input, grad_output):
     if module.weight.requires_grad:
         module.weight.diag_ggn = weight_diag_ggn(module, grad_output,
                                                  sqrt_ggn_out)
-    CTX._backpropagated_sqrt_ggn = backpropagate_sqrt_ggn(
-        module, grad_output, sqrt_ggn_out)
+
+    backpropagate_sqrt_ggn(module, grad_input, grad_output, sqrt_ggn_out)
 
 
 def bias_diag_ggn(module, grad_output, sqrt_ggn_out):
@@ -52,47 +53,9 @@ def weight_diag_ggn(module, grad_output, sqrt_ggn_out):
     return w_diag_ggn.view_as(module.weight)
 
 
-def backpropagate_sqrt_ggn(module, grad_output, sqrt_ggn_out):
-    # TODO: Figure out how to do this for multiple inputs
-
-    # checks for debugging
-    batch, out_channels, out_x, out_y = module.output_shape
-    in_features = module.input0.numel() / batch
-    out_features = out_channels * out_x * out_y
-    num_classes = sqrt_ggn_out.size(2)
-    assert tuple(sqrt_ggn_out.size())[:2] == (batch, out_features)
-
-    ##############################################################
-    # trick to process batch and class dimensions without for loop
-    # shape of sqrt_ggn_out: (batch, output, class)
-    # merge batch and class axes (einsum for convenience)
-    # TODO: This can be formulated more efficiently
-    sqrt_ggn = einsum('boc->cbo', (sqrt_ggn_out, )).contiguous()
-    sqrt_ggn = sqrt_ggn.view(num_classes * batch, out_features)
-
-    # separate channel and spatial dimensions
-    sqrt_ggn = sqrt_ggn.view(num_classes * batch, out_channels, out_x, out_y)
-    # end TODO
-
-    # apply Jacobian w.r.t. input
-    sqrt_ggn = torch.nn.functional.conv_transpose2d(
-        sqrt_ggn,
-        module.weight.data,
-        stride=module.stride,
-        padding=module.padding,
-        dilation=module.dilation,
-        groups=module.groups)
-    if tuple(sqrt_ggn.size())[1:] != tuple(module.input0.size())[1:]:
-        raise ValueError(
-            "Size after conv_transpose does not match",
-            "Got {}, and {}. Expecting all dimensions to match, except for the first."
-            .format(sqrt_ggn.size(), module.input0.size()))
-
-    # unmerge batch and class axes
-    sqrt_ggn = sqrt_ggn.view(num_classes, batch, in_features)
-    return einsum('cbi->bic', (sqrt_ggn, ))
-    # end TODO
-    ##############################################################
+def backpropagate_sqrt_ggn(module, grad_input, grad_output, sqrt_ggn_out):
+    sqrt_ggn_in = jac_mat_prod(module, grad_input, grad_output, sqrt_ggn_out)
+    CTX._backpropagated_sqrt_ggn = sqrt_ggn_in
 
 
 SIGNATURE = [(torch.nn.Conv2d, "DIAG_GGN", diag_ggn)]
