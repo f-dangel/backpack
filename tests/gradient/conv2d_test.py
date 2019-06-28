@@ -180,12 +180,12 @@ def test_random_grad_batch(random_runs=10):
 
 
 TEST_SETTINGS = {
-    "in_features": (3, 8, 9),
-    "out_channels": 10,
+    "in_features": (3, 4, 5),
+    "out_channels": 6,
     "kernel_size": (3, 2),
     "padding": (1, 1),
     "bias": True,
-    "batch": 13,
+    "batch": 5,
     "rtol": 1e-5,
     "atol": 5e-4
 }
