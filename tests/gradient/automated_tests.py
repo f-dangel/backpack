@@ -21,31 +21,15 @@ def set_up_tests(layer_fn, layer_name, input_size, atol=1e-8, rtol=1e-5):
 
     for idx, loss in enumerate(losses):
         problem = make_test_problem(
-            layer_fn,
-            input_size,
-            loss,
-            device=torch.device('cpu')
-        )
-        cpu_test = unittest_for(
-            problem,
-            atol=atol,
-            rtol=rtol
-        )
+            layer_fn, input_size, loss, device=torch.device('cpu'))
+        cpu_test = unittest_for(problem, atol=atol, rtol=rtol)
 
         yield '{}CPUTest{}'.format(layer_name, idx), cpu_test
 
         if torch.cuda.is_available():
             problem = make_test_problem(
-                layer_fn,
-                input_size,
-                loss,
-                device=torch.device('gpu:0')
-            )
+                layer_fn, input_size, loss, device=torch.device('cuda:0'))
 
-            gpu_test = unittest_for(
-                problem,
-                atol=atol,
-                rtol=rtol
-            )
+            gpu_test = unittest_for(problem, atol=atol, rtol=rtol)
 
             yield '{}GPUTest{}'.format(layer_name, idx), gpu_test
