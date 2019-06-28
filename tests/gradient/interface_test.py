@@ -3,8 +3,7 @@ Test of the interface - calls every method that needs implementation
 """
 
 import torch
-import pytest
-from torch.nn import Conv2d, Linear
+from torch.nn import Linear, ReLU, CrossEntropyLoss
 import bpexts.gradient.config as config
 from bpexts.gradient.extensions import Extensions as ext
 from bpexts.gradient.config import extend
@@ -12,33 +11,25 @@ from bpexts.gradient.config import extend
 
 def dummy_forward_pass():
     N = 3
-    CONV_IN = 3
-    CONV_OUT = 2
-    DIM_X = 4
-    DIM_Y = 3
-    S = 1
-    K = 2
+    D_IN = 5
+    D_H = 10
     D_OUT = 2
-    P = 0
 
-    input = torch.randn(N, CONV_IN, DIM_X, DIM_Y)
+    X = torch.randn(N, D_IN)
+    Y = torch.randint(2, size=(N,))
 
-    conv = extend(Conv2d(
-        in_channels=CONV_IN, out_channels=CONV_OUT,
-        kernel_size=(K, K), stride=(S, S), padding=(P, P), bias=True
-    ))
+    lin1 = extend(Linear(in_features=D_IN, out_features=D_H, bias=True))
+    act = extend(ReLU())
+    lin2 = extend(Linear(in_features=D_H, out_features=D_OUT, bias=True))
+    loss = extend(CrossEntropyLoss())
 
-    act = torch.nn.functional.relu
-
-    lin = extend(Linear(
-        in_features=CONV_OUT * (DIM_X - S) * (DIM_Y - S),
-        out_features=D_OUT, bias=True
-    ))
+    def model(x):
+        return lin2(act(lin1(x)))
 
     def forward():
-        return torch.sum(lin(act(conv(input)).view(N, -1))**2)
+        return loss(model(X), Y)
 
-    return forward, (conv.weight, lin.weight)
+    return forward, (lin1.weight, lin1.bias, lin2.weight, lin2.bias)
 
 
 forward_func, weights = dummy_forward_pass()
@@ -48,6 +39,7 @@ FEATURES_TO_ATTRIBUTES = {
     ext.GRAD: "grad",
     ext.BATCH_GRAD: "grad_batch",
     ext.SUM_GRAD_SQUARED: "sum_grad_squared",
+    ext.DIAG_GGN: "diag_ggn",
 }
 
 
@@ -70,6 +62,5 @@ def test_interface_sum_grad_squared():
     interface_test(ext.SUM_GRAD_SQUARED)
 
 
-@pytest.mark.skip(reason="GGN not ready")
 def test_interface_diag_ggn():
     interface_test(ext.DIAG_GGN)

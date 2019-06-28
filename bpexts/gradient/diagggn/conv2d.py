@@ -9,8 +9,8 @@ def diag_ggn(module, grad_output):
         module.bias.diag_ggn = bias_diag_ggn(module, grad_output)
     if module.weight.requires_grad:
         module.weight.diag_ggn = weight_diag_ggn(module, grad_output)
-    if module.input0.requires_grad:
-        backpropagate_sqrt_ggn(module, grad_output, sqrt_ggn_out)
+
+    backpropagate_sqrt_ggn(module, grad_output, sqrt_ggn_out)
 
 
 def bias_diag_ggn(module, grad_output, sqrt_ggn_out):

@@ -5,12 +5,11 @@ from ..config import CTX
 
 def diag_ggn(module, grad_output):
     sqrt_ggn_out = CTX._backpropagated_sqrt_ggn
-    if module.input0.requires_grad:
-        backpropagate_sqrt_ggn(module, grad_output, sqrt_ggn_out)
+    backpropagate_sqrt_ggn(module, grad_output, sqrt_ggn_out)
 
 
 def backpropagate_sqrt_ggn(module, grad_output, sqrt_ggn_out):
-    d_relu = torch.gt(module.input0, 0)
+    d_relu = torch.gt(module.input0, 0).float()
     sqrt_ggn_in = einsum('bi,bic->bic', (d_relu, sqrt_ggn_out))
     CTX._backpropagated_sqrt_ggn = sqrt_ggn_in
 

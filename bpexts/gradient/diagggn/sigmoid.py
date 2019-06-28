@@ -5,8 +5,7 @@ from ..config import CTX
 
 def diag_ggn(module, grad_output):
     sqrt_ggn_out = CTX._backpropagated_sqrt_ggn
-    if module.input0.requires_grad:
-        backpropagate_sqrt_ggn(module, grad_output, sqrt_ggn_out)
+    backpropagate_sqrt_ggn(module, grad_output, sqrt_ggn_out)
 
 
 def backpropagate_sqrt_ggn(module, grad_output, sqrt_ggn_out):

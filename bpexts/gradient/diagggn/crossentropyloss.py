@@ -5,12 +5,10 @@ from ..config import CTX
 
 
 def diag_ggn(module, grad_output):
-    sqrt_ggn_out = CTX._backpropagated_sqrt_ggn
-    if module.input0.requires_grad:
-        backpropagate_sqrt_ggn(module, grad_output, sqrt_ggn_out)
+    backpropagate_sqrt_ggn(module)
 
 
-def backpropagate_sqrt_ggn(module, grad_output, sqrt_ggn_out):
+def backpropagate_sqrt_ggn(module):
     probs = F.softmax(module.input0, dim=1)
     tau = torch.sqrt(probs)
     Id = torch.diag_embed(torch.ones_like(probs))
