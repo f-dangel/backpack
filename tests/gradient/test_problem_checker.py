@@ -37,53 +37,48 @@ def unittest_for(test_problem, atol=1e-5, rtol=1e-8):
             bpexts_res = self.problem.batch_gradients_bpexts()
             model = self.problem.model
 
-            assert len(autograd_res) == len(bpexts_res) == len(
-                list(model.parameters()))
+            self.check_sizes(autograd_res, bpexts_res)
+
             for g1, g2, p in zip(autograd_res, bpexts_res, model.parameters()):
-                assert tuple(g1.size()) == tuple(
-                    g2.size()) == (self.problem.N, ) + tuple(p.size())
                 self.report_nonclose_values(g1, g2)
                 assert torch.allclose(g1, g2, atol=self.ATOL, rtol=self.RTOL)
 
         def test_batch_gradients_sum_to_grad(self):
             model = self.problem.model
-            autograd_gradients = self.problem.gradient_autograd()
-            bpexts_batch_gradients = self.problem.batch_gradients_bpexts()
+            autograd_res = self.problem.gradient_autograd()
+            bpexts_batch_res = self.problem.batch_gradients_bpexts()
+            bpexts_res = list([g.sum(0) for g in bpexts_batch_res])
 
-            assert len(autograd_gradients) == len(
-                bpexts_batch_gradients) == len(list(model.parameters()))
-            for g, batch_g, p in zip(
-                    autograd_gradients, bpexts_batch_gradients,
+            self.check_sizes(autograd_res, bpexts_res, list(model.parameters()))
+            for g1, g2, p in zip(
+                    autograd_res, bpexts_res,
                     model.parameters()):
-                bpexts_g = batch_g.sum(0)
-                assert g.size() == bpexts_g.size() == p.size()
-                self.report_nonclose_values(g, bpexts_g)
+                self.report_nonclose_values(g1, g2)
                 assert torch.allclose(
-                    g, bpexts_g, atol=self.ATOL, rtol=self.RTOL)
+                    g1, g2, atol=self.ATOL, rtol=self.RTOL)
 
         def test_sgs(self):
             autograd_res = self.problem.sgs_autograd()
             bpexts_res = self.problem.sgs_bpexts()
 
             model = self.problem.model
-            assert len(autograd_res) == len(bpexts_res) == len(list(model.parameters()))
+
+            self.check_sizes(autograd_res, bpexts_res, list(model.parameters()))
 
             for g1, g2, p in zip(autograd_res, bpexts_res, model.parameters()):
-                assert g1.size() == g2.size() == p.size()
                 self.report_nonclose_values(g1, g2)
                 assert torch.allclose(g1, g2, atol=self.ATOL, rtol=self.RTOL)
 
-        @pytest.mark.skip(reason="GGN not ready")
         def test_diag_ggn(self):
             model = self.problem.model
 
             autograd_res = self.problem.diag_ggn_autograd()
             bpexts_res = self.problem.diag_ggn_bpexts()
 
-            assert len(autograd_res) == len(bpexts_res) == len(list(model.parameters()))
+            self.check_sizes(autograd_res, bpexts_res, list(model.parameters()))
+
             for ggn1, ggn2, p in zip(autograd_res, bpexts_res,
                                      model.parameters()):
-                assert ggn1.size() == ggn2.size() == p.size()
                 self.report_nonclose_values(ggn1, ggn2)
                 assert torch.allclose(
                     ggn1, ggn2, atol=self.ATOL, rtol=self.RTOL)
@@ -96,6 +91,15 @@ def unittest_for(test_problem, atol=1e-5, rtol=1e-8):
                 x_numpy, y_numpy, atol=self.ATOL, rtol=self.RTOL)
             where_not_close = np.argwhere(np.logical_not(close))
             for idx in where_not_close:
-                print('{} versus {}'.format(x_numpy[idx], y_numpy[idx]))
+                x, y = x_numpy[idx], y_numpy[idx]
+                print('{} versus {}. Ratio of {}'.format(x, y, y / x))
+
+        def check_sizes(self, *plists):
+            for i in range(len(plists) - 1):
+                assert len(plists[i]) == len(plists[i + 1])
+
+            for params in zip(*plists):
+                for i in range(len(params) - 1):
+                    assert params[i].size() == params[i + 1].size()
 
     return GradientTest
