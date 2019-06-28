@@ -1,3 +1,4 @@
+import torch
 from .context import CTX
 from .extensions import Extensions
 from . import batchgrad, sumgradsquared, diagggn
@@ -48,8 +49,8 @@ def extend(module):
 
         For debugging and conv/pool operations.
         """
-        module.register_buffer('output{}_shape',
-                               torch.IntTensor(*output.size()))
+        module.register_buffer('output_shape',
+                               torch.IntTensor([*output.size()]))
 
     def run_extensions(module, grad_input, grad_output):
         """Check which quantities need to be computed and evaluate them."""
