@@ -140,28 +140,6 @@ class TestProblem():
 
 def dummyCrossEntropy(x, y=None):
     print(x.shape, y.shape)
-    print(x, y)
     return config.extend(torch.nn.CrossEntropyLoss())(x, y)
 
-
-def loss0(x, y=None):
-    """Dummy loss function: Normalized sum of squared elements."""
-    return (x**2).contiguous().view(x.size(0), -1).mean(0).sum()
-
-
-def loss1(x, y=None):
-    loss = torch.zeros(1).to(x.device)
-    for b in range(x.size(0)):
-        loss += (x[b, :].view(-1).sum())**2 / x.size(0)
-    return loss
-
-
-def loss2(x, y=None):
-    loss = torch.zeros(1).to(x.device)
-    for b in range(x.size(0)):
-        loss += (
-            torch.log10(torch.abs(x[b, :]) + 0.1).sum())**2 / x.size(0)
-    return loss
-
-
-losses = [dummyCrossEntropy, loss0, loss1, loss2]
+losses = [dummyCrossEntropy]
