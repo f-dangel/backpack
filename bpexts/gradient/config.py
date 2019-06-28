@@ -68,7 +68,7 @@ def extend(module):
                     CTX._backpropagated_sqrt_ggn.shape if hasattr(CTX, "_backpropagated_sqrt_ggn") else None
                 )
 
-                Extensions.registeredExtensions[key](module, grad_out)
+                Extensions.registeredExtensions[key](module, grad_input, grad_out)
 
     CTX.add_hook_handle(module.register_forward_pre_hook(store_input))
     CTX.add_hook_handle(module.register_forward_hook(store_output))

@@ -3,7 +3,7 @@ from torch import einsum
 from ..config import CTX
 
 
-def diag_ggn(module, grad_output):
+def diag_ggn(module, grad_input, grad_output):
     sqrt_ggn_out = CTX._backpropagated_sqrt_ggn
     if module.bias is not None and module.bias.requires_grad:
         module.bias.diag_ggn = bias_diag_ggn(module, grad_output, sqrt_ggn_out)

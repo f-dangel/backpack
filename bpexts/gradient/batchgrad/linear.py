@@ -2,7 +2,7 @@ import torch.nn
 from torch import einsum
 
 
-def grad_batch(module, grad_output):
+def grad_batch(module, grad_input, grad_output):
     """Compute batchwise gradients of module parameters.
 
     Store bias batch gradients in `module.bias.batch_grad` and

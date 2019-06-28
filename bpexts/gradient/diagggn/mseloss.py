@@ -3,7 +3,7 @@ import math
 from ..config import CTX
 
 
-def diag_ggn(module, grad_output):
+def diag_ggn(module, grad_input, grad_output):
     backpropagate_sqrt_ggn(module)
 
 
