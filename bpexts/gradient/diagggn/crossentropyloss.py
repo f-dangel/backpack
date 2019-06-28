@@ -17,7 +17,6 @@ def backpropagate_sqrt_ggn(module):
     sqrt_ggn_in = einsum('ni,nij->nij', tau, Id_tautau)
 
     if module.reduction is "mean":
-        print("REDUC")
         sqrt_ggn_in /= math.sqrt(module.input0.shape[0])
 
     CTX._backpropagated_sqrt_ggn = sqrt_ggn_in

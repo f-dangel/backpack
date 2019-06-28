@@ -33,7 +33,6 @@ class Extensions:
     def register(LayerClass, ext, func):
         Extensions.check_exists(ext)
         key = (LayerClass, ext)
-        print("REGISTER")
         if key in Extensions.registeredExtensions:
             warnings.warn("Extension {} for layer {} already registered".format(ext, LayerClass), category=RuntimeWarning)
         Extensions.registeredExtensions[key] = func

@@ -139,7 +139,6 @@ class TestProblem():
 
 
 def dummyCrossEntropy(x, y=None):
-    print(x.shape, y.shape)
     return config.extend(torch.nn.CrossEntropyLoss())(x, y)
 
 losses = [dummyCrossEntropy]
