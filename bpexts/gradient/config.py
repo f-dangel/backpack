@@ -30,24 +30,33 @@ class bpexts():
 
 
 def extend(module):
-
     def store_input(module, input):
         """Pre forward hook saving layer input as buffer.
 
         Initialize module buffer `ìnput`.
         """
         for i in range(len(input)):
-            module.register_buffer('input{}'.format(i), input[i].clone().detach())
+            module.register_buffer('input{}'.format(i),
+                                   input[i].clone().detach())
 
     def store_output(module, input, output):
         """Post-forward hook saving layer output as buffer."""
-        for i in range(len(input)):
-            module.register_buffer('output{}'.format(i), input[i].clone().detach())
+        module.register_buffer('output', output.clone().detach())
+
+    def store_output_shape(module, input, output):
+        """Store dimensionality of output as buffer.
+
+        For debugging and conv/pool operations.
+        """
+        module.register_buffer('output{}_shape',
+                               torch.IntTensor(*output.size()))
 
     def run_extensions(module, grad_input, grad_output):
         """Check which quantities need to be computed and evaluate them."""
 
-        grad_out = [grad_output[i].clone().detach() for i in range(len(grad_output))]
+        grad_out = [
+            grad_output[i].clone().detach() for i in range(len(grad_output))
+        ]
 
         for ext in CTX.active_exts():
             key = (module.__class__, ext)
@@ -56,6 +65,7 @@ def extend(module):
 
     CTX.add_hook_handle(module.register_forward_pre_hook(store_input))
     CTX.add_hook_handle(module.register_forward_hook(store_output))
+    CTX.add_hook_handle(module.register_forward_hook(store_output_shape))
     CTX.add_hook_handle(module.register_backward_hook(run_extensions))
 
     return module
@@ -64,6 +74,7 @@ def extend(module):
 def extended(moduleFunc):
     def instanciate_and_extend(*args, **kwargs):
         return extend(moduleFunc(*args, **kwargs))
+
     return instanciate_and_extend
 
 
