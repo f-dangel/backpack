@@ -30,8 +30,6 @@ def bias_diag_ggn(module, grad_output, sqrt_ggn_out):
 
 # TODO: Move the axis-merging trick to a separate method
 def weight_diag_ggn(module, grad_output, sqrt_ggn_out):
-    # TODO: Figure out how to do this for multiple inputs
-
     # checks for debugging
     batch, out_channels, out_x, out_y = module.output_shape
     in_features = module.input0.numel() / batch
@@ -39,37 +37,17 @@ def weight_diag_ggn(module, grad_output, sqrt_ggn_out):
     num_classes = sqrt_ggn_out.size(2)
     assert tuple(sqrt_ggn_out.size())[:2] == (batch, out_features)
 
-    ##############################################################
-    # trick to process batch and class dimensions without for loop
-    # shape of sqrt_ggn_out: (batch, output, class)
-    # merge batch and class axes (einsum for convenience)
-    # TODO: This can be formulated more efficiently
-    sqrt_ggn = einsum('boc->cbo', (sqrt_ggn_out, )).contiguous()
-    sqrt_ggn = sqrt_ggn.view(num_classes * batch, out_features)
-
     # separate channel and spatial dimensions
-    sqrt_ggn = sqrt_ggn.view(num_classes * batch, out_channels, out_x * out_y)
-    # end TODO
-
-    # unfolded input
+    sqrt_ggn = sqrt_ggn_out.view(batch, out_channels, out_x * out_y,
+                                 num_classes)
+    # unfolded input, repeated for each class
     X = unfold_func(module)(module.input0)
-    # repeat for each class, according to the docs, no way around copying
-    X = X.repeat(num_classes, 1, 1)
+    X = X.unsqueeze(0).expand(num_classes, -1, -1, -1)
 
-    # TODO: This can be formulated more efficiently
-    # apply Jacobian with merged (batch, class) axes
-    sqrt_ggn = einsum('bml,bkl->bmk', (sqrt_ggn, X)).contiguous()
-    # result of shape (batch * class, kernel, channel)
-
-    # unmerge batch and class axes
-    sqrt_ggn = sqrt_ggn.view(num_classes, batch, module.weight.numel())
-    sqrt_ggn = einsum('cbk->bkc', (sqrt_ggn, ))
-    # end TODO
-    ##############################################################
-
-    # compute the diagonal of the flattened kernel
-    w_diag_ggn = einsum('bkc->k', (sqrt_ggn**2, ))
-
+    # apply Jacobian
+    sqrt_ggn = einsum('bmlc,cbkl->bmkc', (sqrt_ggn, X)).contiguous()
+    # compute the diagonal
+    w_diag_ggn = einsum('bmkc->mk', (sqrt_ggn**2, ))
     # reshape into kernel dimensions
     return w_diag_ggn.view_as(module.weight)
 
