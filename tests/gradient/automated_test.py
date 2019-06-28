@@ -7,6 +7,7 @@ import pytest
 from .test_problems_convolutions import TEST_PROBLEMS as CONV_TEST_PROBLEMS
 from .test_problems_linear import TEST_PROBLEMS as LIN_TEST_PROBLEMS
 from .test_problems_activations import TEST_PROBLEMS as ACT_TEST_PROBLEMS
+from .test_problems_pooling import TEST_PROBLEMS as POOL_TEST_PROBLEMS
 
 if torch.cuda.is_available():
     DEVICES = {
@@ -21,6 +22,7 @@ TEST_PROBLEMS = {
     **CONV_TEST_PROBLEMS,
     **LIN_TEST_PROBLEMS,
     **ACT_TEST_PROBLEMS,
+    **POOL_TEST_PROBLEMS,
 }
 
 ALL_CONFIGURATIONS = []
