@@ -17,40 +17,34 @@ def diag_ggn(module, grad_input, grad_output):
 
 
 def bias_diag_ggn(module, grad_output, sqrt_ggn_out):
-    # separate channel and spatial coordinates of features
-    batch, channels, classes, pixels = (
-        module.input0.size(0),
-        module.out_channels,
-        sqrt_ggn_out.size(2),
-        module.output_shape[2] * module.output_shape[3],
-    )
-    sqrt_ggn = sqrt_ggn_out.view(batch, channels, pixels, classes)
-
+    sqrt_ggn = separate_channels_and_pixels(module, sqrt_ggn_out)
     return einsum('bijc,bikc->i', (sqrt_ggn, sqrt_ggn))
 
 
-# TODO: Move the axis-merging trick to a separate method
 def weight_diag_ggn(module, grad_output, sqrt_ggn_out):
-    # checks for debugging
-    batch, out_channels, out_x, out_y = module.output_shape
-    in_features = module.input0.numel() / batch
-    out_features = out_channels * out_x * out_y
-    num_classes = sqrt_ggn_out.size(2)
-    assert tuple(sqrt_ggn_out.size())[:2] == (batch, out_features)
+    sqrt_ggn = separate_channels_and_pixels(module, sqrt_ggn_out)
 
-    # separate channel and spatial dimensions
-    sqrt_ggn = sqrt_ggn_out.view(batch, out_channels, out_x * out_y,
-                                 num_classes)
     # unfolded input, repeated for each class
-    X = unfold_func(module)(module.input0)
-    X = X.unsqueeze(0).expand(num_classes, -1, -1, -1)
+    num_classes = sqrt_ggn_out.size(2)
+    X = unfold_func(module)(module.input0).unsqueeze(0).expand(
+        num_classes, -1, -1, -1)
 
-    # apply Jacobian
-    sqrt_ggn = einsum('bmlc,cbkl->bmkc', (sqrt_ggn, X)).contiguous()
-    # compute the diagonal
-    w_diag_ggn = einsum('bmkc->mk', (sqrt_ggn**2, ))
-    # reshape into kernel dimensions
-    return w_diag_ggn.view_as(module.weight)
+    return einsum('bmlc,cbkl,bmic,cbki->mk',
+                  (sqrt_ggn, X, sqrt_ggn, X)).view_as(module.weight)
+
+
+def separate_channels_and_pixels(module, sqrt_ggn_out):
+    """Reshape (batch, out_features, classes)
+    into
+               (batch, out_channels, pixels, classes).
+    """
+    batch, channels, pixels, classes = (
+        module.input0.size(0),
+        module.out_channels,
+        module.output_shape[2] * module.output_shape[3],
+        sqrt_ggn_out.size(2),
+    )
+    return sqrt_ggn_out.view(batch, channels, pixels, classes)
 
 
 def backpropagate_sqrt_ggn(module, grad_input, grad_output, sqrt_ggn_out):
