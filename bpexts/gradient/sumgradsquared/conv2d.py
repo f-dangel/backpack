@@ -1,6 +1,6 @@
 import torch.nn
 from torch import einsum
-from ..batchgrad.conv2d import bias_grad_batch, weight_grad_batch
+from ..batchgrad.conv2d import bias_grad_batch, weight_grad_batch, unfold_func
 
 
 def sum_grad_squared(module, grad_input, grad_output):
@@ -24,8 +24,11 @@ def bias_sum_grad_squared(module, grad_output):
 
 def weight_sum_grad_squared(module, grad_output):
     """Compute sum of squared batch gradients for kernel."""
-    # TODO: This could probably be optimized with einsum
-    return (weight_grad_batch(module, grad_output)**2).sum(0)
+    batch = module.input0.size(0)
+    X = unfold_func(module)(module.input0)
+    dE_dY = grad_output[0].view(batch, module.out_channels, -1)
+    w_sgs = einsum('bml,bkl,bmi,bki->mk', (dE_dY, X, dE_dY, X))
+    return w_sgs.view_as(module.weight)
 
 
 SIGNATURE = [(torch.nn.Conv2d, "SUM_GRAD_SQUARED", sum_grad_squared)]
