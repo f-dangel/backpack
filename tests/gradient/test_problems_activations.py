@@ -3,7 +3,6 @@ from bpexts.utils import set_seeds
 import bpexts.gradient.config as config
 from .test_problem import TestProblem
 
-
 TEST_SETTINGS = {
     "in_features": 20,
     "out_features": 10,
@@ -16,30 +15,26 @@ TEST_SETTINGS = {
 ACTIVATIONS = {
     'ReLU': config.extend(torch.nn.ReLU()),
     'Sigmoid': config.extend(torch.nn.Sigmoid()),
+    'Tanh': config.extend(torch.nn.Tanh())
 }
 
 set_seeds(0)
-linearlayer = config.extend(torch.nn.Linear(
-    in_features=TEST_SETTINGS["in_features"],
-    out_features=TEST_SETTINGS["out_features"],
-    bias=TEST_SETTINGS["bias"],
-))
-summationLinearLayer = config.extend(torch.nn.Linear(
-    in_features=TEST_SETTINGS["out_features"],
-    out_features=1,
-    bias=True
-))
+linearlayer = config.extend(
+    torch.nn.Linear(
+        in_features=TEST_SETTINGS["in_features"],
+        out_features=TEST_SETTINGS["out_features"],
+        bias=TEST_SETTINGS["bias"],
+    ))
+summationLinearLayer = config.extend(
+    torch.nn.Linear(
+        in_features=TEST_SETTINGS["out_features"], out_features=1, bias=True))
 
 input_size = (TEST_SETTINGS["batch"], TEST_SETTINGS["in_features"])
 X = torch.randn(size=input_size)
 
 
 def make_regression_problem(activation):
-    model = torch.nn.Sequential(
-        linearlayer,
-        activation,
-        summationLinearLayer
-    )
+    model = torch.nn.Sequential(linearlayer, activation, summationLinearLayer)
 
     Y = torch.randn(size=(model(X).shape[0], 1))
 
@@ -56,13 +51,9 @@ def make_classification_problem(activation):
         def forward(self, input):
             return input.view(input.shape[0], -1)
 
-    model = torch.nn.Sequential(
-        linearlayer,
-        activation,
-        To2D()
-    )
+    model = torch.nn.Sequential(linearlayer, activation, To2D())
 
-    Y = torch.randint(high=model(X).shape[1], size=(X.shape[0],))
+    Y = torch.randint(high=model(X).shape[1], size=(X.shape[0], ))
 
     lossfunc = config.extend(torch.nn.CrossEntropyLoss())
 
@@ -71,5 +62,7 @@ def make_classification_problem(activation):
 
 TEST_PROBLEMS = {}
 for act_name, act in ACTIVATIONS.items():
-    TEST_PROBLEMS["linear{}-regression".format(act_name)] = make_regression_problem(act)
-    TEST_PROBLEMS["linear{}-classification".format(act_name)] = make_classification_problem(act)
+    TEST_PROBLEMS["linear{}-regression".format(
+        act_name)] = make_regression_problem(act)
+    TEST_PROBLEMS["linear{}-classification".format(
+        act_name)] = make_classification_problem(act)
