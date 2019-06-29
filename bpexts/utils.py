@@ -3,8 +3,32 @@
 import gc
 import numpy
 import torch
+import opt_einsum
 import random
 import math
+
+BPEXTS_EINSUM = 'torch'
+
+EINSUMS = {
+    'torch':
+    torch.einsum,
+    'opt_einsum':
+    opt_einsum.contract,
+    'numpy':
+    numpy.einsum,
+    'numpy_optimized':
+    lambda equation, operands: numpy.einsum(
+        equation, *operands, optimize=True)
+}
+
+
+def einsum(equation, *operands):
+    """`einsum` implementations used by `bpexts`.
+
+    Modify by setting `bpexts.utils.BPEXTS_EINSUM`.
+    See `bpexts.utils.EINSUMS` for supported implementations.
+    """
+    return EINSUMS[BPEXTS_EINSUM](equation, *operands)
 
 
 def matrix_from_mvp(mvp, dims, device=torch.device('cpu')):
