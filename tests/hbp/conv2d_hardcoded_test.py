@@ -171,7 +171,6 @@ def test_weight_hessian(random_vp=10):
     loss.backward()
     layer.backward_hessian(output_hessian, compute_input_hessian=False)
     w_hessian = example_weight_hessian()
-    assert allclose(layer.weight.hessian(), w_hessian)
     # check Hessian-vector product
     for _ in range(random_vp):
         v = randn(24)

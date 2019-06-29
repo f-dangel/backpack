@@ -225,7 +225,6 @@ class HBPConv2d(hbp_decorate(Conv2d)):
         out_h (torch.Tensor): Batch-averaged Hessian with respect to
                               the layer's outputs
         """
-        self.weight.hessian = self._compute_weight_hessian(out_h)
         self.weight.hvp = self._weight_hessian_vp(out_h)
 
     def _bias_hessian_vp(self, v):
@@ -267,26 +266,6 @@ class HBPConv2d(hbp_decorate(Conv2d)):
             return result.view(v.size())
 
         return hvp
-
-    def _compute_weight_hessian(self, out_h):
-        r"""Compute weight Hessian from output Hessian.
-
-        Use approximation
-        weight_hessian = (I \otimes X) output_hessian (I \otimes X^T).
-        """
-
-        def weight_hessian():
-            """Compute matrix form of the weight Hessian when called."""
-            # compute the weight Hessian
-            w_hessian = einsum('kl,jlmp,op->jkmo',
-                               (self.mean_unfolded_input,
-                                out_h.view(self.h_out_tensor_structure()),
-                                self.mean_unfolded_input))
-            # reshape into square matrix
-            num_weight = self.weight.numel()
-            return w_hessian.view(num_weight, num_weight)
-
-        return weight_hessian
 
     def h_out_tensor_structure(self):
         """Return tensor shape of output Hessian for weight Hessian.
