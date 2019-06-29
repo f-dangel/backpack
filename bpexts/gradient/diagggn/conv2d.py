@@ -18,15 +18,15 @@ def diag_ggn(module, grad_input, grad_output):
 
 def bias_diag_ggn(module, grad_output, sqrt_ggn_out):
     # separate channel and spatial coordinates of features
-    batch = module.input0.size(0)
-    num_classes = sqrt_ggn_out.size(2)
-    out_pixels = module.output_shape[2] * module.output_shape[3]
-    # apply Jacobian
-    sqrt_ggn = sqrt_ggn_out.view(batch, module.out_channels, out_pixels,
-                                 num_classes)
-    sqrt_ggn = einsum('bijc->bic', sqrt_ggn)
-    # extract diag
-    return einsum('bic->i', (sqrt_ggn**2))
+    batch, channels, classes, pixels = (
+        module.input0.size(0),
+        module.out_channels,
+        sqrt_ggn_out.size(2),
+        module.output_shape[2] * module.output_shape[3],
+    )
+    sqrt_ggn = sqrt_ggn_out.view(batch, channels, pixels, classes)
+
+    return einsum('bijc,bikc->i', (sqrt_ggn, sqrt_ggn))
 
 
 # TODO: Move the axis-merging trick to a separate method
