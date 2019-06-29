@@ -1,8 +1,8 @@
 from torch import gt
-from ...utils import einsum
+from .elementwise import jac_mat_prod as elementwise_jac_mat_prod
 
 
 def jac_mat_prod(module, grad_input, grad_output, mat):
     d_relu = gt(module.input0, 0).float()
-    jmp = einsum('bi,bic->bic', (d_relu, mat))
-    return jmp
+    return elementwise_jac_mat_prod(module, grad_input, grad_output, mat,
+                                    d_relu)
