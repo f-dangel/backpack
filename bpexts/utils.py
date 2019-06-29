@@ -3,22 +3,24 @@
 import gc
 import numpy
 import torch
-import opt_einsum
+import opt_einsum as oe
 import random
 import math
 
 BPEXTS_EINSUM = 'torch'
 
 
-def _numpy_optimized_einsum(equation, *operands):
-    return numpy.einsum(equation, *operands, optimize=True)
+def _oe_einsum(equation, *operands):
+    # handle old interface, passing operands as one list
+    # see https://pytorch.org/docs/stable/_modules/torch/functional.html#einsum
+    if len(operands) == 1 and isinstance(operands[0], (list, tuple)):
+        operands = operands[0]
+    return oe.contract(equation, *operands, backend='torch')
 
 
 EINSUMS = {
     'torch': torch.einsum,
-    'opt_einsum': opt_einsum.contract,
-    'numpy': numpy.einsum,
-    'numpy_optimized': _numpy_optimized_einsum
+    'opt_einsum': _oe_einsum,
 }
 
 
