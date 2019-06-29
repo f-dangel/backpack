@@ -1,4 +1,4 @@
-from torch import einsum
+from ...utils import einsum
 from torch.nn.functional import conv_transpose2d
 
 
@@ -20,11 +20,9 @@ def check_sizes_input(mat, module):
 def check_sizes_output(jmp, module):
     if tuple(jmp.size())[1:] != tuple(module.input0.size())[1:]:
         raise ValueError(
-            "Size after conv_transpose does not match",
-            "Got {}, and {}.",
-            "Expected all dimensions to match, except for the first."
-            .format(jmp.size(), module.input0.size())
-        )
+            "Size after conv_transpose does not match", "Got {}, and {}.",
+            "Expected all dimensions to match, except for the first.".format(
+                jmp.size(), module.input0.size()))
 
 
 def reshape_for_conv(bmat, module):
@@ -52,5 +50,4 @@ def apply_jacobian_of(module, mat):
         stride=module.stride,
         padding=module.padding,
         dilation=module.dilation,
-        groups=module.groups
-    )
+        groups=module.groups)

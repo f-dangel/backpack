@@ -1,7 +1,7 @@
 import torch.nn
-from torch import einsum
 from ..config import CTX
 from ..jmp.linear import jac_mat_prod
+from ...utils import einsum
 
 
 def diag_ggn(module, grad_input, grad_output):
@@ -9,7 +9,8 @@ def diag_ggn(module, grad_input, grad_output):
     if module.bias is not None and module.bias.requires_grad:
         module.bias.diag_ggn = bias_diag_ggn(module, grad_output, sqrt_ggn_out)
     if module.weight.requires_grad:
-        module.weight.diag_ggn = weight_diag_ggn(module, grad_output, sqrt_ggn_out)
+        module.weight.diag_ggn = weight_diag_ggn(module, grad_output,
+                                                 sqrt_ggn_out)
 
     backpropagate_sqrt_ggn(module, grad_input, grad_output, sqrt_ggn_out)
 

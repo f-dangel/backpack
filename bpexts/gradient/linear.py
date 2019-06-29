@@ -1,9 +1,9 @@
 """Extension of torch.nn.Linear for computing first-order information."""
 
 import torch.nn
-from torch import einsum
 from . import config
 from .config import CTX
+from ..utils import einsum
 
 
 class Linear(torch.nn.Linear):

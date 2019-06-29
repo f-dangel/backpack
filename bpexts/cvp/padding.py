@@ -1,10 +1,11 @@
 """Curvature-vector products for padding layers."""
 
 from numpy import prod
-from torch import (einsum, arange, zeros, tensor)
+from torch import (arange, zeros, tensor)
 from torch.nn import functional
 from torch.nn import ZeroPad2d
 from ..hbp.module import hbp_decorate
+from ..utils import einsum
 
 
 class CVPZeroPad2d(hbp_decorate(ZeroPad2d)):

@@ -1,7 +1,8 @@
 """Base class for elementwise activation layer with CVP functionality."""
 
-from torch import (einsum, diagflat)
+from torch import diagflat
 from ..hbp.module import hbp_decorate
+from ..utils import einsum
 
 
 def cvp_elementwise_nonlinear(module_subclass):

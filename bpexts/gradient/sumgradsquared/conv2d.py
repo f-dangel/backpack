@@ -1,5 +1,5 @@
 import torch.nn
-from torch import einsum
+from ...utils import einsum
 from ..batchgrad.conv2d import bias_grad_batch, weight_grad_batch, unfold_func
 
 

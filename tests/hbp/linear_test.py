@@ -5,7 +5,7 @@ import torch
 from torch.nn import Linear
 from bpexts.hbp.linear import HBPLinear
 from bpexts.hbp.loss import batch_summed_hessian
-from bpexts.utils import set_seeds, matrix_from_mvp
+from bpexts.utils import set_seeds, matrix_from_mvp, einsum
 from .hbp_test import set_up_hbp_tests
 
 # hyper-parameters
@@ -100,7 +100,7 @@ class HBPLinearHardcodedTest(unittest.TestCase):
             torch.randn(layer.out_features, layer.out_features))
         assert torch.allclose(layer.mean_input, x_mean)
         # check of approximation 2
-        x_kron_mean = torch.einsum('bi,bj->ij', (x_flat, x_flat)) / x.size(0)
+        x_kron_mean = einsum('bi,bj->ij', (x_flat, x_flat)) / x.size(0)
         layer.set_hbp_approximation(
             average_input_jacobian=None, average_parameter_jacobian=False)
         layer.disable_hbp()

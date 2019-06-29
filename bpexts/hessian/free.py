@@ -12,6 +12,7 @@ Reference
 """
 
 import torch
+from ..utils import einsum
 
 
 def _check_param_device(param, old_param_device):
@@ -142,7 +143,7 @@ def ggn_vector_product(loss, output, model, vp):
                         dims).cuda() if outputsoftmax.is_cuda else torch.zeros(
                             batch, dims, dims)
         M.reshape(batch, -1)[:, ::dims + 1] = outputsoftmax
-        H = M - torch.einsum('bi,bj->bij', (outputsoftmax, outputsoftmax))
+        H = M - einsum('bi,bj->bij', (outputsoftmax, outputsoftmax))
         HJv = [torch.squeeze(H @ torch.unsqueeze(Jv[0], -1)) / batch]
     else:
         HJv = hessian_vector_product(loss, output, Jv)

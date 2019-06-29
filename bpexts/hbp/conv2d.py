@@ -1,10 +1,11 @@
 """Hessian backpropagation for 2D convolution."""
 
 from numpy import prod
-from torch import (einsum, arange, zeros, tensor)
+from torch import (arange, zeros, tensor)
 from torch.nn import functional
 from torch.nn import Conv2d
 from .module import hbp_decorate
+from ..utils import einsum
 
 
 class HBPConv2d(hbp_decorate(Conv2d)):

@@ -1,8 +1,8 @@
 import torch.nn
-from torch import einsum
 from ..config import CTX
 from ..batchgrad.conv2d import unfold_func
 from ..jmp.conv2d import jac_mat_prod
+from ...utils import einsum
 
 
 def diag_ggn(module, grad_input, grad_output):

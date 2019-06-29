@@ -1,5 +1,5 @@
 import torch.nn
-from torch import einsum
+from ...utils import einsum
 
 
 def grad_batch(module, grad_input, grad_output):

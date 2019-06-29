@@ -1,5 +1,5 @@
 import torch.nn
-from torch import einsum
+from ...utils import einsum
 
 
 def sum_grad_squared(module, grad_input, grad_output):

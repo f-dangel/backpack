@@ -1,8 +1,9 @@
 """Hessian backpropagation for a linear layer."""
 
-from torch import einsum, Tensor
+from torch import Tensor
 from torch.nn import Linear
 from .module import hbp_decorate
+from ..utils import einsum
 
 
 class HBPLinear(hbp_decorate(Linear)):

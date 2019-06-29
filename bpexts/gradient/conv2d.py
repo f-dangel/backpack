@@ -1,7 +1,7 @@
 """Extension of torch.nn.Conv2d for computing batch gradients."""
 
 import torch.nn
-from torch import einsum
+from ...utils import einsum
 from . import config
 from .config import CTX
 

@@ -1,4 +1,5 @@
-from torch import eq, einsum
+from torch import eq
+from ...utils import einsum
 
 
 def jac_mat_prod(module, grad_input, grad_output, mat):

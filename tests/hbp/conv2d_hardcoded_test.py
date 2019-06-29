@@ -6,11 +6,12 @@ The example is taken from
 """
 
 import torch
-from torch import (Tensor, tensor, eye, randn, einsum, allclose)
+from torch import (Tensor, tensor, eye, randn, allclose)
 from torch.nn import (Conv2d, functional)
 from bpexts.hbp.conv2d import HBPConv2d
 from bpexts.hbp.loss import batch_summed_hessian
 from bpexts.hessian import exact
+from bpexts.utils import einsum
 
 torch.set_printoptions(linewidth=300, threshold=10000)
 

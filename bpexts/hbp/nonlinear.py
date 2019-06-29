@@ -1,9 +1,10 @@
 """Base class for elementwise activation layer with HBP functionality."""
 
 import collections
-from torch import (einsum, diagflat, Tensor)
+from torch import (diagflat, Tensor)
 from numpy import prod
 from .module import hbp_decorate
+from ..utils import einsum
 
 
 def hbp_elementwise_nonlinear(module_subclass):

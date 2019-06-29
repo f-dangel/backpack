@@ -1,8 +1,8 @@
 import torch
 import math
 import torch.nn.functional as F
-from torch import einsum
 from ..config import CTX
+from ...utils import einsum
 
 
 def diag_ggn(module, grad_input, grad_output):

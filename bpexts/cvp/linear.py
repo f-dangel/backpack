@@ -1,8 +1,8 @@
 """Curvature-vector products for linear layer."""
 
-from torch import einsum
 from torch.nn import Linear
 from ..hbp.module import hbp_decorate
+from ..utils import einsum
 
 
 class CVPLinear(hbp_decorate(Linear)):
