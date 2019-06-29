@@ -9,16 +9,16 @@ import math
 
 BPEXTS_EINSUM = 'torch'
 
+
+def _numpy_optimized_einsum(equation, *operands):
+    return numpy.einsum(equation, *operands, optimize=True)
+
+
 EINSUMS = {
-    'torch':
-    torch.einsum,
-    'opt_einsum':
-    opt_einsum.contract,
-    'numpy':
-    numpy.einsum,
-    'numpy_optimized':
-    lambda equation, operands: numpy.einsum(
-        equation, *operands, optimize=True)
+    'torch': torch.einsum,
+    'opt_einsum': opt_einsum.contract,
+    'numpy': numpy.einsum,
+    'numpy_optimized': _numpy_optimized_einsum
 }
 
 
