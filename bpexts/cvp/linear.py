@@ -62,7 +62,7 @@ class CVPLinear(hbp_decorate(Linear)):
         result = einsum('bj,ij->bi',
                         (v.view(batch, self.in_features), self.weight))
         assert tuple(result.size()) == (batch, self.out_features)
-        return result.view(-1)
+        return result.contiguous().view(-1)
 
     def _input_jacobian_transpose(self, v):
         """Apply the transposed Jacobian with respect to the input."""
@@ -71,7 +71,7 @@ class CVPLinear(hbp_decorate(Linear)):
         result = einsum('bi,ij->bj',
                         (v.view(batch, self.out_features), self.weight))
         assert tuple(result.size()) == (batch, self.in_features)
-        return result.view(-1)
+        return result.contiguous().view(-1)
 
     # --- Hessian-vector products with the parameter Hessians ---
     # override
@@ -129,7 +129,7 @@ class CVPLinear(hbp_decorate(Linear)):
                                         self.in_features)
         result = einsum('bj,bij->bi', (self.layer_input, result))
         assert tuple(result.size()) == (batch, self.out_features)
-        return result.view(-1)
+        return result.contiguous().view(-1)
 
     def _weight_jacobian_transpose(self, v):
         """Apply the transposed Jacobian with respect to the weights."""
@@ -138,4 +138,4 @@ class CVPLinear(hbp_decorate(Linear)):
         result = einsum('bj,bi->ji',
                         (v.view(batch, self.out_features), self.layer_input))
         assert tuple(result.size()) == (self.out_features, self.in_features)
-        return result.view(-1)
+        return result.contiguous().view(-1)
