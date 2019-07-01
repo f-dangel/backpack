@@ -8,6 +8,8 @@ from .test_problems_convolutions import TEST_PROBLEMS as CONV_TEST_PROBLEMS
 from .test_problems_linear import TEST_PROBLEMS as LIN_TEST_PROBLEMS
 from .test_problems_activations import TEST_PROBLEMS as ACT_TEST_PROBLEMS
 from .test_problems_pooling import TEST_PROBLEMS as POOL_TEST_PROBLEMS
+from .implementation.implementation_autograd import AutogradImpl
+from .implementation.implementation_bpext import BpextImpl
 
 if torch.cuda.is_available():
     DEVICES = {
@@ -69,8 +71,8 @@ def check_sizes(*plists):
 @pytest.mark.parametrize("problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
 def test_batch_gradients(problem, device):
     problem.to(device)
-    autograd_res = problem.batch_gradients_autograd()
-    bpexts_res = problem.batch_gradients_bpexts()
+    autograd_res = AutogradImpl(problem).batch_gradients()
+    bpexts_res = BpextImpl(problem).batch_gradients()
     model = problem.model
 
     check_sizes(autograd_res, bpexts_res)
@@ -84,8 +86,8 @@ def test_batch_gradients(problem, device):
 def test_batch_gradients_sum_to_grad(problem, device):
     problem.to(device)
     model = problem.model
-    autograd_res = problem.gradient_autograd()
-    bpexts_batch_res = problem.batch_gradients_bpexts()
+    autograd_res = AutogradImpl(problem).gradient()
+    bpexts_batch_res = BpextImpl(problem).batch_gradients()
     bpexts_res = list([g.sum(0) for g in bpexts_batch_res])
 
     check_sizes(autograd_res, bpexts_res, list(model.parameters()))
@@ -100,8 +102,8 @@ def test_batch_gradients_sum_to_grad(problem, device):
 @pytest.mark.parametrize("problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
 def test_sgs(problem, device):
     problem.to(device)
-    autograd_res = problem.sgs_autograd()
-    bpexts_res = problem.sgs_bpexts()
+    autograd_res = AutogradImpl(problem).sgs()
+    bpexts_res = BpextImpl(problem).sgs()
 
     model = problem.model
 
@@ -117,8 +119,8 @@ def test_diag_ggn(problem, device):
     problem.to(device)
     model = problem.model
 
-    autograd_res = problem.diag_ggn_autograd()
-    bpexts_res = problem.diag_ggn_bpexts()
+    autograd_res = AutogradImpl(problem).diag_ggn()
+    bpexts_res = BpextImpl(problem).diag_ggn()
 
     check_sizes(autograd_res, bpexts_res, list(model.parameters()))
 

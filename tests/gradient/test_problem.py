@@ -1,15 +1,7 @@
 import torch
-import bpexts.gradient.config as config
-import bpexts.hessian.free as HF
-from bpexts.gradient.extensions import Extensions as ext
 
 
 class TestProblem():
-    """
-    Given a ML problem (fitting X to Y using model under lossfunc),
-    compute various quantities at the current parameters using brute-force
-    autodiff or bpexts.
-    """
 
     def __init__(self, X, Y, model, lossfunc, device=torch.device("cpu")):
         """
@@ -51,82 +43,6 @@ class TestProblem():
                 Yb = self.Y[b].unsqueeze(0)
             return self.lossfunc(self.model(Xb), Yb)
 
-    def gradient_autograd(self):
-        return list(torch.autograd.grad(self.loss(), self.model.parameters()))
-
-    def batch_gradients_autograd(self):
-        batch_grads = [
-            torch.zeros(self.N, *p.size()).to(self.device)
-            for p in self.model.parameters()
-        ]
-
-        for b in range(self.N):
-            gradients = torch.autograd.grad(self.loss(b), self.model.parameters())
-
-            for idx, g in enumerate(gradients):
-                batch_grads[idx][b, :] = g.detach() / self.N
-
-        return batch_grads
-
-    def batch_gradients_bpexts(self):
-        with config.bpexts(ext.BATCH_GRAD):
-            self.loss().backward()
-
-            batch_grads = []
-            for p in self.model.parameters():
-                batch_grads.append(p.grad_batch)
-
-        return batch_grads
-
-    def sgs_autograd(self):
-        batch_grad = self.batch_gradients_autograd()
-        sgs = [(g**2).sum(0) for g in batch_grad]
-        return sgs
-
-    def sgs_bpexts(self):
-        with config.bpexts(ext.SUM_GRAD_SQUARED):
-            self.loss().backward()
-            sgs = [p.sum_grad_squared for p in self.model.parameters()]
-        return sgs
-
-    def diag_ggn_autograd(self):
-        outputs = self.model(self.X)
-        loss = self.lossfunc(outputs, self.Y)
-
-        tot_params = sum([p.numel() for p in self.model.parameters()])
-
-        def extract_ith_element_of_diag_ggn(i):
-            v = torch.zeros(tot_params).to(self.device)
-            v[i] = 1.
-
-            vs = HF.vector_to_parameter_list(
-                v, list(self.model.parameters()))
-
-            # GGN-vector product
-            GGN_v = HF.ggn_vector_product(loss, outputs, self.model, vs)
-            GGN_v = torch.cat([g.detach().view(-1) for g in GGN_v])
-            return GGN_v[i]
-
-        diagonal_index = 0
-        diag_ggns = []
-        for p in list(self.model.parameters()):
-            diag_ggn_p = torch.zeros_like(p).view(-1)
-
-            for parameter_index in range(p.numel()):
-                diag_value = extract_ith_element_of_diag_ggn(diagonal_index)
-                diag_ggn_p[parameter_index] = diag_value
-                diagonal_index += 1
-
-            diag_ggns.append(diag_ggn_p.view(p.size()))
-
-        return diag_ggns
-
-    def diag_ggn_bpexts(self):
-        with config.bpexts(ext.DIAG_GGN):
-            self.loss().backward()
-            diag_ggns = [p.diag_ggn for p in self.model.parameters()]
-        return diag_ggns
-
     def clear(self):
         """
         Clear saved state
@@ -145,7 +61,3 @@ class TestProblem():
         for p in self.model.parameters():
             for attr in attrs:
                 safeclear(p, attr)
-
-
-
-
