@@ -64,39 +64,35 @@ def check_sizes(*plists):
             assert params[i].size() == params[i + 1].size()
 
 
+def check_values(list1, list2):
+    for g1, g2 in zip(list1, list2):
+        report_nonclose_values(g1, g2)
+        assert torch.allclose(g1, g2, atol=atol, rtol=rtol)
+
 ###
 # Tests
 ###
+
 
 @pytest.mark.parametrize("problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
 def test_batch_gradients(problem, device):
     problem.to(device)
     autograd_res = AutogradImpl(problem).batch_gradients()
     bpexts_res = BpextImpl(problem).batch_gradients()
-    model = problem.model
 
     check_sizes(autograd_res, bpexts_res)
-
-    for g1, g2, p in zip(autograd_res, bpexts_res, model.parameters()):
-        report_nonclose_values(g1, g2)
-        assert torch.allclose(g1, g2, atol=atol, rtol=rtol)
+    check_values(autograd_res, bpexts_res)
 
 
 @pytest.mark.parametrize("problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
 def test_batch_gradients_sum_to_grad(problem, device):
     problem.to(device)
-    model = problem.model
     autograd_res = AutogradImpl(problem).gradient()
     bpexts_batch_res = BpextImpl(problem).batch_gradients()
     bpexts_res = list([g.sum(0) for g in bpexts_batch_res])
 
-    check_sizes(autograd_res, bpexts_res, list(model.parameters()))
-    for g1, g2, p in zip(
-            autograd_res, bpexts_res,
-            model.parameters()):
-        report_nonclose_values(g1, g2)
-        assert torch.allclose(
-            g1, g2, atol=atol, rtol=rtol)
+    check_sizes(autograd_res, bpexts_res, list(problem.model.parameters()))
+    check_values(autograd_res, bpexts_res)
 
 
 @pytest.mark.parametrize("problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
@@ -105,27 +101,16 @@ def test_sgs(problem, device):
     autograd_res = AutogradImpl(problem).sgs()
     bpexts_res = BpextImpl(problem).sgs()
 
-    model = problem.model
-
-    check_sizes(autograd_res, bpexts_res, list(model.parameters()))
-
-    for g1, g2, p in zip(autograd_res, bpexts_res, model.parameters()):
-        report_nonclose_values(g1, g2)
-        assert torch.allclose(g1, g2, atol=atol, rtol=rtol)
+    check_sizes(autograd_res, bpexts_res, list(problem.model.parameters()))
+    check_values(autograd_res, bpexts_res)
 
 
 @pytest.mark.parametrize("problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
 def test_diag_ggn(problem, device):
     problem.to(device)
-    model = problem.model
 
     autograd_res = AutogradImpl(problem).diag_ggn()
     bpexts_res = BpextImpl(problem).diag_ggn()
 
-    check_sizes(autograd_res, bpexts_res, list(model.parameters()))
-
-    for ggn1, ggn2, p in zip(autograd_res, bpexts_res,
-                             model.parameters()):
-        report_nonclose_values(ggn1, ggn2)
-        assert torch.allclose(
-            ggn1, ggn2, atol=atol, rtol=rtol)
+    check_sizes(autograd_res, bpexts_res, list(problem.model.parameters()))
+    check_values(autograd_res, bpexts_res)
