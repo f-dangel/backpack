@@ -1,6 +1,6 @@
 import torch
 from bpexts.utils import set_seeds
-import bpexts.gradient.config as config
+from bpexts.gradient import extend
 from .test_problem import TestProblem
 
 TEST_SETTINGS = {
@@ -13,19 +13,19 @@ TEST_SETTINGS = {
 }
 
 ACTIVATIONS = {
-    'ReLU': config.extend(torch.nn.ReLU()),
-    'Sigmoid': config.extend(torch.nn.Sigmoid()),
-    'Tanh': config.extend(torch.nn.Tanh())
+    'ReLU': extend(torch.nn.ReLU()),
+    'Sigmoid': extend(torch.nn.Sigmoid()),
+    'Tanh': extend(torch.nn.Tanh())
 }
 
 set_seeds(0)
-linearlayer = config.extend(
+linearlayer = extend(
     torch.nn.Linear(
         in_features=TEST_SETTINGS["in_features"],
         out_features=TEST_SETTINGS["out_features"],
         bias=TEST_SETTINGS["bias"],
     ))
-summationLinearLayer = config.extend(
+summationLinearLayer = extend(
     torch.nn.Linear(
         in_features=TEST_SETTINGS["out_features"], out_features=1, bias=True))
 
@@ -38,7 +38,7 @@ def make_regression_problem(activation):
 
     Y = torch.randn(size=(model(X).shape[0], 1))
 
-    lossfunc = config.extend(torch.nn.MSELoss())
+    lossfunc = extend(torch.nn.MSELoss())
 
     return TestProblem(X, Y, model, lossfunc)
 
@@ -55,7 +55,7 @@ def make_classification_problem(activation):
 
     Y = torch.randint(high=model(X).shape[1], size=(X.shape[0], ))
 
-    lossfunc = config.extend(torch.nn.CrossEntropyLoss())
+    lossfunc = extend(torch.nn.CrossEntropyLoss())
 
     return TestProblem(X, Y, model, lossfunc)
 

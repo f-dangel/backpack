@@ -1,7 +1,7 @@
 import torch
 import math
 import torch.nn.functional as F
-from ..config import CTX
+from ..context import CTX
 from ...utils import einsum
 from ..backpropextension import BackpropExtension
 

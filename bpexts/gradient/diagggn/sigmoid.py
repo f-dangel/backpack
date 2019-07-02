@@ -1,5 +1,5 @@
 import torch.nn
-from ..config import CTX
+from ..context import CTX
 from ..jmp.sigmoid import jac_mat_prod
 from ..backpropextension import BackpropExtension
 

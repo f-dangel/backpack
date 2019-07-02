@@ -42,9 +42,15 @@ class Extensions:
         if already_exist:
             warnings.warn("Extension {} for layer {} already registered".format(key[1], key[0]), category=RuntimeWarning)
 
-        Extensions.registeredExtensions[key] = backpropextension.apply
+        Extensions.registeredExtensions[key] = backpropextension
 
     @staticmethod
     def check_exists(ext):
         if ext not in Extensions.EXTENSIONS:
             raise ValueError("Backprop extension [{}] unknown".format(ext))
+
+    def get_extensions_for(active_exts, module):
+        for ext in active_exts:
+            key = (module.__class__, ext)
+            if key in Extensions.registeredExtensions:
+                yield Extensions.registeredExtensions[key]

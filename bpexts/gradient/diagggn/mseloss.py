@@ -1,7 +1,7 @@
 import torch
 import math
 from ..backpropextension import BackpropExtension
-from ..config import CTX
+from ..context import CTX
 
 
 class DiagGGNMSELoss(BackpropExtension):

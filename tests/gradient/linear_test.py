@@ -2,13 +2,13 @@
 
 from torch import Tensor
 from torch.nn import Linear
-import bpexts.gradient.config as config
+from bpexts.gradient import extend, bpexts
 from bpexts.gradient.extensions import Extensions as ext
 from bpexts.utils import torch_allclose as allclose
 
 
 def ExtLinear(*args, **kwargs):
-    return config.extend(Linear(*args, **kwargs))
+    return extend(Linear(*args, **kwargs))
 
 
 ##
@@ -93,7 +93,7 @@ def test_grad():
         input, b_grad, w_grad = ex["in"], ex["bias_grad"], ex["weight_grad"]
 
         loss = loss_function(g_lin(input))
-        with config.bpexts(ext.GRAD):
+        with bpexts(ext.GRAD):
             loss.backward()
 
         assert allclose(g_lin.bias.grad, b_grad)
@@ -109,7 +109,7 @@ def test_grad_batch():
         input, b_grad_batch, w_grad_batch = ex["in"], ex["bias_grad_batch"], ex["weight_grad_batch"]
 
         loss = loss_function(g_lin(input))
-        with config.bpexts(ext.BATCH_GRAD):
+        with bpexts(ext.BATCH_GRAD):
             loss.backward()
 
         assert allclose(g_lin.bias.grad_batch, b_grad_batch), "{} ≠ {}".format(g_lin.bias.grad_batch, b_grad_batch)

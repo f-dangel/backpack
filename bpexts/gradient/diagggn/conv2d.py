@@ -1,5 +1,5 @@
 import torch.nn
-from ..config import CTX
+from ..context import CTX
 from ..utils import unfold_func
 from ..jmp.conv2d import jac_mat_prod
 from ...utils import einsum

@@ -4,9 +4,8 @@ Test of the interface - calls every method that needs implementation
 
 import torch
 from torch.nn import Linear, ReLU, CrossEntropyLoss
-import bpexts.gradient.config as config
+from bpexts.gradient import extend, bpexts
 from bpexts.gradient.extensions import Extensions as ext
-from bpexts.gradient.config import extend
 
 
 def dummy_forward_pass():
@@ -44,7 +43,7 @@ FEATURES_TO_ATTRIBUTES = {
 
 
 def interface_test(feature):
-    with config.bpexts(feature):
+    with bpexts(feature):
         forward_func().backward()
     for w in weights:
         assert hasattr(w, FEATURES_TO_ATTRIBUTES[feature])

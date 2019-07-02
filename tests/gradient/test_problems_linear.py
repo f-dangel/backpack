@@ -1,6 +1,6 @@
 import torch
 from bpexts.utils import set_seeds, Flatten
-import bpexts.gradient.config as config
+from bpexts.gradient import extend
 from .test_problem import TestProblem
 
 TEST_SETTINGS = {
@@ -13,17 +13,17 @@ TEST_SETTINGS = {
 }
 
 set_seeds(0)
-linearlayer = config.extend(torch.nn.Linear(
+linearlayer = extend(torch.nn.Linear(
     in_features=TEST_SETTINGS["in_features"],
     out_features=TEST_SETTINGS["out_features"],
     bias=TEST_SETTINGS["bias"],
 ))
-linearlayer2 = config.extend(torch.nn.Linear(
+linearlayer2 = extend(torch.nn.Linear(
     in_features=TEST_SETTINGS["out_features"],
     out_features=3,
     bias=TEST_SETTINGS["bias"],
 ))
-summationLinearLayer = config.extend(torch.nn.Linear(
+summationLinearLayer = extend(torch.nn.Linear(
     in_features=TEST_SETTINGS["out_features"],
     out_features=1,
     bias=True
@@ -40,7 +40,7 @@ def make_regression_problem():
 
     Y = torch.randn(size=(model(X).shape[0], 1))
 
-    lossfunc = config.extend(torch.nn.MSELoss())
+    lossfunc = extend(torch.nn.MSELoss())
 
     return TestProblem(X, Y, model, lossfunc)
 
@@ -53,9 +53,10 @@ def make_classification_problem():
 
     Y = torch.randint(high=model(X).shape[1], size=(X.shape[0],))
 
-    lossfunc = config.extend(torch.nn.CrossEntropyLoss())
+    lossfunc = extend(torch.nn.CrossEntropyLoss())
 
     return TestProblem(X, Y, model, lossfunc)
+
 
 def make_2layer_classification_problem():
     model = torch.nn.Sequential(
@@ -66,7 +67,7 @@ def make_2layer_classification_problem():
 
     Y = torch.randint(high=model(X).shape[1], size=(X.shape[0],))
 
-    lossfunc = config.extend(torch.nn.CrossEntropyLoss())
+    lossfunc = extend(torch.nn.CrossEntropyLoss())
 
     return TestProblem(X, Y, model, lossfunc)
 

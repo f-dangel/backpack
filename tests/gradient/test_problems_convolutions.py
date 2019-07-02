@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from bpexts.utils import set_seeds, Flatten
-import bpexts.gradient.config as config
+from bpexts.gradient import extend
 from .test_problem import TestProblem
 
 TEST_SETTINGS = {
@@ -20,7 +20,7 @@ set_seeds(0)
 
 
 def convlayer():
-    return config.extend(torch.nn.Conv2d(
+    return extend(torch.nn.Conv2d(
         in_channels=TEST_SETTINGS["in_features"][0],
         out_channels=TEST_SETTINGS["out_channels"],
         kernel_size=TEST_SETTINGS["kernel_size"],
@@ -30,7 +30,7 @@ def convlayer():
 
 
 def convlayer2():
-    return config.extend(torch.nn.Conv2d(
+    return extend(torch.nn.Conv2d(
         in_channels=TEST_SETTINGS["in_features"][0],
         out_channels=TEST_SETTINGS["out_channels"],
         kernel_size=TEST_SETTINGS["kernel_size"],
@@ -44,7 +44,7 @@ X = torch.randn(size=input_size)
 
 
 def linearlayer():
-    return config.extend(torch.nn.Linear(
+    return extend(torch.nn.Linear(
         in_features=np.prod(
             [f - TEST_SETTINGS["padding"][0] for f in TEST_SETTINGS["in_features"]]
         ) * TEST_SETTINGS["out_channels"],
@@ -61,7 +61,7 @@ def make_regression_problem():
 
     Y = torch.randn(size=(model(X).shape[0], 1))
 
-    lossfunc = config.extend(torch.nn.MSELoss())
+    lossfunc = extend(torch.nn.MSELoss())
 
     return TestProblem(X, Y, model, lossfunc)
 
@@ -74,7 +74,7 @@ def make_classification_problem():
 
     Y = torch.randint(high=X.shape[1], size=(model(X).shape[0],))
 
-    lossfunc = config.extend(torch.nn.CrossEntropyLoss())
+    lossfunc = extend(torch.nn.CrossEntropyLoss())
 
     return TestProblem(X, Y, model, lossfunc)
 
@@ -88,7 +88,7 @@ def make_2layer_classification_problem():
 
     Y = torch.randint(high=X.shape[1], size=(model(X).shape[0],))
 
-    lossfunc = config.extend(torch.nn.CrossEntropyLoss())
+    lossfunc = extend(torch.nn.CrossEntropyLoss())
 
     return TestProblem(X, Y, model, lossfunc)
 

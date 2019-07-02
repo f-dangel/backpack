@@ -1,6 +1,6 @@
 import torch
 from .implementation import Implementation
-import bpexts.gradient.config as config
+from bpexts.gradient import bpexts
 from bpexts.gradient.extensions import Extensions as ext
 
 
@@ -10,7 +10,7 @@ class BpextImpl(Implementation):
         return list(torch.autograd.grad(self.loss(), self.model.parameters()))
 
     def batch_gradients(self):
-        with config.bpexts(ext.BATCH_GRAD):
+        with bpexts(ext.BATCH_GRAD):
             self.loss().backward()
 
             batch_grads = []
@@ -20,13 +20,13 @@ class BpextImpl(Implementation):
         return batch_grads
 
     def sgs(self):
-        with config.bpexts(ext.SUM_GRAD_SQUARED):
+        with bpexts(ext.SUM_GRAD_SQUARED):
             self.loss().backward()
             sgs = [p.sum_grad_squared for p in self.model.parameters()]
         return sgs
 
     def diag_ggn(self):
-        with config.bpexts(ext.DIAG_GGN):
+        with bpexts(ext.DIAG_GGN):
             self.loss().backward()
             diag_ggns = [p.diag_ggn for p in self.model.parameters()]
         return diag_ggns

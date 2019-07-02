@@ -6,17 +6,16 @@ The example is taken from
     for Document Processing (2007).
 """
 
-import torch
 from torch import (Tensor, randn)
 from torch.nn import Conv2d
 from random import (randint, choice)
-import bpexts.gradient.config as config
+from bpexts.gradient import extend, bpexts
 from bpexts.utils import torch_allclose as allclose
 from bpexts.gradient.extensions import Extensions as ext
 
 
 def ExtConv2d(*args, **kwargs):
-    return config.extend(Conv2d(*args, **kwargs))
+    return extend(Conv2d(*args, **kwargs))
 
 
 TEST_ATOL = 1e-4
@@ -152,7 +151,7 @@ def compare_grads(conv2d, g_conv2d, input):
     loss.backward()
 
     loss_g = loss_function(g_conv2d(input))
-    with config.bpexts(ext.BATCH_GRAD):
+    with bpexts(ext.BATCH_GRAD):
         loss_g.backward()
 
     assert allclose(g_conv2d.bias.grad, conv2d.bias.grad, atol=TEST_ATOL)

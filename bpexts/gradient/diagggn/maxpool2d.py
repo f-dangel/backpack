@@ -1,5 +1,5 @@
 import torch.nn
-from ..config import CTX
+from ..context import CTX
 from ..jmp.maxpool2d import jac_mat_prod
 from ..backpropextension import BackpropExtension
 
