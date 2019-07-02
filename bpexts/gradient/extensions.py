@@ -1,4 +1,5 @@
 import warnings
+from .backpropextension import BackpropExtension
 
 GRAD = "GRAD"
 BATCH_GRAD = "BATCH_GRAD"
@@ -30,17 +31,18 @@ class Extensions:
         return Extensions.EXTENSIONS
 
     @staticmethod
-    def register(LayerClass, ext, func_or_obj):
-        Extensions.check_exists(ext)
-        key = (LayerClass, ext)
+    def register(backpropextension):
+        assert isinstance(backpropextension, BackpropExtension)
+
+        Extensions.check_exists(backpropextension._BackpropExtension__get_ext())
+
+        key = backpropextension._BackpropExtension__get_key()
 
         already_exist = key in Extensions.registeredExtensions
         if already_exist:
-            warnings.warn("Extension {} for layer {} already registered".format(ext, LayerClass), category=RuntimeWarning)
+            warnings.warn("Extension {} for layer {} already registered".format(key[1], key[0]), category=RuntimeWarning)
 
-        assert not callable(func_or_obj)
-
-        Extensions.registeredExtensions[key] = func_or_obj.apply
+        Extensions.registeredExtensions[key] = backpropextension.apply
 
     @staticmethod
     def check_exists(ext):

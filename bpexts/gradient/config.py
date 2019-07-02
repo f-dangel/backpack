@@ -91,5 +91,5 @@ SIGNATURES = [
     *diagggn.SIGNATURE,
 ]
 
-for ModuleClass, extension, func_or_obj in SIGNATURES:
-    Extensions.register(ModuleClass, extension, func_or_obj)
+for _, _, func_or_obj in SIGNATURES:
+    Extensions.register(func_or_obj)
