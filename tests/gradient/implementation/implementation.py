@@ -26,8 +26,17 @@ class Implementation():
     def batch_gradients(self):
         raise NotImplementedError
 
+    def batch_l2(self):
+        raise NotImplementedError
+
+    def variance(self):
+        raise NotImplementedError
+
     def sgs(self):
         raise NotImplementedError
 
     def diag_ggn(self):
+        raise NotImplementedError
+
+    def diag_h(self):
         raise NotImplementedError

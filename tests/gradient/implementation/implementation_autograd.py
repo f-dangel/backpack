@@ -50,9 +50,8 @@ class AutogradImpl(Implementation):
             vs = HF.vector_to_parameter_list(
                 v, list(self.model.parameters()))
 
-            # GGN-vector product
-            GGN_v = HF.ggn_vector_product(loss, outputs, self.model, vs)
-            GGN_v = torch.cat([g.detach().view(-1) for g in GGN_v])
+            GGN_vs = HF.ggn_vector_product(loss, outputs, self.model, vs)
+            GGN_v = torch.cat([g.detach().view(-1) for g in GGN_vs])
             return GGN_v[i]
 
         diagonal_index = 0
@@ -68,3 +67,30 @@ class AutogradImpl(Implementation):
             diag_ggns.append(diag_ggn_p.view(p.size()))
 
         return diag_ggns
+
+    def diag_h(self):
+        loss = self.problem.lossfunc(self.model(self.problem.X), self.problem.Y)
+        tot_params = sum([p.numel() for p in self.model.parameters()])
+
+        def extract_ith_element_of_diag_h(i):
+            v = torch.zeros(tot_params).to(self.device)
+            v[i] = 1.
+            plist = list(self.model.parameters())
+            vs = HF.vector_to_parameter_list(v, plist)
+            Hvs = HF.hessian_vector_product(loss, plist, vs)
+            Hv = torch.cat([g.detach().view(-1) for g in Hvs])
+            return Hv[i]
+
+        diagonal_index = 0
+        diag_hs = []
+        for p in list(self.model.parameters()):
+            diag_h_p = torch.zeros_like(p).view(-1)
+
+            for parameter_index in range(p.numel()):
+                diag_value = extract_ith_element_of_diag_h(diagonal_index)
+                diag_h_p[parameter_index] = diag_value
+                diagonal_index += 1
+
+            diag_hs.append(diag_h_p.view(p.size()))
+
+        return diag_hs

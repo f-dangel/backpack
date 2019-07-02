@@ -136,3 +136,14 @@ def test_variance(problem, device):
 
     check_sizes(autograd_res, bpexts_res)
     check_values(autograd_res, bpexts_res)
+
+
+@pytest.mark.parametrize("problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
+def test_diag_h(problem, device):
+    problem.to(device)
+
+    autograd_res = AutogradImpl(problem).diag_h()
+    bpexts_res = BpextImpl(problem).diag_h()
+
+    check_sizes(autograd_res, bpexts_res)
+    check_values(autograd_res, bpexts_res)
