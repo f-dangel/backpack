@@ -9,7 +9,10 @@ from ..backpropextension import BackpropExtension
 class DiagGGNCrossEntropyLoss(BackpropExtension):
 
     def __init__(self):
-        super().__init__(req_inputs=[0], req_output=True)
+        super().__init__(
+            torch.nn.CrossEntropyLoss, "DIAG_GGN",
+            req_inputs=[0], req_output=True
+        )
 
     def apply(self, module, grad_input, grad_output):
         probs = F.softmax(module.input0, dim=1)

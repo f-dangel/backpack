@@ -8,7 +8,10 @@ from ..backpropextension import BackpropExtension
 class DiagGGNLinear(BackpropExtension):
 
     def __init__(self):
-        super().__init__(req_inputs=[0], req_output=False)
+        super().__init__(
+            torch.nn.Linear, "DIAG_GGN",
+            req_inputs=[0]
+        )
 
     def apply(self, module, grad_input, grad_output):
         sqrt_ggn_out = CTX._backpropagated_sqrt_ggn

@@ -1,10 +1,16 @@
 import torch.nn
 from ...utils import einsum
 from ..utils import unfold_func
-from ..batchgrad.conv2d import BatchGradConv2d
+from ..backpropextension import BackpropExtension
 
 
-class SGSConv2d(BatchGradConv2d):
+class SGSConv2d(BackpropExtension):
+
+    def __init__(self):
+        super().__init__(
+            torch.nn.Conv2d, "SUM_GRAD_SQUARED",
+            req_inputs=[0], req_output=True
+        )
 
     def apply(self, module, grad_input, grad_output):
         """Compute sum of squared batch gradients of `torch.nn.Conv2d` parameters.
@@ -21,7 +27,7 @@ class SGSConv2d(BatchGradConv2d):
 
     def bias_sum_grad_squared(self, module, grad_output):
         """Compute sum of squared batch gradients for bias."""
-        return (self.bias_grad_batch(module, grad_output)**2).sum(0)
+        return (grad_output[0].sum(3).sum(2)**2).sum(0)
 
     def weight_sum_grad_squared(self, module, grad_output):
         """Compute sum of squared batch gradients for kernel."""

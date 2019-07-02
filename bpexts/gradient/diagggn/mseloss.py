@@ -7,7 +7,10 @@ from ..config import CTX
 class DiagGGNMSELoss(BackpropExtension):
 
     def __init__(self):
-        super().__init__(req_inputs=[0])
+        super().__init__(
+            torch.nn.MSELoss, "DIAG_GGN",
+            req_inputs=[0]
+        )
 
     def apply(self, module, grad_input, grad_output):
         self.backpropagate_sqrt_ggn(module)

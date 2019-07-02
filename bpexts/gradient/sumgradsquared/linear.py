@@ -6,7 +6,10 @@ from ..backpropextension import BackpropExtension
 class SGSLinear(BackpropExtension):
 
     def __init__(self):
-        super().__init__(req_inputs=[0], req_output=True)
+        super().__init__(
+            torch.nn.Linear, "SUM_GRAD_SQUARED",
+            req_inputs=[0], req_output=True
+        )
 
     def apply(self, module, grad_input, grad_output):
         """Compute sum of squared batch gradients of `torch.nn.Linear` parameters."""
