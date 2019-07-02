@@ -30,4 +30,4 @@ class SGSLinear(BackpropExtension):
         return w_sgs.view(module.out_features, module.in_features)
 
 
-SIGNATURE = [(torch.nn.Linear, "SUM_GRAD_SQUARED", SGSLinear())]
+EXTENSIONS = [SGSLinear()]

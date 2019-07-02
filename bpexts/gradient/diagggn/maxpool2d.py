@@ -18,4 +18,4 @@ class DiagGGNMaxpool2d(BackpropExtension):
         CTX._backpropagated_sqrt_ggn = sqrt_ggn_in
 
 
-SIGNATURE = [(torch.nn.MaxPool2d, "DIAG_GGN", DiagGGNMaxpool2d())]
+EXTENSIONS = [DiagGGNMaxpool2d()]

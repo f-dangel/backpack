@@ -18,4 +18,4 @@ class DiagGGNSigmoid(BackpropExtension):
         CTX._backpropagated_sqrt_ggn = sqrt_ggn_in
 
 
-SIGNATURE = [(torch.nn.Sigmoid, "DIAG_GGN", DiagGGNSigmoid())]
+EXTENSIONS = [DiagGGNSigmoid()]

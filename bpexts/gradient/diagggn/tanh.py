@@ -18,4 +18,4 @@ class DiagGGNTanh(BackpropExtension):
         CTX._backpropagated_sqrt_ggn = sqrt_ggn_in
 
 
-SIGNATURE = [(torch.nn.Tanh, "DIAG_GGN", DiagGGNTanh())]
+EXTENSIONS = [DiagGGNTanh()]

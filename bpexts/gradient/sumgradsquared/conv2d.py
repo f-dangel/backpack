@@ -38,4 +38,4 @@ class SGSConv2d(BackpropExtension):
         return w_sgs.view_as(module.weight)
 
 
-SIGNATURE = [(torch.nn.Conv2d, "SUM_GRAD_SQUARED", SGSConv2d())]
+EXTENSIONS = [SGSConv2d()]

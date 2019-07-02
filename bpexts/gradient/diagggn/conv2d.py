@@ -58,4 +58,4 @@ class DiagGGNConv2d(BackpropExtension):
         CTX._backpropagated_sqrt_ggn = sqrt_ggn_in
 
 
-SIGNATURE = [(torch.nn.Conv2d, "DIAG_GGN", DiagGGNConv2d())]
+EXTENSIONS = [DiagGGNConv2d()]

@@ -79,4 +79,4 @@ class BatchGradConv2d(BackpropExtension):
         return dE_dW.view(dE_dw_shape)
 
 
-SIGNATURE = [(torch.nn.Conv2d, "BATCH_GRAD", BatchGradConv2d())]
+EXTENSIONS = [BatchGradConv2d()]

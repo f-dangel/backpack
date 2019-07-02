@@ -18,4 +18,4 @@ class DiagGGNReLU(BackpropExtension):
         CTX._backpropagated_sqrt_ggn = sqrt_ggn_in
 
 
-SIGNATURE = [(torch.nn.ReLU, "DIAG_GGN", DiagGGNReLU())]
+EXTENSIONS = [DiagGGNReLU()]

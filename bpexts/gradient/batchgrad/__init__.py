@@ -1,3 +1,3 @@
 from . import conv2d, linear
 
-SIGNATURE = conv2d.SIGNATURE + linear.SIGNATURE
+EXTENSIONS = conv2d.EXTENSIONS + linear.EXTENSIONS

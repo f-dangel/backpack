@@ -51,4 +51,4 @@ class BatchGradLinear(BackpropExtension):
         return w_grad_batch.view(batch, module.out_features, module.in_features)
 
 
-SIGNATURE = [(torch.nn.Linear, "BATCH_GRAD", BatchGradLinear())]
+EXTENSIONS = [BatchGradLinear()]

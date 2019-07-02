@@ -36,4 +36,4 @@ class DiagGGNLinear(BackpropExtension):
         CTX._backpropagated_sqrt_ggn = sqrt_ggn_in
 
 
-SIGNATURE = [(torch.nn.Linear, "DIAG_GGN", DiagGGNLinear())]
+EXTENSIONS = [DiagGGNLinear()]

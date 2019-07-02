@@ -27,4 +27,4 @@ class DiagGGNCrossEntropyLoss(BackpropExtension):
         CTX._backpropagated_sqrt_ggn = sqrt_ggn_in
 
 
-SIGNATURE = [(torch.nn.CrossEntropyLoss, "DIAG_GGN", DiagGGNCrossEntropyLoss())]
+EXTENSIONS = [DiagGGNCrossEntropyLoss()]
