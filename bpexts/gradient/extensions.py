@@ -49,6 +49,7 @@ class Extensions:
         if ext not in Extensions.EXTENSIONS:
             raise ValueError("Backprop extension [{}] unknown".format(ext))
 
+    @staticmethod
     def get_extensions_for(active_exts, module):
         for ext in active_exts:
             key = (module.__class__, ext)

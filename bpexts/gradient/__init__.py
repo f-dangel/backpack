@@ -37,24 +37,16 @@ class bpexts():
 
 def extend(module):
 
-    def store_input(module, input):
-        """Pre forward hook saving layer input as buffer.
-
-        Initialize module buffer `ìnput`.
-        """
+    def store_io(module, input, output):
         for i in range(len(input)):
-            module.register_buffer('input{}'.format(i),
-                                   input[i].clone().detach())
+            setattr(module, 'input{}'.format(i), input[i])
+        setattr(module, 'output', output)
 
-    def store_output(module, input, output):
-        """Post-forward hook saving layer output as buffer."""
-        module.register_buffer('output', output.clone().detach())
-
-    def store_output_shape(module, input, output):
-        """Store dimensionality of output as buffer.
-
-        For debugging and conv/pool operations.
-        """
+    def store_shapes(module, input, output):
+        """Store dimensionality of output as buffer."""
+        for i in range(len(input)):
+            module.register_buffer('input{}_shape'.format(i),
+                                   torch.IntTensor([*input[i].size()]))
         module.register_buffer('output_shape',
                                torch.IntTensor([*output.size()]))
 
@@ -73,9 +65,8 @@ def extend(module):
 
             bpext.apply(module, grad_input, grad_out)
 
-    CTX.add_hook_handle(module.register_forward_pre_hook(store_input))
-    CTX.add_hook_handle(module.register_forward_hook(store_output))
-    CTX.add_hook_handle(module.register_forward_hook(store_output_shape))
+    CTX.add_hook_handle(module.register_forward_hook(store_io))
+    CTX.add_hook_handle(module.register_forward_hook(store_shapes))
     CTX.add_hook_handle(module.register_backward_hook(run_extensions))
 
     return module
