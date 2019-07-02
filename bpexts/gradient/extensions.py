@@ -38,10 +38,9 @@ class Extensions:
         if already_exist:
             warnings.warn("Extension {} for layer {} already registered".format(ext, LayerClass), category=RuntimeWarning)
 
-        if callable(func_or_obj):
-            Extensions.registeredExtensions[key] = func_or_obj
-        else:
-            Extensions.registeredExtensions[key] = func_or_obj.apply
+        assert not callable(func_or_obj)
+
+        Extensions.registeredExtensions[key] = func_or_obj.apply
 
     @staticmethod
     def check_exists(ext):
