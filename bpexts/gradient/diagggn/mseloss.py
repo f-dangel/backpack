@@ -1,22 +1,27 @@
 import torch
 import math
+from ..backpropextension import BackpropExtension
 from ..config import CTX
 
 
-def diag_ggn(module, grad_input, grad_output):
-    backpropagate_sqrt_ggn(module)
+class DiagGGNMSELoss(BackpropExtension):
+
+    def __init__(self):
+        super().__init__(req_inputs=[0])
+
+    def apply(self, module, grad_input, grad_output):
+        self.backpropagate_sqrt_ggn(module)
+
+    def backpropagate_sqrt_ggn(self, module):
+        if not len(module.input0.shape) == 2:
+            raise ValueError("Only 2D inputs are currently supported for MSELoss.")
+
+        sqrt_ggn_in = torch.diag_embed(math.sqrt(2) * torch.ones_like(module.input0))
+
+        if module.reduction is "mean":
+            sqrt_ggn_in /= math.sqrt(module.input0.shape[0])
+
+        CTX._backpropagated_sqrt_ggn = sqrt_ggn_in
 
 
-def backpropagate_sqrt_ggn(module):
-    if not len(module.input0.shape) == 2:
-        raise ValueError("Only 2D inputs are currently supported for MSELoss.")
-
-    sqrt_ggn_in = torch.diag_embed(math.sqrt(2) * torch.ones_like(module.input0))
-
-    if module.reduction is "mean":
-        sqrt_ggn_in /= math.sqrt(module.input0.shape[0])
-
-    CTX._backpropagated_sqrt_ggn = sqrt_ggn_in
-
-
-SIGNATURE = [(torch.nn.MSELoss, "DIAG_GGN", diag_ggn)]
+SIGNATURE = [(torch.nn.MSELoss, "DIAG_GGN", DiagGGNMSELoss())]

@@ -30,12 +30,18 @@ class Extensions:
         return Extensions.EXTENSIONS
 
     @staticmethod
-    def register(LayerClass, ext, func):
+    def register(LayerClass, ext, func_or_obj):
         Extensions.check_exists(ext)
         key = (LayerClass, ext)
-        if key in Extensions.registeredExtensions:
+
+        already_exist = key in Extensions.registeredExtensions
+        if already_exist:
             warnings.warn("Extension {} for layer {} already registered".format(ext, LayerClass), category=RuntimeWarning)
-        Extensions.registeredExtensions[key] = func
+
+        if callable(func_or_obj):
+            Extensions.registeredExtensions[key] = func_or_obj
+        else:
+            Extensions.registeredExtensions[key] = func_or_obj.apply
 
     @staticmethod
     def check_exists(ext):

@@ -85,5 +85,11 @@ def extended(moduleFunc):
     return instanciate_and_extend
 
 
-for ModuleClass, extension, func in batchgrad.SIGNATURE + sumgradsquared.SIGNATURE + diagggn.SIGNATURE:
-    Extensions.register(ModuleClass, extension, func)
+SIGNATURES = [
+    *batchgrad.SIGNATURE,
+    *sumgradsquared.SIGNATURE,
+    *diagggn.SIGNATURE,
+]
+
+for ModuleClass, extension, func_or_obj in SIGNATURES:
+    Extensions.register(ModuleClass, extension, func_or_obj)
