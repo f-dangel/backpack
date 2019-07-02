@@ -1,6 +1,6 @@
 import torch
 import torch.nn
-from ..config import CTX
+from ..context import CTX
 from ...utils import einsum
 from ..backpropextension import BackpropExtension
 from ..jmp.conv2d import jac_mat_prod

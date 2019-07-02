@@ -1,6 +1,6 @@
 import torch
 import torch.nn
-from ..config import CTX
+from ..context import CTX
 from ...utils import einsum
 from ..backpropextension import BackpropExtension
 from ..jmp.linear import jac_mat_prod
@@ -16,14 +16,14 @@ class DiagHLinear(BackpropExtension):
         sqrt_h_outs_signs = CTX._backpropagated_sqrt_h_signs
 
         if module.bias is not None and module.bias.requires_grad:
-            module.bias.diag_h = bias_diagH(module, sqrt_h_outs,
-                                            sqrt_h_outs_signs)
+            module.bias.diag_h = self.bias_diagH(module, sqrt_h_outs,
+                                                 sqrt_h_outs_signs)
         if module.weight.requires_grad:
-            module.weight.diag_h = weight_diagH(module, sqrt_h_outs,
-                                                sqrt_h_outs_signs)
+            module.weight.diag_h = self.weight_diagH(module, sqrt_h_outs,
+                                                     sqrt_h_outs_signs)
         if module.input0.requires_grad:
-            backpropagate_sqrt_h(module, grad_input, grad_output, sqrt_h_outs,
-                                 sqrt_h_outs_signs)
+            self.backpropagate_sqrt_h(module, grad_input, grad_output, sqrt_h_outs,
+                                      sqrt_h_outs_signs)
 
     # TODO: Reuse code in ..diaggn.linear to extract the diagonal
     def bias_diagH(self, module, sqrt_h_outs, sqrt_h_outs_signs):

@@ -36,5 +36,11 @@ class BpextImpl(Implementation):
     def diag_ggn(self):
         with bpexts(ext.DIAG_GGN):
             self.loss().backward()
-            diag_ggns = [p.diag_ggn for p in self.model.parameters()]
-        return diag_ggns
+            diag_ggn = [p.diag_ggn for p in self.model.parameters()]
+        return diag_ggn
+
+    def diag_h(self):
+        with bpexts(ext.DIAG_H):
+            self.loss().backward()
+            diag_h = [p.diag_h for p in self.model.parameters()]
+        return diag_h
