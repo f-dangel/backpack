@@ -16,3 +16,4 @@ tensorboard==1.11.0
 tensorboard-logger==0.1.0
 tensorflow==1.11.0
 torchvision==0.2.2.post3
+pytest-benchmark==3.2.2

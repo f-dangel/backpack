@@ -1,6 +1,6 @@
 import torch
 import pytest
-from bpexts.gradient.config import extend
+from bpexts.gradient import extend
 from .test_problem import TestProblem
 from .implementation.implementation_autograd import AutogradImpl
 from .implementation.implementation_bpext import BpextImpl
@@ -17,7 +17,7 @@ def make_large_linear_classification_problem():
         extend(torch.nn.Sigmoid()),
         extend(torch.nn.Linear(Ds[3], Ds[-1])),
     )
-    N = 16
+    N = 128
     X = torch.randn(size=(N, Ds[0]))
     Y = torch.randint(high=Ds[-1], size=(N, ))
     lossfunc = extend(torch.nn.CrossEntropyLoss())
