@@ -3,6 +3,7 @@
 class BackpropExtension():
 
     def __init__(self, module, extension, req_inputs=[], req_output=False):
+        # TODO: req_inputs and req_output are currently unused
         self.__module = module
         self.__extension = extension
         self.__req_inputs = req_inputs
