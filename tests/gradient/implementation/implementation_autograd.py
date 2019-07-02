@@ -27,6 +27,11 @@ class AutogradImpl(Implementation):
         batch_l2 = [(g**2).sum(list(range(1, len(g.shape)))) for g in batch_grad]
         return batch_l2
 
+    def variance(self):
+        batch_grad = self.batch_gradients()
+        variances = [torch.var(g, dim=0, unbiased=False) for g in batch_grad]
+        return variances
+
     def sgs(self):
         batch_grad = self.batch_gradients()
         sgs = [(g**2).sum(0) for g in batch_grad]

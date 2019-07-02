@@ -115,12 +115,24 @@ def test_diag_ggn(problem, device):
     check_sizes(autograd_res, bpexts_res, list(problem.model.parameters()))
     check_values(autograd_res, bpexts_res)
 
+
 @pytest.mark.parametrize("problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
 def test_batch_l2(problem, device):
     problem.to(device)
 
     autograd_res = AutogradImpl(problem).batch_l2()
     bpexts_res = BpextImpl(problem).batch_l2()
+
+    check_sizes(autograd_res, bpexts_res)
+    check_values(autograd_res, bpexts_res)
+
+
+@pytest.mark.parametrize("problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
+def test_variance(problem, device):
+    problem.to(device)
+
+    autograd_res = AutogradImpl(problem).variance()
+    bpexts_res = BpextImpl(problem).variance()
 
     check_sizes(autograd_res, bpexts_res)
     check_values(autograd_res, bpexts_res)

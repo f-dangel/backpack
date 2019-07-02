@@ -21,6 +21,12 @@ class BpextImpl(Implementation):
             batch_l2s = [p.batch_l2 for p in self.model.parameters()]
         return batch_l2s
 
+    def variance(self):
+        with bpexts(ext.VARIANCE):
+            self.loss().backward()
+            variances = [p.variance for p in self.model.parameters()]
+        return variances
+
     def sgs(self):
         with bpexts(ext.SUM_GRAD_SQUARED):
             self.loss().backward()
