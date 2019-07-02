@@ -35,6 +35,10 @@ class GRAD(Extension):
     pass
 
 
+class DIAG_H(Extension):
+    pass
+
+
 class ParametrizedExtension(Extension):
     def __init__(self, input):
         self.input = input
@@ -55,6 +59,7 @@ class Extensions:
         BATCH_L2,
         VARIANCE,
         JVP,
+        DIAG_H,
     ]
 
     registeredExtensions = {}
@@ -67,13 +72,17 @@ class Extensions:
     def register(backpropextension):
         assert isinstance(backpropextension, BackpropExtension)
 
-        Extensions.check_exists(backpropextension._BackpropExtension__get_ext())
+        Extensions.check_exists(
+            backpropextension._BackpropExtension__get_ext())
 
         key = backpropextension._BackpropExtension__get_key()
 
         already_exist = key in Extensions.registeredExtensions
         if already_exist:
-            warnings.warn("Extension {} for layer {} already registered".format(key[1], key[0]), category=RuntimeWarning)
+            warnings.warn(
+                "Extension {} for layer {} already registered".format(
+                    key[1], key[0]),
+                category=RuntimeWarning)
 
         Extensions.registeredExtensions[key] = backpropextension
 
