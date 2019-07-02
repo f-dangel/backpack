@@ -7,7 +7,7 @@ from ..backpropextension import BackpropExtension
 from ..extensions import DIAG_H
 
 
-class DiagGGNCrossEntropyLoss(BackpropExtension):
+class DiagHCrossEntropyLoss(BackpropExtension):
     def __init__(self):
         super().__init__(
             torch.nn.CrossEntropyLoss, DIAG_H, req_inputs=[0], req_output=True)
