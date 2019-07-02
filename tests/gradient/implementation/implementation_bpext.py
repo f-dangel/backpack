@@ -12,12 +12,14 @@ class BpextImpl(Implementation):
     def batch_gradients(self):
         with bpexts(ext.BATCH_GRAD):
             self.loss().backward()
-
-            batch_grads = []
-            for p in self.model.parameters():
-                batch_grads.append(p.grad_batch)
-
+            batch_grads = [p.grad_batch for p in self.model.parameters()]
         return batch_grads
+
+    def batch_l2(self):
+        with bpexts(ext.BATCH_L2):
+            self.loss().backward()
+            batch_l2s = [p.batch_l2 for p in self.model.parameters()]
+        return batch_l2s
 
     def sgs(self):
         with bpexts(ext.SUM_GRAD_SQUARED):

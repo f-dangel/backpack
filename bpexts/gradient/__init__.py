@@ -4,7 +4,7 @@ Computing parameter gradients for each batch sample can be used
 to calculate the variance of a gradient.
 """
 import torch
-from . import batchgrad, sumgradsquared, diagggn
+from . import batchgrad, sumgradsquared, diagggn, batchl2
 from .extensions import Extensions
 from .context import CTX
 
@@ -83,6 +83,7 @@ EXTENSIONS = [
     *batchgrad.EXTENSIONS,
     *sumgradsquared.EXTENSIONS,
     *diagggn.EXTENSIONS,
+    *batchl2.EXTENSIONS,
 ]
 
 for backpropextension in EXTENSIONS:

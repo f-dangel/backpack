@@ -6,6 +6,7 @@ BATCH_GRAD = "BATCH_GRAD"
 SUM_GRAD_SQUARED = "SUM_GRAD_SQUARED"
 GRAD_VAR = "GRAD_VAR"
 DIAG_GGN = 'DIAG_GGN'
+BATCH_L2 = 'BATCH_L2'
 
 
 class Extensions:
@@ -15,6 +16,7 @@ class Extensions:
     SUM_GRAD_SQUARED = "SUM_GRAD_SQUARED"
     GRAD_VAR = "GRAD_VAR"
     DIAG_GGN = 'DIAG_GGN'
+    BATCH_L2 = 'BATCH_L2'
 
     EXTENSIONS = [
         GRAD,
@@ -22,6 +24,7 @@ class Extensions:
         SUM_GRAD_SQUARED,
         GRAD_VAR,
         DIAG_GGN,
+        BATCH_L2,
     ]
 
     registeredExtensions = {}
