@@ -1,7 +1,7 @@
 import torch
 from .implementation import Implementation
 from bpexts.gradient import bpexts
-from bpexts.gradient.extensions import Extensions as ext
+import bpexts.gradient.extensions as ext
 
 
 class BpextImpl(Implementation):

@@ -3,13 +3,14 @@ from ..context import CTX
 from ..jmp.linear import jac_mat_prod
 from ...utils import einsum
 from ..backpropextension import BackpropExtension
+from ..extensions import DIAG_GGN
 
 
 class DiagGGNLinear(BackpropExtension):
 
     def __init__(self):
         super().__init__(
-            torch.nn.Linear, "DIAG_GGN",
+            torch.nn.Linear, DIAG_GGN,
             req_inputs=[0]
         )
 

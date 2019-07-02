@@ -2,13 +2,14 @@ import torch.nn
 from ..backpropextension import BackpropExtension
 from ..sumgradsquared.conv2d import SGSConv2d
 from ..gradient.conv2d import GradConv2d
+from ..extensions import VARIANCE
 
 
 class VarianceConv2d(BackpropExtension):
 
     def __init__(self):
         super().__init__(
-            torch.nn.Conv2d, "VARIANCE",
+            torch.nn.Conv2d, VARIANCE,
             req_inputs=[0], req_output=True
         )
 

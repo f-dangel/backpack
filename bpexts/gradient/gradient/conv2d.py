@@ -2,13 +2,14 @@ import torch.nn
 from ...utils import einsum
 from ..utils import unfold_func
 from ..backpropextension import BackpropExtension
+from ..extensions import GRAD
 
 
 class GradConv2d(BackpropExtension):
 
     def __init__(self):
         super().__init__(
-            torch.nn.Conv2d, "GRAD",
+            torch.nn.Conv2d, GRAD,
             req_inputs=[0], req_output=True
         )
 

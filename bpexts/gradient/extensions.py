@@ -1,24 +1,50 @@
 import warnings
 from .backpropextension import BackpropExtension
 
-GRAD = "GRAD"
-BATCH_GRAD = "BATCH_GRAD"
-SUM_GRAD_SQUARED = "SUM_GRAD_SQUARED"
-GRAD_VAR = "GRAD_VAR"
-DIAG_GGN = 'DIAG_GGN'
-BATCH_L2 = 'BATCH_L2'
-VARIANCE = 'VARIANCE'
+
+class Extension():
+    def __init__(self):
+        return
+
+
+class VARIANCE(Extension):
+    pass
+
+
+class BATCH_L2(Extension):
+    pass
+
+
+class BATCH_GRAD(Extension):
+    pass
+
+
+class SUM_GRAD_SQUARED(Extension):
+    pass
+
+
+class GRAD_VAR(Extension):
+    pass
+
+
+class DIAG_GGN(Extension):
+    pass
+
+
+class GRAD(Extension):
+    pass
+
+
+class ParametrizedExtension(Extension):
+    def __init__(self, input):
+        self.input = input
+
+
+class JVP(Extension):
+    pass
 
 
 class Extensions:
-
-    GRAD = "GRAD"
-    BATCH_GRAD = "BATCH_GRAD"
-    SUM_GRAD_SQUARED = "SUM_GRAD_SQUARED"
-    GRAD_VAR = "GRAD_VAR"
-    DIAG_GGN = 'DIAG_GGN'
-    BATCH_L2 = 'BATCH_L2'
-    VARIANCE = 'VARIANCE'
 
     EXTENSIONS = [
         GRAD,
@@ -28,6 +54,7 @@ class Extensions:
         DIAG_GGN,
         BATCH_L2,
         VARIANCE,
+        JVP,
     ]
 
     registeredExtensions = {}

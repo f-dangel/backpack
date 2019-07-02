@@ -1,13 +1,14 @@
 import torch.nn
 from ...utils import einsum
 from ..backpropextension import BackpropExtension
+from ..extensions import BATCH_GRAD
 
 
 class BatchGradLinear(BackpropExtension):
 
     def __init__(self):
         super().__init__(
-            torch.nn.Linear, "BATCH_GRAD",
+            torch.nn.Linear, BATCH_GRAD,
             req_inputs=[0], req_output=True
         )
 

@@ -2,13 +2,14 @@ import torch.nn
 from ..backpropextension import BackpropExtension
 from ..sumgradsquared.linear import SGSLinear
 from ..gradient.linear import GradLinear
+from ..extensions import VARIANCE
 
 
 class VarianceLinear(BackpropExtension):
 
     def __init__(self):
         super().__init__(
-            torch.nn.Linear, "VARIANCE",
+            torch.nn.Linear, VARIANCE,
             req_inputs=[0], req_output=True
         )
 

@@ -5,7 +5,7 @@ Test of the interface - calls every method that needs implementation
 import torch
 from torch.nn import Linear, ReLU, CrossEntropyLoss
 from bpexts.gradient import extend, bpexts
-from bpexts.gradient.extensions import Extensions as ext
+import bpexts.gradient.extensions as ext
 
 
 def dummy_forward_pass():

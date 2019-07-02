@@ -2,13 +2,14 @@ import torch
 import math
 from ..backpropextension import BackpropExtension
 from ..context import CTX
+from ..extensions import DIAG_GGN
 
 
 class DiagGGNMSELoss(BackpropExtension):
 
     def __init__(self):
         super().__init__(
-            torch.nn.MSELoss, "DIAG_GGN",
+            torch.nn.MSELoss, DIAG_GGN,
             req_inputs=[0]
         )
 

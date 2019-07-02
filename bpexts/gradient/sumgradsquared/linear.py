@@ -1,13 +1,14 @@
 import torch.nn
 from ...utils import einsum
 from ..backpropextension import BackpropExtension
+from ..extensions import SUM_GRAD_SQUARED
 
 
 class SGSLinear(BackpropExtension):
 
     def __init__(self):
         super().__init__(
-            torch.nn.Linear, "SUM_GRAD_SQUARED",
+            torch.nn.Linear, SUM_GRAD_SQUARED,
             req_inputs=[0], req_output=True
         )
 

@@ -5,20 +5,21 @@ class CTX:
     """
     Global Class holding the configuration of the backward pass
     """
+    activeExtsDict = {}
 
     @staticmethod
     def as_dict():
-        return {ext: getattr(CTX, ext, False) for ext in Extensions.ext_list()}
+        return {ext: CTX.activeExtsDict.get(ext, False) for ext in Extensions.ext_list()}
 
     @staticmethod
     def from_dict(dic):
         for key, val in dic.items():
-            setattr(CTX, key, val)
+            CTX.activeExtsDict[key] = val
 
     @staticmethod
     def is_active(ext):
         Extensions.check_exists(ext)
-        return getattr(CTX, ext, False)
+        return CTX.activeExtsDict.get(ext, False)
 
     @staticmethod
     def active_exts():
@@ -26,7 +27,7 @@ class CTX:
 
     @staticmethod
     def add_hook_handle(hook_handle):
-        if getattr(CTX, "hook_handles", None) is None:
+        if getattr(CTX.activeExtsDict, "hook_handles", None) is None:
             CTX.hook_handles = []
         CTX.hook_handles.append(hook_handle)
 

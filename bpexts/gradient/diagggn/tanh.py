@@ -2,13 +2,14 @@ import torch.nn
 from ..context import CTX
 from ..jmp.tanh import jac_mat_prod
 from ..backpropextension import BackpropExtension
+from ..extensions import DIAG_GGN
 
 
 class DiagGGNTanh(BackpropExtension):
 
     def __init__(self):
         super().__init__(
-            torch.nn.Tanh, "DIAG_GGN",
+            torch.nn.Tanh, DIAG_GGN,
             req_inputs=[0], req_output=True
         )
 

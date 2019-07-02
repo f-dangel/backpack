@@ -1,13 +1,14 @@
 import torch.nn
 from ...utils import einsum
 from ..backpropextension import BackpropExtension
+from ..extensions import GRAD
 
 
 class GradLinear(BackpropExtension):
 
     def __init__(self):
         super().__init__(
-            torch.nn.Linear, "GRAD",
+            torch.nn.Linear, GRAD,
             req_inputs=[0], req_output=True
         )
 

@@ -3,7 +3,7 @@
 from torch import Tensor
 from torch.nn import Linear
 from bpexts.gradient import extend, bpexts
-from bpexts.gradient.extensions import Extensions as ext
+import bpexts.gradient.extensions as ext
 from bpexts.utils import torch_allclose as allclose
 
 

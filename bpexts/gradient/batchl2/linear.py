@@ -1,13 +1,14 @@
 import torch.nn
 from ...utils import einsum
 from ..backpropextension import BackpropExtension
+from ..extensions import BATCH_L2
 
 
 class BatchL2Linear(BackpropExtension):
 
     def __init__(self):
         super().__init__(
-            torch.nn.Linear, "BATCH_L2",
+            torch.nn.Linear, BATCH_L2,
             req_inputs=[0], req_output=True
         )
 

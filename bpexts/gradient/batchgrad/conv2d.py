@@ -2,13 +2,13 @@ import torch.nn
 from ...utils import einsum
 from ..utils import unfold_func
 from ..backpropextension import BackpropExtension
-
+from ..extensions import BATCH_GRAD
 
 class BatchGradConv2d(BackpropExtension):
 
     def __init__(self):
         super().__init__(
-            torch.nn.Conv2d, "BATCH_GRAD",
+            torch.nn.Conv2d, BATCH_GRAD,
             req_inputs=[0], req_output=True
         )
 

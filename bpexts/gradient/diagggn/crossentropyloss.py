@@ -4,13 +4,14 @@ import torch.nn.functional as F
 from ..context import CTX
 from ...utils import einsum
 from ..backpropextension import BackpropExtension
+from ..extensions import DIAG_GGN
 
 
 class DiagGGNCrossEntropyLoss(BackpropExtension):
 
     def __init__(self):
         super().__init__(
-            torch.nn.CrossEntropyLoss, "DIAG_GGN",
+            torch.nn.CrossEntropyLoss, DIAG_GGN,
             req_inputs=[0], req_output=True
         )
 
