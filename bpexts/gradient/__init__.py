@@ -39,8 +39,8 @@ def extend(module):
 
     def store_io(module, input, output):
         for i in range(len(input)):
-            setattr(module, 'input{}'.format(i), input[i])
-        setattr(module, 'output', output)
+            setattr(module, 'input{}'.format(i), input[i].clone().detach())
+        setattr(module, 'output', output.clone().detach())
 
     def store_shapes(module, input, output):
         """Store dimensionality of output as buffer."""
