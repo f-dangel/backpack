@@ -25,7 +25,6 @@ class DiagHReLU(BackpropExtension):
         for i, sqrt_h in enumerate(sqrt_h_outs):
             sqrt_h_outs[i] = jac_mat_prod(module, grad_input, grad_output,
                                           sqrt_h)
-        CTX._backpropagated_sqrt_h = sqrt_h_outs
 
 
 EXTENSIONS = [DiagHReLU()]
