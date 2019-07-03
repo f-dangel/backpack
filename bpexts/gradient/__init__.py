@@ -36,7 +36,6 @@ class bpexts():
 
 
 def extend(module):
-
     def store_io(module, input, output):
         for i in range(len(input)):
             setattr(module, 'input{}'.format(i), input[i].clone().detach())
@@ -59,9 +58,8 @@ def extend(module):
 
         for bpext in Extensions.get_extensions_for(CTX.active_exts(), module):
             print(
-                module.__class__,
-                CTX._backpropagated_sqrt_ggn.shape if hasattr(CTX, "_backpropagated_sqrt_ggn") else None
-            )
+                module.__class__, CTX._backpropagated_sqrt_ggn.shape
+                if hasattr(CTX, "_backpropagated_sqrt_ggn") else None)
 
             bpext.apply(module, grad_input, grad_out)
 
