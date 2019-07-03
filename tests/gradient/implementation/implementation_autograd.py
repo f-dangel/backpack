@@ -72,20 +72,27 @@ class AutogradImpl(Implementation):
         loss = self.problem.lossfunc(
             self.model(self.problem.X), self.problem.Y)
 
-        def extract_ith_element_of_diag_h(i, p):
+        def hvp(df_dx, x, v):
+            Hv = HF.R_op(df_dx, x, v)
+            return tuple([j.detach() for j in Hv])
+
+        def extract_ith_element_of_diag_h(i, p, df_dx):
             v = torch.zeros(p.numel()).to(self.device)
             v[i] = 1.
             vs = HF.vector_to_parameter_list(v, [p])
-            Hvs = HF.hessian_vector_product(loss, [p], vs)
+
+            Hvs = hvp(df_dx, [p], vs)
             Hv = torch.cat([g.detach().view(-1) for g in Hvs])
+
             return Hv[i]
 
         diag_hs = []
         for p in list(self.model.parameters()):
             diag_h_p = torch.zeros_like(p).view(-1)
 
+            df_dx = torch.autograd.grad(loss, [p], create_graph=True, retain_graph=True)
             for parameter_index in range(p.numel()):
-                diag_value = extract_ith_element_of_diag_h(parameter_index, p)
+                diag_value = extract_ith_element_of_diag_h(parameter_index, p, df_dx)
                 diag_h_p[parameter_index] = diag_value
 
             diag_hs.append(diag_h_p.view(p.size()))
