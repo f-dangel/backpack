@@ -8,6 +8,8 @@ from . import batchgrad, sumgradsquared, diagggn, batchl2, variance, diagh
 from .extensions import Extensions
 from .context import CTX
 
+DEBUGGING = True
+
 
 def set_bpexts(*args):
     """
@@ -56,10 +58,20 @@ def extend(module):
             grad_output[i].clone().detach() for i in range(len(grad_output))
         ]
 
-        for bpext in Extensions.get_extensions_for(CTX.active_exts(), module):
-            print(
-                module.__class__, CTX._backpropagated_sqrt_ggn.shape
-                if hasattr(CTX, "_backpropagated_sqrt_ggn") else None)
+        exts_for_mod = list(Extensions.get_extensions_for(CTX.active_exts(), module))
+
+        if DEBUGGING and len(exts_for_mod) == 0:
+            print("[DEBUG] No extension registered for {}".format(
+                module.__class__))
+
+        for bpext in exts_for_mod:
+            if DEBUGGING:
+                print("[DEBUG] {} [{} -> {}] {}".format(
+                    module.__class__,
+                    getattr(module, "input0").shape,
+                    module.output.shape,
+                    bpext.__class__
+                ))
 
             bpext.apply(module, grad_input, grad_out)
 
