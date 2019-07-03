@@ -1,1 +1,1 @@
-from . import maxpool2d, conv2d, linear, relu, sigmoid, tanh
+from . import avgpool2d, maxpool2d, conv2d, linear, relu, sigmoid, tanh
