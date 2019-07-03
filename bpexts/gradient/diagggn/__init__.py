@@ -1,6 +1,7 @@
-from . import maxpool2d, conv2d, linear, crossentropyloss, tanh, relu, sigmoid, mseloss
+from . import avgpool2d, maxpool2d, conv2d, linear, crossentropyloss, tanh, relu, sigmoid, mseloss
 
 EXTENSIONS = [
+    *avgpool2d.EXTENSIONS,
     *maxpool2d.EXTENSIONS,
     *conv2d.EXTENSIONS,
     *linear.EXTENSIONS,

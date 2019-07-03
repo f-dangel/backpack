@@ -13,12 +13,12 @@ TEST_SETTINGS = {
     "batch": 5,
     "rtol": 1e-5,
     "atol": 5e-4,
-    "pool_size": 3,
+    "pool_size": 2,
 }
 
 POOLINGS = {
     'MaxPool2d': torch.nn.MaxPool2d,
-    # 'AvgPool2d': torch.nn.AvgPool2d,
+    'AvgPool2d': torch.nn.AvgPool2d,
 }
 
 set_seeds(0)
@@ -39,7 +39,7 @@ X = torch.randn(size=input_size)
 
 
 def linearlayer():
-    return extend(torch.nn.Linear(in_features=6, out_features=1))
+    return extend(torch.nn.Linear(in_features=18, out_features=1))
 
 
 def pooling(pooling_cls):
