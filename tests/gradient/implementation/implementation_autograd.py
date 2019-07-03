@@ -16,7 +16,6 @@ class AutogradImpl(Implementation):
 
         for b in range(self.N):
             gradients = torch.autograd.grad(self.loss(b), self.model.parameters())
-
             for idx, g in enumerate(gradients):
                 batch_grads[idx][b, :] = g.detach() / self.N
 
@@ -33,8 +32,13 @@ class AutogradImpl(Implementation):
         return variances
 
     def sgs(self):
-        batch_grad = self.batch_gradients()
-        sgs = [(g**2).sum(0) for g in batch_grad]
+        sgs = self.plist_like(self.model.parameters())
+
+        for b in range(self.N):
+            gradients = torch.autograd.grad(self.loss(b), self.model.parameters())
+            for idx, g in enumerate(gradients):
+                sgs[idx] += (g.detach() / self.N) ** 2
+
         return sgs
 
     def diag_ggn(self):
@@ -83,3 +87,9 @@ class AutogradImpl(Implementation):
             diag_hs.append(diag_h_p.view(p.size()))
 
         return diag_hs
+
+    def plist_like(plist):
+        return list([
+            torch.zeros(*p.size()).to(self.device)
+            for p in plist
+        ])
