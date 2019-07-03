@@ -4,10 +4,10 @@ from bpexts.gradient import extend
 from .test_problem import TestProblem
 
 TEST_SETTINGS = {
-    "in_features": 20,
-    "out_features": 10,
+    "in_features": 7,
+    "out_features": 3,
     "bias": True,
-    "batch": 13,
+    "batch": 5,
     "rtol": 1e-5,
     "atol": 1e-5
 }

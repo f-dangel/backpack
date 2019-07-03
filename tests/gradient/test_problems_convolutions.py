@@ -10,7 +10,7 @@ TEST_SETTINGS = {
     "kernel_size": (3, 2),
     "padding": (1, 1),
     "bias": True,
-    "batch": 5,
+    "batch": 3,
     "rtol": 1e-5,
     "atol": 5e-4
 }
