@@ -1,5 +1,5 @@
 from ..jacobians.dropout import DropoutJacobian
-from .base import DiagGGNBase
+from .diagggnbase import DiagGGNBase
 
 
 class DiagGGNDropout(DiagGGNBase, DropoutJacobian):
