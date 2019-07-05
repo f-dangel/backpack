@@ -5,7 +5,7 @@ from torch import sqrt as torchsqrt
 from math import sqrt
 from ...utils import einsum
 from ..context import CTX
-from .base import DiagGGNBase
+from .diagggnbase import DiagGGNBase
 
 
 class DiagGGNMSELoss(DiagGGNBase):

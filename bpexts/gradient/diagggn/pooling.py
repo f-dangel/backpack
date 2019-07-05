@@ -1,6 +1,6 @@
 from ..jacobians.avgpool2d import AvgPool2dJacobian
 from ..jacobians.maxpool2d import MaxPool2dJacobian
-from .base import DiagGGNBase
+from .diagggnbase import DiagGGNBase
 
 
 class DiagGGNAvgPool2d(DiagGGNBase, AvgPool2dJacobian):

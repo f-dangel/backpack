@@ -1,7 +1,7 @@
 from ..context import CTX
 from ..jacobians.linear import LinearJacobian
 from ...utils import einsum
-from .base import DiagGGNBase
+from .diagggnbase import DiagGGNBase
 
 
 class DiagGGNLinear(DiagGGNBase, LinearJacobian):
