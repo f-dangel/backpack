@@ -1,18 +1,15 @@
 """Factors for KFLR."""
 
-from torch.nn import Linear
+from .base import KFLRBase
+from ...jacobians.linear import LinearJacobian
 from ..context import CTX
-from ...backpropextension import BackpropExtension
-from ...extensions import KFLR
-from ...jmp.linear import jac_mat_prod
 from ....utils import einsum
 
 
-# TODO second-order extension
-class KFLRLinear(BackpropExtension):
+class KFLRLinear(KFLRBase, LinearJacobian):
     def __init__(self):
         # NOTE: Bias and weights treated jointly in KFLR, save in weights
-        super().__init__(Linear, KFLR, params=["weight"])
+        super().__init__(params=["weight"])
 
     def weight(self, module, grad_input, grad_output):
         # Naming of Kronecker factors: Equation (20) of the paper
@@ -31,12 +28,6 @@ class KFLRLinear(BackpropExtension):
             device=module.input0.device)
         input = torch.cat((module.input0, ones), dim=1)
         return einsum('bi,bj-> ij', (input, input))
-
-    def backpropagate(module, grad_input, grad_output):
-        kflr_sqrt_ggn_out = CTX._kflr_backpropagated_sqrt_ggn
-        kflr_sqrt_ggn_in = self.jac_mat_prod(module, grad_input, grad_output,
-                                             kflr_sqrt_ggn_out)
-        CTX._kflr_backpropagated_sqrt_ggn = kflr_sqrt_ggn_in
 
 
 EXTENSIONS = [KFLRLinear()]
