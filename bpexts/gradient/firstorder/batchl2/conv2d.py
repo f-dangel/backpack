@@ -1,8 +1,8 @@
 import torch.nn
-from ...utils import einsum
-from ..utils import unfold_func
-from ..backpropextension import BackpropExtension
-from ..extensions import BATCH_L2
+from ....utils import einsum
+from ...utils import unfold_func
+from ...backpropextension import BackpropExtension
+from ...extensions import BATCH_L2
 
 
 class BatchL2Conv2d(BackpropExtension):

@@ -1,8 +1,8 @@
 import torch.nn
-from ...utils import einsum
-from ..utils import unfold_func
-from ..backpropextension import BackpropExtension
-from ..extensions import SUM_GRAD_SQUARED
+from ....utils import einsum
+from ...utils import unfold_func
+from ...backpropextension import BackpropExtension
+from ...extensions import SUM_GRAD_SQUARED
 
 
 class SGSConv2d(BackpropExtension):

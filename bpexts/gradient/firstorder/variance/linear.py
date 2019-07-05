@@ -1,8 +1,8 @@
 import torch.nn
-from ..backpropextension import BackpropExtension
+from ...backpropextension import BackpropExtension
+from ...gradient.linear import GradLinear
+from ...extensions import VARIANCE
 from ..sumgradsquared.linear import SGSLinear
-from ..gradient.linear import GradLinear
-from ..extensions import VARIANCE
 
 
 class VarianceLinear(BackpropExtension):

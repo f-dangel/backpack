@@ -1,7 +1,7 @@
 import torch.nn
-from ...utils import einsum
-from ..backpropextension import BackpropExtension
-from ..extensions import BATCH_GRAD
+from ....utils import einsum
+from ...backpropextension import BackpropExtension
+from ...extensions import BATCH_GRAD
 
 
 class BatchGradLinear(BackpropExtension):

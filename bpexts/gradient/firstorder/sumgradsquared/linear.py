@@ -1,7 +1,7 @@
 import torch.nn
-from ...utils import einsum
-from ..backpropextension import BackpropExtension
-from ..extensions import SUM_GRAD_SQUARED
+from ....utils import einsum
+from ...backpropextension import BackpropExtension
+from ...extensions import SUM_GRAD_SQUARED
 
 
 class SGSLinear(BackpropExtension):

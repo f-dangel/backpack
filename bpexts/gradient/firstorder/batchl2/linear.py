@@ -1,7 +1,7 @@
 import torch.nn
-from ...utils import einsum
-from ..backpropextension import BackpropExtension
-from ..extensions import BATCH_L2
+from ....utils import einsum
+from ...backpropextension import BackpropExtension
+from ...extensions import BATCH_L2
 
 
 class BatchL2Linear(BackpropExtension):

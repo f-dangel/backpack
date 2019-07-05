@@ -1,8 +1,8 @@
 import torch.nn
-from ..backpropextension import BackpropExtension
+from ...backpropextension import BackpropExtension
+from ...gradient.conv2d import GradConv2d
+from ...extensions import VARIANCE
 from ..sumgradsquared.conv2d import SGSConv2d
-from ..gradient.conv2d import GradConv2d
-from ..extensions import VARIANCE
 
 
 class VarianceConv2d(BackpropExtension):
