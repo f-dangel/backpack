@@ -18,16 +18,17 @@ class KFLRLinear(KFLRBase, LinearJacobian):
 
     def G(self, module, grad_input, grad_output):
         kflr_sqrt_ggn_out = CTX._kflr_backpropagated_sqrt_ggn
-        return einsum('bic,bjc->ij' (kflr_sqrt_ggn_out, kflr_sqrt_ggn_out))
+        batch = kflr_sqrt_ggn_out.size(0)
+        return einsum('bic,bjc->ij' (kflr_sqrt_ggn_out,
+                                     kflr_sqrt_ggn_out)) / batch
 
     def Q(self, module, grad_input, grad_output):
         # append ones for the bias
+        batch = module.input0.size(0)
         ones = torch.ones(
-            module.input0.size(0),
-            module.out_features,
-            device=module.input0.device)
+            batch, module.out_features, device=module.input0.device)
         input = torch.cat((module.input0, ones), dim=1)
-        return einsum('bi,bj-> ij', (input, input))
+        return einsum('bi,bj-> ij', (input, input)) / batch
 
 
 EXTENSIONS = [KFLRLinear()]
