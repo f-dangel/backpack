@@ -19,8 +19,8 @@ class KFLRLinear(KFLRBase, LinearJacobian):
     def G(self, module, grad_input, grad_output):
         kflr_sqrt_ggn_out = CTX._kflr_backpropagated_sqrt_ggn
         batch = kflr_sqrt_ggn_out.size(0)
-        return einsum('bic,bjc->ij' (kflr_sqrt_ggn_out,
-                                     kflr_sqrt_ggn_out)) / batch
+        # NOTE: Normalization by batch size is already in the sqrt
+        return einsum('bic,bjc->ij' (kflr_sqrt_ggn_out, kflr_sqrt_ggn_out))
 
     def Q(self, module, grad_input, grad_output):
         # append ones for the bias
