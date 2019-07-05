@@ -1,7 +1,7 @@
-from ..context import CTX
-from ..utils import conv as convUtils
-from ..jacobians.conv2d import Conv2dJacobian
-from ...utils import einsum
+from ...context import CTX
+from ...utils import conv as convUtils
+from ...jacobians.conv2d import Conv2dJacobian
+from ....utils import einsum
 from .diagggnbase import DiagGGNBase
 
 

@@ -1,7 +1,7 @@
 from torch import clamp, diag_embed
-from ..context import CTX
-from ..backpropextension import BackpropExtension
-from ..extensions import DIAG_H
+from ...context import CTX
+from ...backpropextension import BackpropExtension
+from ...extensions import DIAG_H
 
 
 class DiagHBase(BackpropExtension):

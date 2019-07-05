@@ -1,6 +1,6 @@
-from ..context import CTX
-from ..backpropextension import BackpropExtension
-from ..extensions import KFLR
+from ...context import CTX
+from ...backpropextension import BackpropExtension
+from ...extensions import KFLR
 
 
 class KFLRBase(BackpropExtension):

@@ -1,6 +1,6 @@
-from ..jacobians.relu import ReLUJacobian
-from ..jacobians.sigmoid import SigmoidJacobian
-from ..jacobians.tanh import TanhJacobian
+from ...jacobians.relu import ReLUJacobian
+from ...jacobians.sigmoid import SigmoidJacobian
+from ...jacobians.tanh import TanhJacobian
 from .diaghbase import DiagHBase
 
 

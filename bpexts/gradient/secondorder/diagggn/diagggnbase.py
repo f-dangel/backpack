@@ -1,6 +1,6 @@
-from ..context import CTX
-from ..backpropextension import BackpropExtension
-from ..extensions import DIAG_GGN
+from ...context import CTX
+from ...backpropextension import BackpropExtension
+from ...extensions import DIAG_GGN
 
 
 class DiagGGNBase(BackpropExtension):

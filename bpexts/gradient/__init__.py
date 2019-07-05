@@ -5,7 +5,7 @@ to calculate the variance of a gradient.
 """
 import torch
 from .firstorder import batchgrad, sumgradsquared, batchl2, variance
-from . import diagggn, diagh
+from .secondorder import diagggn, diagh, kflr
 from .extensions import Extensions
 from .context import CTX
 
@@ -97,6 +97,7 @@ EXTENSIONS = [
     *batchl2.EXTENSIONS,
     *variance.EXTENSIONS,
     *diagh.EXTENSIONS,
+    *kflr.EXTENSIONS,
 ]
 
 for backpropextension in EXTENSIONS:

@@ -5,7 +5,7 @@ approximation as in the KFAC paper for convolutions (KFC) to obtain curvature
 estimated for the convolution layer.
 """
 
-from ..context import CTX
+from ...context import CTX
 from ...utils import conv as convUtils
 from ...jacobians.conv2d import Conv2dJacobian
 from ....utils import einsum

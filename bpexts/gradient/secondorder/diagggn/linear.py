@@ -1,6 +1,6 @@
-from ..context import CTX
-from ..jacobians.linear import LinearJacobian
-from ...utils import einsum
+from ...context import CTX
+from ...jacobians.linear import LinearJacobian
+from ....utils import einsum
 from .diagggnbase import DiagGGNBase
 
 

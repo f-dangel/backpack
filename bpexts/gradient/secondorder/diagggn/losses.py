@@ -1,6 +1,6 @@
-from ..jacobians.mseloss import MSELossJacobian
-from ..jacobians.crossentropyloss import CrossEntropyLossJacobian
-from ..context import CTX
+from ...jacobians.mseloss import MSELossJacobian
+from ...jacobians.crossentropyloss import CrossEntropyLossJacobian
+from ...context import CTX
 from .diagggnbase import DiagGGNBase
 
 

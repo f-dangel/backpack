@@ -1,4 +1,4 @@
-from ..jacobians.dropout import DropoutJacobian
+from ...jacobians.dropout import DropoutJacobian
 from .diagggnbase import DiagGGNBase
 
 

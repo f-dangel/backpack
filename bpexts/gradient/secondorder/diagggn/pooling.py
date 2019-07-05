@@ -1,5 +1,5 @@
-from ..jacobians.avgpool2d import AvgPool2dJacobian
-from ..jacobians.maxpool2d import MaxPool2dJacobian
+from ...jacobians.avgpool2d import AvgPool2dJacobian
+from ...jacobians.maxpool2d import MaxPool2dJacobian
 from .diagggnbase import DiagGGNBase
 
 
