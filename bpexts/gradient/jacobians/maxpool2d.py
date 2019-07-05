@@ -53,3 +53,6 @@ class MaxPool2dJacobian(BaseJacobian):
             ceil_mode=module.ceil_mode
         )
         return pool_idx
+
+    def hessian_is_zero(self):
+        return True

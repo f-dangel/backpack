@@ -42,3 +42,6 @@ class Conv2dJacobian(BaseJacobian):
             dilation=module.dilation,
             groups=module.groups
         )
+
+    def hessian_is_zero(self):
+        return True

@@ -13,3 +13,6 @@ class DropoutJacobian(ElementwiseJacobian):
         mask = 1 - eq(grad_input, 0.).float()
         d_dropout = mask * scaling
         return super().jac_mat_prod(d_dropout, mat)
+
+    def hessian_is_zero(self):
+        return True

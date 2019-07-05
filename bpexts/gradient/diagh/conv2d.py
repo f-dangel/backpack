@@ -2,34 +2,20 @@ import torch
 import torch.nn
 from ..context import CTX
 from ...utils import einsum
-from ..backpropextension import BackpropExtension
-from ..jmp.conv2d import jac_mat_prod
 from ..utils import conv as convUtils
-from ..extensions import DIAG_H
-
+from ..jacobians.conv2d import Conv2dJacobian
+from .diaghbase import DiagHBase
 DETACH_INPUTS = True
 
 
-class DiagHConv2d(BackpropExtension):
+class DiagHConv2d(DiagHBase, Conv2dJacobian):
     def __init__(self):
-        super().__init__(torch.nn.Conv2d, DIAG_H, req_inputs=[0])
-
-    def apply(self, module, grad_input, grad_output):
-        sqrt_h_outs = CTX._backpropagated_sqrt_h
-        sqrt_h_outs_signs = CTX._backpropagated_sqrt_h_signs
-
-        if module.bias is not None and module.bias.requires_grad:
-            module.bias.diag_h = self.bias_diag_h(module, sqrt_h_outs,
-                                                  sqrt_h_outs_signs)
-        if module.weight.requires_grad:
-            module.weight.diag_h = self.weight_diag_h(module, sqrt_h_outs,
-                                                      sqrt_h_outs_signs)
-        if module.input0.requires_grad or DETACH_INPUTS:
-            self.backpropagate_sqrt_h(module, grad_input, grad_output,
-                                      sqrt_h_outs, sqrt_h_outs_signs)
+        super().__init__(params=["bias", "weight"])
 
     # TODO: Reuse code in ..diaggn.conv2d to extract the diagonal
-    def bias_diag_h(self, module, sqrt_h_outs, sqrt_h_outs_signs):
+    def bias(self, module, grad_input, grad_output):
+        sqrt_h_outs = CTX._backpropagated_sqrt_h
+        sqrt_h_outs_signs = CTX._backpropagated_sqrt_h_signs
         h_diag = torch.zeros_like(module.bias)
         for h_sqrt, sign in zip(sqrt_h_outs, sqrt_h_outs_signs):
             h_sqrt_view = convUtils.separate_channels_and_pixels(module, h_sqrt)
@@ -38,7 +24,9 @@ class DiagHConv2d(BackpropExtension):
         return h_diag
 
     # TODO: Reuse code in ..diaggn.conv2d to extract the diagonal
-    def weight_diag_h(self, module, sqrt_h_outs, sqrt_h_outs_signs):
+    def weight(self, module, grad_input, grad_output):
+        sqrt_h_outs = CTX._backpropagated_sqrt_h
+        sqrt_h_outs_signs = CTX._backpropagated_sqrt_h_signs
         X = convUtils.unfold_func(module)(module.input0).unsqueeze(0)
         h_diag = torch.zeros_like(module.weight)
 
@@ -51,12 +39,6 @@ class DiagHConv2d(BackpropExtension):
                        (h_sqrt_view, X_repeated, h_sqrt_view,
                         X_repeated)).view_as(module.weight))
         return h_diag
-
-    def backpropagate_sqrt_h(self, module, grad_input, grad_output,
-                             sqrt_h_outs, sqrt_h_outs_signs):
-        for i, sqrt_h in enumerate(sqrt_h_outs):
-            sqrt_h_outs[i] = jac_mat_prod(module, grad_input, grad_output,
-                                          sqrt_h)
 
 
 EXTENSIONS = [DiagHConv2d()]

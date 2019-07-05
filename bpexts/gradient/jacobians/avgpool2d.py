@@ -72,3 +72,6 @@ class AvgPool2dJacobian(BaseJacobian):
         conv2d_t.weight.data = avg_kernel
 
         return conv2d_t(mat, output_size=output_size)
+
+    def hessian_is_zero(self):
+        return True

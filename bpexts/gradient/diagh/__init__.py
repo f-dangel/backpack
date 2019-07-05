@@ -1,13 +1,10 @@
-from . import conv2d, linear, sigmoid, tanh, relu, crossentropyloss, mseloss, pooling, dropout
+from . import conv2d, linear, losses, pooling, dropout, activations
 
 EXTENSIONS = [
     *conv2d.EXTENSIONS,
     *linear.EXTENSIONS,
-    *crossentropyloss.EXTENSIONS,
-    *mseloss.EXTENSIONS,
-    *sigmoid.EXTENSIONS,
-    *relu.EXTENSIONS,
-    *tanh.EXTENSIONS,
+    *losses.EXTENSIONS,
+    *activations.EXTENSIONS,
     *dropout.EXTENSIONS,
     *pooling.EXTENSIONS,
 ]

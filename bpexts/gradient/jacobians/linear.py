@@ -11,3 +11,6 @@ class LinearJacobian(BaseJacobian):
     def jac_mat_prod(self, module, grad_input, grad_output, mat):
         d_linear = module.weight
         return einsum('ij,bic->bjc', (d_linear, mat))
+
+    def hessian_is_zero(self):
+        return True
