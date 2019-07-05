@@ -1,8 +1,8 @@
 import torch.nn
-from ...gradient.linear import GradLinear
 from ...extensions import VARIANCE
 from ..firstorder import FirstOrderExtension
 from ..sumgradsquared.linear import SGSLinear
+from ..gradient.linear import GradLinear
 from .base import variance_from
 
 

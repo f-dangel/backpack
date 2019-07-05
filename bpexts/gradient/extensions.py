@@ -33,6 +33,7 @@ class DIAG_GGN(Extension):
 
 
 class GRAD(Extension):
+    savefield = "grad_bpext"
     pass
 
 

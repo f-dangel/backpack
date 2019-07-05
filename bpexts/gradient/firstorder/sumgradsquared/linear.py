@@ -1,7 +1,7 @@
 import torch.nn
 from ....utils import einsum
-from ..firstorder import FirstOrderExtension
 from ...extensions import SUM_GRAD_SQUARED
+from ..firstorder import FirstOrderExtension
 
 
 class SGSLinear(FirstOrderExtension):

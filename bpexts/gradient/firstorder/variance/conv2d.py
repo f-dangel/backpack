@@ -1,8 +1,8 @@
 import torch.nn
-from ...gradient.conv2d import GradConv2d
 from ...extensions import VARIANCE
 from ..firstorder import FirstOrderExtension
 from ..sumgradsquared.conv2d import SGSConv2d
+from ..gradient.conv2d import GradConv2d
 from .base import variance_from
 
 
