@@ -8,26 +8,27 @@ class Extension():
 
 
 class VARIANCE(Extension):
+    savefield = "variance"
     pass
 
 
 class BATCH_L2(Extension):
+    savefield = "batch_l2"
     pass
 
 
 class BATCH_GRAD(Extension):
+    savefield = "grad_batch"
     pass
 
 
 class SUM_GRAD_SQUARED(Extension):
-    pass
-
-
-class GRAD_VAR(Extension):
+    savefield = "sum_grad_squared"
     pass
 
 
 class DIAG_GGN(Extension):
+    savefield = "diag_ggn"
     pass
 
 
@@ -36,6 +37,7 @@ class GRAD(Extension):
 
 
 class DIAG_H(Extension):
+    savefield = "diag_h"
     pass
 
 
@@ -54,7 +56,6 @@ class Extensions:
         GRAD,
         BATCH_GRAD,
         SUM_GRAD_SQUARED,
-        GRAD_VAR,
         DIAG_GGN,
         BATCH_L2,
         VARIANCE,
