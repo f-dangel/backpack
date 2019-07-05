@@ -1,8 +1,8 @@
 from ..jacobians.dropout import DropoutJacobian
-from .elementwise import DiagGGNElementwise
+from .base import DiagGGNBase
 
 
-class DiagGGNDropout(DiagGGNElementwise, DropoutJacobian):
+class DiagGGNDropout(DiagGGNBase, DropoutJacobian):
     pass
 
 
