@@ -1,6 +1,7 @@
 from torch import zeros
 from torch.nn import MaxPool2d
 from torch.nn.functional import max_pool2d
+from ..utils import conv as convUtils
 from .basejacobian import BaseJacobian
 
 
@@ -10,30 +11,20 @@ class MaxPool2dJacobian(BaseJacobian):
         return MaxPool2d
 
     def jac_mat_prod(self, module, grad_input, grad_output, mat):
-        self.__check_sizes_input(mat, module)
+        convUtils.check_sizes_input(mat, module)
         mat_as_pool = self.__reshape_for_pooling(mat, module)
         jmp_as_pool = self.__apply_jacobian_of(module, mat_as_pool)
         return self.__reshape_for_matmul(jmp_as_pool, module)
 
-    def __check_sizes_input(self, mat, module):
-        batch, out_channels, out_x, out_y = module.output_shape
-        assert tuple(mat.size())[:2] == (batch, out_channels * out_x * out_y)
-
     def __reshape_for_pooling(self, mat, module):
-        batch, channels, out_x, out_y = module.output_shape
-        _, _, in_x, in_y = module.input0.size()
         num_classes = mat.size(-1)
-
         batch, channels, out_x, out_y = module.output_shape
         return mat.view(batch, channels, out_x * out_y, num_classes)
 
     def __reshape_for_matmul(self, mat, module):
-        batch, channels, out_x, out_y = module.output_shape
-        _, _, in_x, in_y = module.input0.size()
+        batch = module.output_shape[0]
         in_features = module.input0.numel() / batch
-        batch = mat.size(0)
         num_classes = mat.size(-1)
-
         return mat.view(batch, in_features, num_classes)
 
     def __apply_jacobian_of(self, module, mat):

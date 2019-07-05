@@ -1,8 +1,8 @@
-import torch
+from torch.nn import Unfold
 
 
 def unfold_func(module):
-    return torch.nn.Unfold(
+    return Unfold(
         kernel_size=module.kernel_size,
         dilation=module.dilation,
         padding=module.padding,
@@ -27,3 +27,16 @@ def separate_channels_and_pixels(module, tensor):
         -1,
     )
     return tensor.view(batch, channels, pixels, classes)
+
+
+def check_sizes_input(mat, module):
+    batch, out_channels, out_x, out_y = module.output_shape
+    assert tuple(mat.size())[:2] == (batch, out_channels * out_x * out_y)
+
+
+def check_sizes_output(jmp, module):
+    if tuple(jmp.size())[1:] != tuple(module.input0.size())[1:]:
+        raise ValueError(
+            "Size after conv_transpose does not match", "Got {}, and {}.",
+            "Expected all dimensions to match, except for the first.".format(
+                jmp.size(), module.input0.size()))
