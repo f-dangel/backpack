@@ -10,7 +10,7 @@ class DiagGGNElementwise(BackpropExtension):
             self.get_module(), DIAG_GGN,
         )
 
-    def apply(self, module, grad_input, grad_output):
+    def backpropagate(self, module, grad_input, grad_output):
         sqrt_ggn_out = CTX._backpropagated_sqrt_ggn
         sqrt_ggn_in = self.jac_mat_prod(module, grad_input, grad_output, sqrt_ggn_out)
         CTX._backpropagated_sqrt_ggn = sqrt_ggn_in

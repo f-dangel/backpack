@@ -1,18 +1,18 @@
-from ..base.relu import BaseReLU
-from ..base.tanh import BaseTanh
-from ..base.sigmoid import BaseSigmoid
+from ..jacobians.relu import ReLUJacobian
+from ..jacobians.tanh import TanhJacobian
+from ..jacobians.sigmoid import SigmoidJacobian
 from .elementwise import DiagGGNElementwise
 
 
-class DiagGGNReLU(DiagGGNElementwise, BaseReLU):
+class DiagGGNReLU(DiagGGNElementwise, ReLUJacobian):
     pass
 
 
-class DiagGGNSigmoid(DiagGGNElementwise, BaseSigmoid):
+class DiagGGNSigmoid(DiagGGNElementwise, TanhJacobian):
     pass
 
 
-class DiagGGNTanh(DiagGGNElementwise, BaseTanh):
+class DiagGGNTanh(DiagGGNElementwise, SigmoidJacobian):
     pass
 
 
