@@ -19,10 +19,10 @@ class GradConv2d(BackpropExtension):
         if module.weight.requires_grad:
             module.weight.grad = self.weight_grad(module, grad_output)
 
-    def bias_grad(self, module, grad_output):
+    def bias(self, module, grad_input, grad_output):
         return grad_output[0].sum(3).sum(2).sum(0)
 
-    def weight_grad(self, module, grad_output):
+    def weight(self, module, grad_input, grad_output):
         batch = module.input0.size(0)
         X = unfold_func(module)(module.input0)
         dE_dY = grad_output[0].view(batch, module.out_channels, -1)

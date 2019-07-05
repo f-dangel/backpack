@@ -18,9 +18,9 @@ class GradLinear(BackpropExtension):
         if module.weight.requires_grad:
             module.weight.grad_batch = self.weight_grad(module, grad_output)
 
-    def bias_grad(self, module, grad_output):
+    def bias(self, module, grad_input, grad_output):
         return grad_output[0].sum(0)
 
-    def weight_grad(self, module, grad_output):
+    def weight(self, module, grad_input, grad_output):
         w_grad_batch = einsum('bi,bj->ij', (grad_output[0], module.input0))
         return w_grad_batch.view(module.out_features, module.in_features)

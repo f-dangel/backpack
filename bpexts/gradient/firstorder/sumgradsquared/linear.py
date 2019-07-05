@@ -1,30 +1,18 @@
 import torch.nn
 from ....utils import einsum
-from ...backpropextension import BackpropExtension
+from ..firstorder import FirstOrderExtension
 from ...extensions import SUM_GRAD_SQUARED
 
 
-class SGSLinear(BackpropExtension):
+class SGSLinear(FirstOrderExtension):
 
     def __init__(self):
-        super().__init__(
-            torch.nn.Linear, SUM_GRAD_SQUARED,
-            req_inputs=[0], req_output=True
-        )
+        super().__init__(torch.nn.Linear, SUM_GRAD_SQUARED, params=["bias", "weight"])
 
-    def apply(self, module, grad_input, grad_output):
-        """Compute sum of squared batch gradients of `torch.nn.Linear` parameters."""
-        if module.bias is not None and module.bias.requires_grad:
-            module.bias.sum_grad_squared = self.bias_sum_grad_squared(
-                module, grad_output)
-        if module.weight.requires_grad:
-            module.weight.sum_grad_squared = self.weight_sum_grad_squared(
-                module, grad_output)
-
-    def bias_sum_grad_squared(self, module, grad_output):
+    def bias(self, module, grad_input, grad_output):
         return (grad_output[0]**2).sum(0)
 
-    def weight_sum_grad_squared(self, module, grad_output):
+    def weight(self, module, grad_input, grad_output):
         return einsum('bi,bj->ij', (grad_output[0]**2, module.input0**2))
 
 
