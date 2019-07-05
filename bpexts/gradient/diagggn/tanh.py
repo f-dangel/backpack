@@ -1,22 +1,9 @@
-import torch.nn
-from ..context import CTX
-from ..jmp.tanh import jac_mat_prod
-from ..backpropextension import BackpropExtension
-from ..extensions import DIAG_GGN
+from ..base.tanh import BaseTanh
+from .elementwise import DiagGGNElementwise
 
 
-class DiagGGNTanh(BackpropExtension):
-
-    def __init__(self):
-        super().__init__(
-            torch.nn.Tanh, DIAG_GGN,
-            req_inputs=[0], req_output=True
-        )
-
-    def apply(self, module, grad_input, grad_output):
-        sqrt_ggn_out = CTX._backpropagated_sqrt_ggn
-        sqrt_ggn_in = jac_mat_prod(module, grad_input, grad_output, sqrt_ggn_out)
-        CTX._backpropagated_sqrt_ggn = sqrt_ggn_in
+class DiagGGNTanh(DiagGGNElementwise, BaseTanh):
+    pass
 
 
 EXTENSIONS = [DiagGGNTanh()]
