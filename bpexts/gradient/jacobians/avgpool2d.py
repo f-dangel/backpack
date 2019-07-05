@@ -22,8 +22,8 @@ class AvgPool2dJacobian(BaseJacobian):
         )
 
         convUtils.check_sizes_input(mat, module)
-        mat_as_pool = self.reshape_for_conv(mat, module)
-        jmp_as_pool = self.apply_jacobian_of(module, mat_as_pool)
+        mat_as_pool = self.__reshape_for_conv(mat, module)
+        jmp_as_pool = self.__apply_jacobian_of(module, mat_as_pool)
 
         batch, channels, in_x, in_y = module.input0.size()
         num_classes = mat.size(2)
@@ -32,9 +32,9 @@ class AvgPool2dJacobian(BaseJacobian):
         assert jmp_as_pool.size(2) == in_x
         assert jmp_as_pool.size(3) == in_y
 
-        return self.reshape_for_matmul(jmp_as_pool, module)
+        return self.__reshape_for_matmul(jmp_as_pool, module)
 
-    def reshape_for_conv(self, mat, module):
+    def __reshape_for_conv(self, mat, module):
         """Create fake single-channel images, grouping batch,
         class and channel dimension."""
         batch, out_channels, out_x, out_y = module.output_shape
@@ -45,7 +45,7 @@ class AvgPool2dJacobian(BaseJacobian):
         return einsum('bic->bci', mat).contiguous().view(
             batch * num_classes * out_channels, 1, out_x, out_y)
 
-    def reshape_for_matmul(self, mat, module):
+    def __reshape_for_matmul(self, mat, module):
         """Ungroup dimensions after application of Jacobian."""
         batch, channels, in_x, in_y = module.input0.size()
         features = channels * in_x * in_y
@@ -54,7 +54,7 @@ class AvgPool2dJacobian(BaseJacobian):
         mat_view = mat.view(batch, -1, features)
         return einsum('bci->bic', mat_view).contiguous()
 
-    def apply_jacobian_of(self, module, mat):
+    def __apply_jacobian_of(self, module, mat):
         _, _, in_x, in_y = module.input0.size()
         output_size = (mat.size(0), 1, in_x, in_y)
 
