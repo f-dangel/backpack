@@ -42,6 +42,11 @@ class DIAG_H(Extension):
     pass
 
 
+class KFLR(Extension):
+    savefield = "kflr"
+    pass
+
+
 class ParametrizedExtension(Extension):
     def __init__(self, input):
         self.input = input
@@ -62,6 +67,7 @@ class Extensions:
         VARIANCE,
         JVP,
         DIAG_H,
+        KFLR,
     ]
 
     registeredExtensions = {}
