@@ -1,8 +1,8 @@
 from torch.nn import Sigmoid
-from .elementwise import BaseElementwise
+from .elementwise import ElementwiseJacobian
 
 
-class BaseSigmoid(BaseElementwise):
+class SigmoidJacobian(ElementwiseJacobian):
 
     def get_module(self):
         return Sigmoid

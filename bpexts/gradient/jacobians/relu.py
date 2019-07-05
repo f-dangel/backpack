@@ -1,9 +1,9 @@
 from torch import gt
 from torch.nn import ReLU
-from .elementwise import BaseElementwise
+from .elementwise import ElementwiseJacobian
 
 
-class BaseReLU(BaseElementwise):
+class ReLUJacobian(ElementwiseJacobian):
 
     def get_module(self):
         return ReLU

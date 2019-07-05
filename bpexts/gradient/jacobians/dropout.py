@@ -1,9 +1,9 @@
 from torch import eq
 from torch.nn import Dropout
-from .elementwise import BaseElementwise
+from .elementwise import ElementwiseJacobian
 
 
-class BaseDropout(BaseElementwise):
+class DropoutJacobian(ElementwiseJacobian):
 
     def get_module(self):
         return Dropout

@@ -1,8 +1,8 @@
 from torch.nn import Tanh
-from .elementwise import BaseElementwise
+from .elementwise import ElementwiseJacobian
 
 
-class BaseTanh(BaseElementwise):
+class TanhJacobian(ElementwiseJacobian):
 
     def get_module(self):
         return Tanh
