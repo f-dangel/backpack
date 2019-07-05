@@ -1,6 +1,6 @@
 import torch.nn
 from ..context import CTX
-from ..utils import unfold_func
+from ..utils import conv as convUtils
 from ..jmp.conv2d import jac_mat_prod
 from ...utils import einsum
 from ..backpropextension import BackpropExtension
@@ -27,32 +27,19 @@ class DiagGGNConv2d(BackpropExtension):
         self.backpropagate_sqrt_ggn(module, grad_input, grad_output, sqrt_ggn_out)
 
     def bias_diag_ggn(self, module, grad_output, sqrt_ggn_out):
-        sqrt_ggn = self.separate_channels_and_pixels(module, sqrt_ggn_out)
+        sqrt_ggn = convUtils.separate_channels_and_pixels(module, sqrt_ggn_out)
         return einsum('bijc,bikc->i', (sqrt_ggn, sqrt_ggn))
 
     def weight_diag_ggn(self, module, grad_output, sqrt_ggn_out):
-        sqrt_ggn = self.separate_channels_and_pixels(module, sqrt_ggn_out)
+        sqrt_ggn = convUtils.separate_channels_and_pixels(module, sqrt_ggn_out)
 
         # unfolded input, repeated for each class
         num_classes = sqrt_ggn_out.size(2)
-        X = unfold_func(module)(module.input0).unsqueeze(0).expand(
-            num_classes, -1, -1, -1)
+        X = convUtils.unfold_func(module)(module.input0).unsqueeze(0)
+        X = X.expand(num_classes, -1, -1, -1)
 
         return einsum('bmlc,cbkl,bmic,cbki->mk',
                       (sqrt_ggn, X, sqrt_ggn, X)).view_as(module.weight)
-
-    def separate_channels_and_pixels(self, module, sqrt_ggn_out):
-        """Reshape (batch, out_features, classes)
-        into
-                   (batch, out_channels, pixels, classes).
-        """
-        batch, channels, pixels, classes = (
-            module.input0.size(0),
-            module.out_channels,
-            module.output_shape[2] * module.output_shape[3],
-            sqrt_ggn_out.size(2),
-        )
-        return sqrt_ggn_out.view(batch, channels, pixels, classes)
 
     def backpropagate_sqrt_ggn(self, module, grad_input, grad_output, sqrt_ggn_out):
         sqrt_ggn_in = jac_mat_prod(module, grad_input, grad_output, sqrt_ggn_out)
