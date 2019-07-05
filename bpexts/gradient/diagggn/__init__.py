@@ -1,10 +1,9 @@
-from . import pooling, conv2d, linear, crossentropyloss, activations, mseloss
+from . import pooling, conv2d, linear, activations, losses
 
 EXTENSIONS = [
     *pooling.EXTENSIONS,
     *conv2d.EXTENSIONS,
     *linear.EXTENSIONS,
-    *crossentropyloss.EXTENSIONS,
     *activations.EXTENSIONS,
-    *mseloss.EXTENSIONS,
+    *losses.EXTENSIONS,
 ]
