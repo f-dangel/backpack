@@ -1,3 +1,4 @@
+import warnings
 
 
 class BackpropExtension():
@@ -32,3 +33,7 @@ class BackpropExtension():
                 extFunc = getattr(self, param)
                 extValue = extFunc(module, grad_input, grad_output)
                 setattr(getattr(module, param), self.savefield, extValue)
+        self.backpropagate(module, grad_input, grad_output)
+
+    def backpropagate(self, module, grad_input, grad_output):
+        warnings.warn("Backpropagate has not been overwritten")
