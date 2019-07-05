@@ -1,23 +1,21 @@
-import torch.nn
 from ..context import CTX
 from ..utils import conv as convUtils
-from ..jmp.conv2d import jac_mat_prod
+from ..jacobians.conv2d import Conv2dJacobian
 from ...utils import einsum
-from ..backpropextension import BackpropExtension
-from ..extensions import DIAG_GGN
+from .base import DiagGGNBase
 
 
-class DiagGGNConv2d(BackpropExtension):
+class DiagGGNConv2d(DiagGGNBase, Conv2dJacobian):
 
     def __init__(self):
-        super().__init__(torch.nn.Conv2d, DIAG_GGN, params=["bias", "weight"])
+        super().__init__(params=["bias", "weight"])
 
-    def bias(self, module, grad_output, sqrt_ggn_out):
+    def bias(self, module, grad_input, grad_output):
         sqrt_ggn_out = CTX._backpropagated_sqrt_ggn
         sqrt_ggn = convUtils.separate_channels_and_pixels(module, sqrt_ggn_out)
         return einsum('bijc,bikc->i', (sqrt_ggn, sqrt_ggn))
 
-    def weight(self, module, grad_output, sqrt_ggn_out):
+    def weight(self, module, grad_input, grad_output):
         sqrt_ggn_out = CTX._backpropagated_sqrt_ggn
         sqrt_ggn = convUtils.separate_channels_and_pixels(module, sqrt_ggn_out)
 
@@ -28,11 +26,6 @@ class DiagGGNConv2d(BackpropExtension):
 
         return einsum('bmlc,cbkl,bmic,cbki->mk',
                       (sqrt_ggn, X, sqrt_ggn, X)).view_as(module.weight)
-
-    def backpropagate(self, module, grad_input, grad_output):
-        sqrt_ggn_out = CTX._backpropagated_sqrt_ggn
-        sqrt_ggn_in = jac_mat_prod(module, grad_input, grad_output, sqrt_ggn_out)
-        CTX._backpropagated_sqrt_ggn = sqrt_ggn_in
 
 
 EXTENSIONS = [DiagGGNConv2d()]
