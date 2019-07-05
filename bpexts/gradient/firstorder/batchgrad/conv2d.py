@@ -1,6 +1,6 @@
 import torch.nn
 from ....utils import einsum
-from ...utils import unfold_func
+from ...utils import conv as convUtils
 from ...backpropextension import BackpropExtension
 from ...extensions import BATCH_GRAD
 
@@ -72,10 +72,11 @@ class BatchGradConv2d(BackpropExtension):
         -------
         dE / dw = view(dE / dW)
         """
+        X, dE_dY = convUtils.get_weight_gradient_factors(
+            module.input0, grad_output[0], module
+        )
         batch = module.input0.size(0)
         dE_dw_shape = (batch, ) + module.weight.size()
-        X = unfold_func(module)(module.input0)
-        dE_dY = grad_output[0].view(batch, module.out_channels, -1)
         dE_dW = einsum('bml,bkl->bmk', (dE_dY, X))
         return dE_dW.view(dE_dw_shape)
 

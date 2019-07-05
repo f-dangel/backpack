@@ -22,13 +22,10 @@ class SGSLinear(BackpropExtension):
                 module, grad_output)
 
     def bias_sum_grad_squared(self, module, grad_output):
-        """Compute sum of squared batch gradients for bias."""
         return (grad_output[0]**2).sum(0)
 
     def weight_sum_grad_squared(self, module, grad_output):
-        """Compute sum of squared batch gradients for weight."""
-        w_sgs = einsum('bi,bj->ij', (grad_output[0]**2, module.input0**2))
-        return w_sgs.view(module.out_features, module.in_features)
+        return einsum('bi,bj->ij', (grad_output[0]**2, module.input0**2))
 
 
 EXTENSIONS = [SGSLinear()]
