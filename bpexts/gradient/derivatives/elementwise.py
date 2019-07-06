@@ -3,9 +3,9 @@ from ...utils import einsum
 
 
 class ElementwiseDerivatives(BaseDerivatives):
-
     def jac_mat_prod(self, df, mat):
-        return einsum('bi,bic->bic', (df, mat))
+        batch = df.size(0)
+        return einsum('bi,bic->bic', (df.view(batch, -1), mat))
 
     def hessian_diagonal(self, ddf, mat):
         batch = mat.shape[0]
