@@ -2,7 +2,6 @@
 
 from .kflrbase import KFLRBase
 from ...derivatives.linear import LinearDerivatives
-from ...context import CTX
 
 
 class KFLRLinear(KFLRBase, LinearDerivatives):

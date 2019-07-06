@@ -28,7 +28,7 @@ class MSELossDerivatives(BaseDerivatives):
 
         return sum_H
 
-    def check_input_dims(module):
+    def check_input_dims(self, module):
         if not len(module.input0.shape) == 2:
             raise ValueError(
                 "Only 2D inputs are currently supported for MSELoss.")

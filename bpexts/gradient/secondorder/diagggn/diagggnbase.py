@@ -1,4 +1,3 @@
-from ...context import CTX
 from ...matbackprop import MatToJacMat
 from ...extensions import DIAG_GGN
 
