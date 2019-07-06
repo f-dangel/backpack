@@ -39,6 +39,10 @@ class bpexts():
 
 
 def extend(module):
+
+    if DEBUGGING:
+        print("[DEBUG] Extending", module)
+
     def store_io(module, input, output):
         for i in range(len(input)):
             setattr(module, 'input{}'.format(i), input[i].clone().detach())
@@ -54,7 +58,8 @@ def extend(module):
 
     def run_extensions(module, grad_input, grad_output):
         """Check which quantities need to be computed and evaluate them."""
-
+        if DEBUGGING:
+            print("[DEBUG] Backward Hook called on [{}]".format(module))
         grad_out = [
             grad_output[i].clone().detach() for i in range(len(grad_output))
         ]
@@ -62,16 +67,13 @@ def extend(module):
         exts_for_mod = list(Extensions.get_extensions_for(CTX.active_exts(), module))
 
         if DEBUGGING and len(exts_for_mod) == 0:
-            print("[DEBUG] No extension registered for {}".format(
+            print(" └─[DEBUG] No extension registered for {}".format(
                 module.__class__))
 
         for bpext in exts_for_mod:
             if DEBUGGING:
-                print("[DEBUG] {} [{} -> {}] {}".format(
-                    module.__class__,
-                    getattr(module, "input0").shape,
-                    module.output.shape,
-                    bpext.__class__
+                print(" └─[DEBUG] Backward hook {}".format(
+                    bpext.__class__,
                 ))
 
             bpext.apply(module, grad_input, grad_out)
