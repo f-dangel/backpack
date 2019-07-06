@@ -1,12 +1,11 @@
 """Factors for KFLR."""
 
 from .kflrbase import KFLRBase
-from ...jacobians.linear import LinearJacobian
-from ..context import CTX
-from ....utils import einsum
+from ...derivatives.linear import LinearDerivatives
+from ...context import CTX
 
 
-class KFLRLinear(KFLRBase, LinearJacobian):
+class KFLRLinear(KFLRBase, LinearDerivatives):
     def __init__(self):
         # NOTE: Bias and weights treated jointly in KFLR, save in weights
         super().__init__(params=["weight"])

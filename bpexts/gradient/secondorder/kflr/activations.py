@@ -1,18 +1,18 @@
-from ...jacobians.relu import ReLUJacobian
-from ...jacobians.tanh import TanhJacobian
-from ...jacobians.sigmoid import SigmoidJacobian
+from ...derivatives.relu import ReLUDerivatives
+from ...derivatives.tanh import TanhDerivatives
+from ...derivatives.sigmoid import SigmoidDerivatives
 from .kflrbase import KFLRBase
 
 
-class KFLRReLU(KFLRBase, ReLUJacobian):
+class KFLRReLU(KFLRBase, ReLUDerivatives):
     pass
 
 
-class KFLRSigmoid(KFLRBase, TanhJacobian):
+class KFLRSigmoid(KFLRBase, TanhDerivatives):
     pass
 
 
-class KFLRTanh(KFLRBase, SigmoidJacobian):
+class KFLRTanh(KFLRBase, SigmoidDerivatives):
     pass
 
 

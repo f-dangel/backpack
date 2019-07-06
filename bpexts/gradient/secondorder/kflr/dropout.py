@@ -1,8 +1,8 @@
-from ...jacobians.dropout import DropoutJacobian
+from ...derivatives.dropout import DropoutDerivatives
 from .kflrbase import KFLRBase
 
 
-class KFLRDropout(KFLRBase, DropoutJacobian):
+class KFLRDropout(KFLRBase, DropoutDerivatives):
     pass
 
 

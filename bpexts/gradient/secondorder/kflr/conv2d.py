@@ -5,14 +5,14 @@ approximation as in the KFAC paper for convolutions (KFC) to obtain curvature
 estimated for the convolution layer.
 """
 
-from ..context import CTX
+from ...context import CTX
 from ...utils import conv as convUtils
-from ...jacobians.conv2d import Conv2dJacobian
+from ...derivatives.conv2d import Conv2DDerivatives
 from ....utils import einsum
 from .kflrbase import KFLRBase
 
 
-class KFLRConv2d(KFLRBase, Conv2dJacobian):
+class KFLRConv2d(KFLRBase, Conv2DDerivatives):
     def __init__(self):
         # NOTE: Bias and weights treated jointly in KFLR, save in weights
         super().__init__(params=["weight"])

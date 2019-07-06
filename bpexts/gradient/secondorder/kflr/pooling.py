@@ -1,13 +1,13 @@
-from ...jacobians.avgpool2d import AvgPool2dJacobian
-from ...jacobians.maxpool2d import MaxPool2dJacobian
+from ...derivatives.avgpool2d import AvgPool2DDerivatives
+from ...derivatives.maxpool2d import MaxPool2DDerivatives
 from .kflrbase import KFLRBase
 
 
-class KFLRAvgPool2d(KFLRBase, AvgPool2dJacobian):
+class KFLRAvgPool2d(KFLRBase, AvgPool2DDerivatives):
     pass
 
 
-class KFLRMaxpool2d(KFLRBase, MaxPool2dJacobian):
+class KFLRMaxpool2d(KFLRBase, MaxPool2DDerivatives):
     pass
 
 
