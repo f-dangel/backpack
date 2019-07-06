@@ -67,9 +67,10 @@ for probname, prob in reversed(list(TEST_PROBLEMS.items())):
     CONFIGURATION_IDS.append(probname + "-bpext")
 
 
-@pytest.mark.skip(reason="Diag GGN with autograd takes way too long")
 @pytest.mark.parametrize("problem,impl", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
-def test_diag_ggn(problem, impl, benchmark):
+def test_diag_ggn(problem, impl, tmp_path, benchmark):
+    if "large_autograd" in str(tmp_path):
+        pytest.skip()
     benchmark(impl(problem).diag_ggn)
 
 
@@ -83,11 +84,14 @@ def test_batch_gradients(problem, impl, benchmark):
     benchmark(impl(problem).batch_gradients)
 
 
+@pytest.mark.skip()
 @pytest.mark.parametrize("problem,impl", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
 def test_var(problem, impl, benchmark):
-    benchmark(impl(problem).diag_h)
+    raise NotImplementedError
 
 
 @pytest.mark.parametrize("problem,impl", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
-def test_diag_h(problem, impl, benchmark):
+def test_diag_h(problem, impl, tmp_path, benchmark):
+    if "large_autograd" in str(tmp_path):
+        pytest.skip()
     benchmark(impl(problem).diag_h)
