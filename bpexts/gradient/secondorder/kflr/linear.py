@@ -16,7 +16,7 @@ class KFLRLinear(KFLRBase, LinearDerivatives):
                 self.Q(self, module, grad_input, grad_output))
 
     def G(self, module, grad_input, grad_output):
-        kflr_sqrt_ggn_out = self.get_sqrt_matrix()
+        kflr_sqrt_ggn_out = self.get_from_ctx()
         batch = kflr_sqrt_ggn_out.size(0)
         # NOTE: Normalization by batch size is already in the sqrt
         return einsum('bic,bjc->ij' (kflr_sqrt_ggn_out, kflr_sqrt_ggn_out))
