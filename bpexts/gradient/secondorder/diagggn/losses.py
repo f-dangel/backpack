@@ -1,5 +1,5 @@
-from ...jacobians.mseloss import MSELossJacobian
-from ...jacobians.crossentropyloss import CrossEntropyLossJacobian
+from ...derivatives.mseloss import MSELossDerivatives
+from ...derivatives.crossentropyloss import CrossEntropyLossDerivatives
 from ...context import CTX
 from .diagggnbase import DiagGGNBase
 
@@ -11,11 +11,11 @@ class DiagGGNLoss(DiagGGNBase):
         CTX._backpropagated_sqrt_ggn = sqrt_H
 
 
-class DiagGGNMSELoss(DiagGGNLoss, MSELossJacobian):
+class DiagGGNMSELoss(DiagGGNLoss, MSELossDerivatives):
     pass
 
 
-class DiagGGNCrossEntropyLoss(DiagGGNLoss, CrossEntropyLossJacobian):
+class DiagGGNCrossEntropyLoss(DiagGGNLoss, CrossEntropyLossDerivatives):
     pass
 
 

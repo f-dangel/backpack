@@ -1,8 +1,8 @@
-from .basejacobian import BaseJacobian
+from .basederivatives import BaseDerivatives
 from ...utils import einsum
 
 
-class ElementwiseJacobian(BaseJacobian):
+class ElementwiseDerivatives(BaseDerivatives):
 
     def jac_mat_prod(self, df, mat):
         return einsum('bi,bic->bic', (df, mat))

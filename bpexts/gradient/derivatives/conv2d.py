@@ -2,10 +2,10 @@ from ...utils import einsum
 from ..utils import conv as convUtils
 from torch.nn import Conv2d
 from torch.nn.functional import conv_transpose2d
-from .basejacobian import BaseJacobian
+from .basederivatives import BaseDerivatives
 
 
-class Conv2dJacobian(BaseJacobian):
+class Conv2DDerivatives(BaseDerivatives):
 
     def get_module(self):
         return Conv2d

@@ -1,11 +1,11 @@
 from ...context import CTX
 from ...utils import conv as convUtils
-from ...jacobians.conv2d import Conv2dJacobian
+from ...derivatives.conv2d import Conv2DDerivatives
 from ....utils import einsum
 from .diagggnbase import DiagGGNBase
 
 
-class DiagGGNConv2d(DiagGGNBase, Conv2dJacobian):
+class DiagGGNConv2d(DiagGGNBase, Conv2DDerivatives):
 
     def __init__(self):
         super().__init__(params=["bias", "weight"])

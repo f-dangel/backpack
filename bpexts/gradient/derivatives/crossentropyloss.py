@@ -2,10 +2,10 @@ from math import sqrt
 from torch import diag_embed, ones_like, softmax, sqrt as torchsqrt
 from torch.nn import CrossEntropyLoss
 from ...utils import einsum
-from .basejacobian import BaseJacobian
+from .basederivatives import BaseDerivatives
 
 
-class CrossEntropyLossJacobian(BaseJacobian):
+class CrossEntropyLossDerivatives(BaseDerivatives):
 
     def get_module(self):
         return CrossEntropyLoss

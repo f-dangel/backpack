@@ -1,8 +1,8 @@
-from ...jacobians.dropout import DropoutJacobian
+from ...derivatives.dropout import DropoutDerivatives
 from .diagggnbase import DiagGGNBase
 
 
-class DiagGGNDropout(DiagGGNBase, DropoutJacobian):
+class DiagGGNDropout(DiagGGNBase, DropoutDerivatives):
     pass
 
 

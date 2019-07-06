@@ -3,12 +3,12 @@ import torch.nn
 from ...context import CTX
 from ....utils import einsum
 from ...utils import conv as convUtils
-from ...jacobians.conv2d import Conv2dJacobian
+from ...derivatives.conv2d import Conv2DDerivatives
 from .diaghbase import DiagHBase
 DETACH_INPUTS = True
 
 
-class DiagHConv2d(DiagHBase, Conv2dJacobian):
+class DiagHConv2d(DiagHBase, Conv2DDerivatives):
     def __init__(self):
         super().__init__(params=["bias", "weight"])
 

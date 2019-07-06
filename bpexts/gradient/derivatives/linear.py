@@ -1,9 +1,9 @@
 from ...utils import einsum
 from torch.nn import Linear
-from .basejacobian import BaseJacobian
+from .basederivatives import BaseDerivatives
 
 
-class LinearJacobian(BaseJacobian):
+class LinearDerivatives(BaseDerivatives):
 
     def get_module(self):
         return Linear

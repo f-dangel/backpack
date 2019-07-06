@@ -1,10 +1,10 @@
-from ...jacobians.dropout import DropoutJacobian
+from ...derivatives.dropout import DropoutDerivatives
 from .diaghbase import DiagHBase
 
 DETACH_INPUTS = True
 
 
-class DiagHDropout(DiagHBase, DropoutJacobian):
+class DiagHDropout(DiagHBase, DropoutDerivatives):
     pass
 
 

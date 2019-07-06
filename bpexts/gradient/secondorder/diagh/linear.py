@@ -2,11 +2,11 @@ import torch
 import torch.nn
 from ...context import CTX
 from ....utils import einsum
-from ...jacobians.linear import LinearJacobian
+from ...derivatives.linear import LinearDerivatives
 from .diaghbase import DiagHBase
 
 
-class DiagHLinear(DiagHBase, LinearJacobian):
+class DiagHLinear(DiagHBase, LinearDerivatives):
     def __init__(self):
         super().__init__(params=["bias", "weight"])
 

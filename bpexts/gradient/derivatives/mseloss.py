@@ -1,10 +1,10 @@
 from math import sqrt
 from torch import diag_embed, ones_like
 from torch.nn import MSELoss
-from .basejacobian import BaseJacobian
+from .basederivatives import BaseDerivatives
 
 
-class MSELossJacobian(BaseJacobian):
+class MSELossDerivatives(BaseDerivatives):
 
     def get_module(self):
         return MSELoss

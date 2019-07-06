@@ -2,10 +2,10 @@ from torch import zeros
 from torch.nn import MaxPool2d
 from torch.nn.functional import max_pool2d
 from ..utils import conv as convUtils
-from .basejacobian import BaseJacobian
+from .basederivatives import BaseDerivatives
 
 
-class MaxPool2dJacobian(BaseJacobian):
+class MaxPool2DDerivatives(BaseDerivatives):
 
     def get_module(self):
         return MaxPool2d

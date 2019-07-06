@@ -1,13 +1,13 @@
-from ...jacobians.avgpool2d import AvgPool2dJacobian
-from ...jacobians.maxpool2d import MaxPool2dJacobian
+from ...derivatives.avgpool2d import AvgPool2DDerivatives
+from ...derivatives.maxpool2d import MaxPool2DDerivatives
 from .diaghbase import DiagHBase
 
 
-class DiagHAvgPool2d(DiagHBase, AvgPool2dJacobian):
+class DiagHAvgPool2d(DiagHBase, AvgPool2DDerivatives):
     pass
 
 
-class DiagHMaxPool2d(DiagHBase, MaxPool2dJacobian):
+class DiagHMaxPool2d(DiagHBase, MaxPool2DDerivatives):
     pass
 
 

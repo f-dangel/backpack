@@ -1,10 +1,10 @@
 from ...context import CTX
-from ...jacobians.linear import LinearJacobian
+from ...derivatives.linear import LinearDerivatives
 from ....utils import einsum
 from .diagggnbase import DiagGGNBase
 
 
-class DiagGGNLinear(DiagGGNBase, LinearJacobian):
+class DiagGGNLinear(DiagGGNBase, LinearDerivatives):
 
     def __init__(self):
         super().__init__(params=["bias", "weight"])

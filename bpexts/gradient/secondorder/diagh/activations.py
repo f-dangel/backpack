@@ -1,18 +1,18 @@
-from ...jacobians.relu import ReLUJacobian
-from ...jacobians.sigmoid import SigmoidJacobian
-from ...jacobians.tanh import TanhJacobian
+from ...derivatives.relu import ReLUDerivatives
+from ...derivatives.sigmoid import SigmoidDerivatives
+from ...derivatives.tanh import TanhDerivatives
 from .diaghbase import DiagHBase
 
 
-class DiagHReLU(DiagHBase, ReLUJacobian):
+class DiagHReLU(DiagHBase, ReLUDerivatives):
     pass
 
 
-class DiagHSigmoid(DiagHBase, SigmoidJacobian):
+class DiagHSigmoid(DiagHBase, SigmoidDerivatives):
     pass
 
 
-class DiagHTanh(DiagHBase, TanhJacobian):
+class DiagHTanh(DiagHBase, TanhDerivatives):
     pass
 
 

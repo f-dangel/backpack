@@ -1,6 +1,6 @@
 from ...context import CTX
-from ...jacobians.mseloss import MSELossJacobian
-from ...jacobians.crossentropyloss import CrossEntropyLossJacobian
+from ...derivatives.mseloss import MSELossDerivatives
+from ...derivatives.crossentropyloss import CrossEntropyLossDerivatives
 from .diaghbase import DiagHBase
 
 
@@ -12,11 +12,11 @@ class DiagHLoss(DiagHBase):
         CTX._backpropagated_sqrt_h_signs = [1.]
 
 
-class DiagHMSELoss(DiagHLoss, MSELossJacobian):
+class DiagHMSELoss(DiagHLoss, MSELossDerivatives):
     pass
 
 
-class DiagHCrossEntropyLoss(DiagHLoss, CrossEntropyLossJacobian):
+class DiagHCrossEntropyLoss(DiagHLoss, CrossEntropyLossDerivatives):
     pass
 
 

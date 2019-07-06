@@ -5,10 +5,10 @@ import torch.nn
 from torch.nn import AvgPool2d, ConvTranspose2d
 from ..utils import conv as convUtils
 from ...utils import einsum
-from .basejacobian import BaseJacobian
+from .basederivatives import BaseDerivatives
 
 
-class AvgPool2dJacobian(BaseJacobian):
+class AvgPool2DDerivatives(BaseDerivatives):
 
     def get_module(self):
         return AvgPool2d

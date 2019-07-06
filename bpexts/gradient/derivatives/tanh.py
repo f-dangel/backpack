@@ -1,8 +1,8 @@
 from torch.nn import Tanh
-from .elementwise import ElementwiseJacobian
+from .elementwise import ElementwiseDerivatives
 
 
-class TanhJacobian(ElementwiseJacobian):
+class TanhDerivatives(ElementwiseDerivatives):
 
     def get_module(self):
         return Tanh

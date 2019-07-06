@@ -1,8 +1,8 @@
 from torch.nn import Sigmoid
-from .elementwise import ElementwiseJacobian
+from .elementwise import ElementwiseDerivatives
 
 
-class SigmoidJacobian(ElementwiseJacobian):
+class SigmoidDerivatives(ElementwiseDerivatives):
 
     def get_module(self):
         return Sigmoid
