@@ -1,5 +1,5 @@
 from ...jacobians.dropout import DropoutJacobian
-from .base import KFLRBase
+from .kflrbase import KFLRBase
 
 
 class KFLRDropout(KFLRBase, DropoutJacobian):

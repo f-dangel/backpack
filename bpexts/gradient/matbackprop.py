@@ -7,7 +7,7 @@ class BackpropSqrtMatrixWithJacobian(BackpropExtension):
         super().__init__(self.get_module(), extension, params=params)
         self.__CTX_NAME = ctx_name
 
-    def get_before_backprop(self):
+    def get_sqrt_matrix(self):
         mat = getattr(CTX, self.__CTX_NAME, None)
         if mat is None:
             raise ValueError(
@@ -15,10 +15,10 @@ class BackpropSqrtMatrixWithJacobian(BackpropExtension):
                     self.__CTX_NAME))
         return mat
 
-    def set_after_backprop(self, mat):
+    def set_sqrt_matrix(self, mat):
         setattr(CTX, self.__CTX_NAME, mat)
 
     def backpropagate(self, module, grad_input, grad_output):
-        sqrt_out = self.get_before_backprop()
+        sqrt_out = self.get_sqrt_matrix()
         sqrt_in = self.jac_mat_prod(module, grad_input, grad_output, sqrt_out)
-        self.set_after_backprop(sqrt_in)
+        self.set_sqrt_matrix(sqrt_in)

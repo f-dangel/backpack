@@ -1,6 +1,6 @@
 """Factors for KFLR."""
 
-from .base import KFLRBase
+from .kflrbase import KFLRBase
 from ...jacobians.linear import LinearJacobian
 from ..context import CTX
 from ....utils import einsum
@@ -17,7 +17,7 @@ class KFLRLinear(KFLRBase, LinearJacobian):
                 self.Q(self, module, grad_input, grad_output))
 
     def G(self, module, grad_input, grad_output):
-        kflr_sqrt_ggn_out = CTX._kflr_backpropagated_sqrt_ggn
+        kflr_sqrt_ggn_out = self.get_sqrt_matrix()
         batch = kflr_sqrt_ggn_out.size(0)
         # NOTE: Normalization by batch size is already in the sqrt
         return einsum('bic,bjc->ij' (kflr_sqrt_ggn_out, kflr_sqrt_ggn_out))

@@ -1,7 +1,7 @@
 from ...jacobians.relu import ReLUJacobian
 from ...jacobians.tanh import TanhJacobian
 from ...jacobians.sigmoid import SigmoidJacobian
-from .base import KFLRBase
+from .kflrbase import KFLRBase
 
 
 class KFLRReLU(KFLRBase, ReLUJacobian):
