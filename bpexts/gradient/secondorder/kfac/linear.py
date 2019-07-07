@@ -11,16 +11,8 @@ class KFACLinear(KFACBase, LinearDerivatives):
 
     def weight(self, module, grad_input, grad_output):
         # Naming of Kronecker factors: Equation (1) of the paper
-        return (self.G(self, module, grad_input, grad_output),
-                self.A(self, module, grad_input, grad_output))
-
-    def G(self, module, grad_input, grad_output):
-        kfac_sqrt_mc_samples = self.get_from_ctx()
-        batch = kfac_sqrt_mc_samples.size(0)
-        # NOTE: Normalization by batch size is already in the sqrt
-        # TODO: Additional normalization for more than one MC sample? (m>1)
-        return einsum('bim,bjm->ij',
-                      (kfac_sqrt_mc_samples, kfac_sqrt_mc_samples))
+        return (self.A(self, module, grad_input, grad_output),
+                self.G(self, module, grad_input, grad_output))
 
     # TODO: Refactor, same as in kflr.linear
     def A(self, module, grad_input, grad_output):
@@ -30,6 +22,13 @@ class KFACLinear(KFACBase, LinearDerivatives):
             batch, module.out_features, device=module.input0.device)
         input = torch.cat((module.input0, ones), dim=1)
         return einsum('bi,bj-> ij', (input, input)) / batch
+
+    def G(self, module, grad_input, grad_output):
+        kfac_sqrt_mc_samples = self.get_from_ctx()
+        samples = kfac_sqrt_mc_samples.size(2)
+        # NOTE: Normalization by batch size is already in the sqrt
+        return einsum('bim,bjm->ij',
+                      (kfac_sqrt_mc_samples, kfac_sqrt_mc_samples)) / samples
 
 
 EXTENSIONS = [KFACLinear()]

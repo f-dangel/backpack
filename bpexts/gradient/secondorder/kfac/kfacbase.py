@@ -1,4 +1,3 @@
-from ...context import CTX
 from ...extensions import KFAC
 from ...matbackprop import MatToJacMat
 
