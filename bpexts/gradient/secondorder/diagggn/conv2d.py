@@ -13,19 +13,19 @@ class DiagGGNConv2d(DiagGGNBase, Conv2DDerivatives):
     def bias(self, module, grad_input, grad_output):
         sqrt_ggn_out = CTX._backpropagated_sqrt_ggn
         sqrt_ggn = convUtils.separate_channels_and_pixels(module, sqrt_ggn_out)
+
         return einsum('bijc,bikc->i', (sqrt_ggn, sqrt_ggn))
 
     def weight(self, module, grad_input, grad_output):
         sqrt_ggn_out = CTX._backpropagated_sqrt_ggn
         sqrt_ggn = convUtils.separate_channels_and_pixels(module, sqrt_ggn_out)
 
-        # unfolded input, repeated for each class
-        num_classes = sqrt_ggn_out.size(2)
-        X = convUtils.unfold_func(module)(module.input0).unsqueeze(0)
-        X = X.expand(num_classes, -1, -1, -1)
+        X = convUtils.unfold_func(module)(module.input0)
 
-        return einsum('bmlc,cbkl,bmic,cbki->mk',
-                      (sqrt_ggn, X, sqrt_ggn, X)).view_as(module.weight)
+        AX = einsum('bkl,bmlc->cbkm', (X, sqrt_ggn))
+        AXAX = (AX**2).sum([0, 1]).transpose(0, 1)
+
+        return AXAX.view_as(module.weight)
 
 
 EXTENSIONS = [DiagGGNConv2d()]
