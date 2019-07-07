@@ -9,7 +9,7 @@ from .secondorder import diagggn, diagh, kflr
 from .extensions import Extensions
 from .context import CTX
 
-DEBUGGING = True
+DEBUGGING = False
 
 
 def set_bpexts(*args):
@@ -45,8 +45,8 @@ def extend(module):
 
     def store_io(module, input, output):
         for i in range(len(input)):
-            setattr(module, 'input{}'.format(i), input[i].clone().detach())
-        setattr(module, 'output', output.clone().detach())
+            setattr(module, 'input{}'.format(i), input[i])
+        setattr(module, 'output', output)
 
     def store_shapes(module, input, output):
         """Store dimensionality of output as buffer."""
@@ -61,7 +61,7 @@ def extend(module):
         if DEBUGGING:
             print("[DEBUG] Backward Hook called on [{}]".format(module))
         grad_out = [
-            grad_output[i].clone().detach() for i in range(len(grad_output))
+            grad_output[i] for i in range(len(grad_output))
         ]
 
         exts_for_mod = list(Extensions.get_extensions_for(CTX.active_exts(), module))
