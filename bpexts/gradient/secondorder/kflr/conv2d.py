@@ -5,6 +5,7 @@ approximation as in the KFAC paper for convolutions (KFC) to obtain curvature
 estimated for the convolution layer.
 """
 
+import torch
 from ...utils import conv as convUtils
 from ...derivatives.conv2d import Conv2DDerivatives
 from ....utils import einsum
@@ -18,8 +19,8 @@ class KFLRConv2d(KFLRBase, Conv2DDerivatives):
 
     def weight(self, module, grad_input, grad_output):
         # Naming of Kronecker factors: Equation (25) of the KFC paper
-        return (self.Omega(self, module, grad_input, grad_output),
-                self.Gamma(self, module, grad_input, grad_output))
+        return (self.Omega(module, grad_input, grad_output),
+                self.Gamma(module, grad_input, grad_output))
 
     def Omega(self, module, grad_input, grad_output):
         # unfolded input
@@ -37,7 +38,8 @@ class KFLRConv2d(KFLRBase, Conv2DDerivatives):
             module, kflr_sqrt_ggn_out)
         # NOTE: Normalization might be different from KFC
         # NOTE: Normalization by batch size is already in the sqrt
-        return einsum('bijc,blkc->il', (sqrt_ggn, sqrt_ggn))
+        sqrt_ggn = einsum('bijc->bic', (kflr_sqrt_ggn, ))
+        return einsum('bic,blc->il', (sqrt_ggn, sqrt_ggn))
 
 
 EXTENSIONS = [KFLRConv2d()]

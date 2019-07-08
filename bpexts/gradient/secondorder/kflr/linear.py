@@ -1,6 +1,8 @@
 """Factors for KFLR."""
 
+import torch
 from .kflrbase import KFLRBase
+from ....utils import einsum
 from ...derivatives.linear import LinearDerivatives
 
 
@@ -11,8 +13,8 @@ class KFLRLinear(KFLRBase, LinearDerivatives):
 
     def weight(self, module, grad_input, grad_output):
         # Naming of Kronecker factors: Equation (20) of the paper
-        return (self.Q(self, module, grad_input, grad_output),
-                self.G(self, module, grad_input, grad_output))
+        return (self.Q(module, grad_input, grad_output),
+                self.G(module, grad_input, grad_output))
 
     def Q(self, module, grad_input, grad_output):
         # append ones for the bias
@@ -20,12 +22,12 @@ class KFLRLinear(KFLRBase, LinearDerivatives):
         ones = torch.ones(
             batch, module.out_features, device=module.input0.device)
         input = torch.cat((module.input0, ones), dim=1)
-        return einsum('bi,bj-> ij', (input, input)) / batch
+        return einsum('bi,bj->ij', (input, input)) / batch
 
     def G(self, module, grad_input, grad_output):
         kflr_sqrt_ggn_out = self.get_from_ctx()
         # NOTE: Normalization by batch size is already in the sqrt
-        return einsum('bic,bjc->ij' (kflr_sqrt_ggn_out, kflr_sqrt_ggn_out))
+        return einsum('bic,bjc->ij', (kflr_sqrt_ggn_out, kflr_sqrt_ggn_out))
 
 
 EXTENSIONS = [KFLRLinear()]

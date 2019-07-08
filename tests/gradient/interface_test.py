@@ -15,7 +15,7 @@ def dummy_forward_pass():
     D_OUT = 2
 
     X = torch.randn(N, D_IN)
-    Y = torch.randint(2, size=(N,))
+    Y = torch.randint(2, size=(N, ))
 
     lin1 = extend(Linear(in_features=D_IN, out_features=D_H, bias=True))
     act = extend(ReLU())
@@ -28,25 +28,27 @@ def dummy_forward_pass():
     def forward():
         return loss(model(X), Y)
 
-    return forward, (lin1.weight, lin1.bias, lin2.weight, lin2.bias)
+    return forward, (lin1.weight, lin2.weight), (lin1.bias, lin2.bias)
 
 
-forward_func, weights = dummy_forward_pass()
-
+forward_func, weights, bias = dummy_forward_pass()
 
 FEATURES_TO_ATTRIBUTES = {
     ext.GRAD: "grad",
     ext.BATCH_GRAD: "grad_batch",
     ext.SUM_GRAD_SQUARED: "sum_grad_squared",
     ext.DIAG_GGN: "diag_ggn",
+    ext.KFLR: "kflr",
 }
 
 
-def interface_test(feature):
+def interface_test(feature, weight_has_attr=True, bias_has_attr=True):
     with bpexts(feature):
         forward_func().backward()
     for w in weights:
-        assert hasattr(w, FEATURES_TO_ATTRIBUTES[feature])
+        assert weight_has_attr == hasattr(w, FEATURES_TO_ATTRIBUTES[feature])
+    for b in bias:
+        assert bias_has_attr == hasattr(b, FEATURES_TO_ATTRIBUTES[feature])
 
 
 def test_interface_grad():
@@ -63,3 +65,8 @@ def test_interface_sum_grad_squared():
 
 def test_interface_diag_ggn():
     interface_test(ext.DIAG_GGN)
+
+
+def test_interface_kflr()
+    interface_test(ext.KFLR, weight_has_attr=True, bias_has_attr=False)
+
