@@ -39,6 +39,7 @@ FEATURES_TO_ATTRIBUTES = {
     ext.SUM_GRAD_SQUARED: "sum_grad_squared",
     ext.DIAG_GGN: "diag_ggn",
     ext.KFLR: "kflr",
+    ext.KFAC: "kfac",
 }
 
 
@@ -67,6 +68,9 @@ def test_interface_diag_ggn():
     interface_test(ext.DIAG_GGN)
 
 
-def test_interface_kflr()
+def test_interface_kflr():
     interface_test(ext.KFLR, weight_has_attr=True, bias_has_attr=False)
 
+
+def test_interface_kfac():
+    interface_test(ext.KFAC, weight_has_attr=True, bias_has_attr=False)

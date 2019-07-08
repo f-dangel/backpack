@@ -1,5 +1,6 @@
 from math import sqrt
-from torch import diag_embed, ones_like, softmax, sqrt as torchsqrt, diag
+from warnings import warn
+from torch import diag_embed, ones_like, softmax, sqrt as torchsqrt, diag, randn
 from torch.nn import CrossEntropyLoss
 from ...utils import einsum
 from .basederivatives import BaseDerivatives
@@ -25,7 +26,11 @@ class CrossEntropyLossDerivatives(BaseDerivatives):
         N, C = module.input0.shape
         M = self.MC_SAMPLES
 
-        probs = self.get_probs()
+        warn("This method is returning a dummy")
+        return randn(N, C, M, device=module.input0.device)
+
+        # TODO
+        probs = self.get_probs(module)
         ys = multinomial(probs, M, replacement=True)  # [N, M]
 
         # Compute G : [N, C, M], such that

@@ -11,8 +11,8 @@ class KFACConv2d(KFACBase, Conv2DDerivatives):
 
     def weight(self, module, grad_input, grad_output):
         # Naming of Kronecker factors: Equation (25) of the KFC paper
-        return (self.Omega(self, module, grad_input, grad_output),
-                self.Gamma(self, module, grad_input, grad_output))
+        return (self.Omega(module, grad_input, grad_output),
+                self.Gamma(module, grad_input, grad_output))
 
     def Omega(self, module, grad_input, grad_output):
         # unfolded input
@@ -31,7 +31,8 @@ class KFACConv2d(KFACBase, Conv2DDerivatives):
             module, kfac_sqrt_mc_samples)
         # NOTE: Normalization might be different from KFC
         # NOTE: Normalization by batch size is already in the sqrt
-        return einsum('bijc,blkc->il', (kfac_sqrt_mc, kfac_sqrt_mc)) / samples
+        kfac_sqrt_mc = einsum('bijc->bic', (kfac_sqrt_mc, ))
+        return einsum('bic,blc->il', (kfac_sqrt_mc, kfac_sqrt_mc)) / samples
 
 
 EXTENSIONS = [KFACConv2d()]

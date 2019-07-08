@@ -1,7 +1,9 @@
 """Factors for KFAC."""
 
+import torch
 from .kfacbase import KFACBase
 from ...derivatives.linear import LinearDerivatives
+from ....utils import einsum
 
 
 class KFACLinear(KFACBase, LinearDerivatives):
@@ -11,8 +13,8 @@ class KFACLinear(KFACBase, LinearDerivatives):
 
     def weight(self, module, grad_input, grad_output):
         # Naming of Kronecker factors: Equation (1) of the paper
-        return (self.A(self, module, grad_input, grad_output),
-                self.G(self, module, grad_input, grad_output))
+        return (self.A(module, grad_input, grad_output),
+                self.G(module, grad_input, grad_output))
 
     # TODO: Refactor, same as in kflr.linear
     def A(self, module, grad_input, grad_output):
