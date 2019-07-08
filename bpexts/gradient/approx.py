@@ -1,10 +1,12 @@
 from .matbackprop import ActOnCTX
-
+from .backpropextension import BackpropExtension
 
 class MatToJacMatJac(BackpropExtension, ActOnCTX):
     """Backprop `M` to `J^T M J`, where `M` is a batch expectation."""
 
-    def __init__(self, ctx_name, extension, params=[]):
+    def __init__(self, ctx_name, extension, params=None):
+        if params is None:
+            params = []
         ActOnCTX.__init__(self, ctx_name)
         BackpropExtension.__init__(
             self, self.get_module(), extension, params=params)

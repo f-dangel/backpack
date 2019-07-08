@@ -83,8 +83,7 @@ class Extensions:
         return Extensions.EXTENSIONS
 
     @staticmethod
-    def register(backpropextension):
-        assert isinstance(backpropextension, BackpropExtension)
+    def register(backpropextension: BackpropExtension):
 
         Extensions.check_exists(
             backpropextension._BackpropExtension__get_ext())

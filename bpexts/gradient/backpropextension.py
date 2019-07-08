@@ -3,7 +3,12 @@ import warnings
 
 class BackpropExtension():
 
-    def __init__(self, module, extension, params=[], req_inputs=[], req_output=False):
+    def __init__(self, module, extension, params=None, req_inputs=None, req_output=False):
+        if params is None:
+            params = []
+        if req_inputs is None:
+            req_inputs = []
+
         # TODO: req_inputs and req_output are currently unused
         self.__module = module
         self.__extension = extension

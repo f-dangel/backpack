@@ -1,8 +1,8 @@
-import torch
+from torch.nn import Unfold
 
 
 def unfold_func(module):
-    return torch.nn.Unfold(
+    return Unfold(
         kernel_size=module.kernel_size,
         dilation=module.dilation,
         padding=module.padding,

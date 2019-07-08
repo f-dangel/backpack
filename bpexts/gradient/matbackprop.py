@@ -5,7 +5,9 @@ from .ctxinteract import ActOnCTX
 class MatToJacMat(BackpropExtension, ActOnCTX):
     """Backpropagate `M` to `J^T M`."""
 
-    def __init__(self, ctx_name, extension, params=[]):
+    def __init__(self, ctx_name, extension, params=None):
+        if params is None:
+            params = []
         ActOnCTX.__init__(self, ctx_name)
         BackpropExtension.__init__(
             self, self.get_module(), extension, params=params)
