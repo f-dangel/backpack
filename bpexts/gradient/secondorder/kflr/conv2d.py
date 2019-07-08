@@ -24,7 +24,7 @@ class KFLRConv2d(KFLRBase, Conv2DDerivatives):
 
     def Omega(self, module, grad_input, grad_output):
         # unfolded input
-        X = convUtils.unfold_func(module)(module.input0).unsqueeze(0)
+        X = convUtils.unfold_func(module)(module.input0)
         # add ones for the bias terms
         ones = torch.ones(module.input0.size(0), 1, X.size(2), device=X.device)
         X_expanded = torch.cat((X, ones), dim=1)
