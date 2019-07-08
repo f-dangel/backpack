@@ -18,6 +18,14 @@ class KFLRConv2d(KFLRBase, Conv2DDerivatives):
         super().__init__(params=["weight"])
 
     def weight(self, module, grad_input, grad_output):
+        r"""
+        Note on the Kronecker factors regarding optimization:
+        -----------------------------------------------------
+        * vec denotes flattening in PyTorch (NOT column-stacking)
+        * The concatenated parameter vector is [ (vec W)^T, b^T ]^T
+        * In this flattening scheme, the curvature matrix C factorizes into
+          C = Gamma \otimes Omega
+        """
         # Naming of Kronecker factors: Equation (25) of the KFC paper
         return (self.Omega(module, grad_input, grad_output),
                 self.Gamma(module, grad_input, grad_output))

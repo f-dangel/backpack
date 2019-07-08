@@ -12,6 +12,14 @@ class KFACLinear(KFACBase, LinearDerivatives):
         super().__init__(params=["weight"])
 
     def weight(self, module, grad_input, grad_output):
+        r"""
+        Note on the Kronecker factors regarding optimization:
+        -----------------------------------------------------
+        * vec denotes flattening in PyTorch (NOT column-stacking)
+        * The concatenated parameter vector is [ (vec W)^T, b^T ]^T
+        * In this flattening scheme, the curvature matrix C factorizes into
+          C = G \otimes A
+        """
         # Naming of Kronecker factors: Equation (1) of the paper
         return (self.A(module, grad_input, grad_output),
                 self.G(module, grad_input, grad_output))
