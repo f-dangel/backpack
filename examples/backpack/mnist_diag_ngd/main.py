@@ -1,11 +1,12 @@
 from torch import no_grad
 import torch
-
-from bpexts.gradient import bpexts, extensions as ext
+from torch.autograd.profiler import profile
 
 from data_loader import get_data_loaders
 from model import make_model, make_lossfunc
 from optim import get_optimizer
+
+PROFILE = False
 
 TEST_BATCH_SIZE = 512
 BATCH_SIZE = 16
@@ -24,16 +25,24 @@ for epoch in range(1, EPOCHS + 1):
     model.train()
     for batch_idx, (data, target) in enumerate(train_loader):
         optimizer.zero_grad()
-        loss = lossfunc(model(data), target)
 
-        with torch.autograd.profiler.profile() as prof:
-            with bpexts(ext.DIAG_GGN):
-                loss.backward()
-                optimizer.step()
 
-        print(prof.table("cpu_time"))
-        import pdb
-        pdb.set_trace()
+        def loss_closure():
+            loss = lossfunc(model(data), target)
+            loss.backward()
+            return loss
+
+
+        if PROFILE:
+            with profile() as prof:
+                optimizer.step(loss_closure)
+
+            print(prof.table("cpu_time"))
+            import pdb
+
+            pdb.set_trace()
+        else:
+            optimizer.step(loss_closure)
 
         print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
             epoch,
@@ -52,10 +61,10 @@ for epoch in range(1, EPOCHS + 1):
             pred = model(data).argmax(dim=1, keepdim=True)
             correct += pred.eq(target.view_as(pred)).sum().item()
 
-    print("-"*20)
+    print("-" * 20)
     print('Test set accuracy: {}/{} ({:.0f}%)'.format(
         correct,
         len(test_loader.dataset),
         100. * correct / len(test_loader.dataset)
     ))
-    print("-"*20)
+    print("-" * 20)
