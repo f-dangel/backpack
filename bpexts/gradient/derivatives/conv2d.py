@@ -6,11 +6,10 @@ from .basederivatives import BaseDerivatives
 
 
 class Conv2DDerivatives(BaseDerivatives):
-
     def get_module(self):
         return Conv2d
 
-    def jac_mat_prod(self, module, grad_input, grad_output, mat):
+    def jac_t_mat_prod(self, module, grad_input, grad_output, mat):
         convUtils.check_sizes_input(mat, module)
         mat_as_conv = self.__reshape_for_conv(mat, module)
         jmp_as_conv = self.__apply_jacobian_of(module, mat_as_conv)
@@ -40,8 +39,7 @@ class Conv2DDerivatives(BaseDerivatives):
             stride=module.stride,
             padding=module.padding,
             dilation=module.dilation,
-            groups=module.groups
-        )
+            groups=module.groups)
 
     def hessian_is_zero(self):
         return True

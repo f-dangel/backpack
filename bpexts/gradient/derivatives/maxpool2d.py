@@ -6,11 +6,10 @@ from .basederivatives import BaseDerivatives
 
 
 class MaxPool2DDerivatives(BaseDerivatives):
-
     def get_module(self):
         return MaxPool2d
 
-    def jac_mat_prod(self, module, grad_input, grad_output, mat):
+    def jac_t_mat_prod(self, module, grad_input, grad_output, mat):
         convUtils.check_sizes_input(mat, module)
         mat_as_pool = self.__reshape_for_pooling(mat, module)
         jmp_as_pool = self.__apply_jacobian_of(module, mat_as_pool)
@@ -33,8 +32,7 @@ class MaxPool2DDerivatives(BaseDerivatives):
         num_classes = mat.shape[-1]
 
         result = zeros(
-            batch, channels, in_x * in_y, num_classes, device=mat.device
-        )
+            batch, channels, in_x * in_y, num_classes, device=mat.device)
 
         pool_idx = self.get_pooling_idx(module)
         pool_idx = pool_idx.view(batch, channels, out_x * out_y)
@@ -50,8 +48,7 @@ class MaxPool2DDerivatives(BaseDerivatives):
             padding=module.padding,
             dilation=module.dilation,
             return_indices=True,
-            ceil_mode=module.ceil_mode
-        )
+            ceil_mode=module.ceil_mode)
         return pool_idx
 
     def hessian_is_zero(self):

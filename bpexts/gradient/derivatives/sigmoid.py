@@ -3,13 +3,12 @@ from .elementwise import ElementwiseDerivatives
 
 
 class SigmoidDerivatives(ElementwiseDerivatives):
-
     def get_module(self):
         return Sigmoid
 
-    def jac_mat_prod(self, module, grad_input, grad_output, mat):
+    def jac_t_mat_prod(self, module, grad_input, grad_output, mat):
         d_sigma = module.output * (1. - module.output)
-        return super().jac_mat_prod(d_sigma, mat)
+        return super().jac_t_mat_prod(d_sigma, mat)
 
     def hessian_is_zero(self):
         return False

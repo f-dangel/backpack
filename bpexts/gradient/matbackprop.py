@@ -14,5 +14,6 @@ class MatToJacMat(BackpropExtension, ActOnCTX):
 
     def backpropagate(self, module, grad_input, grad_output):
         sqrt_out = self.get_from_ctx()
-        sqrt_in = self.jac_mat_prod(module, grad_input, grad_output, sqrt_out)
+        sqrt_in = self.jac_t_mat_prod(module, grad_input, grad_output,
+                                      sqrt_out)
         self.set_in_ctx(sqrt_in)

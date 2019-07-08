@@ -3,7 +3,7 @@ from ...utils import einsum
 
 
 class ElementwiseDerivatives(BaseDerivatives):
-    def jac_mat_prod(self, df, mat):
+    def jac_t_mat_prod(self, df, mat):
         batch = df.size(0)
         return einsum('bi,bic->bic', (df.view(batch, -1), mat))
 

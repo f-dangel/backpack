@@ -9,17 +9,14 @@ from .basederivatives import BaseDerivatives
 
 
 class AvgPool2DDerivatives(BaseDerivatives):
-
     def get_module(self):
         return AvgPool2d
 
-    def jac_mat_prod(self, module, grad_input, grad_output, mat):
+    def jac_t_mat_prod(self, module, grad_input, grad_output, mat):
 
-        assert(
-            module.count_include_pad,
-            "Might now work for exotic hyperparameters of AvgPool2d, " +
-            "like count_include_pad=False"
-        )
+        assert (module.count_include_pad,
+                "Might now work for exotic hyperparameters of AvgPool2d, " +
+                "like count_include_pad=False")
 
         convUtils.check_sizes_input(mat, module)
         mat_as_pool = self.__reshape_for_conv(mat, module)
@@ -64,8 +61,7 @@ class AvgPool2DDerivatives(BaseDerivatives):
             kernel_size=module.kernel_size,
             stride=module.stride,
             padding=module.padding,
-            bias=False
-        ).to(module.input0.device)
+            bias=False).to(module.input0.device)
 
         conv2d_t.weight.requires_grad = False
         avg_kernel = torch.ones_like(conv2d_t.weight) / conv2d_t.weight.numel()

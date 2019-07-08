@@ -2,7 +2,7 @@ class BaseDerivatives():
 
     MC_SAMPLES = 1
 
-    def jac_mat_prod(self, module, grad_input, grad_output, mat):
+    def jac_t_mat_prod(self, module, grad_input, grad_output, mat):
         raise NotImplementedError
 
     def hessian_is_zero(self):
