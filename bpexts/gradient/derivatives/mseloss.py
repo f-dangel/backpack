@@ -38,6 +38,19 @@ class MSELossDerivatives(BaseDerivatives):
 
         return sum_H
 
+    def hessian_matrix_product(self, module, grad_input, grad_output):
+        """Multiplication of the input Hessian with a matrix."""
+
+        def hmp(mat):
+            Hmat = 2 * mat
+
+            if module.reduction is "mean":
+                Hmat /= module.input0.shape[0]
+
+            return Hmat
+
+        return hmp
+
     def check_input_dims(self, module):
         if not len(module.input0.shape) == 2:
             raise ValueError(
