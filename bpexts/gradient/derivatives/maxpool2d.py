@@ -26,7 +26,7 @@ class MaxPool2DDerivatives(BaseDerivatives):
 
     # Jacobian-matrix product
     def jac_mat_prod(self, module, grad_input, grad_output, mat):
-        convUtils.check_sizes_output(mat, module)
+        convUtils.check_sizes_input_jac(mat, module)
         mat_as_pool = self.__reshape_for_pooling_in(mat, module)
         jmp_as_pool = self.__apply_jacobian_of(module, mat_as_pool)
         return self.__reshape_for_matmul(jmp_as_pool, module)
@@ -40,10 +40,10 @@ class MaxPool2DDerivatives(BaseDerivatives):
         batch = module.output_shape[0]
         out_features = prod(module.output_shape) / batch
         num_classes = mat.size(-1)
-        return mat.view(batch, in_features, num_classes)
+        return mat.view(batch, out_features, num_classes)
 
     def __apply_jacobian_of(self, module, mat):
-        batch, channels, in_x, in_y = module.input0.size()
+        batch, channels, out_x, out_y = module.output_shape
         num_classes = mat.shape[-1]
 
         pool_idx = self.get_pooling_idx(module)

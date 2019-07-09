@@ -1,6 +1,3 @@
-"""Testing class for comparison of first-order information and brute-force
- auto-differentiation."""
-
 import torch
 import numpy as np
 import pytest
@@ -34,7 +31,6 @@ for dev_name, dev in DEVICES.items():
         ALL_CONFIGURATIONS.append(tuple([prob, dev]))
         CONFIGURATION_IDS.append(probname + "-" + dev_name)
 
-
 atol = 1e-5
 rtol = 1e-5
 
@@ -47,8 +43,7 @@ def report_nonclose_values(x, y):
     x_numpy = x.data.cpu().numpy().flatten()
     y_numpy = y.data.cpu().numpy().flatten()
 
-    close = np.isclose(
-        x_numpy, y_numpy, atol=atol, rtol=rtol)
+    close = np.isclose(x_numpy, y_numpy, atol=atol, rtol=rtol)
     where_not_close = np.argwhere(np.logical_not(close))
     for idx in where_not_close:
         x, y = x_numpy[idx], y_numpy[idx]
@@ -65,16 +60,20 @@ def check_sizes(*plists):
 
 
 def check_values(list1, list2):
-    for g1, g2 in zip(list1, list2):
+    for i, (g1, g2) in enumerate(zip(list1, list2)):
+        print(i)
+        print(g1.size())
         report_nonclose_values(g1, g2)
         assert torch.allclose(g1, g2, atol=atol, rtol=rtol)
+
 
 ###
 # Tests
 ###
 
 
-@pytest.mark.parametrize("problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
+@pytest.mark.parametrize(
+    "problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
 def test_batch_gradients(problem, device):
     problem.to(device)
     autograd_res = AutogradImpl(problem).batch_gradients()
@@ -84,7 +83,8 @@ def test_batch_gradients(problem, device):
     check_values(autograd_res, bpexts_res)
 
 
-@pytest.mark.parametrize("problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
+@pytest.mark.parametrize(
+    "problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
 def test_batch_gradients_sum_to_grad(problem, device):
     problem.to(device)
     autograd_res = AutogradImpl(problem).gradient()
@@ -95,7 +95,8 @@ def test_batch_gradients_sum_to_grad(problem, device):
     check_values(autograd_res, bpexts_res)
 
 
-@pytest.mark.parametrize("problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
+@pytest.mark.parametrize(
+    "problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
 def test_sgs(problem, device):
     problem.to(device)
     autograd_res = AutogradImpl(problem).sgs()
@@ -105,7 +106,8 @@ def test_sgs(problem, device):
     check_values(autograd_res, bpexts_res)
 
 
-@pytest.mark.parametrize("problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
+@pytest.mark.parametrize(
+    "problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
 def test_diag_ggn(problem, device):
     problem.to(device)
 
@@ -116,7 +118,8 @@ def test_diag_ggn(problem, device):
     check_values(autograd_res, bpexts_res)
 
 
-@pytest.mark.parametrize("problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
+@pytest.mark.parametrize(
+    "problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
 def test_batch_l2(problem, device):
     problem.to(device)
 
@@ -127,7 +130,8 @@ def test_batch_l2(problem, device):
     check_values(autograd_res, bpexts_res)
 
 
-@pytest.mark.parametrize("problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
+@pytest.mark.parametrize(
+    "problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
 def test_variance(problem, device):
     problem.to(device)
 
@@ -138,12 +142,33 @@ def test_variance(problem, device):
     check_values(autograd_res, bpexts_res)
 
 
-@pytest.mark.parametrize("problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
+@pytest.mark.parametrize(
+    "problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
 def test_diag_h(problem, device):
     problem.to(device)
 
     autograd_res = AutogradImpl(problem).diag_h()
     bpexts_res = BpextImpl(problem).diag_h()
+
+    check_sizes(autograd_res, bpexts_res)
+    check_values(autograd_res, bpexts_res)
+
+
+@pytest.mark.parametrize(
+    "problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
+def test_hmp(problem, device):
+    problem.to(device)
+
+    # create test matrices
+    NUM_COLS = 10
+    matrices = [
+        torch.randn(p.numel(), NUM_COLS, device=device)
+        for p in problem.model.parameters()
+    ]
+
+    # perform hmps on same random matrices
+    autograd_res = AutogradImpl(problem).hmp(matrices)
+    bpexts_res = BpextImpl(problem).hmp(matrices)
 
     check_sizes(autograd_res, bpexts_res)
     check_values(autograd_res, bpexts_res)

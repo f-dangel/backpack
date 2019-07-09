@@ -9,7 +9,8 @@ class ElementwiseDerivatives(BaseDerivatives):
 
     def jac_mat_prod(self, df, mat):
         # the Jacobian is diagonal, so J^T = J
-        return self.jac_t_mat_prod(df, mat)
+        batch = df.size(0)
+        return einsum('bi,bic->bic', (df.view(batch, -1), mat))
 
     def hessian_diagonal(self, ddf, mat):
         batch = mat.shape[0]

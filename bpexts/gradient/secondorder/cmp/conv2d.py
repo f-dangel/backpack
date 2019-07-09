@@ -10,10 +10,29 @@ class CMPConv2d(CMPBase, Conv2DDerivatives):
         super().__init__(params=["weight", "bias"])
 
     def weight(self, module, grad_input, grad_output):
-        raise NotImplementedError
+        CMP_out = self.get_from_ctx()
+
+        def weight_hmp(mat):
+            Jmat = self.weight_jac_mat_prod(module, grad_input, grad_output,
+                                            mat)
+            CJmat = CMP_out(Jmat)
+            JTCJmat = self.weight_jac_t_mat_prod(module, grad_input,
+                                                 grad_output, CJmat)
+            return JTCJmat
+
+        return weight_hmp
 
     def bias(self, module, grad_input, grad_output):
-        raise NotImplementedError
+        CMP_out = self.get_from_ctx()
+
+        def bias_hmp(mat):
+            Jmat = self.bias_jac_mat_prod(module, grad_input, grad_output, mat)
+            CJmat = CMP_out(Jmat)
+            JTCJmat = self.bias_jac_t_mat_prod(module, grad_input, grad_output,
+                                               CJmat)
+            return JTCJmat
+
+        return bias_hmp
 
 
 EXTENSIONS = [CMPConv2d()]
