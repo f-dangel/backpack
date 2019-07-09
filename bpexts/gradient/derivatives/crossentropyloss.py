@@ -61,11 +61,11 @@ class CrossEntropyLossDerivatives(BaseDerivatives):
     def hessian_matrix_product(self, module, grad_input, grad_output):
         """Multiplication of the input Hessian with a matrix."""
         probs = self.get_probs(module)
-        batch, num_classes = tuple(self.input_softmax.size())
 
         def hmp(mat):
-            Hmat = einsum('bic,bic->bic', (probs, mat))
-            -einsum('bi,bj,bjc->bic', (probs, probs, mat))
+            h_tmp = einsum('bi,bj->bij', (probs, probs))
+            Hmat = einsum('bi,bic->bic', (probs, mat))
+            -einsum('bij,bjc->bic', (h_tmp, mat))
 
             if module.reduction is "mean":
                 Hmat /= module.input0.shape[0]
