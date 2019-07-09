@@ -10,6 +10,10 @@ class SigmoidDerivatives(ElementwiseDerivatives):
         d_sigma = module.output * (1. - module.output)
         return super().jac_t_mat_prod(d_sigma, mat)
 
+    def jac_mat_prod(self, module, grad_input, grad_output, mat):
+        d_sigma = module.output * (1. - module.output)
+        return super().jac_mat_prod(d_sigma, mat)
+
     def hessian_is_zero(self):
         return False
 

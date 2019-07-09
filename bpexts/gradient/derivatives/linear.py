@@ -21,22 +21,21 @@ class LinearDerivatives(BaseDerivatives):
     def weight_jac_mat_prod(self, module, grad_input, grad_output, mat):
         batch = module.input0.size(0)
         num_cols = mat.size(1)
-        shape = (module.out_features, module.in_features, num_cols)
+        shape = tuple(module.weight.size()) + (num_cols, )
 
         jac_mat = einsum('bj,ijc->bic', (module.input0, mat.view(shape)))
-        return jac_mat.view(batch, module.out_features, num_cols)
+        return jac_mat
 
     def weight_jac_t_mat_prod(self, module, grad_input, grad_output, mat):
         batch = module.input0.size(0)
         num_cols = mat.size(2)
-        shape = (batch, module.in_features, num_cols)
 
         jac_t_mat = einsum('bjc,bi->jic', (mat, module.input0)).contiguous()
         return jac_t_mat.view(module.weight.numel(), num_cols)
 
     def bias_jac_mat_prod(self, module, grad_input, grad_output, mat):
         batch = module.input0.size(0)
-        return mat.unsqueeze(0).expand(batch, -1, -1) / batch
+        return mat.unsqueeze(0).expand(batch, -1, -1)
 
     def bias_jac_t_mat_prod(self, module, grad_input, grad_output, mat):
         return mat.sum(0)
