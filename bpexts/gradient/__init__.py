@@ -5,7 +5,7 @@ to calculate the variance of a gradient.
 """
 import torch
 from .firstorder import batchgrad, sumgradsquared, batchl2, variance
-from .secondorder import diagggn, diagh, kflr, kfac
+from .secondorder import diagggn, diagh, kflr, kfac, cmp
 from .extensions import Extensions
 from .context import CTX
 
@@ -60,11 +60,10 @@ def extend(module):
         """Check which quantities need to be computed and evaluate them."""
         if DEBUGGING:
             print("[DEBUG] Backward Hook called on [{}]".format(module))
-        grad_out = [
-            grad_output[i] for i in range(len(grad_output))
-        ]
+        grad_out = [grad_output[i] for i in range(len(grad_output))]
 
-        exts_for_mod = list(Extensions.get_extensions_for(CTX.active_exts(), module))
+        exts_for_mod = list(
+            Extensions.get_extensions_for(CTX.active_exts(), module))
 
         if DEBUGGING and len(exts_for_mod) == 0:
             print(" └─[DEBUG] No extension registered for {}".format(
@@ -72,9 +71,7 @@ def extend(module):
 
         for bpext in exts_for_mod:
             if DEBUGGING:
-                print(" └─[DEBUG] Backward hook {}".format(
-                    bpext.__class__,
-                ))
+                print(" └─[DEBUG] Backward hook {}".format(bpext.__class__, ))
 
             bpext.apply(module, grad_input, grad_out)
 
@@ -101,6 +98,7 @@ EXTENSIONS = [
     *diagh.EXTENSIONS,
     *kflr.EXTENSIONS,
     *kfac.EXTENSIONS,
+    *cmp.EXTENSIONS,
 ]
 
 for backpropextension in EXTENSIONS:

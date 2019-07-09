@@ -18,7 +18,7 @@ class AvgPool2DDerivatives(BaseDerivatives):
                 "Might now work for exotic hyperparameters of AvgPool2d, " +
                 "like count_include_pad=False")
 
-        convUtils.check_sizes_input(mat, module)
+        convUtils.check_sizes_input_jac_t(mat, module)
         mat_as_pool = self.__reshape_for_conv(mat, module)
         jmp_as_pool = self.__apply_jacobian_of(module, mat_as_pool)
 

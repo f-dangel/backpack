@@ -52,6 +52,11 @@ class KFAC(Extension):
     pass
 
 
+class CMP(Extension):
+    savefield = "cmp"
+    pass
+
+
 class ParametrizedExtension(Extension):
     def __init__(self, input):
         self.input = input
@@ -74,6 +79,7 @@ class Extensions:
         DIAG_H,
         KFLR,
         KFAC,
+        CMP,
     ]
 
     registeredExtensions = {}
