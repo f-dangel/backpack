@@ -5,7 +5,6 @@ import bpexts.gradient.extensions as ext
 
 
 class BpextImpl(Implementation):
-
     def gradient(self):
         return list(torch.autograd.grad(self.loss(), self.model.parameters()))
 
@@ -44,3 +43,13 @@ class BpextImpl(Implementation):
             self.loss().backward()
             diag_h = [p.diag_h for p in self.model.parameters()]
         return diag_h
+
+    def hmp(self, mat_list):
+        assert len(mat_list) == len(list(self.model.parameters()))
+        results = []
+        with bpexts(ext.CMP):
+            self.loss().backward()
+            for p, mat in zip(self.model.parameters(), mat_list):
+                results.append(p.cmp(mat))
+
+        return results

@@ -90,14 +90,37 @@ class AutogradImpl(Implementation):
         for p in list(self.model.parameters()):
             diag_h_p = torch.zeros_like(p).view(-1)
 
-            df_dx = torch.autograd.grad(loss, [p], create_graph=True, retain_graph=True)
+            df_dx = torch.autograd.grad(
+                loss, [p], create_graph=True, retain_graph=True)
             for parameter_index in range(p.numel()):
-                diag_value = extract_ith_element_of_diag_h(parameter_index, p, df_dx)
+                diag_value = extract_ith_element_of_diag_h(
+                    parameter_index, p, df_dx)
                 diag_h_p[parameter_index] = diag_value
 
             diag_hs.append(diag_h_p.view(p.size()))
 
         return diag_hs
+
+    def hmp(self, mat_list):
+        assert len(mat_list) == len(list(self.model.parameters()))
+
+        loss = self.problem.lossfunc(
+            self.model(self.problem.X), self.problem.Y)
+
+        results = []
+        for p, mat in zip(self.model.parameters(), mat_list):
+            results.append(self.hvp_applied_columnwise(loss, p, mat))
+
+        return results
+
+    def hvp_applied_columnwise(self, f, p, mat):
+        h_cols = []
+        for i in range(mat.size(1)):
+            hvp_col_i = HF.hessian_vector_product(f, [p],
+                                                  mat[:, i].view_as(p))[0]
+            h_cols.append(hvp_col_i.view(-1, 1))
+
+        return torch.cat(h_cols, dim=1)
 
     def plist_like(self, plist):
         return list([torch.zeros(*p.size()).to(self.device) for p in plist])

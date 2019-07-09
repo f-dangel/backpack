@@ -1,4 +1,3 @@
-
 class Implementation():
     def __init__(self, test_problem, device=None):
         self.problem = test_problem
@@ -39,4 +38,7 @@ class Implementation():
         raise NotImplementedError
 
     def diag_h(self):
+        raise NotImplementedError
+
+    def hmp(self, mat_list):
         raise NotImplementedError
