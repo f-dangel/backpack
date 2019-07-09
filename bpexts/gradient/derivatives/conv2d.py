@@ -77,3 +77,46 @@ class Conv2DDerivatives(BaseDerivatives):
             padding=module.padding,
             dilation=module.dilation,
             groups=module.groups)
+
+    # TODO: Improve performance
+    def bias_jac_mat_prod(self, module, grad_input, grad_output, mat):
+        batch, out_channels, out_x, out_y = module.output_shape
+        num_cols = mat.size(1)
+        # mat has shape (out_channels, num_cols)
+        # expand for each batch and for each channel
+        jac_mat = mat.view(1, out_channels, 1, 1, num_cols)
+        jac_mat = jac_mat.expand(batch, -1, out_x, out_y, -1).contiguous()
+        return jac_mat.view(batch, -1, num_cols)
+
+    # TODO: Improve performance
+    def bias_jac_t_mat_prod(self, module, grad_input, grad_output, mat):
+        batch, out_channels, out_x, out_y = module.output_shape
+        num_cols = mat.size(2)
+        shape = (batch, out_channels, out_x * out_y, num_cols)
+        # mat has shape (batch, out_features, num_cols)
+        # sum back over the pixels and batch dimensions
+        jac_t_mat = mat.view(shape).sum([0, 2])
+        return jac_t_mat
+
+    # TODO: Improve performance, get rid of unfold
+    def weight_jac_mat_prod(self, module, grad_input, grad_output, mat):
+        batch, out_channels, out_x, out_y = module.output_shape
+        out_features = out_channels * out_x * out_y
+        num_cols = mat.size(1)
+        jac_mat = mat.view(1, out_channels, -1, num_cols)
+        jac_mat = jac_mat.expand(batch, out_channels, -1, -1)
+        jac_mat = einsum('bij,bkic->bkjc', (convUtils.unfold_func(module)(
+            module.input0), jac_mat)).contiguous()
+        jac_mat = jac_mat.view(batch, out_features, num_cols)
+        return jac_mat
+
+    # TODO: Improve performance, get rid of unfold
+    def weight_jac_t_mat_prod(self, module, grad_input, grad_output, mat):
+        batch, out_channels, out_x, out_y = module.output_shape
+        num_cols = mat.size(2)
+
+        jac_t_mat = mat.view(batch, out_channels, -1, num_cols)
+        jac_t_mat = einsum('bij,bkjc->kic', (convUtils.unfold_func(module)(
+            module.input0), jac_t_mat)).contiguous()
+        jac_t_mat = jac_t_mat.view(module.weight.numel(), num_cols)
+        return jac_t_mat
