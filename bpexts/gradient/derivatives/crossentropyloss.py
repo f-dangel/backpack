@@ -63,9 +63,9 @@ class CrossEntropyLossDerivatives(BaseDerivatives):
         probs = self.get_probs(module)
 
         def hmp(mat):
-            h_tmp = einsum('bi,bj->bij', (probs, probs))
-            Hmat = einsum('bi,bic->bic', (probs, mat))
-            -einsum('bij,bjc->bic', (h_tmp, mat))
+            Hmat = einsum('bi,bic->bic',
+                          (probs, mat)) - einsum('bi,bj,bjc->bic',
+                                                 (probs, probs, mat))
 
             if module.reduction is "mean":
                 Hmat /= module.input0.shape[0]
