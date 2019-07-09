@@ -29,14 +29,27 @@ def separate_channels_and_pixels(module, tensor):
     return tensor.view(batch, channels, pixels, classes)
 
 
-def check_sizes_input(mat, module):
+def check_sizes_input_jac_t(mat, module):
     batch, out_channels, out_x, out_y = module.output_shape
     assert tuple(mat.size())[:2] == (batch, out_channels * out_x * out_y)
 
 
-def check_sizes_output(jmp, module):
-    if tuple(jmp.size())[1:] != tuple(module.input0.size())[1:]:
+def check_sizes_input_jac(mat, module):
+    batch, in_channels, in_x, in_y = module.input0.size()
+    assert tuple(mat.size())[:2] == (batch, in_channels * in_x * in_y)
+
+
+def check_sizes_output_jac_t(jtmp, module):
+    if tuple(jtmp.size())[1:] != tuple(module.input0.size())[1:]:
         raise ValueError(
             "Size after conv_transpose does not match", "Got {}, and {}.",
             "Expected all dimensions to match, except for the first.".format(
-                jmp.size(), module.input0.size()))
+                jtmp.size(), module.input0.size()))
+
+
+def check_sizes_output_jac(jmp, module):
+    if tuple(jmp.size())[1:] != tuple(module.output_shape)[1:]:
+        raise ValueError(
+            "Size after conv does not match", "Got {}, and {}.",
+            "Expected all dimensions to match, except for the first.".format(
+                jmp.size(), module.output_shape))
