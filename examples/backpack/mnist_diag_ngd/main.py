@@ -29,20 +29,19 @@ for epoch in range(1, EPOCHS + 1):
 
         def loss_closure():
             loss = lossfunc(model(data), target)
-            loss.backward()
             return loss
 
 
         if PROFILE:
             with profile() as prof:
-                optimizer.step(loss_closure)
+                loss = optimizer.step(loss_closure)
 
             print(prof.table("cpu_time"))
             import pdb
 
             pdb.set_trace()
         else:
-            optimizer.step(loss_closure)
+            loss = optimizer.step(loss_closure)
 
         print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
             epoch,
@@ -51,7 +50,7 @@ for epoch in range(1, EPOCHS + 1):
             100. * batch_idx / len(train_loader),
             loss.item()
         ))
-        if batch_idx > 3:
+        if batch_idx > 30:
             break
 
     model.eval()
