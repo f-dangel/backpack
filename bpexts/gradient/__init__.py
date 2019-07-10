@@ -6,7 +6,7 @@ to calculate the variance of a gradient.
 import torch
 from .firstorder import batchgrad, sumgradsquared, batchl2, variance
 from .secondorder import diagggn, diagh, kflr, kfac, cmp
-from .extensions import Extensions
+from .extensions import Extension, Extensions
 from .context import CTX
 
 DEBUGGING = True
@@ -18,7 +18,15 @@ def set_bpexts(*args):
     """
     for arg in args:
         Extensions.check_exists(arg)
-    CTX.from_dict({ext: (ext in args) for ext in Extensions.ext_list()})
+
+    args_classes = []
+    for arg in args:
+        if isinstance(arg, Extension):
+            args_classes.append(arg.__class__)
+        else:
+            args_classes.append(arg)
+
+    CTX.from_dict({ext: (ext in args_classes ) for ext in Extensions.ext_list()})
 
 
 class bpexts():
@@ -60,6 +68,12 @@ def extend(module):
         """Check which quantities need to be computed and evaluate them."""
         if DEBUGGING:
             print("[DEBUG] Backward Hook called on [{}]".format(module))
+        if len(CTX.active_exts()) == 0:
+            print("[DEBUG] No Active Extension")
+        else:
+            print("[DEBUG] Extensions active: {}".format(CTX.active_exts()))
+
+
         grad_out = [grad_output[i] for i in range(len(grad_output))]
 
         exts_for_mod = list(
