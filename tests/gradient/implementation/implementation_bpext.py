@@ -2,7 +2,7 @@ import torch
 from .implementation import Implementation
 from bpexts.gradient import bpexts
 import bpexts.gradient.extensions as ext
-from bpexts.gradient.secondorder.cmp.cmpbase import GGN
+from bpexts.gradient.secondorder.curvature import Curvature
 
 
 class BpextImpl(Implementation):
@@ -51,7 +51,7 @@ class BpextImpl(Implementation):
         with bpexts(ext.CMP):
             self.loss().backward()
             for p, mat in zip(self.model.parameters(), mat_list):
-                results.append(p.cmp(mat))
+                results.append(p.cmp(mat, which=Curvature.HESSIAN))
         return results
 
     def ggn_mp(self, mat_list):
@@ -60,5 +60,5 @@ class BpextImpl(Implementation):
         with bpexts(ext.CMP):
             self.loss().backward()
             for p, mat in zip(self.model.parameters(), mat_list):
-                results.append(p.cmp(mat, which=GGN))
+                results.append(p.cmp(mat, which=Curvature.GGN))
         return results
