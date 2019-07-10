@@ -26,8 +26,6 @@ class CMPConv2d(CMPBase, Conv2DDerivatives):
         CMP_out = self.get_from_ctx()
 
         def bias_cmp(mat):
-            which = Curvature.DEFAULT if which is None else which
-
             Jmat = self.bias_jac_mat_prod(module, grad_input, grad_output, mat)
             CJmat = CMP_out(Jmat)
             JTCJmat = self.bias_jac_t_mat_prod(module, grad_input, grad_output,

@@ -25,7 +25,7 @@ class CMPBase(BackpropExtension, ActOnCTX):
         # second-order module effects
         residual = self._compute_residual_diag_if_nonzero(
             module, grad_input, grad_output)
-        residual = Curvature.modify_residual(residual)
+        residual_mod = Curvature.modify_residual(residual)
 
         def CMP_in(mat):
             """Multiplication of curvature matrix with matrix `mat`.
@@ -40,8 +40,8 @@ class CMPBase(BackpropExtension, ActOnCTX):
             JTCJmat = self.jac_t_mat_prod(module, grad_input, grad_output,
                                           CJmat)
 
-            if res_mod is not None:
-                JTCJmat.add_(einsum('bi,bic->bic', (res_mod, mat)))
+            if residual_mod is not None:
+                JTCJmat.add_(einsum('bi,bic->bic', (residual_mod, mat)))
 
             return JTCJmat
 
