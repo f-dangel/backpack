@@ -6,11 +6,10 @@ The example is taken from
     for Document Processing (2007).
 """
 
-from torch import (Tensor, randn)
+from torch import (Tensor, randn, allclose)
 from torch.nn import Conv2d
 from random import (randint, choice)
 from bpexts.gradient import extend, bpexts
-from bpexts.utils import torch_allclose as allclose
 import bpexts.gradient.extensions as ext
 
 
