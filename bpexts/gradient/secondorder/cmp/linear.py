@@ -1,5 +1,5 @@
 import torch
-from .cmpbase import CMPBase
+from .cmpbase import CMPBase, HESSIAN
 from ....utils import einsum
 from ...derivatives.linear import LinearDerivatives
 
@@ -11,37 +11,27 @@ class CMPLinear(CMPBase, LinearDerivatives):
     def weight(self, module, grad_input, grad_output):
         CMP_out = self.get_from_ctx()
 
-        print('\nCreate weight HMP')
-
-        def weight_hmp(mat):
+        def weight_cmp(mat, which=HESSIAN):
             Jmat = self.weight_jac_mat_prod(module, grad_input, grad_output,
                                             mat)
-            print('Weight calling CMP with id', id(CMP_out))
-            CJmat = CMP_out(Jmat)
+            CJmat = CMP_out(Jmat, which=which)
             JTCJmat = self.weight_jac_t_mat_prod(module, grad_input,
                                                  grad_output, CJmat)
             return JTCJmat
 
-        print('Finish creation of weight HMP\n')
-
-        return weight_hmp
+        return weight_cmp
 
     def bias(self, module, grad_input, grad_output):
         CMP_out = self.get_from_ctx()
 
-        print('\nCreate bias HMP')
-
-        def bias_hmp(mat):
+        def bias_cmp(mat, which=HESSIAN):
             Jmat = self.bias_jac_mat_prod(module, grad_input, grad_output, mat)
-            print('Bias calling CMP with id', id(CMP_out))
-            CJmat = CMP_out(Jmat)
+            CJmat = CMP_out(Jmat, which=which)
             JTCJmat = self.bias_jac_t_mat_prod(module, grad_input, grad_output,
                                                CJmat)
             return JTCJmat
 
-        print('Finish creation of bias HMP\n')
-
-        return bias_hmp
+        return bias_cmp
 
 
 EXTENSIONS = [CMPLinear()]
