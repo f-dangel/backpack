@@ -122,5 +122,29 @@ class AutogradImpl(Implementation):
 
         return torch.cat(h_cols, dim=1)
 
+    def ggn_mp(self, mat_list):
+        assert len(mat_list) == len(list(self.model.parameters()))
+
+        outputs = self.model(self.problem.X)
+        loss = self.problem.lossfunc(outputs, self.problem.Y)
+
+        results = []
+        for p, mat in zip(self.model.parameters(), mat_list):
+            results.append(
+                self.ggn_vp_applied_columnwise(loss, outputs, p, mat))
+
+        return results
+
+    def ggn_vp_applied_columnwise(self, loss, out, p, mat):
+        ggn_cols = []
+        for i in range(mat.size(1)):
+            col_i = HF.vector_to_parameter_list(mat[:, i], [p])
+
+            GGN_col_i = HF.ggn_vector_product_from_plist(loss, out, [p], col_i)
+            GGN_col_i = torch.cat([g.detach().view(-1) for g in GGN_col_i])
+            ggn_cols.append(GGN_col_i.view(-1, 1))
+
+        return torch.cat(ggn_cols, dim=1)
+
     def plist_like(self, plist):
         return list([torch.zeros(*p.size()).to(self.device) for p in plist])

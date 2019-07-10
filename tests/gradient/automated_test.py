@@ -159,16 +159,32 @@ def test_diag_h(problem, device):
 def test_hmp(problem, device):
     problem.to(device)
 
-    # create test matrices
     NUM_COLS = 10
     matrices = [
         torch.randn(p.numel(), NUM_COLS, device=device)
         for p in problem.model.parameters()
     ]
 
-    # perform hmps on same random matrices
     autograd_res = AutogradImpl(problem).hmp(matrices)
     bpexts_res = BpextImpl(problem).hmp(matrices)
+
+    check_sizes(autograd_res, bpexts_res)
+    check_values(autograd_res, bpexts_res)
+
+
+@pytest.mark.parametrize(
+    "problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
+def test_ggn_mp(problem, device):
+    problem.to(device)
+
+    NUM_COLS = 10
+    matrices = [
+        torch.randn(p.numel(), NUM_COLS, device=device)
+        for p in problem.model.parameters()
+    ]
+
+    autograd_res = AutogradImpl(problem).ggn_mp(matrices)
+    bpexts_res = BpextImpl(problem).ggn_mp(matrices)
 
     check_sizes(autograd_res, bpexts_res)
     check_values(autograd_res, bpexts_res)

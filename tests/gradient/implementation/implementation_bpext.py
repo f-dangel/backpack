@@ -2,6 +2,7 @@ import torch
 from .implementation import Implementation
 from bpexts.gradient import bpexts
 import bpexts.gradient.extensions as ext
+from bpexts.gradient.secondorder.cmp.cmpbase import GGN
 
 
 class BpextImpl(Implementation):
@@ -51,5 +52,13 @@ class BpextImpl(Implementation):
             self.loss().backward()
             for p, mat in zip(self.model.parameters(), mat_list):
                 results.append(p.cmp(mat))
+        return results
 
+    def ggn_mp(self, mat_list):
+        assert len(mat_list) == len(list(self.model.parameters()))
+        results = []
+        with bpexts(ext.CMP):
+            self.loss().backward()
+            for p, mat in zip(self.model.parameters(), mat_list):
+                results.append(p.cmp(mat, which=GGN))
         return results
