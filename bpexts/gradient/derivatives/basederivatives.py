@@ -16,3 +16,6 @@ class BaseDerivatives():
 
     def hessian_diagonal(self):
         raise NotImplementedError
+
+    def hessian_is_psd(self):
+        raise NotImplementedError

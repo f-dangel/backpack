@@ -74,5 +74,8 @@ class CrossEntropyLossDerivatives(BaseDerivatives):
 
         return hmp
 
+    def hessian_is_psd(self):
+        return True
+
     def get_probs(self, module):
         return softmax(module.input0, dim=1)

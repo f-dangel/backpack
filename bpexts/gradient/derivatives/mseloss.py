@@ -55,3 +55,6 @@ class MSELossDerivatives(BaseDerivatives):
         if not len(module.input0.shape) == 2:
             raise ValueError(
                 "Only 2D inputs are currently supported for MSELoss.")
+
+    def hessian_is_psd(self):
+        return True
