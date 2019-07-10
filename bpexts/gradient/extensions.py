@@ -1,5 +1,6 @@
 import warnings
 from .backpropextension import BackpropExtension
+from .secondorder.curvature import Curvature
 
 
 class Extension():
@@ -52,14 +53,17 @@ class KFAC(Extension):
     pass
 
 
-class CMP(Extension):
-    savefield = "cmp"
-    pass
-
-
 class ParametrizedExtension(Extension):
     def __init__(self, input):
         self.input = input
+
+
+class CMP(ParametrizedExtension):
+    savefield = "cmp"
+
+    def __init__(self, which):
+        Curvature.set_current(which)
+        super().__init__(which)
 
 
 class JVP(Extension):
@@ -107,8 +111,9 @@ class Extensions:
 
     @staticmethod
     def check_exists(ext):
-        if ext not in Extensions.EXTENSIONS:
-            raise ValueError("Backprop extension [{}] unknown".format(ext))
+        ext_cls = ext.__class__ if isinstance(ext, Extension) else ext
+        if ext_cls not in Extensions.EXTENSIONS:
+            raise ValueError("Backprop extension [{}] unknown".format(ext_cls))
 
     @staticmethod
     def get_extensions_for(active_exts, module):

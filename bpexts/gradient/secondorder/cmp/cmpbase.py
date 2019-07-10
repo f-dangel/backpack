@@ -25,24 +25,21 @@ class CMPBase(BackpropExtension, ActOnCTX):
         # second-order module effects
         residual = self._compute_residual_diag_if_nonzero(
             module, grad_input, grad_output)
+        residual = Curvature.modify_residual(residual)
 
-        def CMP_in(mat, which):
+        def CMP_in(mat):
             """Multiplication of curvature matrix with matrix `mat`.
 
             Parameters:
             -----------
             mat : torch.Tensor
                 Matrix that will be multiplied.
-            which : str
-                Which curvature matrix to use. For choices,
-                Choices: See `CURVATURE_CHOICES`
             """
             Jmat = self.jac_mat_prod(module, grad_input, grad_output, mat)
-            CJmat = CMP_out(Jmat, which=which)
+            CJmat = CMP_out(Jmat)
             JTCJmat = self.jac_t_mat_prod(module, grad_input, grad_output,
                                           CJmat)
 
-            res_mod = Curvature.modify_residual(residual, which)
             if res_mod is not None:
                 JTCJmat.add_(einsum('bi,bic->bic', (res_mod, mat)))
 

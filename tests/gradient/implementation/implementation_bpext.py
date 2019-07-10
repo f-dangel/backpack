@@ -48,17 +48,17 @@ class BpextImpl(Implementation):
     def hmp(self, mat_list):
         assert len(mat_list) == len(list(self.model.parameters()))
         results = []
-        with bpexts(ext.CMP):
+        with bpexts(ext.CMP(Curvature.HESSIAN)):
             self.loss().backward()
             for p, mat in zip(self.model.parameters(), mat_list):
-                results.append(p.cmp(mat, which=Curvature.HESSIAN))
+                results.append(p.cmp(mat))
         return results
 
     def ggn_mp(self, mat_list):
         assert len(mat_list) == len(list(self.model.parameters()))
         results = []
-        with bpexts(ext.CMP):
+        with bpexts(ext.CMP(Curvature.GGN)):
             self.loss().backward()
             for p, mat in zip(self.model.parameters(), mat_list):
-                results.append(p.cmp(mat, which=Curvature.GGN))
+                results.append(p.cmp(mat))
         return results
