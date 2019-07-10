@@ -3,34 +3,49 @@ import torch
 from torch.autograd.profiler import profile
 
 from data_loader import get_data_loaders
-from model import make_model, make_lossfunc
-from optim import get_optimizer
+from model import make_model, make_lossfunc, make_quadratic_model
+from optim import get_sgd, get_ngd
 
 PROFILE = False
 
 TEST_BATCH_SIZE = 512
-BATCH_SIZE = 16
+BATCH_SIZE = 128
 SEED = 0
 EPOCHS = 2
-LR = 0.01
+LR = .1
+
+USE_SGD = False
 
 torch.manual_seed(SEED)
 
-model = make_model()
+#model = make_model()
+model = make_quadratic_model()
+
 lossfunc = make_lossfunc()
 train_loader, test_loader = get_data_loaders(BATCH_SIZE, TEST_BATCH_SIZE)
-optimizer = get_optimizer(model, LR)
+
+if USE_SGD:
+    optimizer = get_sgd(model, LR)
+else:
+    optimizer = get_ngd(model)
 
 for epoch in range(1, EPOCHS + 1):
     model.train()
     for batch_idx, (data, target) in enumerate(train_loader):
-        optimizer.zero_grad()
 
-
-        def loss_closure():
-            loss = lossfunc(model(data), target)
-            return loss
-
+        if USE_SGD:
+            def loss_closure():
+                optimizer.zero_grad()
+                output = model(data)
+                loss = lossfunc(output, target)
+                loss.backward()
+                return loss
+        else:
+            def loss_closure():
+                optimizer.zero_grad()
+                output = model(data)
+                loss = lossfunc(output, target)
+                return loss, output
 
         if PROFILE:
             with profile() as prof:
@@ -50,7 +65,7 @@ for epoch in range(1, EPOCHS + 1):
             100. * batch_idx / len(train_loader),
             loss.item()
         ))
-        if batch_idx > 30:
+        if batch_idx > 100:
             break
 
     model.eval()

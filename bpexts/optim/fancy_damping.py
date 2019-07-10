@@ -168,7 +168,7 @@ class FancyDampingWrapper(Optimizer):
             step = self.__update_inverse_and_inv_damping_and_compute_step()
         else:
             step = self.curvature_wrapper.compute_step(
-                self.inv_damping, self.trust_damping
+                self.inv_damping, self.trust_damping, self.l2_reg
             )
 
         self.__apply_step(step)
@@ -192,14 +192,14 @@ class FancyDampingWrapper(Optimizer):
                 self.curvature_wrapper.inverse_candidate(inv_damping_candidate)
 
             step = self.curvature_wrapper.compute_step(
-                self.inv_damping, self.trust_damping
+                self.inv_damping, self.trust_damping, self.l2_reg
             )
 
             if len(inv_damping_candidates) == 1:
                 self.curvature_wrapper.accept_inverse_candidate()
                 return step
             else:
-                candidate_score = self.curvature_wrapper.evaluate_step(step)
+                candidate_score = self.curvature_wrapper.evaluate_step(step, self.trust_damping, self.l2_reg)
                 if candidate_score < best_candidate_score:
                     best_step = step
                     best_candidate_score = candidate_score
@@ -243,8 +243,8 @@ class FancyDampingWrapper(Optimizer):
         )
 
         if should_update:
-            reduction_ratio = self.curvature_wrapper.reduction_ratio()
-
+            reduction_ratio = self.curvature_wrapper.reduction_ratio(self.trust_damping, self.l2_reg)
+            print("RedRat", reduction_ratio)
             if reduction_ratio < .25:
                 self.trust_damping /= self.trust_damping_factor
             elif reduction_ratio > .75:

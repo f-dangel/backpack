@@ -37,7 +37,7 @@ class KFACCurvatureWrapper(CurvatureWrapper):
         # described in Section 6.3 (but using γ as described in Section 6.6)
         raise NotImplementedError
 
-    def compute_step(self, inv_damping, trust_damping):
+    def compute_step(self, inv_damping, trust_damping, l2_reg):
         step_proposal = self.__compute_step_proposal()
         corrected_step = self.__correct(step_proposal)
         return corrected_step

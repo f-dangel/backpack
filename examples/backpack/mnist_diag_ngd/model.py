@@ -18,5 +18,12 @@ def make_model() -> Sequential:
     )
 
 
+def make_quadratic_model() -> Sequential:
+    return Sequential(
+        extend(Flatten()),
+        extend(Linear(784, 10)),
+    )
+
+
 def make_lossfunc():
     return extend(CrossEntropyLoss())
