@@ -8,7 +8,8 @@ class CurvatureWrapper:
         self.parameters = parameters
 
     def compute_derivatives_and_stuff(self, closure):
-        raise NotImplementedError("Should compute gradients and curvature updates")
+        raise NotImplementedError(
+            "Should compute gradients and curvature updates")
 
     def compute_step(self, inv_damping, trust_damping, l2_reg):
         raise NotImplementedError

@@ -26,18 +26,19 @@ class FancyDampingWrapper(Optimizer):
     # Init and Validation
     ############################################################################
 
-    def __init__(self,
-                 params,
-                 curvature_wrapper: CurvatureWrapper,
-                 l2_reg=0.,  # eta
-                 trust_damping=150.,  # lambda
-                 inv_damping=None,  # gamma
-                 trust_damping_factor=None,  # ω1
-                 inv_damping_factor=None,  # ω2
-                 update_interval_trust_damping=5,  # T1
-                 update_interval_inv_damping=20,  # T2
-                 update_interval_inversion=20,  # T3
-                 ):
+    def __init__(
+            self,
+            params,
+            curvature_wrapper: CurvatureWrapper,
+            l2_reg=0.,  # eta
+            trust_damping=150.,  # lambda
+            inv_damping=None,  # gamma
+            trust_damping_factor=None,  # ω1
+            inv_damping_factor=None,  # ω2
+            update_interval_trust_damping=5,  # T1
+            update_interval_inv_damping=20,  # T2
+            update_interval_inversion=20,  # T3
+    ):
         """
         Implements the damping strategy developed for
         [KFAC](https://arxiv.org/abs/1503.05671)
@@ -81,12 +82,12 @@ class FancyDampingWrapper(Optimizer):
 
         MAGIC = MAGIC_FACTOR_FROM_KFAC_PAPER
         if inv_damping_factor is None:
-            self.inv_damping_factor = sqrt(MAGIC) ** update_interval_inv_damping
+            self.inv_damping_factor = sqrt(MAGIC)**update_interval_inv_damping
         else:
             self.inv_damping_factor = inv_damping_factor
 
         if trust_damping_factor is None:
-            self.trust_damping_factor = MAGIC ** update_interval_trust_damping
+            self.trust_damping_factor = MAGIC**update_interval_trust_damping
         else:
             self.trust_damping_factor = trust_damping_factor
 
@@ -109,51 +110,40 @@ class FancyDampingWrapper(Optimizer):
         ])
 
         inv_damping_interval_is_multiple_of_inv_interval = (
-                (self.update_interval_inv_damping %
-                 self.update_interval_inversion) == 0
-        )
+            (self.update_interval_inv_damping %
+             self.update_interval_inversion) == 0)
 
         damping_factors_are_between_0_and_1 = (
-                (0. < self.inv_damping_factor <= 1.) and
-                (0. < self.trust_damping_factor <= 1.)
-        )
+            (0. < self.inv_damping_factor <= 1.)
+            and (0. < self.trust_damping_factor <= 1.))
 
         only_one_group_of_parameters = len(self.param_groups) == 1
 
         if not update_intervals_are_positive_ints:
-            raise ValueError(
-                "Update intervals need to be positive integers." +
-                "Got [{}, {}, {}]".format(
-                    self.update_interval_trust_damping,
-                    self.update_interval_inv_damping,
-                    self.update_interval_inversion,
-                )
-            )
+            raise ValueError("Update intervals need to be positive integers." +
+                             "Got [{}, {}, {}]".format(
+                                 self.update_interval_trust_damping,
+                                 self.update_interval_inv_damping,
+                                 self.update_interval_inversion,
+                             ))
 
         if not inv_damping_interval_is_multiple_of_inv_interval:
             raise ValueError(
                 "Update interval for damping the inverse needs to be " +
                 "a multiple of the interval for the update of the inverse. " +
-                "Got {}, {}".format(
-                    self.update_interval_inv_damping,
-                    self.update_interval_inversion
-                )
-            )
+                "Got {}, {}".format(self.update_interval_inv_damping,
+                                    self.update_interval_inversion))
 
         if not damping_factors_are_between_0_and_1:
-            raise ValueError(
-                "Damping factors need to be 0 < x <= 1. " +
-                "Got {}, {}".format(
-                    self.inv_damping_factor,
-                    self.trust_damping_factor,
-                )
-            )
+            raise ValueError("Damping factors need to be 0 < x <= 1. " +
+                             "Got {}, {}".format(
+                                 self.inv_damping_factor,
+                                 self.trust_damping_factor,
+                             ))
 
         if not only_one_group_of_parameters:
-            raise ValueError(
-                "Expected only one group of parameters. " +
-                "Got {}".format(len(self.param_groups))
-            )
+            raise ValueError("Expected only one group of parameters. " +
+                             "Got {}".format(len(self.param_groups)))
 
     ############################################################################
     # Main update
@@ -170,12 +160,12 @@ class FancyDampingWrapper(Optimizer):
 
         loss = self.curvature_wrapper.compute_derivatives_and_stuff(closure)
 
-        if self.__should_update_inverse() or self.__should_update_inv_damping():
+        if self.__should_update_inverse() or self.__should_update_inv_damping(
+        ):
             step = self.__update_inverse_and_inv_damping_and_compute_step()
         else:
             step = self.curvature_wrapper.compute_step(
-                self.inv_damping, self.trust_damping, self.l2_reg
-            )
+                self.inv_damping, self.trust_damping, self.l2_reg)
 
         self.__apply_step(step)
 
@@ -202,14 +192,14 @@ class FancyDampingWrapper(Optimizer):
                 self.curvature_wrapper.inverse_candidate(inv_damping_candidate)
 
             step = self.curvature_wrapper.compute_step(
-                inv_damping_candidate, self.trust_damping, self.l2_reg
-            )
+                inv_damping_candidate, self.trust_damping, self.l2_reg)
 
             if len(inv_damping_candidates) == 1:
                 self.curvature_wrapper.accept_inverse_candidate()
                 return step
             else:
-                candidate_score = self.curvature_wrapper.evaluate_step(step, self.trust_damping, self.l2_reg)
+                candidate_score = self.curvature_wrapper.evaluate_step(
+                    step, self.trust_damping, self.l2_reg)
 
                 if candidate_score < best_candidate_score:
                     best_step = step
@@ -243,20 +233,19 @@ class FancyDampingWrapper(Optimizer):
 
     def __should_update_inverse(self):
         return self.__should_update_inv_damping() or (
-                self.step_counter < 3 or
-                (self.step_counter % self.update_interval_inversion == 0)
-        )
+            self.step_counter < 3 or
+            (self.step_counter % self.update_interval_inversion == 0))
 
     def __should_update_inv_damping(self):
         return self.step_counter % self.update_interval_inv_damping == 0
 
     def __update_trust_damping_if_needed(self):
-        should_update = (
-                (self.step_counter % self.update_interval_trust_damping) == 0
-        )
+        should_update = ((
+            self.step_counter % self.update_interval_trust_damping) == 0)
 
         if should_update:
-            reduction_ratio = -self.curvature_wrapper.reduction_ratio(self.trust_damping, self.l2_reg)
+            reduction_ratio = -self.curvature_wrapper.reduction_ratio(
+                self.trust_damping, self.l2_reg)
             if reduction_ratio < .25:
                 self.trust_damping /= self.trust_damping_factor
             elif reduction_ratio > .75:
