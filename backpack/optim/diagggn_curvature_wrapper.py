@@ -7,7 +7,8 @@ import warnings
 import torch
 from torch import zeros_like, ones_like
 
-from backpack.hessian.free import R_op, hessian_vector_product
+from backpack.hessianfree.rop import R_op
+from backpack.hessian.hvp import hessian_vector_product
 from backpack.gradient import backpack, extensions as ext
 from .curvature_wrapper import CurvatureWrapper
 

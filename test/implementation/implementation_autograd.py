@@ -1,6 +1,11 @@
 import torch
 from .implementation import Implementation
-import backpack.hessian.free as HF
+
+from backpack.hessianfree.hvp import hessian_vector_product
+from backpack.hessianfree.ggnvp import ggn_vector_product_from_plist
+from backpack.hessianfree.lop import L_op
+from backpack.hessianfree.rop import R_op
+from backpack.hessianfree.utils import vector_to_parameter_list
 
 
 class AutogradImpl(Implementation):
@@ -50,8 +55,8 @@ class AutogradImpl(Implementation):
         def extract_ith_element_of_diag_ggn(i, p):
             v = torch.zeros(p.numel()).to(self.device)
             v[i] = 1.
-            vs = HF.vector_to_parameter_list(v, [p])
-            GGN_vs = HF.ggn_vector_product_from_plist(loss, outputs, [p], vs)
+            vs = vector_to_parameter_list(v, [p])
+            GGN_vs = ggn_vector_product_from_plist(loss, outputs, [p], vs)
             GGN_v = torch.cat([g.detach().view(-1) for g in GGN_vs])
             return GGN_v[i]
 
@@ -73,13 +78,13 @@ class AutogradImpl(Implementation):
             self.model(self.problem.X), self.problem.Y)
 
         def hvp(df_dx, x, v):
-            Hv = HF.R_op(df_dx, x, v)
+            Hv = R_op(df_dx, x, v)
             return tuple([j.detach() for j in Hv])
 
         def extract_ith_element_of_diag_h(i, p, df_dx):
             v = torch.zeros(p.numel()).to(self.device)
             v[i] = 1.
-            vs = HF.vector_to_parameter_list(v, [p])
+            vs = vector_to_parameter_list(v, [p])
 
             Hvs = hvp(df_dx, [p], vs)
             Hv = torch.cat([g.detach().view(-1) for g in Hvs])
@@ -116,8 +121,7 @@ class AutogradImpl(Implementation):
     def hvp_applied_columnwise(self, f, p, mat):
         h_cols = []
         for i in range(mat.size(1)):
-            hvp_col_i = HF.hessian_vector_product(f, [p],
-                                                  mat[:, i].view_as(p))[0]
+            hvp_col_i = hessian_vector_product(f, [p], mat[:, i].view_as(p))[0]
             h_cols.append(hvp_col_i.view(-1, 1))
 
         return torch.cat(h_cols, dim=1)
@@ -138,9 +142,9 @@ class AutogradImpl(Implementation):
     def ggn_vp_applied_columnwise(self, loss, out, p, mat):
         ggn_cols = []
         for i in range(mat.size(1)):
-            col_i = HF.vector_to_parameter_list(mat[:, i], [p])
+            col_i = vector_to_parameter_list(mat[:, i], [p])
 
-            GGN_col_i = HF.ggn_vector_product_from_plist(loss, out, [p], col_i)
+            GGN_col_i = ggn_vector_product_from_plist(loss, out, [p], col_i)
             GGN_col_i = torch.cat([g.detach().view(-1) for g in GGN_col_i])
             ggn_cols.append(GGN_col_i.view(-1, 1))
 
