@@ -11,7 +11,13 @@ from torch.optim.optimizer import Optimizer
 
 from .curvature_wrapper import CurvatureWrapper
 
-MAGIC_FACTOR_FROM_KFAC_PAPER = 19 / 20
+MAGIC_FACTOR_FROM_KFAC_PAPER = 19. / 20.
+DEBUG = True
+
+
+def debug(*str):
+    if DEBUG:
+        print(" " * 40, *str)
 
 
 class FancyDampingWrapper(Optimizer):
@@ -178,12 +184,16 @@ class FancyDampingWrapper(Optimizer):
         self.curvature_wrapper.end_of_step()
         self.step_counter += 1
 
+        debug("inv_damping", self.inv_damping)
+        debug("trust_damping", self.trust_damping)
+
         return loss
 
     def __update_inverse_and_inv_damping_and_compute_step(self):
 
         best_candidate_score = INFINITY
         best_step = None
+        best_inv_damping = None
         inv_damping_candidates = self.__inv_damping_candidates()
 
         for inv_damping_candidate in inv_damping_candidates:
@@ -192,7 +202,7 @@ class FancyDampingWrapper(Optimizer):
                 self.curvature_wrapper.inverse_candidate(inv_damping_candidate)
 
             step = self.curvature_wrapper.compute_step(
-                self.inv_damping, self.trust_damping, self.l2_reg
+                inv_damping_candidate, self.trust_damping, self.l2_reg
             )
 
             if len(inv_damping_candidates) == 1:
@@ -200,13 +210,16 @@ class FancyDampingWrapper(Optimizer):
                 return step
             else:
                 candidate_score = self.curvature_wrapper.evaluate_step(step, self.trust_damping, self.l2_reg)
+
                 if candidate_score < best_candidate_score:
                     best_step = step
+                    best_inv_damping = inv_damping_candidate
                     best_candidate_score = candidate_score
                     self.curvature_wrapper.accept_inverse_candidate()
                 else:
                     self.curvature_wrapper.invalidate_inverse_candidate()
 
+        self.inv_damping = best_inv_damping
         return best_step
 
     ############################################################################
@@ -243,8 +256,7 @@ class FancyDampingWrapper(Optimizer):
         )
 
         if should_update:
-            reduction_ratio = self.curvature_wrapper.reduction_ratio(self.trust_damping, self.l2_reg)
-            print("RedRat", reduction_ratio)
+            reduction_ratio = -self.curvature_wrapper.reduction_ratio(self.trust_damping, self.l2_reg)
             if reduction_ratio < .25:
                 self.trust_damping /= self.trust_damping_factor
             elif reduction_ratio > .75:
