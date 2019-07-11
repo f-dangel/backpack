@@ -1,1 +1,1 @@
-from . import batchgrad, sumgradsquared, batchl2, variance
+from . import batchgrad, sumgradsquared, batchl2grad, variance
