@@ -1,6 +1,0 @@
-#!/bin/sh
-
-# Optional: Test experiments
-pytest -v exp
-# Test bpexts packages
-pytest -v tests
