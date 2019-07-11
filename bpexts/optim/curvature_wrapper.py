@@ -13,10 +13,10 @@ class CurvatureWrapper:
     def compute_step(self, inv_damping, trust_damping, l2_reg):
         raise NotImplementedError
 
-    def evaluate_step(self, step):
+    def evaluate_step(self, step, trust_damping, l2_reg):
         raise NotImplementedError
 
-    def reduction_ratio(self):
+    def reduction_ratio(self, trust_damping, l2_reg):
         """
         Compare the improvement in loss due to the step against
         the expected improvement under the quadratic model.

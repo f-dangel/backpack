@@ -14,12 +14,12 @@ SEED = 0
 EPOCHS = 2
 LR = .1
 
-USE_SGD = False
+USE_SGD = True
 
 torch.manual_seed(SEED)
 
-#model = make_model()
-model = make_quadratic_model()
+model = make_model()
+#model = make_quadratic_model()
 
 lossfunc = make_lossfunc()
 train_loader, test_loader = get_data_loaders(BATCH_SIZE, TEST_BATCH_SIZE)

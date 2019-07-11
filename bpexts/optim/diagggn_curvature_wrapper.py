@@ -60,18 +60,16 @@ class DiagGGNCurvatureWrapper(CurvatureWrapper):
     def inverse_candidate(self, inv_damping):
         self.invalidate_inverse_candidate()
         for diag in self.ggn_diags:
-            self.ggn_diag_invs_tmp.append(1. / (diag.add(inv_damping)))
+            self.ggn_diag_invs_tmp.append(1. / (diag.add(inv_damping**2)))
 
     def compute_step(self, inv_damping, trust_damping, l2_reg):
-        step_proposal = self.__step_proposal()
-        corrected_step = self.__correct(step_proposal, trust_damping, l2_reg)
-        return corrected_step
-
-    def __step_proposal(self):
         step = []
         for p, diag_inv in zip(self.parameters, self.__current_diag_inv()):
             step.append(-p.grad * diag_inv)
-        return step
+
+        corrected_step = self.__correct(step, trust_damping, l2_reg)
+
+        return corrected_step
 
     def __correct(self, step, trust_damping, l2_reg):
 
@@ -111,9 +109,20 @@ class DiagGGNCurvatureWrapper(CurvatureWrapper):
         return corrected_step
 
     def reduction_ratio(self, trust_damping, l2_reg):
+        loss_after_step = self.last_closure()[0]
+        loss_before_step = self.last_loss
+
+        loss_change = loss_after_step - loss_before_step
+
+        predicted_new_loss = self.__model_predict(self.last_proposed_step, trust_damping, l2_reg)
+        rho = loss_change / predicted_new_loss
+
+
+#        print("    loss before step:   ", loss_before_step)
+#        print("    loss after step:    ", loss_after_step)
+#        print("    predicted new loss: ", predicted_new_loss)
         return (
-                (self.last_closure()[0] - self.last_loss) /
-                self.__model_predict(self.last_proposed_step, trust_damping, l2_reg)
+                (loss_after_step - loss_before_step) / predicted_new_loss
         )
 
     def __model_predict(self, step, trust_damping, l2_reg):
@@ -124,8 +133,7 @@ class DiagGGNCurvatureWrapper(CurvatureWrapper):
         return (
                 .5 * ip(J_v, H_J_v) +
                 .5 * (trust_damping + l2_reg) * ip(step, step) +
-                ip(step, [p.grad for p in self.parameters]) +
-                self.last_loss
+                ip(step, [p.grad for p in self.parameters])
         )
 
     def evaluate_step(self, step, trust_damping, l2_reg):
