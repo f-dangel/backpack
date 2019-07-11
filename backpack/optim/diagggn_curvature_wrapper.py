@@ -7,12 +7,12 @@ import warnings
 import torch
 from torch import zeros_like, ones_like
 
-from bpexts.hessian.free import R_op, hessian_vector_product
-from bpexts.gradient import bpexts, extensions as ext
+from backpack.hessian.free import R_op, hessian_vector_product
+from backpack.gradient import backpack, extensions as ext
 from .curvature_wrapper import CurvatureWrapper
 
 MIN_DECAY = 0.95
-EPS = 10 ** -6
+EPS = 10**-6
 
 
 class DiagGGNCurvatureWrapper(CurvatureWrapper):
@@ -23,21 +23,15 @@ class DiagGGNCurvatureWrapper(CurvatureWrapper):
 
     def __init__(self, params):
         super().__init__(params)
-        self.ggn_diags = list([
-            ones_like(p) for p in self.parameters
-        ])
-        self.ggn_diag_invs = list([
-            ones_like(p) for p in self.parameters
-        ])
+        self.ggn_diags = list([ones_like(p) for p in self.parameters])
+        self.ggn_diag_invs = list([ones_like(p) for p in self.parameters])
         self.ggn_diag_invs_tmp = []
         self.step_counter = 0
 
         self.last_loss = None
         self.last_output = None
         self.last_closure = None
-        self.prev_step = list([
-            zeros_like(p) for p in self.parameters
-        ])
+        self.prev_step = list([zeros_like(p) for p in self.parameters])
         self.last_proposed_step = None
 
     ############################################################################
@@ -46,7 +40,7 @@ class DiagGGNCurvatureWrapper(CurvatureWrapper):
 
     def compute_derivatives_and_stuff(self, closure):
         self.last_closure = closure
-        with bpexts(ext.DIAG_GGN):
+        with backpack(ext.DIAG_GGN):
             self.last_loss, self.last_output = closure()
             self.last_loss.backward(retain_graph=True)
             self.__update_factors()
@@ -76,8 +70,10 @@ class DiagGGNCurvatureWrapper(CurvatureWrapper):
         J_prev = R_op(self.last_output, self.parameters, self.prev_step)
         J_curr = R_op(self.last_output, self.parameters, step)
 
-        H_J_prev = hessian_vector_product(self.last_loss, self.last_output, J_prev)
-        H_J_curr = hessian_vector_product(self.last_loss, self.last_output, J_prev)
+        H_J_prev = hessian_vector_product(self.last_loss, self.last_output,
+                                          J_prev)
+        H_J_curr = hessian_vector_product(self.last_loss, self.last_output,
+                                          J_prev)
 
         ip = self.__inner_product
 
@@ -103,7 +99,7 @@ class DiagGGNCurvatureWrapper(CurvatureWrapper):
 
         corrected_step = []
         for curr, prev in zip(step, self.prev_step):
-            corrected_step.append(- (factors[0] * curr + factors[1] * prev))
+            corrected_step.append(-(factors[0] * curr + factors[1] * prev))
 
         self.last_proposed_step = corrected_step
         return corrected_step
@@ -114,27 +110,23 @@ class DiagGGNCurvatureWrapper(CurvatureWrapper):
 
         loss_change = loss_after_step - loss_before_step
 
-        predicted_new_loss = self.__model_predict(self.last_proposed_step, trust_damping, l2_reg)
+        predicted_new_loss = self.__model_predict(self.last_proposed_step,
+                                                  trust_damping, l2_reg)
         rho = loss_change / predicted_new_loss
 
-
-#        print("    loss before step:   ", loss_before_step)
-#        print("    loss after step:    ", loss_after_step)
-#        print("    predicted new loss: ", predicted_new_loss)
-        return (
-                (loss_after_step - loss_before_step) / predicted_new_loss
-        )
+        #        print("    loss before step:   ", loss_before_step)
+        #        print("    loss after step:    ", loss_after_step)
+        #        print("    predicted new loss: ", predicted_new_loss)
+        return ((loss_after_step - loss_before_step) / predicted_new_loss)
 
     def __model_predict(self, step, trust_damping, l2_reg):
         J_v = R_op(self.last_output, self.parameters, step)
         H_J_v = hessian_vector_product(self.last_loss, self.last_output, J_v)
 
         ip = self.__inner_product
-        return (
-                .5 * ip(J_v, H_J_v) +
-                .5 * (trust_damping + l2_reg) * ip(step, step) +
-                ip(step, [p.grad for p in self.parameters])
-        )
+        return (.5 * ip(J_v, H_J_v) +
+                .5 * (trust_damping + l2_reg) * ip(step, step) + ip(
+                    step, [p.grad for p in self.parameters]))
 
     def evaluate_step(self, step, trust_damping, l2_reg):
         return self.__model_predict(step, trust_damping, l2_reg)

@@ -2,8 +2,8 @@
 
 from torch import Tensor, allclose
 from torch.nn import Linear
-from bpexts.gradient import extend, bpexts
-import bpexts.gradient.extensions as ext
+from backpack.gradient import extend, backpack
+import backpack.gradient.extensions as ext
 
 
 def ExtLinear(*args, **kwargs):
@@ -71,7 +71,7 @@ EXAMPLES = [EXAMPLE_1, EXAMPLE_2]
 
 
 def test_forward():
-    """Compare forward of torch.nn.Linear and bpexts.
+    """Compare forward of torch.nn.Linear and backpack.
     Handles single-instance and batch mode."""
     for ex in EXAMPLES:
         input, result = ex["in"], ex["out"]
@@ -96,7 +96,7 @@ def test_grad():
         input, b_grad, w_grad = ex["in"], ex["bias_grad"], ex["weight_grad"]
 
         loss = loss_function(g_lin(input))
-        with bpexts(ext.GRAD):
+        with backpack(ext.GRAD):
             loss.backward()
 
         assert allclose(g_lin.bias.grad, b_grad)
@@ -113,7 +113,7 @@ def test_grad_batch():
             "bias_grad_batch"], ex["weight_grad_batch"]
 
         loss = loss_function(g_lin(input))
-        with bpexts(ext.BATCH_GRAD):
+        with backpack(ext.BATCH_GRAD):
             loss.backward()
 
         assert allclose(g_lin.bias.grad_batch, b_grad_batch), "{} ≠ {}".format(

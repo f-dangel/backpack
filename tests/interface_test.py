@@ -6,9 +6,9 @@ import torch
 from torch.nn import Linear, ReLU, CrossEntropyLoss
 from torch.nn import Sequential
 from torch.nn import Conv2d
-from bpexts.gradient.layers import Flatten
-from bpexts.gradient import extend, bpexts
-import bpexts.gradient.extensions as ext
+from backpack.gradient.layers import Flatten
+from backpack.gradient import extend, backpack
+import backpack.gradient.extensions as ext
 
 
 def dummy_forward_pass():
@@ -72,7 +72,7 @@ def interface_test(feature,
     else:
         f, ws, bs = forward_func, weights, bias
 
-    with bpexts(feature):
+    with backpack(feature):
         f().backward()
     for w in ws:
         assert weight_has_attr == hasattr(w, FEATURES_TO_ATTRIBUTES[feature])

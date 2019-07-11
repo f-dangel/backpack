@@ -1,6 +1,6 @@
 from torch.nn import Sequential, Conv2d, MaxPool2d, ReLU, Linear, CrossEntropyLoss
-from bpexts.gradient.layers import Flatten
-from bpexts.gradient import extend
+from backpack.gradient.layers import Flatten
+from backpack.gradient import extend
 
 
 def make_model() -> Sequential:

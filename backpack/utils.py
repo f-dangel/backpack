@@ -23,10 +23,10 @@ EINSUMS = {
 
 
 def einsum(equation, *operands):
-    """`einsum` implementations used by `bpexts`.
+    """`einsum` implementations used by `backpack`.
 
-    Modify by setting `bpexts.utils.BPEXTS_EINSUM`.
-    See `bpexts.utils.EINSUMS` for supported implementations.
+    Modify by setting `backpack.utils.BPEXTS_EINSUM`.
+    See `backpack.utils.EINSUMS` for supported implementations.
     """
     return EINSUMS[BPEXTS_EINSUM](equation, *operands)
 

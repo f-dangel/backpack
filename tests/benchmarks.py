@@ -1,6 +1,6 @@
 import torch
 import pytest
-from bpexts.gradient import extend
+from backpack.gradient import extend
 from .test_problem import TestProblem
 from .implementation.implementation_autograd import AutogradImpl
 from .implementation.implementation_bpext import BpextImpl
@@ -67,30 +67,35 @@ for probname, prob in reversed(list(TEST_PROBLEMS.items())):
     CONFIGURATION_IDS.append(probname + "-bpext")
 
 
-@pytest.mark.parametrize("problem,impl", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
+@pytest.mark.parametrize(
+    "problem,impl", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
 def test_diag_ggn(problem, impl, tmp_path, benchmark):
     if "large_autograd" in str(tmp_path):
         pytest.skip()
     benchmark(impl(problem).diag_ggn)
 
 
-@pytest.mark.parametrize("problem,impl", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
+@pytest.mark.parametrize(
+    "problem,impl", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
 def test_sgs(problem, impl, benchmark):
     benchmark(impl(problem).sgs)
 
 
-@pytest.mark.parametrize("problem,impl", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
+@pytest.mark.parametrize(
+    "problem,impl", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
 def test_batch_gradients(problem, impl, benchmark):
     benchmark(impl(problem).batch_gradients)
 
 
 @pytest.mark.skip()
-@pytest.mark.parametrize("problem,impl", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
+@pytest.mark.parametrize(
+    "problem,impl", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
 def test_var(problem, impl, benchmark):
     raise NotImplementedError
 
 
-@pytest.mark.parametrize("problem,impl", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
+@pytest.mark.parametrize(
+    "problem,impl", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
 def test_diag_h(problem, impl, tmp_path, benchmark):
     if "large_autograd" in str(tmp_path):
         pytest.skip()

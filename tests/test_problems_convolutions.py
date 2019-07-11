@@ -1,7 +1,7 @@
 import numpy as np
 import torch
-from bpexts.utils import set_seeds, Flatten
-from bpexts.gradient import extend
+from backpack.utils import set_seeds, Flatten
+from backpack.gradient import extend
 from .test_problem import TestProblem
 
 TEST_SETTINGS = {
@@ -15,28 +15,27 @@ TEST_SETTINGS = {
     "atol": 5e-4
 }
 
-
 set_seeds(0)
 
 
 def convlayer():
-    return extend(torch.nn.Conv2d(
-        in_channels=TEST_SETTINGS["in_features"][0],
-        out_channels=TEST_SETTINGS["out_channels"],
-        kernel_size=TEST_SETTINGS["kernel_size"],
-        padding=TEST_SETTINGS["padding"],
-        bias=TEST_SETTINGS["bias"]
-    ))
+    return extend(
+        torch.nn.Conv2d(
+            in_channels=TEST_SETTINGS["in_features"][0],
+            out_channels=TEST_SETTINGS["out_channels"],
+            kernel_size=TEST_SETTINGS["kernel_size"],
+            padding=TEST_SETTINGS["padding"],
+            bias=TEST_SETTINGS["bias"]))
 
 
 def convlayer2():
-    return extend(torch.nn.Conv2d(
-        in_channels=TEST_SETTINGS["in_features"][0],
-        out_channels=TEST_SETTINGS["out_channels"],
-        kernel_size=TEST_SETTINGS["kernel_size"],
-        padding=TEST_SETTINGS["padding"],
-        bias=TEST_SETTINGS["bias"]
-    ))
+    return extend(
+        torch.nn.Conv2d(
+            in_channels=TEST_SETTINGS["in_features"][0],
+            out_channels=TEST_SETTINGS["out_channels"],
+            kernel_size=TEST_SETTINGS["kernel_size"],
+            padding=TEST_SETTINGS["padding"],
+            bias=TEST_SETTINGS["bias"]))
 
 
 input_size = (TEST_SETTINGS["batch"], ) + TEST_SETTINGS["in_features"]
@@ -44,20 +43,17 @@ X = torch.randn(size=input_size)
 
 
 def linearlayer():
-    return extend(torch.nn.Linear(
-        in_features=np.prod(
-            [f - TEST_SETTINGS["padding"][0] for f in TEST_SETTINGS["in_features"]]
-        ) * TEST_SETTINGS["out_channels"],
-        out_features=1
-    ))
+    return extend(
+        torch.nn.Linear(
+            in_features=np.prod([
+                f - TEST_SETTINGS["padding"][0]
+                for f in TEST_SETTINGS["in_features"]
+            ]) * TEST_SETTINGS["out_channels"],
+            out_features=1))
 
 
 def make_regression_problem():
-    model = torch.nn.Sequential(
-        convlayer(),
-        Flatten(),
-        linearlayer()
-    )
+    model = torch.nn.Sequential(convlayer(), Flatten(), linearlayer())
 
     Y = torch.randn(size=(model(X).shape[0], 1))
 
@@ -67,12 +63,9 @@ def make_regression_problem():
 
 
 def make_classification_problem():
-    model = torch.nn.Sequential(
-        convlayer(),
-        Flatten()
-    )
+    model = torch.nn.Sequential(convlayer(), Flatten())
 
-    Y = torch.randint(high=X.shape[1], size=(model(X).shape[0],))
+    Y = torch.randint(high=X.shape[1], size=(model(X).shape[0], ))
 
     lossfunc = extend(torch.nn.CrossEntropyLoss())
 
@@ -80,13 +73,9 @@ def make_classification_problem():
 
 
 def make_2layer_classification_problem():
-    model = torch.nn.Sequential(
-        convlayer(),
-        convlayer2(),
-        Flatten()
-    )
+    model = torch.nn.Sequential(convlayer(), convlayer2(), Flatten())
 
-    Y = torch.randint(high=X.shape[1], size=(model(X).shape[0],))
+    Y = torch.randint(high=X.shape[1], size=(model(X).shape[0], ))
 
     lossfunc = extend(torch.nn.CrossEntropyLoss())
 

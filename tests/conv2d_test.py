@@ -9,8 +9,8 @@ The example is taken from
 from torch import (Tensor, randn, allclose)
 from torch.nn import Conv2d
 from random import (randint, choice)
-from bpexts.gradient import extend, bpexts
-import bpexts.gradient.extensions as ext
+from backpack.gradient import extend, backpack
+import backpack.gradient.extensions as ext
 
 
 def ExtConv2d(*args, **kwargs):
@@ -150,7 +150,7 @@ def compare_grads(conv2d, g_conv2d, input):
     loss.backward()
 
     loss_g = loss_function(g_conv2d(input))
-    with bpexts(ext.BATCH_GRAD):
+    with backpack(ext.BATCH_GRAD):
         loss_g.backward()
 
     assert allclose(g_conv2d.bias.grad, conv2d.bias.grad, atol=TEST_ATOL)

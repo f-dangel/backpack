@@ -2,17 +2,16 @@
 BackPACK implementation of a KFAC `CurvatureWrapper` for use with `FancyDamping`
 """
 
-from bpexts.gradient import bpexts, extensions as ext
+from backpack.gradient import backpack, extensions as ext
 
 from .curvature_wrapper import CurvatureWrapper
 
 
 class KFACCurvatureWrapper(CurvatureWrapper):
-
     def compute_derivatives_and_stuff(self, closure):
         #    def accumulate_derivatives_and_return_loss(self, closure):
         #        if self.should_compute_diag_ggn():
-        #            with bpexts(ext.DIAG_GGN):
+        #            with backpack(ext.DIAG_GGN):
         #                loss = closure()
         #        else:
         #            loss = closure()
@@ -66,4 +65,3 @@ class KFACCurvatureWrapper(CurvatureWrapper):
 
     def accept_inverse_candidate(self):
         raise NotImplementedError
-

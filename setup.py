@@ -5,8 +5,7 @@ from setuptools import setup
 ##############################################################################
 AUTHORS = "F. Dangel, F. Künstner"
 NAME = "BackPACK"
-# TODO: Change into backpack
-PACKAGES = ["bpexts"]
+PACKAGES = ["backpack"]
 
 DESCRIPTION = r"""BACKpropagation PACKage - A backpack for PyTorch that
 extends the backward pass of feedforward networks to compute quantities
@@ -14,8 +13,7 @@ beyond the gradient.
 """.replace("\n", " ")
 
 VERSION = "0.1"
-# TODO: Change into backpack
-URL = "https://github.com/f-dangel/bpexts"
+URL = "https://github.com/f-dangel/backpack"
 LICENSE = "MIT"
 
 # DEPENDENCIES

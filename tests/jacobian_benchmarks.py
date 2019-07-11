@@ -12,11 +12,11 @@ from .implementation.implementation_autograd import AutogradImpl
 from .implementation.implementation_bpext import BpextImpl
 from .test_problem import TestProblem
 
-from bpexts.gradient.layers import Flatten
-from bpexts.gradient import extend as xtd
-from bpexts.gradient import bpexts
+from backpack.gradient.layers import Flatten
+from backpack.gradient import extend as xtd
+from backpack.gradient import backpack
 
-import bpexts.gradient.extensions as ext
+import backpack.gradient.extensions as ext
 
 N, C, H, W = 100, 3, 4, 4
 D = C * H * W
@@ -32,7 +32,7 @@ def X_Y(input_type, output_type):
         raise NotImplementedError
 
     if output_type is "CE":
-        Y = torch.randint(high=2, size=(N,))
+        Y = torch.randint(high=2, size=(N, ))
     else:
         raise NotImplementedError
 
@@ -62,9 +62,11 @@ img_models = [
 def all_problems():
     problems = []
     for model in models:
-        problems.append(TestProblem(*X_Y("LINEAR", "CE"), model, xtd(CrossEntropyLoss())))
+        problems.append(
+            TestProblem(*X_Y("LINEAR", "CE"), model, xtd(CrossEntropyLoss())))
     for model in img_models:
-        problems.append(TestProblem(*X_Y("IMAGE", "CE"), model, xtd(CrossEntropyLoss())))
+        problems.append(
+            TestProblem(*X_Y("IMAGE", "CE"), model, xtd(CrossEntropyLoss())))
     return problems
 
 

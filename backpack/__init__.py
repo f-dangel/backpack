@@ -7,7 +7,7 @@ is hard.
 **Contribution:** This package provides a way to modify the forward and
 backward pass of a module in PyTorch (a subclass of torch.nn.Module).
 
-We do so by providing a decorator (bpexts.decorator.decorate) which extends
+We do so by providing a decorator (backpack.decorator.decorate) which extends
 a given PyTorch layer by adding functions to install and remove hooks and
 buffers which can be used to extend the forward/backward behavior.
 
@@ -19,7 +19,7 @@ on top using the default functionality of PyTorch.
 Subpackages
 ===========
 
-* :py:mod:`bpexts.hbp`
+* :py:mod:`backpack.hbp`
 
   Implements the **Hessian backpropagation (HBP)** procedure. This is a
   technique to obtain approximations to the block diagonal of the Hessian.
@@ -30,26 +30,26 @@ Subpackages
     URL: https://arxiv.org/pdf/1902.01813.pdf
 
 
-* :py:mod:`bpexts.optim`
+* :py:mod:`backpack.optim`
 
   Implements optimizers that make use of the additional quantities from the
   backward extension.
 
 
-* :py:mod:`bpexts.gradient`
+* :py:mod:`backpack.gradient`
 
   Compute gradients for each sample in a batch. Usually, the gradients for
   each data point in the batch are summed up. For instance, this facilitates
   the implementation of variance-adapted optimization methods
 
 
-* :py:mod:`bpexts.hessian`
+* :py:mod:`backpack.hessian`
 
   Brute-force computation of Hessian matrices by twice application of automatic
   differentiation.
 
 
-* :py:mod:`bpexts.sumgradsquared`
+* :py:mod:`backpack.sumgradsquared`
 
   (TODO: Coming soon)
 """

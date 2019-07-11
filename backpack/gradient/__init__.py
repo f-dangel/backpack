@@ -12,7 +12,7 @@ from .context import CTX
 DEBUGGING = True
 
 
-def set_bpexts(*args):
+def set_backpack(*args):
     """
     Activates the backprop extensions passed as input.
     """
@@ -26,10 +26,12 @@ def set_bpexts(*args):
         else:
             args_classes.append(arg)
 
-    CTX.from_dict({ext: (ext in args_classes ) for ext in Extensions.ext_list()})
+    CTX.from_dict(
+        {ext: (ext in args_classes)
+         for ext in Extensions.ext_list()})
 
 
-class bpexts():
+class backpack():
     """
     Context manager for the configuration of the backward pass.
     Activates the backprop extensions given as arguments within the context.
@@ -40,7 +42,7 @@ class bpexts():
 
     def __enter__(self):
         self.old_CTX = CTX.as_dict()
-        set_bpexts(*self.args)
+        set_backpack(*self.args)
 
     def __exit__(self, type, value, traceback):
         CTX.from_dict(self.old_CTX)
@@ -72,7 +74,6 @@ def extend(module):
             print("[DEBUG] No Active Extension")
         else:
             print("[DEBUG] Extensions active: {}".format(CTX.active_exts()))
-
 
         grad_out = [grad_output[i] for i in range(len(grad_output))]
 

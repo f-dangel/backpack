@@ -77,10 +77,10 @@ def check_values(list1, list2):
 def test_batch_gradients(problem, device):
     problem.to(device)
     autograd_res = AutogradImpl(problem).batch_gradients()
-    bpexts_res = BpextImpl(problem).batch_gradients()
+    backpack_res = BpextImpl(problem).batch_gradients()
 
-    check_sizes(autograd_res, bpexts_res)
-    check_values(autograd_res, bpexts_res)
+    check_sizes(autograd_res, backpack_res)
+    check_values(autograd_res, backpack_res)
 
 
 @pytest.mark.parametrize(
@@ -88,11 +88,11 @@ def test_batch_gradients(problem, device):
 def test_batch_gradients_sum_to_grad(problem, device):
     problem.to(device)
     autograd_res = AutogradImpl(problem).gradient()
-    bpexts_batch_res = BpextImpl(problem).batch_gradients()
-    bpexts_res = list([g.sum(0) for g in bpexts_batch_res])
+    backpack_batch_res = BpextImpl(problem).batch_gradients()
+    backpack_res = list([g.sum(0) for g in backpack_batch_res])
 
-    check_sizes(autograd_res, bpexts_res, list(problem.model.parameters()))
-    check_values(autograd_res, bpexts_res)
+    check_sizes(autograd_res, backpack_res, list(problem.model.parameters()))
+    check_values(autograd_res, backpack_res)
 
 
 @pytest.mark.parametrize(
@@ -100,10 +100,10 @@ def test_batch_gradients_sum_to_grad(problem, device):
 def test_sgs(problem, device):
     problem.to(device)
     autograd_res = AutogradImpl(problem).sgs()
-    bpexts_res = BpextImpl(problem).sgs()
+    backpack_res = BpextImpl(problem).sgs()
 
-    check_sizes(autograd_res, bpexts_res, list(problem.model.parameters()))
-    check_values(autograd_res, bpexts_res)
+    check_sizes(autograd_res, backpack_res, list(problem.model.parameters()))
+    check_values(autograd_res, backpack_res)
 
 
 @pytest.mark.parametrize(
@@ -112,10 +112,10 @@ def test_diag_ggn(problem, device):
     problem.to(device)
 
     autograd_res = AutogradImpl(problem).diag_ggn()
-    bpexts_res = BpextImpl(problem).diag_ggn()
+    backpack_res = BpextImpl(problem).diag_ggn()
 
-    check_sizes(autograd_res, bpexts_res, list(problem.model.parameters()))
-    check_values(autograd_res, bpexts_res)
+    check_sizes(autograd_res, backpack_res, list(problem.model.parameters()))
+    check_values(autograd_res, backpack_res)
 
 
 @pytest.mark.parametrize(
@@ -124,10 +124,10 @@ def test_batch_l2(problem, device):
     problem.to(device)
 
     autograd_res = AutogradImpl(problem).batch_l2()
-    bpexts_res = BpextImpl(problem).batch_l2()
+    backpack_res = BpextImpl(problem).batch_l2()
 
-    check_sizes(autograd_res, bpexts_res)
-    check_values(autograd_res, bpexts_res)
+    check_sizes(autograd_res, backpack_res)
+    check_values(autograd_res, backpack_res)
 
 
 @pytest.mark.parametrize(
@@ -136,10 +136,10 @@ def test_variance(problem, device):
     problem.to(device)
 
     autograd_res = AutogradImpl(problem).variance()
-    bpexts_res = BpextImpl(problem).variance()
+    backpack_res = BpextImpl(problem).variance()
 
-    check_sizes(autograd_res, bpexts_res)
-    check_values(autograd_res, bpexts_res)
+    check_sizes(autograd_res, backpack_res)
+    check_values(autograd_res, backpack_res)
 
 
 @pytest.mark.parametrize(
@@ -148,10 +148,10 @@ def test_diag_h(problem, device):
     problem.to(device)
 
     autograd_res = AutogradImpl(problem).diag_h()
-    bpexts_res = BpextImpl(problem).diag_h()
+    backpack_res = BpextImpl(problem).diag_h()
 
-    check_sizes(autograd_res, bpexts_res)
-    check_values(autograd_res, bpexts_res)
+    check_sizes(autograd_res, backpack_res)
+    check_values(autograd_res, backpack_res)
 
 
 @pytest.mark.parametrize(
@@ -166,10 +166,10 @@ def test_hmp(problem, device):
     ]
 
     autograd_res = AutogradImpl(problem).hmp(matrices)
-    bpexts_res = BpextImpl(problem).hmp(matrices)
+    backpack_res = BpextImpl(problem).hmp(matrices)
 
-    check_sizes(autograd_res, bpexts_res)
-    check_values(autograd_res, bpexts_res)
+    check_sizes(autograd_res, backpack_res)
+    check_values(autograd_res, backpack_res)
 
 
 @pytest.mark.parametrize(
@@ -184,7 +184,7 @@ def test_ggn_mp(problem, device):
     ]
 
     autograd_res = AutogradImpl(problem).ggn_mp(matrices)
-    bpexts_res = BpextImpl(problem).ggn_mp(matrices)
+    backpack_res = BpextImpl(problem).ggn_mp(matrices)
 
-    check_sizes(autograd_res, bpexts_res)
-    check_values(autograd_res, bpexts_res)
+    check_sizes(autograd_res, backpack_res)
+    check_values(autograd_res, backpack_res)

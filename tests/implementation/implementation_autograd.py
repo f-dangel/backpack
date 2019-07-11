@@ -1,6 +1,6 @@
 import torch
 from .implementation import Implementation
-import bpexts.hessian.free as HF
+import backpack.hessian.free as HF
 
 
 class AutogradImpl(Implementation):
