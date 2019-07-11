@@ -1,7 +1,7 @@
 import torch
 from .cmpbase import CMPBase
-from ...utils.utils import einsum
-from ...core.derivatives.linear import LinearDerivatives
+from ..utils.utils import einsum
+from ..core.derivatives.linear import LinearDerivatives
 
 
 class CMPLinear(CMPBase, LinearDerivatives):

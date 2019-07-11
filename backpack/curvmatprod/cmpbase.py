@@ -1,7 +1,7 @@
-from ...backpropextension import BackpropExtension
-from ...ctxinteract import ActOnCTX
-from ...extensions import CMP
-from ...utils.utils import einsum
+from ..backpropextension import BackpropExtension
+from ..ctxinteract import ActOnCTX
+from ..extensions import CMP
+from ..utils.utils import einsum
 from ..curvature import Curvature
 
 BACKPROPAGATED_MP_NAME = "_cmp_backpropagated_mp"

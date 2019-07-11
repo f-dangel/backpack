@@ -1,6 +1,6 @@
 import warnings
 from .backpropextension import BackpropExtension
-from .secondorder.curvature import Curvature
+from .curvature import Curvature
 
 
 class Extension():

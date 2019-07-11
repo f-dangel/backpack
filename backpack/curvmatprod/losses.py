@@ -1,5 +1,5 @@
-from ...core.derivatives.mseloss import MSELossDerivatives
-from ...core.derivatives.crossentropyloss import CrossEntropyLossDerivatives
+from ..core.derivatives.mseloss import MSELossDerivatives
+from ..core.derivatives.crossentropyloss import CrossEntropyLossDerivatives
 from .cmpbase import CMPBase
 from ..curvature import Curvature
 

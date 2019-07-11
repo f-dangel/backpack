@@ -1,4 +1,4 @@
-from ...core.derivatives.dropout import DropoutDerivatives
+from ..core.derivatives.dropout import DropoutDerivatives
 from .cmpbase import CMPBase
 
 

@@ -2,7 +2,7 @@ import torch
 from .implementation import Implementation
 from backpack import backpack
 import backpack.extensions as ext
-from backpack.secondorder.curvature import Curvature
+from backpack.curvature import Curvature
 
 
 class BpextImpl(Implementation):

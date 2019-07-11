@@ -1,7 +1,7 @@
 import torch
-from ...utils import conv as convUtils
-from ...core.derivatives.conv2d import Conv2DDerivatives
-from ...utils.utils import einsum
+from ..utils import conv as convUtils
+from ..core.derivatives.conv2d import Conv2DDerivatives
+from ..utils.utils import einsum
 from .cmpbase import CMPBase
 
 
