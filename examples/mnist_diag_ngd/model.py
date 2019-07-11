@@ -1,5 +1,5 @@
 from torch.nn import Sequential, Conv2d, MaxPool2d, ReLU, Linear, CrossEntropyLoss
-from backpack.layers import Flatten
+from backpack.core.layers import Flatten
 from backpack import extend
 
 

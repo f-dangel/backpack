@@ -12,7 +12,7 @@ from .implementation.implementation_autograd import AutogradImpl
 from .implementation.implementation_bpext import BpextImpl
 from .test_problem import TestProblem
 
-from backpack.layers import Flatten
+from backpack.core.layers import Flatten
 from backpack import extend as xtd
 from backpack import backpack
 

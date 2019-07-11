@@ -6,7 +6,7 @@ import torch
 from torch.nn import Linear, ReLU, CrossEntropyLoss
 from torch.nn import Sequential
 from torch.nn import Conv2d
-from backpack.layers import Flatten
+from backpack.core.layers import Flatten
 from backpack import extend, backpack
 import backpack.extensions as ext
 
