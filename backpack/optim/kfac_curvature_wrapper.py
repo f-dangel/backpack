@@ -2,7 +2,7 @@
 BackPACK implementation of a KFAC `CurvatureWrapper` for use with `FancyDamping`
 """
 
-from backpack.gradient import backpack, extensions as ext
+from backpack import backpack, extensions as ext
 
 from .curvature_wrapper import CurvatureWrapper
 

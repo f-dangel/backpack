@@ -2,7 +2,7 @@ from math import sqrt
 from warnings import warn
 from torch import diag_embed, ones_like, softmax, sqrt as torchsqrt, diag, randn
 from torch.nn import CrossEntropyLoss
-from ...utils import einsum
+from ...utils.utils import einsum
 from .basederivatives import BaseDerivatives
 
 

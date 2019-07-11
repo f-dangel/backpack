@@ -2,8 +2,8 @@
 
 from torch import Tensor, allclose
 from torch.nn import Linear
-from backpack.gradient import extend, backpack
-import backpack.gradient.extensions as ext
+from backpack import extend, backpack
+import backpack.extensions as ext
 
 
 def ExtLinear(*args, **kwargs):

@@ -12,11 +12,11 @@ from .implementation.implementation_autograd import AutogradImpl
 from .implementation.implementation_bpext import BpextImpl
 from .test_problem import TestProblem
 
-from backpack.gradient.layers import Flatten
-from backpack.gradient import extend as xtd
-from backpack.gradient import backpack
+from backpack.layers import Flatten
+from backpack import extend as xtd
+from backpack import backpack
 
-import backpack.gradient.extensions as ext
+import backpack.extensions as ext
 
 N, C, H, W = 100, 3, 4, 4
 D = C * H * W

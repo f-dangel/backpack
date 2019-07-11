@@ -1,5 +1,5 @@
 from .basederivatives import BaseDerivatives
-from ...utils import einsum
+from ...utils.utils import einsum
 
 
 class ElementwiseDerivatives(BaseDerivatives):

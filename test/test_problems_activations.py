@@ -1,6 +1,6 @@
 import torch
-from backpack.utils import set_seeds
-from backpack.gradient import extend
+from backpack.utils.utils import set_seeds
+from backpack import extend
 from .test_problem import TestProblem
 
 TEST_SETTINGS = {

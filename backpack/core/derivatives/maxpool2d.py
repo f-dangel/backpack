@@ -1,7 +1,7 @@
 from torch import zeros, prod
 from torch.nn import MaxPool2d
 from torch.nn.functional import max_pool2d
-from ...gradient.utils import conv as convUtils
+from ...utils import conv as convUtils
 from .basederivatives import BaseDerivatives
 
 

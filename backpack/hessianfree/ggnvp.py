@@ -1,5 +1,5 @@
 import torch
-from ..utils import einsum
+from ..utils.utils import einsum
 
 from .lop import L_op
 from .rop import R_op

@@ -1,8 +1,8 @@
 import torch
 from .implementation import Implementation
-from backpack.gradient import backpack
-import backpack.gradient.extensions as ext
-from backpack.gradient.secondorder.curvature import Curvature
+from backpack import backpack
+import backpack.extensions as ext
+from backpack.secondorder.curvature import Curvature
 
 
 class BpextImpl(Implementation):

@@ -9,8 +9,8 @@ The example is taken from
 from torch import (Tensor, randn, allclose)
 from torch.nn import Conv2d
 from random import (randint, choice)
-from backpack.gradient import extend, backpack
-import backpack.gradient.extensions as ext
+from backpack import extend, backpack
+import backpack.extensions as ext
 
 
 def ExtConv2d(*args, **kwargs):

@@ -6,9 +6,9 @@ import torch
 from torch.nn import Linear, ReLU, CrossEntropyLoss
 from torch.nn import Sequential
 from torch.nn import Conv2d
-from backpack.gradient.layers import Flatten
-from backpack.gradient import extend, backpack
-import backpack.gradient.extensions as ext
+from backpack.layers import Flatten
+from backpack import extend, backpack
+import backpack.extensions as ext
 
 
 def dummy_forward_pass():

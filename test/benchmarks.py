@@ -1,6 +1,6 @@
 import torch
 import pytest
-from backpack.gradient import extend
+from backpack import extend
 from .test_problem import TestProblem
 from .implementation.implementation_autograd import AutogradImpl
 from .implementation.implementation_bpext import BpextImpl
