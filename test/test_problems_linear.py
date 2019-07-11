@@ -1,5 +1,5 @@
 import torch
-from backpack.utils.utils import Flatten
+from backpack.core.layers import Flatten
 from backpack import extend
 from .test_problem import TestProblem
 

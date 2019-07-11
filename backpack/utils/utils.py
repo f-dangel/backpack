@@ -27,10 +27,3 @@ def einsum(equation, *operands):
     See `backpack.utils.utils.EINSUMS` for supported implementations.
     """
     return EINSUMS[BPEXTS_EINSUM](equation, *operands)
-
-
-class Flatten(torch.nn.Module):
-    """Flatten all dimensions except batch dimension."""
-
-    def forward(self, input):
-        return input.view(input.size(0), -1)
