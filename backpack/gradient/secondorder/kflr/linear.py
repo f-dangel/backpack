@@ -3,7 +3,7 @@
 import torch
 from .kflrbase import KFLRBase
 from ....utils import einsum
-from ...derivatives.linear import LinearDerivatives
+from ....core.derivatives.linear import LinearDerivatives
 
 
 class KFLRLinear(KFLRBase, LinearDerivatives):

@@ -1,4 +1,4 @@
-from ...derivatives.dropout import DropoutDerivatives
+from ....core.derivatives.dropout import DropoutDerivatives
 from .kflrbase import KFLRBase
 
 

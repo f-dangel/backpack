@@ -3,7 +3,7 @@ import torch.nn
 from ...context import CTX
 from ....utils import einsum
 from ...utils import conv as convUtils
-from ...derivatives.conv2d import Conv2DDerivatives
+from ....core.derivatives.conv2d import Conv2DDerivatives
 from .diaghbase import DiagHBase
 DETACH_INPUTS = True
 
@@ -18,7 +18,8 @@ class DiagHConv2d(DiagHBase, Conv2DDerivatives):
         sqrt_h_outs_signs = CTX._backpropagated_sqrt_h_signs
         h_diag = torch.zeros_like(module.bias)
         for h_sqrt, sign in zip(sqrt_h_outs, sqrt_h_outs_signs):
-            h_sqrt_view = convUtils.separate_channels_and_pixels(module, h_sqrt)
+            h_sqrt_view = convUtils.separate_channels_and_pixels(
+                module, h_sqrt)
             h_diag.add_(sign * einsum('bijc,bikc->i',
                                       (h_sqrt_view, h_sqrt_view)))
         return h_diag
@@ -33,7 +34,8 @@ class DiagHConv2d(DiagHBase, Conv2DDerivatives):
         for h_sqrt, sign in zip(sqrt_h_outs, sqrt_h_outs_signs):
             num_classes = h_sqrt.size(2)
             X_repeated = X.expand(num_classes, -1, -1, -1)
-            h_sqrt_view = convUtils.separate_channels_and_pixels(module, h_sqrt)
+            h_sqrt_view = convUtils.separate_channels_and_pixels(
+                module, h_sqrt)
             h_diag.add_(
                 einsum('bmlc,cbkl,bmic,cbki->mk',
                        (h_sqrt_view, X_repeated, h_sqrt_view,

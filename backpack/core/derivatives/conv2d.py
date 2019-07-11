@@ -1,6 +1,6 @@
 import torch
 from ...utils import einsum
-from ..utils import conv as convUtils
+from ...gradient.utils import conv as convUtils
 from torch.nn import Conv2d
 from torch.nn.functional import conv_transpose2d, conv2d
 from .basederivatives import BaseDerivatives

@@ -1,5 +1,5 @@
-from ...derivatives.mseloss import MSELossDerivatives
-from ...derivatives.crossentropyloss import CrossEntropyLossDerivatives
+from ....core.derivatives.mseloss import MSELossDerivatives
+from ....core.derivatives.crossentropyloss import CrossEntropyLossDerivatives
 from .kfacbase import KFACBase
 
 

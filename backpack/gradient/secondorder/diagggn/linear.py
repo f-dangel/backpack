@@ -1,4 +1,4 @@
-from ...derivatives.linear import LinearDerivatives
+from ....core.derivatives.linear import LinearDerivatives
 from ....utils import einsum
 from .diagggnbase import DiagGGNBase
 

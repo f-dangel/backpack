@@ -2,7 +2,7 @@ import torch
 import torch.nn
 from ...context import CTX
 from ....utils import einsum
-from ...derivatives.linear import LinearDerivatives
+from ....core.derivatives.linear import LinearDerivatives
 from .diaghbase import DiagHBase
 
 

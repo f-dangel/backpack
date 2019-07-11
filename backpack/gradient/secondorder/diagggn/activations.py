@@ -1,6 +1,6 @@
-from ...derivatives.relu import ReLUDerivatives
-from ...derivatives.tanh import TanhDerivatives
-from ...derivatives.sigmoid import SigmoidDerivatives
+from ....core.derivatives.relu import ReLUDerivatives
+from ....core.derivatives.tanh import TanhDerivatives
+from ....core.derivatives.sigmoid import SigmoidDerivatives
 from .diagggnbase import DiagGGNBase
 
 

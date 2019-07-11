@@ -1,5 +1,5 @@
 from ...utils import conv as convUtils
-from ...derivatives.conv2d import Conv2DDerivatives
+from ....core.derivatives.conv2d import Conv2DDerivatives
 from ....utils import einsum
 from .diagggnbase import DiagGGNBase
 

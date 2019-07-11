@@ -2,7 +2,7 @@
 
 import torch
 from .kfacbase import KFACBase
-from ...derivatives.linear import LinearDerivatives
+from ....core.derivatives.linear import LinearDerivatives
 from ....utils import einsum
 
 
