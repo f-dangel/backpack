@@ -1,6 +1,6 @@
 numpy==1.14.5
 opt-einsum==2.3.2
 pytest==4.0.1
-torch==1.0.1.post2
-tqdm==4.28.1
-
+pytest-benchmark==3.2.2
+torch==1.1.0
+torchvision==0.3.0
