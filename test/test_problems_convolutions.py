@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from backpack.utils.utils import set_seeds, Flatten
+from backpack.utils.utils import Flatten
 from backpack import extend
 from .test_problem import TestProblem
 
@@ -14,8 +14,6 @@ TEST_SETTINGS = {
     "rtol": 1e-5,
     "atol": 5e-4
 }
-
-set_seeds(0)
 
 
 def convlayer():

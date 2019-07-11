@@ -1,9 +1,7 @@
 """Utility functions."""
 
-import numpy
 import torch
 import opt_einsum as oe
-import random
 
 BPEXTS_EINSUM = 'torch'
 
@@ -29,24 +27,6 @@ def einsum(equation, *operands):
     See `backpack.utils.utils.EINSUMS` for supported implementations.
     """
     return EINSUMS[BPEXTS_EINSUM](equation, *operands)
-
-
-def set_seeds(seed=None):
-    """Set random seeds of :mod:`torch`, :mod:`torch.cuda`, :mod:`numpy`,
-    :mod:`random`.
-
-    Per default, no reset will be performed.
-
-    Parameters
-    ----------
-    seed : :obj:`int` or :obj:`None`, optional
-        Seed initialization value, no reset if unspecified
-    """
-    if seed is not None:
-        torch.manual_seed(seed)
-        torch.cuda.manual_seed(seed)
-        numpy.random.seed(seed)
-        random.seed(seed)
 
 
 class Flatten(torch.nn.Module):

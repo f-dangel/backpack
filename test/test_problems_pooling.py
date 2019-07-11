@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from backpack.utils.utils import set_seeds, Flatten
+from backpack.utils.utils import Flatten
 from backpack import extend
 from .test_problem import TestProblem
 
@@ -20,8 +20,6 @@ POOLINGS = {
     'MaxPool2d': torch.nn.MaxPool2d,
     'AvgPool2d': torch.nn.AvgPool2d,
 }
-
-set_seeds(0)
 
 
 def convlayer():

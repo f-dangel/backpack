@@ -1,5 +1,5 @@
 import torch
-from backpack.utils.utils import set_seeds, Flatten
+from backpack.utils.utils import Flatten
 from backpack import extend
 from .test_problem import TestProblem
 
@@ -12,7 +12,6 @@ TEST_SETTINGS = {
     "atol": 1e-5
 }
 
-set_seeds(0)
 linearlayer = extend(
     torch.nn.Linear(
         in_features=TEST_SETTINGS["in_features"],
