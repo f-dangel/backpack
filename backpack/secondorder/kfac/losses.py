@@ -7,7 +7,7 @@ class KFACLoss(KFACBase):
     def backpropagate(self, module, grad_input, grad_output):
         sqrt_H_sampled = self.sqrt_hessian_sampled(module, grad_input,
                                                    grad_output)
-        self.set_in_ctx(sqrt_H_sampled)
+        self.set_mat_in_ctx(sqrt_H_sampled)
 
 
 class KFACMSELoss(KFACLoss, MSELossDerivatives):
