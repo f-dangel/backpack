@@ -12,7 +12,7 @@ def unfold_func(module):
 def get_weight_gradient_factors(input, grad_out, module):
     batch = input.size(0)
     X = unfold_func(module)(input)
-    dE_dY = grad_out.view(batch, module.out_channels, -1)
+    dE_dY = grad_out.contiguous().view(batch, module.out_channels, -1)
     return X, dE_dY
 
 
@@ -26,7 +26,7 @@ def separate_channels_and_pixels(module, tensor):
         module.output_shape[2] * module.output_shape[3],
         -1,
     )
-    return tensor.view(batch, channels, pixels, classes)
+    return tensor.contiguous().view(batch, channels, pixels, classes)
 
 
 def check_sizes_input_jac_t(mat, module):

@@ -1,4 +1,4 @@
-from . import pooling, conv2d, linear, activations, losses
+from . import pooling, conv2d, linear, activations, losses, padding
 
 EXTENSIONS = [
     *pooling.EXTENSIONS,
@@ -6,4 +6,5 @@ EXTENSIONS = [
     *linear.EXTENSIONS,
     *activations.EXTENSIONS,
     *losses.EXTENSIONS,
+    *padding.EXTENSIONS,
 ]
