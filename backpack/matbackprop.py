@@ -1,18 +1,15 @@
 from .backpropextension import BackpropExtension
-from .ctxinteract import ActOnCTX
 from .context import get_from_ctx, set_in_ctx
 
 
-class MatToJacMat(BackpropExtension, ActOnCTX):
+class MatToJacMat(BackpropExtension):
     """Backpropagate `M` to `J^T M`."""
 
     def __init__(self, mat_name_in_ctx, extension, params=None):
         if params is None:
             params = []
+        super().__init__(self.get_module(), extension, params=params)
         self.MAT_NAME_IN_CTX = mat_name_in_ctx
-        ActOnCTX.__init__(self, mat_name_in_ctx)
-        BackpropExtension.__init__(
-            self, self.get_module(), extension, params=params)
 
     def backpropagate(self, module, grad_input, grad_output):
         M = self.get_mat_from_ctx()
@@ -28,7 +25,7 @@ class MatToJacMat(BackpropExtension, ActOnCTX):
         return self.jac_t_mat_prod(module, grad_input, grad_output, M)
 
     def apply_jac_t_on_list(self, module, grad_input, grad_output, M_list):
-        mat_list = [
+        M_list = [
             self.apply_jac_t(module, grad_input, grad_output, M)
             for M in M_list
         ]

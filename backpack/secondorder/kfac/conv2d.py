@@ -34,7 +34,7 @@ class KFACConv2d(KFACBase, Conv2DDerivatives):
         return einsum('bik,bjk->ij', (X_expanded, X_expanded)) / batch
 
     def Gamma(self, module, grad_input, grad_output):
-        kfac_sqrt_mc_samples = self.get_from_ctx()
+        kfac_sqrt_mc_samples = self.get_mat_from_ctx()
         samples = kfac_sqrt_mc_samples.size(2)
         kfac_sqrt_mc = convUtils.separate_channels_and_pixels(
             module, kfac_sqrt_mc_samples)

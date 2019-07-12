@@ -34,7 +34,7 @@ class KFACLinear(KFACBase, LinearDerivatives):
         return einsum('bi,bj-> ij', (input, input)) / batch
 
     def G(self, module, grad_input, grad_output):
-        kfac_sqrt_mc_samples = self.get_from_ctx()
+        kfac_sqrt_mc_samples = self.get_mat_from_ctx()
         samples = kfac_sqrt_mc_samples.size(2)
         # NOTE: Normalization by batch size is already in the sqrt
         return einsum('bim,bjm->ij',

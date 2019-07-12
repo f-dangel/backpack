@@ -9,13 +9,13 @@ class DiagGGNConv2d(DiagGGNBase, Conv2DDerivatives):
         super().__init__(params=["bias", "weight"])
 
     def bias(self, module, grad_input, grad_output):
-        sqrt_ggn_out = self.get_from_ctx()
+        sqrt_ggn_out = self.get_mat_from_ctx()
         sqrt_ggn = convUtils.separate_channels_and_pixels(module, sqrt_ggn_out)
 
         return einsum('bijc,bikc->i', (sqrt_ggn, sqrt_ggn))
 
     def weight(self, module, grad_input, grad_output):
-        sqrt_ggn_out = self.get_from_ctx()
+        sqrt_ggn_out = self.get_mat_from_ctx()
         sqrt_ggn = convUtils.separate_channels_and_pixels(module, sqrt_ggn_out)
 
         X = convUtils.unfold_func(module)(module.input0)
