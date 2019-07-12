@@ -1,11 +1,12 @@
-from ...extensions import KFLR
+from ...extensions import KFRA
 from ...approx import MatToJacMatJac
 
-BACKPROPAGATED_MATRIX_SQRT_NAME = "_kflr_backpropagated_sqrt_ggn"
-EXTENSION = KFLR
 
+class KFRABase(MatToJacMat):
+    MAT_NAME_IN_CTX = "_kfra_backpropagated_sqrt_ggn"
+    EXTENSION = KFRA
 
-class KFLRBase(MatToJacMat):
-    def __init__(self, params=[]):
-        super().__init__(
-            BACKPROPAGATED_MATRIX_SQRT_NAME, EXTENSION, params=params)
+    def __init__(self, params=None):
+        if params is None:
+            params = []
+        super().__init__(self.MAT_NAME_IN_CTX, self.EXTENSION, params=params)

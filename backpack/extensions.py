@@ -53,6 +53,11 @@ class KFAC(Extension):
     pass
 
 
+class KFRA(Extension):
+    savefield = "kfra"
+    pass
+
+
 class ParametrizedExtension(Extension):
     def __init__(self, input):
         self.input = input
@@ -82,6 +87,7 @@ class Extensions:
         JVP,
         DIAG_H,
         KFLR,
+        KFRA,
         KFAC,
         CMP,
     ]
