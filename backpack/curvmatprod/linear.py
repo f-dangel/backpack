@@ -9,7 +9,7 @@ class CMPLinear(CMPBase, LinearDerivatives):
         super().__init__(params=["weight", "bias"])
 
     def weight(self, module, grad_input, grad_output):
-        CMP_out = self.get_from_ctx()
+        CMP_out = self.get_cmp_from_ctx()
 
         def weight_cmp(mat):
             Jmat = self.weight_jac_mat_prod(module, grad_input, grad_output,
@@ -22,7 +22,7 @@ class CMPLinear(CMPBase, LinearDerivatives):
         return weight_cmp
 
     def bias(self, module, grad_input, grad_output):
-        CMP_out = self.get_from_ctx()
+        CMP_out = self.get_cmp_from_ctx()
 
         def bias_cmp(mat, which=None):
             Jmat = self.bias_jac_mat_prod(module, grad_input, grad_output, mat)

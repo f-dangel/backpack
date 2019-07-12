@@ -1,5 +1,18 @@
 from .extensions import Extensions
 
+RETURN_IF_NOT_EXISTING = None
+
+
+def get_from_ctx(name):
+    value = getattr(CTX, name, RETURN_IF_NOT_EXISTING)
+    if value is RETURN_IF_NOT_EXISTING:
+        raise ValueError("The attribute {} does not exist in CTX".format(name))
+    return value
+
+
+def set_in_ctx(name, value):
+    setattr(CTX, name, value)
+
 
 class CTX:
     """
@@ -9,7 +22,10 @@ class CTX:
 
     @staticmethod
     def as_dict():
-        return {ext: CTX.activeExtsDict.get(ext, False) for ext in Extensions.ext_list()}
+        return {
+            ext: CTX.activeExtsDict.get(ext, False)
+            for ext in Extensions.ext_list()
+        }
 
     @staticmethod
     def from_dict(dic):

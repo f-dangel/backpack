@@ -9,7 +9,7 @@ class CMPLoss(CMPBase):
         Curvature.check_loss_hessian(self.hessian_is_psd())
 
         CMP = self.hessian_matrix_product(module, grad_input, grad_output)
-        self.set_in_ctx(CMP)
+        self.set_cmp_in_ctx(CMP)
 
 
 class CMPMSELoss(CMPLoss, MSELossDerivatives):
