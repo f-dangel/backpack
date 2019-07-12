@@ -1,4 +1,3 @@
-from ...context import CTX
 from ...core.derivatives.mseloss import MSELossDerivatives
 from ...core.derivatives.crossentropyloss import CrossEntropyLossDerivatives
 from .diaghbase import DiagHBase
@@ -7,8 +6,9 @@ from .diaghbase import DiagHBase
 class DiagHLoss(DiagHBase):
     def backpropagate(self, module, grad_input, grad_output):
         sqrt_H = self.sqrt_hessian(module, grad_input, grad_output)
-        CTX._backpropagated_sqrt_h = [sqrt_H]
-        CTX._backpropagated_sqrt_h_signs = [1.]
+
+        self.set_mat_in_ctx([sqrt_H])
+        self.set_sign_list_in_ctx([self.PLUS])
 
 
 class DiagHMSELoss(DiagHLoss, MSELossDerivatives):
