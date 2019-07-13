@@ -10,7 +10,7 @@ from .extensions import Extension, Extensions
 from . import curvmatprod as cmp
 from .context import CTX
 
-DEBUGGING = True
+DEBUGGING = False
 
 
 def set_backpack(*args):
@@ -71,10 +71,10 @@ def extend(module):
         """Check which quantities need to be computed and evaluate them."""
         if DEBUGGING:
             print("[DEBUG] Backward Hook called on [{}]".format(module))
-        if len(CTX.active_exts()) == 0:
-            print("[DEBUG] No Active Extension")
-        else:
-            print("[DEBUG] Extensions active: {}".format(CTX.active_exts()))
+            if len(CTX.active_exts()) == 0:
+                print("[DEBUG] No Active Extension")
+            else:
+                print("[DEBUG] Extensions active: {}".format(CTX.active_exts()))
 
         grad_out = [grad_output[i] for i in range(len(grad_output))]
 
