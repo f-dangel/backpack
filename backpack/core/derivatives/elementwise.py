@@ -3,22 +3,30 @@ from ...utils.utils import einsum
 
 
 class ElementwiseDerivatives(BaseDerivatives):
-    def jac_t_mat_prod(self, df, mat):
-        _, df_flat = self.batch_flat(df)
+    def jac_t_mat_prod(self, module, grad_input, grad_output, mat):
+        _, df_flat = self.batch_flat(self.df(module, grad_input, grad_output))
         return einsum('bi,bic->bic', (df_flat, mat))
 
-    def jac_mat_prod(self, df, mat):
-        _, df_flat = self.batch_flat(df)
+    def jac_mat_prod(self, module, grad_input, grad_output, mat):
+        _, df_flat = self.batch_flat(self.df(module, grad_input, grad_output))
         return einsum('bi,bic->bic', (df_flat, mat))
 
-    def hessian_diagonal(self, ddf, mat):
-        _, ddf_flat = self.batch_flat(ddf)
-        _, mat_flat = self.batch_flat(mat)
-        return ddf_flat * mat_flat
-
-    def ea_jac_t_mat_jac(self, df, mat):
-        batch, df_flat = self.batch_flat(df)
+    def ea_jac_t_mat_jac(self, module, grad_input, grad_output, mat):
+        batch, df_flat = self.batch_flat(
+            self.df(module, grad_input, grad_output))
         return einsum('bi,ij,bj->ij', (df_flat, mat, df_flat)) / batch
+
+    def hessian_diagonal(self, module, grad_input, grad_output):
+        _, d2f_flat = self.batch_flat(
+            self.d2f(module, grad_input, grad_output))
+        _, grad_output_flat = self.batch_flat(grad_output[0])
+        return d2f_flat * grad_output_flat
+
+    def df(self, module, grad_input, grad_output):
+        raise NotImplementedError("First derivatives not implemented")
+
+    def d2f(self, module, grad_input, grad_output):
+        raise NotImplementedError("Second derivatives not implemented")
 
     @staticmethod
     def batch_flat(tensor):
