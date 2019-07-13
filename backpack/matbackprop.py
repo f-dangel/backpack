@@ -36,3 +36,25 @@ class MatToJacMat(BackpropExtension):
 
     def set_mat_in_ctx(self, mat):
         set_in_ctx(self.MAT_NAME_IN_CTX, mat)
+
+
+class ExpectationApproximationMatToJacMatJac(BackpropExtension):
+    """Backpropagate batch average of the Hessian."""
+
+    def __init__(self, mat_name_in_ctx, extension, params=None):
+        if params is None:
+            params = []
+        super().__init__(self.get_module(), extension, params=params)
+        self.MAT_NAME_IN_CTX = mat_name_in_ctx
+
+    def backpropagate(self, module, grad_input, grad_output):
+        mat = self.get_mat_from_ctx()
+        ea_JT_mat_J = self.ea_jac_t_mat_jac(module, grad_input, grad_output,
+                                            mat)
+        self.set_mat_in_ctx(ea_JT_mat_J)
+
+    def get_mat_from_ctx(self):
+        return get_from_ctx(self.MAT_NAME_IN_CTX)
+
+    def set_mat_in_ctx(self, mat):
+        set_in_ctx(self.MAT_NAME_IN_CTX, mat)
