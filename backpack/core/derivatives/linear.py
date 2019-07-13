@@ -18,6 +18,10 @@ class LinearDerivatives(BaseDerivatives):
         d_linear = module.weight.data
         return einsum('ij,bjc->bic', (d_linear, mat))
 
+    def ea_jac_t_mat_jac(self, module, grad_input, grad_output, mat):
+        jac = module.weight
+        return einsum('ik,ij,jl->kl', (jac, mat, jac))
+
     def weight_jac_mat_prod(self, module, grad_input, grad_output, mat):
         batch = module.input0.size(0)
         num_cols = mat.size(1)
