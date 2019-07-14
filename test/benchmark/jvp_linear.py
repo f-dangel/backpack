@@ -6,10 +6,10 @@ from backpack import extend
 from backpack.core.derivatives.linear import LinearDerivatives
 from backpack.hessianfree.lop import transposed_jacobian_vector_product
 
-
 ################################################################################
 # Data and helpers
 ################################################################################
+from backpack.hessianfree.rop import jacobian_vector_product
 
 
 def data():
@@ -19,44 +19,57 @@ def data():
     linear = extend(Linear(D1, D2))
     out = linear(X)
 
-    v = torch.randn(N, D2)
+    vin = torch.randn(N, D2)
+    vout = torch.randn(N, D1)
 
-    return X, linear, out, v
+    return X, linear, out, vin, vout
 
 
-def ag_jtv_func(X, module, out, v):
+def ag_jtv_func(X, module, out, vin, vout):
     return lambda: transposed_jacobian_vector_product(
-        out, X, v, detach=False
+        out, X, vin, detach=False
     )[0]
 
 
-def bp_jtv_func(X, module, out, v):
+def ag_jv_func(X, module, out, vin, vout):
+    return lambda: jacobian_vector_product(
+        out, X, vout, detach=False
+    )[0]
+
+
+def bp_jtv_func(X, module, out, vin, vout):
     return lambda: LinearDerivatives().jac_t_mat_prod(
-        module, None, None, v.unsqueeze(2)
+        module, None, None, vin.unsqueeze(2)
     ).squeeze(2)
 
 
-def ag_jtv_weight_func(X, module, out, v):
+def bp_jv_func(X, module, out, vin, vout):
+    return lambda: LinearDerivatives().jac_mat_prod(
+        module, None, None, vout.unsqueeze(2)
+    ).squeeze(2)
+
+
+def ag_jtv_weight_func(X, module, out, vin, vout):
     return lambda: transposed_jacobian_vector_product(
-        out, module.weight, v, detach=False
+        out, module.weight, vin, detach=False
     )[0]
 
 
-def bp_jtv_weight_func(X, module, out, v):
+def bp_jtv_weight_func(X, module, out, vin, vout):
     return lambda: LinearDerivatives().weight_jac_t_mat_prod(
-        module, None, None, v.unsqueeze(2)
+        module, None, None, vin.unsqueeze(2)
     )
 
 
-def ag_jtv_bias_func(X, module, out, v):
+def ag_jtv_bias_func(X, module, out, vin, vout):
     return lambda: transposed_jacobian_vector_product(
-        out, module.bias, v, detach=False
+        out, module.bias, vin, detach=False
     )[0]
 
 
-def bp_jtv_bias_func(X, module, out, v):
+def bp_jtv_bias_func(X, module, out, vin, vout):
     return lambda: LinearDerivatives().bias_jac_t_mat_prod(
-        module, None, None, v.unsqueeze(2)
+        module, None, None, vin.unsqueeze(2)
     )
 
 
@@ -66,23 +79,30 @@ def bp_jtv_bias_func(X, module, out, v):
 
 
 def test_jtv_ag_vs_bp():
-    X, linear, out, v = data()
-    A = ag_jtv_func(X, linear, out, v)()
-    B = bp_jtv_func(X, linear, out, v)()
+    X, module, out, vin, vout = data()
+    A = ag_jtv_func(X, module, out, vin, vout)()
+    B = bp_jtv_func(X, module, out, vin, vout)()
+    assert torch.allclose(A, B)
+
+
+def test_jv_ag_vs_bp():
+    X, module, out, vin, vout = data()
+    A = ag_jtv_func(X, module, out, vin, vout)()
+    B = bp_jtv_func(X, module, out, vin, vout)()
     assert torch.allclose(A, B)
 
 
 def test_jtv_weight_ag_vs_bp():
-    X, linear, out, v = data()
-    A = ag_jtv_weight_func(X, linear, out, v)()
-    B = bp_jtv_weight_func(X, linear, out, v)()
+    X, module, out, vin, vout = data()
+    A = ag_jtv_weight_func(X, module, out, vin, vout)()
+    B = bp_jtv_weight_func(X, module, out, vin, vout)()
     assert torch.allclose(A, B.view_as(A))
 
 
 def test_jtv_bias_ag_vs_bp():
-    X, linear, out, v = data()
-    A = ag_jtv_bias_func(X, linear, out, v)()
-    B = bp_jtv_bias_func(X, linear, out, v)()
+    X, module, out, vin, vout = data()
+    A = ag_jtv_bias_func(X, module, out, vin, vout)()
+    B = bp_jtv_bias_func(X, module, out, vin, vout)()
     assert torch.allclose(A, B.view_as(A))
 
 
@@ -92,30 +112,40 @@ def test_jtv_bias_ag_vs_bp():
 
 
 def test_jtv_linear_ag(benchmark):
-    X, linear, out, v = data()
-    benchmark(ag_jtv_func(X, linear, out, v))
+    X, module, out, vin, vout = data()
+    benchmark(ag_jtv_func(X, module, out, vin, vout))
+
+
+def test_jv_linear_ag(benchmark):
+    X, module, out, vin, vout = data()
+    benchmark(ag_jv_func(X, module, out, vin, vout))
 
 
 def test_jtv_linear_bp(benchmark):
-    X, linear, out, v = data()
-    benchmark(bp_jtv_func(X, linear, out, v))
+    X, module, out, vin, vout = data()
+    benchmark(bp_jtv_func(X, module, out, vin, vout))
+
+
+def test_jv_linear_bp(benchmark):
+    X, module, out, vin, vout = data()
+    benchmark(bp_jv_func(X, module, out, vin, vout))
 
 
 def test_jtv_linear_weight_ag(benchmark):
-    X, linear, out, v = data()
-    benchmark(ag_jtv_weight_func(X, linear, out, v))
+    X, module, out, vin, vout = data()
+    benchmark(ag_jtv_weight_func(X, module, out, vin, vout))
 
 
 def test_jtv_linear_weight_bp(benchmark):
-    X, linear, out, v = data()
-    benchmark(bp_jtv_weight_func(X, linear, out, v))
+    X, module, out, vin, vout = data()
+    benchmark(bp_jtv_weight_func(X, module, out, vin, vout))
 
 
 def test_jtv_linear_bias_ag(benchmark):
-    X, linear, out, v = data()
-    benchmark(ag_jtv_bias_func(X, linear, out, v))
+    X, module, out, vin, vout = data()
+    benchmark(ag_jtv_bias_func(X, module, out, vin, vout))
 
 
 def test_jtv_linear_bias_bp(benchmark):
-    X, linear, out, v = data()
-    benchmark(bp_jtv_bias_func(X, linear, out, v))
+    X, module, out, vin, vout = data()
+    benchmark(bp_jtv_bias_func(X, module, out, vin, vout))
