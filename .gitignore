@@ -1,6 +1,8 @@
-# Python cache files
 __pycache__/
 *.egg-info/
 **/*.pyc
 .cache
+docs/
+examples/data
+
  
