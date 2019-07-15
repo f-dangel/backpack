@@ -1,6 +1,7 @@
 import warnings
 from .backpropextension import BackpropExtension
 from .curvature import Curvature
+from .secondorder.ea import ExpectationApproximation
 
 
 class Extension():
@@ -71,6 +72,26 @@ class CMP(ParametrizedExtension):
         super().__init__(which)
 
 
+class HBP(Extension):
+    savefield = "hbp"
+
+    def __init__(self, curv_type, avg_param_jac):
+        Curvature.set_current(curv_type)
+        ExpectationApproximation.set_expectation(avg_param_jac)
+        super().__init__([curv_type, avg_param_jac])
+
+
+# TODO
+# class KFRA2(HBP):
+#     pass
+
+# class KFAC2(HBP):
+#     pass
+
+# class KFRA2(HBP):
+#     pass
+
+
 class JVP(Extension):
     pass
 
@@ -90,6 +111,7 @@ class Extensions:
         KFRA,
         KFAC,
         CMP,
+        HBP,
     ]
 
     registeredExtensions = {}

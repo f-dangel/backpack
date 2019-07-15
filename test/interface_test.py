@@ -61,6 +61,7 @@ FEATURES_TO_ATTRIBUTES = {
     ext.KFRA: "kfra",
     ext.KFAC: "kfac",
     ext.CMP: "cmp",
+    ext.HBP: "hbp",
 }
 
 
@@ -107,6 +108,10 @@ def test_interface_kfra():
 
 def test_interface_kfac():
     interface_test(ext.KFAC, weight_has_attr=True, bias_has_attr=False)
+
+
+def test_interface_hbp():
+    interface_test(ext.HBP)
 
 
 def test_interface_cmp():

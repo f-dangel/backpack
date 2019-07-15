@@ -5,7 +5,7 @@ to calculate the variance of a gradient.
 """
 import torch
 from .firstorder import batchgrad, sumgradsquared, batchl2grad, variance
-from .secondorder import diagggn, diagh, kflr, kfra, kfac
+from .secondorder import diagggn, diagh, kflr, kfra, kfac, hbp
 from .extensions import Extension, Extensions
 from . import curvmatprod as cmp
 from .context import CTX
@@ -74,7 +74,8 @@ def extend(module):
             if len(CTX.active_exts()) == 0:
                 print("[DEBUG] No Active Extension")
             else:
-                print("[DEBUG] Extensions active: {}".format(CTX.active_exts()))
+                print("[DEBUG] Extensions active: {}".format(
+                    CTX.active_exts()))
 
         grad_out = [grad_output[i] for i in range(len(grad_output))]
 
@@ -116,6 +117,7 @@ EXTENSIONS = [
     *kfra.EXTENSIONS,
     *kfac.EXTENSIONS,
     *cmp.EXTENSIONS,
+    *hbp.EXTENSIONS,
 ]
 
 for backpropextension in EXTENSIONS:
