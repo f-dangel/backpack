@@ -11,7 +11,7 @@ class ElementwiseDerivatives(BaseDerivatives):
         _, df_flat = self.batch_flat(self.df(module, grad_input, grad_output))
         return einsum('bi,bic->bic', (df_flat, mat))
 
-    def ea_jac_t_mat_jac(self, module, grad_input, grad_output, mat):
+    def ea_jac_t_mat_jac_prod(self, module, grad_input, grad_output, mat):
         batch, df_flat = self.batch_flat(
             self.df(module, grad_input, grad_output))
         return einsum('bi,ij,bj->ij', (df_flat, mat, df_flat)) / batch
@@ -27,8 +27,3 @@ class ElementwiseDerivatives(BaseDerivatives):
 
     def d2f(self, module, grad_input, grad_output):
         raise NotImplementedError("Second derivatives not implemented")
-
-    @staticmethod
-    def batch_flat(tensor):
-        batch = tensor.size(0)
-        return batch, tensor.view(batch, -1)

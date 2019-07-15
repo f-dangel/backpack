@@ -49,8 +49,8 @@ class ExpectationApproximationMatToJacMatJac(BackpropExtension):
 
     def backpropagate(self, module, grad_input, grad_output):
         mat = self.get_mat_from_ctx()
-        ea_JT_mat_J = self.ea_jac_t_mat_jac(module, grad_input, grad_output,
-                                            mat)
+        ea_JT_mat_J = self.ea_jac_t_mat_jac_prod(module, grad_input,
+                                                 grad_output, mat)
         self.set_mat_in_ctx(ea_JT_mat_J)
 
     def get_mat_from_ctx(self):
