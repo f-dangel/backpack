@@ -150,7 +150,7 @@ def compare_grads(conv2d, g_conv2d, input):
     loss.backward()
 
     loss_g = loss_function(g_conv2d(input))
-    with backpack(ext.BATCH_GRAD):
+    with backpack(ext.BATCH_GRAD()):
         loss_g.backward()
 
     assert allclose(g_conv2d.bias.grad, conv2d.bias.grad, atol=TEST_ATOL)

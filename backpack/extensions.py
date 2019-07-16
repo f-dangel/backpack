@@ -104,23 +104,32 @@ class KFAC(HBP):
         return HBP
 
 
-def KFRA():
-    return HBP(
-        curv_type=Curvature.GGN,
-        loss_hessian_strategy=LossHessianStrategy.AVERAGE,
-        backprop_strategy=BackpropStrategy.BATCH_AVERAGE,
-        ea_strategy=ExpectationApproximation.BOTEV_MARTENS,
-    )
+class KFRA(HBP):
+    def __init__(self):
+        super().__init__(
+            curv_type=Curvature.GGN,
+            loss_hessian_strategy=LossHessianStrategy.AVERAGE,
+            backprop_strategy=BackpropStrategy.BATCH_AVERAGE,
+            ea_strategy=ExpectationApproximation.BOTEV_MARTENS,
+            savefield="kfra",
+        )
+
+    def extension_to_trigger(self):
+        return HBP
 
 
-def KFLR():
-    return HBP(
-        curv_type=Curvature.GGN,
-        loss_hessian_strategy=LossHessianStrategy.EXACT,
-        backprop_strategy=BackpropStrategy.SQRT,
-        ea_strategy=ExpectationApproximation.BOTEV_MARTENS,
-    )
+class KFLR(HBP):
+    def __init__(self):
+        super().__init__(
+            curv_type=Curvature.GGN,
+            loss_hessian_strategy=LossHessianStrategy.EXACT,
+            backprop_strategy=BackpropStrategy.SQRT,
+            ea_strategy=ExpectationApproximation.BOTEV_MARTENS,
+            savefield="kflr",
+        )
 
+    def extension_to_trigger(self):
+        return HBP
 
 
 class JVP(Extension):
