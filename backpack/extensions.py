@@ -1,4 +1,7 @@
 import warnings
+
+import torch
+
 from .backpropextension import BackpropExtension
 from .curvature import Curvature
 from .secondorder.strategies import (BackpropStrategy, LossHessianStrategy,
@@ -6,58 +9,63 @@ from .secondorder.strategies import (BackpropStrategy, LossHessianStrategy,
 
 
 class Extension():
-    def __init__(self):
+    def __init__(self, savefield):
+        self.savefield = savefield
         return
+
+    def extension_to_trigger(self):
+        return self.__class__
 
 
 class VARIANCE(Extension):
-    savefield = "variance"
-    pass
+    def __init__(self):
+        super().__init__(savefield="variance")
 
 
 class BATCH_L2(Extension):
-    savefield = "batch_l2"
-    pass
+    def __init__(self):
+        super().__init__(savefield="batch_l2")
 
 
 class BATCH_GRAD(Extension):
-    savefield = "grad_batch"
-    pass
+    def __init__(self):
+        super().__init__(savefield="grad_batch")
 
 
 class SUM_GRAD_SQUARED(Extension):
-    savefield = "sum_grad_squared"
-    pass
+    def __init__(self):
+        super().__init__(savefield="sum_grad_squared")
 
 
 class DIAG_GGN(Extension):
-    savefield = "diag_ggn"
-    pass
+    def __init__(self):
+        super().__init__(savefield="diag_ggn")
 
 
 class GRAD(Extension):
-    savefield = "grad_bpext"
-    pass
+    def __init__(self):
+        super().__init__(savefield="grad_bpext")
 
 
 class DIAG_H(Extension):
-    savefield = "diag_h"
-    pass
+    def __init__(self):
+        super().__init__(savefield="diag_h")
 
 
 class KFLR(Extension):
-    savefield = "kflr"
-    pass
+    def __init__(self):
+        super().__init__(savefield="kflr")
 
 
 class KFRA(Extension):
-    savefield = "kfra"
-    pass
+    def __init__(self):
+        super().__init__(savefield="kfra")
 
 
 class ParametrizedExtension(Extension):
-    def __init__(self, input):
+    def __init__(self, savefield, input):
         self.input = input
+        super().__init__(savefield=savefield)
 
 
 class CMP(ParametrizedExtension):
@@ -69,7 +77,6 @@ class CMP(ParametrizedExtension):
 
 
 class HBP(ParametrizedExtension):
-    savefield = "hbp"
 
     def __init__(
             self,
@@ -77,13 +84,17 @@ class HBP(ParametrizedExtension):
             loss_hessian_strategy,
             backprop_strategy,
             ea_strategy,
+            savefield="hbp",
     ):
-        super().__init__([
-            curv_type,
-            loss_hessian_strategy,
-            backprop_strategy,
-            ea_strategy,
-        ])
+        super().__init__(
+            savefield=savefield,
+            input=[
+                curv_type,
+                loss_hessian_strategy,
+                backprop_strategy,
+                ea_strategy,
+            ]
+        )
 
         Curvature.set_current(curv_type)
         LossHessianStrategy.set_strategy(loss_hessian_strategy)
@@ -91,13 +102,18 @@ class HBP(ParametrizedExtension):
         ExpectationApproximation.set_strategy(ea_strategy)
 
 
-def KFAC():
-    return HBP(
-        curv_type=Curvature.GGN,
-        loss_hessian_strategy=LossHessianStrategy.SAMPLING,
-        backprop_strategy=BackpropStrategy.SQRT,
-        ea_strategy=ExpectationApproximation.BOTEV_MARTENS,
-    )
+class KFAC(HBP):
+    def __init__(self):
+        super().__init__(
+            curv_type=Curvature.GGN,
+            loss_hessian_strategy=LossHessianStrategy.SAMPLING,
+            backprop_strategy=BackpropStrategy.SQRT,
+            ea_strategy=ExpectationApproximation.BOTEV_MARTENS,
+            savefield="kfac",
+        )
+
+    def extension_to_trigger(self):
+        return HBP
 
 
 # class KFRA2(HBP):
@@ -172,6 +188,7 @@ class Extensions:
     @staticmethod
     def get_extensions_for(active_exts, module):
         for ext in active_exts:
-            key = (module.__class__, ext)
+            key = (module.__class__, ext.extension_to_trigger())
+
             if key in Extensions.registeredExtensions:
                 yield Extensions.registeredExtensions[key]

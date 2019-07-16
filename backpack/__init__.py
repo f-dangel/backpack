@@ -10,26 +10,7 @@ from .extensions import Extension, Extensions
 from . import curvmatprod as cmp
 from .context import CTX
 
-DEBUGGING = True  #False
-
-
-def set_backpack(*args):
-    """
-    Activates the backprop extensions passed as input.
-    """
-    for arg in args:
-        Extensions.check_exists(arg)
-
-    args_classes = []
-    for arg in args:
-        if isinstance(arg, Extension):
-            args_classes.append(arg.__class__)
-        else:
-            args_classes.append(arg)
-
-    CTX.from_dict(
-        {ext: (ext in args_classes)
-         for ext in Extensions.ext_list()})
+DEBUGGING = True
 
 
 class backpack():
@@ -42,11 +23,11 @@ class backpack():
         self.args = args
 
     def __enter__(self):
-        self.old_CTX = CTX.as_dict()
-        set_backpack(*self.args)
+        self.old_CTX = CTX.active_exts()
+        CTX.set_active_exts(self.args)
 
     def __exit__(self, type, value, traceback):
-        CTX.from_dict(self.old_CTX)
+        CTX.set_active_exts(self.old_CTX)
 
 
 def extend(module):
