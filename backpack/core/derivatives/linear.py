@@ -25,7 +25,7 @@ class LinearDerivatives(BaseDerivatives):
     def weight_jac_mat_prod(self, module, grad_input, grad_output, mat):
         batch = module.input0.size(0)
         num_cols = mat.size(1)
-        shape = tuple(module.weight.size()) + (num_cols, )
+        shape = tuple(module.weight.size()) + (num_cols,)
 
         jac_mat = einsum('bj,ijc->bic', (module.input0, mat.view(shape)))
         return jac_mat
