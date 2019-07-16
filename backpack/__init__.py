@@ -5,12 +5,12 @@ to calculate the variance of a gradient.
 """
 import torch
 from .firstorder import batchgrad, sumgradsquared, batchl2grad, variance
-from .secondorder import diagggn, diagh, kflr, kfra, kfac, hbp
+from .secondorder import diagggn, diagh, kflr, kfra, hbp
 from .extensions import Extension, Extensions
 from . import curvmatprod as cmp
 from .context import CTX
 
-DEBUGGING = False
+DEBUGGING = True  #False
 
 
 def set_backpack(*args):
@@ -83,6 +83,8 @@ def extend(module):
             Extensions.get_extensions_for(CTX.active_exts(), module))
 
         if DEBUGGING and len(exts_for_mod) == 0:
+            import pdb
+            pdb.set_trace()
             print(" └─[DEBUG] No extension registered for {}".format(
                 module.__class__))
 
@@ -115,7 +117,6 @@ EXTENSIONS = [
     *diagh.EXTENSIONS,
     *kflr.EXTENSIONS,
     *kfra.EXTENSIONS,
-    *kfac.EXTENSIONS,
     *cmp.EXTENSIONS,
     *hbp.EXTENSIONS,
 ]

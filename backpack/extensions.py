@@ -50,11 +50,6 @@ class KFLR(Extension):
     pass
 
 
-class KFAC(Extension):
-    savefield = "kfac"
-    pass
-
-
 class KFRA(Extension):
     savefield = "kfra"
     pass
@@ -96,14 +91,17 @@ class HBP(ParametrizedExtension):
         ExpectationApproximation.set_strategy(ea_strategy)
 
 
-# class KFAC2(HBP):
-#     def __init__(self):
-#         super().__init__(
-#             curv_type=Curvature.GGN,
-#             loss_hessian_strategy=LossHessianStrategy.SAMPLING,
-#             backprop_strategy=BackpropStrategy.SQRT,
-#             ea_strategy=ExpectationApproximation.BOTEV_MARTENS,
-#         )
+class KFAC(HBP):
+    savefield = "kfac"
+
+    def __init__(self):
+        super().__init__(
+            curv_type=Curvature.GGN,
+            loss_hessian_strategy=LossHessianStrategy.SAMPLING,
+            backprop_strategy=BackpropStrategy.SQRT,
+            ea_strategy=ExpectationApproximation.BOTEV_MARTENS,
+        )
+
 
 # class KFRA2(HBP):
 #     def __init__(self):

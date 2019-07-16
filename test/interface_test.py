@@ -59,9 +59,9 @@ FEATURES_TO_ATTRIBUTES = {
     ext.DIAG_GGN: "diag_ggn",
     ext.KFLR: "kflr",
     ext.KFRA: "kfra",
-    ext.KFAC: "kfac",
     ext.CMP: "cmp",
     ext.HBP: "hbp",
+    ext.KFAC: "kfac",
 }
 
 
@@ -107,7 +107,7 @@ def test_interface_kfra():
 
 
 def test_interface_kfac():
-    interface_test(ext.KFAC, weight_has_attr=True, bias_has_attr=False)
+    interface_test(ext.KFAC)
 
 
 def test_interface_hbp():
@@ -139,9 +139,8 @@ def test_interface_kflr_conv():
         ext.KFLR, weight_has_attr=True, bias_has_attr=False, use_conv=True)
 
 
-def test_interface_kfac_conv():
-    interface_test(
-        ext.KFAC, weight_has_attr=True, bias_has_attr=False, use_conv=True)
+# def test_interface_kfac_conv():
+#     interface_test(ext.KFAC, use_conv=True)
 
 
 def test_interface_cmp_conv():
