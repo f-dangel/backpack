@@ -45,16 +45,6 @@ class DIAG_H(Extension):
     pass
 
 
-class KFLR(Extension):
-    savefield = "kflr"
-    pass
-
-
-class KFRA(Extension):
-    savefield = "kfra"
-    pass
-
-
 class ParametrizedExtension(Extension):
     def __init__(self, input):
         self.input = input
@@ -100,23 +90,22 @@ def KFAC():
     )
 
 
-# class KFRA2(HBP):
-#     def __init__(self):
-#         super().__init__(
-#             curv_type=Curvature.GGN,
-#             loss_hessian_strategy=LossHessianStrategy.AVERAGE,
-#             backprop_strategy=BackpropStrategy.BATCH_AVERAGE,
-#             ea_strategy=ExpectationApproximation.BOTEV_MARTENS,
-#         )
+def KFRA():
+    return HBP(
+        curv_type=Curvature.GGN,
+        loss_hessian_strategy=LossHessianStrategy.AVERAGE,
+        backprop_strategy=BackpropStrategy.BATCH_AVERAGE,
+        ea_strategy=ExpectationApproximation.BOTEV_MARTENS,
+    )
 
-# class KFLR2(HBP):
-#     def __init__(self):
-#         super().__init__(
-#             curv_type=Curvature.GGN,
-#             loss_hessian_strategy=LossHessianStrategy.EXACT,
-#             backprop_strategy=BackpropStrategy.SQRT,
-#             ea_strategy=ExpectationApproximation.BOTEV_MARTENS,
-#         )
+
+def KFLR():
+    return HBP(
+        curv_type=Curvature.GGN,
+        loss_hessian_strategy=LossHessianStrategy.EXACT,
+        backprop_strategy=BackpropStrategy.SQRT,
+        ea_strategy=ExpectationApproximation.BOTEV_MARTENS,
+    )
 
 
 class JVP(Extension):

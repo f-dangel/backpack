@@ -36,10 +36,6 @@ class LossHessianStrategy():
 
     @classmethod
     def is_kfra(cls):
-        return cls.is_ea()
-
-    @classmethod
-    def is_ea(cls):
         return cls.CURRENT == cls.AVERAGE
 
 
@@ -69,7 +65,7 @@ class BackpropStrategy():
     @classmethod
     def set_strategy(cls, strategy):
         cls.__check_exists(strategy)
-        cls.CURRENT = CURRENT
+        cls.CURRENT = strategy
 
     @classmethod
     def __check_exists(cls, strategy):

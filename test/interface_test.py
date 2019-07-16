@@ -99,11 +99,11 @@ def test_interface_diag_ggn():
 
 
 def test_interface_kflr():
-    interface_test(ext.KFLR, weight_has_attr=True, bias_has_attr=False)
+    interface_test(ext.KFLR())
 
 
 def test_interface_kfra():
-    interface_test(ext.KFRA, weight_has_attr=True, bias_has_attr=False)
+    interface_test(ext.KFRA())
 
 
 def test_interface_kfac():
@@ -135,12 +135,15 @@ def test_interface_diag_ggn_conv():
 
 
 def test_interface_kflr_conv():
-    interface_test(
-        ext.KFLR, weight_has_attr=True, bias_has_attr=False, use_conv=True)
+    interface_test(ext.KFLR(), use_conv=True)
 
 
-# def test_interface_kfac_conv():
-#     interface_test(ext.KFAC, use_conv=True)
+def test_interface_kfra_conv():
+    interface_test(ext.KFRA(), use_conv=True)
+
+
+def test_interface_kfac_conv():
+    interface_test(ext.KFAC(), use_conv=True)
 
 
 def test_interface_cmp_conv():
