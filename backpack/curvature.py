@@ -62,7 +62,7 @@ class Curvature():
         if not which in cls.CHOICES:
             raise AttributeError(
                 "Unknown curvature: {}. Expecting one of {}".format(
-                    which, cls.CURVATURE_CHOICES))
+                    which, cls.CHOICES))
 
     @classmethod
     def modify_residual(cls, residual):
