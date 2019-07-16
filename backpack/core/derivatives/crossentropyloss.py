@@ -1,7 +1,9 @@
 from math import sqrt
 from warnings import warn
-from torch import diag_embed, ones_like, softmax, sqrt as torchsqrt, diag, randn
+from torch import diag_embed, ones_like, softmax, sqrt as torchsqrt, diag, randn, multinomial
 from torch.nn import CrossEntropyLoss
+from torch.nn.functional import one_hot
+
 from ...utils.utils import einsum
 from .basederivatives import BaseDerivatives
 
@@ -23,31 +25,18 @@ class CrossEntropyLossDerivatives(BaseDerivatives):
         return sqrt_H
 
     def sqrt_hessian_sampled(self, module, grad_input, grad_output):
-        N, C = module.input0.shape
         M = self.MC_SAMPLES
 
-        warn("This method is returning a dummy")
-        return randn(N, C, M, device=module.input0.device)
-
-        # TODO
         probs = self.get_probs(module)
-        ys = multinomial(probs, M, replacement=True)  # [N, M]
+        classes = one_hot(multinomial(probs, M, replacement=True))
+        classes = classes.transpose(1, 2).float()
 
-        # Compute G : [N, C, M], such that
-        # G[n, c, m] = d_out[n,c] CE(out[n], ys[n,m])
-        raise NotImplementedError
+        sqrt_mc_h = (probs - classes) / sqrt(M)
 
-        # X = probs.unsqueeze(-1)
-        # X = X.repeat(1, 1, M)  # [N, C, M]
-        # one_hot = one_hot_encode(ys, C)  # [N, M, C]
-        # one_hot = one_hot.transpose(1, 2)  # [N, C, M]
+        if module.reduction is "mean":
+            sqrt_mc_h /= sqrt(module.input0.shape[0])
 
-        # G = X - one_hot.float()
-
-        # if module.reduction is "mean":
-        #     G /= sqrt(module.input0.shape[0])
-
-        # return -G, one_hot
+        return sqrt_mc_h
 
     def sum_hessian(self, module, grad_input, grad_output):
         probs = self.get_probs(module)

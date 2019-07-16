@@ -12,5 +12,5 @@ class DropoutDerivatives(ElementwiseDerivatives):
 
     def df(self, module, grad_input, grad_output):
         scaling = 1 / (1 - module.p)
-        mask = 1 - eq(grad_input, 0.).float()
+        mask = 1 - eq(module.output, 0.).float()
         return mask * scaling
