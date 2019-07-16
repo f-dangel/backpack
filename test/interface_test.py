@@ -88,21 +88,23 @@ def test_interface_diag_ggn():
 
 
 def test_interface_kflr():
-    interface_test(ext.KFLR(), weight_has_attr=True, bias_has_attr=False)
+    interface_test(ext.KFLR())
 
 
 def test_interface_kfra():
-    interface_test(ext.KFRA(), weight_has_attr=True, bias_has_attr=False)
+    interface_test(ext.KFRA())
 
 
 def test_interface_kfac():
     interface_test(ext.KFAC())
 
 
+@pytest.mark.skip()
 def test_interface_hbp():
     interface_test(ext.HBP())
 
 
+@pytest.mark.skip()
 def test_interface_cmp():
     interface_test(ext.CMP())
 
@@ -124,12 +126,20 @@ def test_interface_diag_ggn_conv():
 
 
 def test_interface_kflr_conv():
+<<<<<<< HEAD
     interface_test(
         ext.KFLR(), weight_has_attr=True, bias_has_attr=False, use_conv=True)
+=======
+    interface_test(ext.KFLR(), use_conv=True)
+>>>>>>> a341eae95c9805063bb9ec98b01b2ce837cc415e
 
 
-# def test_interface_kfac_conv():
-#     interface_test(ext.KFAC, use_conv=True)
+def test_interface_kfra_conv():
+    interface_test(ext.KFRA(), use_conv=True)
+
+
+def test_interface_kfac_conv():
+    interface_test(ext.KFAC(), use_conv=True)
 
 
 def test_interface_cmp_conv():

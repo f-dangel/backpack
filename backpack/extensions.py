@@ -52,16 +52,6 @@ class DIAG_H(Extension):
         super().__init__(savefield="diag_h")
 
 
-class KFLR(Extension):
-    def __init__(self):
-        super().__init__(savefield="kflr")
-
-
-class KFRA(Extension):
-    def __init__(self):
-        super().__init__(savefield="kfra")
-
-
 class ParametrizedExtension(Extension):
     def __init__(self, savefield, input):
         self.input = input
@@ -69,11 +59,9 @@ class ParametrizedExtension(Extension):
 
 
 class CMP(ParametrizedExtension):
-    savefield = "cmp"
-
     def __init__(self, which):
         Curvature.set_current(which)
-        super().__init__(which)
+        super().__init__(savefield="cmp", input=which)
 
 
 class HBP(ParametrizedExtension):
@@ -116,23 +104,24 @@ class KFAC(HBP):
         return HBP
 
 
-# class KFRA2(HBP):
-#     def __init__(self):
-#         super().__init__(
-#             curv_type=Curvature.GGN,
-#             loss_hessian_strategy=LossHessianStrategy.AVERAGE,
-#             backprop_strategy=BackpropStrategy.BATCH_AVERAGE,
-#             ea_strategy=ExpectationApproximation.BOTEV_MARTENS,
-#         )
+"""
+def KFRA():
+    return HBP(
+        curv_type=Curvature.GGN,
+        loss_hessian_strategy=LossHessianStrategy.AVERAGE,
+        backprop_strategy=BackpropStrategy.BATCH_AVERAGE,
+        ea_strategy=ExpectationApproximation.BOTEV_MARTENS,
+    )
 
-# class KFLR2(HBP):
-#     def __init__(self):
-#         super().__init__(
-#             curv_type=Curvature.GGN,
-#             loss_hessian_strategy=LossHessianStrategy.EXACT,
-#             backprop_strategy=BackpropStrategy.SQRT,
-#             ea_strategy=ExpectationApproximation.BOTEV_MARTENS,
-#         )
+
+def KFLR():
+    return HBP(
+        curv_type=Curvature.GGN,
+        loss_hessian_strategy=LossHessianStrategy.EXACT,
+        backprop_strategy=BackpropStrategy.SQRT,
+        ea_strategy=ExpectationApproximation.BOTEV_MARTENS,
+    )
+"""
 
 
 class JVP(Extension):
