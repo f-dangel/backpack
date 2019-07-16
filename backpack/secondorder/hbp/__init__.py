@@ -1,8 +1,11 @@
-from . import losses, linear, activations, dropout
+from . import linear, activations, pooling, dropout, conv2d, losses, padding
 
 EXTENSIONS = [
-    *losses.EXTENSIONS,
     *linear.EXTENSIONS,
     *activations.EXTENSIONS,
+    *pooling.EXTENSIONS,
     *dropout.EXTENSIONS,
+    *conv2d.EXTENSIONS,
+    *losses.EXTENSIONS,
+    *padding.EXTENSIONS,
 ]

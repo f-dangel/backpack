@@ -97,7 +97,7 @@ class ExpectationApproximation():
 
     @classmethod
     def should_average_param_jac(cls):
-        return cls.CURRENT == Cls.CHEN
+        return cls.CURRENT == cls.CHEN
 
     @classmethod
     def __check_exists(cls, strategy):

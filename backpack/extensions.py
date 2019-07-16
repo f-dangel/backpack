@@ -1,7 +1,8 @@
 import warnings
 from .backpropextension import BackpropExtension
 from .curvature import Curvature
-from .secondorder.ea import ExpectationApproximation
+from .secondorder.strategies import (BackpropStrategy, LossHessianStrategy,
+                                     ExpectationApproximation)
 
 
 class Extension():
@@ -72,24 +73,55 @@ class CMP(ParametrizedExtension):
         super().__init__(which)
 
 
-class HBP(Extension):
+class HBP(ParametrizedExtension):
     savefield = "hbp"
 
-    def __init__(self, curv_type, avg_param_jac):
+    def __init__(
+            self,
+            curv_type,
+            loss_hessian_strategy,
+            backprop_strategy,
+            ea_strategy,
+    ):
+        super().__init__([
+            curv_type,
+            loss_hessian_strategy,
+            backprop_strategy,
+            ea_strategy,
+        ])
+
         Curvature.set_current(curv_type)
-        ExpectationApproximation.set_expectation(avg_param_jac)
-        super().__init__([curv_type, avg_param_jac])
+        LossHessianStrategy.set_strategy(loss_hessian_strategy)
+        BackpropStrategy.set_strategy(backprop_strategy)
+        ExpectationApproximation.set_strategy(ea_strategy)
 
-
-# TODO
-# class KFRA2(HBP):
-#     pass
 
 # class KFAC2(HBP):
-#     pass
+#     def __init__(self):
+#         super().__init__(
+#             curv_type=Curvature.GGN,
+#             loss_hessian_strategy=LossHessianStrategy.SAMPLING,
+#             backprop_strategy=BackpropStrategy.SQRT,
+#             ea_strategy=ExpectationApproximation.BOTEV_MARTENS,
+#         )
 
 # class KFRA2(HBP):
-#     pass
+#     def __init__(self):
+#         super().__init__(
+#             curv_type=Curvature.GGN,
+#             loss_hessian_strategy=LossHessianStrategy.AVERAGE,
+#             backprop_strategy=BackpropStrategy.BATCH_AVERAGE,
+#             ea_strategy=ExpectationApproximation.BOTEV_MARTENS,
+#         )
+
+# class KFLR2(HBP):
+#     def __init__(self):
+#         super().__init__(
+#             curv_type=Curvature.GGN,
+#             loss_hessian_strategy=LossHessianStrategy.EXACT,
+#             backprop_strategy=BackpropStrategy.SQRT,
+#             ea_strategy=ExpectationApproximation.BOTEV_MARTENS,
+#         )
 
 
 class JVP(Extension):

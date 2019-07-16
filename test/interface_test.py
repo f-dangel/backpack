@@ -146,3 +146,7 @@ def test_interface_kfac_conv():
 
 def test_interface_cmp_conv():
     interface_test(ext.CMP, use_conv=True)
+
+
+def test_interface_hbp_conv():
+    interface_test(ext.HBP, use_conv=True)
