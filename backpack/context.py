@@ -1,4 +1,4 @@
-from .extensions import Extensions
+from .extensions import Extension
 
 RETURN_IF_NOT_EXISTING = None
 
@@ -18,32 +18,23 @@ class CTX:
     """
     Global Class holding the configuration of the backward pass
     """
-    activeExtsDict = {}
+    activeExts = tuple()
 
     @staticmethod
-    def as_dict():
-        return {
-            ext: CTX.activeExtsDict.get(ext, False)
-            for ext in Extensions.ext_list()
-        }
-
-    @staticmethod
-    def from_dict(dic):
-        for key, val in dic.items():
-            CTX.activeExtsDict[key] = val
-
-    @staticmethod
-    def is_active(ext):
-        Extensions.check_exists(ext)
-        return CTX.activeExtsDict.get(ext, False)
+    def set_active_exts(active_exts):
+        CTX.activeExts = tuple()
+        for act_ext in active_exts:
+            if not isinstance(act_ext, Extension):
+                raise ValueError("Unknown extension ... was expecting ...")
+            CTX.activeExts += (act_ext, )
 
     @staticmethod
     def active_exts():
-        return [ext for ext, active in CTX.as_dict().items() if active]
+        return CTX.activeExts
 
     @staticmethod
     def add_hook_handle(hook_handle):
-        if getattr(CTX.activeExtsDict, "hook_handles", None) is None:
+        if getattr(CTX, "hook_handles", None) is None:
             CTX.hook_handles = []
         CTX.hook_handles.append(hook_handle)
 

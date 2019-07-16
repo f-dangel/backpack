@@ -104,7 +104,6 @@ class KFAC(HBP):
         return HBP
 
 
-"""
 def KFRA():
     return HBP(
         curv_type=Curvature.GGN,
@@ -121,7 +120,7 @@ def KFLR():
         backprop_strategy=BackpropStrategy.SQRT,
         ea_strategy=ExpectationApproximation.BOTEV_MARTENS,
     )
-"""
+
 
 
 class JVP(Extension):

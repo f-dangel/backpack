@@ -60,18 +60,20 @@ def extend(module):
 
         grad_out = [grad_output[i] for i in range(len(grad_output))]
 
-        exts_for_mod = list(
-            Extensions.get_extensions_for(CTX.active_exts(), module))
+        for extension in CTX.active_exts():
 
-        if DEBUGGING and len(exts_for_mod) == 0:
-            print(" └─[DEBUG] No extension registered for {}".format(
-                module.__class__))
+            exts_for_mod = list(
+                Extensions.get_extensions_for([extension], module))
 
-        for bpext in exts_for_mod:
-            if DEBUGGING:
-                print(" └─[DEBUG] Backward hook {}".format(bpext.__class__, ))
+            if DEBUGGING and len(exts_for_mod) == 0:
+                print(" └─[DEBUG] No extension registered for {}".format(
+                    module.__class__))
 
-            bpext.apply(module, grad_input, grad_out)
+            for bpext in exts_for_mod:
+                if DEBUGGING:
+                    print(" └─[DEBUG] Backward hook {}".format(bpext.__class__, ))
+
+                bpext.apply(extension, module, grad_input, grad_out)
 
     CTX.add_hook_handle(module.register_forward_hook(store_io))
     CTX.add_hook_handle(module.register_forward_hook(store_shapes))
