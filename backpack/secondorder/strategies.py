@@ -17,7 +17,7 @@ class LossHessianStrategy():
     @classmethod
     def set_strategy(cls, strategy):
         cls.__check_exists(strategy)
-        cls.CURRENT = CURRENT
+        cls.CURRENT = strategy
 
     @classmethod
     def __check_exists(cls, strategy):

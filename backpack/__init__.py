@@ -83,8 +83,6 @@ def extend(module):
             Extensions.get_extensions_for(CTX.active_exts(), module))
 
         if DEBUGGING and len(exts_for_mod) == 0:
-            import pdb
-            pdb.set_trace()
             print(" └─[DEBUG] No extension registered for {}".format(
                 module.__class__))
 
