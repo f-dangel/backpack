@@ -107,7 +107,7 @@ def test_interface_kfra():
 
 
 def test_interface_kfac():
-    interface_test(ext.KFAC)
+    interface_test(ext.KFAC())
 
 
 def test_interface_hbp():

@@ -91,16 +91,13 @@ class HBP(ParametrizedExtension):
         ExpectationApproximation.set_strategy(ea_strategy)
 
 
-class KFAC(HBP):
-    savefield = "kfac"
-
-    def __init__(self):
-        super().__init__(
-            curv_type=Curvature.GGN,
-            loss_hessian_strategy=LossHessianStrategy.SAMPLING,
-            backprop_strategy=BackpropStrategy.SQRT,
-            ea_strategy=ExpectationApproximation.BOTEV_MARTENS,
-        )
+def KFAC():
+    return HBP(
+        curv_type=Curvature.GGN,
+        loss_hessian_strategy=LossHessianStrategy.SAMPLING,
+        backprop_strategy=BackpropStrategy.SQRT,
+        ea_strategy=ExpectationApproximation.BOTEV_MARTENS,
+    )
 
 
 # class KFRA2(HBP):
@@ -127,7 +124,6 @@ class JVP(Extension):
 
 
 class Extensions:
-
     EXTENSIONS = [
         GRAD,
         BATCH_GRAD,
