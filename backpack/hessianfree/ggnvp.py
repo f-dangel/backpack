@@ -24,6 +24,10 @@ def ggn_vector_product_from_plist(loss, output, plist, vp):
         M.reshape(batch, -1)[:, ::dims + 1] = outputsoftmax
         H = M - einsum('bi,bj->bij', (outputsoftmax, outputsoftmax))
         HJv = [torch.squeeze(H @ torch.unsqueeze(Jv[0], -1)) / batch]
+        # TODO: The squeeze above eliminates the batch axis if batch == 1
+        # DIRTY fix to make the tests with batch size 1 run
+        if batch == 1:
+            HJv[0] = HJv[0].unsqueeze(0)
     else:
         HJv = hessian_vector_product(loss, output, Jv)
     JHJv = L_op(output, plist, HJv)
