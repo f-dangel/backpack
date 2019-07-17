@@ -106,6 +106,12 @@ class AutogradImpl(Implementation):
 
         return diag_hs
 
+    def h_blocks(self):
+        mat_list = []
+        for p in self.model.parameters():
+            mat_list.append(torch.eye(p.numel(), device=p.device))
+        return self.hmp(mat_list)
+
     def hmp(self, mat_list):
         assert len(mat_list) == len(list(self.model.parameters()))
 
@@ -130,9 +136,6 @@ class AutogradImpl(Implementation):
         mat_list = []
         for p in self.model.parameters():
             mat_list.append(torch.eye(p.numel(), device=p.device))
-
-        for m in mat_list:
-            print(m.shape)
         return self.ggn_mp(mat_list)
 
     def ggn_mp(self, mat_list):

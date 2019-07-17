@@ -53,3 +53,27 @@ def test_kflr_should_equal_ggn(problem, device):
 
     check_sizes(autograd_res, backpack_res)
     check_values(autograd_res, backpack_res)
+
+
+@pytest.mark.parametrize(
+    "problem,device", BATCH1_CONFIGURATIONS, ids=CONFIGURATION_IDS)
+def test_hbp_ggn_mode_should_equal_ggn(problem, device):
+    problem.to(device)
+
+    backpack_res = BpextImpl(problem).hbp_single_sample_ggn_blocks()
+    autograd_res = AutogradImpl(problem).ggn_blocks()
+
+    check_sizes(autograd_res, backpack_res)
+    check_values(autograd_res, backpack_res)
+
+
+@pytest.mark.parametrize(
+    "problem,device", BATCH1_CONFIGURATIONS, ids=CONFIGURATION_IDS)
+def test_hbp_h_mode_should_equal_h(problem, device):
+    problem.to(device)
+
+    backpack_res = BpextImpl(problem).hbp_single_sample_h_blocks()
+    autograd_res = AutogradImpl(problem).h_blocks()
+
+    check_sizes(autograd_res, backpack_res)
+    check_values(autograd_res, backpack_res)
