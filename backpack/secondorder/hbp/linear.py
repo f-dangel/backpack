@@ -30,16 +30,9 @@ class HBPLinear(HBPBase, LinearDerivatives):
         return kron_factors
 
     def _weight_for_sqrt(self, module, grad_input, grad_output):
-        kron_factors = []
-
-        if LossHessianStrategy.is_kfac():
-            kron_factors.append(
-                self._factor_from_sqrt_sampling(module, grad_input,
-                                                grad_output))
-
-        elif LossHessianStrategy.is_kflr():
-            kron_factors.append(
-                self._factor_from_sqrt_exact(module, grad_input, grad_output))
+        kron_factors = [
+            self._factor_from_sqrt(module, grad_input, grad_output)
+        ]
 
         for factor in self._factors_from_input(module, grad_input,
                                                grad_output):
@@ -55,14 +48,9 @@ class HBPLinear(HBPBase, LinearDerivatives):
         else:
             yield self.__mean_input_outer(module)
 
-    def _factor_from_sqrt_exact(self, module, grad_input, grad_output):
+    def _factor_from_sqrt(self, module, grad_input, grad_output):
         sqrt_ggn_out = self.get_mat_from_ctx()
         return einsum('bic,bjc->ij', (sqrt_ggn_out, sqrt_ggn_out))
-
-    def _factor_from_sqrt_sampling(self, module, grad_input, grad_output):
-        sqrt_mc = self.get_mat_from_ctx()
-        samples = sqrt_mc.size(2)
-        return einsum('bim,bjm->ij', (sqrt_mc, sqrt_mc)) / samples
 
     ###
 
@@ -80,18 +68,7 @@ class HBPLinear(HBPBase, LinearDerivatives):
         return kron_factors
 
     def _bias_for_sqrt(self, module, grad_input, grad_output):
-        kron_factors = []
-
-        if LossHessianStrategy.is_kfac():
-            kron_factors.append(
-                self._factor_from_sqrt_sampling(module, grad_input,
-                                                grad_output))
-
-        elif LossHessianStrategy.is_kflr():
-            kron_factors.append(
-                self._factor_from_sqrt_exact(module, grad_input, grad_output))
-
-        return kron_factors
+        return [self._factor_from_sqrt(module, grad_input, grad_output)]
 
     def __mean_input(self, module):
         _, flat_input = self.batch_flat(module.input0)
