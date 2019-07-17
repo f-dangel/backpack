@@ -2,6 +2,7 @@ import torch
 import torch.nn.functional as F
 from torch.nn import Module, Linear, Parameter, Conv2d
 from torch import flatten, cat, Tensor, empty
+from ...utils.conv import unfold_func
 
 
 class Flatten(Module):
@@ -130,6 +131,18 @@ class Conv2dConcat(Module):
 
     def has_bias(self):
         return self.bias is True
+
+    def homogeneous_unfolded_input(self):
+        unfolded_input = unfold_func(self)(self.input0)
+        if self.has_bias():
+            unfolded_input = self.append_ones(unfolded_input)
+        return input
+
+    @staticmethod
+    def append_ones(input):
+        batch, _, cols = input.shape
+        ones = torch.ones(batch, 1, cols, device=input.device)
+        return torch.cat([input, ones], dim=1)
 
     def _slice_weight(self):
         return self.weight.narrow(1, 0,
