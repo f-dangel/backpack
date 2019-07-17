@@ -3,7 +3,10 @@
 import torch
 import opt_einsum as oe
 
-BPEXTS_EINSUM = 'torch'
+TORCH = "torch"
+OPT_EINSUM = "opt_einsum"
+
+BPEXTS_EINSUM = "torch"
 
 
 def _oe_einsum(equation, *operands):
@@ -15,8 +18,8 @@ def _oe_einsum(equation, *operands):
 
 
 EINSUMS = {
-    'torch': torch.einsum,
-    'opt_einsum': _oe_einsum,
+    TORCH: torch.einsum,
+    OPT_EINSUM: _oe_einsum,
 }
 
 
