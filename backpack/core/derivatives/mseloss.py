@@ -19,14 +19,12 @@ class MSELossDerivatives(BaseDerivatives):
         return sqrt_H
 
     def sqrt_hessian_sampled(self, module, grad_input, grad_output):
-        N, C = module.input0.shape
-        M = self.MC_SAMPLES
-
-        warn("This method is returning a dummy")
-        return randn(N, C, M, device=module.input0.device)
-
-        # TODO
-        raise NotImplementedError
+        warn(
+            "[MC Sampling Hessian of CrossEntropy] " +
+            "Returning the symmetric factorization of the full Hessian " +
+            "(same computation cost)"
+        )
+        return self.sqrt_hessian(module, grad_input, grad_output)
 
     def sum_hessian(self, module, grad_input, grad_output):
         self.check_input_dims(module)
