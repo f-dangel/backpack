@@ -23,10 +23,10 @@ class LinearConcat(Module):
         lin = Linear(in_features, out_features, bias=bias)
 
         if bias:
-            self.weight = Parameter(empty(size=(out_features, in_features + 1)))
+            self.weight = Parameter(
+                empty(size=(out_features, in_features + 1)))
             self.weight.data = cat(
-                [lin.weight.data, lin.bias.data.unsqueeze(-1)], dim=1
-            )
+                [lin.weight.data, lin.bias.data.unsqueeze(-1)], dim=1)
         else:
             self.weight = Parameter(empty(size=(out_features, in_features)))
             self.weight.data = lin.weight.data
@@ -36,11 +36,16 @@ class LinearConcat(Module):
         self.bias = bias
 
     def forward(self, input):
-        if self.bias:
-            return F.linear(
-                input,
-                self.weight.narrow(1, 0, self.input_features),
-                self.weight.narrow(1, self.input_features, 1).squeeze(-1)
-            )
+        return F.linear(input, self.__slice_weight(), self.__slice_bias())
+
+    def has_bias(self):
+        return self.bias is True
+
+    def __slice_weight(self):
+        return self.weight.narrow(1, 0, self.input_features)
+
+    def __slice_bias(self):
+        if not self.has_bias():
+            return None
         else:
-            return F.linear(input, self.weight, None)
+            return self.weight.narrow(1, self.input_features, 1).squeeze(-1)
