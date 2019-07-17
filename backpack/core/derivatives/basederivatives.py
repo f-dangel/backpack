@@ -26,4 +26,6 @@ class BaseDerivatives():
     @staticmethod
     def batch_flat(tensor):
         batch = tensor.size(0)
-        return batch, tensor.view(batch, -1)
+        # TODO: Removing the clone().detach() will destroy the computation graph
+        # Tests will fail
+        return batch, tensor.clone().detach().view(batch, -1)
