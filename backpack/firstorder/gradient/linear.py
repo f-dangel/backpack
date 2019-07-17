@@ -22,9 +22,6 @@ class GradLinearConcat(FirstOrderExtension):
         super().__init__(LinearConcat, GRAD, params=["weight"])
 
     def weight(self, module, grad_input, grad_output):
-        input = module.input0
-        if module.has_bias():
-            input = module.append_ones(input)
-
+        input = module.homogeneous_input()
         w_grad_batch = einsum('bi,bj->ij', (grad_output[0], input))
         return w_grad_batch.view_as(module.weight)

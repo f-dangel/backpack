@@ -24,9 +24,7 @@ class DiagGGNLinearConcat(DiagGGNBase, LinearConcatDerivatives):
     def weight(self, module, grad_input, grad_output):
         sqrt_ggn_out = self.get_mat_from_ctx()
 
-        input = module.input0
-        if module.has_bias():
-            input = module.append_ones(input)
+        input = module.homogeneous_input()
 
         return einsum('bic,bj->ij', (sqrt_ggn_out**2, input**2))
 

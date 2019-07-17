@@ -41,6 +41,12 @@ class LinearConcat(Module):
     def has_bias(self):
         return self.bias is True
 
+    def homogeneous_input(self):
+        input = self.input0
+        if self.has_bias():
+            input = self.append_ones(input)
+        return input
+
     @staticmethod
     def append_ones(input):
         batch = input.shape[0]

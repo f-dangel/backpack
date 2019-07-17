@@ -67,9 +67,7 @@ class LinearConcatDerivatives(BaseDerivatives):
         return einsum('ik,ij,jl->kl', (jac, mat, jac))
 
     def weight_jac_mat_prod(self, module, grad_input, grad_output, mat):
-        input = module.input0
-        if module.has_bias():
-            input = module.append_ones(input)
+        input = module.homogeneous_input()
 
         num_cols = mat.size(1)
         shape = tuple(module.weight.size()) + (num_cols, )
@@ -78,9 +76,7 @@ class LinearConcatDerivatives(BaseDerivatives):
         return jac_mat
 
     def weight_jac_t_mat_prod(self, module, grad_input, grad_output, mat):
-        input = module.input0
-        if module.has_bias():
-            input = module.append_ones(input)
+        input = module.homogeneous_input()
 
         batch = module.input0.size(0)
         num_cols = mat.size(2)

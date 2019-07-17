@@ -40,9 +40,7 @@ class DiagHLinearConcat(DiagHBase, LinearConcatDerivatives):
         sqrt_h_outs_signs = CTX._backpropagated_sqrt_h_signs
         h_diag = torch.zeros_like(module.weight)
 
-        input = module.input0
-        if module.has_bias():
-            input = module.append_ones(input)
+        input = module.homogeneous_input()
 
         for h_sqrt, sign in zip(sqrt_h_outs, sqrt_h_outs_signs):
             h_diag.add_(sign * einsum('bic,bj->ij', (h_sqrt**2, input**2)))
