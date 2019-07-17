@@ -16,7 +16,7 @@ class BatchL2Linear(FirstOrderExtension):
         return einsum('bi,bj->b', (grad_output[0]**2, module.input0**2))
 
 
-class BatchL2ConcatLinear(FirstOrderExtension):
+class BatchL2LinearConcat(FirstOrderExtension):
     def __init__(self):
         super().__init__(LinearConcat, BATCH_L2, params=["weight"])
 
@@ -25,4 +25,4 @@ class BatchL2ConcatLinear(FirstOrderExtension):
         return einsum('bi,bj->b', (grad_output[0]**2, input**2))
 
 
-EXTENSIONS = [BatchL2Linear(), BatchL2ConcatLinear()]
+EXTENSIONS = [BatchL2Linear(), BatchL2LinearConcat()]
