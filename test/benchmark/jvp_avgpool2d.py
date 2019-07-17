@@ -34,25 +34,25 @@ def data():
 def ag_jtv_func(X, module, out, vin, vout):
     return lambda: transposed_jacobian_vector_product(
         out, X, vin, detach=False
-    )[0]
+    )[0].contiguous()
 
 
 def bp_jtv_func(X, module, out, vin, vout):
     return lambda: AvgPool2DDerivatives().jac_t_mat_prod(
         module, None, None, vin.view(vin.shape[0], -1).unsqueeze(-1)
-    ).squeeze(2)
+    ).squeeze(2).contiguous()
 
 
 def ag_jv_func(X, module, out, vin, vout):
     return lambda: jacobian_vector_product(
         out, X, vout, detach=False
-    )[0]
+    )[0].contiguous()
 
 
 def bp_jv_func(X, module, out, vin, vout):
     return lambda: AvgPool2DDerivatives().jac_mat_prod(
         module, None, None, vout.view(vout.shape[0], -1).unsqueeze(-1)
-    ).squeeze(2)
+    ).squeeze(2).contiguous()
 
 
 ################################################################################

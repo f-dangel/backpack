@@ -39,25 +39,25 @@ def data(module_class):
 def ag_jtv_func(X, module, out, v):
     return lambda: transposed_jacobian_vector_product(
         out, X, v, detach=False
-    )[0]
+    )[0].contiguous()
 
 
 def ag_jv_func(X, module, out, v):
     return lambda: jacobian_vector_product(
         out, X, v, detach=False
-    )[0]
+    )[0].contiguous()
 
 
 def bp_jtv_func(X, module, out, v):
     return lambda: derivatives_for[module.__class__]().jac_t_mat_prod(
         module, None, None, v.unsqueeze(2)
-    ).squeeze(2)
+    ).squeeze(2).contiguous()
 
 
 def bp_jv_func(X, module, out, v):
     return lambda: derivatives_for[module.__class__]().jac_mat_prod(
         module, None, None, v.unsqueeze(2)
-    ).squeeze(2)
+    ).squeeze(2).contiguous()
 
 
 ################################################################################

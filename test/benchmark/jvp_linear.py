@@ -28,25 +28,25 @@ def data():
 def ag_jtv_func(X, module, out, vin, vout):
     return lambda: transposed_jacobian_vector_product(
         out, X, vin, detach=False
-    )[0]
+    )[0].contiguous()
 
 
 def ag_jv_func(X, module, out, vin, vout):
     return lambda: jacobian_vector_product(
         out, X, vout, detach=False
-    )[0]
+    )[0].contiguous()
 
 
 def bp_jtv_func(X, module, out, vin, vout):
     return lambda: LinearDerivatives().jac_t_mat_prod(
         module, None, None, vin.unsqueeze(2)
-    ).squeeze(2)
+    ).squeeze(2).contiguous()
 
 
 def bp_jv_func(X, module, out, vin, vout):
     return lambda: LinearDerivatives().jac_mat_prod(
         module, None, None, vout.unsqueeze(2)
-    ).squeeze(2)
+    ).squeeze(2).contiguous()
 
 
 def ag_jtv_weight_func(X, module, out, vin, vout):
