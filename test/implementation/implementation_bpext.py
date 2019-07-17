@@ -4,6 +4,11 @@ from backpack import backpack
 import backpack.extensions as ext
 from backpack.curvature import Curvature
 from backpack.secondorder.utils import matrix_from_kron_facs
+from backpack.secondorder.strategies import (
+    ExpectationApproximation,
+    BackpropStrategy,
+    LossHessianStrategy,
+)
 
 
 class BpextImpl(Implementation):
@@ -81,3 +86,28 @@ class BpextImpl(Implementation):
                 factors = p.kflr
                 results.append(matrix_from_kron_facs(factors))
         return results
+
+    def hbp_with_curv(self,
+                      curv_type,
+                      loss_hessian_strategy=LossHessianStrategy.AVERAGE,
+                      backprop_strategy=BackpropStrategy.BATCH_AVERAGE,
+                      ea_strategy=ExpectationApproximation.BOTEV_MARTENS):
+        results = []
+        with backpack(
+                ext.HBP(
+                    curv_type=curv_type,
+                    loss_hessian_strategy=loss_hessian_strategy,
+                    backprop_strategy=backprop_strategy,
+                    ea_strategy=ea_strategy,
+                )):
+            self.loss().backward()
+            for p in self.model.parameters():
+                factors = p.hbp
+                results.append(matrix_from_kron_facs(factors))
+        return results
+
+    def hbp_single_sample_ggn_blocks(self):
+        return self.hbp_with_curv(Curvature.GGN)
+
+    def hbp_single_sample_h_blocks(self):
+        return self.hbp_with_curv(Curvature.HESSIAN)

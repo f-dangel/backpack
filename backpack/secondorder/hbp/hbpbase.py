@@ -2,6 +2,7 @@ from ...backpropextension import BackpropExtension
 from ..strategies import BackpropStrategy
 from ...context import get_from_ctx, set_in_ctx
 from ...extensions import HBP
+from ...curvature import Curvature
 
 
 class HBPBase(BackpropExtension):
@@ -29,10 +30,44 @@ class HBPBase(BackpropExtension):
         return self.jac_t_mat_prod(module, grad_input, grad_output, H)
 
     def backpropagate_batch_average(self, module, grad_input, grad_output, H):
-        return self.ea_jac_t_mat_jac_prod(module, grad_input, grad_output, H)
+        ggn = self.ea_jac_t_mat_jac_prod(module, grad_input, grad_output, H)
+
+        # second-order module effects
+        residual = self._compute_residual_diag_if_nonzero(
+            module, grad_input, grad_output)
+        residual_mod = Curvature.modify_residual(residual)
+
+        if residual_mod is not None:
+            ggn = self.add_diag_to_mat(residual_mod, ggn)
+
+        return ggn
+
+    def _compute_residual_diag_if_nonzero(self, module, grad_input,
+                                          grad_output):
+        if self.hessian_is_zero():
+            return None
+
+        if not self.hessian_is_diagonal():
+            raise AttributeError(
+                "Residual terms are only supported for elementwise functions")
+
+        # second order module effects
+        return self.hessian_diagonal(module, grad_input, grad_output).sum(0)
 
     def get_mat_from_ctx(self):
         return get_from_ctx(self.MAT_NAME_IN_CTX)
 
     def set_mat_in_ctx(self, mat):
         set_in_ctx(self.MAT_NAME_IN_CTX, mat)
+
+    @staticmethod
+    def add_diag_to_mat(diag, mat):
+        assert len(diag.shape) == 1
+        assert len(mat.shape) == 2
+        assert diag.shape[0] == mat.shape[0] == mat.shape[1]
+
+        dim = diag.shape[0]
+        idx = list(range(dim))
+
+        mat[idx, idx] = mat[idx, idx] + diag
+        return mat
