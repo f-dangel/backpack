@@ -72,3 +72,12 @@ class BpextImpl(Implementation):
                 factors = p.kfra
                 results.append(matrix_from_kron_facs(factors))
         return results
+
+    def kflr_blocks(self):
+        results = []
+        with backpack(ext.KFLR()):
+            self.loss().backward()
+            for p in self.model.parameters():
+                factors = p.kflr
+                results.append(matrix_from_kron_facs(factors))
+        return results

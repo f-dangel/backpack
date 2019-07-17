@@ -35,10 +35,21 @@ for dev_name, dev in DEVICES.items():
     "problem,device", BATCH1_CONFIGURATIONS, ids=CONFIGURATION_IDS)
 def test_kfra_should_equal_ggn(problem, device):
     problem.to(device)
-    # torch.autograd.set_detect_anomaly(True)
 
-    # backpack_res = BpextImpl(problem).kfra_blocks()
+    backpack_res = BpextImpl(problem).kfra_blocks()
     autograd_res = AutogradImpl(problem).ggn_blocks()
 
-    # check_sizes(autograd_res, backpack_res)
-    # check_values(autograd_res, backpack_res)
+    check_sizes(autograd_res, backpack_res)
+    check_values(autograd_res, backpack_res)
+
+
+@pytest.mark.parametrize(
+    "problem,device", BATCH1_CONFIGURATIONS, ids=CONFIGURATION_IDS)
+def test_kflr_should_equal_ggn(problem, device):
+    problem.to(device)
+
+    backpack_res = BpextImpl(problem).kflr_blocks()
+    autograd_res = AutogradImpl(problem).ggn_blocks()
+
+    check_sizes(autograd_res, backpack_res)
+    check_values(autograd_res, backpack_res)
