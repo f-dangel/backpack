@@ -34,7 +34,7 @@ class Conv2DDerivatives(BaseDerivatives):
     def __reshape_for_conv_in(self, bmat, module):
         batch, in_channels, in_x, in_y = module.input0.size()
         num_classes = bmat.size(2)
-        bmat = einsum('boc->cbo', (bmat, )).contiguous()
+        bmat = einsum('boc->cbo', (bmat,)).contiguous()
         bmat = bmat.view(num_classes * batch, in_channels, in_x, in_y)
         return bmat
 
@@ -42,7 +42,7 @@ class Conv2DDerivatives(BaseDerivatives):
         batch = module.output_shape[0]
         out_features = torch.prod(module.output_shape) / batch
         bconv = bconv.view(-1, batch, out_features)
-        bconv = einsum('cbi->bic', (bconv, ))
+        bconv = einsum('cbi->bic', (bconv,))
         return bconv
 
     # Transposed Jacobian-matrix product
@@ -58,7 +58,7 @@ class Conv2DDerivatives(BaseDerivatives):
         batch, out_channels, out_x, out_y = module.output_shape
         num_classes = bmat.size(2)
 
-        bmat = einsum('boc->cbo', (bmat, )).contiguous()
+        bmat = einsum('boc->cbo', (bmat,)).contiguous()
         bmat = bmat.view(num_classes * batch, out_channels, out_x, out_y)
         return bmat
 
@@ -66,7 +66,7 @@ class Conv2DDerivatives(BaseDerivatives):
         batch = module.output_shape[0]
         in_features = module.input0.numel() / batch
         bconv = bconv.view(-1, batch, in_features)
-        bconv = einsum('cbi->bic', (bconv, ))
+        bconv = einsum('cbi->bic', (bconv,))
         return bconv
 
     def __apply_jacobian_t_of(self, module, mat):
@@ -88,15 +88,13 @@ class Conv2DDerivatives(BaseDerivatives):
         jac_mat = jac_mat.expand(batch, -1, out_x, out_y, -1).contiguous()
         return jac_mat.view(batch, -1, num_cols)
 
-    # TODO: Improve performance
     def bias_jac_t_mat_prod(self, module, grad_input, grad_output, mat):
         batch, out_channels, out_x, out_y = module.output_shape
         num_cols = mat.size(2)
         shape = (batch, out_channels, out_x * out_y, num_cols)
         # mat has shape (batch, out_features, num_cols)
         # sum back over the pixels and batch dimensions
-        jac_t_mat = mat.view(shape).sum([0, 2])
-        return jac_t_mat
+        return mat.view(shape).sum([0, 2])
 
     # TODO: Improve performance, get rid of unfold
     def weight_jac_mat_prod(self, module, grad_input, grad_output, mat):
@@ -113,10 +111,33 @@ class Conv2DDerivatives(BaseDerivatives):
     # TODO: Improve performance, get rid of unfold
     def weight_jac_t_mat_prod(self, module, grad_input, grad_output, mat):
         batch, out_channels, out_x, out_y = module.output_shape
-        num_cols = mat.size(2)
+        batch, in_channels, in_x, in_y = module.input0.shape
+        num_cols = mat.shape[-1]
 
         jac_t_mat = mat.view(batch, out_channels, -1, num_cols)
         jac_t_mat = einsum('bij,bkjc->kic', (convUtils.unfold_func(module)(
             module.input0), jac_t_mat)).contiguous()
         jac_t_mat = jac_t_mat.view(module.weight.numel(), num_cols)
         return jac_t_mat
+
+    def weight_jac_t_mat_prod2(self, module, grad_input, grad_output, mat):
+        batch, out_channels, out_x, out_y = module.output_shape
+        batch, in_channels, in_x, in_y = module.input0.shape
+        k_x, k_y = module.kernel_size
+        num_cols = mat.shape[-1]
+
+        mat = mat.view(batch, out_channels, out_x, out_y)
+        mat = mat.repeat(1, in_channels, 1, 1)
+        mat = mat.view(batch * out_channels * in_channels, 1, out_x, out_y)
+
+        input = module.input0.view(1, -1, in_x, in_y)
+
+        grad_weight = conv2d(input, mat, None, module.dilation, module.padding,
+                             module.stride, in_channels * batch)
+
+        grad_weight = grad_weight.view(batch, out_channels * in_channels, k_x, k_y)
+        grad_weight = grad_weight.sum(0)
+        grad_weight = grad_weight.view(in_channels, out_channels, k_x, k_y)
+        grad_weight = einsum('mnxy->nmxy', grad_weight)
+
+        return grad_weight
