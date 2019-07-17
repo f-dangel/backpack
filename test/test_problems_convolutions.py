@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from backpack.core.layers import Flatten
+from backpack.core.layers import Flatten, Conv2dConcat
 from backpack import extend
 from .test_problem import TestProblem
 
@@ -15,10 +15,15 @@ TEST_SETTINGS = {
     "atol": 5e-4
 }
 
+CONVS = {
+    'Conv2d': torch.nn.Conv2d,
+    'Conv2dConcat': Conv2dConcat,
+}
 
-def convlayer():
+
+def convlayer(conv_cls):
     return extend(
-        torch.nn.Conv2d(
+        conv_cls(
             in_channels=TEST_SETTINGS["in_features"][0],
             out_channels=TEST_SETTINGS["out_channels"],
             kernel_size=TEST_SETTINGS["kernel_size"],
@@ -26,9 +31,9 @@ def convlayer():
             bias=TEST_SETTINGS["bias"]))
 
 
-def convlayer2():
+def convlayer2(conv_cls):
     return extend(
-        torch.nn.Conv2d(
+        conv_cls(
             in_channels=TEST_SETTINGS["in_features"][0],
             out_channels=TEST_SETTINGS["out_channels"],
             kernel_size=TEST_SETTINGS["kernel_size"],
@@ -40,7 +45,7 @@ input_size = (TEST_SETTINGS["batch"], ) + TEST_SETTINGS["in_features"]
 X = torch.randn(size=input_size)
 
 
-def linearlayer():
+def convearlayer():
     return extend(
         torch.nn.Linear(
             in_features=np.prod([
@@ -50,8 +55,8 @@ def linearlayer():
             out_features=1))
 
 
-def make_regression_problem():
-    model = torch.nn.Sequential(convlayer(), Flatten(), linearlayer())
+def make_regression_problem(conv_cls):
+    model = torch.nn.Sequential(convlayer(conv_cls), Flatten(), convearlayer())
 
     Y = torch.randn(size=(model(X).shape[0], 1))
 
@@ -60,8 +65,8 @@ def make_regression_problem():
     return TestProblem(X, Y, model, lossfunc)
 
 
-def make_classification_problem():
-    model = torch.nn.Sequential(convlayer(), Flatten())
+def make_classification_problem(conv_cls):
+    model = torch.nn.Sequential(convlayer(conv_cls), Flatten())
 
     Y = torch.randint(high=X.shape[1], size=(model(X).shape[0], ))
 
@@ -70,8 +75,9 @@ def make_classification_problem():
     return TestProblem(X, Y, model, lossfunc)
 
 
-def make_2layer_classification_problem():
-    model = torch.nn.Sequential(convlayer(), convlayer2(), Flatten())
+def make_2layer_classification_problem(conv_cls):
+    model = torch.nn.Sequential(
+        convlayer(conv_cls), convlayer2(conv_cls), Flatten())
 
     Y = torch.randint(high=X.shape[1], size=(model(X).shape[0], ))
 
@@ -80,8 +86,11 @@ def make_2layer_classification_problem():
     return TestProblem(X, Y, model, lossfunc)
 
 
-TEST_PROBLEMS = {
-    "conv-regression": make_regression_problem(),
-    "conv-classification": make_classification_problem(),
-    "conv-classification-2layer": make_2layer_classification_problem(),
-}
+TEST_PROBLEMS = {}
+for conv_name, conv_cls in CONVS.items():
+    TEST_PROBLEMS["{}-regression".format(conv_name)] = make_regression_problem(
+        conv_cls)
+    TEST_PROBLEMS["{}-classification".format(
+        conv_name)] = make_classification_problem(conv_cls)
+    TEST_PROBLEMS["{}-2layer-classification".format(
+        conv_name)] = make_2layer_classification_problem(conv_cls)
