@@ -6,11 +6,11 @@ from backpack import extend
 from backpack.core.derivatives.linear import LinearDerivatives
 from backpack.hessianfree.lop import transposed_jacobian_vector_product
 
+from backpack.hessianfree.rop import jacobian_vector_product
+
 ################################################################################
 # Data and helpers
 ################################################################################
-from backpack.hessianfree.rop import jacobian_vector_product
-
 
 def data():
     N, D1, D2 = 10, 10, 10
