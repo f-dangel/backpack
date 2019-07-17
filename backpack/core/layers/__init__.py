@@ -1,6 +1,6 @@
 import torch
 import torch.nn.functional as F
-from torch.nn import Module, Linear, Parameter
+from torch.nn import Module, Linear, Parameter, Conv2d
 from torch import flatten, cat, Tensor, empty
 
 
@@ -61,3 +61,84 @@ class LinearConcat(Module):
             return None
         else:
             return self.weight.narrow(1, self.input_features, 1).squeeze(-1)
+
+
+class Conv2dConcat(Module):
+    def __init__(self,
+                 in_channels,
+                 out_channels,
+                 kernel_size,
+                 stride=1,
+                 padding=0,
+                 dilation=1,
+                 groups=1,
+                 bias=True,
+                 padding_mode="zeros"):
+        assert padding_mode is "zeros"
+        assert groups == 1
+
+        super().__init__()
+
+        conv = Conv2d(
+            in_channels,
+            out_channels,
+            kernel_size,
+            stride=stride,
+            padding=padding,
+            dilation=dilation,
+            groups=groups,
+            bias=bias,
+            padding_mode=padding_mode)
+
+        self._KERNEL_SHAPE = conv.weight.shape
+
+        kernel_mat_shape = [out_channels, conv.weight.numel() // out_channels]
+        kernel_mat = conv.weight.data.view(kernel_mat_shape)
+
+        if bias:
+            kernel_mat_shape[1] += 1
+            kernel_mat = cat([kernel_mat, conv.bias.data.unsqueeze(-1)], dim=1)
+
+            self.weight = Parameter(empty(size=kernel_mat_shape))
+            self.weight.data = kernel_mat
+
+        else:
+            self.weight = Parameter(empty(size=kernel_mat_shape))
+            self.weight.data = kernel_mat
+
+        self.in_channels = conv.in_channels
+        self.out_channels = conv.out_channels
+        self.kernel_size = conv.kernel_size
+        self.stride = conv.stride
+        self.padding = conv.padding
+        self.dilation = conv.dilation
+        self.transposed = conv.transposed
+        self.output_padding = conv.output_padding
+        self.groups = conv.groups
+        self.padding_mode = padding_mode
+        self.bias = bias
+
+    def forward(self, input):
+        return F.conv2d(
+            input,
+            self._slice_weight(),
+            bias=self._slice_bias(),
+            stride=self.stride,
+            padding=self.padding,
+            dilation=self.dilation,
+            groups=self.groups)
+
+    def has_bias(self):
+        return self.bias is True
+
+    def _slice_weight(self):
+        return self.weight.narrow(1, 0,
+                                  self.weight.size(1) - 1).view(
+                                      self._KERNEL_SHAPE)
+
+    def _slice_bias(self):
+        if not self.has_bias():
+            return None
+        else:
+            return self.weight.narrow(1,
+                                      self.weight.size(1) - 1, 1).squeeze(-1)
