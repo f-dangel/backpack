@@ -2,6 +2,7 @@ import torch.nn
 from ...utils.utils import einsum
 from ...extensions import SUM_GRAD_SQUARED
 from ..firstorder import FirstOrderExtension
+from ...core.layers import LinearConcat
 
 
 class SGSLinear(FirstOrderExtension):
@@ -16,4 +17,15 @@ class SGSLinear(FirstOrderExtension):
         return einsum('bi,bj->ij', (grad_output[0]**2, module.input0**2))
 
 
-EXTENSIONS = [SGSLinear()]
+class SGSLinearConcat(FirstOrderExtension):
+    def __init__(self):
+        super().__init__(LinearConcat, SUM_GRAD_SQUARED, params=["weight"])
+
+    def weight(self, module, grad_input, grad_output):
+        input = module.input0
+        if module.has_bias():
+            input = module.append_ones(input)
+        return einsum('bi,bj->ij', (grad_output[0]**2, input**2))
+
+
+EXTENSIONS = [SGSLinear(), SGSLinearConcat()]

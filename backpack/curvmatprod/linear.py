@@ -1,7 +1,5 @@
-import torch
 from .cmpbase import CMPBase
-from ..utils.utils import einsum
-from ..core.derivatives.linear import LinearDerivatives
+from ..core.derivatives.linear import LinearDerivatives, LinearConcatDerivatives
 
 
 class CMPLinear(CMPBase, LinearDerivatives):
@@ -34,4 +32,22 @@ class CMPLinear(CMPBase, LinearDerivatives):
         return bias_cmp
 
 
-EXTENSIONS = [CMPLinear()]
+class CMPLinearConcat(CMPBase, LinearConcatDerivatives):
+    def __init__(self):
+        super().__init__(params=["weight"])
+
+    def weight(self, module, grad_input, grad_output):
+        CMP_out = self.get_cmp_from_ctx()
+
+        def weight_cmp(mat):
+            Jmat = self.weight_jac_mat_prod(module, grad_input, grad_output,
+                                            mat)
+            CJmat = CMP_out(Jmat)
+            JTCJmat = self.weight_jac_t_mat_prod(module, grad_input,
+                                                 grad_output, CJmat)
+            return JTCJmat
+
+        return weight_cmp
+
+
+EXTENSIONS = [CMPLinear(), CMPLinearConcat()]

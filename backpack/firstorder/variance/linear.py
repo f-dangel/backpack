@@ -1,8 +1,9 @@
 import torch.nn
+from ...core.layers import LinearConcat
 from ...extensions import VARIANCE
 from ..firstorder import FirstOrderExtension
-from ..sumgradsquared.linear import SGSLinear
-from ..gradient.linear import GradLinear
+from ..sumgradsquared.linear import SGSLinear, SGSLinearConcat
+from ..gradient.linear import GradLinear, GradLinearConcat
 from .base import variance_from
 
 
@@ -23,4 +24,15 @@ class VarianceLinear(FirstOrderExtension):
             SGSLinear().weight(module, grad_input, grad_output), N)
 
 
-EXTENSIONS = [VarianceLinear()]
+class VarianceLinearConcat(FirstOrderExtension):
+    def __init__(self):
+        super().__init__(LinearConcat, VARIANCE, params=["weight"])
+
+    def weight(self, module, grad_input, grad_output):
+        N = grad_output[0].shape[0]
+        return variance_from(
+            GradLinearConcat().weight(module, grad_input, grad_output),
+            SGSLinearConcat().weight(module, grad_input, grad_output), N)
+
+
+EXTENSIONS = [VarianceLinear(), VarianceLinearConcat()]

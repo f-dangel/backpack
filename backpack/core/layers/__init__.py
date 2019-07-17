@@ -36,15 +36,21 @@ class LinearConcat(Module):
         self.bias = bias
 
     def forward(self, input):
-        return F.linear(input, self.__slice_weight(), self.__slice_bias())
+        return F.linear(input, self._slice_weight(), self._slice_bias())
 
     def has_bias(self):
         return self.bias is True
 
-    def __slice_weight(self):
+    @staticmethod
+    def append_ones(input):
+        batch = input.shape[0]
+        ones = torch.ones(batch, 1, device=input.device)
+        return torch.cat([input, ones], dim=1)
+
+    def _slice_weight(self):
         return self.weight.narrow(1, 0, self.input_features)
 
-    def __slice_bias(self):
+    def _slice_bias(self):
         if not self.has_bias():
             return None
         else:

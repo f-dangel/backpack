@@ -1,4 +1,5 @@
-from ...core.derivatives.linear import LinearDerivatives
+from ...core.derivatives.linear import LinearDerivatives, LinearConcatDerivatives
+from ...core.layers import LinearConcat
 from ...utils.utils import einsum
 from .diagggnbase import DiagGGNBase
 
@@ -16,4 +17,18 @@ class DiagGGNLinear(DiagGGNBase, LinearDerivatives):
         return einsum('bic,bj->ij', (sqrt_ggn_out**2, module.input0**2))
 
 
-EXTENSIONS = [DiagGGNLinear()]
+class DiagGGNLinearConcat(DiagGGNBase, LinearConcatDerivatives):
+    def __init__(self):
+        super().__init__(params=["weight"])
+
+    def weight(self, module, grad_input, grad_output):
+        sqrt_ggn_out = self.get_mat_from_ctx()
+
+        input = module.input0
+        if module.has_bias():
+            input = module.append_ones(input)
+
+        return einsum('bic,bj->ij', (sqrt_ggn_out**2, input**2))
+
+
+EXTENSIONS = [DiagGGNLinear(), DiagGGNLinearConcat()]
