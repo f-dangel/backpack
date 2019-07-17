@@ -1,5 +1,6 @@
 import torch
 from backpack import extend
+from backpack.core.layers import Flatten
 from .test_problem import TestProblem
 
 TEST_SETTINGS = {
@@ -42,14 +43,7 @@ def make_regression_problem(activation):
 
 
 def make_classification_problem(activation):
-    class To2D(torch.nn.Module):
-        def __init__(self):
-            super().__init__()
-
-        def forward(self, input):
-            return input.view(input.shape[0], -1)
-
-    model = torch.nn.Sequential(linearlayer, activation, To2D())
+    model = torch.nn.Sequential(linearlayer, activation, Flatten())
 
     Y = torch.randint(high=model(X).shape[1], size=(X.shape[0], ))
 
