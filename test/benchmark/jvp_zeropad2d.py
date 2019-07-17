@@ -15,7 +15,7 @@ RTOL = 1e-5
 ################################################################################
 
 def data():
-    N, C, Hin, Win = 100, 10, 32, 32
+    N, C, Hin, Win = 100, 10, 4, 4
     padding = [1,2,3,4]
     Hout = Hin + padding[2] + padding[3]
     Wout = Win + padding[0] + padding[1]
@@ -33,25 +33,25 @@ def data():
 def ag_jtv_func(X, module, out, vin, vout):
     return lambda: transposed_jacobian_vector_product(
         out, X, vin, detach=False
-    )[0]
+    )[0].contiguous()
 
 
 def bp_jtv_func(X, module, out, vin, vout):
     return lambda: ZeroPad2dDerivatives().jac_t_mat_prod(
-        module, None, None, vin.view(vin.shape[0], -1).unsqueeze(-1)
-    ).squeeze(2)
+        module, None, None, vin.view(vin.shape[0], -1, 1)
+    ).squeeze(2).contiguous()
 
 
 def ag_jv_func(X, module, out, vin, vout):
     return lambda: jacobian_vector_product(
         out, X, vout, detach=False
-    )[0]
+    )[0].contiguous()
 
 
 def bp_jv_func(X, module, out, vin, vout):
     return lambda: ZeroPad2dDerivatives().jac_mat_prod(
         module, None, None, vout.view(vout.shape[0], -1).unsqueeze(-1)
-    ).squeeze(2)
+    ).squeeze(2).contiguous()
 
 
 ################################################################################
@@ -62,6 +62,7 @@ def test_jtv_ag_vs_bp():
     X, module, out, vin, vout = data()
     A = ag_jtv_func(X, module, out, vin, vout)()
     B = bp_jtv_func(X, module, out, vin, vout)()
+    assert A.is_contiguous()
     assert torch.allclose(A, B.view_as(A), atol=ATOL, rtol=RTOL)
 
 
