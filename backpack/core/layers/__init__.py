@@ -1,6 +1,7 @@
+import torch
 import torch.nn.functional as F
 from torch.nn import Module, Linear, Parameter
-from torch import flatten, cat, Tensor
+from torch import flatten, cat, Tensor, empty
 
 
 class Flatten(Module):
@@ -22,12 +23,12 @@ class LinearCat(Module):
         lin = Linear(in_features, out_features, bias=bias)
 
         if bias:
-            self.weight = Parameter(Tensor.new_empty(out_features, in_features + 1))
+            self.weight = Parameter(empty(size=(out_features, in_features + 1)))
             self.weight.data = cat(
-                [lin.weight.data, lin.bias.data], dim=1
+                [lin.weight.data, lin.bias.data.unsqueeze(-1)], dim=1
             )
         else:
-            self.weight = Parameter(Tensor.new_empty(out_features, in_features))
+            self.weight = Parameter(empty(size=(out_features, in_features)))
             self.weight.data = lin.weight.data
 
         self.input_features = in_features
@@ -39,7 +40,7 @@ class LinearCat(Module):
             return F.linear(
                 input,
                 self.weight.narrow(1, 0, self.input_features),
-                self.weight.narrow(1, self.input_features + 1, 1)
+                self.weight.narrow(1, self.input_features, 1).squeeze(-1)
             )
         else:
             return F.linear(input, self.weight, None)
