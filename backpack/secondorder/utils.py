@@ -1,3 +1,5 @@
+from ..utils.utils import einsum
+
 def vp_from_kron_facs(factors):
     assert all_tensors_of_order(order=2, tensors=factors)
 

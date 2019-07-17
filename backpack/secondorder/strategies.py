@@ -24,7 +24,7 @@ class LossHessianStrategy():
         if not strategy in cls.CHOICES:
             raise AttributeError(
                 "Unknown loss Hessian strategy: {}. Expecting one of {}".
-                format(which, cls.CHOICES))
+                format(strategy, cls.CHOICES))
 
     @classmethod
     def is_kfac(cls):
@@ -72,7 +72,7 @@ class BackpropStrategy():
         if not strategy in cls.CHOICES:
             raise AttributeError(
                 "Unknown loss Hessian strategy: {}. Expecting one of {}".
-                format(which, cls.CHOICES))
+                format(strategy, cls.CHOICES))
 
 
 class ExpectationApproximation():
@@ -100,4 +100,4 @@ class ExpectationApproximation():
         if not strategy in cls.CHOICES:
             raise AttributeError(
                 "Unknown loss Hessian strategy: {}. Expecting one of {}".
-                format(which, cls.CHOICES))
+                format(strategy, cls.CHOICES))
