@@ -16,7 +16,7 @@ class SkipConnection(Module):
     pass
 
 
-class LinearCat(Module):
+class LinearConcat(Module):
     def __init__(self, in_features, out_features, bias=True):
         super().__init__()
 
