@@ -126,6 +126,15 @@ class AutogradImpl(Implementation):
 
         return torch.cat(h_cols, dim=1)
 
+    def ggn_blocks(self):
+        mat_list = []
+        for p in self.model.parameters():
+            mat_list.append(torch.eye(p.numel(), device=p.device))
+
+        for m in mat_list:
+            print(m.shape)
+        return self.ggn_mp(mat_list)
+
     def ggn_mp(self, mat_list):
         assert len(mat_list) == len(list(self.model.parameters()))
 

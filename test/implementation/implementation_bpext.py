@@ -3,6 +3,7 @@ from .implementation import Implementation
 from backpack import backpack
 import backpack.extensions as ext
 from backpack.curvature import Curvature
+from backpack.secondorder.utils import matrix_from_kron_facs
 
 
 class BpextImpl(Implementation):
@@ -61,4 +62,13 @@ class BpextImpl(Implementation):
             self.loss().backward()
             for p, mat in zip(self.model.parameters(), mat_list):
                 results.append(p.cmp(mat))
+        return results
+
+    def kfra_blocks(self):
+        results = []
+        with backpack(ext.KFRA()):
+            self.loss().backward()
+            for p in self.model.parameters():
+                factors = p.kfra
+                results.append(matrix_from_kron_facs(factors))
         return results

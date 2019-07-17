@@ -87,6 +87,10 @@ class ExpectationApproximation():
     CURRENT = BOTEV_MARTENS
 
     @classmethod
+    def get_current(cls):
+        return cls.CURRENT
+
+    @classmethod
     def set_strategy(cls, strategy):
         cls.__check_exists(strategy)
         cls.CURRENT = strategy

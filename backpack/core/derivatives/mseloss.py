@@ -1,5 +1,5 @@
 from math import sqrt
-from torch import diag_embed, ones_like, randn
+from torch import diag_embed, ones_like, randn, diag, ones
 from torch.nn import MSELoss
 from .basederivatives import BaseDerivatives
 
@@ -31,11 +31,14 @@ class MSELossDerivatives(BaseDerivatives):
     def sum_hessian(self, module, grad_input, grad_output):
         self.check_input_dims(module)
 
-        sum_H = diag_embed(2 * ones_like(module.input0))
+        batch = module.input0_shape[0]
+        num_features = module.input0.numel() // batch
+        sum_H = 2 * batch * diag(
+            ones(num_features, device=module.input0.device))
 
         if module.reduction is "mean":
             sum_H /= module.input0.shape[0]
-
+        print("sum H ", sum_H.shape)
         return sum_H
 
     def hessian_matrix_product(self, module, grad_input, grad_output):

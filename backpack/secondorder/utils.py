@@ -1,4 +1,26 @@
 from ..utils.utils import einsum
+from .strategies import BackpropStrategy, ExpectationApproximation, LossHessianStrategy
+
+
+def print_strategies():
+    print("Loss strategy: {}".format(LossHessianStrategy.get_current()))
+    print("Backprop strategy: {}".format(BackpropStrategy.get_current()))
+    print("EA strategy: {}".format(ExpectationApproximation.get_current()))
+
+
+def matrix_from_kron_facs(factors):
+    assert all_tensors_of_order(order=2, tensors=factors)
+    mat = None
+    for factor in factors:
+        if mat is None:
+            mat = factor
+        else:
+            new_shape = (mat.shape[0] * factor.shape[0],
+                         mat.shape[1] * factor.shape[1])
+            mat = einsum('ij,kl->ikjl',
+                         (mat, factor)).contiguous().view(new_shape)
+    return mat
+
 
 def vp_from_kron_facs(factors):
     assert all_tensors_of_order(order=2, tensors=factors)
