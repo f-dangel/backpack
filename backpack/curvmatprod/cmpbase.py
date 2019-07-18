@@ -61,8 +61,7 @@ class CMPBase(BackpropExtension):
         return Curvature.modify_residual(residual, curv_type)
 
     def _get_curv_type_from_extension(self):
-        # TODO: Figure out how to obtain from parametrized extension
-        return None
+        return self._get_parametrized_ext().get_curv_type()
 
     def get_cmp_from_ctx(self):
         return get_from_ctx(self.BACKPROPAGATED_CMP_NAME_IN_CTX)
