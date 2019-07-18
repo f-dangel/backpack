@@ -81,12 +81,16 @@ class Curvature():
                     which, cls.CHOICES))
 
     @classmethod
-    def modify_residual(cls, residual):
+    def modify_residual(cls, residual, curv_type=None):
         # None if zero or curvature neglects 2nd-order module effects
         if residual is None:
             return None
         else:
-            return cls.RESIDUAL_MODS[cls.CURRENT](residual)
+            if curv_type is None:
+                return cls.RESIDUAL_MODS[cls.CURRENT](residual)
+            else:
+                cls.__check_exists(curv_type)
+                return cls.RESIDUAL_MODS[curv_type](residual)
 
     @classmethod
     def check_loss_hessian(cls, loss_hessian_is_psd):

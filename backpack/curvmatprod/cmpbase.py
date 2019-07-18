@@ -14,8 +14,7 @@ class CMPBase(BackpropExtension):
     def __init__(self, params=None):
         if params is None:
             params = []
-        BackpropExtension.__init__(
-            self, self.get_module(), self.EXTENSION, params=params)
+        super().__init__(self.get_module(), self.EXTENSION, params=params)
 
     def backpropagate(self, module, grad_input, grad_output):
         CMP_out = self.get_cmp_from_ctx()
@@ -23,7 +22,7 @@ class CMPBase(BackpropExtension):
         # second-order module effects
         residual = self._compute_residual_diag_if_nonzero(
             module, grad_input, grad_output)
-        residual_mod = Curvature.modify_residual(residual)
+        residual_mod = self._modify_residual(residual)
 
         def CMP_in(mat):
             """Multiplication of curvature matrix with matrix `mat`.
@@ -56,6 +55,14 @@ class CMPBase(BackpropExtension):
 
         # second order module effects
         return self.hessian_diagonal(module, grad_input, grad_output)
+
+    def _modify_residual(self, residual):
+        curv_type = self._get_curv_type_from_extension()
+        return Curvature.modify_residual(residual, curv_type)
+
+    def _get_curv_type_from_extension(self):
+        # TODO: Figure out how to obtain from parametrized extension
+        return None
 
     def get_cmp_from_ctx(self):
         return get_from_ctx(self.BACKPROPAGATED_CMP_NAME_IN_CTX)

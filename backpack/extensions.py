@@ -59,13 +59,15 @@ class ParametrizedExtension(Extension):
 
 
 class CMP(ParametrizedExtension):
-    def __init__(self, which):
-        Curvature.set_current(which)
-        super().__init__(savefield="cmp", input=which)
+    def __init__(self, curv_type):
+        Curvature.set_current(curv_type)
+        super().__init__(savefield="cmp", input=curv_type)
+
+    def get_curv_type(self):
+        return self.input
 
 
 class HBP(ParametrizedExtension):
-
     def __init__(
             self,
             curv_type,
@@ -81,8 +83,7 @@ class HBP(ParametrizedExtension):
                 loss_hessian_strategy,
                 backprop_strategy,
                 ea_strategy,
-            ]
-        )
+            ])
 
         Curvature.set_current(curv_type)
         LossHessianStrategy.set_strategy(loss_hessian_strategy)
