@@ -25,31 +25,22 @@ class BackpropStrategy():
         SQRT,
     ]
 
-    CURRENT = SQRT
+    @classmethod
+    def is_batch_average(cls, strategy):
+        cls.check_exists(strategy)
+        return strategy == cls.BATCH_AVERAGE
 
     @classmethod
-    def is_batch_average(cls):
-        return cls.CURRENT == cls.BATCH_AVERAGE
+    def is_sqrt(cls, strategy):
+        cls.check_exists(strategy)
+        return strategy == cls.SQRT
 
     @classmethod
-    def is_sqrt(cls):
-        return cls.CURRENT == cls.SQRT
-
-    @classmethod
-    def get_current(cls):
-        return cls.CURRENT
-
-    @classmethod
-    def set_strategy(cls, strategy):
-        cls.__check_exists(strategy)
-        cls.CURRENT = strategy
-
-    @classmethod
-    def __check_exists(cls, strategy):
+    def check_exists(cls, strategy):
         if not strategy in cls.CHOICES:
             raise AttributeError(
-                "Unknown loss Hessian strategy: {}. Expecting one of {}".
-                format(strategy, cls.CHOICES))
+                "Unknown backpropagation strategy: {}. Expect {}".format(
+                    strategy, cls.CHOICES))
 
 
 class ExpectationApproximation():

@@ -13,10 +13,11 @@ class HBPLinear(HBPBase, LinearDerivatives):
     # WEIGHT
     ###
     def weight(self, module, grad_input, grad_output):
-        if BackpropStrategy.is_batch_average():
+        bp_strategy = self._get_bp_strategy_from_extension()
+        if BackpropStrategy.is_batch_average(bp_strategy):
             return self._weight_for_batch_average(module, grad_input,
                                                   grad_output)
-        elif BackpropStrategy.is_sqrt():
+        elif BackpropStrategy.is_sqrt(bp_strategy):
             return self._weight_for_sqrt(module, grad_input, grad_output)
 
     def _weight_for_batch_average(self, module, grad_input, grad_output):
@@ -57,10 +58,11 @@ class HBPLinear(HBPBase, LinearDerivatives):
     # BIAS
     ###
     def bias(self, module, grad_input, grad_output):
-        if BackpropStrategy.is_batch_average():
+        bp_strategy = self._get_bp_strategy_from_extension()
+        if BackpropStrategy.is_batch_average(bp_strategy):
             return self._bias_for_batch_average(module, grad_input,
                                                 grad_output)
-        elif BackpropStrategy.is_sqrt():
+        elif BackpropStrategy.is_sqrt(bp_strategy):
             return self._bias_for_sqrt(module, grad_input, grad_output)
 
     def _bias_for_batch_average(self, module, grad_input, grad_output):

@@ -84,7 +84,6 @@ class HBP(ParametrizedExtension):
                 ea_strategy,
             ])
 
-        BackpropStrategy.set_strategy(backprop_strategy)
         ExpectationApproximation.set_strategy(ea_strategy)
 
     def get_curv_type(self):
