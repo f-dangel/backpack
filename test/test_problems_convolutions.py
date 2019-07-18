@@ -21,42 +21,43 @@ CONVS = {
 }
 
 
-def convlayer(conv_cls):
+def convlayer(conv_cls, settings):
     return extend(
         conv_cls(
-            in_channels=TEST_SETTINGS["in_features"][0],
-            out_channels=TEST_SETTINGS["out_channels"],
-            kernel_size=TEST_SETTINGS["kernel_size"],
-            padding=TEST_SETTINGS["padding"],
-            bias=TEST_SETTINGS["bias"]))
+            in_channels=settings["in_features"][0],
+            out_channels=settings["out_channels"],
+            kernel_size=settings["kernel_size"],
+            padding=settings["padding"],
+            bias=settings["bias"]))
 
 
-def convlayer2(conv_cls):
+def convlayer2(conv_cls, settings):
     return extend(
         conv_cls(
-            in_channels=TEST_SETTINGS["in_features"][0],
-            out_channels=TEST_SETTINGS["out_channels"],
-            kernel_size=TEST_SETTINGS["kernel_size"],
-            padding=TEST_SETTINGS["padding"],
-            bias=TEST_SETTINGS["bias"]))
+            in_channels=settings["in_features"][0],
+            out_channels=settings["out_channels"],
+            kernel_size=settings["kernel_size"],
+            padding=settings["padding"],
+            bias=settings["bias"]))
 
 
 input_size = (TEST_SETTINGS["batch"], ) + TEST_SETTINGS["in_features"]
 X = torch.randn(size=input_size)
 
 
-def convearlayer():
+def convearlayer(settings):
     return extend(
         torch.nn.Linear(
-            in_features=np.prod([
-                f - TEST_SETTINGS["padding"][0]
-                for f in TEST_SETTINGS["in_features"]
-            ]) * TEST_SETTINGS["out_channels"],
+            in_features=np.prod(
+                [f - settings["padding"][0]
+                 for f in settings["in_features"]]) * settings["out_channels"],
             out_features=1))
 
 
 def make_regression_problem(conv_cls):
-    model = torch.nn.Sequential(convlayer(conv_cls), Flatten(), convearlayer())
+    model = torch.nn.Sequential(
+        convlayer(conv_cls, TEST_SETTINGS), Flatten(),
+        convearlayer(TEST_SETTINGS))
 
     Y = torch.randn(size=(model(X).shape[0], 1))
 
@@ -66,7 +67,7 @@ def make_regression_problem(conv_cls):
 
 
 def make_classification_problem(conv_cls):
-    model = torch.nn.Sequential(convlayer(conv_cls), Flatten())
+    model = torch.nn.Sequential(convlayer(conv_cls, TEST_SETTINGS), Flatten())
 
     Y = torch.randint(high=X.shape[1], size=(model(X).shape[0], ))
 
@@ -77,7 +78,8 @@ def make_classification_problem(conv_cls):
 
 def make_2layer_classification_problem(conv_cls):
     model = torch.nn.Sequential(
-        convlayer(conv_cls), convlayer2(conv_cls), Flatten())
+        convlayer(conv_cls, TEST_SETTINGS),
+        convlayer2(conv_cls, TEST_SETTINGS), Flatten())
 
     Y = torch.randint(high=X.shape[1], size=(model(X).shape[0], ))
 

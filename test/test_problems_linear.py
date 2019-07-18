@@ -6,6 +6,7 @@ from .test_problem import TestProblem
 TEST_SETTINGS = {
     "in_features": 7,
     "out_features": 3,
+    "out_features2": 3,
     "bias": True,
     "batch": 5,
     "rtol": 1e-5,
@@ -18,30 +19,28 @@ LINEARS = {
 }
 
 
-def linearlayer(linear_cls):
+def linearlayer(linear_cls, settings):
     return extend(
         linear_cls(
-            in_features=TEST_SETTINGS["in_features"],
-            out_features=TEST_SETTINGS["out_features"],
+            in_features=settings["in_features"],
+            out_features=settings["out_features"],
+            bias=settings["bias"],
+        ))
+
+
+def linearlayer2(linear_cls, settings):
+    return extend(
+        linear_cls(
+            in_features=TEST_SETTINGS["out_features"],
+            out_features=TEST_SETTINGS["out_features2"],
             bias=TEST_SETTINGS["bias"],
         ))
 
 
-def linearlayer2(linear_cls):
+def summationLinearLayer(linear_cls, settings):
     return extend(
         linear_cls(
-            in_features=TEST_SETTINGS["out_features"],
-            out_features=3,
-            bias=TEST_SETTINGS["bias"],
-        ))
-
-
-def summationLinearLayer(linear_cls):
-    return extend(
-        linear_cls(
-            in_features=TEST_SETTINGS["out_features"],
-            out_features=1,
-            bias=True))
+            in_features=settings["out_features"], out_features=1, bias=True))
 
 
 input_size = (TEST_SETTINGS["batch"], TEST_SETTINGS["in_features"])
@@ -50,7 +49,8 @@ X = torch.randn(size=input_size)
 
 def make_regression_problem(linear_cls):
     model = torch.nn.Sequential(
-        linearlayer(linear_cls), summationLinearLayer(linear_cls))
+        linearlayer(linear_cls, TEST_SETTINGS),
+        summationLinearLayer(linear_cls, TEST_SETTINGS))
 
     Y = torch.randn(size=(model(X).shape[0], 1))
 
@@ -60,7 +60,8 @@ def make_regression_problem(linear_cls):
 
 
 def make_classification_problem(linear_cls):
-    model = torch.nn.Sequential(linearlayer(linear_cls), Flatten())
+    model = torch.nn.Sequential(
+        linearlayer(linear_cls, TEST_SETTINGS), Flatten())
 
     Y = torch.randint(high=model(X).shape[1], size=(X.shape[0], ))
 
@@ -71,7 +72,8 @@ def make_classification_problem(linear_cls):
 
 def make_2layer_classification_problem(linear_cls):
     model = torch.nn.Sequential(
-        linearlayer(linear_cls), linearlayer2(linear_cls), Flatten())
+        linearlayer(linear_cls, TEST_SETTINGS),
+        linearlayer2(linear_cls, TEST_SETTINGS), Flatten())
 
     Y = torch.randint(high=model(X).shape[1], size=(X.shape[0], ))
 
