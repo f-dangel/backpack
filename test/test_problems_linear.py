@@ -2,6 +2,7 @@ import torch
 from backpack.core.layers import Flatten, LinearConcat
 from backpack import extend
 from .test_problem import TestProblem
+from .layers import LINEARS
 
 TEST_SETTINGS = {
     "in_features": 7,
@@ -11,11 +12,6 @@ TEST_SETTINGS = {
     "batch": 5,
     "rtol": 1e-5,
     "atol": 1e-5
-}
-
-LINEARS = {
-    'Linear': torch.nn.Linear,
-    'LinearConcat': LinearConcat,
 }
 
 

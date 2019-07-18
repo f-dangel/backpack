@@ -3,6 +3,7 @@ import torch
 from backpack.core.layers import Flatten, Conv2dConcat
 from backpack import extend
 from .test_problem import TestProblem
+from .layers import CONVS
 
 TEST_SETTINGS = {
     "in_features": (3, 4, 5),
@@ -13,11 +14,6 @@ TEST_SETTINGS = {
     "batch": 3,
     "rtol": 1e-5,
     "atol": 5e-4
-}
-
-CONVS = {
-    'Conv2d': torch.nn.Conv2d,
-    'Conv2dConcat': Conv2dConcat,
 }
 
 

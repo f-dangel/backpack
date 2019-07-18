@@ -3,6 +3,7 @@ import torch
 from backpack.core.layers import Flatten
 from backpack import extend
 from .test_problem import TestProblem
+from .layers import POOLINGS
 
 TEST_SETTINGS = {
     "in_features": (3, 4, 5),
@@ -14,11 +15,6 @@ TEST_SETTINGS = {
     "rtol": 1e-5,
     "atol": 5e-4,
     "pool_size": 2,
-}
-
-POOLINGS = {
-    'MaxPool2d': torch.nn.MaxPool2d,
-    'AvgPool2d': torch.nn.AvgPool2d,
 }
 
 

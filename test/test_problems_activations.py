@@ -2,14 +2,9 @@ import torch
 from backpack import extend
 from backpack.core.layers import Flatten
 from .test_problem import TestProblem
-from .test_problems_linear import (LINEARS, TEST_SETTINGS, linearlayer,
-                                   linearlayer2, summationLinearLayer, get_X)
-
-ACTIVATIONS = {
-    'ReLU': torch.nn.ReLU,
-    'Sigmoid': torch.nn.Sigmoid,
-    'Tanh': torch.nn.Tanh
-}
+from .layers import LINEARS, ACTIVATIONS
+from .test_problems_linear import (TEST_SETTINGS, linearlayer, linearlayer2,
+                                   summationLinearLayer, get_X)
 
 
 def activation_layer(activation_cls):

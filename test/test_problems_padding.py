@@ -2,6 +2,7 @@ import torch
 from backpack.core.layers import Flatten
 from backpack import extend
 from .test_problem import TestProblem
+from .layers import PADDINGS
 
 TEST_SETTINGS = {
     "in_features": (3, 4, 5),
@@ -12,10 +13,6 @@ TEST_SETTINGS = {
     "batch": 5,
     "rtol": 1e-5,
     "atol": 5e-4,
-}
-
-PADDINGS = {
-    'ZeroPad2d': torch.nn.ZeroPad2d,
 }
 
 
