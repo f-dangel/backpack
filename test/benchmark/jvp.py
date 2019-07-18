@@ -5,7 +5,7 @@ from backpack.core.derivatives import derivatives_for
 from backpack.hessianfree.lop import transposed_jacobian_vector_product
 from backpack.hessianfree.rop import jacobian_vector_product
 from torch import allclose
-from torch.cuda import is_available as cuda_is_available
+from torch.cuda import is_available as cuda_is_available, synchronize as cuda_synchronize
 
 from .jvp_linear import data_linear, data_linearconcat
 from .jvp_conv2d import data_conv2d, data_conv2dconcat
@@ -60,55 +60,107 @@ def skip_if_attribute_does_not_exists(module, attr):
 
 
 def ag_jtv_func(X, out, vin):
-    return lambda: transposed_jacobian_vector_product(
-        out, X, vin, detach=False
-    )[0].contiguous()
+    def f():
+        r = transposed_jacobian_vector_product(
+            out, X, vin, detach=False
+        )[0].contiguous()
+        if vin.is_cuda:
+            cuda_synchronize()
+        return r
+
+    return f
 
 
 def ag_jv_func(X, out, vout):
-    return lambda: jacobian_vector_product(
-        out, X, vout, detach=False
-    )[0].contiguous()
+    def f():
+        r = jacobian_vector_product(
+            out, X, vout, detach=False
+        )[0].contiguous()
+        if vout.is_cuda:
+            cuda_synchronize()
+        return r
+
+    return f
 
 
 def bp_jtv_func(module, vin):
-    return lambda: derivatives_for[module.__class__]().jac_t_mat_prod(
-        module, None, None, vin
-    ).squeeze(2).contiguous()
+    def f():
+        r = derivatives_for[module.__class__]().jac_t_mat_prod(
+            module, None, None, vin
+        ).contiguous()
+        if vin.is_cuda:
+            cuda_synchronize()
+        return r
+
+    return f
 
 
 def bp_jv_func(module, vout):
-    return lambda: derivatives_for[module.__class__]().jac_mat_prod(
-        module, None, None, vout
-    ).squeeze(2).contiguous()
+    def f():
+        r = derivatives_for[module.__class__]().jac_mat_prod(
+            module, None, None, vout
+        ).contiguous()
+        if vout.is_cuda:
+            cuda_synchronize()
+        return r
+
+    return f
 
 
 def ag_jtv_weight_func(module, out, vin):
     skip_if_attribute_does_not_exists(module, "weight")
-    return lambda: transposed_jacobian_vector_product(
-        out, module.weight, vin, detach=False
-    )[0].contiguous()
+
+    def f():
+        r = transposed_jacobian_vector_product(
+            out, module.weight, vin, detach=False
+        )[0].contiguous()
+        if vin.is_cuda:
+            cuda_synchronize()
+        return r
+
+    return f
 
 
 def bp_jtv_weight_func(module, vin):
     skip_if_attribute_does_not_exists(module, "weight")
-    return lambda: derivatives_for[module.__class__]().weight_jac_t_mat_prod(
-        module, None, None, vin
-    ).contiguous()
+
+    def f():
+        r = derivatives_for[module.__class__]().weight_jac_t_mat_prod(
+            module, None, None, vin
+        ).contiguous()
+        if vin.is_cuda:
+            cuda_synchronize()
+        return r
+
+    return f
 
 
 def ag_jtv_bias_func(module, out, vin):
     skip_if_attribute_does_not_exists(module, "bias")
-    return lambda: transposed_jacobian_vector_product(
-        out, module.bias, vin, detach=False
-    )[0].contiguous()
+
+    def f():
+        r = transposed_jacobian_vector_product(
+            out, module.bias, vin, detach=False
+        )[0].contiguous()
+        if vin.is_cuda:
+            cuda_synchronize()
+        return r
+
+    return f
 
 
 def bp_jtv_bias_func(module, vin):
     skip_if_attribute_does_not_exists(module, "bias")
-    return lambda: derivatives_for[module.__class__]().bias_jac_t_mat_prod(
-        module, None, None, vin.unsqueeze(2)
-    ).contiguous()
+
+    def f():
+        r = derivatives_for[module.__class__]().bias_jac_t_mat_prod(
+            module, None, None, vin.unsqueeze(2)
+        ).contiguous()
+        if vin.is_cuda:
+            cuda_synchronize()
+        return r
+
+    return f
 
 
 ################################################################################
