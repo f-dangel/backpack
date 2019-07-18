@@ -65,6 +65,9 @@ class HBPBase(BackpropExtension):
     def _get_bp_strategy_from_extension(self):
         return self._get_parametrized_ext().get_backprop_strategy()
 
+    def _get_ea_strategy_from_extension(self):
+        return self._get_parametrized_ext().get_ea_strategy()
+
     def get_mat_from_ctx(self):
         return get_from_ctx(self.MAT_NAME_IN_CTX)
 

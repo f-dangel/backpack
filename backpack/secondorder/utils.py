@@ -1,11 +1,4 @@
 from ..utils.utils import einsum
-from .strategies import BackpropStrategy, ExpectationApproximation, LossHessianStrategy
-
-
-def print_strategies():
-    print("Loss strategy: {}".format(LossHessianStrategy.get_current()))
-    print("Backprop strategy: {}".format(BackpropStrategy.get_current()))
-    print("EA strategy: {}".format(ExpectationApproximation.get_current()))
 
 
 def matrix_from_kron_facs(factors):

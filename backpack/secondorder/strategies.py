@@ -52,24 +52,13 @@ class ExpectationApproximation():
         CHEN,
     ]
 
-    CURRENT = BOTEV_MARTENS
+    @classmethod
+    def should_average_param_jac(cls, strategy):
+        cls.check_exists(strategy)
+        return strategy == cls.CHEN
 
     @classmethod
-    def get_current(cls):
-        return cls.CURRENT
-
-    @classmethod
-    def set_strategy(cls, strategy):
-        cls.__check_exists(strategy)
-        cls.CURRENT = strategy
-
-    @classmethod
-    def should_average_param_jac(cls):
-        return cls.CURRENT == cls.CHEN
-
-    @classmethod
-    def __check_exists(cls, strategy):
+    def check_exists(cls, strategy):
         if not strategy in cls.CHOICES:
-            raise AttributeError(
-                "Unknown loss Hessian strategy: {}. Expecting one of {}".
-                format(strategy, cls.CHOICES))
+            raise AttributeError("Unknown EA strategy: {}. Expect {}".format(
+                strategy, cls.CHOICES))

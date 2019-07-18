@@ -42,7 +42,8 @@ class HBPLinear(HBPBase, LinearDerivatives):
         return kron_factors
 
     def _factors_from_input(self, module, grad_input, grad_output):
-        if ExpectationApproximation.should_average_param_jac():
+        ea_strategy = self._get_ea_strategy_from_extension()
+        if ExpectationApproximation.should_average_param_jac(ea_strategy):
             mean_input = self.__mean_input(module).unsqueeze(-1)
             yield mean_input
             yield mean_input.transpose()

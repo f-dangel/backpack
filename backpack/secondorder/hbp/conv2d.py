@@ -34,7 +34,8 @@ class HBPConv2d(HBPBase, Conv2DDerivatives):
         X = convUtils.unfold_func(module)(module.input0)
         batch = X.size(0)
 
-        if ExpectationApproximation.should_average_param_jac():
+        ea_strategy = self._get_ea_strategy_from_extension()
+        if ExpectationApproximation.should_average_param_jac(ea_strategy):
             raise NotImplementedError
         else:
             yield einsum('bik,bjk->ij', (X, X)) / batch
