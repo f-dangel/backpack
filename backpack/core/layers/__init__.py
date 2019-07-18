@@ -34,13 +34,13 @@ class LinearConcat(Module):
 
         self.input_features = in_features
         self.output_features = out_features
-        self.bias = bias
+        self.__bias = bias
 
     def forward(self, input):
         return F.linear(input, self._slice_weight(), self._slice_bias())
 
     def has_bias(self):
-        return self.bias is True
+        return self.__bias is True
 
     def homogeneous_input(self):
         input = self.input0
@@ -117,7 +117,7 @@ class Conv2dConcat(Module):
         self.output_padding = conv.output_padding
         self.groups = conv.groups
         self.padding_mode = padding_mode
-        self.bias = bias
+        self.__bias = bias
 
     def forward(self, input):
         return F.conv2d(
@@ -130,7 +130,7 @@ class Conv2dConcat(Module):
             groups=self.groups)
 
     def has_bias(self):
-        return self.bias is True
+        return self.__bias is True
 
     def homogeneous_unfolded_input(self):
         unfolded_input = unfold_func(self)(self.input0)

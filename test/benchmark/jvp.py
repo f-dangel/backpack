@@ -4,8 +4,8 @@ from backpack.hessianfree.lop import transposed_jacobian_vector_product
 from backpack.hessianfree.rop import jacobian_vector_product
 from torch import allclose
 
-from .jvp_linear import data as data_linear
-from .jvp_conv2d import data as data_conv2d
+from .jvp_linear import data_linear, data_linearconcat
+from .jvp_conv2d import data_conv2d, data_conv2dconcat
 from .jvp_avgpool2d import data as data_avgpool2d
 from .jvp_maxpool2d import data as data_maxpool2d
 from .jvp_zeropad2d import data as data_zeropad2d
@@ -17,7 +17,9 @@ RTOL = 1e-3
 
 PROBLEMS = {
     "Linear": data_linear(),
+    "LinearConcat": data_linearconcat(),
     "Conv2d": data_conv2d(),
+    "Conv2dConcat": data_conv2dconcat(),
     "AvgPool2d": data_avgpool2d(),
     "MaxPool2d": data_maxpool2d(),
     "ZeroPad2d": data_zeropad2d(),
