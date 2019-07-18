@@ -13,9 +13,10 @@ class HBPConv2d(HBPBase, Conv2DDerivatives):
     # WEIGHT
     ###
     def weight(self, module, grad_input, grad_output):
-        if BackpropStrategy.is_batch_average():
+        bp_strategy = self._get_bp_strategy_from_extension()
+        if BackpropStrategy.is_batch_average(bp_strategy):
             raise NotImplementedError
-        elif BackpropStrategy.is_sqrt():
+        elif BackpropStrategy.is_sqrt(bp_strategy):
             return self._weight_for_sqrt(module, grad_input, grad_output)
 
     def _weight_for_sqrt(self, module, grad_input, grad_output):
@@ -33,7 +34,8 @@ class HBPConv2d(HBPBase, Conv2DDerivatives):
         X = convUtils.unfold_func(module)(module.input0)
         batch = X.size(0)
 
-        if ExpectationApproximation.should_average_param_jac():
+        ea_strategy = self._get_ea_strategy_from_extension()
+        if ExpectationApproximation.should_average_param_jac(ea_strategy):
             raise NotImplementedError
         else:
             yield einsum('bik,bjk->ij', (X, X)) / batch
@@ -49,9 +51,10 @@ class HBPConv2d(HBPBase, Conv2DDerivatives):
     # BIAS
     ###
     def bias(self, module, grad_input, grad_output):
-        if BackpropStrategy.is_batch_average():
+        bp_strategy = self._get_bp_strategy_from_extension()
+        if BackpropStrategy.is_batch_average(bp_strategy):
             raise NotImplementedError
-        elif BackpropStrategy.is_sqrt():
+        elif BackpropStrategy.is_sqrt(bp_strategy):
             return self._bias_for_sqrt(module, grad_input, grad_output)
 
     def _bias_for_sqrt(self, module, grad_input, grad_output):

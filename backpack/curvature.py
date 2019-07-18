@@ -34,8 +34,6 @@ class Curvature():
     PCH_CLIP = 'pch-clip'
     PCH_MED = 'pch-med'
 
-    CURRENT = HESSIAN
-
     CHOICES = [
         HESSIAN,
         GGN,
@@ -69,11 +67,6 @@ class Curvature():
     }
 
     @classmethod
-    def set_current(cls, which):
-        cls.__check_exists(which)
-        cls.CURRENT = which
-
-    @classmethod
     def __check_exists(cls, which):
         if not which in cls.CHOICES:
             raise AttributeError(
@@ -81,23 +74,17 @@ class Curvature():
                     which, cls.CHOICES))
 
     @classmethod
-    def modify_residual(cls, residual, curv_type=None):
+    def modify_residual(cls, residual, curv_type):
         # None if zero or curvature neglects 2nd-order module effects
         if residual is None:
             return None
         else:
-            if curv_type is None:
-                return cls.RESIDUAL_MODS[cls.CURRENT](residual)
-            else:
-                cls.__check_exists(curv_type)
-                return cls.RESIDUAL_MODS[curv_type](residual)
+            cls.__check_exists(curv_type)
+            return cls.RESIDUAL_MODS[curv_type](residual)
 
     @classmethod
-    def check_loss_hessian(cls, loss_hessian_is_psd, curv_type=None):
-        if curv_type is None:
-            curv_type = cls.CURRENT
-        else:
-            cls.__check_exists(curv_type)
+    def check_loss_hessian(cls, loss_hessian_is_psd, curv_type):
+        cls.__check_exists(curv_type)
 
         require_psd = cls.REQUIRE_PSD_LOSS_HESSIAN[curv_type]
 

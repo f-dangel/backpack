@@ -8,35 +8,12 @@ class LossHessianStrategy():
         AVERAGE,
     ]
 
-    CURRENT = EXACT
-
     @classmethod
-    def get_current(cls):
-        return cls.CURRENT
-
-    @classmethod
-    def set_strategy(cls, strategy):
-        cls.__check_exists(strategy)
-        cls.CURRENT = strategy
-
-    @classmethod
-    def __check_exists(cls, strategy):
+    def check_exists(cls, strategy):
         if not strategy in cls.CHOICES:
             raise AttributeError(
                 "Unknown loss Hessian strategy: {}. Expecting one of {}".
                 format(strategy, cls.CHOICES))
-
-    @classmethod
-    def is_kfac(cls):
-        return cls.CURRENT == cls.SAMPLING
-
-    @classmethod
-    def is_kflr(cls):
-        return cls.CURRENT == cls.EXACT
-
-    @classmethod
-    def is_kfra(cls):
-        return cls.CURRENT == cls.AVERAGE
 
 
 class BackpropStrategy():
@@ -48,31 +25,22 @@ class BackpropStrategy():
         SQRT,
     ]
 
-    CURRENT = SQRT
+    @classmethod
+    def is_batch_average(cls, strategy):
+        cls.check_exists(strategy)
+        return strategy == cls.BATCH_AVERAGE
 
     @classmethod
-    def is_batch_average(cls):
-        return cls.CURRENT == cls.BATCH_AVERAGE
+    def is_sqrt(cls, strategy):
+        cls.check_exists(strategy)
+        return strategy == cls.SQRT
 
     @classmethod
-    def is_sqrt(cls):
-        return cls.CURRENT == cls.SQRT
-
-    @classmethod
-    def get_current(cls):
-        return cls.CURRENT
-
-    @classmethod
-    def set_strategy(cls, strategy):
-        cls.__check_exists(strategy)
-        cls.CURRENT = strategy
-
-    @classmethod
-    def __check_exists(cls, strategy):
+    def check_exists(cls, strategy):
         if not strategy in cls.CHOICES:
             raise AttributeError(
-                "Unknown loss Hessian strategy: {}. Expecting one of {}".
-                format(strategy, cls.CHOICES))
+                "Unknown backpropagation strategy: {}. Expect {}".format(
+                    strategy, cls.CHOICES))
 
 
 class ExpectationApproximation():
@@ -84,24 +52,13 @@ class ExpectationApproximation():
         CHEN,
     ]
 
-    CURRENT = BOTEV_MARTENS
+    @classmethod
+    def should_average_param_jac(cls, strategy):
+        cls.check_exists(strategy)
+        return strategy == cls.CHEN
 
     @classmethod
-    def get_current(cls):
-        return cls.CURRENT
-
-    @classmethod
-    def set_strategy(cls, strategy):
-        cls.__check_exists(strategy)
-        cls.CURRENT = strategy
-
-    @classmethod
-    def should_average_param_jac(cls):
-        return cls.CURRENT == cls.CHEN
-
-    @classmethod
-    def __check_exists(cls, strategy):
+    def check_exists(cls, strategy):
         if not strategy in cls.CHOICES:
-            raise AttributeError(
-                "Unknown loss Hessian strategy: {}. Expecting one of {}".
-                format(strategy, cls.CHOICES))
+            raise AttributeError("Unknown EA strategy: {}. Expect {}".format(
+                strategy, cls.CHOICES))

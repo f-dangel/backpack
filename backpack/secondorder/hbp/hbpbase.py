@@ -17,11 +17,12 @@ class HBPBase(BackpropExtension):
     def backpropagate(self, module, grad_input, grad_output):
         M = self.get_mat_from_ctx()
 
-        if BackpropStrategy.is_batch_average():
+        bp_strategy = self._get_bp_strategy_from_extension()
+        if BackpropStrategy.is_batch_average(bp_strategy):
             M_mod = self.backpropagate_batch_average(module, grad_input,
                                                      grad_output, M)
 
-        elif BackpropStrategy.is_sqrt():
+        elif BackpropStrategy.is_sqrt(bp_strategy):
             M_mod = self.backpropagate_sqrt(module, grad_input, grad_output, M)
 
         self.set_mat_in_ctx(M_mod)
@@ -35,7 +36,7 @@ class HBPBase(BackpropExtension):
         # second-order module effects
         residual = self._compute_residual_diag_if_nonzero(
             module, grad_input, grad_output)
-        residual_mod = Curvature.modify_residual(residual)
+        residual_mod = self._modify_residual(residual)
 
         if residual_mod is not None:
             ggn = self.add_diag_to_mat(residual_mod, ggn)
@@ -53,6 +54,19 @@ class HBPBase(BackpropExtension):
 
         # second order module effects
         return self.hessian_diagonal(module, grad_input, grad_output).sum(0)
+
+    def _modify_residual(self, residual):
+        curv_type = self._get_curv_type_from_extension()
+        return Curvature.modify_residual(residual, curv_type)
+
+    def _get_curv_type_from_extension(self):
+        return self._get_parametrized_ext().get_curv_type()
+
+    def _get_bp_strategy_from_extension(self):
+        return self._get_parametrized_ext().get_backprop_strategy()
+
+    def _get_ea_strategy_from_extension(self):
+        return self._get_parametrized_ext().get_ea_strategy()
 
     def get_mat_from_ctx(self):
         return get_from_ctx(self.MAT_NAME_IN_CTX)
