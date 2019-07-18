@@ -1,7 +1,6 @@
 from .layers import LINEARS, ACTIVATIONS
-from .make_problems import (make_regression_problem,
-                            make_classification_problem,
-                            make_2layer_classification_problem)
+from .problems import make_regression_problem, make_classification_problem
+from .networks import single_linear_layer, two_linear_layers
 
 TEST_SETTINGS = {
     "in_features": 7,
@@ -12,17 +11,27 @@ TEST_SETTINGS = {
     "rtol": 1e-5,
     "atol": 1e-5
 }
+INPUT_SHAPE = (TEST_SETTINGS["batch"], TEST_SETTINGS["in_features"])
 
 TEST_PROBLEMS = {}
 
-for act_name, act in ACTIVATIONS.items():
-    for lin_name, lin in LINEARS.items():
+for act_name, act_cls in ACTIVATIONS.items():
+    for lin_name, lin_cls in LINEARS.items():
+
         TEST_PROBLEMS["{}{}-regression".format(
             lin_name, act_name)] = make_regression_problem(
-                act, lin, TEST_SETTINGS)
+                INPUT_SHAPE,
+                single_linear_layer(
+                    TEST_SETTINGS, lin_cls, activation_cls=act_cls))
+
         TEST_PROBLEMS["{}{}-classification".format(
             lin_name, act_name)] = make_classification_problem(
-                act, lin, TEST_SETTINGS)
+                INPUT_SHAPE,
+                single_linear_layer(
+                    TEST_SETTINGS, lin_cls, activation_cls=act_cls))
+
         TEST_PROBLEMS["{}{}-2layer-classification".format(
-            lin_name, act_name)] = make_2layer_classification_problem(
-                act, lin, TEST_SETTINGS)
+            lin_name, act_name)] = make_classification_problem(
+                INPUT_SHAPE,
+                two_linear_layers(
+                    TEST_SETTINGS, lin_cls, activation_cls=act_cls))
