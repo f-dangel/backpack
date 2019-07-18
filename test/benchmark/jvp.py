@@ -207,22 +207,22 @@ def test_jtv_bias_ag_vs_bp(data):
 
 
 @pytest.mark.parametrize("data", PROBLEM_DATA, ids=PROBLEM_NAME)
-def test_jtv_ag(data, benchmark):
+def test_jtv_input_ag(data, benchmark):
     benchmark(ag_jtv_func(data["X"], data["output"], data["vin_ag"]))
 
 
 @pytest.mark.parametrize("data", PROBLEM_DATA, ids=PROBLEM_NAME)
-def test_jv_ag(data, benchmark):
+def test_jv_input_ag(data, benchmark):
     benchmark(ag_jv_func(data["X"], data["output"], data["vout_ag"]))
 
 
 @pytest.mark.parametrize("data", PROBLEM_DATA, ids=PROBLEM_NAME)
-def test_jtv_bp(data, benchmark):
+def test_jtv_input_bp(data, benchmark):
     benchmark(bp_jtv_func(data["module"], data["vin_bp"]))
 
 
 @pytest.mark.parametrize("data", PROBLEM_DATA, ids=PROBLEM_NAME)
-def test_jv_bp(data, benchmark):
+def test_jv_input_bp(data, benchmark):
     benchmark(bp_jv_func(data["module"], data["vout_bp"]))
 
 
