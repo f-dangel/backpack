@@ -136,7 +136,7 @@ class Conv2dConcat(Module):
         unfolded_input = unfold_func(self)(self.input0)
         if self.has_bias():
             unfolded_input = self.append_ones(unfolded_input)
-        return input
+        return unfolded_input
 
     @staticmethod
     def append_ones(input):
