@@ -134,6 +134,10 @@ class HBPLinearConcat(HBPBase, LinearConcatDerivatives):
 
     ###
 
+    def _bias_for_batch_average(self, module, grad_input, grad_output):
+        kron_factors = [self.get_mat_from_ctx()]
+        return kron_factors
+
     def __mean_input(self, module):
         _, flat_input = self.batch_flat(module.homogeneous_input())
         return flat_input.mean(0)
