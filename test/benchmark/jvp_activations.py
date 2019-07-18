@@ -2,14 +2,14 @@ from torch import randn
 from backpack import extend
 
 
-def data(module_class):
+def data(module_class, device="cpu"):
     N, D = 100, 200
 
-    X = randn(N, D, requires_grad=True)
-    module = extend(module_class())
+    X = randn(N, D, requires_grad=True, device=device)
+    module = extend(module_class()).to(device=device)
     out = module(X)
 
-    v = randn(N, D)
+    v = randn(N, D, device=device)
 
     return {
         "X": X,
