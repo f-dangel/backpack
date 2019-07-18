@@ -35,7 +35,7 @@ class HBPBase(BackpropExtension):
         # second-order module effects
         residual = self._compute_residual_diag_if_nonzero(
             module, grad_input, grad_output)
-        residual_mod = Curvature.modify_residual(residual)
+        residual_mod = self._modify_residual(residual)
 
         if residual_mod is not None:
             ggn = self.add_diag_to_mat(residual_mod, ggn)
@@ -53,6 +53,13 @@ class HBPBase(BackpropExtension):
 
         # second order module effects
         return self.hessian_diagonal(module, grad_input, grad_output).sum(0)
+
+    def _modify_residual(self, residual):
+        curv_type = self._get_curv_type_from_extension()
+        return Curvature.modify_residual(residual, curv_type)
+
+    def _get_curv_type_from_extension(self):
+        return self._get_parametrized_ext().get_curv_type()
 
     def get_mat_from_ctx(self):
         return get_from_ctx(self.MAT_NAME_IN_CTX)

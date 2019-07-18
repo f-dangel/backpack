@@ -2,6 +2,7 @@ from ...core.derivatives.mseloss import MSELossDerivatives
 from ...core.derivatives.crossentropyloss import CrossEntropyLossDerivatives
 from ..strategies import LossHessianStrategy
 from .hbpbase import HBPBase
+from ...curvature import Curvature
 
 
 class HBPLoss(HBPBase):
@@ -15,6 +16,10 @@ class HBPLoss(HBPBase):
         }
 
     def backpropagate(self, module, grad_input, grad_output):
+        curv_type = self._get_curv_type_from_extension()
+        Curvature.check_loss_hessian(
+            self.hessian_is_psd(), curv_type=curv_type)
+
         H_func = self.LOSS_HESSIAN_GETTERS[LossHessianStrategy.CURRENT]
         H_loss = H_func(module, grad_input, grad_output)
 

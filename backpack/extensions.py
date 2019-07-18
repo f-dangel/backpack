@@ -84,10 +84,12 @@ class HBP(ParametrizedExtension):
                 ea_strategy,
             ])
 
-        Curvature.set_current(curv_type)
         LossHessianStrategy.set_strategy(loss_hessian_strategy)
         BackpropStrategy.set_strategy(backprop_strategy)
         ExpectationApproximation.set_strategy(ea_strategy)
+
+    def get_curv_type(self):
+        return self.input[0]
 
 
 class KFAC(HBP):
