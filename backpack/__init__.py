@@ -30,10 +30,18 @@ class backpack():
         CTX.set_active_exts(self.old_CTX)
 
 
+def has_children(mod):
+    return len(list(mod.children())) > 0
+
+
 def extend(module):
 
     if DEBUGGING:
         print("[DEBUG] Extending", module)
+
+    if has_children(module):
+        for child in module.children():
+            extend(child)
 
     def store_io(module, input, output):
         for i in range(len(input)):
@@ -71,7 +79,8 @@ def extend(module):
 
             for bpext in exts_for_mod:
                 if DEBUGGING:
-                    print(" └─[DEBUG] Backward hook {}".format(bpext.__class__, ))
+                    print(" └─[DEBUG] Backward hook {}".format(
+                        bpext.__class__, ))
 
                 bpext.apply(extension, module, grad_input, grad_out)
 

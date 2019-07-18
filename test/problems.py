@@ -42,8 +42,8 @@ class ProblemBase():
 
     @staticmethod
     def extend_and_create_sequential(modules):
-        extended_modules = [extend(m) for m in modules]
-        return torch.nn.Sequential(*extended_modules)
+        sequential = torch.nn.Sequential(*modules)
+        return extend(sequential)
 
 
 class Regression(ProblemBase):
