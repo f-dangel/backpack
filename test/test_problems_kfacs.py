@@ -1,17 +1,18 @@
-import torch
-from backpack.core.layers import Flatten
-from backpack import extend
-from .test_problem import TestProblem
-from .test_problems_linear import (TEST_SETTINGS as LIN_TEST_SETTINGS, LINEARS,
-                                   linearlayer, linearlayer2,
-                                   summationLinearLayer)
+from .make_problems import (make_regression_problem,
+                            make_classification_problem,
+                            make_2layer_classification_problem)
+from .layers import ACTIVATIONS, LINEARS
 
-from .test_problems_activations import (
-    ACTIVATIONS, activation_layer, make_regression_problem,
-    make_classification_problem, make_2layer_classification_problem)
-
-TEST_SETTINGS = {**LIN_TEST_SETTINGS}
-TEST_SETTINGS["batch"] = 1
+TEST_SETTINGS = {
+    "in_features": 7,
+    "out_features": 3,
+    "out_features2": 3,
+    "bias": True,
+    "batch": 1,
+    "rtol": 1e-5,
+    "atol": 1e-5
+}
+assert TEST_SETTINGS["batch"] == 1
 
 REGRESSION_PROBLEMS = {}
 for act_name, act in ACTIVATIONS.items():
