@@ -7,6 +7,10 @@ from torch import allclose
 from .jvp_linear import data as data_linear
 from .jvp_conv2d import data as data_conv2d
 from .jvp_avgpool2d import data as data_avgpool2d
+from .jvp_maxpool2d import data as data_maxpool2d
+from .jvp_zeropad2d import data as data_zeropad2d
+from .jvp_activations import data as data_activation
+from torch.nn import Dropout, ReLU, Tanh, Sigmoid
 
 ATOL = 1e-3
 RTOL = 1e-3
@@ -15,6 +19,12 @@ PROBLEMS = {
     "Linear": data_linear(),
     "Conv2d": data_conv2d(),
     "AvgPool2d": data_avgpool2d(),
+    "MaxPool2d": data_maxpool2d(),
+    "ZeroPad2d": data_zeropad2d(),
+    "Dropout": data_activation(Dropout),
+    "ReLU": data_activation(ReLU),
+    "Tanh": data_activation(Tanh),
+    "Sigmoid": data_activation(Sigmoid),
 }
 
 PROBLEM_DATA = []

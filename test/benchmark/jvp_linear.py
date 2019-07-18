@@ -18,7 +18,7 @@ def data():
         "module": linear,
         "output": out,
         "vout_ag": vout,
-        "vout_bp": vout,
+        "vout_bp": vout.unsqueeze(2),
         "vin_ag": vin,
-        "vin_bp": vin,
+        "vin_bp": vin.unsqueeze(2),
     }
