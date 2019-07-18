@@ -8,35 +8,12 @@ class LossHessianStrategy():
         AVERAGE,
     ]
 
-    CURRENT = EXACT
-
     @classmethod
-    def get_current(cls):
-        return cls.CURRENT
-
-    @classmethod
-    def set_strategy(cls, strategy):
-        cls.__check_exists(strategy)
-        cls.CURRENT = strategy
-
-    @classmethod
-    def __check_exists(cls, strategy):
+    def check_exists(cls, strategy):
         if not strategy in cls.CHOICES:
             raise AttributeError(
                 "Unknown loss Hessian strategy: {}. Expecting one of {}".
                 format(strategy, cls.CHOICES))
-
-    @classmethod
-    def is_kfac(cls):
-        return cls.CURRENT == cls.SAMPLING
-
-    @classmethod
-    def is_kflr(cls):
-        return cls.CURRENT == cls.EXACT
-
-    @classmethod
-    def is_kfra(cls):
-        return cls.CURRENT == cls.AVERAGE
 
 
 class BackpropStrategy():
