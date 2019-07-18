@@ -1,11 +1,11 @@
 from functools import partial
 
 import pytest
+import torch
 from backpack.core.derivatives import derivatives_for
 from backpack.hessianfree.lop import transposed_jacobian_vector_product
 from backpack.hessianfree.rop import jacobian_vector_product
 from torch import allclose
-from torch.cuda import is_available as cuda_is_available, synchronize as cuda_synchronize
 
 from .jvp_linear import data_linear, data_linearconcat
 from .jvp_conv2d import data_conv2d, data_conv2dconcat
@@ -17,6 +17,8 @@ from torch.nn import Dropout, ReLU, Tanh, Sigmoid
 
 ATOL = 1e-3
 RTOL = 1e-3
+
+torch.manual_seed(0)
 
 PROBLEMS = {
     "Linear": data_linear,
@@ -33,7 +35,7 @@ PROBLEMS = {
 }
 
 DEVICES = {"cpu": "cpu"}
-if cuda_is_available():
+if torch.cuda.is_available():
     DEVICES["gpu"] = "cuda:0"
 
 PROBLEM_DATA = []
@@ -65,7 +67,7 @@ def ag_jtv_func(X, out, vin):
             out, X, vin, detach=False
         )[0].contiguous()
         if vin.is_cuda:
-            cuda_synchronize()
+            torch.cuda.synchronize()
         return r
 
     return f
@@ -77,7 +79,7 @@ def ag_jv_func(X, out, vout):
             out, X, vout, detach=False
         )[0].contiguous()
         if vout.is_cuda:
-            cuda_synchronize()
+            torch.cuda.synchronize()
         return r
 
     return f
@@ -89,7 +91,7 @@ def bp_jtv_func(module, vin):
             module, None, None, vin
         ).contiguous()
         if vin.is_cuda:
-            cuda_synchronize()
+            torch.cuda.synchronize()
         return r
 
     return f
@@ -101,7 +103,7 @@ def bp_jv_func(module, vout):
             module, None, None, vout
         ).contiguous()
         if vout.is_cuda:
-            cuda_synchronize()
+            torch.cuda.synchronize()
         return r
 
     return f
@@ -115,7 +117,7 @@ def ag_jtv_weight_func(module, out, vin):
             out, module.weight, vin, detach=False
         )[0].contiguous()
         if vin.is_cuda:
-            cuda_synchronize()
+            torch.cuda.synchronize()
         return r
 
     return f
@@ -129,7 +131,7 @@ def bp_jtv_weight_func(module, vin):
             module, None, None, vin
         ).contiguous()
         if vin.is_cuda:
-            cuda_synchronize()
+            torch.cuda.synchronize()
         return r
 
     return f
@@ -143,7 +145,7 @@ def ag_jtv_bias_func(module, out, vin):
             out, module.bias, vin, detach=False
         )[0].contiguous()
         if vin.is_cuda:
-            cuda_synchronize()
+            torch.cuda.synchronize()
         return r
 
     return f
@@ -157,7 +159,7 @@ def bp_jtv_bias_func(module, vin):
             module, None, None, vin.unsqueeze(2)
         ).contiguous()
         if vin.is_cuda:
-            cuda_synchronize()
+            torch.cuda.synchronize()
         return r
 
     return f

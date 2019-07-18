@@ -5,7 +5,7 @@ from backpack import extend
 
 
 def data_linear(device="cpu"):
-    N, D1, D2 = 10, 10, 10
+    N, D1, D2 = 100, 64, 256
 
     X = randn(N, D1, requires_grad=True, device=device)
     linear = extend(Linear(D1, D2).to(device=device))
@@ -26,7 +26,7 @@ def data_linear(device="cpu"):
 
 
 def data_linearconcat(device="cpu"):
-    N, D1, D2 = 10, 10, 10
+    N, D1, D2 = 100, 64, 256
 
     X = randn(N, D1, requires_grad=True, device=device)
     linear = extend(LinearConcat(D1, D2)).to(device=device)
