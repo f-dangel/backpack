@@ -1,3 +1,4 @@
+from warnings import warn
 from math import sqrt
 from torch import diag_embed, ones_like, randn, diag, ones
 from torch.nn import MSELoss
@@ -19,11 +20,9 @@ class MSELossDerivatives(BaseDerivatives):
         return sqrt_H
 
     def sqrt_hessian_sampled(self, module, grad_input, grad_output):
-        warn(
-            "[MC Sampling Hessian of CrossEntropy] " +
-            "Returning the symmetric factorization of the full Hessian " +
-            "(same computation cost)"
-        )
+        warn("[MC Sampling Hessian of CrossEntropy] " +
+             "Returning the symmetric factorization of the full Hessian " +
+             "(same computation cost)")
         return self.sqrt_hessian(module, grad_input, grad_output)
 
     def sum_hessian(self, module, grad_input, grad_output):

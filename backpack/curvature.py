@@ -1,3 +1,6 @@
+import torch
+
+
 class ResidualModifications():
     @staticmethod
     def nothing(res):
@@ -15,12 +18,21 @@ class ResidualModifications():
     def to_abs(res):
         return res.abs()
 
+    @staticmethod
+    def to_med(res, if_negative_return=None):
+        median = res.median()
+        if median < 0:
+            return None
+        else:
+            return median * torch.ones_like(res)
+
 
 class Curvature():
     HESSIAN = 'hessian'
     GGN = 'ggn'
     PCH_ABS = 'pch-abs'
     PCH_CLIP = 'pch-clip'
+    PCH_MED = 'pch-med'
 
     CURRENT = HESSIAN
 
@@ -29,6 +41,7 @@ class Curvature():
         GGN,
         PCH_CLIP,
         PCH_ABS,
+        PCH_MED,
     ]
 
     REQUIRE_PSD_LOSS_HESSIAN = {
@@ -36,6 +49,7 @@ class Curvature():
         GGN: True,
         PCH_ABS: True,
         PCH_CLIP: True,
+        PCH_MED: True,
     }
 
     REQUIRE_RESIDUAL = {
@@ -43,6 +57,7 @@ class Curvature():
         GGN: False,
         PCH_ABS: True,
         PCH_CLIP: True,
+        PCH_MED: True,
     }
 
     RESIDUAL_MODS = {
@@ -50,6 +65,7 @@ class Curvature():
         GGN: ResidualModifications.to_zero,
         PCH_ABS: ResidualModifications.to_abs,
         PCH_CLIP: ResidualModifications.remove_negative_values,
+        PCH_MED: ResidualModifications.to_med,
     }
 
     @classmethod
