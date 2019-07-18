@@ -1,8 +1,11 @@
+from functools import partial
+
 import pytest
 from backpack.core.derivatives import derivatives_for
 from backpack.hessianfree.lop import transposed_jacobian_vector_product
 from backpack.hessianfree.rop import jacobian_vector_product
 from torch import allclose
+from torch.cuda import is_available as cuda_is_available
 
 from .jvp_linear import data_linear, data_linearconcat
 from .jvp_conv2d import data_conv2d, data_conv2dconcat
@@ -16,24 +19,29 @@ ATOL = 1e-3
 RTOL = 1e-3
 
 PROBLEMS = {
-    "Linear": data_linear(),
-    "LinearConcat": data_linearconcat(),
-    "Conv2d": data_conv2d(),
-    "Conv2dConcat": data_conv2dconcat(),
-    "AvgPool2d": data_avgpool2d(),
-    "MaxPool2d": data_maxpool2d(),
-    "ZeroPad2d": data_zeropad2d(),
-    "Dropout": data_activation(Dropout),
-    "ReLU": data_activation(ReLU),
-    "Tanh": data_activation(Tanh),
-    "Sigmoid": data_activation(Sigmoid),
+    "Linear": data_linear,
+    "LinearConcat": data_linearconcat,
+    "Conv2d": data_conv2d,
+    "Conv2dConcat": data_conv2dconcat,
+    "AvgPool2d": data_avgpool2d,
+    "MaxPool2d": data_maxpool2d,
+    "ZeroPad2d": data_zeropad2d,
+    "Dropout": partial(data_activation, module_class=Dropout),
+    "ReLU": partial(data_activation, module_class=ReLU),
+    "Tanh": partial(data_activation, module_class=Tanh),
+    "Sigmoid": partial(data_activation, module_class=Sigmoid),
 }
+
+DEVICES = {"cpu": "cpu"}
+if cuda_is_available():
+    DEVICES["gpu"] = "cuda:0"
 
 PROBLEM_DATA = []
 PROBLEM_NAME = []
-for name, problem in PROBLEMS.items():
-    PROBLEM_NAME.append(name)
-    PROBLEM_DATA.append(problem)
+for devname, dev in DEVICES.items():
+    for name, problemfunc in PROBLEMS.items():
+        PROBLEM_NAME.append(name + ":" + devname)
+        PROBLEM_DATA.append(problemfunc(device=dev))
 
 
 ################################################################################

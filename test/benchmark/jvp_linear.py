@@ -4,15 +4,15 @@ from torch.nn import Linear
 from backpack import extend
 
 
-def data_linear():
+def data_linear(device="cpu"):
     N, D1, D2 = 10, 10, 10
 
-    X = randn(N, D1, requires_grad=True)
-    linear = extend(Linear(D1, D2))
+    X = randn(N, D1, requires_grad=True, device=device)
+    linear = extend(Linear(D1, D2).to(device=device))
     out = linear(X)
 
-    vin = randn(N, D2)
-    vout = randn(N, D1)
+    vin = randn(N, D2, device=device)
+    vout = randn(N, D1, device=device)
 
     return {
         "X": X,
@@ -25,15 +25,15 @@ def data_linear():
     }
 
 
-def data_linearconcat():
+def data_linearconcat(device="cpu"):
     N, D1, D2 = 10, 10, 10
 
-    X = randn(N, D1, requires_grad=True)
-    linear = extend(LinearConcat(D1, D2))
+    X = randn(N, D1, requires_grad=True, device=device)
+    linear = extend(LinearConcat(D1, D2)).to(device=device)
     out = linear(X)
 
-    vin = randn(N, D2)
-    vout = randn(N, D1)
+    vin = randn(N, D2, device=device)
+    vout = randn(N, D1, device=device)
 
     return {
         "X": X,

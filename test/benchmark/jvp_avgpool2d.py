@@ -3,18 +3,18 @@ from torch.nn import AvgPool2d
 from backpack import extend
 
 
-def data():
+def data(device="cpu"):
     N, C, Hin, Win = 100, 10, 32, 32
     KernelSize = 4
 
-    X = randn(N, C, Hin, Win, requires_grad=True)
-    module = extend(AvgPool2d(KernelSize))
+    X = randn(N, C, Hin, Win, requires_grad=True, device=device)
+    module = extend(AvgPool2d(KernelSize)).to(device=device)
     out = module(X)
 
     Hout = int(Hin / KernelSize)
     Wout = int(Win / KernelSize)
-    vout = randn(N, C, Hin, Win)
-    vin = randn(N, C, Hout, Wout)
+    vout = randn(N, C, Hin, Win, device=device)
+    vin = randn(N, C, Hout, Wout, device=device)
 
     return {
         "X": X,
