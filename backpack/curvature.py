@@ -93,9 +93,15 @@ class Curvature():
                 return cls.RESIDUAL_MODS[curv_type](residual)
 
     @classmethod
-    def check_loss_hessian(cls, loss_hessian_is_psd):
-        require_psd = cls.REQUIRE_PSD_LOSS_HESSIAN[cls.CURRENT]
+    def check_loss_hessian(cls, loss_hessian_is_psd, curv_type=None):
+        if curv_type is None:
+            curv_type = cls.CURRENT
+        else:
+            cls.__check_exists(curv_type)
+
+        require_psd = cls.REQUIRE_PSD_LOSS_HESSIAN[curv_type]
+
         if require_psd and not loss_hessian_is_psd:
             raise ValueError(
                 'Loss Hessian PSD = {}, but {} requires PSD = {}'.format(
-                    loss_hessian_is_psd, cls.CURRENT, require_psd))
+                    loss_hessian_is_psd, curv_type, require_psd))
