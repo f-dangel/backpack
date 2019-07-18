@@ -69,23 +69,23 @@ class BpextImpl(Implementation):
                 results.append(p.cmp(mat))
         return results
 
-    def kfra_blocks(self):
+    def matrices_from_kronecker_curvature(self, extension_cls, savefield):
         results = []
-        with backpack(ext.KFRA()):
+        with backpack(extension_cls()):
             self.loss().backward()
             for p in self.model.parameters():
-                factors = p.kfra
+                factors = getattr(p, savefield)
                 results.append(matrix_from_kron_facs(factors))
         return results
 
+    def kfra_blocks(self):
+        return self.matrices_from_kronecker_curvature(ext.KFRA, "kfra")
+
     def kflr_blocks(self):
-        results = []
-        with backpack(ext.KFLR()):
-            self.loss().backward()
-            for p in self.model.parameters():
-                factors = p.kflr
-                results.append(matrix_from_kron_facs(factors))
-        return results
+        return self.matrices_from_kronecker_curvature(ext.KFLR, "kflr")
+
+    def kfac_blocks(self):
+        return self.matrices_from_kronecker_curvature(ext.KFAC, "kfac")
 
     def hbp_with_curv(self,
                       curv_type,

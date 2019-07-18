@@ -69,10 +69,15 @@ def make_2layer_classification_problem(activation):
     return TestProblem(X, Y, model, lossfunc)
 
 
-TEST_PROBLEMS = {}
+REGRESSION_PROBLEMS = {}
 for act_name, act in ACTIVATIONS.items():
-    TEST_PROBLEMS["linear{}-regression".format(
+    REGRESSION_PROBLEMS["linear{}-regression".format(
         act_name)] = make_regression_problem(act)
+
+TEST_PROBLEMS = {
+    **REGRESSION_PROBLEMS,
+}
+for act_name, act in ACTIVATIONS.items():
     TEST_PROBLEMS["linear{}-classification".format(
         act_name)] = make_classification_problem(act)
     TEST_PROBLEMS["linear{}-2layer-classification".format(
