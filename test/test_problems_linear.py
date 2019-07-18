@@ -31,9 +31,9 @@ def linearlayer(linear_cls, settings):
 def linearlayer2(linear_cls, settings):
     return extend(
         linear_cls(
-            in_features=TEST_SETTINGS["out_features"],
-            out_features=TEST_SETTINGS["out_features2"],
-            bias=TEST_SETTINGS["bias"],
+            in_features=settings["out_features"],
+            out_features=settings["out_features2"],
+            bias=settings["bias"],
         ))
 
 
@@ -43,15 +43,18 @@ def summationLinearLayer(linear_cls, settings):
             in_features=settings["out_features"], out_features=1, bias=True))
 
 
-input_size = (TEST_SETTINGS["batch"], TEST_SETTINGS["in_features"])
-X = torch.randn(size=input_size)
+def get_X(settings):
+    input_size = (settings["batch"], settings["in_features"])
+    return torch.randn(size=input_size)
 
 
-def make_regression_problem(linear_cls):
+def make_regression_problem(linear_cls, settings):
+
     model = torch.nn.Sequential(
-        linearlayer(linear_cls, TEST_SETTINGS),
-        summationLinearLayer(linear_cls, TEST_SETTINGS))
+        linearlayer(linear_cls, settings),
+        summationLinearLayer(linear_cls, settings))
 
+    X = get_X(settings)
     Y = torch.randn(size=(model(X).shape[0], 1))
 
     lossfunc = extend(torch.nn.MSELoss())
@@ -59,10 +62,11 @@ def make_regression_problem(linear_cls):
     return TestProblem(X, Y, model, lossfunc)
 
 
-def make_classification_problem(linear_cls):
-    model = torch.nn.Sequential(
-        linearlayer(linear_cls, TEST_SETTINGS), Flatten())
+def make_classification_problem(linear_cls, settings):
 
+    model = torch.nn.Sequential(linearlayer(linear_cls, settings), Flatten())
+
+    X = get_X(settings)
     Y = torch.randint(high=model(X).shape[1], size=(X.shape[0], ))
 
     lossfunc = extend(torch.nn.CrossEntropyLoss())
@@ -70,11 +74,12 @@ def make_classification_problem(linear_cls):
     return TestProblem(X, Y, model, lossfunc)
 
 
-def make_2layer_classification_problem(linear_cls):
+def make_2layer_classification_problem(linear_cls, settings):
     model = torch.nn.Sequential(
-        linearlayer(linear_cls, TEST_SETTINGS),
-        linearlayer2(linear_cls, TEST_SETTINGS), Flatten())
+        linearlayer(linear_cls, settings), linearlayer2(linear_cls, settings),
+        Flatten())
 
+    X = get_X(settings)
     Y = torch.randint(high=model(X).shape[1], size=(X.shape[0], ))
 
     lossfunc = extend(torch.nn.CrossEntropyLoss())
@@ -85,8 +90,9 @@ def make_2layer_classification_problem(linear_cls):
 TEST_PROBLEMS = {}
 for lin_name, lin_cls in LINEARS.items():
     TEST_PROBLEMS["{}-regression".format(lin_name)] = make_regression_problem(
-        lin_cls)
+        lin_cls, TEST_SETTINGS)
     TEST_PROBLEMS["{}-classification".format(
-        lin_name)] = make_classification_problem(lin_cls)
+        lin_name)] = make_classification_problem(lin_cls, TEST_SETTINGS)
     TEST_PROBLEMS["{}-2layer-classification".format(
-        lin_name)] = make_2layer_classification_problem(lin_cls)
+        lin_name)] = make_2layer_classification_problem(
+            lin_cls, TEST_SETTINGS)
