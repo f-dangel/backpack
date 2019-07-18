@@ -5,14 +5,17 @@ from backpack.hessianfree.rop import jacobian_vector_product
 from torch import allclose
 
 from .jvp_linear import data as data_linear
+from .jvp_conv2d import data as data_conv2d
 from .jvp_avgpool2d import data as data_avgpool2d
 
+ATOL = 1e-3
+RTOL = 1e-3
 
 PROBLEMS = {
     "Linear": data_linear(),
+    "Conv2d": data_conv2d(),
     "AvgPool2d": data_avgpool2d(),
 }
-
 
 PROBLEM_DATA = []
 PROBLEM_NAME = []
@@ -50,13 +53,13 @@ def ag_jv_func(X, out, vout):
 
 def bp_jtv_func(module, vin):
     return lambda: derivatives_for[module.__class__]().jac_t_mat_prod(
-        module, None, None, vin.unsqueeze(2)
+        module, None, None, vin
     ).squeeze(2).contiguous()
 
 
 def bp_jv_func(module, vout):
     return lambda: derivatives_for[module.__class__]().jac_mat_prod(
-        module, None, None, vout.unsqueeze(2)
+        module, None, None, vout
     ).squeeze(2).contiguous()
 
 
@@ -70,7 +73,7 @@ def ag_jtv_weight_func(module, out, vin):
 def bp_jtv_weight_func(module, vin):
     skip_if_attribute_does_not_exists(module, "weight")
     return lambda: derivatives_for[module.__class__]().weight_jac_t_mat_prod(
-        module, None, None, vin.unsqueeze(2)
+        module, None, None, vin
     ).contiguous()
 
 
@@ -95,16 +98,17 @@ def bp_jtv_bias_func(module, vin):
 
 @pytest.mark.parametrize("data", PROBLEM_DATA, ids=PROBLEM_NAME)
 def test_jtv_ag_vs_bp(data):
+    print(data["vin_bp"].shape)
     A = ag_jtv_func(data["X"], data["output"], data["vin_ag"])()
     B = bp_jtv_func(data["module"], data["vin_bp"])()
-    assert allclose(A, B.view_as(A))
+    assert allclose(A, B.view_as(A), atol=ATOL, rtol=RTOL)
 
 
 @pytest.mark.parametrize("data", PROBLEM_DATA, ids=PROBLEM_NAME)
 def test_jv_ag_vs_bp(data):
     A = ag_jv_func(data["X"], data["output"], data["vout_ag"])()
     B = bp_jv_func(data["module"], data["vout_bp"])()
-    assert allclose(A, B.view_as(A))
+    assert allclose(A, B.view_as(A), atol=ATOL, rtol=RTOL)
 
 
 @pytest.mark.parametrize("data", PROBLEM_DATA, ids=PROBLEM_NAME)
@@ -112,7 +116,7 @@ def test_jtv_weight_ag_vs_bp(data):
     skip_if_attribute_does_not_exists(data["module"], "weight")
     A = ag_jtv_weight_func(data["module"], data["output"], data["vin_ag"])()
     B = bp_jtv_weight_func(data["module"], data["vin_bp"])()
-    assert allclose(A, B.view_as(A))
+    assert allclose(A, B.view_as(A), atol=ATOL, rtol=RTOL)
 
 
 @pytest.mark.parametrize("data", PROBLEM_DATA, ids=PROBLEM_NAME)
@@ -120,7 +124,7 @@ def test_jtv_bias_ag_vs_bp(data):
     skip_if_attribute_does_not_exists(data["module"], "bias")
     A = ag_jtv_bias_func(data["module"], data["output"], data["vin_ag"])()
     B = bp_jtv_bias_func(data["module"], data["vin_bp"])()
-    assert allclose(A, B.view_as(A))
+    assert allclose(A, B.view_as(A), atol=ATOL, rtol=RTOL)
 
 
 ################################################################################

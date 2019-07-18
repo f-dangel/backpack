@@ -1,4 +1,5 @@
 from backpack.core.derivatives.avgpool2d import AvgPool2DDerivatives
+from backpack.core.derivatives.conv2d import Conv2DDerivatives
 
 from .maxpool2d import MaxPool2DDerivatives
 from .zeropad2d import ZeroPad2dDerivatives
@@ -8,10 +9,11 @@ from .sigmoid import SigmoidDerivatives
 from .tanh import TanhDerivatives
 from .linear import LinearDerivatives
 
-from torch.nn import Sigmoid, Tanh, ReLU, Dropout, ZeroPad2d, MaxPool2d, Linear, AvgPool2d
+from torch.nn import Sigmoid, Tanh, ReLU, Dropout, ZeroPad2d, MaxPool2d, Linear, AvgPool2d, Conv2d
 
 derivatives_for = {
     Linear: LinearDerivatives,
+    Conv2d: Conv2DDerivatives,
     AvgPool2d: AvgPool2DDerivatives,
     MaxPool2d: MaxPool2DDerivatives,
     ZeroPad2d: ZeroPad2dDerivatives,
