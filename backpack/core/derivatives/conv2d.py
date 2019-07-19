@@ -6,7 +6,7 @@ from torch.nn import Conv2d
 from torch.nn.functional import conv_transpose2d, conv2d
 from .basederivatives import BaseDerivatives
 
-from .utils import unsqueeze_if_missing_dim
+from .utils import jmp_unsqueeze_if_missing_dim
 
 
 class Conv2DDerivatives(BaseDerivatives):
@@ -26,6 +26,7 @@ class Conv2DDerivatives(BaseDerivatives):
         return convUtils.unfold_func(module)(self.get_input(module))
 
     # Jacobian-matrix product
+    @jmp_unsqueeze_if_missing_dim(mat_dim=2)
     def jac_mat_prod(self, module, grad_input, grad_output, mat):
         convUtils.check_sizes_input_jac(mat, module)
         mat_as_conv = self.__reshape_for_conv_in(mat, module)
@@ -58,6 +59,7 @@ class Conv2DDerivatives(BaseDerivatives):
         return bconv
 
     # Transposed Jacobian-matrix product
+    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     def jac_t_mat_prod(self, module, grad_input, grad_output, mat):
         convUtils.check_sizes_input_jac_t(mat, module)
         mat_as_conv = self.__reshape_for_conv_out(mat, module)
@@ -91,6 +93,7 @@ class Conv2DDerivatives(BaseDerivatives):
             groups=module.groups)
 
     # TODO: Improve performance
+    @jmp_unsqueeze_if_missing_dim(mat_dim=2)
     def bias_jac_mat_prod(self, module, grad_input, grad_output, mat):
         batch, out_channels, out_x, out_y = module.output_shape
         num_cols = mat.size(1)
@@ -100,7 +103,7 @@ class Conv2DDerivatives(BaseDerivatives):
         jac_mat = jac_mat.expand(batch, -1, out_x, out_y, -1).contiguous()
         return jac_mat.view(batch, -1, num_cols)
 
-    @unsqueeze_if_missing_dim(mat_dim=3)
+    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     def bias_jac_t_mat_prod(self,
                             module,
                             grad_input,
@@ -116,6 +119,7 @@ class Conv2DDerivatives(BaseDerivatives):
         return mat.view(shape).sum(sum_dims)
 
     # TODO: Improve performance, get rid of unfold
+    @jmp_unsqueeze_if_missing_dim(mat_dim=2)
     def weight_jac_mat_prod(self, module, grad_input, grad_output, mat):
         batch, out_channels, out_x, out_y = module.output_shape
         out_features = out_channels * out_x * out_y
@@ -128,13 +132,13 @@ class Conv2DDerivatives(BaseDerivatives):
         jac_mat = jac_mat.view(batch, out_features, num_cols)
         return jac_mat
 
-    @unsqueeze_if_missing_dim(mat_dim=3)
-    def weight_jac_t_mat_prod2(self,
-                               module,
-                               grad_input,
-                               grad_output,
-                               mat,
-                               sum_batch=True):
+    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
+    def __weight_jac_t_mat_prod2(self,
+                                 module,
+                                 grad_input,
+                                 grad_output,
+                                 mat,
+                                 sum_batch=True):
         """Intuitive, using unfold operation."""
         batch, out_channels, out_x, out_y = module.output_shape
         _, in_channels, in_x, in_y = module.input0.shape
@@ -153,7 +157,7 @@ class Conv2DDerivatives(BaseDerivatives):
         jac_t_mat = jac_t_mat.view(shape)
         return jac_t_mat
 
-    @unsqueeze_if_missing_dim(mat_dim=3)
+    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     def weight_jac_t_mat_prod(self,
                               module,
                               grad_input,
@@ -216,26 +220,36 @@ class Conv2DConcatDerivatives(Conv2DDerivatives):
     def get_weight_data(self, module):
         return module._slice_weight().data
 
-    def bias_jac_mat_prod(self, module, grad_input, grad_output, mat):
-        raise RuntimeError("Bias is concatenated with weight matrix")
-
-    def bias_jac_t_mat_prod(self,
-                            module,
-                            grad_input,
-                            grad_output,
-                            mat,
-                            sum_batch=True):
-        raise RuntimeError("Bias is concatenated with weight matrix")
-
     # override
-    @unsqueeze_if_missing_dim(mat_dim=3)
+    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     def weight_jac_t_mat_prod(self,
                               module,
                               grad_input,
                               grad_output,
                               mat,
                               sum_batch=True):
-        # TODO: Figure out how to use weight_jac_t_mat_prod to treat
-        # concatenated parameter of weight/bias
-        return self.weight_jac_t_mat_prod2(
+        weight_part = super().weight_jac_t_mat_prod(
             module, grad_input, grad_output, mat, sum_batch=sum_batch)
+
+        if not module.has_bias():
+            return weight_part
+
+        else:
+            bias_part = super().bias_jac_t_mat_prod(
+                module, grad_input, grad_output, mat, sum_batch=sum_batch)
+
+            batch = 1 if sum_batch is True else self.get_batch(module)
+            num_cols = mat.size(2)
+            w_for_cat = [batch, module.out_channels, -1, num_cols]
+            b_for_cat = [batch, module.out_channels, 1, num_cols]
+
+            weight_part = weight_part.view(w_for_cat)
+            bias_part = bias_part.view(b_for_cat)
+
+            wb_part = torch.cat([weight_part, bias_part], dim=2)
+            wb_part = wb_part.view(batch, -1, num_cols)
+
+            if sum_batch is True:
+                wb_part = wb_part.squeeze(0)
+
+            return wb_part

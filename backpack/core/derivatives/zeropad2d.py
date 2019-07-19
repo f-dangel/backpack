@@ -3,6 +3,8 @@ from torch.nn import ZeroPad2d
 from torch.nn.functional import pad
 from .basederivatives import BaseDerivatives
 
+from .utils import jmp_unsqueeze_if_missing_dim
+
 
 class ZeroPad2dDerivatives(BaseDerivatives):
     def get_module(self):
@@ -11,6 +13,7 @@ class ZeroPad2dDerivatives(BaseDerivatives):
     def hessian_is_zero(self):
         return True
 
+    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     def jac_t_mat_prod(self, module, grad_input, grad_output, mat):
         # reshape feature dimension as output image
         batch, out_features, num_cols = mat.size()
@@ -22,13 +25,15 @@ class ZeroPad2dDerivatives(BaseDerivatives):
         pad_left, pad_right, pad_top, pad_bottom = module.padding
         idx_left, idx_right = pad_left, out_y - pad_right
         idx_top, idx_bottom = pad_top, out_x - pad_bottom
-        mat_unpad = mat[:, :, idx_top:idx_bottom, idx_left:idx_right, :].contiguous()
+        mat_unpad = mat[:, :, idx_top:idx_bottom, idx_left:
+                        idx_right, :].contiguous()
 
         # group in features
         _, in_channels, in_x, in_y = module.input0_shape
         in_features = in_channels * in_x * in_y
         return mat_unpad.view(batch, in_features, num_cols)
 
+    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     def jac_mat_prod(self, module, grad_input, grad_output, mat):
         # group batch and column dimension of the matrix
         batch, in_features, num_cols = mat.size()
@@ -47,7 +52,6 @@ class ZeroPad2dDerivatives(BaseDerivatives):
 
         pad_mat = pad_mat.view(batch, num_cols, out_features)
         return einsum('bci->bic', (pad_mat)).contiguous()
-
 
     @staticmethod
     def apply_padding(module, input):

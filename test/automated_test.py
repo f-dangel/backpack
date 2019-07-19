@@ -190,3 +190,37 @@ def test_ggn_mp(problem, device):
 
     check_sizes(autograd_res, backpack_res)
     check_values(autograd_res, backpack_res)
+
+
+@pytest.mark.parametrize(
+    "problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
+def test_hvp(problem, device):
+    problem.to(device)
+
+    vecs = [
+        torch.randn(p.numel(), device=device)
+        for p in problem.model.parameters()
+    ]
+
+    autograd_res = AutogradImpl(problem).hvp(vecs)
+    backpack_res = BpextImpl(problem).hvp(vecs)
+
+    check_sizes(autograd_res, backpack_res)
+    check_values(autograd_res, backpack_res)
+
+
+@pytest.mark.parametrize(
+    "problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
+def test_ggn_vp(problem, device):
+    problem.to(device)
+
+    vecs = [
+        torch.randn(p.numel(), device=device)
+        for p in problem.model.parameters()
+    ]
+
+    autograd_res = AutogradImpl(problem).ggn_vp(vecs)
+    backpack_res = BpextImpl(problem).ggn_vp(vecs)
+
+    check_sizes(autograd_res, backpack_res)
+    check_values(autograd_res, backpack_res)

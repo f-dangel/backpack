@@ -112,6 +112,12 @@ class AutogradImpl(Implementation):
             mat_list.append(torch.eye(p.numel(), device=p.device))
         return self.hmp(mat_list)
 
+    def hvp(self, vec_list):
+        mat_list = [vec.unsqueeze(-1) for vec in vec_list]
+        results = self.hmp(mat_list)
+        results_vec = [mat.squeeze(-1) for mat in results]
+        return results_vec
+
     def hmp(self, mat_list):
         assert len(mat_list) == len(list(self.model.parameters()))
 
@@ -137,6 +143,12 @@ class AutogradImpl(Implementation):
         for p in self.model.parameters():
             mat_list.append(torch.eye(p.numel(), device=p.device))
         return self.ggn_mp(mat_list)
+
+    def ggn_vp(self, vec_list):
+        mat_list = [vec.unsqueeze(-1) for vec in vec_list]
+        results = self.ggn_mp(mat_list)
+        results_vec = [mat.squeeze(-1) for mat in results]
+        return results_vec
 
     def ggn_mp(self, mat_list):
         assert len(mat_list) == len(list(self.model.parameters()))

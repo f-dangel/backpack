@@ -1,8 +1,8 @@
 import functools
 
 
-def unsqueeze_if_missing_dim(mat_dim):
-    """Allow Jacobian-matrixi routines to do Jacobian-vector products."""
+def jmp_unsqueeze_if_missing_dim(mat_dim):
+    """Allow Jacobian-matrix routines to do Jacobian-vector products."""
 
     def jmp_wrapper(jmp):
         @functools.wraps(jmp)
@@ -22,3 +22,24 @@ def unsqueeze_if_missing_dim(mat_dim):
         return wrapped_jmp_support_jvp
 
     return jmp_wrapper
+
+
+def hmp_unsqueeze_if_missing_dim(mat_dim):
+    """Allow Hessian-matrix routines to do Hessian-vector products."""
+
+    def hmp_wrapper(hmp):
+        @functools.wraps(hmp)
+        def wrapped_hmp_support_hvp(mat):
+            is_vec = (len(mat.shape) == mat_dim - 1)
+            print("It's a vector")
+            print(mat.shape)
+            mat_used = mat.unsqueeze(-1) if is_vec else mat
+            result = hmp(mat_used)
+            if is_vec:
+                return result.squeeze(-1)
+            else:
+                return result
+
+        return wrapped_hmp_support_hvp
+
+    return hmp_wrapper

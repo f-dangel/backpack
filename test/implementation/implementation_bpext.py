@@ -51,6 +51,9 @@ class BpextImpl(Implementation):
             diag_h = [p.diag_h for p in self.model.parameters()]
         return diag_h
 
+    def hvp(self, vec_list):
+        return self.hmp(vec_list)
+
     def hmp(self, mat_list):
         assert len(mat_list) == len(list(self.model.parameters()))
         results = []
@@ -60,6 +63,9 @@ class BpextImpl(Implementation):
                 results.append(p.cmp(mat))
         return results
 
+    def hvp(self, vec_list):
+        return self.hmp(vec_list)
+
     def ggn_mp(self, mat_list):
         assert len(mat_list) == len(list(self.model.parameters()))
         results = []
@@ -68,6 +74,9 @@ class BpextImpl(Implementation):
             for p, mat in zip(self.model.parameters(), mat_list):
                 results.append(p.cmp(mat))
         return results
+
+    def ggn_vp(self, vec_list):
+        return self.ggn_mp(vec_list)
 
     def matrices_from_kronecker_curvature(self, extension_cls, savefield):
         results = []

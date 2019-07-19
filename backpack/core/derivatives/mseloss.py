@@ -4,6 +4,8 @@ from torch import diag_embed, ones_like, randn, diag, ones
 from torch.nn import MSELoss
 from .basederivatives import BaseDerivatives
 
+from .utils import hmp_unsqueeze_if_missing_dim
+
 
 class MSELossDerivatives(BaseDerivatives):
     def get_module(self):
@@ -41,6 +43,7 @@ class MSELossDerivatives(BaseDerivatives):
     def hessian_matrix_product(self, module, grad_input, grad_output):
         """Multiplication of the input Hessian with a matrix."""
 
+        @hmp_unsqueeze_if_missing_dim(mat_dim=3)
         def hmp(mat):
             Hmat = 2 * mat
 

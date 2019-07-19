@@ -6,6 +6,7 @@ from torch.nn.functional import one_hot
 
 from ...utils.utils import einsum
 from .basederivatives import BaseDerivatives
+from .utils import hmp_unsqueeze_if_missing_dim
 
 
 class CrossEntropyLossDerivatives(BaseDerivatives):
@@ -29,7 +30,8 @@ class CrossEntropyLossDerivatives(BaseDerivatives):
         C = module.input0.shape[1]
 
         probs = self.get_probs(module).unsqueeze(-1).repeat(1, 1, M)
-        classes = one_hot(multinomial(probs, M, replacement=True), num_classes=C)
+        classes = one_hot(
+            multinomial(probs, M, replacement=True), num_classes=C)
         classes = classes.transpose(1, 2).float()
 
         sqrt_mc_h = (probs - classes) / sqrt(M)
@@ -52,6 +54,7 @@ class CrossEntropyLossDerivatives(BaseDerivatives):
         """Multiplication of the input Hessian with a matrix."""
         probs = self.get_probs(module)
 
+        @hmp_unsqueeze_if_missing_dim(mat_dim=3)
         def hmp(mat):
             Hmat = einsum('bi,bic->bic',
                           (probs, mat)) - einsum('bi,bj,bjc->bic',

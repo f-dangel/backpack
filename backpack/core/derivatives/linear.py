@@ -4,7 +4,7 @@ from torch.nn import Linear
 from .basederivatives import BaseDerivatives
 from ..layers import LinearConcat
 
-from .utils import unsqueeze_if_missing_dim
+from .utils import jmp_unsqueeze_if_missing_dim
 
 
 class LinearDerivatives(BaseDerivatives):
@@ -20,10 +20,12 @@ class LinearDerivatives(BaseDerivatives):
     def get_weight_data(self, module):
         return module.weight.data
 
+    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     def jac_t_mat_prod(self, module, grad_input, grad_output, mat):
         d_linear = self.get_weight_data(module)
         return einsum('ij,bic->bjc', (d_linear, mat))
 
+    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     def jac_mat_prod(self, module, grad_input, grad_output, mat):
         d_linear = self.get_weight_data(module)
         return einsum('ij,bjc->bic', (d_linear, mat))
@@ -32,6 +34,7 @@ class LinearDerivatives(BaseDerivatives):
         jac = self.get_weight_data(module)
         return einsum('ik,ij,jl->kl', (jac, mat, jac))
 
+    @jmp_unsqueeze_if_missing_dim(mat_dim=2)
     def weight_jac_mat_prod(self, module, grad_input, grad_output, mat):
         batch = self.get_batch(module)
         num_cols = mat.size(1)
@@ -41,7 +44,7 @@ class LinearDerivatives(BaseDerivatives):
                          (self.get_input(module), mat.view(shape)))
         return jac_mat
 
-    @unsqueeze_if_missing_dim(mat_dim=3)
+    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     def weight_jac_t_mat_prod(self,
                               module,
                               grad_input,
@@ -61,11 +64,12 @@ class LinearDerivatives(BaseDerivatives):
 
         return jac_t_mat.view(*shape)
 
+    @jmp_unsqueeze_if_missing_dim(mat_dim=2)
     def bias_jac_mat_prod(self, module, grad_input, grad_output, mat):
         batch = self.get_batch(module)
         return mat.unsqueeze(0).expand(batch, -1, -1)
 
-    @unsqueeze_if_missing_dim(mat_dim=3)
+    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     def bias_jac_t_mat_prod(self,
                             module,
                             grad_input,
@@ -95,14 +99,3 @@ class LinearConcatDerivatives(LinearDerivatives):
     # override
     def get_weight_data(self, module):
         return module._slice_weight().data
-
-    def bias_jac_mat_prod(self, module, grad_input, grad_output, mat):
-        raise RuntimeError("Bias is concatenated with weight matrix")
-
-    def bias_jac_t_mat_prod(self,
-                            module,
-                            grad_input,
-                            grad_output,
-                            mat,
-                            sum_batch=True):
-        raise RuntimeError("Bias is concatenated with weight matrix")

@@ -3,6 +3,7 @@ from ..context import set_in_ctx, get_from_ctx
 from ..extensions import CMP
 from ..utils.utils import einsum
 from ..curvature import Curvature
+from ..core.derivatives.utils import hmp_unsqueeze_if_missing_dim
 
 
 class CMPBase(BackpropExtension):
@@ -24,6 +25,7 @@ class CMPBase(BackpropExtension):
             module, grad_input, grad_output)
         residual_mod = self._modify_residual(residual)
 
+        @hmp_unsqueeze_if_missing_dim(mat_dim=3)
         def CMP_in(mat):
             """Multiplication of curvature matrix with matrix `mat`.
 

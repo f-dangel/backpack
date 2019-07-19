@@ -4,6 +4,8 @@ from torch.nn.functional import max_pool2d
 from ...utils import conv as convUtils
 from .basederivatives import BaseDerivatives
 
+from .utils import jmp_unsqueeze_if_missing_dim
+
 
 class MaxPool2DDerivatives(BaseDerivatives):
     def get_module(self):
@@ -25,6 +27,7 @@ class MaxPool2DDerivatives(BaseDerivatives):
         return True
 
     # Jacobian-matrix product
+    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     def jac_mat_prod(self, module, grad_input, grad_output, mat):
         convUtils.check_sizes_input_jac(mat, module)
         mat_as_pool = self.__reshape_for_pooling_in(mat, module)
@@ -53,6 +56,7 @@ class MaxPool2DDerivatives(BaseDerivatives):
         return mat.gather(2, pool_idx)
 
     # Transposed Jacobian-matrix product
+    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     def jac_t_mat_prod(self, module, grad_input, grad_output, mat):
         convUtils.check_sizes_input_jac_t(mat, module)
         mat_as_pool = self.__reshape_for_pooling_out(mat, module)

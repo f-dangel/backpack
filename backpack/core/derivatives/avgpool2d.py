@@ -7,6 +7,8 @@ from ...utils import conv as convUtils
 from ...utils.utils import einsum
 from .basederivatives import BaseDerivatives
 
+from .utils import jmp_unsqueeze_if_missing_dim
+
 
 class AvgPool2DDerivatives(BaseDerivatives):
     def get_module(self):
@@ -16,6 +18,7 @@ class AvgPool2DDerivatives(BaseDerivatives):
         return True
 
     # Jacobian-matrix product
+    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     def jac_mat_prod(self, module, grad_input, grad_output, mat):
         assert (module.count_include_pad,
                 "Might now work for exotic hyperparameters of AvgPool2d, " +
@@ -70,6 +73,7 @@ class AvgPool2DDerivatives(BaseDerivatives):
         return conv2d(mat)
 
     # Transpose Jacobian-matrix product
+    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     def jac_t_mat_prod(self, module, grad_input, grad_output, mat):
 
         assert (module.count_include_pad,
