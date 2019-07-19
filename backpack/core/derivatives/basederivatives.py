@@ -23,9 +23,11 @@ class BaseDerivatives():
     def hessian_is_psd(self):
         raise NotImplementedError
 
-    @staticmethod
-    def batch_flat(tensor):
+    def batch_flat(self, tensor):
         batch = tensor.size(0)
         # TODO: Removing the clone().detach() will destroy the computation graph
         # Tests will fail
         return batch, tensor.clone().detach().view(batch, -1)
+
+    def get_batch(self, module):
+        return module.input0.size(0)

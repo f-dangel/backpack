@@ -14,9 +14,6 @@ class LinearDerivatives(BaseDerivatives):
     def get_input(self, module):
         return module.input0
 
-    def get_batch(self, module):
-        return module.input0.size(0)
-
     def hessian_is_zero(self):
         return True
 

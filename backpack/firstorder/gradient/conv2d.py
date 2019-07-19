@@ -1,33 +1,52 @@
 import torch.nn
 from ...core.layers import Conv2dConcat
-from ...utils.utils import einsum
-from ...utils import conv as convUtils
+from ...core.derivatives.conv2d import (Conv2DDerivatives,
+                                        Conv2DConcatDerivatives)
 from ...extensions import GRAD
 from ..firstorder import FirstOrderExtension
 
 
-class GradConv2d(FirstOrderExtension):
+class GradConv2d(FirstOrderExtension, Conv2DDerivatives):
     def __init__(self):
         super().__init__(torch.nn.Conv2d, GRAD, params=["bias", "weight"])
 
+    # TODO: Same code as for batch gradient, but with sum_batch = True
     def bias(self, module, grad_input, grad_output):
-        return grad_output[0].sum(3).sum(2).sum(0)
+        batch = grad_output[0].shape[0]
+        shape = module.bias.shape
 
+        grad_out_vec = grad_output[0].contiguous().view(batch, -1)
+
+        bias_grad = self.bias_jac_t_mat_prod(
+            module, grad_input, grad_output, grad_out_vec, sum_batch=True)
+
+        return bias_grad.view(shape)
+
+    # TODO: Same code as for batch gradient, but with sum_batch = True
     def weight(self, module, grad_input, grad_output):
-        X, dE_dY = convUtils.get_weight_gradient_factors(
-            module.input0, grad_output[0], module)
-        return einsum('bml,bkl->mk', (dE_dY, X)).view(module.weight.size())
+        batch = grad_output[0].shape[0]
+        shape = module.weight.shape
+
+        grad_out_vec = grad_output[0].contiguous().view(batch, -1)
+
+        weight_grad = self.weight_jac_t_mat_prod(
+            module, grad_input, grad_output, grad_out_vec, sum_batch=True)
+
+        return weight_grad.view(shape)
 
 
-class GradConv2dConcat(FirstOrderExtension):
+class GradConv2dConcat(FirstOrderExtension, Conv2DConcatDerivatives):
     def __init__(self):
         super().__init__(Conv2dConcat, GRAD, params=["weight"])
 
+    # TODO: Same code as for batch gradient, but with sum_batch = True
     def weight(self, module, grad_input, grad_output):
-        X, dE_dY = convUtils.get_weight_gradient_factors(
-            module.input0, grad_output[0], module)
+        batch = grad_output[0].shape[0]
+        shape = module.weight.shape
 
-        if module.has_bias():
-            X = module.append_ones(X)
+        grad_out_vec = grad_output[0].contiguous().view(batch, -1)
 
-        return einsum('bml,bkl->mk', (dE_dY, X)).view(module.weight.size())
+        weight_grad = self.weight_jac_t_mat_prod(
+            module, grad_input, grad_output, grad_out_vec, sum_batch=True)
+
+        return weight_grad.view(shape)
