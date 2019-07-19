@@ -7,11 +7,14 @@ class BackpropExtension():
                  extension,
                  params=None,
                  req_inputs=None,
-                 req_output=False):
+                 req_output=False,
+                 derivatives=None):
         if params is None:
             params = []
         if req_inputs is None:
             req_inputs = []
+
+        self.derivatives = derivatives
 
         # TODO: req_inputs and req_output are currently unused
         self.__module = module
