@@ -28,7 +28,7 @@ class backpack():
 
     def __exit__(self, type, value, traceback):
         CTX.set_active_exts(self.old_CTX)
-
+        CTX.clear()
 
 def has_children(mod):
     return len(list(mod.children())) > 0
