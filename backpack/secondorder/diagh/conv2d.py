@@ -14,8 +14,8 @@ class DiagHConv2d(DiagHBase, Conv2DDerivatives):
 
     # TODO: Reuse code in ..diaggn.conv2d to extract the diagonal
     def bias(self, module, grad_input, grad_output):
-        sqrt_h_outs = CTX._backpropagated_sqrt_h
-        sqrt_h_outs_signs = CTX._backpropagated_sqrt_h_signs
+        sqrt_h_outs = self.get_mat_from_ctx()
+        sqrt_h_outs_signs = self.get_sign_list_from_ctx()
         h_diag = torch.zeros_like(module.bias)
         for h_sqrt, sign in zip(sqrt_h_outs, sqrt_h_outs_signs):
             h_sqrt_view = convUtils.separate_channels_and_pixels(
@@ -26,8 +26,8 @@ class DiagHConv2d(DiagHBase, Conv2DDerivatives):
 
     # TODO: Reuse code in ..diaggn.conv2d to extract the diagonal
     def weight(self, module, grad_input, grad_output):
-        sqrt_h_outs = CTX._backpropagated_sqrt_h
-        sqrt_h_outs_signs = CTX._backpropagated_sqrt_h_signs
+        sqrt_h_outs = self.get_mat_from_ctx()
+        sqrt_h_outs_signs = self.get_sign_list_from_ctx()
         X = convUtils.unfold_func(module)(module.input0).unsqueeze(0)
         h_diag = torch.zeros_like(module.weight)
 
@@ -49,8 +49,8 @@ class DiagHConv2dConcat(DiagHBase, Conv2DConcatDerivatives):
 
     # TODO: Reuse code in ..diaggn.conv2d to extract the diagonal
     def weight(self, module, grad_input, grad_output):
-        sqrt_h_outs = CTX._backpropagated_sqrt_h
-        sqrt_h_outs_signs = CTX._backpropagated_sqrt_h_signs
+        sqrt_h_outs = self.get_mat_from_ctx()
+        sqrt_h_outs_signs = self.get_sign_list_from_ctx()
         X = convUtils.unfold_func(module)(module.input0)
 
         if module.has_bias():

@@ -12,8 +12,8 @@ class DiagHLinear(DiagHBase, LinearDerivatives):
 
     # TODO: Reuse code in ..diaggn.linear to extract the diagonal
     def bias(self, module, grad_input, grad_output):
-        sqrt_h_outs = CTX._backpropagated_sqrt_h
-        sqrt_h_outs_signs = CTX._backpropagated_sqrt_h_signs
+        sqrt_h_outs = self.get_mat_from_ctx()
+        sqrt_h_outs_signs = self.get_sign_list_from_ctx()
         h_diag = torch.zeros_like(module.bias)
         for h_sqrt, sign in zip(sqrt_h_outs, sqrt_h_outs_signs):
             h_diag.add_(sign * einsum('bic->i', (h_sqrt**2, )))
@@ -21,8 +21,8 @@ class DiagHLinear(DiagHBase, LinearDerivatives):
 
     # TODO: Reuse code in ..diaggn.linear to extract the diagonal
     def weight(self, module, grad_input, grad_output):
-        sqrt_h_outs = CTX._backpropagated_sqrt_h
-        sqrt_h_outs_signs = CTX._backpropagated_sqrt_h_signs
+        sqrt_h_outs = self.get_mat_from_ctx()
+        sqrt_h_outs_signs = self.get_sign_list_from_ctx()
         h_diag = torch.zeros_like(module.weight)
         for h_sqrt, sign in zip(sqrt_h_outs, sqrt_h_outs_signs):
             h_diag.add_(sign * einsum('bic,bj->ij',
@@ -36,8 +36,8 @@ class DiagHLinearConcat(DiagHBase, LinearConcatDerivatives):
 
     # TODO: Reuse code in ..diaggn.linear to extract the diagonal
     def weight(self, module, grad_input, grad_output):
-        sqrt_h_outs = CTX._backpropagated_sqrt_h
-        sqrt_h_outs_signs = CTX._backpropagated_sqrt_h_signs
+        sqrt_h_outs = self.get_mat_from_ctx()
+        sqrt_h_outs_signs = self.get_sign_list_from_ctx()
         h_diag = torch.zeros_like(module.weight)
 
         input = module.homogeneous_input()
