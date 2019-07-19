@@ -109,8 +109,8 @@ class Conv2DDerivatives(BaseDerivatives):
         jac_mat = jac_mat.view(batch, out_features, num_cols)
         return jac_mat
 
-    # TODO: Improve performance, get rid of unfold
-    def weight_jac_t_mat_prod(self, module, grad_input, grad_output, mat):
+    def weight_jac_t_mat_prod2(self, module, grad_input, grad_output, mat):
+        """Intuitive, using unfold operation."""
         batch, out_channels, out_x, out_y = module.output_shape
         batch, in_channels, in_x, in_y = module.input0.shape
         num_cols = mat.shape[-1]
@@ -121,28 +121,34 @@ class Conv2DDerivatives(BaseDerivatives):
         jac_t_mat = jac_t_mat.view(module.weight.numel(), num_cols)
         return jac_t_mat
 
-    def weight_jac_t_mat_prod2(self, module, grad_input, grad_output, mat):
+    def weight_jac_t_mat_prod(self, module, grad_input, grad_output, mat):
+        """Unintuitive, but faster due to conv operation."""
         batch, out_channels, out_x, out_y = module.output_shape
         batch, in_channels, in_x, in_y = module.input0.shape
         k_x, k_y = module.kernel_size
         num_cols = mat.shape[-1]
 
-        mat = mat.view(batch, out_channels, out_x, out_y)
+        mat = mat.view(batch, out_channels, out_x, out_y, num_cols)
+        mat = einsum('boxyc->cboxy', (mat, )).contiguous().view(
+            num_cols * batch, out_channels, out_x, out_y)
         mat = mat.repeat(1, in_channels, 1, 1)
-        mat = mat.view(batch * out_channels * in_channels, 1, out_x, out_y)
+        mat = mat.view(num_cols * batch * out_channels * in_channels, 1, out_x,
+                       out_y)
 
-        input = module.input0.view(1, -1, in_x, in_y)
+        input = module.input0.view(1, -1, in_x, in_y).repeat(1, num_cols, 1, 1)
 
         grad_weight = conv2d(input, mat, None, module.dilation, module.padding,
-                             module.stride, in_channels * batch)
+                             module.stride, in_channels * batch * num_cols)
 
-        grad_weight = grad_weight.view(batch, out_channels * in_channels, k_x,
-                                       k_y)
-        grad_weight = grad_weight.sum(0)
-        grad_weight = grad_weight.view(in_channels, out_channels, k_x, k_y)
-        grad_weight = einsum('mnxy->nmxy', grad_weight)
+        grad_weight = grad_weight.view(num_cols, batch,
+                                       out_channels * in_channels, k_x, k_y)
+        grad_weight = grad_weight.sum(1)
+        grad_weight = grad_weight.view(num_cols, in_channels, out_channels,
+                                       k_x, k_y)
+        grad_weight = einsum('cmnxy->nmxyc', grad_weight).contiguous()
 
-        return grad_weight
+        return grad_weight.view(in_channels * out_channels * k_x * k_y,
+                                num_cols)
 
 
 class Conv2DConcatDerivatives(BaseDerivatives):
