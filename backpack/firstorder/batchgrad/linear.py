@@ -17,10 +17,10 @@ class BatchGradLinear(FirstOrderExtension, LinearDerivatives):
         batch = grad_output[0].shape[0]
         shape = (batch, *module.bias.shape)
 
-        weight_grad = self.bias_jac_t_mat_prod(
+        bias_grad = self.bias_jac_t_mat_prod(
             module, grad_input, grad_output, grad_output[0], sum_batch=False)
 
-        return weight_grad.view(shape)
+        return bias_grad.view(shape)
 
     def weight(self, module, grad_input, grad_output):
         batch = grad_output[0].shape[0]
