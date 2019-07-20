@@ -1,9 +1,2 @@
-from .diag_ggn import DiagGGN
-from .batch_l2_grad import BatchL2Grad
-from .batch_grad import BatchGrad
-from .sum_grad_squared import SumGradSquared
-from .variance import Variance
-from .diag_hessian import DiagHessian
-from .hbp import HBP, KFAC, KFRA, KFLR
-
-__all__ = ["DiagGGN", "BatchL2Grad", "BatchGrad", "SumGradSquared", "Variance", "HBP", "KFAC", "KFRA", "KFLR"]
+from .firstorder import BatchL2Grad, BatchGrad, SumGradSquared, Variance
+from .secondorder import DiagGGN, DiagHessian, HBP, KFAC, KFRA, KFLR
