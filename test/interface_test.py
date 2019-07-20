@@ -114,17 +114,12 @@ def test_interface_cmp():
     interface_test(ext.CMP())
 
 
-@pytest.mark.skip()
-def test_interface_grad_conv():
-    interface_test(ext.GRAD(), use_conv=True)
-
-
 def test_interface_batch_grad_conv():
-    interface_test(ext.BATCH_GRAD(), use_conv=True)
+    interface_test(new_ext.BatchGrad(), use_conv=True)
 
 
 def test_interface_sum_grad_squared_conv():
-    interface_test(ext.SUM_GRAD_SQUARED(), use_conv=True)
+    interface_test(new_ext.SumGradSquared(), use_conv=True)
 
 
 def test_interface_diag_ggn_conv():

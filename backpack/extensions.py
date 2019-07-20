@@ -17,31 +17,6 @@ class Extension():
         return self.__class__
 
 
-class VARIANCE(Extension):
-    def __init__(self):
-        super().__init__(savefield="variance")
-
-
-class BATCH_L2(Extension):
-    def __init__(self):
-        super().__init__(savefield="batch_l2")
-
-
-class BATCH_GRAD(Extension):
-    def __init__(self):
-        super().__init__(savefield="grad_batch")
-
-
-class SUM_GRAD_SQUARED(Extension):
-    def __init__(self):
-        super().__init__(savefield="sum_grad_squared")
-
-
-class GRAD(Extension):
-    def __init__(self):
-        super().__init__(savefield="grad_bpext")
-
-
 class DIAG_H(Extension):
     def __init__(self):
         super().__init__(savefield="diag_h")
@@ -140,11 +115,6 @@ class JVP(Extension):
 
 class Extensions:
     EXTENSIONS = [
-        GRAD,
-        BATCH_GRAD,
-        SUM_GRAD_SQUARED,
-        BATCH_L2,
-        VARIANCE,
         JVP,
         DIAG_H,
         KFLR,

@@ -4,6 +4,7 @@ from torch import Tensor, allclose
 from torch.nn import Linear
 from backpack import extend, backpack
 import backpack.extensions as ext
+import backpack.new_extensions as new_ext
 
 
 def ExtLinear(*args, **kwargs):
@@ -96,7 +97,7 @@ def test_grad():
         input, b_grad, w_grad = ex["in"], ex["bias_grad"], ex["weight_grad"]
 
         loss = loss_function(g_lin(input))
-        with backpack(ext.GRAD()):
+        with backpack(new_ext.BatchGrad()):
             loss.backward()
 
         assert allclose(g_lin.bias.grad, b_grad)
@@ -113,7 +114,7 @@ def test_grad_batch():
             "bias_grad_batch"], ex["weight_grad_batch"]
 
         loss = loss_function(g_lin(input))
-        with backpack(ext.BATCH_GRAD()):
+        with backpack(new_ext.BatchGrad()):
             loss.backward()
 
         assert allclose(g_lin.bias.grad_batch, b_grad_batch), "{} ≠ {}".format(
