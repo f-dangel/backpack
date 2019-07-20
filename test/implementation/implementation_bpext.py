@@ -9,7 +9,7 @@ from backpack.secondorder.strategies import (
     BackpropStrategy,
     LossHessianStrategy,
 )
-from backpack.new_extensions.diag_ggn import DiagGGN
+import backpack.new_extensions as new_ext
 
 
 class BpextImpl(Implementation):
@@ -23,7 +23,7 @@ class BpextImpl(Implementation):
         return batch_grads
 
     def batch_l2(self):
-        with backpack(ext.BATCH_L2()):
+        with backpack(new_ext.BatchL2Grad()):
             self.loss().backward()
             batch_l2s = [p.batch_l2 for p in self.model.parameters()]
         return batch_l2s
@@ -42,7 +42,7 @@ class BpextImpl(Implementation):
 
     def diag_ggn(self):
         print(self.model)
-        with backpack(DiagGGN()):
+        with backpack(new_ext.DiagGGN()):
             self.loss().backward()
             diag_ggn = [p.diag_ggn for p in self.model.parameters()]
         return diag_ggn

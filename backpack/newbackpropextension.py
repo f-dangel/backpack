@@ -58,15 +58,16 @@ class NewBackpropExtension:
                     "does not have an extension for " +
                     "Module {}".format(module.__class__)
                 )
-            elif self.__fail_mode is FAIL_WARN:
+            elif self.__fail_mode == FAIL_WARN:
                 warnings.warn(
                     "Extension saving to {} ".format(self.savefield) +
                     "does not have an extension for " +
                     "Module {}".format(module.__class__)
                 )
-            elif self.__fail_mode is FAIL_SILENT:
-                return no_op
 
+            return no_op
+
+        print(module.__class__, self.savefield)
         return module_extension.apply
 
     def apply(self, module, grad_input, grad_output):
