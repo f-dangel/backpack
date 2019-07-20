@@ -17,7 +17,7 @@ class BpextImpl(Implementation):
         return list(torch.autograd.grad(self.loss(), self.model.parameters()))
 
     def batch_gradients(self):
-        with backpack(ext.BATCH_GRAD()):
+        with backpack(new_ext.BatchGrad()):
             self.loss().backward()
             batch_grads = [p.grad_batch for p in self.model.parameters()]
         return batch_grads
@@ -29,13 +29,13 @@ class BpextImpl(Implementation):
         return batch_l2s
 
     def variance(self):
-        with backpack(ext.VARIANCE()):
+        with backpack(new_ext.Variance()):
             self.loss().backward()
             variances = [p.variance for p in self.model.parameters()]
         return variances
 
     def sgs(self):
-        with backpack(ext.SUM_GRAD_SQUARED()):
+        with backpack(new_ext.SumGradSquared()):
             self.loss().backward()
             sgs = [p.sum_grad_squared for p in self.model.parameters()]
         return sgs

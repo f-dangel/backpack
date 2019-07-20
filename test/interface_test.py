@@ -77,15 +77,20 @@ def test_interface_grad():
 
 
 def test_interface_batch_grad():
-    interface_test(ext.BATCH_GRAD())
+    interface_test(new_ext.BatchGrad())
+
+
+def test_interface_variance():
+    interface_test(new_ext.Variance())
 
 
 def test_interface_sum_grad_squared():
-    interface_test(ext.SUM_GRAD_SQUARED())
+    interface_test(new_ext.SumGradSquared())
 
 
 def test_interface_diag_ggn():
     interface_test(new_ext.DiagGGN())
+
 
 def test_interface_kflr():
     interface_test(ext.KFLR())
