@@ -1,5 +1,7 @@
 import warnings
+from backpack.context import get_from_ctx, set_in_ctx
 
+SAVE_BP_QUANTITIES_IN_COMPUTATION_GRAPH = False
 
 class ModuleExtension:
     """
@@ -49,18 +51,25 @@ class ModuleExtension:
 
     @staticmethod
     def __backproped_quantities(ext, out):
-        return getattr(out, ext.savefield, None)
+        if SAVE_BP_QUANTITIES_IN_COMPUTATION_GRAPH:
+            return getattr(out, ext.savefield, None)
+        else:
+            get_from_ctx(ext.savefield)
 
     @staticmethod
     def __backprop_quantities(ext, inp, out, bpQuantities):
-        setattr(inp, ext.savefield, bpQuantities)
 
-        is_a_leaf = out.grad_fn is None
-        retain_grad_is_on = getattr(out, "retains_grad", False)
-        should_retain_grad = is_a_leaf or retain_grad_is_on
+        if not SAVE_BP_QUANTITIES_IN_COMPUTATION_GRAPH:
+            set_in_ctx(ext.savefield, bpQuantities)
+        else SAVE_BP_QUANTITIES_IN_COMPUTATION_GRAPH:
+            setattr(inp, ext.savefield, bpQuantities)
 
-        if not should_retain_grad:
-            delattr(out, ext.savefield)
+            is_a_leaf = out.grad_fn is None
+            retain_grad_is_on = getattr(out, "retains_grad", False)
+            should_retain_grad = is_a_leaf or retain_grad_is_on
+
+            if not should_retain_grad:
+                delattr(out, ext.savefield)
 
     def backpropagate(self, ext, module, g_inp, g_out, bpQuantities):
         """
