@@ -3,10 +3,6 @@ import warnings
 import torch
 
 from .backpropextension import BackpropExtension
-from .curvature import Curvature
-from .secondorder.strategies import (BackpropStrategy, LossHessianStrategy,
-                                     ExpectationApproximation)
-
 
 class Extension():
     def __init__(self, savefield):
@@ -31,79 +27,6 @@ class CMP(ParametrizedExtension):
         return self.input
 
 
-class HBP(ParametrizedExtension):
-    def __init__(
-            self,
-            curv_type,
-            loss_hessian_strategy,
-            backprop_strategy,
-            ea_strategy,
-            savefield="hbp",
-    ):
-        super().__init__(
-            savefield=savefield,
-            input=[
-                curv_type,
-                loss_hessian_strategy,
-                backprop_strategy,
-                ea_strategy,
-            ])
-
-    def get_curv_type(self):
-        return self.input[0]
-
-    def get_loss_hessian_strategy(self):
-        return self.input[1]
-
-    def get_backprop_strategy(self):
-        return self.input[2]
-
-    def get_ea_strategy(self):
-        return self.input[3]
-
-
-class KFAC(HBP):
-    def __init__(self):
-        super().__init__(
-            curv_type=Curvature.GGN,
-            loss_hessian_strategy=LossHessianStrategy.SAMPLING,
-            backprop_strategy=BackpropStrategy.SQRT,
-            ea_strategy=ExpectationApproximation.BOTEV_MARTENS,
-            savefield="kfac",
-        )
-
-    def extension_to_trigger(self):
-        return HBP
-
-
-class KFRA(HBP):
-    def __init__(self):
-        super().__init__(
-            curv_type=Curvature.GGN,
-            loss_hessian_strategy=LossHessianStrategy.AVERAGE,
-            backprop_strategy=BackpropStrategy.BATCH_AVERAGE,
-            ea_strategy=ExpectationApproximation.BOTEV_MARTENS,
-            savefield="kfra",
-        )
-
-    def extension_to_trigger(self):
-        return HBP
-
-
-class KFLR(HBP):
-    def __init__(self):
-        super().__init__(
-            curv_type=Curvature.GGN,
-            loss_hessian_strategy=LossHessianStrategy.EXACT,
-            backprop_strategy=BackpropStrategy.SQRT,
-            ea_strategy=ExpectationApproximation.BOTEV_MARTENS,
-            savefield="kflr",
-        )
-
-    def extension_to_trigger(self):
-        return HBP
-
-
 class JVP(Extension):
     pass
 
@@ -111,11 +34,7 @@ class JVP(Extension):
 class Extensions:
     EXTENSIONS = [
         JVP,
-        KFLR,
-        KFRA,
-        KFAC,
         CMP,
-        HBP,
     ]
 
     registeredExtensions = {}

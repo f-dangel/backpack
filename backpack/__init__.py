@@ -4,7 +4,6 @@ Computing parameter gradients for each batch sample can be used
 to calculate the variance of a gradient.
 """
 import torch
-from .secondorder import hbp
 from .extensions import Extension, Extensions
 from . import curvmatprod as cmp
 from .context import CTX
@@ -103,7 +102,6 @@ def extended(moduleFunc):
 
 EXTENSIONS = [
     *cmp.EXTENSIONS,
-    *hbp.EXTENSIONS,
 ]
 
 for backpropextension in EXTENSIONS:

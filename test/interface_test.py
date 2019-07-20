@@ -97,15 +97,15 @@ def test_interface_diag_h():
 
 
 def test_interface_kflr():
-    interface_test(ext.KFLR())
+    interface_test(new_ext.KFLR())
 
 
 def test_interface_kfra():
-    interface_test(ext.KFRA())
+    interface_test(new_ext.KFRA())
 
 
 def test_interface_kfac():
-    interface_test(ext.KFAC())
+    interface_test(new_ext.KFAC())
 
 
 @pytest.mark.skip()
@@ -131,12 +131,12 @@ def test_interface_diag_ggn_conv():
 
 
 def test_interface_kflr_conv():
-    interface_test(ext.KFLR(), use_conv=True)
+    interface_test(new_ext.KFLR(), use_conv=True)
 
 
 @pytest.mark.skip()
 def test_interface_kfra_conv():
-    interface_test(ext.KFRA(), use_conv=True)
+    interface_test(new_ext.KFRA(), use_conv=True)
 
 
 def test_interface_kfac_conv():
@@ -150,4 +150,4 @@ def test_interface_cmp_conv():
 
 @pytest.mark.skip()
 def test_interface_hbp_conv():
-    interface_test(ext.HBP(), use_conv=True)
+    interface_test(new_ext.HBP(), use_conv=True)
