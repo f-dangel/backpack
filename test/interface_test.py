@@ -9,6 +9,7 @@ from torch.nn import Conv2d
 from backpack.core.layers import Flatten
 from backpack import extend, backpack
 import backpack.extensions as ext
+import backpack.new_extensions as new_ext
 
 
 def dummy_forward_pass():
@@ -84,8 +85,7 @@ def test_interface_sum_grad_squared():
 
 
 def test_interface_diag_ggn():
-    interface_test(ext.DIAG_GGN())
-
+    interface_test(new_ext.DiagGGN())
 
 def test_interface_kflr():
     interface_test(ext.KFLR())
@@ -123,7 +123,7 @@ def test_interface_sum_grad_squared_conv():
 
 
 def test_interface_diag_ggn_conv():
-    interface_test(ext.DIAG_GGN(), use_conv=True)
+    interface_test(new_ext.DiagGGN(), use_conv=True)
 
 
 def test_interface_kflr_conv():

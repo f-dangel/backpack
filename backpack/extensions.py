@@ -37,11 +37,6 @@ class SUM_GRAD_SQUARED(Extension):
         super().__init__(savefield="sum_grad_squared")
 
 
-class DIAG_GGN(Extension):
-    def __init__(self):
-        super().__init__(savefield="diag_ggn")
-
-
 class GRAD(Extension):
     def __init__(self):
         super().__init__(savefield="grad_bpext")
@@ -148,7 +143,6 @@ class Extensions:
         GRAD,
         BATCH_GRAD,
         SUM_GRAD_SQUARED,
-        DIAG_GGN,
         BATCH_L2,
         VARIANCE,
         JVP,

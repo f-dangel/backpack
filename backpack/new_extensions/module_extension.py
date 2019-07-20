@@ -56,24 +56,24 @@ class ModuleExtension:
     @staticmethod
     def __backproped_quantities(ext, out):
         if not SAVE_BP_QUANTITIES_IN_COMPUTATION_GRAPH:
-            return get_from_ctx(ext._NewBackpropExtension__savefield)
+            return get_from_ctx(ext.savefield)
         else:
-            return getattr(out, ext._NewBackpropExtension__savefield, None)
+            return getattr(out, ext.savefield, None)
 
     @staticmethod
     def __backprop_quantities(ext, inp, out, bpQuantities):
 
         if not SAVE_BP_QUANTITIES_IN_COMPUTATION_GRAPH:
-            set_in_ctx(ext._NewBackpropExtension__savefield, bpQuantities)
+            set_in_ctx(ext.savefield, bpQuantities)
         else:
-            setattr(inp, ext._NewBackpropExtension__savefield, bpQuantities)
+            setattr(inp, ext.savefield, bpQuantities)
 
             is_a_leaf = out.grad_fn is None
             retain_grad_is_on = getattr(out, "retains_grad", False)
             should_retain_grad = is_a_leaf or retain_grad_is_on
 
             if not should_retain_grad:
-                delattr(out, ext._NewBackpropExtension__savefield)
+                delattr(out, ext.savefield)
 
     def backpropagate(self, ext, module, g_inp, g_out, bpQuantities):
         """
@@ -107,5 +107,5 @@ class ModuleExtension:
 
     @staticmethod
     def __save(value, extension, module, param):
-        setattr(getattr(module, param), extension._NewBackpropExtension__savefield, value)
+        setattr(getattr(module, param), extension.savefield, value)
 

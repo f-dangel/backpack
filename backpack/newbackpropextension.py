@@ -39,7 +39,7 @@ class NewBackpropExtension:
             - "WARN": raise a UserWarning
             - "SILENT": skip the module silently
         """
-        self.__savefield = savefield
+        self.savefield = savefield
         self.__module_extensions = module_exts
         self.__fail_mode = fail_mode
 
@@ -54,13 +54,13 @@ class NewBackpropExtension:
 
             if self.__fail_mode is FAIL_ERROR:
                 raise NotImplementedError(
-                    "Extension saving to {} ".format(self.__savefield) +
+                    "Extension saving to {} ".format(self.savefield) +
                     "does not have an extension for " +
                     "Module {}".format(module.__class__)
                 )
             elif self.__fail_mode is FAIL_WARN:
                 warnings.warn(
-                    "Extension saving to {} ".format(self.__savefield) +
+                    "Extension saving to {} ".format(self.savefield) +
                     "does not have an extension for " +
                     "Module {}".format(module.__class__)
                 )
