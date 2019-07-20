@@ -23,19 +23,19 @@ class backpack():
         self.args = args
 
     def __enter__(self):
-        self.old_CTX = CTX.active_exts()
+        self.old_CTX = CTX.active_exts() + CTX.new_active_exts()
         CTX.set_active_exts(self.args)
 
     def __exit__(self, type, value, traceback):
         CTX.set_active_exts(self.old_CTX)
         CTX.clear()
 
+
 def has_children(mod):
     return len(list(mod.children())) > 0
 
 
 def extend(module):
-
     if DEBUGGING:
         print("[DEBUG] Extending", module)
 
@@ -67,6 +67,9 @@ def extend(module):
                     CTX.active_exts()))
 
         grad_out = [grad_output[i] for i in range(len(grad_output))]
+
+        for backpack_extension in CTX.new_active_exts():
+            backpack_extension.apply(module, grad_input, grad_output)
 
         for extension in CTX.active_exts():
 

@@ -1,3 +1,5 @@
+from backpack.newbackpropextension import NewBackpropExtension
+
 from .extensions import Extension
 
 RETURN_IF_NOT_EXISTING = None
@@ -20,11 +22,15 @@ class CTX:
     """
     activeExts = tuple()
     backpropQuantities = {}
+    newActiveExts = tuple()
 
     @staticmethod
     def set_active_exts(active_exts):
         CTX.activeExts = tuple()
         for act_ext in active_exts:
+            if isinstance(act_ext, NewBackpropExtension):
+                CTX.newActiveExts += (act_ext, )
+                continue
             if not isinstance(act_ext, Extension):
                 raise ValueError("Unknown extension ... was expecting ...")
             CTX.activeExts += (act_ext, )
@@ -32,6 +38,10 @@ class CTX:
     @staticmethod
     def active_exts():
         return CTX.activeExts
+
+    @staticmethod
+    def new_active_exts():
+        return CTX.newActiveExts
 
     @staticmethod
     def add_hook_handle(hook_handle):
