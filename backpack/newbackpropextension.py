@@ -1,5 +1,7 @@
 import warnings
 
+from torch.nn import Sequential
+
 FAIL_ERROR = "ERROR"
 FAIL_WARN = "WARN"
 FAIL_SILENT = "SILENT"
@@ -43,8 +45,13 @@ class NewBackpropExtension:
 
     def __get_module_extension(self, module):
         module_extension = self.__module_extensions.get(module.__class__)
+        no_op = lambda *args: None
 
         if module_extension is None:
+
+            if isinstance(module, Sequential):
+                return no_op
+
             if self.__fail_mode is FAIL_ERROR:
                 raise NotImplementedError(
                     "Extension saving to {} ".format(self.__savefield) +
@@ -58,7 +65,6 @@ class NewBackpropExtension:
                     "Module {}".format(module.__class__)
                 )
             elif self.__fail_mode is FAIL_SILENT:
-                no_op = lambda *args: None
                 return no_op
 
         return module_extension.apply

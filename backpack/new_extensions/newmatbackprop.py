@@ -1,4 +1,4 @@
-from backpack.extensions.module_extension import ModuleExtension
+from .module_extension import ModuleExtension
 
 
 class MatToJacMat(ModuleExtension):
@@ -15,12 +15,12 @@ class MatToJacMat(ModuleExtension):
         if isinstance(backproped, list):
             M_list = [
                 self.derivatives.jac_t_mat_prod(
-                    module, inp, out, grad_inp, grad_out, M
+                    module, grad_inp, grad_out, M
                 )
                 for M in backproped
             ]
             return list(M_list)
         else:
             return self.derivatives.jac_t_mat_prod(
-                module, inp, out, grad_inp, grad_out, backproped
+                module, grad_inp, grad_out, backproped
             )

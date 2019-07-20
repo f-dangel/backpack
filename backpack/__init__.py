@@ -69,6 +69,7 @@ def extend(module):
         grad_out = [grad_output[i] for i in range(len(grad_output))]
 
         for backpack_extension in CTX.new_active_exts():
+            print(" └───────[DEBUG] New Backward hook {}-{}".format(module.__class__, backpack_extension.__class__))
             backpack_extension.apply(module, grad_input, grad_output)
 
         for extension in CTX.active_exts():

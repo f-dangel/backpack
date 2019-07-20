@@ -5,9 +5,7 @@ from .diag_ggn_base import DiagGGNBaseModule
 
 class DiagGGNLoss(DiagGGNBaseModule):
     def backpropagate(self, ext, module, grad_inp, grad_out, backproped):
-        return self.derivatives.sqrt_hessian(
-            module, grad_inp, grad_out, backproped
-        )
+        return self.derivatives.sqrt_hessian(module, grad_inp, grad_out)
 
 
 class DiagGGNMSELoss(DiagGGNLoss):

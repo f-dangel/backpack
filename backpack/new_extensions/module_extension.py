@@ -35,6 +35,10 @@ class ModuleExtension:
         out = module.output
 
         bpQuantities = self.__backproped_quantities(ext, out)
+        if bpQuantities is not None:
+            print("bped: {} for mod {}".format(bpQuantities.shape, module))
+        else:
+            print("bped is none?")
 
         for param in self.__params:
             if self.__param_exists_and_requires_grad(module, param):
@@ -44,32 +48,32 @@ class ModuleExtension:
                 )
                 self.__save(extValue, ext, module, param)
 
-        self.backpropagate(
+        bpQuantities = self.backpropagate(
             ext, module, g_inp, g_out, bpQuantities
         )
         self.__backprop_quantities(ext, inp, out, bpQuantities)
 
     @staticmethod
     def __backproped_quantities(ext, out):
-        if SAVE_BP_QUANTITIES_IN_COMPUTATION_GRAPH:
-            return getattr(out, ext.savefield, None)
+        if not SAVE_BP_QUANTITIES_IN_COMPUTATION_GRAPH:
+            return get_from_ctx(ext._NewBackpropExtension__savefield)
         else:
-            get_from_ctx(ext.savefield)
+            return getattr(out, ext._NewBackpropExtension__savefield, None)
 
     @staticmethod
     def __backprop_quantities(ext, inp, out, bpQuantities):
 
         if not SAVE_BP_QUANTITIES_IN_COMPUTATION_GRAPH:
-            set_in_ctx(ext.savefield, bpQuantities)
-        else SAVE_BP_QUANTITIES_IN_COMPUTATION_GRAPH:
-            setattr(inp, ext.savefield, bpQuantities)
+            set_in_ctx(ext._NewBackpropExtension__savefield, bpQuantities)
+        else:
+            setattr(inp, ext._NewBackpropExtension__savefield, bpQuantities)
 
             is_a_leaf = out.grad_fn is None
             retain_grad_is_on = getattr(out, "retains_grad", False)
             should_retain_grad = is_a_leaf or retain_grad_is_on
 
             if not should_retain_grad:
-                delattr(out, ext.savefield)
+                delattr(out, ext._NewBackpropExtension__savefield)
 
     def backpropagate(self, ext, module, g_inp, g_out, bpQuantities):
         """
@@ -103,5 +107,5 @@ class ModuleExtension:
 
     @staticmethod
     def __save(value, extension, module, param):
-        setattr(getattr(module, param), extension.savefield, value)
+        setattr(getattr(module, param), extension._NewBackpropExtension__savefield, value)
 

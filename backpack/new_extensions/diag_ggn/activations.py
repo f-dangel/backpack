@@ -11,9 +11,9 @@ class DiagGGNReLU(DiagGGNBaseModule):
 
 class DiagGGNSigmoid(DiagGGNBaseModule):
     def __init__(self):
-        super().__init__(derivatives=TanhDerivatives())
+        super().__init__(derivatives=SigmoidDerivatives())
 
 
 class DiagGGNTanh(DiagGGNBaseModule):
     def __init__(self):
-        super().__init__(derivatives=SigmoidDerivatives())
+        super().__init__(derivatives=TanhDerivatives())

@@ -9,6 +9,7 @@ from backpack.secondorder.strategies import (
     BackpropStrategy,
     LossHessianStrategy,
 )
+from backpack.new_extensions.diag_ggn import DiagGGN
 
 
 class BpextImpl(Implementation):
@@ -40,7 +41,8 @@ class BpextImpl(Implementation):
         return sgs
 
     def diag_ggn(self):
-        with backpack(ext.DIAG_GGN()):
+        print(self.model)
+        with backpack(DiagGGN()):
             self.loss().backward()
             diag_ggn = [p.diag_ggn for p in self.model.parameters()]
         return diag_ggn

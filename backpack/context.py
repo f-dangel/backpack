@@ -1,3 +1,5 @@
+import warnings
+
 from backpack.newbackpropextension import NewBackpropExtension
 
 from .extensions import Extension
@@ -8,7 +10,7 @@ RETURN_IF_NOT_EXISTING = None
 def get_from_ctx(name):
     value = CTX.backpropQuantities.get(name, RETURN_IF_NOT_EXISTING)
     if value is RETURN_IF_NOT_EXISTING:
-        raise ValueError("The attribute {} does not exist in CTX".format(name))
+        warnings.warn("The attribute {} does not exist in CTX".format(name))
     return value
 
 
@@ -27,6 +29,7 @@ class CTX:
     @staticmethod
     def set_active_exts(active_exts):
         CTX.activeExts = tuple()
+        CTX.newActiveExts = tuple()
         for act_ext in active_exts:
             if isinstance(act_ext, NewBackpropExtension):
                 CTX.newActiveExts += (act_ext, )

@@ -1,4 +1,4 @@
-from backpack.extensions.newmatbackprop import MatToJacMat
+from backpack.new_extensions.newmatbackprop import MatToJacMat
 
 
 class DiagGGNBaseModule(MatToJacMat):
