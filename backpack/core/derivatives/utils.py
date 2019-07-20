@@ -9,8 +9,8 @@ def jmp_unsqueeze_if_missing_dim(mat_dim):
         def wrapped_jmp_support_jvp(self, module, grad_input, grad_output, mat,
                                     **kwargs):
             is_vec = (len(mat.shape) == mat_dim - 1)
-            print("It's a vector")
-            print(mat.shape)
+#            print("It's a vector")
+#            print(mat.shape)
             mat_used = mat.unsqueeze(-1) if is_vec else mat
             result = jmp(self, module, grad_input, grad_output, mat_used,
                          **kwargs)
@@ -31,8 +31,8 @@ def hmp_unsqueeze_if_missing_dim(mat_dim):
         @functools.wraps(hmp)
         def wrapped_hmp_support_hvp(mat):
             is_vec = (len(mat.shape) == mat_dim - 1)
-            print("It's a vector")
-            print(mat.shape)
+#            print("It's a vector")
+#            print(mat.shape)
             mat_used = mat.unsqueeze(-1) if is_vec else mat
             result = hmp(mat_used)
             if is_vec:
