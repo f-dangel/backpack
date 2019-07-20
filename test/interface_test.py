@@ -110,7 +110,7 @@ def test_interface_kfac():
 
 @pytest.mark.skip()
 def test_interface_hbp():
-    interface_test(ext.HBP())
+    interface_test(new_ext.HBP())
 
 
 @pytest.mark.skip()
@@ -140,7 +140,7 @@ def test_interface_kfra_conv():
 
 
 def test_interface_kfac_conv():
-    interface_test(ext.KFAC(), use_conv=True)
+    interface_test(new_ext.KFAC(), use_conv=True)
 
 
 @pytest.mark.skip()

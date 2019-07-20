@@ -90,13 +90,13 @@ class BpextImpl(Implementation):
         return results
 
     def kfra_blocks(self):
-        return self.matrices_from_kronecker_curvature(ext.KFRA, "kfra")
+        return self.matrices_from_kronecker_curvature(new_ext.KFRA, "kfra")
 
     def kflr_blocks(self):
-        return self.matrices_from_kronecker_curvature(ext.KFLR, "kflr")
+        return self.matrices_from_kronecker_curvature(new_ext.KFLR, "kflr")
 
     def kfac_blocks(self):
-        return self.matrices_from_kronecker_curvature(ext.KFAC, "kfac")
+        return self.matrices_from_kronecker_curvature(new_ext.KFAC, "kfac")
 
     def hbp_with_curv(self,
                       curv_type,
@@ -105,7 +105,7 @@ class BpextImpl(Implementation):
                       ea_strategy=ExpectationApproximation.BOTEV_MARTENS):
         results = []
         with backpack(
-                ext.HBP(
+                new_ext.HBP(
                     curv_type=curv_type,
                     loss_hessian_strategy=loss_hessian_strategy,
                     backprop_strategy=backprop_strategy,
