@@ -78,8 +78,8 @@ def check_values(list1, list2):
     "problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
 def test_batch_gradients(problem, device):
     problem.to(device)
-    autograd_res = AutogradImpl(problem).batch_gradients()
     backpack_res = BpextImpl(problem).batch_gradients()
+    autograd_res = AutogradImpl(problem).batch_gradients()
 
     check_sizes(autograd_res, backpack_res)
     check_values(autograd_res, backpack_res)
@@ -89,9 +89,9 @@ def test_batch_gradients(problem, device):
     "problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
 def test_batch_gradients_sum_to_grad(problem, device):
     problem.to(device)
-    autograd_res = AutogradImpl(problem).gradient()
     backpack_batch_res = BpextImpl(problem).batch_gradients()
     backpack_res = list([g.sum(0) for g in backpack_batch_res])
+    autograd_res = AutogradImpl(problem).gradient()
 
     check_sizes(autograd_res, backpack_res, list(problem.model.parameters()))
     check_values(autograd_res, backpack_res)
@@ -113,8 +113,8 @@ def test_sgs(problem, device):
 def test_diag_ggn(problem, device):
     problem.to(device)
 
-    autograd_res = AutogradImpl(problem).diag_ggn()
     backpack_res = BpextImpl(problem).diag_ggn()
+    autograd_res = AutogradImpl(problem).diag_ggn()
 
     check_sizes(autograd_res, backpack_res, list(problem.model.parameters()))
     check_values(autograd_res, backpack_res)
@@ -125,8 +125,8 @@ def test_diag_ggn(problem, device):
 def test_batch_l2(problem, device):
     problem.to(device)
 
-    autograd_res = AutogradImpl(problem).batch_l2()
     backpack_res = BpextImpl(problem).batch_l2()
+    autograd_res = AutogradImpl(problem).batch_l2()
 
     check_sizes(autograd_res, backpack_res)
     check_values(autograd_res, backpack_res)
@@ -167,8 +167,8 @@ def test_hmp(problem, device):
         for p in problem.model.parameters()
     ]
 
-    autograd_res = AutogradImpl(problem).hmp(matrices)
     backpack_res = BpextImpl(problem).hmp(matrices)
+    autograd_res = AutogradImpl(problem).hmp(matrices)
 
     check_sizes(autograd_res, backpack_res)
     check_values(autograd_res, backpack_res)
@@ -202,8 +202,8 @@ def test_hvp(problem, device):
         for p in problem.model.parameters()
     ]
 
-    autograd_res = AutogradImpl(problem).hvp(vecs)
     backpack_res = BpextImpl(problem).hvp(vecs)
+    autograd_res = AutogradImpl(problem).hvp(vecs)
 
     check_sizes(autograd_res, backpack_res)
     check_values(autograd_res, backpack_res)
@@ -219,8 +219,8 @@ def test_ggn_vp(problem, device):
         for p in problem.model.parameters()
     ]
 
-    autograd_res = AutogradImpl(problem).ggn_vp(vecs)
     backpack_res = BpextImpl(problem).ggn_vp(vecs)
+    autograd_res = AutogradImpl(problem).ggn_vp(vecs)
 
     check_sizes(autograd_res, backpack_res)
     check_values(autograd_res, backpack_res)
