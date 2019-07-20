@@ -18,23 +18,8 @@ class ParametrizedExtension(Extension):
         self.input = input
         super().__init__(savefield=savefield)
 
-
-class CMP(ParametrizedExtension):
-    def __init__(self, curv_type):
-        super().__init__(savefield="cmp", input=curv_type)
-
-    def get_curv_type(self):
-        return self.input
-
-
-class JVP(Extension):
-    pass
-
-
 class Extensions:
     EXTENSIONS = [
-        JVP,
-        CMP,
     ]
 
     registeredExtensions = {}

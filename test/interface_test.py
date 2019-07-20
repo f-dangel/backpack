@@ -115,7 +115,7 @@ def test_interface_hbp():
 
 @pytest.mark.skip()
 def test_interface_cmp():
-    interface_test(ext.CMP())
+    interface_test(new_ext.CMP())
 
 
 def test_interface_batch_grad_conv():
@@ -145,7 +145,7 @@ def test_interface_kfac_conv():
 
 @pytest.mark.skip()
 def test_interface_cmp_conv():
-    interface_test(ext.CMP(), use_conv=True)
+    interface_test(new_ext.CMP(), use_conv=True)
 
 
 @pytest.mark.skip()

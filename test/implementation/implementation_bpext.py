@@ -3,8 +3,8 @@ from .implementation import Implementation
 from backpack import backpack
 import backpack.extensions as ext
 from backpack.curvature import Curvature
-from backpack.secondorder.utils import matrix_from_kron_facs
-from backpack.new_extensions.hbp.hbp_options import (
+from backpack.new_extensions.secondorder.utils import matrix_from_kron_facs
+from backpack.new_extensions.secondorder.hbp import (
     ExpectationApproximation,
     BackpropStrategy,
     LossHessianStrategy,
@@ -59,19 +59,16 @@ class BpextImpl(Implementation):
     def hmp(self, mat_list):
         assert len(mat_list) == len(list(self.model.parameters()))
         results = []
-        with backpack(ext.CMP(Curvature.HESSIAN)):
+        with backpack(new_ext.CMP(Curvature.HESSIAN)):
             self.loss().backward()
             for p, mat in zip(self.model.parameters(), mat_list):
                 results.append(p.cmp(mat))
         return results
 
-    def hvp(self, vec_list):
-        return self.hmp(vec_list)
-
     def ggn_mp(self, mat_list):
         assert len(mat_list) == len(list(self.model.parameters()))
         results = []
-        with backpack(ext.CMP(Curvature.GGN)):
+        with backpack(new_ext.CMP(Curvature.GGN)):
             self.loss().backward()
             for p, mat in zip(self.model.parameters(), mat_list):
                 results.append(p.cmp(mat))

@@ -5,7 +5,6 @@ to calculate the variance of a gradient.
 """
 import torch
 from .extensions import Extension, Extensions
-from . import curvmatprod as cmp
 from .context import CTX
 
 DEBUGGING = True
@@ -101,7 +100,6 @@ def extended(moduleFunc):
 
 
 EXTENSIONS = [
-    *cmp.EXTENSIONS,
 ]
 
 for backpropextension in EXTENSIONS:
