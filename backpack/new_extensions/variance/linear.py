@@ -1,8 +1,8 @@
 from backpack.new_extensions.gradient.linear import GradLinear
 from backpack.new_extensions.gradient.linear import GradLinearConcat
-from backpack.new_extensions.sumgradsquared.linear import SGSLinear
-from backpack.new_extensions.sumgradsquared.linear import SGSLinearConcat
-from backpack.new_extensions.variance.base import VarianceBaseModule
+from backpack.new_extensions.sum_grad_squared.linear import SGSLinear
+from backpack.new_extensions.sum_grad_squared.linear import SGSLinearConcat
+from backpack.new_extensions.variance.variance_base import VarianceBaseModule
 
 
 class VarianceLinear(VarianceBaseModule):

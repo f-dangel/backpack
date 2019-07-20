@@ -92,6 +92,10 @@ def test_interface_diag_ggn():
     interface_test(new_ext.DiagGGN())
 
 
+def test_interface_diag_h():
+    interface_test(new_ext.DiagHessian())
+
+
 def test_interface_kflr():
     interface_test(ext.KFLR())
 

@@ -1,8 +1,8 @@
 from backpack.new_extensions.gradient.conv2d import GradConv2dConcat
-from backpack.new_extensions.sumgradsquared.conv2d import SGSConv2dConcat
+from backpack.new_extensions.sum_grad_squared.conv2d import SGSConv2dConcat
 from backpack.new_extensions.gradient.conv2d import GradConv2d
-from backpack.new_extensions.sumgradsquared.conv2d import SGSConv2d
-from backpack.new_extensions.variance.base import VarianceBaseModule
+from backpack.new_extensions.sum_grad_squared.conv2d import SGSConv2d
+from backpack.new_extensions.variance.variance_base import VarianceBaseModule
 
 
 class VarianceConv2d(VarianceBaseModule):

@@ -36,7 +36,7 @@ class ModuleExtension:
 
         bpQuantities = self.__backproped_quantities(ext, out)
         if bpQuantities is not None:
-            print("bped: {} for mod {}".format(bpQuantities.shape, module))
+            print("bped: {} for mod {}".format(bpQuantities, module))
         else:
             print("bped is none?")
 

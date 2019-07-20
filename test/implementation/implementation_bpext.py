@@ -48,7 +48,7 @@ class BpextImpl(Implementation):
         return diag_ggn
 
     def diag_h(self):
-        with backpack(ext.DIAG_H()):
+        with backpack(new_ext.DiagHessian()):
             self.loss().backward()
             diag_h = [p.diag_h for p in self.model.parameters()]
         return diag_h

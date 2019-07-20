@@ -1,7 +1,7 @@
 from backpack.core.derivatives.linear import (LinearDerivatives,
                                               LinearConcatDerivatives)
 
-from backpack.new_extensions.batchgrad.base import BatchGradBase
+from backpack.new_extensions.batch_grad.batch_grad_base import BatchGradBase
 
 
 class BatchGradLinear(BatchGradBase):

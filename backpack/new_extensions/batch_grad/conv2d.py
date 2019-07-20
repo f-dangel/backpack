@@ -1,7 +1,7 @@
 from backpack.core.derivatives.conv2d import (Conv2DDerivatives,
                                               Conv2DConcatDerivatives)
 
-from backpack.new_extensions.batchgrad.base import BatchGradBase
+from backpack.new_extensions.batch_grad.batch_grad_base import BatchGradBase
 
 
 class BatchGradConv2d(BatchGradBase):

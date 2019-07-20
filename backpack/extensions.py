@@ -17,11 +17,6 @@ class Extension():
         return self.__class__
 
 
-class DIAG_H(Extension):
-    def __init__(self):
-        super().__init__(savefield="diag_h")
-
-
 class ParametrizedExtension(Extension):
     def __init__(self, savefield, input):
         self.input = input
@@ -116,7 +111,6 @@ class JVP(Extension):
 class Extensions:
     EXTENSIONS = [
         JVP,
-        DIAG_H,
         KFLR,
         KFRA,
         KFAC,
