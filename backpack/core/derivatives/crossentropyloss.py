@@ -13,7 +13,7 @@ class CrossEntropyLossDerivatives(BaseDerivatives):
     def get_module(self):
         return CrossEntropyLoss
 
-    def sqrt_hessian(self, module, grad_input, grad_output):
+    def sqrt_hessian(self, module, g_inp, g_out):
         probs = self.get_probs(module)
         tau = torchsqrt(probs)
         Id = diag_embed(ones_like(probs))
@@ -25,7 +25,7 @@ class CrossEntropyLossDerivatives(BaseDerivatives):
 
         return sqrt_H
 
-    def sqrt_hessian_sampled(self, module, grad_input, grad_output):
+    def sqrt_hessian_sampled(self, module, g_inp, g_out):
         M = self.MC_SAMPLES
         C = module.input0.shape[1]
 
@@ -41,7 +41,7 @@ class CrossEntropyLossDerivatives(BaseDerivatives):
 
         return sqrt_mc_h
 
-    def sum_hessian(self, module, grad_input, grad_output):
+    def sum_hessian(self, module, g_inp, g_out):
         probs = self.get_probs(module)
         sum_H = diag(probs.sum(0)) - einsum('bi,bj->ij', (probs, probs))
 
@@ -50,7 +50,7 @@ class CrossEntropyLossDerivatives(BaseDerivatives):
 
         return sum_H
 
-    def hessian_matrix_product(self, module, grad_input, grad_output):
+    def hessian_matrix_product(self, module, g_inp, g_out):
         """Multiplication of the input Hessian with a matrix."""
         probs = self.get_probs(module)
 

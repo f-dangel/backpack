@@ -11,7 +11,7 @@ class MSELossDerivatives(BaseDerivatives):
     def get_module(self):
         return MSELoss
 
-    def sqrt_hessian(self, module, grad_input, grad_output):
+    def sqrt_hessian(self, module, g_inp, g_out):
         self.check_input_dims(module)
 
         sqrt_H = diag_embed(sqrt(2) * ones_like(module.input0))
@@ -21,13 +21,13 @@ class MSELossDerivatives(BaseDerivatives):
 
         return sqrt_H
 
-    def sqrt_hessian_sampled(self, module, grad_input, grad_output):
+    def sqrt_hessian_sampled(self, module, g_inp, g_out):
         warn("[MC Sampling Hessian of CrossEntropy] " +
              "Returning the symmetric factorization of the full Hessian " +
              "(same computation cost)")
-        return self.sqrt_hessian(module, grad_input, grad_output)
+        return self.sqrt_hessian(module, g_inp, g_out)
 
-    def sum_hessian(self, module, grad_input, grad_output):
+    def sum_hessian(self, module, g_inp, g_out):
         self.check_input_dims(module)
 
         batch = module.input0_shape[0]
@@ -40,7 +40,7 @@ class MSELossDerivatives(BaseDerivatives):
         print("sum H ", sum_H.shape)
         return sum_H
 
-    def hessian_matrix_product(self, module, grad_input, grad_output):
+    def hessian_matrix_product(self, module, g_inp, g_out):
         """Multiplication of the input Hessian with a matrix."""
 
         @hmp_unsqueeze_if_missing_dim(mat_dim=3)

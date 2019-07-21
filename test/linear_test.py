@@ -3,8 +3,7 @@
 from torch import Tensor, allclose
 from torch.nn import Linear
 from backpack import extend, backpack
-import backpack.extensions as ext
-import backpack.new_extensions as new_ext
+import backpack.extensions as new_ext
 
 
 def ExtLinear(*args, **kwargs):

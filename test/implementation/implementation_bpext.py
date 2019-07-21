@@ -1,15 +1,14 @@
 import torch
 from .implementation import Implementation
 from backpack import backpack
-import backpack.extensions as ext
-from backpack.curvature import Curvature
-from backpack.new_extensions.secondorder.utils import matrix_from_kron_facs
-from backpack.new_extensions.secondorder.hbp import (
+from backpack.extensions.curvature import Curvature
+from backpack.extensions.secondorder.utils import matrix_from_kron_facs
+from backpack.extensions.secondorder.hbp import (
     ExpectationApproximation,
     BackpropStrategy,
     LossHessianStrategy,
 )
-import backpack.new_extensions as new_ext
+import backpack.extensions as new_ext
 
 
 class BpextImpl(Implementation):

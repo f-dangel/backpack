@@ -12,8 +12,8 @@ class TanhDerivatives(ElementwiseDerivatives):
     def hessian_is_diagonal(self):
         return True
 
-    def df(self, module, grad_input, grad_output):
+    def df(self, module, g_inp, g_out):
         return 1. - module.output**2
 
-    def d2f(self, module, grad_input, grad_output):
+    def d2f(self, module, g_inp, g_out):
         return (-2. * module.output * (1. - module.output**2))

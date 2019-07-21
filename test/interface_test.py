@@ -8,8 +8,7 @@ from torch.nn import Sequential
 from torch.nn import Conv2d
 from backpack.core.layers import Flatten
 from backpack import extend, backpack
-import backpack.extensions as ext
-import backpack.new_extensions as new_ext
+import backpack.extensions as new_ext
 
 
 def dummy_forward_pass():
@@ -69,11 +68,6 @@ def interface_test(feature,
         assert weight_has_attr == hasattr(w, feature.savefield)
     for b in bs:
         assert bias_has_attr == hasattr(b, feature.savefield)
-
-
-@pytest.mark.skip()
-def test_interface_grad():
-    interface_test(ext.GRAD())
 
 
 def test_interface_batch_grad():

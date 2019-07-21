@@ -7,7 +7,7 @@ from torchvision import datasets
 from torchvision.transforms import transforms
 
 import matplotlib.pyplot as plt
-from backpack import extend, backpack, extensions
+from backpack import extend, backpack, extensions as extensions
 from backpack.core.layers import Flatten
 
 PROFILE = False

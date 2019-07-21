@@ -28,7 +28,7 @@ class MaxPool2DDerivatives(BaseDerivatives):
 
     # Jacobian-matrix product
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
-    def jac_mat_prod(self, module, grad_input, grad_output, mat):
+    def jac_mat_prod(self, module, g_inp, g_out, mat):
         convUtils.check_sizes_input_jac(mat, module)
         mat_as_pool = self.__reshape_for_pooling_in(mat, module)
         jmp_as_pool = self.__apply_jacobian_of(module, mat_as_pool)
@@ -57,7 +57,7 @@ class MaxPool2DDerivatives(BaseDerivatives):
 
     # Transposed Jacobian-matrix product
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
-    def jac_t_mat_prod(self, module, grad_input, grad_output, mat):
+    def jac_t_mat_prod(self, module, g_inp, g_out, mat):
         convUtils.check_sizes_input_jac_t(mat, module)
         mat_as_pool = self.__reshape_for_pooling_out(mat, module)
         jmp_as_pool = self.__apply_jacobian_t_of(module, mat_as_pool)

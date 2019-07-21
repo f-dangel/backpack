@@ -10,5 +10,5 @@ class ReLUDerivatives(ElementwiseDerivatives):
     def hessian_is_zero(self):
         return True
 
-    def df(self, module, grad_input, grad_output):
+    def df(self, module, g_inp, g_out):
         return gt(module.input0, 0).float()

@@ -10,8 +10,7 @@ from torch import (Tensor, randn, allclose)
 from torch.nn import Conv2d
 from random import (randint, choice)
 from backpack import extend, backpack
-import backpack.extensions as ext
-import backpack.new_extensions as new_ext
+import backpack.extensions as new_ext
 
 
 def ExtConv2d(*args, **kwargs):

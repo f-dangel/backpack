@@ -14,7 +14,7 @@ class ZeroPad2dDerivatives(BaseDerivatives):
         return True
 
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
-    def jac_t_mat_prod(self, module, grad_input, grad_output, mat):
+    def jac_t_mat_prod(self, module, g_inp, g_out, mat):
         # reshape feature dimension as output image
         batch, out_features, num_cols = mat.size()
         _, out_channels, out_x, out_y = module.output_shape
@@ -34,7 +34,7 @@ class ZeroPad2dDerivatives(BaseDerivatives):
         return mat_unpad.view(batch, in_features, num_cols)
 
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
-    def jac_mat_prod(self, module, grad_input, grad_output, mat):
+    def jac_mat_prod(self, module, g_inp, g_out, mat):
         # group batch and column dimension of the matrix
         batch, in_features, num_cols = mat.size()
         mat = einsum('bic->bci', (mat)).contiguous()

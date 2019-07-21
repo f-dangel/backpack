@@ -1,50 +1,36 @@
 import warnings
 
-from backpack.newbackpropextension import NewBackpropExtension
-
-from .extensions import Extension
 
 RETURN_IF_NOT_EXISTING = None
 
 
 def get_from_ctx(name):
-    value = CTX.backpropQuantities.get(name, RETURN_IF_NOT_EXISTING)
+    value = CTX.backproped_quantities.get(name, RETURN_IF_NOT_EXISTING)
     if value is RETURN_IF_NOT_EXISTING:
         warnings.warn("The attribute {} does not exist in CTX".format(name))
     return value
 
 
 def set_in_ctx(name, value):
-    CTX.backpropQuantities[name] = value
+    CTX.backproped_quantities[name] = value
 
 
 class CTX:
     """
     Global Class holding the configuration of the backward pass
     """
-    activeExts = tuple()
-    backpropQuantities = {}
-    newActiveExts = tuple()
+    active_exts = tuple()
+    backproped_quantities = {}
 
     @staticmethod
     def set_active_exts(active_exts):
-        CTX.activeExts = tuple()
-        CTX.newActiveExts = tuple()
+        CTX.active_exts = tuple()
         for act_ext in active_exts:
-            if isinstance(act_ext, NewBackpropExtension):
-                CTX.newActiveExts += (act_ext, )
-                continue
-            if not isinstance(act_ext, Extension):
-                raise ValueError("Unknown extension ... was expecting ...")
-            CTX.activeExts += (act_ext, )
+            CTX.active_exts += (act_ext, )
 
     @staticmethod
-    def active_exts():
-        return CTX.activeExts
-
-    @staticmethod
-    def new_active_exts():
-        return CTX.newActiveExts
+    def get_active_exts():
+        return CTX.active_exts
 
     @staticmethod
     def add_hook_handle(hook_handle):
@@ -60,5 +46,5 @@ class CTX:
 
     @staticmethod
     def clear():
-        del CTX.backpropQuantities
-        CTX.backpropQuantities = {}
+        del CTX.backproped_quantities
+        CTX.backproped_quantities = {}

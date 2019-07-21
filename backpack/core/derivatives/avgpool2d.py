@@ -19,7 +19,7 @@ class AvgPool2DDerivatives(BaseDerivatives):
 
     # Jacobian-matrix product
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
-    def jac_mat_prod(self, module, grad_input, grad_output, mat):
+    def jac_mat_prod(self, module, g_inp, g_out, mat):
         assert (module.count_include_pad,
                 "Might now work for exotic hyperparameters of AvgPool2d, " +
                 "like count_include_pad=False")
@@ -74,7 +74,7 @@ class AvgPool2DDerivatives(BaseDerivatives):
 
     # Transpose Jacobian-matrix product
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
-    def jac_t_mat_prod(self, module, grad_input, grad_output, mat):
+    def jac_t_mat_prod(self, module, g_inp, g_out, mat):
 
         assert (module.count_include_pad,
                 "Might now work for exotic hyperparameters of AvgPool2d, " +
