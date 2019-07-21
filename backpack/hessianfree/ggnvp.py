@@ -1,34 +1,45 @@
-import torch
-from ..utils.utils import einsum
-
 from .lop import L_op
 from .rop import R_op
 from .hvp import hessian_vector_product
 
 
-def ggn_vector_product(loss, output, model, vp):
-    """Compute GGN-vector product G loss(x) * v."""
-    plist = list(model.parameters())
-    return ggn_vector_product_from_plist(loss, output, plist, vp)
+def ggn_vector_product(loss, output, model, v):
+    """
+    Multiplies the vector `v` with the Generalized Gauss-Newton,
+    `ggn_v = J.T @ H @ J @ v`
+
+    where `J` is the Jacobian of `output` w.r.t. `model.parameters()`
+    and `H` is the Hessian of `loss` w.r.t. `output`.
+
+    Example usage:
+    ```
+    X, Y = data()
+    model = torch.nn.Linear(784, 10)
+    lossfunc = torch.nn.CrossEntropyLoss()
+
+    output = model(X)
+    loss = lossfunc(output, Y)
+
+    v = list([torch.randn_like(p) for p in model.parameters])
+
+    GGNv = ggn_vector_product(loss, output, model, v)
+    ```
+
+    Parameters:
+    -----------
+        loss: torch.Tensor
+        output: torch.Tensor
+        model: torch.nn.Module
+        v: [torch.Tensor]
+            List of tensors matching the sizes of model.parameters()
+    """
+    return ggn_vector_product_from_plist(
+        loss, output, list(model.parameters()), v
+    )
 
 
-def ggn_vector_product_from_plist(loss, output, plist, vp):
-    Jv = R_op(output, plist, vp)
-    batch, dims = output.size(0), output.size(1)
-    # TODO: Clean up
-    if loss.grad_fn.__class__.__name__ == 'NllLossBackward':
-        outputsoftmax = torch.nn.functional.softmax(output, dim=1)
-        M = torch.zeros(batch, dims,
-                        dims).cuda() if outputsoftmax.is_cuda else torch.zeros(
-                            batch, dims, dims)
-        M.reshape(batch, -1)[:, ::dims + 1] = outputsoftmax
-        H = M - einsum('bi,bj->bij', (outputsoftmax, outputsoftmax))
-        HJv = [torch.squeeze(H @ torch.unsqueeze(Jv[0], -1)) / batch]
-        # TODO: The squeeze above eliminates the batch axis if batch == 1
-        # DIRTY fix to make the tests with batch size 1 run
-        if batch == 1:
-            HJv[0] = HJv[0].unsqueeze(0)
-    else:
-        HJv = hessian_vector_product(loss, output, Jv)
-    JHJv = L_op(output, plist, HJv)
-    return JHJv
+def ggn_vector_product_from_plist(loss, output, plist, v):
+    Jv = R_op(output, plist, v)
+    HJv = hessian_vector_product(loss, output, Jv)
+    JTHJv = L_op(output, plist, HJv)
+    return JTHJv

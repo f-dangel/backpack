@@ -1,12 +1,9 @@
 import warnings
 
 
-RETURN_IF_NOT_EXISTING = None
-
-
 def get_from_ctx(name):
-    value = CTX.backproped_quantities.get(name, RETURN_IF_NOT_EXISTING)
-    if value is RETURN_IF_NOT_EXISTING:
+    value = CTX.backproped_quantities.get(name, None)
+    if value is None:
         warnings.warn("The attribute {} does not exist in CTX".format(name))
     return value
 
@@ -26,7 +23,7 @@ class CTX:
     def set_active_exts(active_exts):
         CTX.active_exts = tuple()
         for act_ext in active_exts:
-            CTX.active_exts += (act_ext, )
+            CTX.active_exts += (act_ext,)
 
     @staticmethod
     def get_active_exts():

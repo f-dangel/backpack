@@ -9,10 +9,11 @@ FAIL_SILENT = "SILENT"
 
 class BackpropExtension:
     """
-    Base class for the new type of BackpropExtension for BackPACK.
+    Base class for the BackPACK extensions.
 
-    Descendants of this class need to define in what field to save results
-    and provide a mapping from Module classes to ModuleExtension instances.
+    Descendants of this class need to
+    - define in what field to save results
+    - provide a mapping from Module classes to ModuleExtension instances.
 
     They can then be passed to the Backpack context manager, i.e.,
     ```
@@ -29,7 +30,7 @@ class BackpropExtension:
         Parameters
         ----------
         savefield : str
-
+            Where to save results
         module_exts : dict
             Dictionary mapping module classes to `ModuleExtension` instances
         fail_mode : str, optional

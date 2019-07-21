@@ -2,7 +2,9 @@ from .module_extension import ModuleExtension
 
 
 class MatToJacMat(ModuleExtension):
-
+    """
+    Base class for backpropagating matrices by multiplying with Jacobians.
+    """
     def __init__(self, derivatives, params=None):
         super().__init__(params)
         self.derivatives = derivatives

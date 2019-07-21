@@ -1,12 +1,8 @@
-"""Computation of batch gradients.
-
-Computing parameter gradients for each batch sample can be used
-to calculate the variance of a gradient.
+"""
+BackPACK
 """
 import torch
 from .context import CTX
-
-DEBUGGING = True
 
 
 class backpack():
@@ -16,6 +12,34 @@ class backpack():
     """
 
     def __init__(self, *args):
+        """
+        Activate the Backpack extensions.
+
+        Example usage:
+        ```
+        X, Y, model, lossfunc = get_problem()
+
+        backpack.extend(model)
+        backpack.extend(lossfunc)
+
+        with backpack.backpack(backpack.extensions.Variance()):
+            lossfunc(model(X), Y).backward()
+
+            for p in model.parameters():
+                print(p.grad)
+                print(p.variance)
+        ```
+
+        .. warning ::
+
+            The quantities computed by backPACK may be garbage collected when
+            exiting the `with` clause. Use them within the `with` clause or
+            assign them to another variable.
+
+        Parameters:
+            args: [BackpropExtension]
+                The extensions to activate for the backward pass.
+        """
         self.args = args
 
     def __enter__(self):
@@ -27,8 +51,18 @@ class backpack():
         CTX.clear()
 
 
-def extend(module):
-    if DEBUGGING:
+def extend(module, debug=True):
+    """
+    Extends the `module` to make it backPACK-ready.
+
+    Attributes
+    ----------
+    module: torch.nn.Module
+        The module to extend
+    debug: Bool, optional (default: False)
+        If true, will print debug messages during the extension and backward.
+    """
+    if debug:
         print("[DEBUG] Extending", module)
 
     for child in module.children():
@@ -53,7 +87,7 @@ def extend(module):
 
     def run_extensions(module_, g_inp, g_out):
         for backpack_extension in CTX.get_active_exts():
-            if DEBUGGING:
+            if debug:
                 print(
                     "[DEBUG] Running extension", backpack_extension,
                     "on ", module

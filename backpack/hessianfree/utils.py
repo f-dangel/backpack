@@ -32,12 +32,15 @@ def _check_param_device(param, old_param_device):
 
 
 def vector_to_parameter_list(vec, parameters):
-    r"""Convert one vector to the parameter list
+    """
+    Convert the vector `vec` to a parameter-list format matching `parameters`.
 
-    Arguments:
-        vec (Tensor): a single vector represents the parameters of a model.
-        parameters (Iterable[Tensor]): an iterator of Tensors that are the
-            parameters of a model.
+    Parameters:
+    -----------
+        vec: Tensor
+            a single vector represents the parameters of a model
+        parameters: (Iterable[Tensor])
+            an iterator of Tensors that are the parameters of a model.
     """
     # Ensure vec of type Tensor
     if not isinstance(vec, torch.Tensor):

@@ -1,3 +1,14 @@
+"""
+Curvature-matrix product backPACK extensions.
+
+Those extension propagate additional information through the computation graph.
+They are more expensive to run than a standard gradient backpropagation.
+
+This extension does not compute information directly, but gives access to
+functions to compute Matrix-Matrix products with Block-Diagonal approximations
+of the curvature, such as the Block-diagonal Generalized Gauss-Newton
+"""
+
 from backpack.extensions.backprop_extension import BackpropExtension
 
 from backpack.core.layers import Conv2dConcat, LinearConcat, Flatten

@@ -6,7 +6,13 @@ SAVE_BP_QUANTITIES_IN_COMPUTATION_GRAPH = False
 
 class ModuleExtension:
     """
-    Base class for the new type of Module Extensions for BackPACK.
+    Base class for a Module Extension for BackPACK.
+
+    Descendants of this class need to
+    - define what parameters of the Module need to be treated (weight, bias)
+      and provide functions to compute the quantities
+    - extend the `backpropagate` function if information other than the gradient
+      needs to be propagated through the graph.
     """
 
     def __init__(self, params=None):
@@ -30,51 +36,6 @@ class ModuleExtension:
             extFunc = getattr(self, param, None)
             if extFunc is None:
                 raise NotImplementedError
-
-    def apply(self, ext, module, g_inp, g_out):
-        inp = module.input0
-        out = module.output
-
-        bpQuantities = self.__backproped_quantities(ext, out)
-        if bpQuantities is not None:
-            print("bped: {} for mod {}".format(bpQuantities, module))
-        else:
-            print("bped is none?")
-
-        for param in self.__params:
-            if self.__param_exists_and_requires_grad(module, param):
-                extFunc = getattr(self, param)
-                extValue = extFunc(
-                    ext, module, g_inp, g_out, bpQuantities
-                )
-                self.__save(extValue, ext, module, param)
-
-        bpQuantities = self.backpropagate(
-            ext, module, g_inp, g_out, bpQuantities
-        )
-        self.__backprop_quantities(ext, inp, out, bpQuantities)
-
-    @staticmethod
-    def __backproped_quantities(ext, out):
-        if not SAVE_BP_QUANTITIES_IN_COMPUTATION_GRAPH:
-            return get_from_ctx(ext.savefield)
-        else:
-            return getattr(out, ext.savefield, None)
-
-    @staticmethod
-    def __backprop_quantities(ext, inp, out, bpQuantities):
-
-        if not SAVE_BP_QUANTITIES_IN_COMPUTATION_GRAPH:
-            set_in_ctx(ext.savefield, bpQuantities)
-        else:
-            setattr(inp, ext.savefield, bpQuantities)
-
-            is_a_leaf = out.grad_fn is None
-            retain_grad_is_on = getattr(out, "retains_grad", False)
-            should_retain_grad = is_a_leaf or retain_grad_is_on
-
-            if not should_retain_grad:
-                delattr(out, ext.savefield)
 
     def backpropagate(self, ext, module, g_inp, g_out, bpQuantities):
         """
@@ -100,6 +61,48 @@ class ModuleExtension:
             Quantities backpropagated w.r.t. the input
         """
         warnings.warn("Backpropagate has not been overwritten")
+
+    def apply(self, ext, module, g_inp, g_out):
+        inp = module.input0
+        out = module.output
+
+        bpQuantities = self.__backproped_quantities(ext, out)
+
+        for param in self.__params:
+            if self.__param_exists_and_requires_grad(module, param):
+                extFunc = getattr(self, param)
+                extValue = extFunc(
+                    ext, module, g_inp, g_out, bpQuantities
+                )
+                self.__save(extValue, ext, module, param)
+
+        bpQuantities = self.backpropagate(
+            ext, module, g_inp, g_out, bpQuantities
+        )
+
+        self.__backprop_quantities(ext, inp, out, bpQuantities)
+
+    @staticmethod
+    def __backproped_quantities(ext, out):
+        if not SAVE_BP_QUANTITIES_IN_COMPUTATION_GRAPH:
+            return get_from_ctx(ext.savefield)
+        else:
+            return getattr(out, ext.savefield, None)
+
+    @staticmethod
+    def __backprop_quantities(ext, inp, out, bpQuantities):
+
+        if not SAVE_BP_QUANTITIES_IN_COMPUTATION_GRAPH:
+            set_in_ctx(ext.savefield, bpQuantities)
+        else:
+            setattr(inp, ext.savefield, bpQuantities)
+
+            is_a_leaf = out.grad_fn is None
+            retain_grad_is_on = getattr(out, "retains_grad", False)
+            should_retain_grad = is_a_leaf or retain_grad_is_on
+
+            if not should_retain_grad:
+                delattr(out, ext.savefield)
 
     @staticmethod
     def __param_exists_and_requires_grad(module, param):
