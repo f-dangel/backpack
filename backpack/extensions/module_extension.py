@@ -1,7 +1,7 @@
 import warnings
 from backpack.context import get_from_ctx, set_in_ctx
 
-SAVE_BP_QUANTITIES_IN_COMPUTATION_GRAPH = False
+SAVE_BP_QUANTITIES_IN_COMPUTATION_GRAPH = True
 
 
 class ModuleExtension:
@@ -99,10 +99,12 @@ class ModuleExtension:
 
             is_a_leaf = out.grad_fn is None
             retain_grad_is_on = getattr(out, "retains_grad", False)
-            should_retain_grad = is_a_leaf or retain_grad_is_on
+            inp_is_out = id(inp) == id(out)
+            should_retain_grad = is_a_leaf or retain_grad_is_on or inp_is_out
 
             if not should_retain_grad:
-                delattr(out, ext.savefield)
+                if hasattr(out, ext.savefield):
+                    delattr(out, ext.savefield)
 
     @staticmethod
     def __param_exists_and_requires_grad(module, param):

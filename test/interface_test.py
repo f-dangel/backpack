@@ -38,9 +38,9 @@ def dummy_forward_pass_conv():
     N, C, H, W = 2, 3, 4, 4
     X = torch.randn(N, C, H, W)
     Y = torch.randint(high=5, size=(N,))
-    conv = extend(Conv2d(3, 2, 2))
-    lin = extend(Linear(18, 5))
-    model = Sequential(conv, Flatten(), lin)
+    conv = Conv2d(3, 2, 2)
+    lin = Linear(18, 5)
+    model = extend(Sequential(conv, Flatten(), lin))
     loss = extend(CrossEntropyLoss())
 
     def forward():
