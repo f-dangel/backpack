@@ -27,7 +27,7 @@ class Conv2DDerivatives(BaseDerivatives):
 
     # Jacobian-matrix product
     @jmp_unsqueeze_if_missing_dim(mat_dim=2)
-    def jac_mat_prod(self, module, grad_input, grad_output, mat):
+    def jac_mat_prod(self, module, g_inp, g_out, mat):
         convUtils.check_sizes_input_jac(mat, module)
         mat_as_conv = self.__reshape_for_conv_in(mat, module)
         jmp_as_conv = self.__apply_jacobian_of(module, mat_as_conv)
@@ -60,7 +60,7 @@ class Conv2DDerivatives(BaseDerivatives):
 
     # Transposed Jacobian-matrix product
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
-    def jac_t_mat_prod(self, module, grad_input, grad_output, mat):
+    def jac_t_mat_prod(self, module, g_inp, g_out, mat):
         convUtils.check_sizes_input_jac_t(mat, module)
         mat_as_conv = self.__reshape_for_conv_out(mat, module)
         jmp_as_conv = self.__apply_jacobian_t_of(module, mat_as_conv)
@@ -94,7 +94,7 @@ class Conv2DDerivatives(BaseDerivatives):
 
     # TODO: Improve performance
     @jmp_unsqueeze_if_missing_dim(mat_dim=2)
-    def bias_jac_mat_prod(self, module, grad_input, grad_output, mat):
+    def bias_jac_mat_prod(self, module, g_inp, g_out, mat):
         batch, out_channels, out_x, out_y = module.output_shape
         num_cols = mat.size(1)
         # mat has shape (out_channels, num_cols)
@@ -106,8 +106,8 @@ class Conv2DDerivatives(BaseDerivatives):
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     def bias_jac_t_mat_prod(self,
                             module,
-                            grad_input,
-                            grad_output,
+                            g_inp,
+                            g_out,
                             mat,
                             sum_batch=True):
         batch, out_channels, out_x, out_y = module.output_shape
@@ -120,7 +120,7 @@ class Conv2DDerivatives(BaseDerivatives):
 
     # TODO: Improve performance, get rid of unfold
     @jmp_unsqueeze_if_missing_dim(mat_dim=2)
-    def weight_jac_mat_prod(self, module, grad_input, grad_output, mat):
+    def weight_jac_mat_prod(self, module, g_inp, g_out, mat):
         batch, out_channels, out_x, out_y = module.output_shape
         out_features = out_channels * out_x * out_y
         num_cols = mat.size(1)
@@ -135,8 +135,8 @@ class Conv2DDerivatives(BaseDerivatives):
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     def __weight_jac_t_mat_prod2(self,
                                  module,
-                                 grad_input,
-                                 grad_output,
+                                 g_inp,
+                                 g_out,
                                  mat,
                                  sum_batch=True):
         """Intuitive, using unfold operation."""
@@ -160,8 +160,8 @@ class Conv2DDerivatives(BaseDerivatives):
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     def weight_jac_t_mat_prod(self,
                               module,
-                              grad_input,
-                              grad_output,
+                              g_inp,
+                              g_out,
                               mat,
                               sum_batch=True):
         """Unintuitive, but faster due to conv operation."""
@@ -224,19 +224,19 @@ class Conv2DConcatDerivatives(Conv2DDerivatives):
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     def weight_jac_t_mat_prod(self,
                               module,
-                              grad_input,
-                              grad_output,
+                              g_inp,
+                              g_out,
                               mat,
                               sum_batch=True):
         weight_part = super().weight_jac_t_mat_prod(
-            module, grad_input, grad_output, mat, sum_batch=sum_batch)
+            module, g_inp, g_out, mat, sum_batch=sum_batch)
 
         if not module.has_bias():
             return weight_part
 
         else:
             bias_part = super().bias_jac_t_mat_prod(
-                module, grad_input, grad_output, mat, sum_batch=sum_batch)
+                module, g_inp, g_out, mat, sum_batch=sum_batch)
 
             batch = 1 if sum_batch is True else self.get_batch(module)
             num_cols = mat.size(2)

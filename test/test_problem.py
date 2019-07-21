@@ -1,4 +1,5 @@
 import torch
+from backpack import extend
 
 
 class TestProblem():
@@ -14,8 +15,8 @@ class TestProblem():
         """
         self.X = X
         self.Y = Y
-        self.model = model
-        self.lossfunc = lossfunc
+        self.model = extend(model)
+        self.lossfunc = extend(lossfunc)
         self.device = device
         self.to(device)
         self.N = self.X.shape[0]

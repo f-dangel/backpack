@@ -8,7 +8,7 @@ from torch.nn import Sequential
 from torch.nn import Conv2d
 from backpack.core.layers import Flatten
 from backpack import extend, backpack
-import backpack.extensions as ext
+import backpack.extensions as new_ext
 
 
 def dummy_forward_pass():
@@ -38,9 +38,9 @@ def dummy_forward_pass_conv():
     N, C, H, W = 2, 3, 4, 4
     X = torch.randn(N, C, H, W)
     Y = torch.randint(high=5, size=(N,))
-    conv = extend(Conv2d(3, 2, 2))
-    lin = extend(Linear(18, 5))
-    model = Sequential(conv, Flatten(), lin)
+    conv = Conv2d(3, 2, 2)
+    lin = Linear(18, 5)
+    model = extend(Sequential(conv, Flatten(), lin))
     loss = extend(CrossEntropyLoss())
 
     def forward():
@@ -70,80 +70,78 @@ def interface_test(feature,
         assert bias_has_attr == hasattr(b, feature.savefield)
 
 
-@pytest.mark.skip()
-def test_interface_grad():
-    interface_test(ext.GRAD())
-
-
 def test_interface_batch_grad():
-    interface_test(ext.BATCH_GRAD())
+    interface_test(new_ext.BatchGrad())
+
+
+def test_interface_variance():
+    interface_test(new_ext.Variance())
 
 
 def test_interface_sum_grad_squared():
-    interface_test(ext.SUM_GRAD_SQUARED())
+    interface_test(new_ext.SumGradSquared())
 
 
 def test_interface_diag_ggn():
-    interface_test(ext.DIAG_GGN())
+    interface_test(new_ext.DiagGGN())
+
+
+def test_interface_diag_h():
+    interface_test(new_ext.DiagHessian())
 
 
 def test_interface_kflr():
-    interface_test(ext.KFLR())
+    interface_test(new_ext.KFLR())
 
 
 def test_interface_kfra():
-    interface_test(ext.KFRA())
+    interface_test(new_ext.KFRA())
 
 
 def test_interface_kfac():
-    interface_test(ext.KFAC())
+    interface_test(new_ext.KFAC())
 
 
 @pytest.mark.skip()
 def test_interface_hbp():
-    interface_test(ext.HBP())
+    interface_test(new_ext.HBP())
 
 
 @pytest.mark.skip()
 def test_interface_cmp():
-    interface_test(ext.CMP())
-
-
-@pytest.mark.skip()
-def test_interface_grad_conv():
-    interface_test(ext.GRAD(), use_conv=True)
+    interface_test(new_ext.CMP())
 
 
 def test_interface_batch_grad_conv():
-    interface_test(ext.BATCH_GRAD(), use_conv=True)
+    interface_test(new_ext.BatchGrad(), use_conv=True)
 
 
 def test_interface_sum_grad_squared_conv():
-    interface_test(ext.SUM_GRAD_SQUARED(), use_conv=True)
+    interface_test(new_ext.SumGradSquared(), use_conv=True)
 
 
 def test_interface_diag_ggn_conv():
-    interface_test(ext.DIAG_GGN(), use_conv=True)
+    interface_test(new_ext.DiagGGN(), use_conv=True)
 
 
 def test_interface_kflr_conv():
-    interface_test(ext.KFLR(), use_conv=True)
+    interface_test(new_ext.KFLR(), use_conv=True)
 
 
 @pytest.mark.skip()
 def test_interface_kfra_conv():
-    interface_test(ext.KFRA(), use_conv=True)
+    interface_test(new_ext.KFRA(), use_conv=True)
 
 
 def test_interface_kfac_conv():
-    interface_test(ext.KFAC(), use_conv=True)
+    interface_test(new_ext.KFAC(), use_conv=True)
 
 
 @pytest.mark.skip()
 def test_interface_cmp_conv():
-    interface_test(ext.CMP(), use_conv=True)
+    interface_test(new_ext.CMP(), use_conv=True)
 
 
 @pytest.mark.skip()
 def test_interface_hbp_conv():
-    interface_test(ext.HBP(), use_conv=True)
+    interface_test(new_ext.HBP(), use_conv=True)

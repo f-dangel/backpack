@@ -1,14 +1,14 @@
 import torch
 from .implementation import Implementation
 from backpack import backpack
-import backpack.extensions as ext
-from backpack.curvature import Curvature
-from backpack.secondorder.utils import matrix_from_kron_facs
-from backpack.secondorder.strategies import (
+from backpack.extensions.curvature import Curvature
+from backpack.extensions.secondorder.utils import matrix_from_kron_facs
+from backpack.extensions.secondorder.hbp import (
     ExpectationApproximation,
     BackpropStrategy,
     LossHessianStrategy,
 )
+import backpack.extensions as new_ext
 
 
 class BpextImpl(Implementation):
@@ -16,37 +16,38 @@ class BpextImpl(Implementation):
         return list(torch.autograd.grad(self.loss(), self.model.parameters()))
 
     def batch_gradients(self):
-        with backpack(ext.BATCH_GRAD()):
+        with backpack(new_ext.BatchGrad()):
             self.loss().backward()
             batch_grads = [p.grad_batch for p in self.model.parameters()]
         return batch_grads
 
     def batch_l2(self):
-        with backpack(ext.BATCH_L2()):
+        with backpack(new_ext.BatchL2Grad()):
             self.loss().backward()
             batch_l2s = [p.batch_l2 for p in self.model.parameters()]
         return batch_l2s
 
     def variance(self):
-        with backpack(ext.VARIANCE()):
+        with backpack(new_ext.Variance()):
             self.loss().backward()
             variances = [p.variance for p in self.model.parameters()]
         return variances
 
     def sgs(self):
-        with backpack(ext.SUM_GRAD_SQUARED()):
+        with backpack(new_ext.SumGradSquared()):
             self.loss().backward()
             sgs = [p.sum_grad_squared for p in self.model.parameters()]
         return sgs
 
     def diag_ggn(self):
-        with backpack(ext.DIAG_GGN()):
+        print(self.model)
+        with backpack(new_ext.DiagGGN()):
             self.loss().backward()
             diag_ggn = [p.diag_ggn for p in self.model.parameters()]
         return diag_ggn
 
     def diag_h(self):
-        with backpack(ext.DIAG_H()):
+        with backpack(new_ext.DiagHessian()):
             self.loss().backward()
             diag_h = [p.diag_h for p in self.model.parameters()]
         return diag_h
@@ -57,19 +58,16 @@ class BpextImpl(Implementation):
     def hmp(self, mat_list):
         assert len(mat_list) == len(list(self.model.parameters()))
         results = []
-        with backpack(ext.CMP(Curvature.HESSIAN)):
+        with backpack(new_ext.CMP(Curvature.HESSIAN)):
             self.loss().backward()
             for p, mat in zip(self.model.parameters(), mat_list):
                 results.append(p.cmp(mat))
         return results
 
-    def hvp(self, vec_list):
-        return self.hmp(vec_list)
-
     def ggn_mp(self, mat_list):
         assert len(mat_list) == len(list(self.model.parameters()))
         results = []
-        with backpack(ext.CMP(Curvature.GGN)):
+        with backpack(new_ext.CMP(Curvature.GGN)):
             self.loss().backward()
             for p, mat in zip(self.model.parameters(), mat_list):
                 results.append(p.cmp(mat))
@@ -88,13 +86,13 @@ class BpextImpl(Implementation):
         return results
 
     def kfra_blocks(self):
-        return self.matrices_from_kronecker_curvature(ext.KFRA, "kfra")
+        return self.matrices_from_kronecker_curvature(new_ext.KFRA, "kfra")
 
     def kflr_blocks(self):
-        return self.matrices_from_kronecker_curvature(ext.KFLR, "kflr")
+        return self.matrices_from_kronecker_curvature(new_ext.KFLR, "kflr")
 
     def kfac_blocks(self):
-        return self.matrices_from_kronecker_curvature(ext.KFAC, "kfac")
+        return self.matrices_from_kronecker_curvature(new_ext.KFAC, "kfac")
 
     def hbp_with_curv(self,
                       curv_type,
@@ -103,7 +101,7 @@ class BpextImpl(Implementation):
                       ea_strategy=ExpectationApproximation.BOTEV_MARTENS):
         results = []
         with backpack(
-                ext.HBP(
+                new_ext.HBP(
                     curv_type=curv_type,
                     loss_hessian_strategy=loss_hessian_strategy,
                     backprop_strategy=backprop_strategy,

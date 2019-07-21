@@ -1,16 +1,8 @@
-"""Computation of batch gradients.
-
-Computing parameter gradients for each batch sample can be used
-to calculate the variance of a gradient.
+"""
+BackPACK
 """
 import torch
-from .firstorder import batchgrad, sumgradsquared, batchl2grad, variance
-from .secondorder import diagggn, diagh, hbp
-from .extensions import Extension, Extensions
-from . import curvmatprod as cmp
 from .context import CTX
-
-DEBUGGING = True
 
 
 class backpack():
@@ -20,28 +12,64 @@ class backpack():
     """
 
     def __init__(self, *args):
+        """
+        Activate the Backpack extensions.
+
+        Example usage:
+        ```
+        X, Y, model, lossfunc = get_problem()
+
+        backpack.extend(model)
+        backpack.extend(lossfunc)
+
+        with backpack.backpack(backpack.extensions.Variance()):
+            lossfunc(model(X), Y).backward()
+
+            for p in model.parameters():
+                print(p.grad)
+                print(p.variance)
+        ```
+
+        .. warning ::
+
+            The quantities computed by backPACK may be garbage collected when
+            exiting the `with` clause. Use them within the `with` clause or
+            assign them to another variable.
+
+        Parameters:
+            args: [BackpropExtension]
+                The extensions to activate for the backward pass.
+        """
         self.args = args
 
     def __enter__(self):
-        self.old_CTX = CTX.active_exts()
+        self.old_CTX = CTX.get_active_exts()
         CTX.set_active_exts(self.args)
 
     def __exit__(self, type, value, traceback):
         CTX.set_active_exts(self.old_CTX)
         CTX.clear()
 
-def has_children(mod):
-    return len(list(mod.children())) > 0
 
+def extend(module, debug=True):
+    """
+    Extends the `module` to make it backPACK-ready.
 
-def extend(module):
-
-    if DEBUGGING:
+    Attributes
+    ----------
+    module: torch.nn.Module
+        The module to extend
+    debug: Bool, optional (default: False)
+        If true, will print debug messages during the extension and backward.
+    """
+    if debug:
         print("[DEBUG] Extending", module)
 
-    if has_children(module):
-        for child in module.children():
-            extend(child)
+    for child in module.children():
+        extend(child)
+
+    if getattr(module, "_backpack_extend", False):
+        return module
 
     def store_io(module, input, output):
         for i in range(len(input)):
@@ -51,63 +79,27 @@ def extend(module):
     def store_shapes(module, input, output):
         """Store dimensionality of output as buffer."""
         for i in range(len(input)):
-            module.register_buffer('input{}_shape'.format(i),
-                                   torch.IntTensor([*input[i].size()]))
-        module.register_buffer('output_shape',
-                               torch.IntTensor([*output.size()]))
+            module.register_buffer(
+                'input{}_shape'.format(i),
+                torch.IntTensor([*input[i].size()])
+            )
+        module.register_buffer(
+            'output_shape',
+            torch.IntTensor([*output.size()])
+        )
 
-    def run_extensions(module, grad_input, grad_output):
-        """Check which quantities need to be computed and evaluate them."""
-        if DEBUGGING:
-            print("[DEBUG] Backward Hook called on [{}]".format(module))
-            if len(CTX.active_exts()) == 0:
-                print("[DEBUG] No Active Extension")
-            else:
-                print("[DEBUG] Extensions active: {}".format(
-                    CTX.active_exts()))
-
-        grad_out = [grad_output[i] for i in range(len(grad_output))]
-
-        for extension in CTX.active_exts():
-
-            exts_for_mod = list(
-                Extensions.get_extensions_for([extension], module))
-
-            if DEBUGGING and len(exts_for_mod) == 0:
-                print(" └─[DEBUG] No extension registered for {}".format(
-                    module.__class__))
-
-            for bpext in exts_for_mod:
-                if DEBUGGING:
-                    print(" └─[DEBUG] Backward hook {}".format(
-                        bpext.__class__, ))
-
-                bpext.apply(extension, module, grad_input, grad_out)
+    def run_extensions(module_, g_inp, g_out):
+        for backpack_extension in CTX.get_active_exts():
+            if debug:
+                print(
+                    "[DEBUG] Running extension", backpack_extension,
+                    "on", module
+                )
+            backpack_extension.apply(module_, g_inp, g_out)
 
     CTX.add_hook_handle(module.register_forward_hook(store_io))
     CTX.add_hook_handle(module.register_forward_hook(store_shapes))
     CTX.add_hook_handle(module.register_backward_hook(run_extensions))
 
+    setattr(module, "_backpack_extend", True)
     return module
-
-
-def extended(moduleFunc):
-    def instanciate_and_extend(*args, **kwargs):
-        return extend(moduleFunc(*args, **kwargs))
-
-    return instanciate_and_extend
-
-
-EXTENSIONS = [
-    *batchgrad.EXTENSIONS,
-    *sumgradsquared.EXTENSIONS,
-    *diagggn.EXTENSIONS,
-    *batchl2grad.EXTENSIONS,
-    *variance.EXTENSIONS,
-    *diagh.EXTENSIONS,
-    *cmp.EXTENSIONS,
-    *hbp.EXTENSIONS,
-]
-
-for backpropextension in EXTENSIONS:
-    Extensions.register(backpropextension)

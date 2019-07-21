@@ -1,4 +1,5 @@
-"""(Jacobian/Transpose Jacobian/GGN/Hessian)-vector products with autograd.
-
-Adapted from the original implementation by Piotr Sokol (https://discuss.pytorch.org/t/adding-functionality-hessian-and-fisher-information-vector-products/23295).
+"""
+A collection of helper functions for Hessian-free operations,
+(Jacobian, Jacobian Transpose, GGN, Hessian)-vector products,
+using Pytorch's with autograd.
 """

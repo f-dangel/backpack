@@ -14,9 +14,7 @@ from .test_problem import TestProblem
 
 from backpack.core.layers import Flatten
 from backpack import extend as xtd
-from backpack import backpack
 
-import backpack.extensions as ext
 
 N, C, H, W = 100, 3, 4, 4
 D = C * H * W
