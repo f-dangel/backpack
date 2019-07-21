@@ -68,6 +68,9 @@ def extend(module, debug=True):
     for child in module.children():
         extend(child)
 
+    if getattr(module, "_backpack_extend", False):
+        return module
+
     def store_io(module, input, output):
         for i in range(len(input)):
             setattr(module, 'input{}'.format(i), input[i])
@@ -90,7 +93,7 @@ def extend(module, debug=True):
             if debug:
                 print(
                     "[DEBUG] Running extension", backpack_extension,
-                    "on ", module
+                    "on", module
                 )
             backpack_extension.apply(module_, g_inp, g_out)
 
@@ -98,4 +101,5 @@ def extend(module, debug=True):
     CTX.add_hook_handle(module.register_forward_hook(store_shapes))
     CTX.add_hook_handle(module.register_backward_hook(run_extensions))
 
+    setattr(module, "_backpack_extend", True)
     return module
