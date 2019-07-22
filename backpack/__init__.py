@@ -66,7 +66,7 @@ def extend(module, debug=True):
         print("[DEBUG] Extending", module)
 
     for child in module.children():
-        extend(child)
+        extend(child, debug=debug)
 
     if getattr(module, "_backpack_extend", False):
         return module

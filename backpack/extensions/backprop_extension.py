@@ -68,7 +68,6 @@ class BackpropExtension:
 
             return no_op
 
-        print(module.__class__, self.savefield)
         return module_extension.apply
 
     def apply(self, module, g_inp, g_out):
