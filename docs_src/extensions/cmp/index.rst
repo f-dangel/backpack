@@ -1,0 +1,2 @@
+Block curvature-matrix products
+====================================

@@ -1,26 +1,8 @@
-# Python cache files
 __pycache__/
 *.egg-info/
 **/*.pyc
 .cache
-**/.ipynb_checkpoints
-
-# virtual environment files
-.venv/
-
-# datasets and logged data from experiments
-dat/
-
-# datasets for example
-examples/hbp/CIFAR10
-examples/hbp/MNIST
-
-# figures
-fig/
-
-# documentation
-**/*.html
-**/*.rst
-!README.rst
-!doc/source/index.rst
-doc/build
+docs/
+examples/data
+.idea
+ 
