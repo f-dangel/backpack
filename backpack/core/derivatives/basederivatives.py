@@ -30,4 +30,10 @@ class BaseDerivatives():
         return batch, tensor.clone().detach().view(batch, -1)
 
     def get_batch(self, module):
-        return module.input0.size(0)
+        return self.get_input(module).size(0)
+
+    def get_input(self, module):
+        return module.input0
+
+    def get_output(self, module):
+        return module.output

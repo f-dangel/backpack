@@ -1,5 +1,5 @@
+from backpack.core.layers import Conv2dConcat, LinearConcat
 from torch import nn
-from backpack.core.layers import LinearConcat, Conv2dConcat
 
 LINEARS = {
     'Linear': nn.Linear,
@@ -24,4 +24,8 @@ PADDINGS = {
 POOLINGS = {
     'MaxPool2d': nn.MaxPool2d,
     'AvgPool2d': nn.AvgPool2d,
+}
+
+BN = {
+    'BatchNorm1d': nn.BatchNorm1d,
 }
