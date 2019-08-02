@@ -74,6 +74,11 @@ class Curvature():
                     which, cls.CHOICES))
 
     @classmethod
+    def require_residual(cls, curv_type):
+        cls.__check_exists(curv_type)
+        return cls.REQUIRE_RESIDUAL[curv_type]
+
+    @classmethod
     def modify_residual(cls, residual, curv_type):
         # None if zero or curvature neglects 2nd-order module effects
         if residual is None:
