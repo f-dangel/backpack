@@ -77,9 +77,7 @@ class BatchNorm1dDerivatives(BaseDerivatives):
     def weight_jac_mat_prod(self, module, g_inp, g_out, mat):
         batch = self.get_batch(module)
         x_hat, _ = self.get_normalized_input_and_var(module)
-        jac_mat = mat.unsqueeze(0).repeat(batch, 1, 1)
-        jac_mat = einsum('bi,bic->bic', (x_hat, jac_mat))
-        return jac_mat
+        return einsum('bi,ic->bic', (x_hat, mat))
 
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     def weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
@@ -91,8 +89,7 @@ class BatchNorm1dDerivatives(BaseDerivatives):
     @jmp_unsqueeze_if_missing_dim(mat_dim=2)
     def bias_jac_mat_prod(self, module, g_inp, g_out, mat):
         batch = self.get_batch(module)
-        jac_mat = mat.unsqueeze(0).repeat(batch, 1, 1)
-        return jac_mat
+        return mat.unsqueeze(0).repeat(batch, 1, 1)
 
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     def bias_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
