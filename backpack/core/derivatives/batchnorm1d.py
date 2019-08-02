@@ -25,20 +25,44 @@ class BatchNorm1dDerivatives(BaseDerivatives):
     # Transpose Jacobian-matrix product
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     def jac_t_mat_prod(self, module, g_inp, g_out, mat):
-        # Need tests
-        raise NotImplementedError
-        # assert module.affine is True
-        # batch = self.get_batch(module)
-        # x_hat, var = self.get_normalized_input_and_var(module)
+        """
+        Note:
+        -----
+        The Jacobian is *not independent* among the batch dimension, i.e.
+        D z_i = D z_i(x_1, ..., x_B).
 
-        # x_hat_mat = mat * module.weight
+        This structure breaks the computation of the GGN diagonal,
+        for curvature-matrix products it should still work.
 
-        # jac_t_mat = batch * x_hat_mat
-        # jac_t_mat -= x_hat_mat.sum(0)
-        # jac_t_mat -= x_hat * (x_hat_mat * x_hat).sum(0)
-        # jac_t_mat /= (var + module.eps).sqrt() * batch
+        References:
+        -----------
+        https://kevinzakka.github.io/2016/09/14/batch_normalization/
+        """
+        assert module.affine is True
 
-        # return jac_t_mat
+        batch = self.get_batch(module)
+        x_hat, var = self.get_normalized_input_and_var(module)
+        ivar = 1. / (var + module.eps).sqrt()
+
+        # TODO: Remove DEBUG once the jac_mat is implemented and therefore
+        #       this method is tested within curvmatprod
+        # check if jac_t(g_out) is equal to g_inp
+        DEBUG = False
+        mat_for_jac = g_out[0].unsqueeze(-1) if DEBUG else mat
+
+        dx_hat = einsum('bic,i->bic', (mat_for_jac, module.weight))
+
+        jac_t_mat = batch * dx_hat
+        jac_t_mat -= dx_hat.sum(0).unsqueeze(0).expand_as(jac_t_mat)
+        jac_t_mat -= einsum('bi,sic,si->bic', (x_hat, dx_hat, x_hat))
+        jac_t_mat = einsum('bic,i->bic', (jac_t_mat, ivar / batch))
+
+        if DEBUG is True:
+            assert torch.allclose(jac_t_mat, g_inp[0].unsqueeze(-1))
+            print("[DEBUG] Batch Norm:\tjac_t_mat(grad_out) == grad_in")
+            raise Exception
+
+        return jac_t_mat
 
     def get_normalized_input_and_var(self, module):
         input = self.get_input(module)

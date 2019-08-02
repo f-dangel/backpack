@@ -30,6 +30,12 @@ TEST_PROBLEMS = {}
 
 for lin_name, lin_cls in LINEARS.items():
 
+    TEST_PROBLEMS["{}-bn-regression".format(
+        lin_name)] = make_regression_problem(
+            INPUT_SHAPE,
+            single_linear_layer(TEST_SETTINGS, lin_cls, activation_cls=None) +
+            [BatchNorm1d(TEST_SETTINGS["out_features"])])
+
     TEST_PROBLEMS["{}-bn-classification".format(
         lin_name)] = make_classification_problem(
             INPUT_SHAPE,
