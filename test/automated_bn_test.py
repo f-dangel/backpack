@@ -44,3 +44,40 @@ def test_batch_gradients_sum_to_grad(problem, device):
 
     check_sizes(autograd_res, backpack_res, list(problem.model.parameters()))
     check_values(autograd_res, backpack_res)
+
+
+@pytest.mark.parametrize("problem,device",
+                         ALL_CONFIGURATIONS,
+                         ids=CONFIGURATION_IDS)
+def test_ggn_mp(problem, device):
+    problem.to(device)
+
+    NUM_COLS = 10
+    matrices = [
+        torch.randn(p.numel(), NUM_COLS, device=device)
+        for p in problem.model.parameters()
+    ]
+
+    autograd_res = AutogradImpl(problem).ggn_mp(matrices)
+    backpack_res = BpextImpl(problem).ggn_mp(matrices)
+
+    check_sizes(autograd_res, backpack_res)
+    check_values(autograd_res, backpack_res)
+
+
+@pytest.mark.parametrize("problem,device",
+                         ALL_CONFIGURATIONS,
+                         ids=CONFIGURATION_IDS)
+def test_ggn_vp(problem, device):
+    problem.to(device)
+
+    vecs = [
+        torch.randn(p.numel(), device=device)
+        for p in problem.model.parameters()
+    ]
+
+    backpack_res = BpextImpl(problem).ggn_vp(vecs)
+    autograd_res = AutogradImpl(problem).ggn_vp(vecs)
+
+    check_sizes(autograd_res, backpack_res)
+    check_values(autograd_res, backpack_res)

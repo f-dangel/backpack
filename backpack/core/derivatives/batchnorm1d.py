@@ -20,7 +20,7 @@ class BatchNorm1dDerivatives(BaseDerivatives):
     # Jacobian-matrix product
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     def jac_mat_prod(self, module, g_inp, g_out, mat):
-        raise NotImplementedError
+        return self.jac_t_mat_prod(module, g_inp, g_out, mat)
 
     # Transpose Jacobian-matrix product
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
@@ -37,6 +37,7 @@ class BatchNorm1dDerivatives(BaseDerivatives):
         References:
         -----------
         https://kevinzakka.github.io/2016/09/14/batch_normalization/
+        https://chrisyeh96.github.io/2017/08/28/deriving-batchnorm-backprop.html
         """
         assert module.affine is True
 
@@ -74,7 +75,11 @@ class BatchNorm1dDerivatives(BaseDerivatives):
 
     @jmp_unsqueeze_if_missing_dim(mat_dim=2)
     def weight_jac_mat_prod(self, module, g_inp, g_out, mat):
-        raise NotImplementedError
+        batch = self.get_batch(module)
+        x_hat, _ = self.get_normalized_input_and_var(module)
+        jac_mat = mat.unsqueeze(0).repeat(batch, 1, 1)
+        jac_mat = einsum('bi,bic->bic', (x_hat, jac_mat))
+        return jac_mat
 
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     def weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
@@ -85,7 +90,9 @@ class BatchNorm1dDerivatives(BaseDerivatives):
 
     @jmp_unsqueeze_if_missing_dim(mat_dim=2)
     def bias_jac_mat_prod(self, module, g_inp, g_out, mat):
-        raise NotImplementedError
+        batch = self.get_batch(module)
+        jac_mat = mat.unsqueeze(0).repeat(batch, 1, 1)
+        return jac_mat
 
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     def bias_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
