@@ -44,6 +44,9 @@ class BackpropExtension:
         self.__module_extensions = module_exts
         self.__fail_mode = fail_mode
 
+    def add_module_extension(self, module, extension):
+        self.__module_extensions[module] = extension
+
     def __get_module_extension(self, module):
         module_extension = self.__module_extensions.get(module.__class__)
         no_op = lambda *args: None
