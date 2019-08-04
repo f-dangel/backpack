@@ -24,6 +24,7 @@ class BackpropExtension:
             print(p.myfield)
     ```
     """
+    __external_module_extensions = {}
 
     def __init__(self, savefield, module_exts, fail_mode=FAIL_ERROR):
         """
@@ -41,11 +42,16 @@ class BackpropExtension:
             - "SILENT": skip the module silently
         """
         self.savefield = savefield
-        self.__module_extensions = module_exts
+        self.__module_extensions = {
+            **module_exts,
+            **self.__class__.__external_module_extensions,
+        }
+
         self.__fail_mode = fail_mode
 
-    def add_module_extension(self, module, extension):
-        self.__module_extensions[module] = extension
+    @classmethod
+    def add_module_extension(cls, module, extension):
+        cls.__external_module_extensions[module] = extension
 
     def __get_module_extension(self, module):
         module_extension = self.__module_extensions.get(module.__class__)
@@ -60,14 +66,12 @@ class BackpropExtension:
                 raise NotImplementedError(
                     "Extension saving to {} ".format(self.savefield) +
                     "does not have an extension for " +
-                    "Module {}".format(module.__class__)
-                )
+                    "Module {}".format(module.__class__))
             elif self.__fail_mode == FAIL_WARN:
                 warnings.warn(
                     "Extension saving to {} ".format(self.savefield) +
                     "does not have an extension for " +
-                    "Module {}".format(module.__class__)
-                )
+                    "Module {}".format(module.__class__))
 
             return no_op
 
