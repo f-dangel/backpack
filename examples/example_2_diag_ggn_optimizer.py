@@ -17,6 +17,7 @@ x_{t+1} = x_t - (G_t + bI)^{-1} g_t
 
 from backpack import backpack, extend
 from backpack.extensions import DiagGGN
+from backpack.extensions.secondorder.hbp import LossHessianStrategy
 from torch import manual_seed
 from torch.nn import CrossEntropyLoss
 from torch.optim.optimizer import Optimizer
@@ -31,7 +32,7 @@ class DiagGGNConstantDampingOptimizer(Optimizer):
         """
         The closure should reevaluate the model and return the loss.
         """
-        with backpack(DiagGGN()):
+        with backpack(DiagGGN(loss_hessian_strategy=LossHessianStrategy.SAMPLING)):
             loss = closure()
             loss.backward()
             for group in self.param_groups:
@@ -42,8 +43,8 @@ class DiagGGNConstantDampingOptimizer(Optimizer):
 
 
 # Hyperparameters
-BATCH_SIZE = 512
-DAMPING = 100.
+BATCH_SIZE = 128
+DAMPING = 10.0
 EPOCHS = 1
 manual_seed(0)
 
