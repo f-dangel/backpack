@@ -1,6 +1,8 @@
 from math import sqrt
 from warnings import warn
-from torch import diag_embed, ones_like, softmax, sqrt as torchsqrt, diag, randn, multinomial
+
+from torch import diag, diag_embed, multinomial, ones_like, randn, softmax
+from torch import sqrt as torchsqrt
 from torch.nn import CrossEntropyLoss
 from torch.nn.functional import one_hot
 
@@ -30,8 +32,19 @@ class CrossEntropyLossDerivatives(BaseDerivatives):
         C = module.input0.shape[1]
 
         probs = self.get_probs(module).unsqueeze(-1).repeat(1, 1, M)
-        classes = one_hot(
-            multinomial(probs, M, replacement=True), num_classes=C)
+
+        # HOTFIX (torch bug): multinomial not working with CUDA
+        original_dev = probs.device
+        if probs.is_cuda:
+            probs = probs.cpu()
+
+        classes = one_hot(multinomial(probs, M, replacement=True),
+                          num_classes=C)
+
+        probs = probs.to(original_dev)
+        classes = classes.to(original_dev)
+        # END
+
         classes = classes.transpose(1, 2).float()
 
         sqrt_mc_h = (probs - classes) / sqrt(M)
