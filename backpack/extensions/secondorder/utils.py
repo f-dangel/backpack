@@ -39,11 +39,11 @@ def vp_einsum_equation(num_factors):
     for _ in range(num_factors):
         row_idx, col_idx = next(letters), next(letters)
 
-        in_str += row_idx + col_idx
+        in_str += row_idx + col_idx + ","
         v_str += col_idx
         out_str += row_idx
 
-    return "{},{}->{}".format(in_str, v_str, out_str)
+    return "{}{}->{}".format(in_str, v_str, out_str)
 
 
 def all_tensors_of_order(order, tensors):
