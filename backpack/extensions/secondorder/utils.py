@@ -16,6 +16,7 @@ def matrix_from_kron_facs(factors):
 
 
 def vp_from_kron_facs(factors):
+    """Return function v ↦ (A ⊗ B ⊗ ...)v for `factors = [A, B, ...]` """
     assert all_tensors_of_order(order=2, tensors=factors)
 
     shapes = [list(f.size()) for f in factors]
@@ -27,9 +28,18 @@ def vp_from_kron_facs(factors):
     def vp(v):
         assert len(v.shape) == 1
         v_reshaped = v.view(col_dims)
-        return einsum(equation, *factors, v_reshaped).view(-1)
+        return einsum(equation, v_reshaped, *factors).view(-1)
 
     return vp
+
+
+def multiply_vec_with_kron_facs(factors, v):
+    """Return (A ⊗ B ⊗ ...) v for `factors = [A, B, ...]`
+
+    All Kronecker factors have to be of order-2-tensors.
+    """
+    vp = vp_from_kron_facs(factors)
+    return vp(v)
 
 
 def vp_einsum_equation(num_factors):
@@ -39,11 +49,11 @@ def vp_einsum_equation(num_factors):
     for _ in range(num_factors):
         row_idx, col_idx = next(letters), next(letters)
 
-        in_str += row_idx + col_idx + ","
+        in_str += "," + row_idx + col_idx
         v_str += col_idx
         out_str += row_idx
 
-    return "{}{}->{}".format(in_str, v_str, out_str)
+    return "{}{}->{}".format(v_str, in_str, out_str)
 
 
 def all_tensors_of_order(order, tensors):
