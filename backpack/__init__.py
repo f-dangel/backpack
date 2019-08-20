@@ -51,7 +51,7 @@ class backpack():
         CTX.clear()
 
 
-def extend(module, debug=True):
+def extend(module, debug=False):
     """
     Extends the `module` to make it backPACK-ready.
 
@@ -68,7 +68,8 @@ def extend(module, debug=True):
     for child in module.children():
         extend(child, debug=debug)
 
-    if getattr(module, "_backpack_extend", False):
+    module_was_already_extended = getattr(module, "_backpack_extend", False)
+    if module_was_already_extended:
         return module
 
     def store_io(module, input, output):
@@ -96,6 +97,15 @@ def extend(module, debug=True):
                     "on", module
                 )
             backpack_extension.apply(module_, g_inp, g_out)
+
+        # Memory cleanup
+        delattr(module_, "output")
+        delattr(module_, "output_shape")
+        i = 0
+        while hasattr(module_, "input{}".format(i)):
+            delattr(module_, "input{}_shape".format(i))
+            delattr(module_, "input{}".format(i))
+            i += 1
 
     CTX.add_hook_handle(module.register_forward_hook(store_io))
     CTX.add_hook_handle(module.register_forward_hook(store_shapes))
