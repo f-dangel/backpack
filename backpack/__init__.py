@@ -89,6 +89,20 @@ def extend(module, debug=False):
             torch.IntTensor([*output.size()])
         )
 
+    def memory_cleanup(module):
+        if hasattr(module, "output"):
+            delattr(module, "output")
+        if hasattr(module, "output_shape"):
+            delattr(module, "output_shape")
+        i = 0
+        while hasattr(module, "input{}".format(i)):
+            delattr(module, "input{}".format(i))
+            i += 1
+        i = 0
+        while hasattr(module, "input{}_shape".format(i)):
+            delattr(module, "input{}_shape".format(i))
+            i += 1
+
     def run_extensions(module_, g_inp, g_out):
         for backpack_extension in CTX.get_active_exts():
             if debug:
@@ -97,15 +111,7 @@ def extend(module, debug=False):
                     "on", module
                 )
             backpack_extension.apply(module_, g_inp, g_out)
-
-        # Memory cleanup
-        delattr(module_, "output")
-        delattr(module_, "output_shape")
-        i = 0
-        while hasattr(module_, "input{}".format(i)):
-            delattr(module_, "input{}_shape".format(i))
-            delattr(module_, "input{}".format(i))
-            i += 1
+        memory_cleanup(module_)
 
     CTX.add_hook_handle(module.register_forward_hook(store_io))
     CTX.add_hook_handle(module.register_forward_hook(store_shapes))
