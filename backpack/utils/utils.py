@@ -32,11 +32,12 @@ def einsum(equation, *operands):
     return EINSUMS[BPEXTS_EINSUM](equation, *operands)
 
 
-def random_psd_matrix(dim, device=None, diag_shift=0.01):
+def random_psd_matrix(dim, device=None):
     """Random positive semi-definite matrix on device."""
     if device is None:
         device = torch.device("cpu")
 
     rand_mat = torch.randn(dim, dim, device=device)
-    shift = diag_shift * torch.eye(dim, device=device)
-    return rand_mat.matmul(rand_mat.t()) + shift
+    rand_mat = 0.5 * (rand_mat + rand_mat.t())
+    shift = dim * torch.eye(dim, device=device)
+    return rand_mat + shift
