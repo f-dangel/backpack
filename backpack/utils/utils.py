@@ -1,7 +1,7 @@
 """Utility functions."""
 
-import torch
 import opt_einsum as oe
+import torch
 
 TORCH = "torch"
 OPT_EINSUM = "opt_einsum"
@@ -30,3 +30,13 @@ def einsum(equation, *operands):
     See `backpack.utils.utils.EINSUMS` for supported implementations.
     """
     return EINSUMS[BPEXTS_EINSUM](equation, *operands)
+
+
+def random_psd_matrix(dim, device=None, diag_shift=0.01):
+    """Random positive semi-definite matrix on device."""
+    if device is None:
+        device = torch.device("cpu")
+
+    rand_mat = torch.randn(dim, dim, device=device)
+    shift = diag_shift * torch.eye(dim, device=device)
+    return rand_mat.matmul(rand_mat.transpose()) + shift

@@ -1,11 +1,13 @@
 """The code relies on the insight that average pooling can be understood as
 convolution over single channels with a constant kernel."""
 
+import warnings
+
 import torch.nn
 from torch.nn import AvgPool2d, Conv2d, ConvTranspose2d
 
 from ...utils import conv as convUtils
-from ...utils.utils import einsum
+from ...utils.utils import einsum, random_psd_matrix
 from .basederivatives import BaseDerivatives
 from .utils import jmp_unsqueeze_if_missing_dim
 
@@ -16,6 +18,24 @@ class AvgPool2DDerivatives(BaseDerivatives):
 
     def hessian_is_zero(self):
         return True
+
+    def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
+        """CAUTION: Return a random PSD matrix.
+
+        TODO:
+        -----
+        should be identical to Conv2d
+        """
+        warnings.warn("[DUMMY IMPLEMENTATION] KFRA for AvgPool2d")
+        _, in_c, in_x, in_y = module.input0.size()
+        in_features = in_c * in_x * in_y
+        device = mat.device
+
+        return random_psd_matrix(in_features, device=device)
+
+    def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
+
+        raise NotImplementedError
 
     # Jacobian-matrix product
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)

@@ -1,9 +1,12 @@
-from torch import zeros, prod
+import warnings
+
+from torch import prod, zeros
 from torch.nn import MaxPool2d
 from torch.nn.functional import max_pool2d
-from ...utils import conv as convUtils
-from .basederivatives import BaseDerivatives
 
+from ...utils import conv as convUtils
+from ...utils.utils import random_psd_matrix
+from .basederivatives import BaseDerivatives
 from .utils import jmp_unsqueeze_if_missing_dim
 
 
@@ -13,15 +16,28 @@ class MaxPool2DDerivatives(BaseDerivatives):
 
     def get_pooling_idx(self, module):
         # TODO: Do not recompute but get from forward pass of module
-        _, pool_idx = max_pool2d(
-            module.input0,
-            kernel_size=module.kernel_size,
-            stride=module.stride,
-            padding=module.padding,
-            dilation=module.dilation,
-            return_indices=True,
-            ceil_mode=module.ceil_mode)
+        _, pool_idx = max_pool2d(module.input0,
+                                 kernel_size=module.kernel_size,
+                                 stride=module.stride,
+                                 padding=module.padding,
+                                 dilation=module.dilation,
+                                 return_indices=True,
+                                 ceil_mode=module.ceil_mode)
         return pool_idx
+
+    def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
+        """CAUTION: Return a random PSD matrix.
+
+        TODO:
+        -----
+        require thinking how to implement efficiently
+        """
+        warnings.warn("[DUMMY IMPLEMENTATION] KFRA for MaxPool2d")
+        _, in_c, in_x, in_y = module.input0.size()
+        in_features = in_c * in_x * in_y
+        device = mat.device
+
+        return random_psd_matrix(in_features, device=device)
 
     def hessian_is_zero(self):
         return True
@@ -79,8 +95,11 @@ class MaxPool2DDerivatives(BaseDerivatives):
         _, _, in_x, in_y = module.input0.size()
         num_classes = mat.shape[-1]
 
-        result = zeros(
-            batch, channels, in_x * in_y, num_classes, device=mat.device)
+        result = zeros(batch,
+                       channels,
+                       in_x * in_y,
+                       num_classes,
+                       device=mat.device)
 
         pool_idx = self.get_pooling_idx(module)
         pool_idx = pool_idx.view(batch, channels, out_x * out_y)

@@ -1,7 +1,9 @@
+import warnings
+
 from torch.nn import ZeroPad2d
 from torch.nn.functional import pad
 
-from ...utils.utils import einsum
+from ...utils.utils import einsum, random_psd_matrix
 from .basederivatives import BaseDerivatives
 from .utils import jmp_unsqueeze_if_missing_dim
 
@@ -13,8 +15,15 @@ class ZeroPad2dDerivatives(BaseDerivatives):
     def hessian_is_zero(self):
         return True
 
-    # TODO: Require tests
     def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
+        """CAUTION: Return a random PSD matrix.
+
+        TODO: Code below should work, requires testing.
+        -----
+        # return unpadded mat
+        _, in_c, in_x, in_y = module.input0_shape
+        in_features = in_c * in_x * in_y
+
         # reshape into (out_c, out_x, out_y, out_c, out_x, out_y)
         _, out_c, out_x, out_y = module.output_shape
         result = mat.view(out_c, out_x, out_y, out_c, out_x, out_y)
@@ -33,7 +42,17 @@ class ZeroPad2dDerivatives(BaseDerivatives):
                         idx_right].contiguous()
 
         # return unpadded mat
-        return result
+        _, in_c, in_x, in_y = module.input0_shape
+        in_features = in_c * in_x * in_y
+
+        return result.view(in_features, in_features)
+        """
+        warnings.warn("[DUMMY IMPLEMENTATION] KFRA for ZeroPad2d")
+        _, in_c, in_x, in_y = module.input0.size()
+        in_features = in_c * in_x * in_y
+        device = mat.device
+
+        return random_psd_matrix(in_features, device=device)
 
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     def jac_t_mat_prod(self, module, g_inp, g_out, mat):
