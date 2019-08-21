@@ -1,6 +1,6 @@
 import warnings
 
-from torch import prod, zeros
+from torch import prod, scatter_add, zeros
 from torch.nn import MaxPool2d
 from torch.nn.functional import max_pool2d
 
@@ -26,18 +26,27 @@ class MaxPool2DDerivatives(BaseDerivatives):
         return pool_idx
 
     def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
-        """CAUTION: Return a random PSD matrix.
-
-        TODO:
-        -----
-        require thinking how to implement efficiently
         """
-        warnings.warn("[DUMMY IMPLEMENTATION] KFRA for MaxPool2d")
-        _, in_c, in_x, in_y = module.input0.size()
-        in_features = in_c * in_x * in_y
-        device = mat.device
 
-        return random_psd_matrix(in_features, device=device)
+        Note: It is highly questionable whether this makes sense both
+              in terms of the approximation and memory costs.
+        """
+        device = mat.device
+        batch, channels, in_x, in_y = module.input0.size()
+        in_features = channels * in_x * in_y
+        _, _, out_x, out_y = module.output.size()
+        out_features = channels * out_x * out_y
+
+        pool_idx = self.get_pooling_idx(module).view(batch, channels,
+                                                     out_x * out_y)
+        result = zeros(in_features, in_features, device=device)
+
+        for b in range(batch):
+            idx = pool_idx[b, :, :]
+            temp = zeros(in_features, out_features, device=device)
+            temp.scatter_add_(1, idx, mat)
+            result.scatter_add_(0, idx.t(), temp)
+        return result / batch
 
     def hessian_is_zero(self):
         return True
