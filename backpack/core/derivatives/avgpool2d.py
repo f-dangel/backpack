@@ -33,10 +33,6 @@ class AvgPool2DDerivatives(BaseDerivatives):
 
         return random_psd_matrix(in_features, device=device)
 
-    def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
-
-        raise NotImplementedError
-
     # Jacobian-matrix product
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     def jac_mat_prod(self, module, g_inp, g_out, mat):
