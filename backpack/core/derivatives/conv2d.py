@@ -27,26 +27,29 @@ class Conv2DDerivatives(BaseDerivatives):
     def get_unfolded_input(self, module):
         return convUtils.unfold_func(module)(self.get_input(module))
 
+    # TODO: Require tests
     def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
-        """CAUTION: Return a random PSD matrix.
-
-        TODO:
-        -----
-        1) apply conv_transpose to multiply with W^T
-        result: W^T mat
-        2) transpose: mat^T W
-        3) apply conv_transpose
-        result: W^T mat^T W
-        4) since mat^T = mat, it should be okay to stop here
-           could do an additional transpose to obtain
-        return W^T mat W
-        """
-        warnings.warn("[DUMMY IMPLEMENTATION] KFRA for Conv2d")
         _, in_c, in_x, in_y = module.input0.size()
         in_features = in_c * in_x * in_y
-        device = mat.device
+        _, out_c, out_x, out_y = module.output.size()
+        out_features = out_c * out_x * out_y
 
-        return random_psd_matrix(in_features, device=device)
+        # 1) apply conv_transpose to multiply with W^T
+        result = mat.view(out_c, out_x, out_y, out_features)
+        result = einsum('cxyf->fcxy', (result, ))
+        # result: W^T mat
+        result = self.__apply_jacobian_t_of(module, result).view(
+            out_features, in_features)
+
+        # 2) transpose: mat^T W
+        result = result.t()
+
+        # 3) apply conv_transpose
+        result = result.view(in_features, out_c, out_x, out_y)
+        result = self.__apply_jacobian_t_of(module, result)
+
+        # 4) transpose to obtain W^T mat W
+        return result.view(in_features, in_features).t()
 
     # Jacobian-matrix product
     @jmp_unsqueeze_if_missing_dim(mat_dim=2)
