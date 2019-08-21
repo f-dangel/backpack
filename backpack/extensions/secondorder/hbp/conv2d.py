@@ -24,15 +24,11 @@ class HBPConv2d(HBPBaseModule):
         elif BackpropStrategy.is_sqrt(bp_strategy):
             return self._weight_for_sqrt(ext, module, backproped)
 
+    # TODO: Require tests
     def _weight_for_batch_average(self, ext, module, backproped):
-        """CAUTION: Return a random PSD matrix."""
-        warnings.warn("[DUMMY IMPLEMENTATION] KFRA weight for Conv2d")
-        out_c, in_c, k_x, k_y = module.weight.size()
-        device = module.weight.device
-        return [
-            random_psd_matrix(out_c, device=device),
-            random_psd_matrix(in_c * k_x * k_y, device=device)
-        ]
+        kron_factors = [self._factor_from_batch_average(module, backproped)]
+        kron_factors += self._factors_from_input(ext, module)
+        return kron_factors
 
     def _weight_for_sqrt(self, ext, module, backproped):
         kron_factors = [self._factor_from_sqrt(module, backproped)]
@@ -46,7 +42,7 @@ class HBPConv2d(HBPBaseModule):
         ea_strategy = ext.get_ea_strategy()
 
         if ExpectationApproximation.should_average_param_jac(ea_strategy):
-            raise NotImplementedError
+            raise NotImplementedError("Undefined")
         else:
             yield einsum('bik,bjk->ij', (X, X)) / batch
 
@@ -67,12 +63,17 @@ class HBPConv2d(HBPBaseModule):
     def _bias_for_sqrt(self, module, backproped):
         return [self._factor_from_sqrt(module, backproped)]
 
+    # TODO: Require tests
     def _bias_for_batch_average(self, module, backproped):
-        """CAUTION: Return a random PSD matrix."""
-        warnings.warn("[DUMMY IMPLEMENTATION] KFRA bias for Conv2d")
-        bias_dim = module.bias.numel()
-        device = module.bias.device
-        return [random_psd_matrix(bias_dim, device=device)]
+        return [self._factor_from_batch_average(module, backproped)]
+
+    def _factor_from_batch_average(self, module, backproped):
+        _, out_c, out_x, out_y = module.output.size()
+        out_pixels = out_x * out_y
+        # sum over spatial coordinates
+        result = backproped.view(out_c, out_pixels, out_c,
+                                 out_pixels).sum([1, 3])
+        return result.contiguous()
 
 
 class HBPConv2dConcat(HBPBaseModule):
