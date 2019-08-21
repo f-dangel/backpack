@@ -19,19 +19,31 @@ class AvgPool2DDerivatives(BaseDerivatives):
     def hessian_is_zero(self):
         return True
 
+    # TODO: Require tests
     def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
-        """CAUTION: Return a random PSD matrix.
+        """Use fact that average pooling can be implemented as conv."""
+        _, channels, in_x, in_y = module.input0.size()
+        in_features = channels * in_x * in_y
+        _, _, out_x, out_y = module.output.size()
+        out_features = channels * out_x * out_y
 
-        TODO:
-        -----
-        should be identical to Conv2d
-        """
-        warnings.warn("[DUMMY IMPLEMENTATION] KFRA for AvgPool2d")
-        _, in_c, in_x, in_y = module.input0.size()
-        in_features = in_c * in_x * in_y
-        device = mat.device
+        # 1) apply conv_transpose to multiply with W^T
+        result = mat.view(channels, out_x, out_y, out_features)
+        result = einsum('cxyf->fcxy', (result, )).contiguous()
+        result = result.view(out_features * channels, 1, out_x, out_y)
+        # result: W^T mat
+        result = self.__apply_jacobian_t_of(module, result)
+        result = result.view(out_features, in_features)
 
-        return random_psd_matrix(in_features, device=device)
+        # 2) transpose: mat^T W
+        result = result.t().contiguous()
+
+        # 3) apply conv_transpose
+        result = result.view(in_features * channels, 1, out_x, out_y)
+        result = self.__apply_jacobian_t_of(module, result)
+
+        # 4) transpose to obtain W^T mat W
+        return result.view(in_features, in_features).t()
 
     # Jacobian-matrix product
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
