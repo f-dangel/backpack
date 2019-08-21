@@ -1,8 +1,8 @@
-from ...utils.utils import einsum
 from torch.nn import ZeroPad2d
 from torch.nn.functional import pad
-from .basederivatives import BaseDerivatives
 
+from ...utils.utils import einsum
+from .basederivatives import BaseDerivatives
 from .utils import jmp_unsqueeze_if_missing_dim
 
 
@@ -12,6 +12,28 @@ class ZeroPad2dDerivatives(BaseDerivatives):
 
     def hessian_is_zero(self):
         return True
+
+    # TODO: Require tests
+    def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
+        # reshape into (out_c, out_x, out_y, out_c, out_x, out_y)
+        _, out_c, out_x, out_y = module.output_shape
+        result = mat.view(out_c, out_x, out_y, out_c, out_x, out_y)
+
+        # slicing indices
+        pad_left, pad_right, pad_top, pad_bottom = module.padding
+        idx_left, idx_right = pad_left, out_y - pad_right
+        idx_top, idx_bottom = pad_top, out_x - pad_bottom
+
+        # Unpad the rows
+        result = result[:, idx_top:idx_bottom, idx_left:
+                        idx_right, :, :, :].contiguous()
+
+        # Unpad the columns
+        result = result[:, :, :, :, idx_top:idx_bottom, idx_left:
+                        idx_right].contiguous()
+
+        # return unpadded mat
+        return result
 
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     def jac_t_mat_prod(self, module, g_inp, g_out, mat):
