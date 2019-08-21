@@ -39,4 +39,4 @@ def random_psd_matrix(dim, device=None, diag_shift=0.01):
 
     rand_mat = torch.randn(dim, dim, device=device)
     shift = diag_shift * torch.eye(dim, device=device)
-    return rand_mat.matmul(rand_mat.transpose()) + shift
+    return rand_mat.matmul(rand_mat.t()) + shift
