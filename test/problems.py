@@ -70,7 +70,7 @@ class Regression(ProblemBase):
 
 
 class Classification(ProblemBase):
-    """(network) -> Flatten -> MSE"""
+    """(network) -> Flatten -> CrossEntropy"""
 
     def get_loss_func(self):
         return torch.nn.CrossEntropyLoss()
@@ -86,11 +86,11 @@ class Classification(ProblemBase):
         return X, Y
 
 
-def make_regression_problem(settings, modules):
-    regression = Regression(settings, modules)
+def make_regression_problem(input_shape, modules):
+    regression = Regression(input_shape, modules)
     return regression()
 
 
-def make_classification_problem(settings, modules):
-    classification = Classification(settings, modules)
+def make_classification_problem(input_shape, modules):
+    classification = Classification(input_shape, modules)
     return classification()
