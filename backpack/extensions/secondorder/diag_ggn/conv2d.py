@@ -16,14 +16,9 @@ class DiagGGNConv2d(DiagGGNBaseModule):
         return einsum('bijc,bikc->i', (sqrt_ggn, sqrt_ggn))
 
     def weight(self, ext, module, grad_inp, grad_out, backproped):
-        sqrt_ggn = convUtils.separate_channels_and_pixels(module, backproped)
-
         X = convUtils.unfold_func(module)(module.input0)
-
-        AX = einsum('bkl,bmlc->cbkm', (X, sqrt_ggn))
-        AXAX = (AX ** 2).sum([0, 1]).transpose(0, 1)
-
-        return AXAX.view_as(module.weight)
+        weight_diag = convUtils.extract_weight_diagonal(module, X, backproped)
+        return weight_diag .view_as(module.weight)
 
 
 class DiagGGNConv2dConcat(DiagGGNBaseModule):
@@ -34,13 +29,10 @@ class DiagGGNConv2dConcat(DiagGGNBaseModule):
         )
 
     def weight(self, ext, module, grad_inp, grad_out, backproped):
-        sqrt_ggn = convUtils.separate_channels_and_pixels(module, backproped)
-
         X = convUtils.unfold_func(module)(module.input0)
         if module.has_bias:
             X = module.append_ones(X)
 
-        AX = einsum('bkl,bmlc->cbkm', (X, sqrt_ggn))
-        AXAX = (AX ** 2).sum([0, 1]).transpose(0, 1)
+        weight_diag = convUtils.extract_weight_diagonal(module, X, backproped)
 
-        return AXAX.view_as(module.weight)
+        return weight_diag.view_as(module.weight)

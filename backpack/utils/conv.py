@@ -1,4 +1,5 @@
 from torch.nn import Unfold
+from backpack.utils.utils import einsum
 
 
 def unfold_func(module):
@@ -6,7 +7,6 @@ def unfold_func(module):
                   dilation=module.dilation,
                   padding=module.padding,
                   stride=module.stride)
-
 
 def get_weight_gradient_factors(input, grad_out, module):
     batch = input.size(0)
@@ -52,3 +52,12 @@ def check_sizes_output_jac(jmp, module):
             "Size after conv does not match", "Got {}, and {}.",
             "Expected all dimensions to match, except for the first.".format(
                 jmp.size(), module.output_shape))
+
+def extract_weight_diagonal(module, input, grad_output):
+    """
+    input must be the unfolded input to the convolution (see unfold_func)
+    and grad_output the backpropagated gradient
+    """
+    grad_output_viewed = separate_channels_and_pixels(module, grad_output)
+    AX = einsum('bkl,bmlc->cbkm', (input, grad_output_viewed))
+    return (AX ** 2).sum([0, 1]).transpose(0, 1)
