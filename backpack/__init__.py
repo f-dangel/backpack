@@ -3,7 +3,7 @@ BackPACK
 """
 import torch
 from .context import CTX
-
+from . import extensions
 
 class backpack():
     """
@@ -111,7 +111,15 @@ def extend(module, debug=False):
                     "on", module
                 )
             backpack_extension.apply(module_, g_inp, g_out)
-        memory_cleanup(module_)
+
+        def extension_contain_curvmatprod():
+            for backpack_ext in CTX.get_active_exts():
+                if isinstance(backpack_ext, extensions.curvmatprod.CMP):
+                    return True
+            return False
+
+        if not extension_contain_curvmatprod():
+            memory_cleanup(module_)
 
     CTX.add_hook_handle(module.register_forward_hook(store_io))
     CTX.add_hook_handle(module.register_forward_hook(store_shapes))
