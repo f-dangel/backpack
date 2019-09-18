@@ -4,6 +4,7 @@ from backpack.core.layers import Flatten, Conv2dConcat
 from backpack import extend
 from .test_problem import TestProblem
 from .layers import CONVS
+from .layers import ACTIVATIONS
 
 TEST_SETTINGS = {
     "in_features": (3, 4, 5),
@@ -19,22 +20,20 @@ TEST_SETTINGS = {
 
 def convlayer(conv_cls, settings):
     return extend(
-        conv_cls(
-            in_channels=settings["in_features"][0],
-            out_channels=settings["out_channels"],
-            kernel_size=settings["kernel_size"],
-            padding=settings["padding"],
-            bias=settings["bias"]))
+        conv_cls(in_channels=settings["in_features"][0],
+                 out_channels=settings["out_channels"],
+                 kernel_size=settings["kernel_size"],
+                 padding=settings["padding"],
+                 bias=settings["bias"]))
 
 
 def convlayer2(conv_cls, settings):
     return extend(
-        conv_cls(
-            in_channels=settings["in_features"][0],
-            out_channels=settings["out_channels"],
-            kernel_size=settings["kernel_size"],
-            padding=settings["padding"],
-            bias=settings["bias"]))
+        conv_cls(in_channels=settings["in_features"][0],
+                 out_channels=settings["out_channels"],
+                 kernel_size=settings["kernel_size"],
+                 padding=settings["padding"],
+                 bias=settings["bias"]))
 
 
 input_size = (TEST_SETTINGS["batch"], ) + TEST_SETTINGS["in_features"]
@@ -43,17 +42,15 @@ X = torch.randn(size=input_size)
 
 def convearlayer(settings):
     return extend(
-        torch.nn.Linear(
-            in_features=np.prod(
-                [f - settings["padding"][0]
-                 for f in settings["in_features"]]) * settings["out_channels"],
-            out_features=1))
+        torch.nn.Linear(in_features=np.prod(
+            [f - settings["padding"][0]
+             for f in settings["in_features"]]) * settings["out_channels"],
+                        out_features=1))
 
 
-def make_regression_problem(conv_cls):
-    model = torch.nn.Sequential(
-        convlayer(conv_cls, TEST_SETTINGS), Flatten(),
-        convearlayer(TEST_SETTINGS))
+def make_regression_problem(conv_cls, act_cls):
+    model = torch.nn.Sequential(convlayer(conv_cls, TEST_SETTINGS), act_cls(),
+                                Flatten(), convearlayer(TEST_SETTINGS))
 
     Y = torch.randn(size=(model(X).shape[0], 1))
 
@@ -62,8 +59,9 @@ def make_regression_problem(conv_cls):
     return TestProblem(X, Y, model, lossfunc)
 
 
-def make_classification_problem(conv_cls):
-    model = torch.nn.Sequential(convlayer(conv_cls, TEST_SETTINGS), Flatten())
+def make_classification_problem(conv_cls, act_cls):
+    model = torch.nn.Sequential(convlayer(conv_cls, TEST_SETTINGS), act_cls(),
+                                Flatten())
 
     Y = torch.randint(high=X.shape[1], size=(model(X).shape[0], ))
 
@@ -72,10 +70,10 @@ def make_classification_problem(conv_cls):
     return TestProblem(X, Y, model, lossfunc)
 
 
-def make_2layer_classification_problem(conv_cls):
-    model = torch.nn.Sequential(
-        convlayer(conv_cls, TEST_SETTINGS),
-        convlayer2(conv_cls, TEST_SETTINGS), Flatten())
+def make_2layer_classification_problem(conv_cls, act_cls):
+    model = torch.nn.Sequential(convlayer(conv_cls, TEST_SETTINGS), act_cls(),
+                                convlayer2(conv_cls, TEST_SETTINGS), act_cls(),
+                                Flatten())
 
     Y = torch.randint(high=X.shape[1], size=(model(X).shape[0], ))
 
@@ -86,9 +84,12 @@ def make_2layer_classification_problem(conv_cls):
 
 TEST_PROBLEMS = {}
 for conv_name, conv_cls in CONVS.items():
-    TEST_PROBLEMS["{}-regression".format(conv_name)] = make_regression_problem(
-        conv_cls)
-    TEST_PROBLEMS["{}-classification".format(
-        conv_name)] = make_classification_problem(conv_cls)
-    TEST_PROBLEMS["{}-2layer-classification".format(
-        conv_name)] = make_2layer_classification_problem(conv_cls)
+    for act_name, act_cls in ACTIVATIONS.items():
+        TEST_PROBLEMS["{}-{}-regression".format(
+            conv_name, act_name)] = make_regression_problem(conv_cls, act_cls)
+        TEST_PROBLEMS["{}-{}-classification".format(
+            conv_name,
+            act_name)] = make_classification_problem(conv_cls, act_cls)
+        TEST_PROBLEMS["{}-{}-2layer-classification".format(
+            conv_name,
+            act_name)] = make_2layer_classification_problem(conv_cls, act_cls)
