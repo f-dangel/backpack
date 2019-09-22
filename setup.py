@@ -3,7 +3,7 @@ from setuptools import setup
 
 # META
 ##############################################################################
-AUTHORS = "F. Dangel, F. Künstner"
+AUTHORS = "toiaydcdyywlhzvlob"
 NAME = "BackPACK"
 PACKAGES = ["backpack"]
 
@@ -13,7 +13,7 @@ beyond the gradient.
 """.replace("\n", " ")
 
 VERSION = "0.1"
-URL = "https://github.com/f-dangel/backpack"
+URL = "https://github.com/toiaydcdyywlhzvlob/backpack"
 LICENSE = "MIT"
 
 # DEPENDENCIES
