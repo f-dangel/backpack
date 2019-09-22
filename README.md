@@ -17,35 +17,3 @@ python setup.py install
 ```python
 >>> import backpack
 ```
-##
-
-## Getting started ##
-TODO
-
-
-### Installation ###
-TODO
-
-### Basic usage ###
-TODO
-
-### Tutorials & examples ###
-TODO
-
-
-## List of features ##
-TODO
-
-
-## Motivation ##
-TODO
-
-### What? ###
-TODO
-
-### Why? ###
-TODO
-
-### How? ###
-TODO
-
