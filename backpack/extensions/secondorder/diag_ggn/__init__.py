@@ -48,18 +48,35 @@ class DiagGGN(BackpropExtension):
 
 
 class DiagGGNExact(DiagGGN):
-    """Exact diagonal of the GGN"""
-    def __init__(self, savefield=None):
-        if savefield is None:
-            savefield = "diag_ggn_exact"
+    """
+    Diagonal of the Generalized Gauss-Newton/Fisher. 
+    Uses the exact Hessian of the loss w.r.t. the model output.
+
+    Stores the output in :code:`diag_ggn_exact`, 
+    has the same dimensions as the gradient.
+
+    For a faster but less precise alternative, 
+    see :py:meth:`backpack.extensions.DiagGGNMC`.
+
+    """
+    def __init__(self):
         super().__init__(loss_hessian_strategy=LossHessianStrategy.EXACT,
-                         savefield=savefield)
+                         savefield="diag_ggn_exact")
 
 
 class DiagGGNMC(DiagGGN):
-    """MC-sampled diagonal of the GGN/Fisher."""
-    def __init__(self, savefield=None):
-        if savefield is None:
-            savefield = "diag_ggn_mc"
+    """
+    Diagonal of the Generalized Gauss-Newton/Fisher.
+    Uses a Monte-Carlo approximation of
+    the Hessian of the loss w.r.t. the model output.
+
+    Stores the output in :code:`diag_ggn_mc`,
+    has the same dimensions as the gradient.
+
+    For a more precise but slower alternative,
+    see :py:meth:`backpack.extensions.DiagGGNExact`.
+
+    """
+    def __init__(self):
         super().__init__(loss_hessian_strategy=LossHessianStrategy.SAMPLING,
-                         savefield=savefield)
+                         savefield="diag_ggn_mc")

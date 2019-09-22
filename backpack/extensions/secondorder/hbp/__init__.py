@@ -51,6 +51,25 @@ class HBP(BackpropExtension):
 
 
 class KFAC(HBP):
+    """
+    Approximate Kronecker factorization of the Generalized Gauss-Newton/Fisher
+    using Monte-Carlo sampling.
+
+    Stores the output in :code:`kfac` as a list of Kronecker factors.
+
+    - If there is only one element, [INSERT HERE]
+    - If there are multiple elements, [INSERT HERE]
+
+    Implements the procedures described by
+
+    - `Optimizing Neural Networks with Kronecker-factored Approximate Curvature
+      <http://proceedings.mlr.press/v37/martens15.html>`_
+      by James Martens and Roger Grosse, 2015.
+
+    - `A Kronecker-factored approximate Fisher matrix for convolution layers
+      <http://proceedings.mlr.press/v48/grosse16.html>`_
+      by Roger Grosse and James Martens, 2016
+    """
     def __init__(self):
         super().__init__(
             curv_type=Curvature.GGN,
@@ -62,6 +81,28 @@ class KFAC(HBP):
 
 
 class KFRA(HBP):
+    """
+    Approximate Kronecker factorization of the Generalized Gauss-Newton/Fisher
+    using the full Hessian of the loss function w.r.t. the model output
+    and averaging after every backpropagation step.
+
+    Stores the output in :code:`kfra` as a list of Kronecker factors.
+
+    - If there is only one element, [INSERT HERE]
+    - If there are multiple elements, [INSERT HERE]
+
+    Implements the procedures described by
+
+    - `Practical Gauss-Newton Optimisation for Deep Learning
+      <http://proceedings.mlr.press/v70/botev17a.html>`_
+      by Aleksandar Botev, Hippolyt Ritter and David Barber, 2017.
+
+    Extended for convolutions following
+
+    - `A Kronecker-factored approximate Fisher matrix for convolution layers
+      <http://proceedings.mlr.press/v48/grosse16.html>`_
+      by Roger Grosse and James Martens, 2016
+    """
     def __init__(self):
         super().__init__(
             curv_type=Curvature.GGN,
@@ -73,6 +114,28 @@ class KFRA(HBP):
 
 
 class KFLR(HBP):
+    """
+    Approximate Kronecker factorization of the Generalized Gauss-Newton/Fisher
+    using the full Hessian of the loss function w.r.t. the model output.
+
+    Stores the output in :code:`kflr` as a list of Kronecker factors.
+
+    - If there is only one element, [INSERT HERE]
+    - If there are multiple elements, [INSERT HERE]
+
+    Implements the procedures described by
+
+    - `Practical Gauss-Newton Optimisation for Deep Learning
+      <http://proceedings.mlr.press/v70/botev17a.html>`_
+      by Aleksandar Botev, Hippolyt Ritter and David Barber, 2017.
+
+    Extended for convolutions following
+
+    - `A Kronecker-factored approximate Fisher matrix for convolution layers
+      <http://proceedings.mlr.press/v48/grosse16.html>`_
+      by Roger Grosse and James Martens, 2016
+    """
+
     def __init__(self):
         super().__init__(
             curv_type=Curvature.GGN,

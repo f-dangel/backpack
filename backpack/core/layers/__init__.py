@@ -6,6 +6,9 @@ from ...utils.conv import unfold_func
 
 
 class Flatten(Module):
+    """
+    NN module version of torch.nn.functional.flatten
+    """
     def __init__(self):
         super().__init__()
 
@@ -18,6 +21,9 @@ class SkipConnection(Module):
 
 
 class LinearConcat(Module):
+    """
+    Drop-in replacement for torch.nn.Linear with only one parameter.
+    """
     def __init__(self, in_features, out_features, bias=True):
         super().__init__()
 
@@ -65,6 +71,9 @@ class LinearConcat(Module):
 
 
 class Conv2dConcat(Module):
+    """
+    Drop-in replacement for torch.nn.Conv2d with only one parameter.
+    """
     def __init__(self,
                  in_channels,
                  out_channels,

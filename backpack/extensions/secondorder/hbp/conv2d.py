@@ -5,7 +5,6 @@ from backpack.core.derivatives.conv2d import (Conv2DConcatDerivatives,
 from backpack.utils import conv as convUtils
 from backpack.utils.utils import einsum
 
-from ....utils.utils import random_psd_matrix
 from .hbp_options import BackpropStrategy, ExpectationApproximation
 from .hbpbase import HBPBaseModule
 

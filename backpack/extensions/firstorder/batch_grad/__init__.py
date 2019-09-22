@@ -6,6 +6,14 @@ from . import batchnorm1d, conv2d, linear
 
 
 class BatchGrad(BackpropExtension):
+    """
+    The individual gradients for each sample in a minibatch.
+    Is only meaningful is the individual functions are independent (no batchnorm).
+
+    Stores the output in :code:`grad_batch` as a :code:`[N x ...]` tensor,
+    where :code:`N` is the size of the minibatch and :code:`...`
+    is the shape of the gradient.
+    """
     def __init__(self):
         super().__init__(savefield="grad_batch",
                          fail_mode="WARNING",

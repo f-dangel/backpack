@@ -5,7 +5,16 @@ from . import pooling, conv2d, linear, activations, losses, padding, dropout, fl
 
 
 class DiagHessian(BackpropExtension):
+    """
+    Diagonal of the Hessian.
 
+    Stores the output in :code:`diag_h`, has the same dimensions as the gradient.
+
+    .. warning::
+
+        Very expensive on networks with non-piecewise linear activations.
+
+    """
     def __init__(self):
         super().__init__(
             savefield="diag_h",

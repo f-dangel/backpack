@@ -6,7 +6,12 @@ from . import linear, conv2d
 
 
 class Variance(BackpropExtension):
+    """
+    Estimates the variance of the gradient using the samples in the minibatch.
+    Is only meaningful is the individual functions are independent (no batchnorm).
 
+    Stores the output in :code:`variance`, has the same dimension as the gradient.
+    """
     def __init__(self):
         super().__init__(
             savefield="variance",

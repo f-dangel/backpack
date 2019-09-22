@@ -7,8 +7,8 @@ from . import extensions
 
 class backpack():
     """
-    Context manager for the configuration of the backward pass.
-    Activates the backprop extensions given as arguments within the context.
+    Activates the BackPACK extensions passed as arguments for the
+    :code:`backward` calls in the current :code:`with` block.
     """
 
     def __init__(self, *args):
