@@ -57,8 +57,21 @@ class KFAC(HBP):
 
     Stores the output in :code:`kfac` as a list of Kronecker factors.
 
-    - If there is only one element, [INSERT HERE]
-    - If there are multiple elements, [INSERT HERE]
+    - If there is only one element, the item represents the GGN/Fisher
+    approximation itself.
+    - If there are multiple elements, they are arranged in the order such
+    that their Kronecker product represents the Generalized Gauss-Newton/Fisher
+    approximation.
+    - The dimension of the factors depends on the layer, but the product
+    of all row dimensions (or column dimensions) yields the dimension of the
+    layer parameter.
+
+    .. note::
+
+        The literature uses column-stacking as vectorization convention.
+        This is in contrast to the default row-major storing scheme of tensors
+        in :code:`torch`. Therefore, the order of factors differs from the
+        presentation in the literature.
 
     Implements the procedures described by
 
@@ -88,10 +101,21 @@ class KFRA(HBP):
 
     Stores the output in :code:`kfra` as a list of Kronecker factors.
 
-    - If there is only one element, [INSERT HERE]
-    - If there are multiple elements, [INSERT HERE]
+    - If there is only one element, the item represents the GGN/Fisher
+    approximation itself.
+    - If there are multiple elements, they are arranged in the order such
+    that their Kronecker product represents the Generalized Gauss-Newton/Fisher
+    approximation.
+    - The dimension of the factors depends on the layer, but the product
+    of all row dimensions (or column dimensions) yields the dimension of the
+    layer parameter.
 
-    Implements the procedures described by
+    .. note::
+
+        The literature uses column-stacking as vectorization convention.
+        This is in contrast to the default row-major storing scheme of tensors
+        in :code:`torch`. Therefore, the order of factors differs from the
+        presentation in the literature.
 
     - `Practical Gauss-Newton Optimisation for Deep Learning
       <http://proceedings.mlr.press/v70/botev17a.html>`_
@@ -120,8 +144,21 @@ class KFLR(HBP):
 
     Stores the output in :code:`kflr` as a list of Kronecker factors.
 
-    - If there is only one element, [INSERT HERE]
-    - If there are multiple elements, [INSERT HERE]
+    - If there is only one element, the item represents the GGN/Fisher
+    approximation itself.
+    - If there are multiple elements, they are arranged in the order such
+    that their Kronecker product represents the Generalized Gauss-Newton/Fisher
+    approximation.
+    - The dimension of the factors depends on the layer, but the product
+    of all row dimensions (or column dimensions) yields the dimension of the
+    layer parameter.
+
+    .. note::
+
+        The literature uses column-stacking as vectorization convention.
+        This is in contrast to the default row-major storing scheme of tensors
+        in :code:`torch`. Therefore, the order of factors differs from the
+        presentation in the literature.
 
     Implements the procedures described by
 
