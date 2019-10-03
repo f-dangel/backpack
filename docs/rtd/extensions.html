@@ -1,0 +1,382 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Extensions &mdash; BackPACK 0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Supported models" href="supported-layers.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> BackPACK
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="main-api.html">How to use BackPACK</a></li>
+<li class="toctree-l1"><a class="reference internal" href="supported-layers.html">Supported models</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Extensions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#first-order-extensions">First-order extensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#second-order-extensions">Second-order extensions</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">BackPACK</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Extensions</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/extensions.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="extensions">
+<h1>Extensions<a class="headerlink" href="#extensions" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="first-order-extensions">
+<h2>First-order extensions<a class="headerlink" href="#first-order-extensions" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="backpack.extensions.BatchGrad">
+<code class="sig-prename descclassname">backpack.extensions.</code><code class="sig-name descname">BatchGrad</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#backpack.extensions.BatchGrad" title="Permalink to this definition">¶</a></dt>
+<dd><p>The individual gradients for each sample in a minibatch.
+Is only meaningful is the individual functions are independent (no batchnorm).</p>
+<p>Stores the output in <code class="code docutils literal notranslate"><span class="pre">grad_batch</span></code> as a <code class="code docutils literal notranslate"><span class="pre">[N</span> <span class="pre">x</span> <span class="pre">...]</span></code> tensor,
+where <code class="code docutils literal notranslate"><span class="pre">N</span></code> is the size of the minibatch and <code class="code docutils literal notranslate"><span class="pre">...</span></code>
+is the shape of the gradient.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="backpack.extensions.BatchL2Grad">
+<code class="sig-prename descclassname">backpack.extensions.</code><code class="sig-name descname">BatchL2Grad</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#backpack.extensions.BatchL2Grad" title="Permalink to this definition">¶</a></dt>
+<dd><p>The L2 norm of individual gradients in the minibatch.
+Is only meaningful is the individual functions are independent (no batchnorm).</p>
+<p>Stores the output in <code class="code docutils literal notranslate"><span class="pre">batch_l2</span></code>
+as a vector of the size as the minibatch.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="backpack.extensions.SumGradSquared">
+<code class="sig-prename descclassname">backpack.extensions.</code><code class="sig-name descname">SumGradSquared</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#backpack.extensions.SumGradSquared" title="Permalink to this definition">¶</a></dt>
+<dd><p>The sum of individual-gradients-squared, or second moment of the gradient.
+Is only meaningful is the individual functions are independent (no batchnorm).</p>
+<p>Stores the output in <code class="code docutils literal notranslate"><span class="pre">sum_grad_squared</span></code>, has the same dimension as the gradient.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="backpack.extensions.Variance">
+<code class="sig-prename descclassname">backpack.extensions.</code><code class="sig-name descname">Variance</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#backpack.extensions.Variance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Estimates the variance of the gradient using the samples in the minibatch.
+Is only meaningful is the individual functions are independent (no batchnorm).</p>
+<p>Stores the output in <code class="code docutils literal notranslate"><span class="pre">variance</span></code>, has the same dimension as the gradient.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="second-order-extensions">
+<h2>Second-order extensions<a class="headerlink" href="#second-order-extensions" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="backpack.extensions.KFAC">
+<code class="sig-prename descclassname">backpack.extensions.</code><code class="sig-name descname">KFAC</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#backpack.extensions.KFAC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Approximate Kronecker factorization of the Generalized Gauss-Newton/Fisher
+using Monte-Carlo sampling.</p>
+<p>Stores the output in <code class="code docutils literal notranslate"><span class="pre">kfac</span></code> as a list of Kronecker factors.</p>
+<ul class="simple">
+<li><p>If there is only one element, the item represents the GGN/Fisher
+approximation itself.</p></li>
+<li><p>If there are multiple elements, they are arranged in the order such
+that their Kronecker product represents the Generalized Gauss-Newton/Fisher
+approximation.</p></li>
+<li><p>The dimension of the factors depends on the layer, but the product
+of all row dimensions (or column dimensions) yields the dimension of the
+layer parameter.</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The literature uses column-stacking as vectorization convention.
+This is in contrast to the default row-major storing scheme of tensors
+in <code class="code docutils literal notranslate"><span class="pre">torch</span></code>. Therefore, the order of factors differs from the
+presentation in the literature.</p>
+</div>
+<p>Implements the procedures described by</p>
+<ul class="simple">
+<li><p><a class="reference external" href="http://proceedings.mlr.press/v37/martens15.html">Optimizing Neural Networks with Kronecker-factored Approximate Curvature</a>
+by James Martens and Roger Grosse, 2015.</p></li>
+<li><p><a class="reference external" href="http://proceedings.mlr.press/v48/grosse16.html">A Kronecker-factored approximate Fisher matrix for convolution layers</a>
+by Roger Grosse and James Martens, 2016</p></li>
+</ul>
+</dd></dl>
+
+<dl class="function">
+<dt id="backpack.extensions.KFLR">
+<code class="sig-prename descclassname">backpack.extensions.</code><code class="sig-name descname">KFLR</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#backpack.extensions.KFLR" title="Permalink to this definition">¶</a></dt>
+<dd><p>Approximate Kronecker factorization of the Generalized Gauss-Newton/Fisher
+using the full Hessian of the loss function w.r.t. the model output.</p>
+<p>Stores the output in <code class="code docutils literal notranslate"><span class="pre">kflr</span></code> as a list of Kronecker factors.</p>
+<ul class="simple">
+<li><p>If there is only one element, the item represents the GGN/Fisher
+approximation itself.</p></li>
+<li><p>If there are multiple elements, they are arranged in the order such
+that their Kronecker product represents the Generalized Gauss-Newton/Fisher
+approximation.</p></li>
+<li><p>The dimension of the factors depends on the layer, but the product
+of all row dimensions (or column dimensions) yields the dimension of the
+layer parameter.</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The literature uses column-stacking as vectorization convention.
+This is in contrast to the default row-major storing scheme of tensors
+in <code class="code docutils literal notranslate"><span class="pre">torch</span></code>. Therefore, the order of factors differs from the
+presentation in the literature.</p>
+</div>
+<p>Implements the procedures described by</p>
+<ul class="simple">
+<li><p><a class="reference external" href="http://proceedings.mlr.press/v70/botev17a.html">Practical Gauss-Newton Optimisation for Deep Learning</a>
+by Aleksandar Botev, Hippolyt Ritter and David Barber, 2017.</p></li>
+</ul>
+<p>Extended for convolutions following</p>
+<ul class="simple">
+<li><p><a class="reference external" href="http://proceedings.mlr.press/v48/grosse16.html">A Kronecker-factored approximate Fisher matrix for convolution layers</a>
+by Roger Grosse and James Martens, 2016</p></li>
+</ul>
+</dd></dl>
+
+<dl class="function">
+<dt id="backpack.extensions.KFRA">
+<code class="sig-prename descclassname">backpack.extensions.</code><code class="sig-name descname">KFRA</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#backpack.extensions.KFRA" title="Permalink to this definition">¶</a></dt>
+<dd><p>Approximate Kronecker factorization of the Generalized Gauss-Newton/Fisher
+using the full Hessian of the loss function w.r.t. the model output
+and averaging after every backpropagation step.</p>
+<p>Stores the output in <code class="code docutils literal notranslate"><span class="pre">kfra</span></code> as a list of Kronecker factors.</p>
+<ul class="simple">
+<li><p>If there is only one element, the item represents the GGN/Fisher
+approximation itself.</p></li>
+<li><p>If there are multiple elements, they are arranged in the order such
+that their Kronecker product represents the Generalized Gauss-Newton/Fisher
+approximation.</p></li>
+<li><p>The dimension of the factors depends on the layer, but the product
+of all row dimensions (or column dimensions) yields the dimension of the
+layer parameter.</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The literature uses column-stacking as vectorization convention.
+This is in contrast to the default row-major storing scheme of tensors
+in <code class="code docutils literal notranslate"><span class="pre">torch</span></code>. Therefore, the order of factors differs from the
+presentation in the literature.</p>
+</div>
+<ul class="simple">
+<li><p><a class="reference external" href="http://proceedings.mlr.press/v70/botev17a.html">Practical Gauss-Newton Optimisation for Deep Learning</a>
+by Aleksandar Botev, Hippolyt Ritter and David Barber, 2017.</p></li>
+</ul>
+<p>Extended for convolutions following</p>
+<ul class="simple">
+<li><p><a class="reference external" href="http://proceedings.mlr.press/v48/grosse16.html">A Kronecker-factored approximate Fisher matrix for convolution layers</a>
+by Roger Grosse and James Martens, 2016</p></li>
+</ul>
+</dd></dl>
+
+<dl class="function">
+<dt id="backpack.extensions.DiagGGNMC">
+<code class="sig-prename descclassname">backpack.extensions.</code><code class="sig-name descname">DiagGGNMC</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#backpack.extensions.DiagGGNMC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Diagonal of the Generalized Gauss-Newton/Fisher.
+Uses a Monte-Carlo approximation of
+the Hessian of the loss w.r.t. the model output.</p>
+<p>Stores the output in <code class="code docutils literal notranslate"><span class="pre">diag_ggn_mc</span></code>,
+has the same dimensions as the gradient.</p>
+<p>For a more precise but slower alternative,
+see <a class="reference internal" href="#backpack.extensions.DiagGGNExact" title="backpack.extensions.DiagGGNExact"><code class="xref py py-meth docutils literal notranslate"><span class="pre">backpack.extensions.DiagGGNExact()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="backpack.extensions.DiagGGNExact">
+<code class="sig-prename descclassname">backpack.extensions.</code><code class="sig-name descname">DiagGGNExact</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#backpack.extensions.DiagGGNExact" title="Permalink to this definition">¶</a></dt>
+<dd><p>Diagonal of the Generalized Gauss-Newton/Fisher. 
+Uses the exact Hessian of the loss w.r.t. the model output.</p>
+<p>Stores the output in <code class="code docutils literal notranslate"><span class="pre">diag_ggn_exact</span></code>, 
+has the same dimensions as the gradient.</p>
+<p>For a faster but less precise alternative, 
+see <a class="reference internal" href="#backpack.extensions.DiagGGNMC" title="backpack.extensions.DiagGGNMC"><code class="xref py py-meth docutils literal notranslate"><span class="pre">backpack.extensions.DiagGGNMC()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="backpack.extensions.DiagHessian">
+<code class="sig-prename descclassname">backpack.extensions.</code><code class="sig-name descname">DiagHessian</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#backpack.extensions.DiagHessian" title="Permalink to this definition">¶</a></dt>
+<dd><p>Diagonal of the Hessian.</p>
+<p>Stores the output in <code class="code docutils literal notranslate"><span class="pre">diag_h</span></code>, has the same dimensions as the gradient.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Very expensive on networks with non-piecewise linear activations.</p>
+</div>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="supported-layers.html" class="btn btn-neutral float-left" title="Supported models" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
