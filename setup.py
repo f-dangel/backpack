@@ -1,9 +1,10 @@
 from os import path
+
 from setuptools import setup
 
 # META
 ##############################################################################
-AUTHORS = "toiaydcdyywlhzvlob"
+AUTHORS = "F. Dangel, F. Künstner"
 NAME = "BackPACK"
 PACKAGES = ["backpack"]
 
@@ -12,8 +13,8 @@ extends the backward pass of feedforward networks to compute quantities
 beyond the gradient.
 """.replace("\n", " ")
 
-VERSION = "0.1"
-URL = "https://github.com/toiaydcdyywlhzvlob/backpack"
+VERSION = "1.0"
+URL = "https://github.com/f-dangel/backpack"
 LICENSE = "MIT"
 
 # DEPENDENCIES
