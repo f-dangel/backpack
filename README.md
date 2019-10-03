@@ -5,12 +5,12 @@ A backpack for PyTorch that extends the backward pass of feedforward networks to
 ## Installation
 * Using `pip`:
 ```bash
-pip install -e "git+https://github.com/toiaydcdyywlhzvlob/backpack.git/#egg=backpack&subdirectory=libraries/backpack"
+pip install https://github.com/f-dangel/backpack.git@master#egg=backpack
 ```
 * Alternative: Clone the repository and run `setup.py`
 ```bash
-git clone https://github.com/toiaydcdyywlhzvlob/backpack.git ~/backpack
-cd ~/backpack/libraries/backpack
+git clone https://github.com/f-dangel/backpack.git ~/backpack
+cd ~/backpack
 python setup.py install
 ```
 * Quick check: In a `python` session, try
