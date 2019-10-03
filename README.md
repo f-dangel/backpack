@@ -2,6 +2,8 @@
 
 A backpack for PyTorch that extends the backward pass of feedforward networks to compute quantities beyond the gradient.
 
+Check out the [examples](https://f-dangel.github.io/backpack/) on how to use the code.
+
 ## Installation
 * Using `pip`:
 ```bash
