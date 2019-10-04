@@ -12,7 +12,7 @@
     <div class="wrapper">
         <header>
             <h1>
-                <a href="https://toiaydcdyywlhzvlob.github.io/backpack/">
+                <a href="https://f-dangel.github.io/backpack/">
                     BackPACK
                 </a>
             </h1>
@@ -31,15 +31,6 @@
             <p class="view">
                 <ul>
                     <li>
-                        <a href="https://github.com/toiaydcdyywlhzvlob/backpack/tree/master/experiments/exp">
-                            Reproduce our experiments
-                        </a>
-                    </li>
-                </ul>
-            </p>
-            <p class="view">
-                <ul>
-                    <li>
                         <a href="rtd">
                             Documentation
                         </a>
@@ -49,12 +40,13 @@
             <p class="view">
                 <ul>
                     <li>
-                        <a href="https://github.com/toiaydcdyywlhzvlob/backpack">
-                            View the code
+                        <a href="https://github.com/f-dangel/backpack">
+                            Github repo
                         </a>
                     </li>
                 </ul>
-            </p>        </header>
+            </p>
+		</header>
         <section>
             <h1 id="backpack-on-a-small-example">BackPACK on a small example</h1>
 
@@ -63,28 +55,17 @@ It follows <a href="https://github.com/pytorch/examples/tree/master/mnist">the t
 
 <h2 id="installation">Installation</h2>
 
-<p>For this example to run, you will need PyTorch and TorchVision (&gt;= 1.0). 
-If you don’t have it yet, you can install them with</p>
-
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>conda:
-conda install pytorch torchvision cpuonly -c pytorch
-
-pip:
-pip install torch==1.2.0+cpu torchvision==0.4.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
+<p>For this example to run, you will need <a href="https://pytorch.org/get-started/locally/">PyTorch and TorchVision (&gt;= 1.0)</a>
+To install BackPACK, either use <code class="highlighter-rouge">pip</code> or <a href="https://github.com/f-dangel/backpack">clone the repo</a>.</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pip install backpack-for-pytorch
 </code></pre></div></div>
 
-<p><a href="https://pytorch.org/get-started/locally/">See the installation instructions for PyTorch if there is an issue</a></p>
+<h2 id="an-example-diagonal-ggn-preconditioner">An example: Diagonal GGN Preconditioner</h2>
 
-<p>To install BackPACK, either use <code class="highlighter-rouge">pip</code> or <a href="https://github.com/toiaydcdyywlhzvlob/backpack/tree/master/libraries/backpack">clone the repo</a>.</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pip install -e "git+https://github.com/toiaydcdyywlhzvlob/backpack.git/#egg=backpack&amp;subdirectory=libraries/backpack"
-</code></pre></div></div>
-
-<h2 id="the-example">The example</h2>
-
-<p>You can download the <a href="https://raw.githubusercontent.com/toiaydcdyywlhzvlob/backpack-test/master/libraries/backpack/examples/example_diag_ggn_optimizer.py">example code</a> and run it using</p>
+<p>You can download the <a href="https://raw.githubusercontent.com/f-dangel/backpack/master/examples/example_diag_ggn_optimizer.py">example code</a> and run it using</p>
 <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>python example_diag_ggn_optimizer.py
 </code></pre></div></div>
-<p>Follow along for a step-by-step description.</p>
+<p>It runs SGD with a preconditioner based on the diagonal of the GGN.</p>
 
 <h3 id="step-1-libraries-mnist-and-the-model">Step 1: Libraries, MNIST, and the model</h3>
 
