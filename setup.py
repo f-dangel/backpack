@@ -4,16 +4,14 @@ from setuptools import setup
 
 # META
 ##############################################################################
-AUTHORS = "F. Dangel, F. Künstner"
-NAME = "BackPACK"
+AUTHORS = "F. Dangel, F. Kunstner"
+NAME = "backpack-for-pytorch"
 PACKAGES = ["backpack"]
 
-DESCRIPTION = r"""BACKpropagation PACKage - A backpack for PyTorch that
-extends the backward pass of feedforward networks to compute quantities
-beyond the gradient.
-""".replace("\n", " ")
+DESCRIPTION = r"""BACKpropagation PACKage - A backpack for PyTorch to compute quantities beyond the gradient."""
+LONG_DESCR = "https://github.com/f-dangel/backpack"
 
-VERSION = "1.0"
+VERSION = "1.0.0"
 URL = "https://github.com/f-dangel/backpack"
 LICENSE = "MIT"
 
@@ -30,6 +28,8 @@ setup(
     name=NAME,
     version=VERSION,
     description=DESCRIPTION,
+    long_description=LONG_DESCR,
+    long_description_content_type="text/markdown",
     install_requires=requirements,
     url=URL,
     license=LICENSE,
