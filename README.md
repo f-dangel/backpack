@@ -6,7 +6,7 @@ Check out the [examples](https://f-dangel.github.io/backpack/) on how to use the
 
 ## Installation
 ```bash
-pip install backpack-for-pytorch`
+pip install backpack-for-pytorch
 ```
 
 Alternative: Clone the repository and run `setup.py`
