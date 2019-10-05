@@ -1,12 +1,12 @@
 from os import path
 
-from setuptools import setup
+from setuptools import find_packages, setup
 
 # META
 ##############################################################################
 AUTHORS = "F. Dangel, F. Kunstner"
 NAME = "backpack-for-pytorch"
-PACKAGES = ["backpack"]
+PACKAGES = find_packages()
 
 DESCRIPTION = r"""BACKpropagation PACKage - A backpack for PyTorch to compute quantities beyond the gradient."""
 LONG_DESCR = "https://github.com/f-dangel/backpack"
