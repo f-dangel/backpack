@@ -61,7 +61,7 @@ def check_sizes(*plists):
             assert params[i].size() == params[i + 1].size()
 
 
-def check_values(list1, list2):
+def check_values(list1, list2, atol=atol, rtol=rtol):
     for i, (g1, g2) in enumerate(zip(list1, list2)):
         print(i)
         print(g1.size())
@@ -119,6 +119,29 @@ def test_diag_ggn(problem, device):
     check_sizes(autograd_res, backpack_res, list(problem.model.parameters()))
     check_values(autograd_res, backpack_res)
 
+@pytest.mark.parametrize(
+    "problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
+def test_diag_ggn_mc_approx_ggn_montecarlo(problem, device):
+    problem.to(device)
+
+    torch.manual_seed(0)
+    bp_diagggn = BpextImpl(problem).diag_ggn()
+
+    bp_diagggn_mc_avg = []
+    for param_res in bp_diagggn:
+        bp_diagggn_mc_avg.append(torch.zeros_like(param_res))
+
+    mc_samples = 200
+    for mc in range(mc_samples):
+        bp_diagggn_mc = BpextImpl(problem).diag_ggn_mc()
+        for i, param_res in enumerate(bp_diagggn_mc):
+            bp_diagggn_mc_avg[i] += param_res
+
+    for i in range(len(bp_diagggn_mc_avg)):
+        bp_diagggn_mc_avg[i] /= mc_samples
+
+    check_sizes(bp_diagggn, bp_diagggn_mc_avg)
+    check_values(bp_diagggn, bp_diagggn_mc_avg, atol=1e-1, rtol=1e-1)
 
 @pytest.mark.parametrize(
     "problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
