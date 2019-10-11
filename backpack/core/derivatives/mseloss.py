@@ -22,9 +22,12 @@ class MSELossDerivatives(BaseDerivatives):
         return sqrt_H
 
     def sqrt_hessian_sampled(self, module, g_inp, g_out):
-        warn("[MC Sampling Hessian of CrossEntropy] " +
-             "Returning the symmetric factorization of the full Hessian " +
-             "(same computation cost)")
+        warn(
+            "[MC Sampling Hessian of MSE loss] " +
+            "Returning the symmetric factorization of the full Hessian " +
+            "(same computation cost)",
+            UserWarning
+        )
         return self.sqrt_hessian(module, g_inp, g_out)
 
     def sum_hessian(self, module, g_inp, g_out):
