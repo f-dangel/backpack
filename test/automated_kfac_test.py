@@ -104,7 +104,7 @@ def test_kfac_regression_should_equal_ggn(problem, device):
     check_sizes(autograd_res, backpack_res)
     check_values(autograd_res, backpack_res)
 
-
+@pytest.mark.montecarlo
 @pytest.mark.parametrize(
     "problem,device", BATCH1_CONFIGURATIONS, ids=CONFIGURATION_IDS)
 def test_kfac_should_approx_ggn_montecarlo(problem, device):

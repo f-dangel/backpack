@@ -119,6 +119,7 @@ def test_diag_ggn(problem, device):
     check_sizes(autograd_res, backpack_res, list(problem.model.parameters()))
     check_values(autograd_res, backpack_res)
 
+@pytest.mark.montecarlo
 @pytest.mark.parametrize(
     "problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
 def test_diag_ggn_mc_approx_ggn_montecarlo(problem, device):
