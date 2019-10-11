@@ -31,23 +31,13 @@ class CrossEntropyLossDerivatives(BaseDerivatives):
         M = self.MC_SAMPLES
         C = module.input0.shape[1]
 
-        probs = self.get_probs(module).unsqueeze(-1).repeat(1, 1, M)
+        probs = self.get_probs(module)
+        probs_unsqueezed = probs.unsqueeze(-1).repeat(1, 1, M)
 
-        # HOTFIX (torch bug): multinomial not working with CUDA
-        original_dev = probs.device
-        if probs.is_cuda:
-            probs = probs.cpu()
-
-        classes = one_hot(multinomial(probs, M, replacement=True),
-                          num_classes=C)
-
-        probs = probs.to(original_dev)
-        classes = classes.to(original_dev)
-        # END
-
+        classes = one_hot(multinomial(probs, M, replacement=True), num_classes=C)
         classes = classes.transpose(1, 2).float()
 
-        sqrt_mc_h = (probs - classes) / sqrt(M)
+        sqrt_mc_h = (probs_unsqueezed - classes) / sqrt(M)
 
         if module.reduction is "mean":
             sqrt_mc_h /= sqrt(module.input0.shape[0])
