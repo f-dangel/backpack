@@ -5,17 +5,6 @@ from torch import flatten, cat, Tensor, empty
 from ...utils.conv import unfold_func
 
 
-class Flatten(Module):
-    """
-    NN module version of torch.nn.functional.flatten
-    """
-    def __init__(self):
-        super().__init__()
-
-    def forward(self, input):
-        return flatten(input, start_dim=1, end_dim=-1)
-
-
 class SkipConnection(Module):
     pass
 

@@ -1,7 +1,6 @@
 import torch
 from .test_problem import TestProblem
 from backpack import extend
-from backpack.core.layers import Flatten
 
 
 class ProblemBase():
@@ -54,7 +53,7 @@ class Regression(ProblemBase):
 
     def get_modules(self):
         modules = self.get_network_modules()
-        modules.append(Flatten())
+        modules.append(torch.nn.Flatten())
         modules.append(self.sum_output_layer())
         return modules
 
@@ -77,7 +76,7 @@ class Classification(ProblemBase):
 
     def get_modules(self):
         modules = self.get_network_modules()
-        modules.append(Flatten())
+        modules.append(torch.nn.Flatten())
         return modules
 
     def get_XY(self, model):

@@ -4,8 +4,9 @@ from backpack.extensions.secondorder.hbp.hbp_options import (
 )
 from backpack.extensions.backprop_extension import BackpropExtension
 
-from backpack.core.layers import Conv2dConcat, LinearConcat, Flatten
-from torch.nn import Linear, Conv2d, Dropout, MaxPool2d, Tanh, Sigmoid, ReLU, CrossEntropyLoss, MSELoss, AvgPool2d, ZeroPad2d
+from backpack.core.layers import Conv2dConcat, LinearConcat
+from torch.nn import (Linear, Conv2d, Dropout, MaxPool2d, Tanh, Sigmoid, ReLU,
+                      CrossEntropyLoss, MSELoss, AvgPool2d, ZeroPad2d, Flatten)
 from . import pooling, conv2d, linear, activations, losses, padding, dropout, flatten
 
 
@@ -83,6 +84,7 @@ class KFAC(HBP):
       <http://proceedings.mlr.press/v48/grosse16.html>`_
       by Roger Grosse and James Martens, 2016
     """
+
     def __init__(self):
         super().__init__(
             curv_type=Curvature.GGN,
@@ -127,6 +129,7 @@ class KFRA(HBP):
       <http://proceedings.mlr.press/v48/grosse16.html>`_
       by Roger Grosse and James Martens, 2016
     """
+
     def __init__(self):
         super().__init__(
             curv_type=Curvature.GGN,

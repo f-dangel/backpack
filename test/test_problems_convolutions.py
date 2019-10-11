@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from backpack.core.layers import Flatten, Conv2dConcat
+from backpack.core.layers import Conv2dConcat
 from backpack import extend
 from .test_problem import TestProblem
 from .layers import CONVS
@@ -50,7 +50,7 @@ def convearlayer(settings):
 
 def make_regression_problem(conv_cls, act_cls):
     model = torch.nn.Sequential(convlayer(conv_cls, TEST_SETTINGS), act_cls(),
-                                Flatten(), convearlayer(TEST_SETTINGS))
+                                torch.nn.Flatten(), convearlayer(TEST_SETTINGS))
 
     Y = torch.randn(size=(model(X).shape[0], 1))
 
@@ -61,7 +61,7 @@ def make_regression_problem(conv_cls, act_cls):
 
 def make_classification_problem(conv_cls, act_cls):
     model = torch.nn.Sequential(convlayer(conv_cls, TEST_SETTINGS), act_cls(),
-                                Flatten())
+                                torch.nn.Flatten())
 
     Y = torch.randint(high=X.shape[1], size=(model(X).shape[0], ))
 
@@ -73,7 +73,7 @@ def make_classification_problem(conv_cls, act_cls):
 def make_2layer_classification_problem(conv_cls, act_cls):
     model = torch.nn.Sequential(convlayer(conv_cls, TEST_SETTINGS), act_cls(),
                                 convlayer2(conv_cls, TEST_SETTINGS), act_cls(),
-                                Flatten())
+                                torch.nn.Flatten())
 
     Y = torch.randint(high=X.shape[1], size=(model(X).shape[0], ))
 

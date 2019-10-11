@@ -1,5 +1,5 @@
 opt-einsum >= 2.3.2, < 3.0.0
 pytest >= 4.0.1, < 5.0.0
 pytest-benchmark >= 3.2.2, < 4.0.0
-torch >= 1.1.0, < 2.0.0
+torch >= 1.2.0, < 2.0.0
 torchvision >= 0.3.0, < 1.0.0
