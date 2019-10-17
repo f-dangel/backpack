@@ -20,3 +20,9 @@ and tests are marked with `@pytest.mark.OPTIONAL_TEST_CATEGORY`.
 
 To run the optional tests, use 
 `pytest --run-optional-tests=OPTIONAL_TEST_CATEGORY`
+
+## Run all tests for BackPACK
+In working directory `tests/`, run
+```bash
+pytest -vx --run-optional-tests=montecarlo .
+```
