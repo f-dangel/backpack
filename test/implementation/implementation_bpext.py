@@ -40,10 +40,15 @@ class BpextImpl(Implementation):
         return sgs
 
     def diag_ggn(self):
-        print(self.model)
         with backpack(new_ext.DiagGGN()):
             self.loss().backward()
             diag_ggn = [p.diag_ggn for p in self.model.parameters()]
+        return diag_ggn
+
+    def diag_ggn_mc(self):
+        with backpack(new_ext.DiagGGNMC()):
+            self.loss().backward()
+            diag_ggn = [p.diag_ggn_mc for p in self.model.parameters()]
         return diag_ggn
 
     def diag_h(self):
