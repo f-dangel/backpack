@@ -1,5 +1,4 @@
 import torch
-from backpack.core.layers import Flatten
 from backpack import extend
 from .test_problem import TestProblem
 from .layers import PADDINGS
@@ -36,7 +35,7 @@ def padding(padding_cls):
 def make_2layer_classification_problem(padding_cls):
     model = torch.nn.Sequential(
         padding(padding_cls), conv_no_padding_layer(), padding(padding_cls),
-        conv_no_padding_layer(), Flatten())
+        conv_no_padding_layer(), torch.nn.Flatten())
 
     Y = torch.randint(high=X.shape[1], size=(model(X).shape[0], ))
 

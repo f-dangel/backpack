@@ -23,8 +23,6 @@ import torchvision
 from backpack import backpack, extend
 # The diagonal GGN extension
 from backpack.extensions import DiagGGNMC
-# This layer did not exist in Pytorch 1.0
-from backpack.core.layers import Flatten
 
 # Hyperparameters
 BATCH_SIZE = 64
@@ -64,8 +62,7 @@ model = torch.nn.Sequential(
     torch.nn.Conv2d(20, 50, 5, 1),
     torch.nn.ReLU(),
     torch.nn.MaxPool2d(2, 2),
-    Flatten(), 
-    # Pytorch <1.2 doesn't have a Flatten layer
+    torch.nn.Flatten(),
     torch.nn.Linear(4*4*50, 500),
     torch.nn.ReLU(),
     torch.nn.Linear(500, 10),

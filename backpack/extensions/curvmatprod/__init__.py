@@ -9,11 +9,11 @@ functions to compute Matrix-Matrix products with Block-Diagonal approximations
 of the curvature, such as the Block-diagonal Generalized Gauss-Newton
 """
 
-from backpack.core.layers import Conv2dConcat, Flatten, LinearConcat
+from backpack.core.layers import Conv2dConcat, LinearConcat
 from backpack.extensions.backprop_extension import BackpropExtension
 from torch.nn import (AvgPool2d, BatchNorm1d, Conv2d, CrossEntropyLoss,
                       Dropout, Linear, MaxPool2d, MSELoss, ReLU, Sigmoid, Tanh,
-                      ZeroPad2d)
+                      ZeroPad2d, Flatten)
 
 from . import (activations, batchnorm1d, conv2d, dropout, flatten, linear,
                losses, padding, pooling)

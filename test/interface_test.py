@@ -6,7 +6,6 @@ import torch
 from torch.nn import Linear, ReLU, CrossEntropyLoss
 from torch.nn import Sequential
 from torch.nn import Conv2d
-from backpack.core.layers import Flatten
 from backpack import extend, backpack
 import backpack.extensions as new_ext
 
@@ -40,7 +39,7 @@ def dummy_forward_pass_conv():
     Y = torch.randint(high=5, size=(N,))
     conv = Conv2d(3, 2, 2)
     lin = Linear(18, 5)
-    model = extend(Sequential(conv, Flatten(), lin))
+    model = extend(Sequential(conv, torch.nn.Flatten(), lin))
     loss = extend(CrossEntropyLoss())
 
     def forward():
