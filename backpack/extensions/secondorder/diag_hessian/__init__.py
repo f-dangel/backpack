@@ -1,6 +1,7 @@
 from backpack.extensions.backprop_extension import BackpropExtension
-from backpack.core.layers import Conv2dConcat, LinearConcat, Flatten
-from torch.nn import Linear, Conv2d, Dropout, MaxPool2d, Tanh, Sigmoid, ReLU, CrossEntropyLoss, MSELoss, AvgPool2d, ZeroPad2d
+from backpack.core.layers import Conv2dConcat, LinearConcat
+from torch.nn import (Linear, Conv2d, Dropout, MaxPool2d, Tanh, Sigmoid, ReLU,
+                      CrossEntropyLoss, MSELoss, AvgPool2d, ZeroPad2d, Flatten)
 from . import pooling, conv2d, linear, activations, losses, padding, dropout, flatten
 
 

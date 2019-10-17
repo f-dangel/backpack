@@ -1,6 +1,5 @@
 import numpy as np
 import torch
-from backpack.core.layers import Flatten
 from backpack import extend
 from .test_problem import TestProblem
 from .layers import POOLINGS
@@ -41,7 +40,7 @@ def pooling(pooling_cls):
 
 
 def make_regression_problem(pooling_cls):
-    model = torch.nn.Sequential(convlayer(), pooling(pooling_cls), Flatten(),
+    model = torch.nn.Sequential(convlayer(), pooling(pooling_cls), torch.nn.Flatten(),
                                 linearlayer())
 
     Y = torch.randn(size=(model(X).shape[0], 1))
@@ -52,7 +51,7 @@ def make_regression_problem(pooling_cls):
 
 
 def make_classification_problem(pooling_cls):
-    model = torch.nn.Sequential(convlayer(), pooling(pooling_cls), Flatten())
+    model = torch.nn.Sequential(convlayer(), pooling(pooling_cls), torch.nn.Flatten())
 
     Y = torch.randint(high=X.shape[1], size=(model(X).shape[0], ))
 
@@ -63,7 +62,7 @@ def make_classification_problem(pooling_cls):
 
 def make_2layer_classification_problem(pooling_cls):
     model = torch.nn.Sequential(convlayer(), pooling(pooling_cls), convlayer(),
-                                pooling(pooling_cls), Flatten())
+                                pooling(pooling_cls), torch.nn.Flatten())
 
     Y = torch.randint(high=X.shape[1], size=(model(X).shape[0], ))
 

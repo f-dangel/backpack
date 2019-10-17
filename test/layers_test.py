@@ -2,8 +2,8 @@
 from backpack import extend
 from torch import allclose, randn, randint, manual_seed, cat
 from torch.autograd import grad
-from torch.nn import Linear, Sequential, CrossEntropyLoss, Conv2d
-from backpack.core.layers import LinearConcat, Conv2dConcat, Flatten
+from torch.nn import Linear, Sequential, CrossEntropyLoss, Conv2d, Flatten
+from backpack.core.layers import LinearConcat, Conv2dConcat
 
 # Linear
 
