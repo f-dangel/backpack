@@ -44,41 +44,41 @@ class KroneckerUtilsTest(unittest.TestCase):
     # SCIPY implementations
     ##########################################################################
 
-    def scipy_matrix_from_two_kron_facs(self, A, B):
+    def scipy_two_kfacs_to_mat(self, A, B):
         return torch.from_numpy(scipy.linalg.kron(A.numpy(), B.numpy()))
 
-    def scipy_matrix_from_kron_facs(self, factors):
+    def scipy_kfacs_to_mat(self, factors):
         mat = None
         for factor in factors:
             if mat is None:
                 assert bp_utils.is_matrix(factor)
                 mat = factor
             else:
-                mat = self.scipy_matrix_from_two_kron_facs(mat, factor)
+                mat = self.scipy_two_kfacs_to_mat(mat, factor)
 
         return mat
 
     # TESTS
     ##########################################################################
 
-    def test_matrix_from_two_kron_facs(self):
+    def test_two_kfacs_to_mat(self):
         """Check matrix from two Kronecker factors with `scipy`."""
         NUM_FACS = 2
 
         for _ in range(self.RUNS):
             A, B = self.make_random_kfacs(NUM_FACS)
 
-            bp_result = bp_utils.matrix_from_two_kron_facs(A, B)
-            sp_result = self.scipy_matrix_from_two_kron_facs(A, B)
+            bp_result = bp_utils.two_kfacs_to_mat(A, B)
+            sp_result = self.scipy_two_kfacs_to_mat(A, B)
 
             assert self.allclose(bp_result, sp_result)
 
-    def test_matrix_from_kron_facs(self):
+    def test_kfacs_to_mat(self):
         """Check matrix from list of Kronecker factors with `scipy`."""
         for _ in range(self.RUNS):
             factors = self.make_random_kfacs()
 
-            bp_result = bp_utils.matrix_from_kron_facs(factors)
-            sp_result = self.scipy_matrix_from_kron_facs(factors)
+            bp_result = bp_utils.kfacs_to_mat(factors)
+            sp_result = self.scipy_kfacs_to_mat(factors)
 
             assert self.allclose(bp_result, sp_result)

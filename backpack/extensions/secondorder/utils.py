@@ -1,7 +1,7 @@
 from backpack.utils.utils import einsum
 
 
-def matrix_from_kron_facs(factors):
+def kfacs_to_mat(factors):
     """Given [A, B, C, ...], return A ⊗ B ⊗ C ⊗ ... ."""
     mat = None
     for factor in factors:
@@ -9,12 +9,12 @@ def matrix_from_kron_facs(factors):
             assert is_matrix(factor)
             mat = factor
         else:
-            mat = matrix_from_two_kron_facs(mat, factor)
+            mat = two_kfacs_to_mat(mat, factor)
 
     return mat
 
 
-def matrix_from_two_kron_facs(A, B):
+def two_kfacs_to_mat(A, B):
     """Given A, B, return A ⊗ B."""
     assert is_matrix(A)
     assert is_matrix(B)

@@ -2,13 +2,13 @@ import torch
 from .implementation import Implementation
 from backpack import backpack
 from backpack.extensions.curvature import Curvature
-from backpack.extensions.secondorder.utils import matrix_from_kron_facs
 from backpack.extensions.secondorder.hbp import (
     ExpectationApproximation,
     BackpropStrategy,
     LossHessianStrategy,
 )
 import backpack.extensions as new_ext
+from backpack.extensions.secondorder.utils import kfacs_to_mat
 
 
 class BpextImpl(Implementation):
@@ -87,7 +87,7 @@ class BpextImpl(Implementation):
             self.loss().backward()
             for p in self.model.parameters():
                 factors = getattr(p, savefield)
-                results.append(matrix_from_kron_facs(factors))
+                results.append(kfacs_to_mat(factors))
         return results
 
     def kfra_blocks(self):
@@ -115,7 +115,7 @@ class BpextImpl(Implementation):
             self.loss().backward()
             for p in self.model.parameters():
                 factors = p.hbp
-                results.append(matrix_from_kron_facs(factors))
+                results.append(kfacs_to_mat(factors))
         return results
 
     def hbp_single_sample_ggn_blocks(self):
