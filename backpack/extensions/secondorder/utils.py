@@ -1,3 +1,4 @@
+from backpack.core.derivatives.utils import kfacmp_unsqueeze_if_missing_dim
 from backpack.utils.utils import einsum
 
 
@@ -27,7 +28,7 @@ def two_kfacs_to_mat(A, B):
     return mat
 
 
-def vp_from_kron_facs(factors):
+def kfac_mat_prod(factors):
     """Return function v ↦ (A ⊗ B ⊗ ...)v for `factors = [A, B, ...]` """
     assert all_tensors_of_order(order=2, tensors=factors)
 
@@ -35,37 +36,43 @@ def vp_from_kron_facs(factors):
     _, col_dims = zip(*shapes)
 
     num_factors = len(shapes)
-    equation = vp_einsum_equation(num_factors)
+    equation = kfac_mat_prod_einsum_equation(num_factors)
 
-    def vp(v):
-        assert len(v.shape) == 1
-        v_reshaped = v.view(col_dims)
-        return einsum(equation, v_reshaped, *factors).view(-1)
+    @kfacmp_unsqueeze_if_missing_dim(mat_dim=2)
+    def kfacmp(mat):
+        assert is_matrix(mat)
+        _, mat_cols = mat.shape
+        mat_reshaped = mat.view(*(col_dims), mat_cols)
+        return einsum(equation, mat_reshaped, *factors).contiguous().view(-1, mat_cols)
 
-    return vp
+    return kfacmp
 
 
-def multiply_vec_with_kron_facs(factors, v):
-    """Return (A ⊗ B ⊗ ...) v for `factors = [A, B, ...]`
+def apply_kfac_mat_prod(factors, mat):
+    """Return (A ⊗ B ⊗ ...) mat for `factors = [A, B, ...]`
 
-    All Kronecker factors have to be of order-2-tensors.
+    All Kronecker factors have to be matrices.
     """
-    vp = vp_from_kron_facs(factors)
-    return vp(v)
+    kfacmp = kfac_mat_prod(factors)
+    return kfacmp(mat)
 
 
-def vp_einsum_equation(num_factors):
+def kfac_mat_prod_einsum_equation(num_factors):
     letters = get_letters()
-    in_str, v_str, out_str = "", "", ""
+    in_str, mat_str, out_str = "", "", ""
 
     for _ in range(num_factors):
         row_idx, col_idx = next(letters), next(letters)
 
         in_str += "," + row_idx + col_idx
-        v_str += col_idx
+        mat_str += col_idx
         out_str += row_idx
 
-    return "{}{}->{}".format(v_str, in_str, out_str)
+    mat_col_idx = next(letters)
+    mat_str += mat_col_idx
+    out_str += mat_col_idx
+
+    return "{}{}->{}".format(mat_str, in_str, out_str)
 
 
 def all_tensors_of_order(order, tensors):
@@ -79,6 +86,11 @@ def is_tensor_of_order(order, tensor):
 def is_matrix(tensor):
     matrix_order = 2
     return is_tensor_of_order(matrix_order, tensor)
+
+
+def is_vector(tensor):
+    vector_order = 1
+    return is_tensor_of_order(vector_order, tensor)
 
 
 def get_letters(max_letters=26):

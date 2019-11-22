@@ -22,17 +22,26 @@ class KroneckerUtilsTest(unittest.TestCase):
     MIN_FACS = 1
     MAX_FACS = 3
 
+    # Number of columns for KFAC-matrix products
+    KFACMP_COLS = 7
+
     # HELPERS
     ##########################################################################
     def allclose(self, tensor1, tensor2):
         return torch.allclose(tensor1, tensor2, rtol=self.RTOL, atol=self.ATOL)
 
-    def make_random_kfacs(self, num_facs=None):
+    def make_random_kfacs(self, num_facs=None, quadratic=False):
         def random_kfac():
             def random_dim():
                 return random.randint(self.MIN_DIM, self.MAX_DIM)
 
-            shape = (random_dim(), random_dim())
+            def random_shape():
+                if quadratic:
+                    return 2 * [random_dim()]
+                else:
+                    return [random_dim(), random_dim()]
+
+            shape = random_shape()
             return torch.rand(shape)
 
         def random_num_facs():
@@ -58,6 +67,17 @@ class KroneckerUtilsTest(unittest.TestCase):
 
         return mat
 
+    def make_matrix_for_multiplication_with(self, kfac, cols=None):
+        cols = cols if cols is not None else self.KFACMP_COLS
+        assert bp_utils.is_matrix(kfac)
+        _, rows = kfac.shape
+        return torch.rand(rows, cols)
+
+    def make_vector_for_multiplication_with(self, kfac):
+        vec = self.make_matrix_for_multiplication_with(kfac, cols=1).squeeze(-1)
+        assert bp_utils.is_vector(vec)
+        return vec
+
     # TESTS
     ##########################################################################
 
@@ -82,3 +102,28 @@ class KroneckerUtilsTest(unittest.TestCase):
             sp_result = self.scipy_kfacs_to_mat(factors)
 
             assert self.allclose(bp_result, sp_result)
+
+    def test_apply_kfac_mat_prod(self):
+        """Check matrix multiplication from Kronecker factors with matrix."""
+        make_vec = self.make_vector_for_multiplication_with
+        self.compare_kfac_tensor_prod(make_vec)
+
+    def test_apply_kfac_vec_prod(self):
+        """Check matrix multiplication from Kronecker factors with vector."""
+        make_mat = self.make_matrix_for_multiplication_with
+        self.compare_kfac_tensor_prod(make_mat)
+
+    def compare_kfac_tensor_prod(self, make_tensor):
+        def set_up():
+            factors = self.make_random_kfacs()
+            kfac = bp_utils.kfacs_to_mat(factors)
+            tensor = make_tensor(kfac)
+            return factors, kfac, tensor
+
+        for _ in range(self.RUNS):
+            factors, kfac, tensor = set_up()
+
+            bp_result = bp_utils.apply_kfac_mat_prod(factors, tensor)
+            torch_result = torch.matmul(kfac, tensor)
+
+            assert self.allclose(bp_result, torch_result)
