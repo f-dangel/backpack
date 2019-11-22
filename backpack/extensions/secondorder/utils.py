@@ -1,18 +1,48 @@
 from backpack.utils.utils import einsum
 
 
-def matrix_from_kron_facs(factors):
+def matrix_from_kron_facs2(factors):
+    # TODO: Remove after test of alternative function
     assert all_tensors_of_order(order=2, tensors=factors)
     mat = None
     for factor in factors:
         if mat is None:
             mat = factor
         else:
-            new_shape = (mat.shape[0] * factor.shape[0],
-                         mat.shape[1] * factor.shape[1])
-            mat = einsum('ij,kl->ikjl',
-                         (mat, factor)).contiguous().view(new_shape)
+            new_shape = (mat.shape[0] * factor.shape[0], mat.shape[1] * factor.shape[1])
+            mat = einsum("ij,kl->ikjl", (mat, factor)).contiguous().view(new_shape)
     return mat
+
+
+def matrix_from_kron_facs(factors):
+    """Given a list [A, B, C, ...] return matrix A ⊗ B ⊗ C ⊗ ... ."""
+    mat = None
+    for factor in factors:
+        if mat is None:
+            assert is_matrix(factor)
+            mat = factor
+        else:
+            mat = matrix_from_two_kron_facs(mat, factor)
+
+    return mat
+
+
+def matrix_from_two_kron_facs(A, B):
+    """Given A, B, return matrix A ⊗ B."""
+    assert is_matrix(A)
+    assert is_matrix(B)
+
+    mat_shape = (
+        A.shape[0] * B.shape[0],
+        A.shape[1] * B.shape[1],
+    )
+    mat = einsum("ij,kl->ikjl", (A, B)).contiguous().view(mat_shape)
+    return mat
+
+
+def is_matrix(tensor):
+    matrix_order = 2
+    return is_tensor_of_order(matrix_order, tensor)
 
 
 def vp_from_kron_facs(factors):
@@ -57,9 +87,13 @@ def vp_einsum_equation(num_factors):
 
 
 def all_tensors_of_order(order, tensors):
-    return all([len(t.shape) == order for t in tensors])
+    return all([is_tensor_of_order(order, t) for t in tensors])
+
+
+def is_tensor_of_order(order, tensor):
+    return len(tensor.shape) == order
 
 
 def get_letters(max_letters=26):
     for i in range(max_letters):
-        yield chr(ord('a') + i)
+        yield chr(ord("a") + i)
