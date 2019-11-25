@@ -57,6 +57,63 @@ def apply_kfac_mat_prod(factors, mat):
     return kfacmp(mat)
 
 
+def inv_kfac_mat_prod(factors, shift=None):
+    """ Return function M ↦ [(A + 𝜆₁I)⁻¹ ⊗ (A + 𝜆₂I)⁻¹⊗ ...] M
+    given [A, B, ...], [𝜆₁, 𝜆₂, ...].
+    """
+    inv_factors = inv_kfacs(factors, shift)
+    return kfac_mat_prod(inv_factors)
+
+
+def apply_inv_kfac_mat_prod(factors, mat, shift=None):
+    """Return [(A + 𝜆₁I)⁻¹ ⊗ (A + 𝜆₂I)⁻¹⊗ ...] M."""
+    inv_mat_prod = inv_kfac_mat_prod(factors, shift)
+    return inv_mat_prod(mat)
+
+
+def inv_kfacs(factors, shift=None):
+    """Given [A, B, ...], [𝜆₁, 𝜆₂, ...] Return [(A + 𝜆₁I)⁻¹, (A + 𝜆₂I)⁻¹, ...].
+
+    I denotes the identity matrix. All KFACs are assumed symmetric.
+
+    Parameters:
+    -----------
+    shift: list, tuple, float:
+        Diagonal shift of the eigenvalues. Per default, no shift is applied.
+        If float, the same shift is applied to all factors.
+    """
+
+    def make_shifts():
+        same = shift is None or isinstance(shift, float)
+        if same:
+            value = 0.0 if shift is None else shift
+            return [value for factor in factors]
+        else:
+            assert isinstance(shift, [tuple, list])
+            assert len(factors) == len(shifts)
+            return shift
+
+    def sym_mat_inv(mat, shift, truncate=1e-8):
+        eigvals, eigvecs = mat.symeig(eigenvectors=True)
+        eigvals.add_(shift)
+        inv_eigvals = 1.0 / eigvals
+        # discard contributions of eigenvalues close to zero
+        inv_eigvals.clamp_(min=0.0, max=1.0 / truncate)
+        return einsum("ij,j,kj->ik", (eigvecs, inv_eigvals, eigvecs))
+
+    inv_factors = []
+    shifts = make_shifts()
+
+    for factor, shift in zip(factors, shifts):
+        inv = sym_mat_inv(factor, shift)
+        inv_factors.append(inv)
+
+    # TODO Use after testing
+    # inv_factors = [sym_mat_inv(mat, shift) for mat, shift in zip(factors, shifts)]
+
+    return inv_factors
+
+
 def kfac_mat_prod_einsum_equation(num_factors):
     letters = get_letters()
     in_str, mat_str, out_str = "", "", ""
