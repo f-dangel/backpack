@@ -106,17 +106,8 @@ def inv_kfacs(factors, shift=None):
         inv_eigvals.clamp_(min=0.0, max=1.0 / truncate)
         return einsum("ij,j,kj->ik", (eigvecs, inv_eigvals, eigvecs))
 
-    inv_factors = []
     shifts = make_shifts()
-
-    for factor, shift in zip(factors, shifts):
-        inv = sym_mat_inv(factor, shift)
-        inv_factors.append(inv)
-
-    # TODO Use after testing
-    # inv_factors = [sym_mat_inv(mat, shift) for mat, shift in zip(factors, shifts)]
-
-    return inv_factors
+    return [sym_mat_inv(mat, shift) for mat, shift in zip(factors, shifts)]
 
 
 def kfac_mat_prod_einsum_equation(num_factors):
