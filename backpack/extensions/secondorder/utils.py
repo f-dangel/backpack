@@ -84,16 +84,21 @@ def inv_kfacs(factors, shift=None):
     """
 
     def make_shifts():
+        """Turn user-specified shift into a value for each factor."""
         same = shift is None or isinstance(shift, float)
         if same:
             value = 0.0 if shift is None else shift
             return [value for factor in factors]
         else:
-            assert isinstance(shift, [tuple, list])
-            assert len(factors) == len(shifts)
+            assert isinstance(shift, (tuple, list))
+            assert len(factors) == len(shift)
             return shift
 
     def sym_mat_inv(mat, shift, truncate=1e-8):
+        """Inverse of a symmetric matrix.
+
+        Computed by eigenvalue decomposition.
+        """
         eigvals, eigvecs = mat.symeig(eigenvectors=True)
         eigvals.add_(shift)
         inv_eigvals = 1.0 / eigvals
