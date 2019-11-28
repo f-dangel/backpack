@@ -95,15 +95,16 @@ def inv_kfacs(factors, shift=None):
             return shift
 
     def sym_mat_inv(mat, shift, truncate=1e-8):
-        """Inverse of a symmetric matrix.
+        """Inverse of a symmetric matrix A -> (A + 𝜆I)⁻¹.
 
-        Computed by eigenvalue decomposition.
+        Computed by eigenvalue decomposition. Eigenvalues with small
+        absolute values are truncated.
         """
         eigvals, eigvecs = mat.symeig(eigenvectors=True)
         eigvals.add_(shift)
         inv_eigvals = 1.0 / eigvals
-        # discard contributions of eigenvalues close to zero
-        inv_eigvals.clamp_(min=0.0, max=1.0 / truncate)
+        inv_truncate = 1.0 / truncate
+        inv_eigvals.clamp_(min=-inv_truncate, max=inv_truncate)
         return einsum("ij,j,kj->ik", (eigvecs, inv_eigvals, eigvecs))
 
     shifts = make_shifts()
