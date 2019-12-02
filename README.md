@@ -1,4 +1,6 @@
 # BACKpropagation PACKage - a backpack for `PyTorch`
+[![Build Status](https://travis-ci.org/f-dangel/backpack.svg?branch=master)](https://travis-ci.org/f-dangel/backpack)
+
 
 A backpack for PyTorch that extends the backward pass of feedforward networks to compute quantities beyond the gradient.
 
