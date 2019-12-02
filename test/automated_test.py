@@ -132,7 +132,7 @@ def test_diag_ggn_mc_approx_ggn_montecarlo(problem, device):
     for param_res in bp_diagggn:
         bp_diagggn_mc_avg.append(torch.zeros_like(param_res))
 
-    mc_samples = 200
+    mc_samples = 500
     for mc in range(mc_samples):
         bp_diagggn_mc = BpextImpl(problem).diag_ggn_mc()
         for i, param_res in enumerate(bp_diagggn_mc):
