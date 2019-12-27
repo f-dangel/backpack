@@ -7,7 +7,7 @@ from utils import load_mnist_data
 B = 64
 X, y = load_mnist_data(B)
 
-print(f"# COMPUTE THE GRADIENT WITH PYTORCH (B={B})")
+print(f"# Gradient with PyTorch (B={B})")
 
 model = Sequential(
     Flatten(),
@@ -22,5 +22,5 @@ for name, param in model.named_parameters():
     print(
         f"\n{name}:",
         f"\n\t.grad.shape: {param.grad.shape}",
-        f"\n\t.grad:       {param.grad}",
+        # f"\n\t.grad:       {param.grad}",
     )
