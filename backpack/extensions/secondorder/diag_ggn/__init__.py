@@ -48,7 +48,6 @@ class DiagGGN(BackpropExtension):
                          })
 
 
-
 class DiagGGNExact(DiagGGN):
     """
     Diagonal of the Generalized Gauss-Newton/Fisher. 
@@ -79,6 +78,10 @@ class DiagGGNMC(DiagGGN):
     see :py:meth:`backpack.extensions.DiagGGNExact`.
 
     """
-    def __init__(self):
+    def __init__(self, mc_samples=1):
+        self._mc_samples = mc_samples
         super().__init__(loss_hessian_strategy=LossHessianStrategy.SAMPLING,
                          savefield="diag_ggn_mc")
+
+    def get_num_mc_samples(self):
+        return self._mc_samples

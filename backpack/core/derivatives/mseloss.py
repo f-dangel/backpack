@@ -21,7 +21,18 @@ class MSELossDerivatives(BaseDerivatives):
 
         return sqrt_H
 
-    def sqrt_hessian_sampled(self, module, g_inp, g_out):
+    def make_sqrt_hessian_sampled_fn(self, mc_samples=None):
+        def _sqrt_hessian_sampled_fn(module, g_inp, g_out):
+            return self.sqrt_hessian_sampled(module, g_inp, g_out, mc_samples)
+
+        return _sqrt_hessian_sampled_fn
+
+    def sqrt_hessian_sampled(self, module, g_inp, g_out, mc_samples=None):
+        """
+        Note:
+        -----
+        Parameter `mc_samples` will be ignored.
+        """
         warn(
             "[MC Sampling Hessian of MSE loss] " +
             "Returning the symmetric factorization of the full Hessian " +
