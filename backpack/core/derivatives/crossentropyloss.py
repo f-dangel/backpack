@@ -22,7 +22,7 @@ class CrossEntropyLossDerivatives(BaseDerivatives):
         Id_tautau = Id - einsum('ni,nj->nij', tau, tau)
         sqrt_H = einsum('ni,nij->nij', tau, Id_tautau)
 
-        if module.reduction is "mean":
+        if module.reduction == "mean":
             sqrt_H /= sqrt(module.input0.shape[0])
 
         return sqrt_H
@@ -39,7 +39,7 @@ class CrossEntropyLossDerivatives(BaseDerivatives):
 
         sqrt_mc_h = (probs_unsqueezed - classes) / sqrt(M)
 
-        if module.reduction is "mean":
+        if module.reduction == "mean":
             sqrt_mc_h /= sqrt(module.input0.shape[0])
 
         return sqrt_mc_h
@@ -48,7 +48,7 @@ class CrossEntropyLossDerivatives(BaseDerivatives):
         probs = self.get_probs(module)
         sum_H = diag(probs.sum(0)) - einsum('bi,bj->ij', (probs, probs))
 
-        if module.reduction is "mean":
+        if module.reduction == "mean":
             sum_H /= module.input0.shape[0]
 
         return sum_H
@@ -63,7 +63,7 @@ class CrossEntropyLossDerivatives(BaseDerivatives):
                           (probs, mat)) - einsum('bi,bj,bjc->bic',
                                                  (probs, probs, mat))
 
-            if module.reduction is "mean":
+            if module.reduction == "mean":
                 Hmat /= module.input0.shape[0]
 
             return Hmat

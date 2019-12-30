@@ -16,7 +16,7 @@ class MSELossDerivatives(BaseDerivatives):
 
         sqrt_H = diag_embed(sqrt(2) * ones_like(module.input0))
 
-        if module.reduction is "mean":
+        if module.reduction == "mean":
             sqrt_H /= sqrt(module.input0.shape[0])
 
         return sqrt_H
@@ -38,7 +38,7 @@ class MSELossDerivatives(BaseDerivatives):
         sum_H = 2 * batch * diag(
             ones(num_features, device=module.input0.device))
 
-        if module.reduction is "mean":
+        if module.reduction == "mean":
             sum_H /= module.input0.shape[0]
         print("sum H ", sum_H.shape)
         return sum_H
@@ -50,7 +50,7 @@ class MSELossDerivatives(BaseDerivatives):
         def hmp(mat):
             Hmat = 2 * mat
 
-            if module.reduction is "mean":
+            if module.reduction == "mean":
                 Hmat /= module.input0.shape[0]
 
             return Hmat

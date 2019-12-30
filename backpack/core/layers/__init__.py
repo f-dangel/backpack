@@ -73,7 +73,7 @@ class Conv2dConcat(Module):
                  groups=1,
                  bias=True,
                  padding_mode="zeros"):
-        assert padding_mode is "zeros"
+        assert padding_mode == "zeros"
         assert groups == 1
 
         super().__init__()
