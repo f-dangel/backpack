@@ -55,7 +55,6 @@ class backpack():
     def __exit__(self, type, value, traceback):
         CTX.set_active_exts(self.old_CTX)
         CTX.set_debug(self.old_debug)
-        CTX.clear()
 
 
 def hook_store_io(module, input, output):
