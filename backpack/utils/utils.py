@@ -30,14 +30,3 @@ def einsum(equation, *operands):
     See `backpack.utils.utils.EINSUMS` for supported implementations.
     """
     return EINSUMS[BPEXTS_EINSUM](equation, *operands)
-
-
-def random_psd_matrix(dim, device=None):
-    """Random positive semi-definite matrix on device."""
-    if device is None:
-        device = torch.device("cpu")
-
-    rand_mat = torch.randn(dim, dim, device=device)
-    rand_mat = 0.5 * (rand_mat + rand_mat.t())
-    shift = dim * torch.eye(dim, device=device)
-    return rand_mat + shift
