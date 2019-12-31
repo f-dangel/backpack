@@ -1,5 +1,5 @@
 from torch.nn import Unfold
-from backpack.utils.utils import einsum
+from backpack.utils.einsum import einsum
 
 
 def unfold_func(module):

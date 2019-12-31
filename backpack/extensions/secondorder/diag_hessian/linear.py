@@ -1,6 +1,6 @@
 import torch
 import torch.nn
-from backpack.utils.utils import einsum
+from backpack.utils.einsum import einsum
 from backpack.core.derivatives.linear import LinearDerivatives, LinearConcatDerivatives
 from .diag_h_base import DiagHBaseModule
 

@@ -1,7 +1,7 @@
 from backpack.utils.unsqueeze import hmp_unsqueeze_if_missing_dim
 from backpack.extensions.curvature import Curvature
 from backpack.extensions.module_extension import ModuleExtension
-from backpack.utils.utils import einsum
+from backpack.utils.einsum import einsum
 
 
 class CMPBase(ModuleExtension):

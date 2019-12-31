@@ -1,4 +1,4 @@
-from ...utils.utils import einsum
+from ...utils.einsum import einsum
 from torch.nn import Linear
 from .basederivatives import BaseDerivatives
 from ..layers import LinearConcat

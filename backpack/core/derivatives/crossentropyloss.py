@@ -5,7 +5,7 @@ from torch import sqrt as torchsqrt
 from torch.nn import CrossEntropyLoss
 from torch.nn.functional import one_hot
 
-from ...utils.utils import einsum
+from ...utils.einsum import einsum
 from .basederivatives import BaseDerivatives
 from backpack.utils.unsqueeze import hmp_unsqueeze_if_missing_dim
 

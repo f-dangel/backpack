@@ -1,4 +1,8 @@
-"""Utility functions."""
+"""
+Einsum utility functions.
+
+Makes it easy to switch to opt_einsum rather than torch's einsum for tests.
+"""
 
 import opt_einsum as oe
 import torch
