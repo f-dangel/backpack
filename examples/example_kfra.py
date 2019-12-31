@@ -10,7 +10,7 @@ from utils import load_mnist_data
 B = 64
 X, y = load_mnist_data(B)
 
-print(f"# Gradient with PyTorch, KFRA approximation with BackPACK (B={B})")
+print("# Gradient with PyTorch, KFRA approximation with BackPACK | B =", B)
 
 model = Sequential(
     Flatten(),
@@ -27,10 +27,6 @@ with backpack(extensions.KFRA()):
     loss.backward()
 
 for name, param in model.named_parameters():
-    print(
-        f"\n{name}:",
-        f"\n\t.grad.shape:    {param.grad.shape}",
-        f"\n\t.kfra (shapes): {[kfra.shape for kfra in param.kfra]}",
-        # f"\n\t.grad:          {param.grad}",
-        # f"\n\t.kfra:          {param.kfra}",
-    )
+    print(name)
+    print(".grad.shape:             ", param.grad.shape)
+    print(".kfra (shapes):          ", [kfra.shape for kfra in param.kfra])
