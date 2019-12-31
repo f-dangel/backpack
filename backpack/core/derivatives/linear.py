@@ -35,7 +35,6 @@ class LinearDerivatives(BaseDerivatives):
 
     @jmp_unsqueeze_if_missing_dim(mat_dim=2)
     def weight_jac_mat_prod(self, module, g_inp, g_out, mat):
-        batch = self.get_batch(module)
         num_cols = mat.size(1)
         shape = tuple(module.weight.size()) + (num_cols, )
 
