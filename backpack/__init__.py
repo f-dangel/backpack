@@ -12,7 +12,7 @@ class backpack():
     :code:`backward` calls in the current :code:`with` block.
     """
 
-    def __init__(self, *args):
+    def __init__(self, *args, debug=False):
         """
         Activate the Backpack extensions.
 
@@ -40,15 +40,21 @@ class backpack():
         Parameters:
             args: [BackpropExtension]
                 The extensions to activate for the backward pass.
+            debug: Bool, optional (default: False)
+                If true, will print debug messages during the backward pass.
         """
         self.args = args
+        self.debug = debug
 
     def __enter__(self):
         self.old_CTX = CTX.get_active_exts()
+        self.old_debug = CTX.get_debug()
         CTX.set_active_exts(self.args)
+        CTX.set_debug(self.debug)
 
     def __exit__(self, type, value, traceback):
         CTX.set_active_exts(self.old_CTX)
+        CTX.set_debug(self.old_debug)
         CTX.clear()
 
 
@@ -88,6 +94,8 @@ def memory_cleanup(module):
 
 def hook_run_extensions(module, g_inp, g_out):
     for backpack_extension in CTX.get_active_exts():
+        if CTX.get_debug():
+            print(f"[DEBUG] Running extension {backpack_extension} on {module}")
         backpack_extension.apply(module, g_inp, g_out)
 
     if not CTX.is_extension_active(extensions.curvmatprod.CMP):

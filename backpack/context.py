@@ -18,6 +18,7 @@ class CTX:
     """
     active_exts = tuple()
     backproped_quantities = {}
+    debug = False
 
     @staticmethod
     def set_active_exts(active_exts):
@@ -52,3 +53,11 @@ class CTX:
             if isinstance(backpack_ext, extension_class):
                 return True
         return False
+
+    @staticmethod
+    def get_debug():
+        return CTX.debug
+
+    @staticmethod
+    def set_debug(debug):
+        CTX.debug = debug
