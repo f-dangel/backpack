@@ -3,7 +3,7 @@ import pytest
 
 import torch
 
-from .automated_test import atol, check_sizes, check_values, rtol
+from .automated_test import check_sizes, check_values
 from .implementation.implementation_autograd import AutogradImpl
 from .implementation.implementation_bpext import BpextImpl
 from .test_problems_bn import TEST_PROBLEMS as BN_TEST_PROBLEMS
