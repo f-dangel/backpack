@@ -4,7 +4,7 @@ from torch import diag_embed, ones_like, diag, ones
 from torch.nn import MSELoss
 from .basederivatives import BaseDerivatives
 
-from .utils import hmp_unsqueeze_if_missing_dim
+from backpack.utils.unsqueeze import hmp_unsqueeze_if_missing_dim
 
 
 class MSELossDerivatives(BaseDerivatives):

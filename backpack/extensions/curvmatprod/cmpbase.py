@@ -1,4 +1,4 @@
-from backpack.core.derivatives.utils import hmp_unsqueeze_if_missing_dim
+from backpack.utils.unsqueeze import hmp_unsqueeze_if_missing_dim
 from backpack.extensions.curvature import Curvature
 from backpack.extensions.module_extension import ModuleExtension
 from backpack.utils.utils import einsum

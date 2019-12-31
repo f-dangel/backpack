@@ -7,7 +7,7 @@ from torch.nn import AvgPool2d, Conv2d, ConvTranspose2d
 from ...utils import conv as convUtils
 from ...utils.utils import einsum
 from .basederivatives import BaseDerivatives
-from .utils import jmp_unsqueeze_if_missing_dim
+from backpack.utils.unsqueeze import jmp_unsqueeze_if_missing_dim
 
 
 class AvgPool2DDerivatives(BaseDerivatives):

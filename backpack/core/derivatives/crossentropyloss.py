@@ -7,7 +7,7 @@ from torch.nn.functional import one_hot
 
 from ...utils.utils import einsum
 from .basederivatives import BaseDerivatives
-from .utils import hmp_unsqueeze_if_missing_dim
+from backpack.utils.unsqueeze import hmp_unsqueeze_if_missing_dim
 
 
 class CrossEntropyLossDerivatives(BaseDerivatives):

@@ -1,6 +1,6 @@
 from ...utils.utils import einsum
 from .basederivatives import BaseDerivatives
-from .utils import jmp_unsqueeze_if_missing_dim
+from backpack.utils.unsqueeze import jmp_unsqueeze_if_missing_dim
 
 
 class ElementwiseDerivatives(BaseDerivatives):

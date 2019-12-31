@@ -1,4 +1,4 @@
-from backpack.core.derivatives.utils import kfacmp_unsqueeze_if_missing_dim
+from backpack.utils.unsqueeze import kfacmp_unsqueeze_if_missing_dim
 from backpack.utils.utils import einsum
 
 

@@ -3,7 +3,7 @@ from torch.nn import Linear
 from .basederivatives import BaseDerivatives
 from ..layers import LinearConcat
 
-from .utils import jmp_unsqueeze_if_missing_dim
+from backpack.utils.unsqueeze import jmp_unsqueeze_if_missing_dim
 
 
 class LinearDerivatives(BaseDerivatives):
