@@ -45,3 +45,10 @@ class CTX:
     def clear():
         del CTX.backproped_quantities
         CTX.backproped_quantities = {}
+
+    @staticmethod
+    def is_extension_active(extension_class):
+        for backpack_ext in CTX.get_active_exts():
+            if isinstance(backpack_ext, extension_class):
+                return True
+        return False
