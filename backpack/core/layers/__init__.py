@@ -1,7 +1,7 @@
 import torch
 import torch.nn.functional as F
 from torch.nn import Module, Linear, Parameter, Conv2d
-from torch import flatten, cat, Tensor, empty
+from torch import cat, empty
 from ...utils.conv import unfold_func
 
 

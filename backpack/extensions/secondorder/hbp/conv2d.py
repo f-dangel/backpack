@@ -1,5 +1,3 @@
-import warnings
-
 from backpack.core.derivatives.conv2d import (Conv2DConcatDerivatives,
                                               Conv2DDerivatives)
 from backpack.utils import conv as convUtils

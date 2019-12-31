@@ -1,6 +1,6 @@
 from warnings import warn
 from math import sqrt
-from torch import diag_embed, ones_like, randn, diag, ones
+from torch import diag_embed, ones_like, diag, ones
 from torch.nn import MSELoss
 from .basederivatives import BaseDerivatives
 
