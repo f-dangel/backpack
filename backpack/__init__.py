@@ -5,13 +5,14 @@ import torch
 from .context import CTX
 from . import extensions
 
+
 class backpack():
     """
     Activates the BackPACK extensions passed as arguments for the
     :code:`backward` calls in the current :code:`with` block.
     """
 
-    def __init__(self, *args):
+    def __init__(self, *args, debug=False):
         """
         Activate the Backpack extensions.
 
@@ -39,16 +40,65 @@ class backpack():
         Parameters:
             args: [BackpropExtension]
                 The extensions to activate for the backward pass.
+            debug: Bool, optional (default: False)
+                If true, will print debug messages during the backward pass.
         """
         self.args = args
+        self.debug = debug
 
     def __enter__(self):
         self.old_CTX = CTX.get_active_exts()
+        self.old_debug = CTX.get_debug()
         CTX.set_active_exts(self.args)
+        CTX.set_debug(self.debug)
 
     def __exit__(self, type, value, traceback):
         CTX.set_active_exts(self.old_CTX)
-        CTX.clear()
+        CTX.set_debug(self.old_debug)
+
+
+def hook_store_io(module, input, output):
+    for i in range(len(input)):
+        setattr(module, 'input{}'.format(i), input[i])
+    setattr(module, 'output', output)
+
+
+def hook_store_shapes(module, input, output):
+    """Store dimensionality of output as buffer."""
+    for i in range(len(input)):
+        module.register_buffer(
+            'input{}_shape'.format(i),
+            torch.IntTensor([*input[i].size()])
+        )
+    module.register_buffer(
+        'output_shape',
+        torch.IntTensor([*output.size()])
+    )
+
+
+def memory_cleanup(module):
+    if hasattr(module, "output"):
+        delattr(module, "output")
+    if hasattr(module, "output_shape"):
+        delattr(module, "output_shape")
+    i = 0
+    while hasattr(module, "input{}".format(i)):
+        delattr(module, "input{}".format(i))
+        i += 1
+    i = 0
+    while hasattr(module, "input{}_shape".format(i)):
+        delattr(module, "input{}_shape".format(i))
+        i += 1
+
+
+def hook_run_extensions(module, g_inp, g_out):
+    for backpack_extension in CTX.get_active_exts():
+        if CTX.get_debug():
+            print("[DEBUG] Running extension", backpack_extension, "on", module)
+        backpack_extension.apply(module, g_inp, g_out)
+
+    if not CTX.is_extension_active(extensions.curvmatprod.CMP):
+        memory_cleanup(module)
 
 
 def extend(module, debug=False):
@@ -60,7 +110,7 @@ def extend(module, debug=False):
     module: torch.nn.Module
         The module to extend
     debug: Bool, optional (default: False)
-        If true, will print debug messages during the extension and backward.
+        If true, will print debug messages during the extension.
     """
     if debug:
         print("[DEBUG] Extending", module)
@@ -69,61 +119,10 @@ def extend(module, debug=False):
         extend(child, debug=debug)
 
     module_was_already_extended = getattr(module, "_backpack_extend", False)
-    if module_was_already_extended:
-        return module
+    if not module_was_already_extended:
+        CTX.add_hook_handle(module.register_forward_hook(hook_store_io))
+        CTX.add_hook_handle(module.register_forward_hook(hook_store_shapes))
+        CTX.add_hook_handle(module.register_backward_hook(hook_run_extensions))
+        setattr(module, "_backpack_extend", True)
 
-    def store_io(module, input, output):
-        for i in range(len(input)):
-            setattr(module, 'input{}'.format(i), input[i])
-        setattr(module, 'output', output)
-
-    def store_shapes(module, input, output):
-        """Store dimensionality of output as buffer."""
-        for i in range(len(input)):
-            module.register_buffer(
-                'input{}_shape'.format(i),
-                torch.IntTensor([*input[i].size()])
-            )
-        module.register_buffer(
-            'output_shape',
-            torch.IntTensor([*output.size()])
-        )
-
-    def memory_cleanup(module):
-        if hasattr(module, "output"):
-            delattr(module, "output")
-        if hasattr(module, "output_shape"):
-            delattr(module, "output_shape")
-        i = 0
-        while hasattr(module, "input{}".format(i)):
-            delattr(module, "input{}".format(i))
-            i += 1
-        i = 0
-        while hasattr(module, "input{}_shape".format(i)):
-            delattr(module, "input{}_shape".format(i))
-            i += 1
-
-    def run_extensions(module_, g_inp, g_out):
-        for backpack_extension in CTX.get_active_exts():
-            if debug:
-                print(
-                    "[DEBUG] Running extension", backpack_extension,
-                    "on", module
-                )
-            backpack_extension.apply(module_, g_inp, g_out)
-
-        def extension_contain_curvmatprod():
-            for backpack_ext in CTX.get_active_exts():
-                if isinstance(backpack_ext, extensions.curvmatprod.CMP):
-                    return True
-            return False
-
-        if not extension_contain_curvmatprod():
-            memory_cleanup(module_)
-
-    CTX.add_hook_handle(module.register_forward_hook(store_io))
-    CTX.add_hook_handle(module.register_forward_hook(store_shapes))
-    CTX.add_hook_handle(module.register_backward_hook(run_extensions))
-
-    setattr(module, "_backpack_extend", True)
     return module

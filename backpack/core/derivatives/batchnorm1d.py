@@ -1,10 +1,8 @@
-import torch
-import torch.nn
 from torch.nn import BatchNorm1d
 
-from ...utils.utils import einsum
+from ...utils.einsum import einsum
 from .basederivatives import BaseDerivatives
-from .utils import jmp_unsqueeze_if_missing_dim
+from backpack.utils.unsqueeze import jmp_unsqueeze_if_missing_dim
 
 
 class BatchNorm1dDerivatives(BaseDerivatives):
@@ -62,7 +60,6 @@ class BatchNorm1dDerivatives(BaseDerivatives):
 
     @jmp_unsqueeze_if_missing_dim(mat_dim=2)
     def weight_jac_mat_prod(self, module, g_inp, g_out, mat):
-        batch = self.get_batch(module)
         x_hat, _ = self.get_normalized_input_and_var(module)
         return einsum('bi,ic->bic', (x_hat, mat))
 

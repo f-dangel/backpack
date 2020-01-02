@@ -8,7 +8,7 @@ from backpack.extensions.secondorder.hbp import (
     LossHessianStrategy,
 )
 import backpack.extensions as new_ext
-from backpack.extensions.secondorder.utils import kfacs_to_mat
+from backpack.utils.kroneckers import kfacs_to_mat
 
 
 class BpextImpl(Implementation):

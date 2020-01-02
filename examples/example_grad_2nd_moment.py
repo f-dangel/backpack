@@ -10,7 +10,7 @@ from utils import load_mnist_data
 B = 64
 X, y = load_mnist_data(B)
 
-print(f"# Gradient with PyTorch, gradient 2nd moment with BackPACK (B={B})")
+print("# Gradient with PyTorch, gradient 2nd moment with BackPACK | B =", B)
 
 model = Sequential(
     Flatten(),
@@ -27,10 +27,6 @@ with backpack(extensions.SumGradSquared()):
     loss.backward()
 
 for name, param in model.named_parameters():
-    print(
-        f"\n{name}:",
-        f"\n\t.grad.shape:             {param.grad.shape}",
-        f"\n\t.sum_grad_squared.shape: {param.sum_grad_squared.shape}",
-        # f"\n\t.grad:                   {param.grad}",
-        # f"\n\t.sum_grad_squared:       {param.sum_grad_squared}",
-    )
+    print(name)
+    print(".grad.shape:             ", param.grad.shape)
+    print(".sum_grad_squared.shape: ", param.sum_grad_squared.shape)

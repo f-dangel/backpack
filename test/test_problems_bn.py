@@ -1,4 +1,3 @@
-import torch
 from torch.nn import BatchNorm1d
 
 from .layers import LINEARS

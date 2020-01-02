@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 from backpack import extend
 from .test_problem import TestProblem

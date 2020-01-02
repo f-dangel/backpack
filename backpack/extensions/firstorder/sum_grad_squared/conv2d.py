@@ -1,4 +1,4 @@
-from backpack.utils.utils import einsum
+from backpack.utils.einsum import einsum
 from backpack.utils import conv as convUtils
 from backpack.extensions.firstorder.base import FirstOrderModuleExtension
 

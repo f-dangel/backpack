@@ -1,9 +1,7 @@
-import warnings
-
 from backpack.core.derivatives.conv2d import (Conv2DConcatDerivatives,
                                               Conv2DDerivatives)
 from backpack.utils import conv as convUtils
-from backpack.utils.utils import einsum
+from backpack.utils.einsum import einsum
 
 from .hbp_options import BackpropStrategy, ExpectationApproximation
 from .hbpbase import HBPBaseModule

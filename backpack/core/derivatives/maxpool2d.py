@@ -1,13 +1,10 @@
-import warnings
-
-from torch import prod, scatter_add, zeros
+from torch import prod, zeros
 from torch.nn import MaxPool2d
 from torch.nn.functional import max_pool2d
 
 from ...utils import conv as convUtils
-from ...utils.utils import random_psd_matrix
 from .basederivatives import BaseDerivatives
-from .utils import jmp_unsqueeze_if_missing_dim
+from backpack.utils.unsqueeze import jmp_unsqueeze_if_missing_dim
 
 
 class MaxPool2DDerivatives(BaseDerivatives):

@@ -10,8 +10,7 @@ from utils import load_mnist_data
 B = 64
 X, y = load_mnist_data(B)
 
-print(
-    f"# Gradient with PyTorch, MC-sampled GGN diagonal with BackPACK (B={B})")
+print("# Gradient with PyTorch, MC-sampled GGN diagonal with BackPACK | B =", B)
 
 model = Sequential(
     Flatten(),

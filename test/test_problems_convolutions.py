@@ -1,6 +1,5 @@
 import numpy as np
 import torch
-from backpack.core.layers import Conv2dConcat
 from backpack import extend
 from .test_problem import TestProblem
 from .layers import CONVS

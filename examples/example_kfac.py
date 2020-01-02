@@ -10,7 +10,7 @@ from utils import load_mnist_data
 B = 64
 X, y = load_mnist_data(B)
 
-print(f"# Gradient with PyTorch, KFAC approximation with BackPACK (B={B})")
+print("# Gradient with PyTorch, KFAC approximation with BackPACK | B =", B)
 
 model = Sequential(
     Flatten(),
@@ -27,10 +27,6 @@ with backpack(extensions.KFAC()):
     loss.backward()
 
 for name, param in model.named_parameters():
-    print(
-        f"\n{name}:",
-        f"\n\t.grad.shape:    {param.grad.shape}",
-        f"\n\t.kfac (shapes): {[kfac.shape for kfac in param.kfac]}",
-        # f"\n\t.grad:          {param.grad}",
-        # f"\n\t.kfac:          {param.kfac}",
-    )
+    print(name)
+    print(".grad.shape:             ", param.grad.shape)
+    print(".kfac (shapes):          ", [kfac.shape for kfac in param.kfac])
