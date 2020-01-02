@@ -17,3 +17,15 @@ git clone https://github.com/f-dangel/backpack.git ~/backpack
 cd ~/backpack
 python setup.py install
 ```
+
+## How to cite
+If you are using `backpack` for your research, consider citing the [paper](https://openreview.net/forum?id=BJlrF24twB) 
+```
+@inproceedings{dangel2020backpack,
+    title     = {Back{\{}PACK{\}}: Packing more into Backprop},
+    author    = {Felix Dangel and Frederik Kunstner and Philipp Hennig},
+    booktitle = {International Conference on Learning Representations},
+    year      = {2020},
+    url       = {https://openreview.net/forum?id=BJlrF24twB}
+}
+```
