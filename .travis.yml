@@ -10,7 +10,9 @@ install:
 cache:
 - pip
 script:
-- pytest -vx .
+- pytest -vx --cov=backpack/ .
+after_success:
+- coveralls
 notifications:
   email: false
   slack:
