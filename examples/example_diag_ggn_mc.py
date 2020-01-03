@@ -27,10 +27,6 @@ with backpack(extensions.DiagGGNMC()):
     loss.backward()
 
 for name, param in model.named_parameters():
-    print(
-        f"\n{name}:",
-        f"\n\t.grad.shape:        {param.grad.shape}",
-        f"\n\t.diag_ggn_mc.shape: {param.diag_ggn_mc.shape}",
-        # f"\n\t.grad:              {param.grad}",
-        # f"\n\t.diag_ggn_mc:       {param.diag_ggn_mc}",
-    )
+    print(name)
+    print(".grad.shape:       ", param.grad.shape)
+    print(".diag_ggn_mc.shape: ", param.diag_ggn_mc.shape)

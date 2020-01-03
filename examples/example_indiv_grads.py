@@ -25,10 +25,6 @@ with backpack(extensions.BatchGrad()):
     loss.backward()
 
 for name, param in model.named_parameters():
-    print(
-        f"\n{name}:",
-        f"\n\t.grad.shape:       {param.grad.shape}",
-        f"\n\t.grad_batch.shape: {param.grad_batch.shape}",
-        # f"\n\t.grad:             {param.grad}",
-        # f"\n\t.grad_batch:       {param.grad_batch}",
-    )
+    print(name)
+    print(".grad.shape:       ", param.grad.shape)
+    print(".grad_batch.shape: ", param.grad_batch.shape)
