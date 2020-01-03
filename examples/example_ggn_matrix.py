@@ -1,5 +1,6 @@
 """
 Compute the full GGN matrix with automatic differentiation.
+Use GGN-vector products for row-wise construction.
 """
 import torch
 from torch.nn import CrossEntropyLoss, Flatten, Linear, Sequential
