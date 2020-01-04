@@ -19,7 +19,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        make install-dev
+        make install-lint
     - name: Lint with flake8
       run: |
         make flake8

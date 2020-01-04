@@ -1,4 +1,7 @@
-.PHONY: help black black-check flake8 install install-dev
+.PHONY: help
+.PHONY: black black-check flake8
+.PHONY: install install-dev install-devtools install-test install-lint
+.PHONY: test
 
 .DEFAULT: help
 help:
@@ -11,7 +14,14 @@ help:
 	@echo "install"
 	@echo "        Install backpack and dependencies"
 	@echo "install-dev"
-	@echo "        Install development tools"
+	@echo "        Install all development tools"
+	@echo "install-lint"
+	@echo "        Install only the linter tools (included in install-dev)"
+	@echo "install-test"
+	@echo "        Install only the testing tools (included in install-dev)"
+
+###
+# Linter and autoformatter
 
 # Uses black.toml config instead of pyproject.toml to avoid pip issues. See
 # - https://github.com/psf/black/issues/683
@@ -26,18 +36,29 @@ black-check:
 flake8:
 	@flake8 .
 
+###
+# Installation
+
 install:
 	@pip install -r requirements.txt
 	@pip install .
 
-install-dev:
+install-lint:
+	@pip install -r requirements/lint.txt
+
+install-test:
+	@pip install -r requirements/test.txt
+
+install-devtools:
+	@echo "Install dev tools..."
+	@pip install -r requirements-dev.txt
+
+install-dev: install-devtools
 	@echo "Install dependencies..."
 	@pip install -r requirements.txt
 	@echo "Uninstall existing version of backpack..."
 	@pip uninstall backpack-for-pytorch
 	@echo "Install backpack in editable mode..."
 	@pip install -e .
-	@echo "Install dev tools..."
-	@pip install -r requirements-dev.txt
 	@echo "Install pre-commit hooks..."
 	@pre-commit install
