@@ -13,13 +13,15 @@ class MaxPool2DDerivatives(BaseDerivatives):
 
     def get_pooling_idx(self, module):
         # TODO: Do not recompute but get from forward pass of module
-        _, pool_idx = max_pool2d(module.input0,
-                                 kernel_size=module.kernel_size,
-                                 stride=module.stride,
-                                 padding=module.padding,
-                                 dilation=module.dilation,
-                                 return_indices=True,
-                                 ceil_mode=module.ceil_mode)
+        _, pool_idx = max_pool2d(
+            module.input0,
+            kernel_size=module.kernel_size,
+            stride=module.stride,
+            padding=module.padding,
+            dilation=module.dilation,
+            return_indices=True,
+            ceil_mode=module.ceil_mode,
+        )
         return pool_idx
 
     def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
@@ -34,8 +36,7 @@ class MaxPool2DDerivatives(BaseDerivatives):
         _, _, out_x, out_y = module.output.size()
         out_features = channels * out_x * out_y
 
-        pool_idx = self.get_pooling_idx(module).view(batch, channels,
-                                                     out_x * out_y)
+        pool_idx = self.get_pooling_idx(module).view(batch, channels, out_x * out_y)
         result = zeros(in_features, in_features, device=device)
 
         for b in range(batch):
@@ -101,11 +102,7 @@ class MaxPool2DDerivatives(BaseDerivatives):
         _, _, in_x, in_y = module.input0.size()
         num_classes = mat.shape[-1]
 
-        result = zeros(batch,
-                       channels,
-                       in_x * in_y,
-                       num_classes,
-                       device=mat.device)
+        result = zeros(batch, channels, in_x * in_y, num_classes, device=mat.device)
 
         pool_idx = self.get_pooling_idx(module)
         pool_idx = pool_idx.view(batch, channels, out_x * out_y)

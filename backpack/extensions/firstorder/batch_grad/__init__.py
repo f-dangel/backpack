@@ -14,13 +14,16 @@ class BatchGrad(BackpropExtension):
     where :code:`N` is the size of the minibatch and :code:`...`
     is the shape of the gradient.
     """
+
     def __init__(self):
-        super().__init__(savefield="grad_batch",
-                         fail_mode="WARNING",
-                         module_exts={
-                             Linear: linear.BatchGradLinear(),
-                             LinearConcat: linear.BatchGradLinearConcat(),
-                             Conv2d: conv2d.BatchGradConv2d(),
-                             Conv2dConcat: conv2d.BatchGradConv2dConcat(),
-                             BatchNorm1d: batchnorm1d.BatchGradBatchNorm1d(),
-                         })
+        super().__init__(
+            savefield="grad_batch",
+            fail_mode="WARNING",
+            module_exts={
+                Linear: linear.BatchGradLinear(),
+                LinearConcat: linear.BatchGradLinearConcat(),
+                Conv2d: conv2d.BatchGradConv2d(),
+                Conv2dConcat: conv2d.BatchGradConv2dConcat(),
+                BatchNorm1d: batchnorm1d.BatchGradBatchNorm1d(),
+            },
+        )

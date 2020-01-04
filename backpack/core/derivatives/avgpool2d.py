@@ -27,7 +27,7 @@ class AvgPool2DDerivatives(BaseDerivatives):
 
         # 1) apply conv_transpose to multiply with W^T
         result = mat.view(channels, out_x, out_y, out_features)
-        result = einsum('cxyf->fcxy', (result, )).contiguous()
+        result = einsum("cxyf->fcxy", (result,)).contiguous()
         result = result.view(out_features * channels, 1, out_x, out_y)
         # result: W^T mat
         result = self.__apply_jacobian_t_of(module, result)
@@ -46,7 +46,9 @@ class AvgPool2DDerivatives(BaseDerivatives):
     # Jacobian-matrix product
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     def jac_mat_prod(self, module, g_inp, g_out, mat):
-        assert module.count_include_pad, "Might now work for exotic hyperparameters of AvgPool2d, like count_include_pad=False"
+        assert (
+            module.count_include_pad
+        ), "Might now work for exotic hyperparameters of AvgPool2d, like count_include_pad=False"
 
         convUtils.check_sizes_input_jac(mat, module)
         mat_as_pool = self.__reshape_for_conv(mat, module)
@@ -69,9 +71,11 @@ class AvgPool2DDerivatives(BaseDerivatives):
 
         # 'fake' image for convolution
         # (batch * class * channel, 1,  out_x, out_y)
-        return einsum('bic->bci',
-                      mat).contiguous().view(batch * num_columns * in_channels,
-                                             1, in_x, in_y)
+        return (
+            einsum("bic->bci", mat)
+            .contiguous()
+            .view(batch * num_columns * in_channels, 1, in_x, in_y)
+        )
 
     def __reshape_for_matmul(self, mat, module):
         """Ungroup dimensions after application of Jacobian."""
@@ -80,15 +84,17 @@ class AvgPool2DDerivatives(BaseDerivatives):
         # mat is of shape (batch * class * channel, 1, out_x, out_y)
         # move class dimension to last
         mat_view = mat.view(batch, -1, features)
-        return einsum('bci->bic', mat_view).contiguous()
+        return einsum("bci->bic", mat_view).contiguous()
 
     def __apply_jacobian_of(self, module, mat):
-        conv2d = Conv2d(in_channels=1,
-                        out_channels=1,
-                        kernel_size=module.kernel_size,
-                        stride=module.stride,
-                        padding=module.padding,
-                        bias=False).to(module.input0.device)
+        conv2d = Conv2d(
+            in_channels=1,
+            out_channels=1,
+            kernel_size=module.kernel_size,
+            stride=module.stride,
+            padding=module.padding,
+            bias=False,
+        ).to(module.input0.device)
 
         conv2d.weight.requires_grad = False
         avg_kernel = torch.ones_like(conv2d.weight) / conv2d.weight.numel()
@@ -100,7 +106,9 @@ class AvgPool2DDerivatives(BaseDerivatives):
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     def jac_t_mat_prod(self, module, g_inp, g_out, mat):
 
-        assert module.count_include_pad, "Might now work for exotic hyperparameters of AvgPool2d, like count_include_pad=False"
+        assert (
+            module.count_include_pad
+        ), "Might now work for exotic hyperparameters of AvgPool2d, like count_include_pad=False"
 
         convUtils.check_sizes_input_jac_t(mat, module)
         mat_as_pool = self.__reshape_for_conv_t(mat, module)
@@ -123,8 +131,11 @@ class AvgPool2DDerivatives(BaseDerivatives):
 
         # 'fake' image for convolution
         # (batch * class * channel, 1,  out_x, out_y)
-        return einsum('bic->bci', mat).contiguous().view(
-            batch * num_classes * out_channels, 1, out_x, out_y)
+        return (
+            einsum("bic->bci", mat)
+            .contiguous()
+            .view(batch * num_classes * out_channels, 1, out_x, out_y)
+        )
 
     def __reshape_for_matmul_t(self, mat, module):
         """Ungroup dimensions after application of Jacobian."""
@@ -133,18 +144,20 @@ class AvgPool2DDerivatives(BaseDerivatives):
         # mat is of shape (batch * class * channel, 1,  in_x, in_y)
         # move class dimension to last
         mat_view = mat.view(batch, -1, features)
-        return einsum('bci->bic', mat_view).contiguous()
+        return einsum("bci->bic", mat_view).contiguous()
 
     def __apply_jacobian_t_of(self, module, mat):
         _, _, in_x, in_y = module.input0.size()
         output_size = (mat.size(0), 1, in_x, in_y)
 
-        conv2d_t = ConvTranspose2d(in_channels=1,
-                                   out_channels=1,
-                                   kernel_size=module.kernel_size,
-                                   stride=module.stride,
-                                   padding=module.padding,
-                                   bias=False).to(module.input0.device)
+        conv2d_t = ConvTranspose2d(
+            in_channels=1,
+            out_channels=1,
+            kernel_size=module.kernel_size,
+            stride=module.stride,
+            padding=module.padding,
+            bias=False,
+        ).to(module.input0.device)
 
         conv2d_t.weight.requires_grad = False
         avg_kernel = torch.ones_like(conv2d_t.weight) / conv2d_t.weight.numel()

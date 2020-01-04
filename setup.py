@@ -23,15 +23,17 @@ REQUIREMENTS_PATH = path.join(path.abspath(__file__), REQUIREMENTS_FILE)
 with open(REQUIREMENTS_FILE) as f:
     requirements = f.read().splitlines()
 
-setup(author=AUTHORS,
-      name=NAME,
-      version=VERSION,
-      description=DESCRIPTION,
-      long_description=LONG_DESCR,
-      long_description_content_type="text/markdown",
-      install_requires=requirements,
-      url=URL,
-      license=LICENSE,
-      packages=PACKAGES,
-      zip_safe=False,
-      python_requires='>=3.5')
+setup(
+    author=AUTHORS,
+    name=NAME,
+    version=VERSION,
+    description=DESCRIPTION,
+    long_description=LONG_DESCR,
+    long_description_content_type="text/markdown",
+    install_requires=requirements,
+    url=URL,
+    license=LICENSE,
+    packages=PACKAGES,
+    zip_safe=False,
+    python_requires=">=3.5",
+)

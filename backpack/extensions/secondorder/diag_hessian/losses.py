@@ -6,10 +6,7 @@ from .diag_h_base import DiagHBaseModule
 class DiagHLoss(DiagHBaseModule):
     def backpropagate(self, ext, module, g_inp, g_out, backproped):
         sqrt_H = self.derivatives.sqrt_hessian(module, g_inp, g_out)
-        return {
-            "matrices": [sqrt_H],
-            "signs": [self.PLUS]
-        }
+        return {"matrices": [sqrt_H], "signs": [self.PLUS]}
 
 
 class DiagHMSELoss(DiagHLoss):

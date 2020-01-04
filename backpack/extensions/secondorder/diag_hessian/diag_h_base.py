@@ -3,8 +3,8 @@ from torch import clamp, diag_embed
 
 
 class DiagHBaseModule(MatToJacMat):
-    PLUS = 1.
-    MINUS = -1.
+    PLUS = 1.0
+    MINUS = -1.0
 
     def __init__(self, derivatives, params=None):
         super().__init__(derivatives=derivatives, params=params)
@@ -19,10 +19,7 @@ class DiagHBaseModule(MatToJacMat):
             bp_matrices.append(matrix)
             bp_signs.append(sign)
 
-        return {
-            "matrices": bp_matrices,
-            "signs": bp_signs
-        }
+        return {"matrices": bp_matrices, "signs": bp_signs}
 
     def local_curvatures(self, module, g_inp, g_out):
         if self.derivatives is None or self.derivatives.hessian_is_zero():
@@ -33,6 +30,5 @@ class DiagHBaseModule(MatToJacMat):
         H = self.derivatives.hessian_diagonal(module, g_inp, g_out)
 
         for sign in [self.PLUS, self.MINUS]:
-            Hsign = clamp(sign * H, min=0, max=float('inf')).sqrt_()
-            yield((diag_embed(Hsign), sign))
-
+            Hsign = clamp(sign * H, min=0, max=float("inf")).sqrt_()
+            yield ((diag_embed(Hsign), sign))

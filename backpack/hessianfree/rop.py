@@ -17,16 +17,11 @@ def R_op(ys, xs, vs, retain_graph=True, detach=True):
         grad_outputs=ws,
         create_graph=True,
         retain_graph=retain_graph,
-        allow_unused=True
+        allow_unused=True,
     )
 
     re = torch.autograd.grad(
-        gs,
-        ws,
-        grad_outputs=vs,
-        create_graph=True,
-        retain_graph=True,
-        allow_unused=True
+        gs, ws, grad_outputs=vs, create_graph=True, retain_graph=True, allow_unused=True
     )
 
     if detach:

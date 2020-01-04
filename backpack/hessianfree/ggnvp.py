@@ -33,9 +33,7 @@ def ggn_vector_product(loss, output, model, v):
         v: [torch.Tensor]
             List of tensors matching the sizes of model.parameters()
     """
-    return ggn_vector_product_from_plist(
-        loss, output, list(model.parameters()), v
-    )
+    return ggn_vector_product_from_plist(loss, output, list(model.parameters()), v)
 
 
 def ggn_vector_product_from_plist(loss, output, plist, v):

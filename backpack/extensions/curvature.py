@@ -1,7 +1,7 @@
 import torch
 
 
-class ResidualModifications():
+class ResidualModifications:
     @staticmethod
     def nothing(res):
         return res
@@ -27,12 +27,12 @@ class ResidualModifications():
             return median * torch.ones_like(res)
 
 
-class Curvature():
-    HESSIAN = 'hessian'
-    GGN = 'ggn'
-    PCH_ABS = 'pch-abs'
-    PCH_CLIP = 'pch-clip'
-    PCH_MED = 'pch-med'
+class Curvature:
+    HESSIAN = "hessian"
+    GGN = "ggn"
+    PCH_ABS = "pch-abs"
+    PCH_CLIP = "pch-clip"
+    PCH_MED = "pch-med"
 
     CHOICES = [
         HESSIAN,
@@ -70,8 +70,8 @@ class Curvature():
     def __check_exists(cls, which):
         if not which in cls.CHOICES:
             raise AttributeError(
-                "Unknown curvature: {}. Expecting one of {}".format(
-                    which, cls.CHOICES))
+                "Unknown curvature: {}. Expecting one of {}".format(which, cls.CHOICES)
+            )
 
     @classmethod
     def require_residual(cls, curv_type):
@@ -95,5 +95,7 @@ class Curvature():
 
         if require_psd and not loss_hessian_is_psd:
             raise ValueError(
-                'Loss Hessian PSD = {}, but {} requires PSD = {}'.format(
-                    loss_hessian_is_psd, curv_type, require_psd))
+                "Loss Hessian PSD = {}, but {} requires PSD = {}".format(
+                    loss_hessian_is_psd, curv_type, require_psd
+                )
+            )

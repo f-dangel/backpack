@@ -17,8 +17,7 @@ class HBPLoss(HBPBaseModule):
 
     def backpropagate(self, ext, module, g_inp, g_out, backproped):
         Curvature.check_loss_hessian(
-            self.derivatives.hessian_is_psd(),
-            curv_type=ext.get_curv_type()
+            self.derivatives.hessian_is_psd(), curv_type=ext.get_curv_type()
         )
 
         hessian_strategy = ext.get_loss_hessian_strategy()

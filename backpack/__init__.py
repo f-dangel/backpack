@@ -6,7 +6,7 @@ from .context import CTX
 from . import extensions
 
 
-class backpack():
+class backpack:
     """
     Activates the BackPACK extensions passed as arguments for the
     :code:`backward` calls in the current :code:`with` block.
@@ -59,21 +59,17 @@ class backpack():
 
 def hook_store_io(module, input, output):
     for i in range(len(input)):
-        setattr(module, 'input{}'.format(i), input[i])
-    setattr(module, 'output', output)
+        setattr(module, "input{}".format(i), input[i])
+    setattr(module, "output", output)
 
 
 def hook_store_shapes(module, input, output):
     """Store dimensionality of output as buffer."""
     for i in range(len(input)):
         module.register_buffer(
-            'input{}_shape'.format(i),
-            torch.IntTensor([*input[i].size()])
+            "input{}_shape".format(i), torch.IntTensor([*input[i].size()])
         )
-    module.register_buffer(
-        'output_shape',
-        torch.IntTensor([*output.size()])
-    )
+    module.register_buffer("output_shape", torch.IntTensor([*output.size()]))
 
 
 def memory_cleanup(module):

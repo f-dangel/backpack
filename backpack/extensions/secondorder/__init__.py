@@ -21,7 +21,12 @@ from .diag_hessian import DiagHessian
 from .hbp import HBP, KFAC, KFLR, KFRA
 
 __all__ = [
-    "DiagGGN", "DiagGGNExact", "DiagGGNMC",
+    "DiagGGN",
+    "DiagGGNExact",
+    "DiagGGNMC",
     "DiagHessian",
-    "HBP", "KFAC", "KFLR", "KFRA",
+    "HBP",
+    "KFAC",
+    "KFLR",
+    "KFRA",
 ]

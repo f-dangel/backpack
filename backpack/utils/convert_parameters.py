@@ -30,8 +30,9 @@ def vector_to_parameter_list(vec, parameters):
     """
     # Ensure vec of type Tensor
     if not isinstance(vec, torch.Tensor):
-        raise TypeError('expected torch.Tensor, but got: {}'.format(
-            torch.typename(vec)))
+        raise TypeError(
+            "expected torch.Tensor, but got: {}".format(torch.typename(vec))
+        )
     params_new = []
     # Pointer for slicing the vector for each parameter
     pointer = 0
@@ -39,7 +40,7 @@ def vector_to_parameter_list(vec, parameters):
         # The length of the parameter
         num_param = param.numel()
         # Slice the vector, reshape it
-        param_new = vec[pointer:pointer + num_param].view_as(param).data
+        param_new = vec[pointer : pointer + num_param].view_as(param).data
         params_new.append(param_new)
         # Increment the pointer
         pointer += num_param

@@ -22,6 +22,5 @@ class SumGradSquared(BackpropExtension):
                 LinearConcat: linear.SGSLinearConcat(),
                 Conv2d: conv2d.SGSConv2d(),
                 Conv2dConcat: conv2d.SGSConv2dConcat(),
-            }
+            },
         )
-
