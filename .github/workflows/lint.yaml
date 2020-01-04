@@ -1,4 +1,4 @@
-name: Flake8
+name: Lint
 
 on:
   push:
@@ -6,10 +6,8 @@ on:
       - pep8-style
 
 jobs:
-  build:
-
+  flake8:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v1
     - name: Set up Python 3.7
@@ -23,3 +21,18 @@ jobs:
     - name: Lint with flake8
       run: |
         make flake8
+  black:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python 3.7
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.7
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        make install-lint
+    - name: Lint with flake8
+      run: |
+        make black-check
