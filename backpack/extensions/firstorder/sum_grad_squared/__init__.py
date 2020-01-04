@@ -10,7 +10,7 @@ class SumGradSquared(BackpropExtension):
     The sum of individual-gradients-squared, or second moment of the gradient.
     Is only meaningful is the individual functions are independent (no batchnorm).
 
-    Stores the output in :code:`sum_grad_squared`, has the same dimension as the gradient.
+    Stores the output in :code:`sum_grad_squared`. Same dimension as the gradient.
     """
 
     def __init__(self):

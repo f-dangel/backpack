@@ -8,8 +8,11 @@ AUTHORS = "F. Dangel, F. Kunstner"
 NAME = "backpack-for-pytorch"
 PACKAGES = find_packages()
 
-DESCRIPTION = r"""BACKpropagation PACKage - A backpack for PyTorch to compute quantities beyond the gradient."""
-LONG_DESCR = "https://github.com/f-dangel/backpack"
+DESCRIPTION = r"""BACKpropagation PACKage"""
+LONG_DESCR = """
+    A backpack for PyTorch to compute quantities beyond the gradient.
+    https://github.com/f-dangel/backpack
+    """
 
 VERSION = "1.0.1"
 URL = "https://github.com/f-dangel/backpack"

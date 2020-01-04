@@ -43,12 +43,16 @@ class AvgPool2DDerivatives(BaseDerivatives):
         # 4) transpose to obtain W^T mat W
         return result.view(in_features, in_features).t()
 
+    def check_exotic_parameters(self, module):
+        assert module.count_include_pad, (
+            "Might not work for exotic hyperparameters of AvgPool2d, "
+            + "like count_include_pad=False"
+        )
+
     # Jacobian-matrix product
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     def jac_mat_prod(self, module, g_inp, g_out, mat):
-        assert (
-            module.count_include_pad
-        ), "Might now work for exotic hyperparameters of AvgPool2d, like count_include_pad=False"
+        self.check_exotic_parameters(module)
 
         convUtils.check_sizes_input_jac(mat, module)
         mat_as_pool = self.__reshape_for_conv(mat, module)
@@ -105,10 +109,7 @@ class AvgPool2DDerivatives(BaseDerivatives):
     # Transpose Jacobian-matrix product
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     def jac_t_mat_prod(self, module, g_inp, g_out, mat):
-
-        assert (
-            module.count_include_pad
-        ), "Might now work for exotic hyperparameters of AvgPool2d, like count_include_pad=False"
+        self.check_exotic_parameters(module)
 
         convUtils.check_sizes_input_jac_t(mat, module)
         mat_as_pool = self.__reshape_for_conv_t(mat, module)

@@ -25,7 +25,7 @@ def R_op(ys, xs, vs, retain_graph=True, detach=True):
     )
 
     if detach:
-        return tuple([j.detach() for j in re])
+        return tuple(j.detach() for j in re)
     else:
         return re
 

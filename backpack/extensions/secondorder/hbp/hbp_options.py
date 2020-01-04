@@ -11,7 +11,7 @@ class LossHessianStrategy:
 
     @classmethod
     def check_exists(cls, strategy):
-        if not strategy in cls.CHOICES:
+        if strategy not in cls.CHOICES:
             raise AttributeError(
                 "Unknown loss Hessian strategy: {}. ".format(strategy)
                 + "Expecting one of {}".format(cls.CHOICES)
@@ -39,7 +39,7 @@ class BackpropStrategy:
 
     @classmethod
     def check_exists(cls, strategy):
-        if not strategy in cls.CHOICES:
+        if strategy not in cls.CHOICES:
             raise AttributeError(
                 "Unknown backpropagation strategy: {}. ".format(strategy)
                 + "Expect {}".format(cls.CHOICES)
@@ -62,7 +62,7 @@ class ExpectationApproximation:
 
     @classmethod
     def check_exists(cls, strategy):
-        if not strategy in cls.CHOICES:
+        if strategy not in cls.CHOICES:
             raise AttributeError(
                 "Unknown EA strategy: {}. ".format(strategy)
                 + "Expect {}".format(cls.CHOICES)

@@ -60,7 +60,7 @@ class backpack:
 def hook_store_io(module, input, output):
     for i in range(len(input)):
         setattr(module, "input{}".format(i), input[i])
-    setattr(module, "output", output)
+    module.output = output
 
 
 def hook_store_shapes(module, input, output):
@@ -119,6 +119,6 @@ def extend(module, debug=False):
         CTX.add_hook_handle(module.register_forward_hook(hook_store_io))
         CTX.add_hook_handle(module.register_forward_hook(hook_store_shapes))
         CTX.add_hook_handle(module.register_backward_hook(hook_run_extensions))
-        setattr(module, "_backpack_extend", True)
+        module._backpack_extend = True
 
     return module

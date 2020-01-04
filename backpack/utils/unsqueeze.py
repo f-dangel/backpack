@@ -40,7 +40,9 @@ def hmp_unsqueeze_if_missing_dim(mat_dim):
 
 
 def kfacmp_unsqueeze_if_missing_dim(mat_dim):
-    """Allow Kronecker-factored matrix-matrix routines to do Kronecker-factored matrix-vector products."""
+    """
+    Allows Kronecker-factored matrix-matrix routines to do matrix-vector products.
+    """
 
     def kfacmp_wrapper(kfacmp):
         @functools.wraps(kfacmp)

@@ -56,7 +56,9 @@ class BackpropExtension:
 
     def __get_module_extension(self, module):
         module_extension = self.__module_extensions.get(module.__class__)
-        no_op = lambda *args: None
+
+        def no_op(*args):
+            return None
 
         if module_extension is None:
 

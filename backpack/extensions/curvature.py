@@ -68,7 +68,7 @@ class Curvature:
 
     @classmethod
     def __check_exists(cls, which):
-        if not which in cls.CHOICES:
+        if which not in cls.CHOICES:
             raise AttributeError(
                 "Unknown curvature: {}. Expecting one of {}".format(which, cls.CHOICES)
             )

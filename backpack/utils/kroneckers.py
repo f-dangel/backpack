@@ -130,7 +130,7 @@ def kfac_mat_prod_einsum_equation(num_factors):
 
 
 def all_tensors_of_order(order, tensors):
-    return all([is_tensor_of_order(order, t) for t in tensors])
+    return all(is_tensor_of_order(order, t) for t in tensors)
 
 
 def is_tensor_of_order(order, tensor):
