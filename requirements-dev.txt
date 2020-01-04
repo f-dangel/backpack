@@ -1,4 +1,17 @@
 scipy
+# Testing
 pytest >= 4.5.0, < 5.0.0
 pytest-benchmark >= 3.2.2, < 4.0.0
 pytest-optional-tests >= 0.1.1
+# PEP8
+flake8
+mccabe
+pycodestyle
+pyflakes
+pep8-naming
+flake8-bugbear
+flake8-comprehensions
+# Formatting
+black
+# pre-commit hooks
+pre-commit
