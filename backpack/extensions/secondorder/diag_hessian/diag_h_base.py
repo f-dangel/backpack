@@ -25,14 +25,23 @@ class DiagHBaseModule(MatToJacMat):
         }
 
     def local_curvatures(self, module, g_inp, g_out):
-        if self.derivatives is None or self.derivatives.hessian_is_zero():
-            return []
-        if not self.derivatives.hessian_is_diagonal():
-            raise NotImplementedError
+        diag_h_sign = []
 
-        H = self.derivatives.hessian_diagonal(module, g_inp, g_out)
+        if not self.derivatives.hessian_is_zero():
 
-        for sign in [self.PLUS, self.MINUS]:
-            Hsign = clamp(sign * H, min=0, max=float('inf')).sqrt_()
-            yield((diag_embed(Hsign), sign))
+            def positive_part(sign, H):
+                return clamp(sign * H, min=0, max=float("inf"))
 
+            def decompose_into_positive_and_negative_sqrt(H):
+                return [
+                    [diag_embed(positive_part(sign, H).sqrt_()), sign]
+                    for sign in [self.PLUS, self.MINUS]
+                ]
+
+            if not self.derivatives.hessian_is_diagonal():
+                raise NotImplementedError
+
+            H = self.derivatives.hessian_diagonal(module, g_inp, g_out)
+            diag_h_sign += decompose_into_positive_and_negative_sqrt(H)
+
+        return diag_h_sign
