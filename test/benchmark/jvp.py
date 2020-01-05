@@ -63,9 +63,9 @@ def skip_if_attribute_does_not_exists(module, attr):
 
 def ag_jtv_func(X, out, vin):
     def f():
-        r = transposed_jacobian_vector_product(
-            out, X, vin, detach=False
-        )[0].contiguous()
+        r = transposed_jacobian_vector_product(out, X, vin, detach=False)[
+            0
+        ].contiguous()
         if vin.is_cuda:
             torch.cuda.synchronize()
         return r
@@ -75,9 +75,7 @@ def ag_jtv_func(X, out, vin):
 
 def ag_jv_func(X, out, vout):
     def f():
-        r = jacobian_vector_product(
-            out, X, vout, detach=False
-        )[0].contiguous()
+        r = jacobian_vector_product(out, X, vout, detach=False)[0].contiguous()
         if vout.is_cuda:
             torch.cuda.synchronize()
         return r
@@ -87,9 +85,11 @@ def ag_jv_func(X, out, vout):
 
 def bp_jtv_func(module, vin):
     def f():
-        r = derivatives_for[module.__class__]().jac_t_mat_prod(
-            module, None, None, vin
-        ).contiguous()
+        r = (
+            derivatives_for[module.__class__]()
+            .jac_t_mat_prod(module, None, None, vin)
+            .contiguous()
+        )
         if vin.is_cuda:
             torch.cuda.synchronize()
         return r
@@ -99,9 +99,11 @@ def bp_jtv_func(module, vin):
 
 def bp_jv_func(module, vout):
     def f():
-        r = derivatives_for[module.__class__]().jac_mat_prod(
-            module, None, None, vout
-        ).contiguous()
+        r = (
+            derivatives_for[module.__class__]()
+            .jac_mat_prod(module, None, None, vout)
+            .contiguous()
+        )
         if vout.is_cuda:
             torch.cuda.synchronize()
         return r
@@ -113,9 +115,9 @@ def ag_jtv_weight_func(module, out, vin):
     skip_if_attribute_does_not_exists(module, "weight")
 
     def f():
-        r = transposed_jacobian_vector_product(
-            out, module.weight, vin, detach=False
-        )[0].contiguous()
+        r = transposed_jacobian_vector_product(out, module.weight, vin, detach=False)[
+            0
+        ].contiguous()
         if vin.is_cuda:
             torch.cuda.synchronize()
         return r
@@ -127,9 +129,11 @@ def bp_jtv_weight_func(module, vin):
     skip_if_attribute_does_not_exists(module, "weight")
 
     def f():
-        r = derivatives_for[module.__class__]().weight_jac_t_mat_prod(
-            module, None, None, vin
-        ).contiguous()
+        r = (
+            derivatives_for[module.__class__]()
+            .weight_jac_t_mat_prod(module, None, None, vin)
+            .contiguous()
+        )
         if vin.is_cuda:
             torch.cuda.synchronize()
         return r
@@ -141,9 +145,9 @@ def ag_jtv_bias_func(module, out, vin):
     skip_if_attribute_does_not_exists(module, "bias")
 
     def f():
-        r = transposed_jacobian_vector_product(
-            out, module.bias, vin, detach=False
-        )[0].contiguous()
+        r = transposed_jacobian_vector_product(out, module.bias, vin, detach=False)[
+            0
+        ].contiguous()
         if vin.is_cuda:
             torch.cuda.synchronize()
         return r
@@ -155,9 +159,11 @@ def bp_jtv_bias_func(module, vin):
     skip_if_attribute_does_not_exists(module, "bias")
 
     def f():
-        r = derivatives_for[module.__class__]().bias_jac_t_mat_prod(
-            module, None, None, vin.unsqueeze(2)
-        ).contiguous()
+        r = (
+            derivatives_for[module.__class__]()
+            .bias_jac_t_mat_prod(module, None, None, vin.unsqueeze(2))
+            .contiguous()
+        )
         if vin.is_cuda:
             torch.cuda.synchronize()
         return r

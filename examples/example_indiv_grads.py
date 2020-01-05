@@ -10,10 +10,7 @@ X, y = load_mnist_data(B)
 
 print("# Gradient with PyTorch, individual gradients with BackPACK | B =", B)
 
-model = Sequential(
-    Flatten(),
-    Linear(784, 10),
-)
+model = Sequential(Flatten(), Linear(784, 10),)
 lossfunc = CrossEntropyLoss()
 
 model = extend(model)

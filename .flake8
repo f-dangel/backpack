@@ -9,10 +9,11 @@ ignore =
 	C408, # use {} instead of dict()
 	# Not Black-compatible
 	E203, # whitespace before :
+	E231, # missing whitespace after ','
 	W291, # trailing whitespace
 	W503, # line break before binary operator
 	W504, # line break after binary operator
-exclude = docs, docs_src, build, .git, test, examples
+exclude = docs, docs_src, build, .git
 
 
 # Differences with pytorch

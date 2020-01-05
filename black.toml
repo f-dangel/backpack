@@ -13,8 +13,6 @@ exclude = '''
     | docs
     | build
     | dist
-    | test
-    | examples
   )/
 )
 '''

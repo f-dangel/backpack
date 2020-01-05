@@ -25,5 +25,5 @@ def load_mnist_data(batch_size=64, shuffle=True):
         mnist_dataset, batch_size=batch_size, shuffle=shuffle,
     )
 
-    X, y = iter(mnist_loader).next()
+    X, y = next(iter(mnist_loader))
     return X, y

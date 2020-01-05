@@ -12,10 +12,7 @@ X, y = load_mnist_data(B)
 
 print("# Gradient with PyTorch, other quantities with BackPACK | B =", B)
 
-model = Sequential(
-    Flatten(),
-    Linear(784, 10),
-)
+model = Sequential(Flatten(), Linear(784, 10),)
 lossfunc = CrossEntropyLoss()
 
 model = extend(model)
@@ -24,26 +21,26 @@ lossfunc = extend(lossfunc)
 loss = lossfunc(model(X), y)
 
 with backpack(
-        # individual gradients
-        extensions.BatchGrad(),
-        # gradient variance
-        extensions.Variance(),
-        # gradient 2nd moment
-        extensions.SumGradSquared(),
-        # individual gradient L2 norm
-        extensions.BatchL2Grad(),
-        # MC-sampled GGN diagonal
-        extensions.DiagGGNMC(),
-        # Exact GGN diagonal
-        extensions.DiagGGNExact(),
-        # Exact Hessian diagonal
-        extensions.DiagHessian(),
-        # KFAC (Martens et al.)
-        extensions.KFAC(),
-        # KFLR (Botev et al.)
-        extensions.KFLR(),
-        # KFRA (Botev et al.)
-        extensions.KFRA(),
+    # individual gradients
+    extensions.BatchGrad(),
+    # gradient variance
+    extensions.Variance(),
+    # gradient 2nd moment
+    extensions.SumGradSquared(),
+    # individual gradient L2 norm
+    extensions.BatchL2Grad(),
+    # MC-sampled GGN diagonal
+    extensions.DiagGGNMC(),
+    # Exact GGN diagonal
+    extensions.DiagGGNExact(),
+    # Exact Hessian diagonal
+    extensions.DiagHessian(),
+    # KFAC (Martens et al.)
+    extensions.KFAC(),
+    # KFLR (Botev et al.)
+    extensions.KFLR(),
+    # KFRA (Botev et al.)
+    extensions.KFRA(),
 ):
     loss.backward()
 

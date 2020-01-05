@@ -5,6 +5,7 @@ from torch.autograd import grad
 from torch.nn import Linear, Sequential, CrossEntropyLoss, Conv2d, Flatten
 from backpack.core.layers import LinearConcat, Conv2dConcat
 
+
 # Linear
 
 
@@ -13,15 +14,15 @@ def data():
     Ds = [20, 10, 3]
 
     X = randn(N, Ds[0])
-    Y = randint(high=Ds[-1], size=(N, ))
+    Y = randint(high=Ds[-1], size=(N,))
 
     manual_seed(0)
-    model1 = Sequential(
-        extend(Linear(Ds[0], Ds[1])), extend(Linear(Ds[1], Ds[2])))
+    model1 = Sequential(extend(Linear(Ds[0], Ds[1])), extend(Linear(Ds[1], Ds[2])))
 
     manual_seed(0)
     model2 = Sequential(
-        extend(LinearConcat(Ds[0], Ds[1])), extend(LinearConcat(Ds[1], Ds[2])))
+        extend(LinearConcat(Ds[0], Ds[1])), extend(LinearConcat(Ds[1], Ds[2]))
+    )
 
     loss = CrossEntropyLoss()
 
@@ -46,10 +47,7 @@ def test_LinearConcat_backward():
 
     # take grad of separated parameters and concat them
     for i in range(len(d2)):
-        d1_cat.append(cat([
-            d1[2 * i],
-            d1[2 * i + 1].unsqueeze(-1),
-        ], dim=1))
+        d1_cat.append(cat([d1[2 * i], d1[2 * i + 1].unsqueeze(-1),], dim=1))
 
     for p1, p2 in zip(d1_cat, d2):
         assert allclose(p1, p2)
@@ -64,7 +62,7 @@ TEST_SETTINGS = {
     "bias": True,
     "batch": 3,
     "rtol": 1e-5,
-    "atol": 5e-4
+    "atol": 5e-4,
 }
 
 
@@ -76,7 +74,9 @@ def convlayer(join_params):
             out_channels=TEST_SETTINGS["out_channels"],
             kernel_size=TEST_SETTINGS["kernel_size"],
             padding=TEST_SETTINGS["padding"],
-            bias=TEST_SETTINGS["bias"]))
+            bias=TEST_SETTINGS["bias"],
+        )
+    )
 
 
 def convlayer2(join_params):
@@ -87,16 +87,18 @@ def convlayer2(join_params):
             out_channels=TEST_SETTINGS["out_channels"],
             kernel_size=TEST_SETTINGS["kernel_size"],
             padding=TEST_SETTINGS["padding"],
-            bias=TEST_SETTINGS["bias"]))
+            bias=TEST_SETTINGS["bias"],
+        )
+    )
 
 
 def data_conv():
-    input_size = (TEST_SETTINGS["batch"], ) + TEST_SETTINGS["in_features"]
+    input_size = (TEST_SETTINGS["batch"],) + TEST_SETTINGS["in_features"]
 
     temp_model = Sequential(convlayer(False), convlayer2(False), Flatten())
 
     X = randn(size=input_size)
-    Y = randint(high=X.shape[1], size=(temp_model(X).shape[0], ))
+    Y = randint(high=X.shape[1], size=(temp_model(X).shape[0],))
 
     del temp_model
 
@@ -136,7 +138,9 @@ def test_Conv2dConcat_backward():
                     d1[2 * i].view(d1[2 * i].shape[0], -1),
                     d1[2 * i + 1].unsqueeze(-1),
                 ],
-                dim=1))
+                dim=1,
+            )
+        )
 
     for p1, p2 in zip(d1_cat, d2):
         assert allclose(p1, p2)
