@@ -37,7 +37,7 @@ class HBPLinear(HBPBaseModule):
             mean_input = self.__mean_input(module).unsqueeze(-1)
             return [mean_input, mean_input.transpose()]
         else:
-            yield self.__mean_input_outer(module)
+            return [self.__mean_input_outer(module)]
 
     def _factor_from_sqrt(self, backproped):
         return [einsum('bic,bjc->ij', (backproped, backproped))]
