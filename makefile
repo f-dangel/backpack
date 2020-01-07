@@ -5,6 +5,8 @@
 
 .DEFAULT: help
 help:
+	@echo "test"
+	@echo "        Run pytest on the project and report coverage"
 	@echo "black"
 	@echo "        Run black on the project"
 	@echo "black-check"
@@ -19,6 +21,11 @@ help:
 	@echo "        Install only the linter tools (included in install-dev)"
 	@echo "install-test"
 	@echo "        Install only the testing tools (included in install-dev)"
+
+###
+# Test coverage
+test:
+	@pytest -vx --cov=backpack .
 
 ###
 # Linter and autoformatter
