@@ -23,10 +23,10 @@ class MSELossDerivatives(BaseDerivatives):
 
     def sqrt_hessian_sampled(self, module, g_inp, g_out):
         warn(
-            "[MC Sampling Hessian of MSE loss] " +
-            "Returning the symmetric factorization of the full Hessian " +
-            "(same computation cost)",
-            UserWarning
+            "[MC Sampling Hessian of MSE loss] "
+            + "Returning the symmetric factorization of the full Hessian "
+            + "(same computation cost)",
+            UserWarning,
         )
         return self.sqrt_hessian(module, g_inp, g_out)
 
@@ -35,8 +35,7 @@ class MSELossDerivatives(BaseDerivatives):
 
         batch = module.input0_shape[0]
         num_features = module.input0.numel() // batch
-        sum_H = 2 * batch * diag(
-            ones(num_features, device=module.input0.device))
+        sum_H = 2 * batch * diag(ones(num_features, device=module.input0.device))
 
         if module.reduction == "mean":
             sum_H /= module.input0.shape[0]
@@ -59,8 +58,7 @@ class MSELossDerivatives(BaseDerivatives):
 
     def check_input_dims(self, module):
         if not len(module.input0.shape) == 2:
-            raise ValueError(
-                "Only 2D inputs are currently supported for MSELoss.")
+            raise ValueError("Only 2D inputs are currently supported for MSELoss.")
 
     def hessian_is_psd(self):
         return True

@@ -1,4 +1,4 @@
-class BaseDerivatives():
+class BaseDerivatives:
 
     MC_SAMPLES = 1
 

@@ -7,8 +7,7 @@ from backpack.extensions.curvature import Curvature
 class CMPLoss(CMPBase):
     def backpropagate(self, ext, module, g_inp, g_out, backproped):
         Curvature.check_loss_hessian(
-            self.derivatives.hessian_is_psd(),
-            curv_type=ext.get_curv_type()
+            self.derivatives.hessian_is_psd(), curv_type=ext.get_curv_type()
         )
 
         CMP = self.derivatives.hessian_matrix_product(module, g_inp, g_out)

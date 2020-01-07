@@ -18,7 +18,7 @@ class VarianceBaseModule(FirstOrderModuleExtension):
         return self.variance_from(
             self.grad_ext.bias(ext, module, g_inp, g_out, backproped),
             self.sgs_ext.bias(ext, module, g_inp, g_out, backproped),
-            N
+            N,
         )
 
     def weight(self, ext, module, g_inp, g_out, backproped):
@@ -26,5 +26,5 @@ class VarianceBaseModule(FirstOrderModuleExtension):
         return self.variance_from(
             self.grad_ext.weight(ext, module, g_inp, g_out, backproped),
             self.sgs_ext.weight(ext, module, g_inp, g_out, backproped),
-            N
+            N,
         )

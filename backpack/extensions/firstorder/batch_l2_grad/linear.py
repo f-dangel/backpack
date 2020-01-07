@@ -10,7 +10,7 @@ class BatchL2Linear(FirstOrderModuleExtension):
         return (g_out[0] ** 2).sum(1)
 
     def weight(self, ext, module, g_inp, g_out, backproped):
-        return einsum('bi,bj->b', (g_out[0] ** 2, module.input0 ** 2))
+        return einsum("bi,bj->b", (g_out[0] ** 2, module.input0 ** 2))
 
 
 class BatchL2LinearConcat(FirstOrderModuleExtension):
@@ -19,4 +19,4 @@ class BatchL2LinearConcat(FirstOrderModuleExtension):
 
     def weight(self, ext, module, g_inp, g_out, backproped):
         input = module.homogeneous_input()
-        return einsum('bi,bj->b', (g_out[0] ** 2, input ** 2))
+        return einsum("bi,bj->b", (g_out[0] ** 2, input ** 2))

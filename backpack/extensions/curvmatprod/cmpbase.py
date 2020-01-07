@@ -8,6 +8,7 @@ class CMPBase(ModuleExtension):
     """
     Given matrix-vector product routine `MVP(A)` backpropagate to `MVP(J^T A J)`.
     """
+
     def __init__(self, derivatives, params=None):
         super().__init__(params=params)
         self.derivatives = derivatives
@@ -29,11 +30,10 @@ class CMPBase(ModuleExtension):
             """
             Jmat = self.derivatives.jac_mat_prod(module, g_inp, g_out, mat)
             CJmat = CMP_out(Jmat)
-            JTCJmat = self.derivatives.jac_t_mat_prod(module, g_inp, g_out,
-                                                      CJmat)
+            JTCJmat = self.derivatives.jac_t_mat_prod(module, g_inp, g_out, CJmat)
 
             if residual_mod is not None:
-                JTCJmat.add_(einsum('bi,bic->bic', (residual_mod, mat)))
+                JTCJmat.add_(einsum("bi,bic->bic", (residual_mod, mat)))
 
             return JTCJmat
 
@@ -47,7 +47,8 @@ class CMPBase(ModuleExtension):
 
         if not self.derivatives.hessian_is_diagonal():
             raise NotImplementedError(
-                "Residual terms are only supported for elementwise functions")
+                "Residual terms are only supported for elementwise functions"
+            )
 
         return self.derivatives.hessian_diagonal(module, g_inp, g_out)
 

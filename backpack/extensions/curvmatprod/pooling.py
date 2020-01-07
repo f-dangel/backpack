@@ -11,4 +11,3 @@ class CMPAvgPool2d(CMPBase, AvgPool2DDerivatives):
 class CMPMaxpool2d(CMPBase, MaxPool2DDerivatives):
     def __init__(self):
         super().__init__(derivatives=MaxPool2DDerivatives())
-

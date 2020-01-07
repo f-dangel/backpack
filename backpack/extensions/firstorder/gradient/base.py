@@ -2,7 +2,6 @@ from backpack.extensions.firstorder.base import FirstOrderModuleExtension
 
 
 class GradBaseModule(FirstOrderModuleExtension):
-
     def __init__(self, derivatives, params=None):
         self.derivatives = derivatives
         super().__init__(params=params)

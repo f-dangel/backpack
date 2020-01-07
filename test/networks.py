@@ -1,4 +1,4 @@
-class HiddenLayer():
+class HiddenLayer:
     def __init__(self, linear_cls, activation_cls=None):
         self.linear_cls = linear_cls
         self.activation_cls = activation_cls
