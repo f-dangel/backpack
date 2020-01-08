@@ -25,7 +25,7 @@ python setup.py install
 If you are using `backpack` for your research, consider citing the [paper](https://openreview.net/forum?id=BJlrF24twB) 
 ```
 @inproceedings{dangel2020backpack,
-    title     = {Back{\{}PACK{\}}: Packing more into Backprop},
+    title     = {Back{PACK}: Packing more into Backprop},
     author    = {Felix Dangel and Frederik Kunstner and Philipp Hennig},
     booktitle = {International Conference on Learning Representations},
     year      = {2020},
