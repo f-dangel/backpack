@@ -2,6 +2,7 @@
 .PHONY: black black-check flake8
 .PHONY: install install-dev install-devtools install-test install-lint
 .PHONY: test
+.PHONY: conda-env
 
 .DEFAULT: help
 help:
@@ -21,7 +22,8 @@ help:
 	@echo "        Install only the linter tools (included in install-dev)"
 	@echo "install-test"
 	@echo "        Install only the testing tools (included in install-dev)"
-
+	@echo "conda-env"
+	@echo "        Create conda environment 'backpack' with dev setup"
 ###
 # Test coverage
 test:
@@ -69,3 +71,8 @@ install-dev: install-devtools
 	@pip install -e .
 	@echo "Install pre-commit hooks..."
 	@pre-commit install
+
+###
+# Conda environment
+conda-env:
+	@conda env create --file .conda_env.yml
