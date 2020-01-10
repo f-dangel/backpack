@@ -58,6 +58,19 @@ class BatchNorm1dDerivatives(BaseDerivatives):
         var = input.var(dim=0, unbiased=False)
         return (input - mean) / (var + module.eps).sqrt(), var
 
+    def make_residual_mat_prod(self, module, g_inp, g_out):
+        # TODO: Implement R_mat_prod for BatchNorm
+        def R_mat_prod(mat):
+            """Multiply with the residual: mat → [∑_{k} Hz_k(x) 𝛿z_k] mat.
+
+            Second term of the module input Hessian backpropagation equation.
+            """
+            raise NotImplementedError
+
+        # TODO: Enable tests in test/automated_bn_test.py
+        raise NotImplementedError
+        return R_mat_prod
+
     @jmp_unsqueeze_if_missing_dim(mat_dim=2)
     def weight_jac_mat_prod(self, module, g_inp, g_out, mat):
         x_hat, _ = self.get_normalized_input_and_var(module)
