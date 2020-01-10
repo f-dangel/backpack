@@ -68,16 +68,12 @@ class CMPBase(ModuleExtension):
 
     def _make_R_mat_prod(self, ext, module, g_inp, g_out, backproped):
         """Return multiplication routine with the second HBP term."""
-
-        if not self.derivatives.hessian_is_diagonal():
-            # TODO: Allow for non-diagonal residuals (e.g. BatchNorm)
-            # No PCH (no cheap way to cast the residual PSD)
-            raise NotImplementedError(
-                "Residual terms are only supported for elementwise functions"
-            )
-
-        else:
+        if self.derivatives.hessian_is_diagonal():
             R_mat_prod = self.__make_diagonal_R_mat_prod(
+                ext, module, g_inp, g_out, backproped
+            )
+        else:
+            R_mat_prod = self.__make_nondiagonal_R_mat_prod(
                 ext, module, g_inp, g_out, backproped
             )
 
@@ -94,5 +90,18 @@ class CMPBase(ModuleExtension):
             Second term of the module input Hessian backpropagation equation.
             """
             return einsum("bi,bic->bic", (R_mod, mat))
+
+        return R_mat_prod
+
+    def __make_nondiagonal_R_mat_prod(self, ext, module, g_inp, g_out, backproped):
+        curv_type = ext.get_curv_type()
+        if not Curvature.is_pch(curv_type):
+            R_mat_prod = self.derivatives.make_residual_mat_prod(module, g_inp, g_out)
+        else:
+            raise ValueError(
+                "{} not supported for {}. Residual cannot be cast PSD.".format(
+                    curv_type, module
+                )
+            )
 
         return R_mat_prod
