@@ -3,6 +3,7 @@ from torch.nn import Linear
 from .basederivatives import BaseDerivatives
 from ..layers import LinearConcat
 
+from backpack.core.derivatives.utils import jac_t_new_shape_convention
 from backpack.utils.unsqueeze import jmp_unsqueeze_if_missing_dim
 
 
@@ -20,9 +21,10 @@ class LinearDerivatives(BaseDerivatives):
         return module.weight.data
 
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
+    @jac_t_new_shape_convention
     def jac_t_mat_prod(self, module, g_inp, g_out, mat):
         d_linear = self.get_weight_data(module)
-        return einsum("ij,bic->bjc", (d_linear, mat))
+        return einsum("ij,cbi->cbj", (d_linear, mat))
 
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     def jac_mat_prod(self, module, g_inp, g_out, mat):
