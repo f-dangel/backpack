@@ -2,9 +2,11 @@ from torch import prod, zeros
 from torch.nn import MaxPool2d
 from torch.nn.functional import max_pool2d
 
+from backpack.core.derivatives.utils import jac_t_new_shape_convention
+from backpack.utils.unsqueeze import jmp_unsqueeze_if_missing_dim
+
 from ...utils import conv as convUtils
 from .basederivatives import BaseDerivatives
-from backpack.utils.unsqueeze import jmp_unsqueeze_if_missing_dim
 
 
 class MaxPool2DDerivatives(BaseDerivatives):
@@ -80,32 +82,66 @@ class MaxPool2DDerivatives(BaseDerivatives):
 
     # Transposed Jacobian-matrix product
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
+    @jac_t_new_shape_convention
     def jac_t_mat_prod(self, module, g_inp, g_out, mat):
-        convUtils.check_sizes_input_jac_t(mat, module)
-        mat_as_pool = self.__reshape_for_pooling_out(mat, module)
-        jmp_as_pool = self.__apply_jacobian_t_of(module, mat_as_pool)
-        return self.__reshape_for_matmul_t(jmp_as_pool, module)
+        new_convention = True
+        convUtils.check_sizes_input_jac_t(mat, module, new_convention=new_convention)
+        mat_as_pool = self.__reshape_for_pooling_out(
+            mat, module, new_convention=new_convention
+        )
+        jmp_as_pool = self.__apply_jacobian_t_of(
+            module, mat_as_pool, new_convention=new_convention
+        )
+        return self.__reshape_for_matmul_t(
+            jmp_as_pool, module, new_convention=new_convention
+        )
 
-    def __reshape_for_pooling_out(self, mat, module):
-        num_classes = mat.size(-1)
+    def __reshape_for_pooling_out(self, mat, module, new_convention=False):
         batch, channels, out_x, out_y = module.output_shape
-        return mat.view(batch, channels, out_x * out_y, num_classes)
 
-    def __reshape_for_matmul_t(self, mat, module):
+        if new_convention:
+            num_classes = mat.size(0)
+            shape = (num_classes, batch, channels, out_x * out_y)
+        else:
+            num_classes = mat.size(-1)
+            shape = (batch, channels, out_x * out_y, num_classes)
+        return mat.view(shape)
+
+    def __reshape_for_matmul_t(self, mat, module, new_convention=False):
         batch = module.output_shape[0]
-        in_features = module.input0.numel() / batch
-        num_classes = mat.size(-1)
-        return mat.view(batch, in_features, num_classes)
 
-    def __apply_jacobian_t_of(self, module, mat):
+        if new_convention:
+            in_features_shape = module.input0_shape[1:]
+            num_classes = mat.size(0)
+            shape = (num_classes, batch) + tuple(in_features_shape)
+        else:
+            in_features = module.input0.numel() / batch
+            num_classes = mat.size(-1)
+            shape = (batch, in_features, num_classes)
+
+        return mat.view(shape)
+
+    def __apply_jacobian_t_of(self, module, mat, new_convention=False):
         batch, channels, out_x, out_y = module.output_shape
         _, _, in_x, in_y = module.input0.size()
-        num_classes = mat.shape[-1]
 
-        result = zeros(batch, channels, in_x * in_y, num_classes, device=mat.device)
+        if new_convention:
+            num_classes = mat.shape[0]
+            shape = (num_classes, batch, channels, in_x * in_y)
+        else:
+            num_classes = mat.shape[-1]
+            shape = (batch, channels, in_x * in_y, num_classes)
+
+        result = zeros(shape, device=mat.device)
 
         pool_idx = self.get_pooling_idx(module)
         pool_idx = pool_idx.view(batch, channels, out_x * out_y)
-        pool_idx = pool_idx.unsqueeze(-1).expand(-1, -1, -1, num_classes)
-        result.scatter_add_(2, pool_idx, mat)
+
+        if new_convention:
+            pool_idx = pool_idx.unsqueeze(0).expand(num_classes, -1, -1, -1)
+            result.scatter_add_(3, pool_idx, mat)
+        else:
+            pool_idx = pool_idx.unsqueeze(-1).expand(-1, -1, -1, num_classes)
+            result.scatter_add_(2, pool_idx, mat)
+
         return result
