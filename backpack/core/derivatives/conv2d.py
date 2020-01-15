@@ -5,6 +5,7 @@ from torch.nn.functional import conv2d, conv_transpose2d
 from backpack.core.derivatives.utils import (
     jac_new_shape_convention,
     jac_t_new_shape_convention,
+    weight_jac_t_new_shape_convention,
 )
 from backpack.utils.unsqueeze import jmp_unsqueeze_if_missing_dim
 
@@ -189,19 +190,28 @@ class Conv2DDerivatives(BaseDerivatives):
         return jac_mat
 
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
+    @weight_jac_t_new_shape_convention
     def weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
         """Unintuitive, but faster due to conv operation."""
+        new_convention = True
+
         batch, out_channels, out_x, out_y = module.output_shape
         _, in_channels, in_x, in_y = module.input0.shape
         k_x, k_y = module.kernel_size
-        num_cols = mat.shape[-1]
 
-        mat = mat.view(batch, out_channels, out_x, out_y, num_cols)
-        mat = (
-            einsum("boxyc->cboxy", (mat,))
-            .contiguous()
-            .view(num_cols * batch, out_channels, out_x, out_y)
-        )
+        if new_convention:
+            num_cols = mat.shape[0]
+        else:
+            num_cols = mat.shape[-1]
+            shape = (batch, out_channels, out_x, out_y, num_cols)
+            mat = mat.view(shape)
+
+        if new_convention:
+            pass
+        else:
+            mat = einsum("boxyc->cboxy", (mat,))
+
+        mat = mat.contiguous().view(num_cols * batch, out_channels, out_x, out_y)
 
         mat = mat.repeat(1, in_channels, 1, 1)
         mat = mat.view(num_cols * batch * out_channels * in_channels, 1, out_x, out_y)
@@ -218,23 +228,42 @@ class Conv2DDerivatives(BaseDerivatives):
             in_channels * batch * num_cols,
         )
 
-        grad_weight = grad_weight.view(
-            num_cols, batch, out_channels * in_channels, k_x, k_y
-        )
-        if sum_batch is True:
-            grad_weight = grad_weight.sum(1)
-            batch = 1
+        if new_convention:
+            grad_weight = grad_weight.view(
+                num_cols, batch, out_channels, in_channels, k_x, k_y
+            )
+            if sum_batch is True:
+                grad_weight = grad_weight.sum(1)
+                batch = 1
 
-        grad_weight = grad_weight.view(
-            num_cols, batch, in_channels, out_channels, k_x, k_y
-        )
-        grad_weight = einsum("cbmnxy->bnmxyc", grad_weight).contiguous()
+            grad_weight = grad_weight.view(
+                num_cols, batch, in_channels, out_channels, k_x, k_y
+            )
+            grad_weight = einsum("cbmnxy->cbnmxy", grad_weight).contiguous()
 
-        grad_weight = grad_weight.view(
-            batch, in_channels * out_channels * k_x * k_y, num_cols
-        )
+            if sum_batch is True:
+                grad_weight = grad_weight.squeeze(1)
 
-        if sum_batch is True:
-            grad_weight = grad_weight.squeeze(0)
+            return grad_weight
 
-        return grad_weight
+        else:
+            grad_weight = grad_weight.view(
+                num_cols, batch, out_channels * in_channels, k_x, k_y
+            )
+            if sum_batch is True:
+                grad_weight = grad_weight.sum(1)
+                batch = 1
+
+            grad_weight = grad_weight.view(
+                num_cols, batch, in_channels, out_channels, k_x, k_y
+            )
+            grad_weight = einsum("cbmnxy->bnmxyc", grad_weight).contiguous()
+
+            grad_weight = grad_weight.view(
+                batch, in_channels * out_channels * k_x * k_y, num_cols
+            )
+
+            if sum_batch is True:
+                grad_weight = grad_weight.squeeze(0)
+
+            return grad_weight
