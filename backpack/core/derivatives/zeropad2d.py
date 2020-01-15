@@ -2,7 +2,10 @@ import numpy
 from torch.nn import ZeroPad2d
 from torch.nn.functional import pad
 
-from backpack.core.derivatives.utils import jac_t_new_shape_convention
+from backpack.core.derivatives.utils import (
+    jac_new_shape_convention,
+    jac_t_new_shape_convention,
+)
 from backpack.utils.unsqueeze import jmp_unsqueeze_if_missing_dim
 
 from ...utils.einsum import einsum
@@ -84,24 +87,36 @@ class ZeroPad2dDerivatives(BaseDerivatives):
             return mat_unpad.view(batch, in_features, num_cols)
 
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
+    @jac_new_shape_convention
     def jac_mat_prod(self, module, g_inp, g_out, mat):
+        new_convention = True
+
         # group batch and column dimension of the matrix
-        batch, in_features, num_cols = mat.size()
-        mat = einsum("bic->bci", (mat)).contiguous()
+        if new_convention:
+            batch = mat.shape[1]
+            num_cols = mat.shape[0]
+        else:
+            batch, in_features, num_cols = mat.size()
+            mat = einsum("bic->bci", (mat))
 
         # reshape feature dimension as input image
         _, in_channels, in_x, in_y = module.input0_shape
-        mat = mat.view(batch * num_cols, in_channels, in_x, in_y)
+        mat = mat.contiguous().view(batch * num_cols, in_channels, in_x, in_y)
 
         # apply padding
         pad_mat = self.apply_padding(module, mat)
 
         # ungroup batch and column dimension
+
         _, out_channels, out_x, out_y = module.output_shape
         out_features = out_channels * out_x * out_y
 
-        pad_mat = pad_mat.view(batch, num_cols, out_features)
-        return einsum("bci->bic", (pad_mat)).contiguous()
+        if new_convention:
+            shape = (num_cols,) + tuple(module.output_shape)
+            return pad_mat.view(shape)
+        else:
+            pad_mat = pad_mat.view(batch, num_cols, out_features)
+            return einsum("bci->bic", (pad_mat)).contiguous()
 
     @staticmethod
     def apply_padding(module, input):
