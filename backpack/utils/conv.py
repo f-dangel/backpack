@@ -1,4 +1,5 @@
 from torch.nn import Unfold
+
 from backpack.utils.einsum import einsum
 
 
@@ -31,9 +32,12 @@ def separate_channels_and_pixels(module, tensor):
     return tensor.contiguous().view(batch, channels, pixels, classes)
 
 
-def check_sizes_input_jac_t(mat, module):
+def check_sizes_input_jac_t(mat, module, new_convention=False):
     batch, out_channels, out_x, out_y = module.output_shape
-    assert tuple(mat.size())[:2] == (batch, out_channels * out_x * out_y)
+    if new_convention:
+        assert tuple(mat.size())[1:] == (batch, out_channels, out_x, out_y)
+    else:
+        assert tuple(mat.size())[:2] == (batch, out_channels * out_x * out_y)
 
 
 def check_sizes_input_jac(mat, module):
