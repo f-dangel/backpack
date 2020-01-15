@@ -40,9 +40,12 @@ def check_sizes_input_jac_t(mat, module, new_convention=False):
         assert tuple(mat.size())[:2] == (batch, out_channels * out_x * out_y)
 
 
-def check_sizes_input_jac(mat, module):
+def check_sizes_input_jac(mat, module, new_convention=False):
     batch, in_channels, in_x, in_y = module.input0.size()
-    assert tuple(mat.size())[:2] == (batch, in_channels * in_x * in_y)
+    if new_convention:
+        assert tuple(mat.size())[1:] == (batch, in_channels, in_x, in_y)
+    else:
+        assert tuple(mat.size())[:2] == (batch, in_channels * in_x * in_y)
 
 
 def check_sizes_output_jac_t(jtmp, module):

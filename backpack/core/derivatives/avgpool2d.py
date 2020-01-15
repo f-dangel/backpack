@@ -4,7 +4,10 @@ convolution over single channels with a constant kernel."""
 import torch.nn
 from torch.nn import AvgPool2d, Conv2d, ConvTranspose2d
 
-from backpack.core.derivatives.utils import jac_t_new_shape_convention
+from backpack.core.derivatives.utils import (
+    jac_new_shape_convention,
+    jac_t_new_shape_convention,
+)
 from backpack.utils.unsqueeze import jmp_unsqueeze_if_missing_dim
 
 from ...utils import conv as convUtils
@@ -53,44 +56,72 @@ class AvgPool2DDerivatives(BaseDerivatives):
 
     # Jacobian-matrix product
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
+    @jac_new_shape_convention
     def jac_mat_prod(self, module, g_inp, g_out, mat):
         self.check_exotic_parameters(module)
 
-        convUtils.check_sizes_input_jac(mat, module)
-        mat_as_pool = self.__reshape_for_conv(mat, module)
-        jmp_as_pool = self.__apply_jacobian_of(module, mat_as_pool)
+        new_convention = True
 
+        convUtils.check_sizes_input_jac(mat, module, new_convention=new_convention)
+        mat_as_pool = self.__reshape_for_conv(
+            mat, module, new_convention=new_convention
+        )
+        jmp_as_pool = self.__apply_jacobian_of(module, mat_as_pool)
+        self.__check_jmp_out_as_pool(
+            mat, jmp_as_pool, module, new_convention=new_convention
+        )
+
+        return self.__reshape_for_matmul(
+            jmp_as_pool, module, new_convention=new_convention
+        )
+
+    def __check_jmp_out_as_pool(self, mat, jmp_as_pool, module, new_convention=False):
         batch, channels, out_x, out_y = module.output_shape
-        num_classes = mat.size(2)
+        if new_convention:
+            num_classes = mat.size(0)
+        else:
+            num_classes = mat.size(2)
+
         assert jmp_as_pool.size(0) == num_classes * batch * channels
         assert jmp_as_pool.size(1) == 1
         assert jmp_as_pool.size(2) == out_x
         assert jmp_as_pool.size(3) == out_y
 
-        return self.__reshape_for_matmul(jmp_as_pool, module)
-
-    def __reshape_for_conv(self, mat, module):
+    def __reshape_for_conv(self, mat, module, new_convention=False):
         """Create fake single-channel images, grouping batch,
         class and channel dimension."""
         batch, in_channels, in_x, in_y = module.input0.size()
-        num_columns = mat.size(-1)
+
+        if new_convention:
+            num_columns = mat.size(0)
+            mat_used = mat
+        else:
+            num_columns = mat.size(-1)
+            mat_used = einsum("bic->bci", mat)
 
         # 'fake' image for convolution
         # (batch * class * channel, 1,  out_x, out_y)
-        return (
-            einsum("bic->bci", mat)
-            .contiguous()
-            .view(batch * num_columns * in_channels, 1, in_x, in_y)
+        return mat_used.contiguous().view(
+            batch * num_columns * in_channels, 1, in_x, in_y
         )
 
-    def __reshape_for_matmul(self, mat, module):
+    def __reshape_for_matmul(self, mat, module, new_convention=False):
         """Ungroup dimensions after application of Jacobian."""
         batch, channels, out_x, out_y = module.output_shape
         features = channels * out_x * out_y
+
         # mat is of shape (batch * class * channel, 1, out_x, out_y)
-        # move class dimension to last
-        mat_view = mat.view(batch, -1, features)
-        return einsum("bci->bic", mat_view).contiguous()
+        if new_convention:
+            shape = (-1, batch, channels, out_x, out_y)
+        else:
+            shape = (batch, -1, features)
+        mat_view = mat.view(shape)
+
+        if new_convention:
+            return mat_view.contiguous()
+        else:
+            # move class dimension to last
+            return einsum("bci->bic", mat_view).contiguous()
 
     def __apply_jacobian_of(self, module, mat):
         conv2d = Conv2d(
@@ -121,7 +152,7 @@ class AvgPool2DDerivatives(BaseDerivatives):
             mat, module, new_convention=new_convention
         )
         jmp_as_pool = self.__apply_jacobian_t_of(module, mat_as_pool)
-        self.__check_jmp_as_pool(
+        self.__check_jmp_in_as_pool(
             mat, jmp_as_pool, module, new_convention=new_convention
         )
 
@@ -129,7 +160,7 @@ class AvgPool2DDerivatives(BaseDerivatives):
             jmp_as_pool, module, new_convention=new_convention
         )
 
-    def __check_jmp_as_pool(self, mat, jmp_as_pool, module, new_convention=False):
+    def __check_jmp_in_as_pool(self, mat, jmp_as_pool, module, new_convention=False):
         batch, channels, in_x, in_y = module.input0.size()
         if new_convention:
             num_classes = mat.size(0)
