@@ -1,6 +1,9 @@
 from torch.nn import Linear
 
-from backpack.core.derivatives.utils import jac_t_new_shape_convention
+from backpack.core.derivatives.utils import (
+    jac_new_shape_convention,
+    jac_t_new_shape_convention,
+)
 from backpack.utils.unsqueeze import jmp_unsqueeze_if_missing_dim
 
 from ...utils.einsum import einsum
@@ -34,9 +37,16 @@ class LinearDerivatives(BaseDerivatives):
             return einsum("ij,bic->bjc", (d_linear, mat))
 
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
+    @jac_new_shape_convention
     def jac_mat_prod(self, module, g_inp, g_out, mat):
+        new_convention = True
+
         d_linear = self.get_weight_data(module)
-        return einsum("ij,bjc->bic", (d_linear, mat))
+
+        if new_convention:
+            return einsum("ij,cbj->cbi", (d_linear, mat))
+        else:
+            return einsum("ij,bjc->bic", (d_linear, mat))
 
     def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
         jac = self.get_weight_data(module)
