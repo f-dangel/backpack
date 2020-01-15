@@ -190,26 +190,6 @@ class Conv2DDerivatives(BaseDerivatives):
         return jac_mat
 
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
-    def __weight_jac_t_mat_prod2(self, module, g_inp, g_out, mat, sum_batch=True):
-        """Intuitive, using unfold operation."""
-        batch, out_channels, out_x, out_y = module.output_shape
-        _, in_channels, in_x, in_y = module.input0.shape
-        num_cols = mat.shape[-1]
-
-        jac_t_mat = mat.view(batch, out_channels, -1, num_cols)
-
-        equation = "bij,bkjc->kic" if sum_batch is True else "bij,bkjc->bkic"
-
-        X = self.get_unfolded_input(module)
-        jac_t_mat = einsum(equation, (X, jac_t_mat)).contiguous()
-
-        sum_shape = [module.weight.numel(), num_cols]
-        shape = sum_shape if sum_batch is True else [batch] + sum_shape
-
-        jac_t_mat = jac_t_mat.view(shape)
-        return jac_t_mat
-
-    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     def weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
         """Unintuitive, but faster due to conv operation."""
         batch, out_channels, out_x, out_y = module.output_shape
