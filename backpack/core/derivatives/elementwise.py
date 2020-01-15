@@ -1,13 +1,22 @@
+from backpack.core.derivatives.utils import jac_t_new_shape_convention
+from backpack.utils.unsqueeze import jmp_unsqueeze_if_missing_dim
+
 from ...utils.einsum import einsum
 from .basederivatives import BaseDerivatives
-from backpack.utils.unsqueeze import jmp_unsqueeze_if_missing_dim
 
 
 class ElementwiseDerivatives(BaseDerivatives):
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
+    @jac_t_new_shape_convention
     def jac_t_mat_prod(self, module, g_inp, g_out, mat):
-        _, df_flat = self.batch_flat(self.df(module, g_inp, g_out))
-        return einsum("bi,bic->bic", (df_flat, mat))
+        new_convention = True
+
+        if new_convention:
+            df_non_flat = self.df(module, g_inp, g_out)
+            return einsum("...,c...->c...", (df_non_flat, mat))
+        else:
+            _, df_flat = self.batch_flat(self.df(module, g_inp, g_out))
+            return einsum("bi,bic->bic", (df_flat, mat))
 
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     def jac_mat_prod(self, module, g_inp, g_out, mat):
