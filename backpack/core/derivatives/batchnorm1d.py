@@ -1,8 +1,10 @@
 from torch.nn import BatchNorm1d
 
+from backpack.core.derivatives.utils import jac_t_new_shape_convention
+from backpack.utils.unsqueeze import jmp_unsqueeze_if_missing_dim
+
 from ...utils.einsum import einsum
 from .basederivatives import BaseDerivatives
-from backpack.utils.unsqueeze import jmp_unsqueeze_if_missing_dim
 
 
 class BatchNorm1dDerivatives(BaseDerivatives):
@@ -22,6 +24,7 @@ class BatchNorm1dDerivatives(BaseDerivatives):
 
     # Transpose Jacobian-matrix product
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
+    @jac_t_new_shape_convention
     def jac_t_mat_prod(self, module, g_inp, g_out, mat):
         """
         Note:
@@ -39,16 +42,27 @@ class BatchNorm1dDerivatives(BaseDerivatives):
         """
         assert module.affine is True
 
+        new_convention = True
+
         batch = self.get_batch(module)
         x_hat, var = self.get_normalized_input_and_var(module)
         ivar = 1.0 / (var + module.eps).sqrt()
 
-        dx_hat = einsum("bic,i->bic", (mat, module.weight))
+        if new_convention:
+            dx_hat = einsum("cbi,i->cbi", (mat, module.weight))
 
-        jac_t_mat = batch * dx_hat
-        jac_t_mat -= dx_hat.sum(0).unsqueeze(0).expand_as(jac_t_mat)
-        jac_t_mat -= einsum("bi,sic,si->bic", (x_hat, dx_hat, x_hat))
-        jac_t_mat = einsum("bic,i->bic", (jac_t_mat, ivar / batch))
+            jac_t_mat = batch * dx_hat
+            jac_t_mat -= dx_hat.sum(1).unsqueeze(1).expand_as(jac_t_mat)
+            jac_t_mat -= einsum("bi,csi,si->cbi", (x_hat, dx_hat, x_hat))
+            jac_t_mat = einsum("cbi,i->cbi", (jac_t_mat, ivar / batch))
+
+        else:
+            dx_hat = einsum("bic,i->bic", (mat, module.weight))
+
+            jac_t_mat = batch * dx_hat
+            jac_t_mat -= dx_hat.sum(0).unsqueeze(0).expand_as(jac_t_mat)
+            jac_t_mat -= einsum("bi,sic,si->bic", (x_hat, dx_hat, x_hat))
+            jac_t_mat = einsum("bic,i->bic", (jac_t_mat, ivar / batch))
 
         return jac_t_mat
 
