@@ -3,6 +3,7 @@ from torch.nn import Conv2d
 from torch.nn.functional import conv2d, conv_transpose2d
 
 from backpack.core.derivatives.utils import (
+    bias_jac_t_new_shape_convention,
     jac_new_shape_convention,
     jac_t_new_shape_convention,
     weight_jac_t_new_shape_convention,
@@ -166,14 +167,24 @@ class Conv2DDerivatives(BaseDerivatives):
         return jac_mat.view(batch, -1, num_cols)
 
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
+    @bias_jac_t_new_shape_convention
     def bias_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
-        batch, out_channels, out_x, out_y = module.output_shape
-        num_cols = mat.size(2)
-        shape = (batch, out_channels, out_x * out_y, num_cols)
-        # mat has shape (batch, out_features, num_cols)
-        # sum back over the pixels and batch dimensions
-        sum_dims = [0, 2] if sum_batch is True else [2]
-        return mat.view(shape).sum(sum_dims)
+        new_convention = True
+
+        if new_convention:
+            if sum_batch:
+                sum_dims = [1, 3, 4]
+            else:
+                sum_dims = [3, 4]
+            return mat.sum(sum_dims)
+        else:
+            batch, out_channels, out_x, out_y = module.output_shape
+            num_cols = mat.size(2)
+            shape = (batch, out_channels, out_x * out_y, num_cols)
+            # mat has shape (batch, out_features, num_cols)
+            # sum back over the pixels and batch dimensions
+            sum_dims = [0, 2] if sum_batch is True else [2]
+            return mat.view(shape).sum(sum_dims)
 
     # TODO: Improve performance, get rid of unfold
     @jmp_unsqueeze_if_missing_dim(mat_dim=2)
