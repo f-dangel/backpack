@@ -27,6 +27,35 @@ def new_output_convention(old_mat, module):
     return new_mat
 
 
+def old_weight_convention(new_mat, module, sum_batch):
+    print("[to old]: in  {}".format(new_mat.shape))
+    V = new_mat.shape[0]
+    N = new_mat.shape[1]
+
+    weight_shape = tuple(module.weight.shape)
+
+    if sum_batch:
+        assert new_mat.shape == (V,) + weight_shape
+    else:
+        assert new_mat.shape == (V, N) + weight_shape
+
+    weight_numel = module.weight.numel()
+
+    if sum_batch:
+        out_shape = (V, weight_numel)
+    else:
+        out_shape = (V, N, weight_numel)
+
+    old_mat = new_mat.reshape(out_shape)
+
+    if sum_batch:
+        equation = "vi->iv"
+    else:
+        equation = "vni->niv"
+
+    return einsum(equation, old_mat)
+
+
 def new_input_convention(old_mat, module):
     print("[to new]: in  {}".format(old_mat.shape))
     N = module.input0_shape[0]
@@ -120,6 +149,37 @@ def jac_t_new_shape_convention(jmp):
         return result
 
     return wrapped_jac_t_use_new_convention
+
+
+def weight_jac_t_new_shape_convention(jmp):
+    """Use new convention internally, old convention for IO."""
+
+    @functools.wraps(jmp)
+    def wrapped_weight_jac_t_use_new_convention(
+        self, module, g_inp, g_out, mat, **kwargs
+    ):
+        print("[weight_jac_t]")
+        # [N, D, V]
+        is_vec = len(mat.shape) == 2
+        print(is_vec)
+        mat_used = mat if not is_vec else add_V_dim(mat)
+
+        # convert and run with new convention
+        mat_used = new_output_convention(mat_used, module)
+        result = jmp(self, module, g_inp, g_out, mat_used, **kwargs)
+
+        try:
+            sum_batch = kwargs["sum_batch"]
+        except KeyError:
+            sum_batch = True
+
+        result = old_weight_convention(result, module, sum_batch)
+
+        result = result if not is_vec else remove_V_dim(result)
+
+        return result
+
+    return wrapped_weight_jac_t_use_new_convention
 
 
 def jac_new_shape_convention(jmp):
