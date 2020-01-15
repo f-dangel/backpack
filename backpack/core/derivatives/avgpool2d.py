@@ -4,10 +4,12 @@ convolution over single channels with a constant kernel."""
 import torch.nn
 from torch.nn import AvgPool2d, Conv2d, ConvTranspose2d
 
+from backpack.core.derivatives.utils import jac_t_new_shape_convention
+from backpack.utils.unsqueeze import jmp_unsqueeze_if_missing_dim
+
 from ...utils import conv as convUtils
 from ...utils.einsum import einsum
 from .basederivatives import BaseDerivatives
-from backpack.utils.unsqueeze import jmp_unsqueeze_if_missing_dim
 
 
 class AvgPool2DDerivatives(BaseDerivatives):
@@ -108,44 +110,69 @@ class AvgPool2DDerivatives(BaseDerivatives):
 
     # Transpose Jacobian-matrix product
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
+    @jac_t_new_shape_convention
     def jac_t_mat_prod(self, module, g_inp, g_out, mat):
+        new_convention = True
+
         self.check_exotic_parameters(module)
 
-        convUtils.check_sizes_input_jac_t(mat, module)
-        mat_as_pool = self.__reshape_for_conv_t(mat, module)
+        convUtils.check_sizes_input_jac_t(mat, module, new_convention=new_convention)
+        mat_as_pool = self.__reshape_for_conv_t(
+            mat, module, new_convention=new_convention
+        )
         jmp_as_pool = self.__apply_jacobian_t_of(module, mat_as_pool)
+        self.__check_jmp_as_pool(
+            mat, jmp_as_pool, module, new_convention=new_convention
+        )
 
+        return self.__reshape_for_matmul_t(
+            jmp_as_pool, module, new_convention=new_convention
+        )
+
+    def __check_jmp_as_pool(self, mat, jmp_as_pool, module, new_convention=False):
         batch, channels, in_x, in_y = module.input0.size()
-        num_classes = mat.size(2)
+        if new_convention:
+            num_classes = mat.size(0)
+        else:
+            num_classes = mat.size(2)
         assert jmp_as_pool.size(0) == num_classes * batch * channels
         assert jmp_as_pool.size(1) == 1
         assert jmp_as_pool.size(2) == in_x
         assert jmp_as_pool.size(3) == in_y
 
-        return self.__reshape_for_matmul_t(jmp_as_pool, module)
-
-    def __reshape_for_conv_t(self, mat, module):
+    def __reshape_for_conv_t(self, mat, module, new_convention=False):
         """Create fake single-channel images, grouping batch,
         class and channel dimension."""
         batch, out_channels, out_x, out_y = module.output_shape
-        num_classes = mat.size(-1)
+
+        if new_convention:
+            num_classes = mat.shape[0]
+            mat_used = mat
+        else:
+            num_classes = mat.size(-1)
+            mat_used = einsum("bic->bci", mat)
 
         # 'fake' image for convolution
         # (batch * class * channel, 1,  out_x, out_y)
-        return (
-            einsum("bic->bci", mat)
-            .contiguous()
-            .view(batch * num_classes * out_channels, 1, out_x, out_y)
+        return mat_used.contiguous().view(
+            batch * num_classes * out_channels, 1, out_x, out_y
         )
 
-    def __reshape_for_matmul_t(self, mat, module):
+    def __reshape_for_matmul_t(self, mat, module, new_convention=False):
         """Ungroup dimensions after application of Jacobian."""
         batch, channels, in_x, in_y = module.input0.size()
         features = channels * in_x * in_y
+
         # mat is of shape (batch * class * channel, 1,  in_x, in_y)
-        # move class dimension to last
-        mat_view = mat.view(batch, -1, features)
-        return einsum("bci->bic", mat_view).contiguous()
+        if new_convention:
+            shape = (-1, batch, channels, in_x, in_y)
+            mat_view = mat.view(shape)
+        else:
+            # move class dimension to last
+            mat_view = mat.view(batch, -1, features)
+            mat_view = einsum("bci->bic", mat_view)
+
+        return mat_view.contiguous()
 
     def __apply_jacobian_t_of(self, module, mat):
         _, _, in_x, in_y = module.input0.size()
