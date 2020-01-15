@@ -1,6 +1,9 @@
 from torch.nn import BatchNorm1d
 
-from backpack.core.derivatives.utils import jac_t_new_shape_convention
+from backpack.core.derivatives.utils import (
+    jac_t_new_shape_convention,
+    weight_jac_t_new_shape_convention,
+)
 from backpack.utils.unsqueeze import jmp_unsqueeze_if_missing_dim
 
 from ...utils.einsum import einsum
@@ -78,9 +81,16 @@ class BatchNorm1dDerivatives(BaseDerivatives):
         return einsum("bi,ic->bic", (x_hat, mat))
 
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
+    @weight_jac_t_new_shape_convention
     def weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
+        new_convention = True
+
         x_hat, _ = self.get_normalized_input_and_var(module)
-        equation = "bic,bi->{}ic".format("" if sum_batch is True else "b")
+
+        if new_convention:
+            equation = "cbi,bi->c{}i".format("" if sum_batch is True else "b")
+        else:
+            equation = "bic,bi->{}ic".format("" if sum_batch is True else "b")
         operands = [mat, x_hat]
         return einsum(equation, operands)
 
