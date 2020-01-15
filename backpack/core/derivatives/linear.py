@@ -3,6 +3,7 @@ from torch.nn import Linear
 from backpack.core.derivatives.utils import (
     jac_new_shape_convention,
     jac_t_new_shape_convention,
+    weight_jac_t_new_shape_convention,
 )
 from backpack.utils.unsqueeze import jmp_unsqueeze_if_missing_dim
 
@@ -61,18 +62,31 @@ class LinearDerivatives(BaseDerivatives):
         return jac_mat
 
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
+    @weight_jac_t_new_shape_convention
     def weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
-        batch = self.get_batch(module)
-        num_cols = mat.size(2)
+        new_convention = True
 
-        equation = "bjc,bi->jic" if sum_batch is True else "bjc,bi->bjic"
+        batch = self.get_batch(module)
+
+        if new_convention:
+            num_cols = mat.size(0)
+            equation = "cbj,bi->cji" if sum_batch is True else "cbj,bi->cbji"
+        else:
+            num_cols = mat.size(2)
+            equation = "bjc,bi->jic" if sum_batch is True else "bjc,bi->bjic"
 
         jac_t_mat = einsum(equation, (mat, self.get_input(module))).contiguous()
 
-        sum_shape = [module.weight.numel(), num_cols]
-        shape = sum_shape if sum_batch is True else [batch] + sum_shape
+        if new_convention:
+            if sum_batch:
+                shape = (num_cols,) + tuple(module.weight.shape)
+            else:
+                shape = (num_cols, batch) + tuple(module.weight.shape)
+        else:
+            sum_shape = [module.weight.numel(), num_cols]
+            shape = sum_shape if sum_batch is True else [batch] + sum_shape
 
-        return jac_t_mat.view(*shape)
+        return jac_t_mat.view(shape)
 
     @jmp_unsqueeze_if_missing_dim(mat_dim=2)
     def bias_jac_mat_prod(self, module, g_inp, g_out, mat):
