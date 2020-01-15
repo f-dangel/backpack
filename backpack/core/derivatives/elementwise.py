@@ -20,8 +20,7 @@ class ElementwiseDerivatives(BaseDerivatives):
 
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     def jac_mat_prod(self, module, g_inp, g_out, mat):
-        _, df_flat = self.batch_flat(self.df(module, g_inp, g_out))
-        return einsum("bi,bic->bic", (df_flat, mat))
+        return self.jac_t_mat_prod(module, g_inp, g_out, mat)
 
     def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
         batch, df_flat = self.batch_flat(self.df(module, g_inp, g_out))
