@@ -1,9 +1,12 @@
+import numpy
 from torch.nn import ZeroPad2d
 from torch.nn.functional import pad
 
+from backpack.core.derivatives.utils import jac_t_new_shape_convention
+from backpack.utils.unsqueeze import jmp_unsqueeze_if_missing_dim
+
 from ...utils.einsum import einsum
 from .basederivatives import BaseDerivatives
-from backpack.utils.unsqueeze import jmp_unsqueeze_if_missing_dim
 
 
 class ZeroPad2dDerivatives(BaseDerivatives):
@@ -38,23 +41,47 @@ class ZeroPad2dDerivatives(BaseDerivatives):
         return result.view(in_features, in_features)
 
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
+    @jac_t_new_shape_convention
     def jac_t_mat_prod(self, module, g_inp, g_out, mat):
+        new_convention = True
+
         # reshape feature dimension as output image
-        batch, out_features, num_cols = mat.size()
-        _, out_channels, out_x, out_y = module.output_shape
-        assert out_features == out_channels * out_x * out_y
-        mat = mat.view(batch, out_channels, out_x, out_y, num_cols)
+        if new_convention:
+            num_cols = mat.size(0)
+            batch = mat.size(1)
+            out_features = numpy.prod(mat.shape[2:])
+            _, out_channels, out_x, out_y = module.output_shape
+            assert out_features == out_channels * out_x * out_y
+            shape = (num_cols, batch, out_channels, out_x, out_y)
+        else:
+            batch, out_features, num_cols = mat.size()
+            _, out_channels, out_x, out_y = module.output_shape
+            assert out_features == out_channels * out_x * out_y
+            shape = (batch, out_channels, out_x, out_y, num_cols)
+
+        mat = mat.view(shape)
 
         # remove padding by slicing
         pad_left, pad_right, pad_top, pad_bottom = module.padding
         idx_left, idx_right = pad_left, out_y - pad_right
         idx_top, idx_bottom = pad_top, out_x - pad_bottom
-        mat_unpad = mat[:, :, idx_top:idx_bottom, idx_left:idx_right, :].contiguous()
 
-        # group in features
-        _, in_channels, in_x, in_y = module.input0_shape
-        in_features = in_channels * in_x * in_y
-        return mat_unpad.view(batch, in_features, num_cols)
+        if new_convention:
+            mat_unpad = mat[
+                :, :, :, idx_top:idx_bottom, idx_left:idx_right
+            ].contiguous()
+        else:
+            mat_unpad = mat[
+                :, :, idx_top:idx_bottom, idx_left:idx_right, :
+            ].contiguous()
+
+        if new_convention:
+            return mat_unpad
+        else:
+            # group in features
+            _, in_channels, in_x, in_y = module.input0_shape
+            in_features = in_channels * in_x * in_y
+            return mat_unpad.view(batch, in_features, num_cols)
 
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     def jac_mat_prod(self, module, g_inp, g_out, mat):
