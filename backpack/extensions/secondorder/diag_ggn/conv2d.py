@@ -1,6 +1,7 @@
+from backpack.core.derivatives.conv2d import Conv2DDerivatives
 from backpack.utils import conv as convUtils
 from backpack.utils.einsum import einsum
-from backpack.core.derivatives.conv2d import Conv2DDerivatives, Conv2DConcatDerivatives
+
 from .diag_ggn_base import DiagGGNBaseModule
 
 
@@ -15,18 +16,4 @@ class DiagGGNConv2d(DiagGGNBaseModule):
     def weight(self, ext, module, grad_inp, grad_out, backproped):
         X = convUtils.unfold_func(module)(module.input0)
         weight_diag = convUtils.extract_weight_diagonal(module, X, backproped)
-        return weight_diag.view_as(module.weight)
-
-
-class DiagGGNConv2dConcat(DiagGGNBaseModule):
-    def __init__(self):
-        super().__init__(derivatives=Conv2DConcatDerivatives(), params=["weight"])
-
-    def weight(self, ext, module, grad_inp, grad_out, backproped):
-        X = convUtils.unfold_func(module)(module.input0)
-        if module.has_bias:
-            X = module.append_ones(X)
-
-        weight_diag = convUtils.extract_weight_diagonal(module, X, backproped)
-
         return weight_diag.view_as(module.weight)

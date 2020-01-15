@@ -1,6 +1,6 @@
-from backpack.utils.einsum import einsum
-from backpack.utils import conv as convUtils
 from backpack.extensions.firstorder.base import FirstOrderModuleExtension
+from backpack.utils import conv as convUtils
+from backpack.utils.einsum import einsum
 
 
 class BatchL2Conv2d(FirstOrderModuleExtension):
@@ -14,19 +14,4 @@ class BatchL2Conv2d(FirstOrderModuleExtension):
         X, dE_dY = convUtils.get_weight_gradient_factors(
             module.input0, g_out[0], module
         )
-        return einsum("bml,bkl,bmi,bki->b", (dE_dY, X, dE_dY, X))
-
-
-class BatchL2Conv2dConcat(FirstOrderModuleExtension):
-    def __init__(self):
-        super().__init__(params=["weight"])
-
-    def weight(self, ext, module, g_inp, g_out, backproped):
-        X, dE_dY = convUtils.get_weight_gradient_factors(
-            module.input0, g_out[0], module
-        )
-
-        if module.has_bias():
-            X = module.append_ones(X)
-
         return einsum("bml,bkl,bmi,bki->b", (dE_dY, X, dE_dY, X))

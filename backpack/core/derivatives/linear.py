@@ -8,7 +8,6 @@ from backpack.core.derivatives.utils import (
 from backpack.utils.unsqueeze import jmp_unsqueeze_if_missing_dim
 
 from ...utils.einsum import einsum
-from ..layers import LinearConcat
 from .basederivatives import BaseDerivatives
 
 
@@ -99,22 +98,3 @@ class LinearDerivatives(BaseDerivatives):
             return mat.sum(0)
         else:
             return mat
-
-
-class LinearConcatDerivatives(LinearDerivatives):
-    # override
-    def get_module(self):
-        return LinearConcat
-
-    # override
-    def get_input(self, module):
-        """Return homogeneous input, if bias exists """
-        input = super().get_input(module)
-        if module.has_bias():
-            return module.append_ones(input)
-        else:
-            return input
-
-    # override
-    def get_weight_data(self, module):
-        return module._slice_weight().data

@@ -1,27 +1,27 @@
+from torch.nn import (
+    AvgPool2d,
+    Conv2d,
+    CrossEntropyLoss,
+    Dropout,
+    Flatten,
+    Linear,
+    MaxPool2d,
+    MSELoss,
+    ReLU,
+    Sigmoid,
+    Tanh,
+    ZeroPad2d,
+)
+
+from backpack.extensions.backprop_extension import BackpropExtension
 from backpack.extensions.curvature import Curvature
 from backpack.extensions.secondorder.hbp.hbp_options import (
-    LossHessianStrategy,
     BackpropStrategy,
     ExpectationApproximation,
+    LossHessianStrategy,
 )
-from backpack.extensions.backprop_extension import BackpropExtension
 
-from backpack.core.layers import Conv2dConcat, LinearConcat
-from torch.nn import (
-    Linear,
-    Conv2d,
-    Dropout,
-    MaxPool2d,
-    Tanh,
-    Sigmoid,
-    ReLU,
-    CrossEntropyLoss,
-    MSELoss,
-    AvgPool2d,
-    ZeroPad2d,
-    Flatten,
-)
-from . import pooling, conv2d, linear, activations, losses, padding, dropout, flatten
+from . import activations, conv2d, dropout, flatten, linear, losses, padding, pooling
 
 
 class HBP(BackpropExtension):
@@ -45,12 +45,10 @@ class HBP(BackpropExtension):
                 MSELoss: losses.HBPMSELoss(),
                 CrossEntropyLoss: losses.HBPCrossEntropyLoss(),
                 Linear: linear.HBPLinear(),
-                LinearConcat: linear.HBPLinearConcat(),
                 MaxPool2d: pooling.HBPMaxpool2d(),
                 AvgPool2d: pooling.HBPAvgPool2d(),
                 ZeroPad2d: padding.HBPZeroPad2d(),
                 Conv2d: conv2d.HBPConv2d(),
-                Conv2dConcat: conv2d.HBPConv2dConcat(),
                 Dropout: dropout.HBPDropout(),
                 Flatten: flatten.HBPFlatten(),
                 ReLU: activations.HBPReLU(),

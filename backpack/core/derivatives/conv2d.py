@@ -8,7 +8,6 @@ from backpack.core.derivatives.utils import (
 )
 from backpack.utils.unsqueeze import jmp_unsqueeze_if_missing_dim
 
-from ...core.layers import Conv2dConcat
 from ...utils import conv as convUtils
 from ...utils.einsum import einsum
 from .basederivatives import BaseDerivatives
@@ -239,53 +238,3 @@ class Conv2DDerivatives(BaseDerivatives):
             grad_weight = grad_weight.squeeze(0)
 
         return grad_weight
-
-
-class Conv2DConcatDerivatives(Conv2DDerivatives):
-    # override
-    def get_module(self):
-        return Conv2dConcat
-
-    # override
-    def get_unfolded_input(self, module):
-        """Return homogeneous input, if bias exists """
-        X = convUtils.unfold_func(module)(self.get_input(module))
-        if module.has_bias():
-            return module.append_ones(X)
-        else:
-            return X
-
-    # override
-    def get_weight_data(self, module):
-        return module._slice_weight().data
-
-    # override
-    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
-    def weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
-        weight_part = super().weight_jac_t_mat_prod(
-            module, g_inp, g_out, mat, sum_batch=sum_batch
-        )
-
-        if not module.has_bias():
-            return weight_part
-
-        else:
-            bias_part = super().bias_jac_t_mat_prod(
-                module, g_inp, g_out, mat, sum_batch=sum_batch
-            )
-
-            batch = 1 if sum_batch is True else self.get_batch(module)
-            num_cols = mat.size(2)
-            w_for_cat = [batch, module.out_channels, -1, num_cols]
-            b_for_cat = [batch, module.out_channels, 1, num_cols]
-
-            weight_part = weight_part.view(w_for_cat)
-            bias_part = bias_part.view(b_for_cat)
-
-            wb_part = torch.cat([weight_part, bias_part], dim=2)
-            wb_part = wb_part.view(batch, -1, num_cols)
-
-            if sum_batch is True:
-                wb_part = wb_part.squeeze(0)
-
-            return wb_part
