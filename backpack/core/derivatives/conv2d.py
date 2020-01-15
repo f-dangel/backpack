@@ -2,7 +2,10 @@ import torch
 from torch.nn import Conv2d
 from torch.nn.functional import conv2d, conv_transpose2d
 
-from backpack.core.derivatives.utils import jac_t_new_shape_convention
+from backpack.core.derivatives.utils import (
+    jac_new_shape_convention,
+    jac_t_new_shape_convention,
+)
 from backpack.utils.unsqueeze import jmp_unsqueeze_if_missing_dim
 
 from ...core.layers import Conv2dConcat
@@ -54,13 +57,20 @@ class Conv2DDerivatives(BaseDerivatives):
 
     # Jacobian-matrix product
     @jmp_unsqueeze_if_missing_dim(mat_dim=2)
+    @jac_new_shape_convention
     def jac_mat_prod(self, module, g_inp, g_out, mat):
-        convUtils.check_sizes_input_jac(mat, module)
-        mat_as_conv = self.__reshape_for_conv_in(mat, module)
+        new_convention = True
+
+        convUtils.check_sizes_input_jac(mat, module, new_convention=new_convention)
+        mat_as_conv = self.__reshape_for_conv_in(
+            mat, module, new_convention=new_convention
+        )
         jmp_as_conv = self.__apply_jacobian_of(module, mat_as_conv)
         convUtils.check_sizes_output_jac(jmp_as_conv, module)
 
-        return self.__reshape_for_matmul(jmp_as_conv, module)
+        return self.__reshape_for_matmul(
+            jmp_as_conv, module, new_convention=new_convention
+        )
 
     def __apply_jacobian_of(self, module, mat):
         return conv2d(
@@ -72,18 +82,28 @@ class Conv2DDerivatives(BaseDerivatives):
             groups=module.groups,
         )
 
-    def __reshape_for_conv_in(self, bmat, module):
+    def __reshape_for_conv_in(self, bmat, module, new_convention=False):
         batch, in_channels, in_x, in_y = module.input0.size()
-        num_classes = bmat.size(2)
-        bmat = einsum("boc->cbo", (bmat,)).contiguous()
-        bmat = bmat.view(num_classes * batch, in_channels, in_x, in_y)
+
+        if new_convention:
+            num_classes = bmat.size(0)
+        else:
+            num_classes = bmat.size(2)
+            bmat = einsum("boc->cbo", (bmat,))
+
+        bmat = bmat.contiguous().view(num_classes * batch, in_channels, in_x, in_y)
         return bmat
 
-    def __reshape_for_matmul(self, bconv, module):
-        batch = module.output_shape[0]
-        out_features = torch.prod(module.output_shape) / batch
-        bconv = bconv.view(-1, batch, out_features)
-        bconv = einsum("cbi->bic", (bconv,))
+    def __reshape_for_matmul(self, bconv, module, new_convention=False):
+        if new_convention:
+            shape = (-1,) + tuple(module.output_shape)
+            bconv = bconv.view(shape)
+            pass
+        else:
+            batch = module.output_shape[0]
+            out_features = torch.prod(module.output_shape) / batch
+            bconv = bconv.view(-1, batch, out_features)
+            bconv = einsum("cbi->bic", (bconv,))
         return bconv
 
     # Transposed Jacobian-matrix product
