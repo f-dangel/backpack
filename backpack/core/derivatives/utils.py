@@ -27,6 +27,39 @@ def new_output_convention(old_mat, module):
     return new_mat
 
 
+def _new_param_convention(old_mat, module, sum_batch, name):
+    print("[to old]: in  {}".format(old_mat.shape))
+    V = old_mat.shape[-1]
+    N = old_mat.shape[0]
+
+    param = getattr(module, name)
+    param_numel = param.numel()
+
+    if sum_batch:
+        assert old_mat.shape == (param_numel, V)
+    else:
+        assert old_mat.shape == (N, param_numel, V)
+
+    # move V to first dimension
+    new_mat = einsum("...v->v...", old_mat)
+
+    param_shape = tuple(param.shape)
+    if sum_batch:
+        out_shape = (V,) + param_shape
+    else:
+        out_shape = (V, N) + param_shape
+
+    return new_mat.view(out_shape)
+
+
+def new_weight_convention(old_mat, module, sum_batch):
+    return _new_param_convention(old_mat, module, sum_batch, "weight")
+
+
+def new_bias_convention(old_mat, module, sum_batch):
+    return _new_param_convention(old_mat, module, sum_batch, "bias")
+
+
 def _old_param_convention(new_mat, module, sum_batch, name):
     print("[to old]: in  {}".format(new_mat.shape))
     V = new_mat.shape[0]
@@ -229,21 +262,17 @@ def bias_jac_new_shape_convention(jmp):
     @functools.wraps(jmp)
     def wrapped_bias_jac_use_new_convention(self, module, g_inp, g_out, mat, **kwargs):
         print("[bias_jac]")
-        # [N, D, V]
-        is_vec = len(mat.shape) == 2
+        # [D, V]
+        is_vec = len(mat.shape) == 1
         print(is_vec)
         mat_used = mat if not is_vec else add_V_dim(mat)
 
         # convert and run with new convention
-        mat_used = new_input_convention(mat_used, module)
+        sum_batch = True
+        mat_used = new_bias_convention(mat_used, module, sum_batch)
         result = jmp(self, module, g_inp, g_out, mat_used, **kwargs)
 
-        try:
-            sum_batch = kwargs["sum_batch"]
-        except KeyError:
-            sum_batch = True
-
-        result = old_bias_convention(result, module, sum_batch)
+        result = old_output_convention(result, module)
 
         result = result if not is_vec else remove_V_dim(result)
 
