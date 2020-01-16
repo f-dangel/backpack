@@ -8,6 +8,7 @@ from backpack.core.derivatives.utils import (
     jac_new_shape_convention,
     jac_t_new_shape_convention,
     weight_jac_t_new_shape_convention,
+    weight_jac_new_shape_convention,
 )
 from backpack.utils.unsqueeze import jmp_unsqueeze_if_missing_dim
 
@@ -196,18 +197,29 @@ class Conv2DDerivatives(BaseDerivatives):
             sum_dims = [0, 2] if sum_batch is True else [2]
             return mat.view(shape).sum(sum_dims)
 
-    # TODO: Improve performance, get rid of unfold
+    # TODO: Improve performance, get rid of unfold, use conv
     @jmp_unsqueeze_if_missing_dim(mat_dim=2)
+    @weight_jac_new_shape_convention
     def weight_jac_mat_prod(self, module, g_inp, g_out, mat):
-        batch, out_channels, out_x, out_y = module.output_shape
-        out_features = out_channels * out_x * out_y
-        num_cols = mat.size(1)
-        jac_mat = mat.view(1, out_channels, -1, num_cols)
-        jac_mat = jac_mat.expand(batch, out_channels, -1, -1)
+        new_convention = True
 
-        X = self.get_unfolded_input(module)
-        jac_mat = einsum("bij,bkic->bkjc", (X, jac_mat)).contiguous()
-        jac_mat = jac_mat.view(batch, out_features, num_cols)
+        batch, out_channels, out_x, out_y = module.output_shape
+        if new_convention:
+            num_cols = mat.size(0)
+            jac_mat = mat.view(num_cols, out_channels, -1)
+            X = self.get_unfolded_input(module)
+
+            jac_mat = einsum("bij,cki->cbkj", (X, jac_mat)).contiguous()
+            jac_mat = jac_mat.view(num_cols, batch, out_channels, out_x, out_y)
+        else:
+            out_features = out_channels * out_x * out_y
+            num_cols = mat.size(1)
+            jac_mat = mat.view(1, out_channels, -1, num_cols)
+            jac_mat = jac_mat.expand(batch, out_channels, -1, -1)
+
+            X = self.get_unfolded_input(module)
+            jac_mat = einsum("bij,bkic->bkjc", (X, jac_mat)).contiguous()
+            jac_mat = jac_mat.view(batch, out_features, num_cols)
         return jac_mat
 
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
