@@ -8,12 +8,19 @@ from torch.nn.functional import one_hot
 from ...utils.einsum import einsum
 from .basederivatives import BaseDerivatives
 from backpack.utils.unsqueeze import hmp_unsqueeze_if_missing_dim
+from backpack.core.derivatives.utils import (
+    hessian_new_shape_convention,
+    hessian_old_shape_convention,
+    hmp_new_shape_convention,
+)
 
 
 class CrossEntropyLossDerivatives(BaseDerivatives):
     def get_module(self):
         return CrossEntropyLoss
 
+    @hessian_new_shape_convention
+    @hessian_old_shape_convention
     def sqrt_hessian(self, module, g_inp, g_out):
         probs = self.get_probs(module)
         tau = torchsqrt(probs)
@@ -26,6 +33,8 @@ class CrossEntropyLossDerivatives(BaseDerivatives):
 
         return sqrt_H
 
+    @hessian_new_shape_convention
+    @hessian_old_shape_convention
     def sqrt_hessian_sampled(self, module, g_inp, g_out):
         M = self.MC_SAMPLES
         C = module.input0.shape[1]
@@ -57,10 +66,17 @@ class CrossEntropyLossDerivatives(BaseDerivatives):
         probs = self.get_probs(module)
 
         @hmp_unsqueeze_if_missing_dim(mat_dim=3)
+        @hmp_new_shape_convention
         def hmp(mat):
-            Hmat = einsum("bi,bic->bic", (probs, mat)) - einsum(
-                "bi,bj,bjc->bic", (probs, probs, mat)
-            )
+            new_convention = True
+            if new_convention:
+                Hmat = einsum("bi,cbi->cbi", (probs, mat)) - einsum(
+                    "bi,bj,cbj->cbi", (probs, probs, mat)
+                )
+            else:
+                Hmat = einsum("bi,bic->bic", (probs, mat)) - einsum(
+                    "bi,bj,bjc->bic", (probs, probs, mat)
+                )
 
             if module.reduction == "mean":
                 Hmat /= module.input0.shape[0]
