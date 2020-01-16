@@ -4,6 +4,7 @@ from backpack.core.derivatives.utils import (
     jac_new_shape_convention,
     jac_t_new_shape_convention,
     weight_jac_t_new_shape_convention,
+    weight_jac_new_shape_convention,
     bias_jac_t_new_shape_convention,
     bias_jac_new_shape_convention,
 )
@@ -55,11 +56,16 @@ class LinearDerivatives(BaseDerivatives):
         return einsum("ik,ij,jl->kl", (jac, mat, jac))
 
     @jmp_unsqueeze_if_missing_dim(mat_dim=2)
+    @weight_jac_new_shape_convention
     def weight_jac_mat_prod(self, module, g_inp, g_out, mat):
-        num_cols = mat.size(1)
-        shape = tuple(module.weight.size()) + (num_cols,)
+        new_convention = True
+        if new_convention:
+            jac_mat = einsum("bj,cij->cbi", (self.get_input(module), mat))
+        else:
+            num_cols = mat.size(1)
+            shape = tuple(module.weight.size()) + (num_cols,)
+            jac_mat = einsum("bj,ijc->bic", (self.get_input(module), mat.view(shape)))
 
-        jac_mat = einsum("bj,ijc->bic", (self.get_input(module), mat.view(shape)))
         return jac_mat
 
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
