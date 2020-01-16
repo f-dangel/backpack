@@ -256,6 +256,33 @@ def bias_jac_t_new_shape_convention(jmp):
     return wrapped_bias_jac_t_use_new_convention
 
 
+def weight_jac_new_shape_convention(jmp):
+    """Use new convention internally, old convention for IO."""
+
+    @functools.wraps(jmp)
+    def wrapped_weight_jac_use_new_convention(
+        self, module, g_inp, g_out, mat, **kwargs
+    ):
+        print("[weight_jac]")
+        # [D, V]
+        is_vec = len(mat.shape) == 1
+        print(is_vec)
+        mat_used = mat if not is_vec else add_V_dim(mat)
+
+        # convert and run with new convention
+        sum_batch = True
+        mat_used = new_weight_convention(mat_used, module, sum_batch)
+        result = jmp(self, module, g_inp, g_out, mat_used, **kwargs)
+
+        result = old_output_convention(result, module)
+
+        result = result if not is_vec else remove_V_dim(result)
+
+        return result
+
+    return wrapped_weight_jac_use_new_convention
+
+
 def bias_jac_new_shape_convention(jmp):
     """Use new convention internally, old convention for IO."""
 
