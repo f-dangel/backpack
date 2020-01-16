@@ -329,3 +329,47 @@ def jac_new_shape_convention(jmp):
         return result
 
     return wrapped_jac_use_new_convention
+
+
+def hessian_new_shape_convention(h_func):
+    """Use new convention internally, old convention for IO."""
+
+    @functools.wraps(h_func)
+    def wrapped_h_use_new_convention(*args, **kwargs):
+        print("[hessian]")
+
+        result = h_func(*args, **kwargs)
+
+        return einsum("cni->nic", result)
+
+    return wrapped_h_use_new_convention
+
+
+def hessian_old_shape_convention(h_func):
+    """Use old convention internally, new convention for IO."""
+
+    @functools.wraps(h_func)
+    def wrapped_h_use_old_convention(*args, **kwargs):
+        print("[hessian]")
+
+        result = h_func(*args, **kwargs)
+
+        return einsum("nic->cni", result)
+
+    return wrapped_h_use_old_convention
+
+
+def hmp_new_shape_convention(hmp_func):
+    """Use new convention internally, old convention for IO."""
+
+    @functools.wraps(hmp_func)
+    def wrapped_hmp_use_new_convention(mat):
+        print("[hessian]")
+
+        mat = einsum("nic->cni", mat)
+
+        result = hmp_func(mat)
+
+        return einsum("cni->nic", result)
+
+    return wrapped_hmp_use_new_convention
