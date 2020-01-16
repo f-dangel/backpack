@@ -5,6 +5,7 @@ from backpack.core.derivatives.utils import (
     jac_t_new_shape_convention,
     weight_jac_t_new_shape_convention,
     bias_jac_t_new_shape_convention,
+    bias_jac_new_shape_convention,
 )
 from backpack.utils.unsqueeze import jmp_unsqueeze_if_missing_dim
 
@@ -89,9 +90,15 @@ class LinearDerivatives(BaseDerivatives):
         return jac_t_mat.view(shape)
 
     @jmp_unsqueeze_if_missing_dim(mat_dim=2)
+    @bias_jac_new_shape_convention
     def bias_jac_mat_prod(self, module, g_inp, g_out, mat):
+        new_convention = True
+
         batch = self.get_batch(module)
-        return mat.unsqueeze(0).expand(batch, -1, -1)
+        if new_convention:
+            return mat.unsqueeze(1).expand(-1, batch, -1)
+        else:
+            return mat.unsqueeze(0).expand(batch, -1, -1)
 
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     @bias_jac_t_new_shape_convention
