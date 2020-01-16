@@ -3,6 +3,7 @@ from torch.nn import BatchNorm1d
 from backpack.core.derivatives.utils import (
     jac_t_new_shape_convention,
     weight_jac_t_new_shape_convention,
+    weight_jac_new_shape_convention,
     bias_jac_t_new_shape_convention,
     bias_jac_new_shape_convention,
 )
@@ -78,9 +79,16 @@ class BatchNorm1dDerivatives(BaseDerivatives):
         return (input - mean) / (var + module.eps).sqrt(), var
 
     @jmp_unsqueeze_if_missing_dim(mat_dim=2)
+    @weight_jac_new_shape_convention
     def weight_jac_mat_prod(self, module, g_inp, g_out, mat):
+        new_convention = True
+
         x_hat, _ = self.get_normalized_input_and_var(module)
-        return einsum("bi,ic->bic", (x_hat, mat))
+
+        if new_convention:
+            return einsum("bi,ci->cbi", (x_hat, mat))
+        else:
+            return einsum("bi,ic->bic", (x_hat, mat))
 
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     @weight_jac_t_new_shape_convention
