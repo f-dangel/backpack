@@ -4,6 +4,7 @@ from torch.nn.functional import conv2d, conv_transpose2d
 
 from backpack.core.derivatives.utils import (
     bias_jac_t_new_shape_convention,
+    bias_jac_new_shape_convention,
     jac_new_shape_convention,
     jac_t_new_shape_convention,
     weight_jac_t_new_shape_convention,
@@ -157,14 +158,23 @@ class Conv2DDerivatives(BaseDerivatives):
 
     # TODO: Improve performance
     @jmp_unsqueeze_if_missing_dim(mat_dim=2)
+    @bias_jac_new_shape_convention
     def bias_jac_mat_prod(self, module, g_inp, g_out, mat):
+        new_convention = True
+
         batch, out_channels, out_x, out_y = module.output_shape
-        num_cols = mat.size(1)
-        # mat has shape (out_channels, num_cols)
-        # expand for each batch and for each channel
-        jac_mat = mat.view(1, out_channels, 1, 1, num_cols)
-        jac_mat = jac_mat.expand(batch, -1, out_x, out_y, -1).contiguous()
-        return jac_mat.view(batch, -1, num_cols)
+        if new_convention:
+            # mat has shape (V, out_channels)
+            # expand for each batch and for each channel
+            jac_mat = mat.unsqueeze(1).unsqueeze(-1).unsqueeze(-1)
+            return jac_mat.expand(-1, batch, -1, out_x, out_y).contiguous()
+        else:
+            num_cols = mat.size(1)
+            # mat has shape (out_channels, num_cols)
+            # expand for each batch and for each channel
+            jac_mat = mat.view(1, out_channels, 1, 1, num_cols)
+            jac_mat = jac_mat.expand(batch, -1, out_x, out_y, -1).contiguous()
+            return jac_mat.view(batch, -1, num_cols)
 
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     @bias_jac_t_new_shape_convention
