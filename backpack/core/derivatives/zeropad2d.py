@@ -3,10 +3,9 @@ from torch.nn import ZeroPad2d
 from torch.nn.functional import pad
 
 from backpack.core.derivatives.utils import (
-    jac_new_shape_convention,
-    jac_t_new_shape_convention,
+    jac_t_mat_prod_accept_vectors,
+    jac_mat_prod_accept_vectors,
 )
-from backpack.utils.unsqueeze import jmp_unsqueeze_if_missing_dim
 
 from ...utils.einsum import einsum
 from .basederivatives import BaseDerivatives
@@ -43,8 +42,7 @@ class ZeroPad2dDerivatives(BaseDerivatives):
 
         return result.view(in_features, in_features)
 
-    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
-    @jac_t_new_shape_convention
+    @jac_t_mat_prod_accept_vectors
     def jac_t_mat_prod(self, module, g_inp, g_out, mat):
         new_convention = True
 
@@ -86,8 +84,7 @@ class ZeroPad2dDerivatives(BaseDerivatives):
             in_features = in_channels * in_x * in_y
             return mat_unpad.view(batch, in_features, num_cols)
 
-    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
-    @jac_new_shape_convention
+    @jac_mat_prod_accept_vectors
     def jac_mat_prod(self, module, g_inp, g_out, mat):
         new_convention = True
 

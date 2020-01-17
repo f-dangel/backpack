@@ -18,8 +18,9 @@ class DiagHConv2d(DiagHBaseModule):
 
         h_diag = torch.zeros_like(module.bias)
         for h_sqrt, sign in zip(sqrt_h_outs, sqrt_h_outs_signs):
-            h_sqrt_view = convUtils.separate_channels_and_pixels(module, h_sqrt)
-            h_diag.add_(sign * einsum("bijc,bikc->i", (h_sqrt_view, h_sqrt_view)))
+            # h_sqrt_view = convUtils.separate_channels_and_pixels(module, h_sqrt)
+            # h_diag.add_(sign * einsum("bijc,bikc->i", (h_sqrt_view, h_sqrt_view)))
+            h_diag.add_(sign * einsum("cbijk,cbilm->i", (h_sqrt, h_sqrt)))
         return h_diag
 
     def weight(self, ext, module, g_inp, g_out, backproped):
@@ -28,7 +29,13 @@ class DiagHConv2d(DiagHBaseModule):
         X = convUtils.unfold_func(module)(module.input0)
         h_diag = torch.zeros_like(module.weight)
 
+        new_convention = True
+
         for h_sqrt, sign in zip(sqrt_h_outs, sqrt_h_outs_signs):
-            h_diag_curr = convUtils.extract_weight_diagonal(module, X, h_sqrt)
+            # h_diag_curr = convUtils.extract_weight_diagonal(module, X, h_sqrt)
+            # h_diag.add_(sign * h_diag_curr.view_as(module.weight))
+            h_diag_curr = convUtils.extract_weight_diagonal(
+                module, X, h_sqrt, new_convention=new_convention
+            )
             h_diag.add_(sign * h_diag_curr.view_as(module.weight))
         return h_diag

@@ -3,10 +3,9 @@ from torch.nn import MaxPool2d
 from torch.nn.functional import max_pool2d
 
 from backpack.core.derivatives.utils import (
-    jac_new_shape_convention,
-    jac_t_new_shape_convention,
+    jac_t_mat_prod_accept_vectors,
+    jac_mat_prod_accept_vectors,
 )
-from backpack.utils.unsqueeze import jmp_unsqueeze_if_missing_dim
 
 from ...utils import conv as convUtils
 from .basederivatives import BaseDerivatives
@@ -55,8 +54,7 @@ class MaxPool2DDerivatives(BaseDerivatives):
         return True
 
     # Jacobian-matrix product
-    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
-    @jac_new_shape_convention
+    @jac_mat_prod_accept_vectors
     def jac_mat_prod(self, module, g_inp, g_out, mat):
         new_convention = True
 
@@ -113,8 +111,7 @@ class MaxPool2DDerivatives(BaseDerivatives):
             return mat.gather(2, pool_idx)
 
     # Transposed Jacobian-matrix product
-    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
-    @jac_t_new_shape_convention
+    @jac_t_mat_prod_accept_vectors
     def jac_t_mat_prod(self, module, g_inp, g_out, mat):
         new_convention = True
         convUtils.check_sizes_input_jac_t(mat, module, new_convention=new_convention)

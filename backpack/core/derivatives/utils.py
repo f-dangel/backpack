@@ -167,6 +167,14 @@ def add_V_dim(old_mat):
     return old_mat.unsqueeze(-1)
 
 
+def add_V_dim_new_convention(mat):
+    return mat.unsqueeze(0)
+
+
+def remove_V_dim_new_convention(mat):
+    return mat.squeeze(0)
+
+
 def remove_V_dim(old_mat):
     return old_mat.squeeze(-1)
 
@@ -194,35 +202,208 @@ def jac_t_new_shape_convention(jmp):
     return wrapped_jac_t_use_new_convention
 
 
-def weight_jac_t_new_shape_convention(jmp):
-    """Use new convention internally, old convention for IO."""
+def check_like_and_is_vec(mat_shape, like_shape):
+    is_vec, fail = None, None
+    if len(mat_shape) == len(like_shape):
+        is_vec = True
+        if not (mat_shape == like_shape):
+            fail = True
+    elif len(mat_shape) - len(like_shape) == 1:
+        is_vec = False
+        if not (mat_shape[1:] == like_shape):
+            fail = True
+    else:
+        fail = True
 
-    @functools.wraps(jmp)
-    def wrapped_weight_jac_t_use_new_convention(
-        self, module, g_inp, g_out, mat, **kwargs
-    ):
-        print("[weight_jac_t]")
-        # [N, D, V]
-        is_vec = len(mat.shape) == 2
-        print(is_vec)
-        mat_used = mat if not is_vec else add_V_dim(mat)
+    if fail:
+        raise ValueError(
+            "Accept {} or {}, got {}".format(like_shape, [-1, *like_shape], mat_shape)
+        )
 
-        # convert and run with new convention
-        mat_used = new_output_convention(mat_used, module)
-        result = jmp(self, module, g_inp, g_out, mat_used, **kwargs)
+    return is_vec
 
-        try:
-            sum_batch = kwargs["sum_batch"]
-        except KeyError:
-            sum_batch = True
 
-        result = old_weight_convention(result, module, sum_batch)
+def check_like_output_and_is_vec(module, mat):
+    mat_shape = [int(dim) for dim in mat.shape]
+    out_shape = [int(dim) for dim in module.output_shape]
 
-        result = result if not is_vec else remove_V_dim(result)
+    return check_like_and_is_vec(mat_shape, out_shape)
+
+
+def check_like_input_and_is_vec(module, mat):
+    mat_shape = [int(dim) for dim in mat.shape]
+    in_shape = [int(dim) for dim in module.input0_shape]
+
+    return check_like_and_is_vec(mat_shape, in_shape)
+
+
+def check_like_param_and_is_vec(module, mat, sum_batch, name):
+    mat_shape = [int(dim) for dim in mat.shape]
+    param_shape = [int(dim) for dim in getattr(module, name).shape]
+
+    N = int(module.output_shape[0])
+    out_shape = param_shape if sum_batch else [N, *param_shape]
+
+    return check_like_and_is_vec(mat_shape, out_shape)
+
+
+def param_jac_t_mat_prod_accept_vectors(jac_t_mat_prod, name):
+    @functools.wraps(jac_t_mat_prod)
+    def wrapped_param_jac_t_mat_prod(self, module, g_inp, g_out, mat, **kwargs):
+
+        is_vec = check_like_output_and_is_vec(module, mat)
+        mat_used = mat if not is_vec else add_V_dim_new_convention(mat)
+
+        result = jac_t_mat_prod(self, module, g_inp, g_out, mat_used, **kwargs)
+
+        sum_batch = kwargs.get("sum_batch", True)
+        check_like_param_and_is_vec(module, result, sum_batch, name)
+
+        result = result if not is_vec else remove_V_dim_new_convention(result)
 
         return result
 
-    return wrapped_weight_jac_t_use_new_convention
+    return wrapped_param_jac_t_mat_prod
+
+
+def weight_jac_t_mat_prod_accept_vectors(jac_t_mat_prod):
+    return param_jac_t_mat_prod_accept_vectors(jac_t_mat_prod, "weight")
+
+
+def bias_jac_t_mat_prod_accept_vectors(jac_t_mat_prod):
+    return param_jac_t_mat_prod_accept_vectors(jac_t_mat_prod, "bias")
+
+
+def param_jac_mat_prod_accept_vectors(jac_mat_prod, name):
+    @functools.wraps(jac_mat_prod)
+    def wrapped_param_jac_mat_prod(self, module, g_inp, g_out, mat, **kwargs):
+        sum_batch = True
+        is_vec = check_like_param_and_is_vec(module, mat, sum_batch, name)
+
+        mat_used = mat if not is_vec else add_V_dim_new_convention(mat)
+        result = jac_mat_prod(self, module, g_inp, g_out, mat_used, **kwargs)
+        check_like_output_and_is_vec(module, result)
+
+        result = result if not is_vec else remove_V_dim_new_convention(result)
+
+        return result
+
+    return wrapped_param_jac_mat_prod
+
+
+def weight_jac_mat_prod_accept_vectors(jac_mat_prod):
+    return param_jac_mat_prod_accept_vectors(jac_mat_prod, "weight")
+
+
+def bias_jac_mat_prod_accept_vectors(jac_mat_prod):
+    return param_jac_mat_prod_accept_vectors(jac_mat_prod, "bias")
+
+
+def jac_t_mat_prod_accept_vectors(jac_t_mat_prod):
+    @functools.wraps(jac_t_mat_prod)
+    def wrapped_jac_t_mat_prod(self, module, g_inp, g_out, mat, **kwargs):
+
+        is_vec = check_like_output_and_is_vec(module, mat)
+        mat_used = mat if not is_vec else add_V_dim_new_convention(mat)
+
+        result = jac_t_mat_prod(self, module, g_inp, g_out, mat_used, **kwargs)
+
+        check_like_input_and_is_vec(module, result)
+
+        result = result if not is_vec else remove_V_dim_new_convention(result)
+
+        return result
+
+    return wrapped_jac_t_mat_prod
+
+
+def jac_mat_prod_accept_vectors(jac_mat_prod):
+    @functools.wraps(jac_mat_prod)
+    def wrapped_jac_mat_prod(self, module, g_inp, g_out, mat, **kwargs):
+        is_vec = check_like_input_and_is_vec(module, mat)
+        mat_used = mat if not is_vec else add_V_dim_new_convention(mat)
+
+        result = jac_mat_prod(self, module, g_inp, g_out, mat_used, **kwargs)
+
+        check_like_output_and_is_vec(module, result)
+
+        result = result if not is_vec else remove_V_dim_new_convention(result)
+
+        return result
+
+    return wrapped_jac_mat_prod
+
+
+def hessian_matrix_product_accept_vectors(hessian_matrix_product):
+    @functools.wraps(hessian_matrix_product)
+    def wrapped_hessian_matrix_product(self, module, g_inp, g_out, **kwargs):
+
+        hmp = hessian_matrix_product(self, module, g_inp, g_out)
+
+        def new_hmp(mat):
+            is_vec = check_like_input_and_is_vec(module, mat)
+            mat_used = mat if not is_vec else add_V_dim_new_convention(mat)
+
+            result = hmp(mat_used)
+
+            check_like_input_and_is_vec(module, result)
+
+            result = result if not is_vec else remove_V_dim_new_convention(result)
+
+            return result
+
+        return new_hmp
+
+    return wrapped_hessian_matrix_product
+
+
+def CMP_in_accept_vectors(module):
+    def wrapped_CMP_in_accept_vectors(CMP_in):
+        @functools.wraps(CMP_in)
+        def wrapped_CMP_in(mat):
+            is_vec = check_like_input_and_is_vec(module, mat)
+            mat_used = mat if not is_vec else add_V_dim_new_convention(mat)
+
+            result = CMP_in(mat_used)
+
+            check_like_input_and_is_vec(module, result)
+
+            result = result if not is_vec else remove_V_dim_new_convention(result)
+
+            return result
+
+        return wrapped_CMP_in
+
+    return wrapped_CMP_in_accept_vectors
+
+
+def param_CMP_accept_vectors(module, name):
+    def wrapped_param_CMP_accept_vectors(param_cmp):
+        @functools.wraps(param_cmp)
+        def wrapped_param_cmp(mat):
+            sum_batch = True
+            is_vec = check_like_param_and_is_vec(module, mat, sum_batch, name)
+
+            mat_used = mat if not is_vec else add_V_dim_new_convention(mat)
+            result = param_cmp(mat_used)
+
+            check_like_param_and_is_vec(module, result, sum_batch, name)
+
+            result = result if not is_vec else remove_V_dim_new_convention(result)
+
+            return result
+
+        return wrapped_param_cmp
+
+    return wrapped_param_CMP_accept_vectors
+
+
+def weight_CMP_accept_vectors(module):
+    return param_CMP_accept_vectors(module, "weight")
+
+
+def bias_CMP_accept_vectors(module):
+    return param_CMP_accept_vectors(module, "bias")
 
 
 def bias_jac_t_new_shape_convention(jmp):

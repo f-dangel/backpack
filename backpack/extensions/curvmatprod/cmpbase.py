@@ -1,7 +1,7 @@
-from backpack.utils.unsqueeze import hmp_unsqueeze_if_missing_dim
 from backpack.extensions.curvature import Curvature
 from backpack.extensions.module_extension import ModuleExtension
 from backpack.utils.einsum import einsum
+from backpack.core.derivatives.utils import CMP_in_accept_vectors
 
 
 class CMPBase(ModuleExtension):
@@ -19,7 +19,7 @@ class CMPBase(ModuleExtension):
         residual = self._second_order_module_effects(module, ext, g_inp, g_out)
         residual_mod = self._modify_residual(ext, residual)
 
-        @hmp_unsqueeze_if_missing_dim(mat_dim=3)
+        @CMP_in_accept_vectors(module)
         def CMP_in(mat):
             """Multiplication of curvature matrix with matrix `mat`.
 
@@ -33,7 +33,12 @@ class CMPBase(ModuleExtension):
             JTCJmat = self.derivatives.jac_t_mat_prod(module, g_inp, g_out, CJmat)
 
             if residual_mod is not None:
-                JTCJmat.add_(einsum("bi,bic->bic", (residual_mod, mat)))
+
+                new_convention = True
+                if new_convention:
+                    JTCJmat.add_(einsum("b...,cb...->cb...", (residual_mod, mat)))
+                else:
+                    JTCJmat.add_(einsum("bi,bic->bic", (residual_mod, mat)))
 
             return JTCJmat
 

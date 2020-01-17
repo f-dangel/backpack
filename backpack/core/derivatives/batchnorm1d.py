@@ -1,13 +1,13 @@
 from torch.nn import BatchNorm1d
 
 from backpack.core.derivatives.utils import (
-    jac_t_new_shape_convention,
-    weight_jac_t_new_shape_convention,
-    weight_jac_new_shape_convention,
-    bias_jac_t_new_shape_convention,
-    bias_jac_new_shape_convention,
+    weight_jac_t_mat_prod_accept_vectors,
+    bias_jac_t_mat_prod_accept_vectors,
+    jac_t_mat_prod_accept_vectors,
+    bias_jac_mat_prod_accept_vectors,
+    weight_jac_mat_prod_accept_vectors,
+    jac_mat_prod_accept_vectors,
 )
-from backpack.utils.unsqueeze import jmp_unsqueeze_if_missing_dim
 
 from ...utils.einsum import einsum
 from .basederivatives import BaseDerivatives
@@ -24,13 +24,12 @@ class BatchNorm1dDerivatives(BaseDerivatives):
         return False
 
     # Jacobian-matrix product
-    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
+    @jac_mat_prod_accept_vectors
     def jac_mat_prod(self, module, g_inp, g_out, mat):
         return self.jac_t_mat_prod(module, g_inp, g_out, mat)
 
     # Transpose Jacobian-matrix product
-    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
-    @jac_t_new_shape_convention
+    @jac_t_mat_prod_accept_vectors
     def jac_t_mat_prod(self, module, g_inp, g_out, mat):
         """
         Note:
@@ -78,8 +77,7 @@ class BatchNorm1dDerivatives(BaseDerivatives):
         var = input.var(dim=0, unbiased=False)
         return (input - mean) / (var + module.eps).sqrt(), var
 
-    @jmp_unsqueeze_if_missing_dim(mat_dim=2)
-    @weight_jac_new_shape_convention
+    @weight_jac_mat_prod_accept_vectors
     def weight_jac_mat_prod(self, module, g_inp, g_out, mat):
         new_convention = True
 
@@ -90,8 +88,7 @@ class BatchNorm1dDerivatives(BaseDerivatives):
         else:
             return einsum("bi,ic->bic", (x_hat, mat))
 
-    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
-    @weight_jac_t_new_shape_convention
+    @weight_jac_t_mat_prod_accept_vectors
     def weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
         new_convention = True
 
@@ -104,8 +101,7 @@ class BatchNorm1dDerivatives(BaseDerivatives):
         operands = [mat, x_hat]
         return einsum(equation, operands)
 
-    @jmp_unsqueeze_if_missing_dim(mat_dim=2)
-    @bias_jac_new_shape_convention
+    @bias_jac_mat_prod_accept_vectors
     def bias_jac_mat_prod(self, module, g_inp, g_out, mat):
         new_convention = True
 
@@ -116,8 +112,7 @@ class BatchNorm1dDerivatives(BaseDerivatives):
         else:
             return mat.unsqueeze(0).repeat(batch, 1, 1)
 
-    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
-    @bias_jac_t_new_shape_convention
+    @bias_jac_t_mat_prod_accept_vectors
     def bias_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
         new_convention = True
 

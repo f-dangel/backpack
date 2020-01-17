@@ -9,7 +9,15 @@ class DiagGGNLinear(DiagGGNBaseModule):
         super().__init__(derivatives=LinearDerivatives(), params=["bias", "weight"])
 
     def bias(self, ext, module, grad_inp, grad_out, backproped):
-        return einsum("bic->i", (backproped ** 2,))
+        new_convention = True
+        if new_convention:
+            return einsum("cbi->i", (backproped ** 2,))
+        else:
+            return einsum("bic->i", (backproped ** 2,))
 
     def weight(self, ext, module, grad_inp, grad_out, backproped):
-        return einsum("bic,bj->ij", (backproped ** 2, module.input0 ** 2))
+        new_convention = True
+        if new_convention:
+            return einsum("cbi,bj->ij", (backproped ** 2, module.input0 ** 2))
+        else:
+            return einsum("bic,bj->ij", (backproped ** 2, module.input0 ** 2))

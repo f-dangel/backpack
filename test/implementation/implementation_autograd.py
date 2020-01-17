@@ -101,13 +101,20 @@ class AutogradImpl(Implementation):
     def h_blocks(self):
         mat_list = []
         for p in self.model.parameters():
-            mat_list.append(torch.eye(p.numel(), device=p.device))
-        return self.hmp(mat_list)
+            mat_list.append(
+                torch.eye(p.numel(), device=p.device).reshape(p.numel(), *p.shape)
+            )
+        # return self.hmp(mat_list)
+        hmp_list = self.hmp(mat_list)
+        return [
+            mat.reshape(p.numel(), p.numel())
+            for mat, p in zip(hmp_list, self.model.parameters())
+        ]
 
     def hvp(self, vec_list):
-        mat_list = [vec.unsqueeze(-1) for vec in vec_list]
+        mat_list = [vec.unsqueeze(0) for vec in vec_list]
         results = self.hmp(mat_list)
-        results_vec = [mat.squeeze(-1) for mat in results]
+        results_vec = [mat.squeeze(0) for mat in results]
         return results_vec
 
     def hmp(self, mat_list):
@@ -123,22 +130,29 @@ class AutogradImpl(Implementation):
 
     def hvp_applied_columnwise(self, f, p, mat):
         h_cols = []
-        for i in range(mat.size(1)):
-            hvp_col_i = hessian_vector_product(f, [p], mat[:, i].view_as(p))[0]
-            h_cols.append(hvp_col_i.view(-1, 1))
+        for i in range(mat.size(0)):
+            hvp_col_i = hessian_vector_product(f, [p], mat[i, :])[0]
+            h_cols.append(hvp_col_i.unsqueeze(0))
 
-        return torch.cat(h_cols, dim=1)
+        return torch.cat(h_cols, dim=0)
 
     def ggn_blocks(self):
         mat_list = []
         for p in self.model.parameters():
-            mat_list.append(torch.eye(p.numel(), device=p.device))
-        return self.ggn_mp(mat_list)
+            mat_list.append(
+                torch.eye(p.numel(), device=p.device).reshape(p.numel(), *p.shape)
+            )
+        ggn_mp_list = self.ggn_mp(mat_list)
+        return [
+            mat.reshape(p.numel(), p.numel())
+            for mat, p in zip(ggn_mp_list, self.model.parameters())
+        ]
+        # return ggn_mp_list
 
     def ggn_vp(self, vec_list):
-        mat_list = [vec.unsqueeze(-1) for vec in vec_list]
+        mat_list = [vec.unsqueeze(0) for vec in vec_list]
         results = self.ggn_mp(mat_list)
-        results_vec = [mat.squeeze(-1) for mat in results]
+        results_vec = [mat.squeeze(0) for mat in results]
         return results_vec
 
     def ggn_mp(self, mat_list):
@@ -155,14 +169,21 @@ class AutogradImpl(Implementation):
 
     def ggn_vp_applied_columnwise(self, loss, out, p, mat):
         ggn_cols = []
-        for i in range(mat.size(1)):
-            col_i = vector_to_parameter_list(mat[:, i], [p])
+        for i in range(mat.size(0)):
+            col_i = mat[i, :]
+            GGN_col_i = ggn_vector_product_from_plist(loss, out, [p], col_i)[0]
+            ggn_cols.append(GGN_col_i.unsqueeze(0))
 
-            GGN_col_i = ggn_vector_product_from_plist(loss, out, [p], col_i)
-            GGN_col_i = torch.cat([g.detach().view(-1) for g in GGN_col_i])
-            ggn_cols.append(GGN_col_i.view(-1, 1))
+        return torch.cat(ggn_cols, dim=0)
 
-        return torch.cat(ggn_cols, dim=1)
+        # for i in range(mat.size(1)):
+        #     col_i = vector_to_parameter_list(mat[:, i], [p])
+
+        #     GGN_col_i = ggn_vector_product_from_plist(loss, out, [p], col_i)
+        #     GGN_col_i = torch.cat([g.detach().view(-1) for g in GGN_col_i])
+        #     ggn_cols.append(GGN_col_i.view(-1, 1))
+
+        # return torch.cat(ggn_cols, dim=1)
 
     def plist_like(self, plist):
         return [torch.zeros(*p.size()).to(self.device) for p in plist]

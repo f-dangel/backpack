@@ -1,4 +1,8 @@
 from backpack.core.derivatives.linear import LinearDerivatives
+from backpack.core.derivatives.utils import (
+    weight_CMP_accept_vectors,
+    bias_CMP_accept_vectors,
+)
 
 from .cmpbase import CMPBase
 
@@ -10,6 +14,7 @@ class CMPLinear(CMPBase):
     def weight(self, ext, module, g_inp, g_out, backproped):
         CMP_out = backproped
 
+        @weight_CMP_accept_vectors(module)
         def weight_cmp(mat):
             Jmat = self.derivatives.weight_jac_mat_prod(module, g_inp, g_out, mat)
             CJmat = CMP_out(Jmat)
@@ -23,6 +28,7 @@ class CMPLinear(CMPBase):
     def bias(self, ext, module, g_inp, g_out, backproped):
         CMP_out = backproped
 
+        @bias_CMP_accept_vectors(module)
         def bias_cmp(mat):
             Jmat = self.derivatives.bias_jac_mat_prod(module, g_inp, g_out, mat)
             CJmat = CMP_out(Jmat)

@@ -2,6 +2,11 @@ from backpack.core.derivatives.conv2d import Conv2DDerivatives
 
 from .cmpbase import CMPBase
 
+from backpack.core.derivatives.utils import (
+    weight_CMP_accept_vectors,
+    bias_CMP_accept_vectors,
+)
+
 
 class CMPConv2d(CMPBase):
     def __init__(self):
@@ -10,6 +15,7 @@ class CMPConv2d(CMPBase):
     def weight(self, ext, module, g_inp, g_out, backproped):
         CMP_out = backproped
 
+        @weight_CMP_accept_vectors(module)
         def weight_cmp(mat):
             Jmat = self.derivatives.weight_jac_mat_prod(module, g_inp, g_out, mat)
             CJmat = CMP_out(Jmat)
@@ -23,6 +29,7 @@ class CMPConv2d(CMPBase):
     def bias(self, ext, module, g_inp, g_out, backproped):
         CMP_out = backproped
 
+        @bias_CMP_accept_vectors(module)
         def bias_cmp(mat):
             Jmat = self.derivatives.bias_jac_mat_prod(module, g_inp, g_out, mat)
             CJmat = CMP_out(Jmat)

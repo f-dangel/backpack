@@ -2,6 +2,11 @@ from backpack.core.derivatives.batchnorm1d import BatchNorm1dDerivatives
 
 from .cmpbase import CMPBase
 
+from backpack.core.derivatives.utils import (
+    weight_CMP_accept_vectors,
+    bias_CMP_accept_vectors,
+)
+
 
 class CMPBatchNorm1d(CMPBase):
     def __init__(self):
@@ -12,6 +17,7 @@ class CMPBatchNorm1d(CMPBase):
     def weight(self, ext, module, g_inp, g_out, backproped):
         CMP_out = backproped
 
+        @weight_CMP_accept_vectors(module)
         def weight_cmp(mat):
             Jmat = self.derivatives.weight_jac_mat_prod(module, g_inp, g_out, mat)
             CJmat = CMP_out(Jmat)
@@ -25,6 +31,7 @@ class CMPBatchNorm1d(CMPBase):
     def bias(self, ext, module, g_inp, g_out, backproped):
         CMP_out = backproped
 
+        @bias_CMP_accept_vectors(module)
         def bias_cmp(mat):
             Jmat = self.derivatives.bias_jac_mat_prod(module, g_inp, g_out, mat)
             CJmat = CMP_out(Jmat)

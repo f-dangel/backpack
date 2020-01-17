@@ -2,10 +2,9 @@ import torch
 from torch.nn import Flatten
 
 from backpack.core.derivatives.utils import (
-    jac_new_shape_convention,
-    jac_t_new_shape_convention,
+    jac_t_mat_prod_accept_vectors,
+    jac_mat_prod_accept_vectors,
 )
-from backpack.utils.unsqueeze import jmp_unsqueeze_if_missing_dim
 
 from .basederivatives import BaseDerivatives
 
@@ -20,8 +19,7 @@ class FlattenDerivatives(BaseDerivatives):
     def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
         return mat
 
-    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
-    @jac_t_new_shape_convention
+    @jac_t_mat_prod_accept_vectors
     def jac_t_mat_prod(self, module, g_inp, g_out, mat):
         new_convention = True
 
@@ -36,8 +34,7 @@ class FlattenDerivatives(BaseDerivatives):
 
         return mat.view(shape)
 
-    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
-    @jac_new_shape_convention
+    @jac_mat_prod_accept_vectors
     def jac_mat_prod(self, module, g_inp, g_out, mat):
         new_convention = True
 

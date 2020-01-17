@@ -18,7 +18,8 @@ class DiagHLinear(DiagHBaseModule):
 
         h_diag = torch.zeros_like(module.bias)
         for h_sqrt, sign in zip(sqrt_h_outs, sqrt_h_outs_signs):
-            h_diag.add_(sign * einsum("bic->i", (h_sqrt ** 2,)))
+            h_diag.add_(sign * einsum("cbi->i", (h_sqrt ** 2,)))
+            # h_diag.add_(sign * einsum("bic->i", (h_sqrt ** 2,)))
         return h_diag
 
     # TODO: Reuse code in ..diaggn.linear to extract the diagonal
@@ -28,5 +29,6 @@ class DiagHLinear(DiagHBaseModule):
 
         h_diag = torch.zeros_like(module.weight)
         for h_sqrt, sign in zip(sqrt_h_outs, sqrt_h_outs_signs):
-            h_diag.add_(sign * einsum("bic,bj->ij", (h_sqrt ** 2, module.input0 ** 2)))
+            h_diag.add_(sign * einsum("cbi,bj->ij", (h_sqrt ** 2, module.input0 ** 2)))
+        # h_diag.add_(sign * einsum("bic,bj->ij", (h_sqrt ** 2, module.input0 ** 2)))
         return h_diag

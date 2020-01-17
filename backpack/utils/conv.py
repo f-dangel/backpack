@@ -19,7 +19,7 @@ def get_weight_gradient_factors(input, grad_out, module):
     return X, dE_dY
 
 
-def separate_channels_and_pixels(module, tensor):
+def separate_channels_and_pixels(module, tensor, new_convention=False):
     """Reshape (batch, out_features, classes)
     into       (batch, out_channels, pixels, classes).
     """
@@ -29,7 +29,10 @@ def separate_channels_and_pixels(module, tensor):
         module.output_shape[2] * module.output_shape[3],
         -1,
     )
-    return tensor.contiguous().view(batch, channels, pixels, classes)
+    if new_convention:
+        return tensor.contiguous().view(classes, batch, channels, pixels)
+    else:
+        return tensor.contiguous().view(batch, channels, pixels, classes)
 
 
 def check_sizes_input_jac_t(mat, module, new_convention=False):
@@ -70,11 +73,17 @@ def check_sizes_output_jac(jmp, module):
         )
 
 
-def extract_weight_diagonal(module, input, grad_output):
+def extract_weight_diagonal(module, input, grad_output, new_convention=False):
     """
     input must be the unfolded input to the convolution (see unfold_func)
     and grad_output the backpropagated gradient
     """
-    grad_output_viewed = separate_channels_and_pixels(module, grad_output)
-    AX = einsum("bkl,bmlc->cbkm", (input, grad_output_viewed))
-    return (AX ** 2).sum([0, 1]).transpose(0, 1)
+    grad_output_viewed = separate_channels_and_pixels(
+        module, grad_output, new_convention=new_convention
+    )
+    if new_convention:
+        AX = einsum("bkl,cbml->cbkm", (input, grad_output_viewed))
+        return (AX ** 2).sum([0, 1]).transpose(0, 1)
+    else:
+        AX = einsum("bkl,bmlc->cbkm", (input, grad_output_viewed))
+        return (AX ** 2).sum([0, 1]).transpose(0, 1)

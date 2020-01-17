@@ -1,14 +1,13 @@
 from torch.nn import Linear
 
 from backpack.core.derivatives.utils import (
-    jac_new_shape_convention,
-    jac_t_new_shape_convention,
-    weight_jac_t_new_shape_convention,
-    weight_jac_new_shape_convention,
-    bias_jac_t_new_shape_convention,
-    bias_jac_new_shape_convention,
+    weight_jac_t_mat_prod_accept_vectors,
+    weight_jac_mat_prod_accept_vectors,
+    bias_jac_t_mat_prod_accept_vectors,
+    bias_jac_mat_prod_accept_vectors,
+    jac_t_mat_prod_accept_vectors,
+    jac_mat_prod_accept_vectors,
 )
-from backpack.utils.unsqueeze import jmp_unsqueeze_if_missing_dim
 
 from ...utils.einsum import einsum
 from .basederivatives import BaseDerivatives
@@ -27,8 +26,7 @@ class LinearDerivatives(BaseDerivatives):
     def get_weight_data(self, module):
         return module.weight.data
 
-    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
-    @jac_t_new_shape_convention
+    @jac_t_mat_prod_accept_vectors
     def jac_t_mat_prod(self, module, g_inp, g_out, mat):
         new_convention = True
 
@@ -39,8 +37,7 @@ class LinearDerivatives(BaseDerivatives):
         else:
             return einsum("ij,bic->bjc", (d_linear, mat))
 
-    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
-    @jac_new_shape_convention
+    @jac_mat_prod_accept_vectors
     def jac_mat_prod(self, module, g_inp, g_out, mat):
         new_convention = True
 
@@ -55,8 +52,7 @@ class LinearDerivatives(BaseDerivatives):
         jac = self.get_weight_data(module)
         return einsum("ik,ij,jl->kl", (jac, mat, jac))
 
-    @jmp_unsqueeze_if_missing_dim(mat_dim=2)
-    @weight_jac_new_shape_convention
+    @weight_jac_mat_prod_accept_vectors
     def weight_jac_mat_prod(self, module, g_inp, g_out, mat):
         new_convention = True
         if new_convention:
@@ -68,8 +64,7 @@ class LinearDerivatives(BaseDerivatives):
 
         return jac_mat
 
-    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
-    @weight_jac_t_new_shape_convention
+    @weight_jac_t_mat_prod_accept_vectors
     def weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
         new_convention = True
 
@@ -95,8 +90,7 @@ class LinearDerivatives(BaseDerivatives):
 
         return jac_t_mat.view(shape)
 
-    @jmp_unsqueeze_if_missing_dim(mat_dim=2)
-    @bias_jac_new_shape_convention
+    @bias_jac_mat_prod_accept_vectors
     def bias_jac_mat_prod(self, module, g_inp, g_out, mat):
         new_convention = True
 
@@ -106,8 +100,7 @@ class LinearDerivatives(BaseDerivatives):
         else:
             return mat.unsqueeze(0).expand(batch, -1, -1)
 
-    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
-    @bias_jac_t_new_shape_convention
+    @bias_jac_t_mat_prod_accept_vectors
     def bias_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
         new_convention = True
 

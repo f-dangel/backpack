@@ -38,7 +38,11 @@ class HBPLinear(HBPBaseModule):
             return [self.__mean_input_outer(module)]
 
     def _factor_from_sqrt(self, backproped):
-        return [einsum("bic,bjc->ij", (backproped, backproped))]
+        new_convention = True
+        if new_convention:
+            return [einsum("cbi,cbj->ij", (backproped, backproped))]
+        else:
+            return [einsum("bic,bjc->ij", (backproped, backproped))]
 
     def bias(self, ext, module, g_inp, g_out, backproped):
         bp_strategy = ext.get_backprop_strategy()

@@ -5,10 +5,9 @@ import torch.nn
 from torch.nn import AvgPool2d, Conv2d, ConvTranspose2d
 
 from backpack.core.derivatives.utils import (
-    jac_new_shape_convention,
-    jac_t_new_shape_convention,
+    jac_t_mat_prod_accept_vectors,
+    jac_mat_prod_accept_vectors,
 )
-from backpack.utils.unsqueeze import jmp_unsqueeze_if_missing_dim
 
 from ...utils import conv as convUtils
 from ...utils.einsum import einsum
@@ -55,8 +54,7 @@ class AvgPool2DDerivatives(BaseDerivatives):
         )
 
     # Jacobian-matrix product
-    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
-    @jac_new_shape_convention
+    @jac_mat_prod_accept_vectors
     def jac_mat_prod(self, module, g_inp, g_out, mat):
         self.check_exotic_parameters(module)
 
@@ -140,8 +138,7 @@ class AvgPool2DDerivatives(BaseDerivatives):
         return conv2d(mat)
 
     # Transpose Jacobian-matrix product
-    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
-    @jac_t_new_shape_convention
+    @jac_t_mat_prod_accept_vectors
     def jac_t_mat_prod(self, module, g_inp, g_out, mat):
         new_convention = True
 

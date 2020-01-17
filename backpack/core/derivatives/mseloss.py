@@ -4,13 +4,17 @@ from torch import diag_embed, ones_like, diag, ones
 from torch.nn import MSELoss
 from .basederivatives import BaseDerivatives
 
-from backpack.utils.unsqueeze import hmp_unsqueeze_if_missing_dim
+from backpack.core.derivatives.utils import (
+    hessian_old_shape_convention,
+    hessian_matrix_product_accept_vectors,
+)
 
 
 class MSELossDerivatives(BaseDerivatives):
     def get_module(self):
         return MSELoss
 
+    @hessian_old_shape_convention
     def sqrt_hessian(self, module, g_inp, g_out):
         self.check_input_dims(module)
 
@@ -19,6 +23,7 @@ class MSELossDerivatives(BaseDerivatives):
         if module.reduction == "mean":
             sqrt_H /= sqrt(module.input0.shape[0])
 
+        print("Hi", sqrt_H.shape)
         return sqrt_H
 
     def sqrt_hessian_sampled(self, module, g_inp, g_out):
@@ -42,10 +47,10 @@ class MSELossDerivatives(BaseDerivatives):
         print("sum H ", sum_H.shape)
         return sum_H
 
+    @hessian_matrix_product_accept_vectors
     def hessian_matrix_product(self, module, g_inp, g_out):
         """Multiplication of the input Hessian with a matrix."""
 
-        @hmp_unsqueeze_if_missing_dim(mat_dim=3)
         def hmp(mat):
             Hmat = 2 * mat
 

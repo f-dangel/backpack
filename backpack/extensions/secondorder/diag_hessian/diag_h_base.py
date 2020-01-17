@@ -1,5 +1,7 @@
 from backpack.extensions.mat_to_mat_jac_base import MatToJacMat
 from torch import clamp, diag_embed
+from numpy import prod
+from backpack.utils.einsum import einsum
 
 
 class DiagHBaseModule(MatToJacMat):
@@ -30,11 +32,39 @@ class DiagHBaseModule(MatToJacMat):
         def positive_part(sign, H):
             return clamp(sign * H, min=0)
 
+        def diag_embed_multi_dim(H):
+            """Convert [N, C_in, H_in, ...] to [N, C_in * H_in * ...,],
+            embed into [N, C_in * H_in * ..., C_in * H_in = V], convert back
+            to [V, N, C_in, H_in, ...,  V]."""
+            print(H.shape)
+            feature_shapes = H.shape[1:]
+            features = prod(feature_shapes)
+            N = H.shape[0]
+            V = features
+            # [N, C_in * H_in * ...]
+            H_flat = H.reshape(N, features)
+            print("H_flat", H_flat.shape)
+            # [N, C_in * H_in * ..., V]
+            H_diag = diag_embed(H_flat)
+            print("H_diag", H_diag.shape)
+
+            # [V, N, C_in, H_in, ...]
+            shape = (V, N, *feature_shapes)
+            return einsum("nic->cni", H_diag).view(shape)
+
         def decompose_into_positive_and_negative_sqrt(H):
-            return [
-                [diag_embed(positive_part(sign, H).sqrt_()), sign]
-                for sign in [self.PLUS, self.MINUS]
-            ]
+            new_convention = True
+
+            if new_convention:
+                return [
+                    [diag_embed_multi_dim(positive_part(sign, H).sqrt_()), sign]
+                    for sign in [self.PLUS, self.MINUS]
+                ]
+            else:
+                return [
+                    [diag_embed(positive_part(sign, H).sqrt_()), sign]
+                    for sign in [self.PLUS, self.MINUS]
+                ]
 
         H = self.derivatives.hessian_diagonal(module, g_inp, g_out)
         return decompose_into_positive_and_negative_sqrt(H)

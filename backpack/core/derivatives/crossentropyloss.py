@@ -7,11 +7,9 @@ from torch.nn.functional import one_hot
 
 from ...utils.einsum import einsum
 from .basederivatives import BaseDerivatives
-from backpack.utils.unsqueeze import hmp_unsqueeze_if_missing_dim
 from backpack.core.derivatives.utils import (
-    hessian_new_shape_convention,
     hessian_old_shape_convention,
-    hmp_new_shape_convention,
+    hessian_matrix_product_accept_vectors,
 )
 
 
@@ -19,7 +17,6 @@ class CrossEntropyLossDerivatives(BaseDerivatives):
     def get_module(self):
         return CrossEntropyLoss
 
-    @hessian_new_shape_convention
     @hessian_old_shape_convention
     def sqrt_hessian(self, module, g_inp, g_out):
         probs = self.get_probs(module)
@@ -33,7 +30,6 @@ class CrossEntropyLossDerivatives(BaseDerivatives):
 
         return sqrt_H
 
-    @hessian_new_shape_convention
     @hessian_old_shape_convention
     def sqrt_hessian_sampled(self, module, g_inp, g_out):
         M = self.MC_SAMPLES
@@ -61,12 +57,11 @@ class CrossEntropyLossDerivatives(BaseDerivatives):
 
         return sum_H
 
+    @hessian_matrix_product_accept_vectors
     def hessian_matrix_product(self, module, g_inp, g_out):
         """Multiplication of the input Hessian with a matrix."""
         probs = self.get_probs(module)
 
-        @hmp_unsqueeze_if_missing_dim(mat_dim=3)
-        @hmp_new_shape_convention
         def hmp(mat):
             new_convention = True
             if new_convention:

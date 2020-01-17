@@ -3,14 +3,13 @@ from torch.nn import Conv2d
 from torch.nn.functional import conv2d, conv_transpose2d
 
 from backpack.core.derivatives.utils import (
-    bias_jac_t_new_shape_convention,
-    bias_jac_new_shape_convention,
-    jac_new_shape_convention,
-    jac_t_new_shape_convention,
-    weight_jac_t_new_shape_convention,
-    weight_jac_new_shape_convention,
+    weight_jac_t_mat_prod_accept_vectors,
+    weight_jac_mat_prod_accept_vectors,
+    bias_jac_t_mat_prod_accept_vectors,
+    bias_jac_mat_prod_accept_vectors,
+    jac_t_mat_prod_accept_vectors,
+    jac_mat_prod_accept_vectors,
 )
-from backpack.utils.unsqueeze import jmp_unsqueeze_if_missing_dim
 
 from ...utils import conv as convUtils
 from ...utils.einsum import einsum
@@ -59,8 +58,7 @@ class Conv2DDerivatives(BaseDerivatives):
         return result.view(in_features, in_features).t()
 
     # Jacobian-matrix product
-    @jmp_unsqueeze_if_missing_dim(mat_dim=2)
-    @jac_new_shape_convention
+    @jac_mat_prod_accept_vectors
     def jac_mat_prod(self, module, g_inp, g_out, mat):
         new_convention = True
 
@@ -110,8 +108,7 @@ class Conv2DDerivatives(BaseDerivatives):
         return bconv
 
     # Transposed Jacobian-matrix product
-    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
-    @jac_t_new_shape_convention
+    @jac_t_mat_prod_accept_vectors
     def jac_t_mat_prod(self, module, g_inp, g_out, mat):
         new_convention = True
 
@@ -158,8 +155,7 @@ class Conv2DDerivatives(BaseDerivatives):
         )
 
     # TODO: Improve performance
-    @jmp_unsqueeze_if_missing_dim(mat_dim=2)
-    @bias_jac_new_shape_convention
+    @bias_jac_mat_prod_accept_vectors
     def bias_jac_mat_prod(self, module, g_inp, g_out, mat):
         new_convention = True
 
@@ -177,8 +173,7 @@ class Conv2DDerivatives(BaseDerivatives):
             jac_mat = jac_mat.expand(batch, -1, out_x, out_y, -1).contiguous()
             return jac_mat.view(batch, -1, num_cols)
 
-    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
-    @bias_jac_t_new_shape_convention
+    @bias_jac_t_mat_prod_accept_vectors
     def bias_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
         new_convention = True
 
@@ -198,8 +193,7 @@ class Conv2DDerivatives(BaseDerivatives):
             return mat.view(shape).sum(sum_dims)
 
     # TODO: Improve performance, get rid of unfold, use conv
-    @jmp_unsqueeze_if_missing_dim(mat_dim=2)
-    @weight_jac_new_shape_convention
+    @weight_jac_mat_prod_accept_vectors
     def weight_jac_mat_prod(self, module, g_inp, g_out, mat):
         new_convention = True
 
@@ -222,8 +216,7 @@ class Conv2DDerivatives(BaseDerivatives):
             jac_mat = jac_mat.view(batch, out_features, num_cols)
         return jac_mat
 
-    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
-    @weight_jac_t_new_shape_convention
+    @weight_jac_t_mat_prod_accept_vectors
     def weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
         """Unintuitive, but faster due to conv operation."""
         new_convention = True

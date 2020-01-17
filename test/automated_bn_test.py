@@ -50,7 +50,7 @@ def test_ggn_mp(problem, device):
 
     NUM_COLS = 10
     matrices = [
-        torch.randn(p.numel(), NUM_COLS, device=device)
+        torch.randn(NUM_COLS, *p.shape, device=device)
         for p in problem.model.parameters()
     ]
 
@@ -65,7 +65,7 @@ def test_ggn_mp(problem, device):
 def test_ggn_vp(problem, device):
     problem.to(device)
 
-    vecs = [torch.randn(p.numel(), device=device) for p in problem.model.parameters()]
+    vecs = [torch.randn(*p.shape, device=device) for p in problem.model.parameters()]
 
     backpack_res = BpextImpl(problem).ggn_vp(vecs)
     autograd_res = AutogradImpl(problem).ggn_vp(vecs)
