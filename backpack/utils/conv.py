@@ -35,44 +35,6 @@ def separate_channels_and_pixels(module, tensor, new_convention=True):
         return tensor.contiguous().view(batch, channels, pixels, classes)
 
 
-def check_sizes_input_jac_t(mat, module, new_convention=True):
-    batch, out_channels, out_x, out_y = module.output_shape
-    if new_convention:
-        assert tuple(mat.size())[1:] == (batch, out_channels, out_x, out_y)
-    else:
-        assert tuple(mat.size())[:2] == (batch, out_channels * out_x * out_y)
-
-
-def check_sizes_input_jac(mat, module, new_convention=False):
-    batch, in_channels, in_x, in_y = module.input0.size()
-    if new_convention:
-        assert tuple(mat.size())[1:] == (batch, in_channels, in_x, in_y)
-    else:
-        assert tuple(mat.size())[:2] == (batch, in_channels * in_x * in_y)
-
-
-def check_sizes_output_jac_t(jtmp, module):
-    if tuple(jtmp.size())[1:] != tuple(module.input0.size())[1:]:
-        raise ValueError(
-            "Size after conv_transpose does not match",
-            "Got {}, and {}.",
-            "Expected all dimensions to match, except for the first.".format(
-                jtmp.size(), module.input0.size()
-            ),
-        )
-
-
-def check_sizes_output_jac(jmp, module):
-    if tuple(jmp.size())[1:] != tuple(module.output_shape)[1:]:
-        raise ValueError(
-            "Size after conv does not match",
-            "Got {}, and {}.",
-            "Expected all dimensions to match, except for the first.".format(
-                jmp.size(), module.output_shape
-            ),
-        )
-
-
 def extract_weight_diagonal(module, input, grad_output, new_convention=False):
     """
     input must be the unfolded input to the convolution (see unfold_func)
