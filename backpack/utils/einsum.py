@@ -56,7 +56,14 @@ def eingroup(equation, operand):
         out_shape.append(numpy.prod([in_shapes[axis] for axis in group]))
 
     einsum_eq = equation.replace(sep, "")
-    print(out_shape)
-    print(einsum_eq)
 
-    return einsum(einsum_eq, operand).view(out_shape)
+    result = einsum(einsum_eq, operand)
+    return try_view(result, out_shape)
+
+
+def try_view(tensor, shape):
+    """Fall back to reshape (more expensive) if viewing does not work."""
+    try:
+        return tensor.view(shape)
+    except RuntimeError:
+        return tensor.reshape(shape)
