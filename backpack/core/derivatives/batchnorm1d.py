@@ -59,7 +59,7 @@ class BatchNorm1dDerivatives(BaseDerivatives):
         return jac_t_mat
 
     def get_normalized_input_and_var(self, module):
-        input = self.get_input(module)
+        input = module.input0
         mean = input.mean(dim=0)
         var = input.var(dim=0, unbiased=False)
         return (input - mean) / (var + module.eps).sqrt(), var

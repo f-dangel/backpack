@@ -11,9 +11,9 @@ from backpack.core.derivatives.utils import (
     jac_mat_prod_accept_vectors,
 )
 
-from ...utils import conv as convUtils
-from ...utils.einsum import einsum
-from .basederivatives import BaseDerivatives
+from backpack.utils import conv as convUtils
+from backpack.utils.einsum import einsum
+from backpack.core.derivatives.basederivatives import BaseDerivatives
 
 
 class Conv2DDerivatives(BaseDerivatives):
@@ -23,14 +23,8 @@ class Conv2DDerivatives(BaseDerivatives):
     def hessian_is_zero(self):
         return True
 
-    def get_weight_data(self, module):
-        return module.weight.data
-
-    def get_input(self, module):
-        return module.input0
-
     def get_unfolded_input(self, module):
-        return convUtils.unfold_func(module)(self.get_input(module))
+        return convUtils.unfold_func(module)(module.input0)
 
     # TODO: Require tests
     def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
@@ -76,7 +70,7 @@ class Conv2DDerivatives(BaseDerivatives):
     def __apply_jacobian_of(self, module, mat):
         return conv2d(
             mat,
-            self.get_weight_data(module),
+            module.weight.data,
             stride=module.stride,
             padding=module.padding,
             dilation=module.dilation,
@@ -147,7 +141,7 @@ class Conv2DDerivatives(BaseDerivatives):
     def __apply_jacobian_t_of(self, module, mat):
         return conv_transpose2d(
             mat,
-            self.get_weight_data(module),
+            module.weight.data,
             stride=module.stride,
             padding=module.padding,
             dilation=module.dilation,

@@ -71,6 +71,7 @@ class BaseDerivatives:
         raise NotImplementedError
 
     def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
+        # TODO: Use new convention
         raise NotImplementedError
 
     def hessian_is_zero(self):
@@ -92,10 +93,7 @@ class BaseDerivatives:
         return batch, tensor.clone().detach().view(batch, -1)
 
     def get_batch(self, module):
-        return self.get_input(module).size(0)
-
-    def get_input(self, module):
-        return module.input0
+        return module.input0.size(0)
 
     def get_output(self, module):
         return module.output
