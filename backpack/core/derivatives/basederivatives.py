@@ -118,3 +118,12 @@ class BaseDerivatives:
     @classmethod
     def view_like_output(cls, mat, module):
         return cls._view_like(mat, module.output)
+
+    @classmethod
+    def view_like_weight(cls, mat, module, batch_dim=False):
+        V, N = -1, module.input0.shape[0]
+        shape = (*module.weight.shape,)
+        if batch_dim:
+            shape = (N, *shape)
+        shape = (V, *shape)
+        return try_view(mat, shape)
