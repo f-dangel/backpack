@@ -76,142 +76,63 @@ class Conv2DDerivatives(BaseDerivatives):
         )
         return self.view_like_input(jmp_as_conv, module)
 
-    # TODO: Improve performance
     @bias_jac_mat_prod_accept_vectors
     def bias_jac_mat_prod(self, module, g_inp, g_out, mat):
-        new_convention = True
+        """mat has shape [V, C_out]"""
+        # expand for each batch and for each channel
+        N_axis, H_axis, W_axis = 1, 3, 4
+        jac_mat = mat.unsqueeze(N_axis).unsqueeze(H_axis).unsqueeze(W_axis)
 
-        batch, out_channels, out_x, out_y = module.output_shape
-        if new_convention:
-            # mat has shape (V, out_channels)
-            # expand for each batch and for each channel
-            jac_mat = mat.unsqueeze(1).unsqueeze(-1).unsqueeze(-1)
-            return jac_mat.expand(-1, batch, -1, out_x, out_y).contiguous()
-        else:
-            num_cols = mat.size(1)
-            # mat has shape (out_channels, num_cols)
-            # expand for each batch and for each channel
-            jac_mat = mat.view(1, out_channels, 1, 1, num_cols)
-            jac_mat = jac_mat.expand(batch, -1, out_x, out_y, -1).contiguous()
-            return jac_mat.view(batch, -1, num_cols)
+        N, _, H_out, W_out = module.output_shape
+        return jac_mat.expand(-1, N, -1, H_out, W_out)
 
     @bias_jac_t_mat_prod_accept_vectors
     def bias_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
-        new_convention = True
+        N_axis, H_axis, W_axis = 1, 3, 4
+        axes = [H_axis, W_axis]
+        if sum_batch:
+            axes = [N_axis] + axes
 
-        if new_convention:
-            if sum_batch:
-                sum_dims = [1, 3, 4]
-            else:
-                sum_dims = [3, 4]
-            return mat.sum(sum_dims)
-        else:
-            batch, out_channels, out_x, out_y = module.output_shape
-            num_cols = mat.size(2)
-            shape = (batch, out_channels, out_x * out_y, num_cols)
-            # mat has shape (batch, out_features, num_cols)
-            # sum back over the pixels and batch dimensions
-            sum_dims = [0, 2] if sum_batch is True else [2]
-            return mat.view(shape).sum(sum_dims)
+        return mat.sum(axes)
 
-    # TODO: Improve performance, get rid of unfold, use conv
+    # TODO: Improve performance by using conv instead of unfold
     @weight_jac_mat_prod_accept_vectors
     def weight_jac_mat_prod(self, module, g_inp, g_out, mat):
-        new_convention = True
+        jac_mat = eingroup("v,o,i,h,w->v,o,ihw", mat)
+        X = self.get_unfolded_input(module)
 
-        batch, out_channels, out_x, out_y = module.output_shape
-        if new_convention:
-            num_cols = mat.size(0)
-            jac_mat = mat.view(num_cols, out_channels, -1)
-            X = self.get_unfolded_input(module)
-
-            jac_mat = einsum("bij,cki->cbkj", (X, jac_mat)).contiguous()
-            jac_mat = jac_mat.view(num_cols, batch, out_channels, out_x, out_y)
-        else:
-            out_features = out_channels * out_x * out_y
-            num_cols = mat.size(1)
-            jac_mat = mat.view(1, out_channels, -1, num_cols)
-            jac_mat = jac_mat.expand(batch, out_channels, -1, -1)
-
-            X = self.get_unfolded_input(module)
-            jac_mat = einsum("bij,bkic->bkjc", (X, jac_mat)).contiguous()
-            jac_mat = jac_mat.view(batch, out_features, num_cols)
-        return jac_mat
+        jac_mat = einsum("nij,vki->vnkj", (X, jac_mat))
+        return self.view_like_output(jac_mat, module)
 
     @weight_jac_t_mat_prod_accept_vectors
     def weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
-        """Unintuitive, but faster due to conv operation."""
-        new_convention = True
+        """Unintuitive, but faster due to convolution."""
+        V, N, C_in = mat.shape[0], module.input0_shape[0], module.input0_shape[1]
 
-        batch, out_channels, out_x, out_y = module.output_shape
-        _, in_channels, in_x, in_y = module.input0.shape
-        k_x, k_y = module.kernel_size
+        mat = eingroup("v,n,c,w,h->vn,c,w,h", mat).repeat(1, C_in, 1, 1)
+        C_in_axis = 1
+        # a,b represent the combined/repeated dimensions
+        mat = eingroup("a,b,w,h->ab,w,h", mat).unsqueeze(C_in_axis)
 
-        if new_convention:
-            num_cols = mat.shape[0]
-        else:
-            num_cols = mat.shape[-1]
-            shape = (batch, out_channels, out_x, out_y, num_cols)
-            mat = mat.view(shape)
-
-        if new_convention:
-            pass
-        else:
-            mat = einsum("boxyc->cboxy", (mat,))
-
-        mat = mat.contiguous().view(num_cols * batch, out_channels, out_x, out_y)
-
-        mat = mat.repeat(1, in_channels, 1, 1)
-        mat = mat.view(num_cols * batch * out_channels * in_channels, 1, out_x, out_y)
-
-        input = module.input0.view(1, -1, in_x, in_y).repeat(1, num_cols, 1, 1)
+        N_axis = 0
+        input = eingroup("n,c,h,w->nc,h,w", module.input0).unsqueeze(N_axis)
+        input = input.repeat(1, V, 1, 1)
 
         grad_weight = conv2d(
             input,
             mat,
-            None,
-            module.dilation,
-            module.padding,
-            module.stride,
-            in_channels * batch * num_cols,
+            bias=None,
+            stride=module.dilation,
+            padding=module.padding,
+            dilation=module.stride,
+            groups=C_in * N * V,
         )
+        grad_weight = self.view_like_weight(grad_weight, module, batch_dim=True)
 
-        if new_convention:
-            grad_weight = grad_weight.view(
-                num_cols, batch, out_channels, in_channels, k_x, k_y
-            )
-            if sum_batch is True:
-                grad_weight = grad_weight.sum(1)
-                batch = 1
+        if sum_batch is True:
+            N_axis = 1
+            grad_weight = grad_weight.sum(N_axis, keepdim=True)
 
-            grad_weight = grad_weight.view(
-                num_cols, batch, in_channels, out_channels, k_x, k_y
-            )
-            grad_weight = einsum("cbmnxy->cbnmxy", grad_weight).contiguous()
-
-            if sum_batch is True:
-                grad_weight = grad_weight.squeeze(1)
-
-            return grad_weight
-
-        else:
-            grad_weight = grad_weight.view(
-                num_cols, batch, out_channels * in_channels, k_x, k_y
-            )
-            if sum_batch is True:
-                grad_weight = grad_weight.sum(1)
-                batch = 1
-
-            grad_weight = grad_weight.view(
-                num_cols, batch, in_channels, out_channels, k_x, k_y
-            )
-            grad_weight = einsum("cbmnxy->bnmxyc", grad_weight).contiguous()
-
-            grad_weight = grad_weight.view(
-                batch, in_channels * out_channels * k_x * k_y, num_cols
-            )
-
-            if sum_batch is True:
-                grad_weight = grad_weight.squeeze(0)
-
-            return grad_weight
+        # swap in/out channel dimensions
+        grad_weight = einsum("vnoixy->vnioxy", grad_weight)
+        return self.view_like_weight(grad_weight, module, batch_dim=not sum_batch)
