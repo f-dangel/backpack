@@ -14,6 +14,7 @@ class MSELossDerivatives(BaseDerivatives):
     def get_module(self):
         return MSELoss
 
+    # TODO: Convert [N, C, V] to  new convention [V, N, C]
     @hessian_old_shape_convention
     def sqrt_hessian(self, module, g_inp, g_out):
         self.check_input_dims(module)
@@ -21,9 +22,9 @@ class MSELossDerivatives(BaseDerivatives):
         sqrt_H = diag_embed(sqrt(2) * ones_like(module.input0))
 
         if module.reduction == "mean":
-            sqrt_H /= sqrt(module.input0.shape[0])
+            N = module.input0.shape[0]
+            sqrt_H /= sqrt(N)
 
-        print("Hi", sqrt_H.shape)
         return sqrt_H
 
     def sqrt_hessian_sampled(self, module, g_inp, g_out):
@@ -38,13 +39,13 @@ class MSELossDerivatives(BaseDerivatives):
     def sum_hessian(self, module, g_inp, g_out):
         self.check_input_dims(module)
 
-        batch = module.input0_shape[0]
-        num_features = module.input0.numel() // batch
-        sum_H = 2 * batch * diag(ones(num_features, device=module.input0.device))
+        N = module.input0_shape[0]
+        num_features = module.input0.numel() // N
+        sum_H = 2 * N * diag(ones(num_features, device=module.input0.device))
 
         if module.reduction == "mean":
-            sum_H /= module.input0.shape[0]
-        print("sum H ", sum_H.shape)
+            sum_H /= N
+
         return sum_H
 
     @hessian_matrix_product_accept_vectors
@@ -55,7 +56,8 @@ class MSELossDerivatives(BaseDerivatives):
             Hmat = 2 * mat
 
             if module.reduction == "mean":
-                Hmat /= module.input0.shape[0]
+                N = module.input0.shape[0]
+                Hmat /= N
 
             return Hmat
 
