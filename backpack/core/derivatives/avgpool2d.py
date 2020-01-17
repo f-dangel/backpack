@@ -9,7 +9,6 @@ from backpack.core.derivatives.utils import (
     jac_mat_prod_accept_vectors,
 )
 
-from backpack.utils import conv as convUtils
 from backpack.utils.einsum import einsum, eingroup
 from backpack.core.derivatives.basederivatives import BaseDerivatives
 
@@ -57,13 +56,13 @@ class AvgPool2DDerivatives(BaseDerivatives):
     def jac_mat_prod(self, module, g_inp, g_out, mat):
         self.check_exotic_parameters(module)
 
-        mat_as_pool = self.__reshape_for_conv(mat, module)
+        mat_as_pool = self.__make_single_channel(mat, module)
         jmp_as_pool = self.__apply_jacobian_of(module, mat_as_pool)
         self.__check_jmp_out_as_pool(mat, jmp_as_pool, module)
 
-        return self.__reshape_for_matmul(jmp_as_pool, module)
+        return self.__view_as_output(jmp_as_pool, module)
 
-    def __reshape_for_conv(self, mat, module):
+    def __make_single_channel(self, mat, module):
         """Create fake single-channel images, grouping batch,
         class and channel dimension."""
         result = eingroup("v,n,c,w,h->vnc,w,h", mat)
@@ -91,7 +90,7 @@ class AvgPool2DDerivatives(BaseDerivatives):
         N, C_out, H_out, W_out = module.output_shape
         assert jmp_as_pool.shape == (V * N * C_out, 1, H_out, W_out)
 
-    def __reshape_for_matmul(self, mat, module):
+    def __view_as_output(self, mat, module):
         """Ungroup dimensions after application of Jacobian."""
         V = -1
         shape = (V, *module.output_shape)
@@ -99,75 +98,20 @@ class AvgPool2DDerivatives(BaseDerivatives):
 
     @jac_t_mat_prod_accept_vectors
     def jac_t_mat_prod(self, module, g_inp, g_out, mat):
-        new_convention = True
-
         self.check_exotic_parameters(module)
 
-        convUtils.check_sizes_input_jac_t(mat, module, new_convention=new_convention)
-        mat_as_pool = self.__reshape_for_conv_t(
-            mat, module, new_convention=new_convention
-        )
+        mat_as_pool = self.__make_single_channel(mat, module)
         jmp_as_pool = self.__apply_jacobian_t_of(module, mat_as_pool)
-        self.__check_jmp_in_as_pool(
-            mat, jmp_as_pool, module, new_convention=new_convention
-        )
+        self.__check_jmp_in_as_pool(mat, jmp_as_pool, module)
 
-        return self.__reshape_for_matmul_t(
-            jmp_as_pool, module, new_convention=new_convention
-        )
-
-    def __check_jmp_in_as_pool(self, mat, jmp_as_pool, module, new_convention=False):
-        batch, channels, in_x, in_y = module.input0.size()
-        if new_convention:
-            num_classes = mat.size(0)
-        else:
-            num_classes = mat.size(2)
-        assert jmp_as_pool.size(0) == num_classes * batch * channels
-        assert jmp_as_pool.size(1) == 1
-        assert jmp_as_pool.size(2) == in_x
-        assert jmp_as_pool.size(3) == in_y
-
-    def __reshape_for_conv_t(self, mat, module, new_convention=False):
-        """Create fake single-channel images, grouping batch,
-        class and channel dimension."""
-        batch, out_channels, out_x, out_y = module.output_shape
-
-        if new_convention:
-            num_classes = mat.shape[0]
-            mat_used = mat
-        else:
-            num_classes = mat.size(-1)
-            mat_used = einsum("bic->bci", mat)
-
-        # 'fake' image for convolution
-        # (batch * class * channel, 1,  out_x, out_y)
-        return mat_used.contiguous().view(
-            batch * num_classes * out_channels, 1, out_x, out_y
-        )
-
-    def __reshape_for_matmul_t(self, mat, module, new_convention=False):
-        """Ungroup dimensions after application of Jacobian."""
-        batch, channels, in_x, in_y = module.input0.size()
-        features = channels * in_x * in_y
-
-        # mat is of shape (batch * class * channel, 1,  in_x, in_y)
-        if new_convention:
-            shape = (-1, batch, channels, in_x, in_y)
-            mat_view = mat.view(shape)
-        else:
-            # move class dimension to last
-            mat_view = mat.view(batch, -1, features)
-            mat_view = einsum("bci->bic", mat_view)
-
-        return mat_view.contiguous()
+        return self.__view_as_input(jmp_as_pool, module)
 
     def __apply_jacobian_t_of(self, module, mat):
-        _, _, in_x, in_y = module.input0.size()
-        output_size = (mat.size(0), 1, in_x, in_y)
+        C_for_conv_t = 1
 
         conv2d_t = ConvTranspose2d(
-            in_channels=1,
-            out_channels=1,
+            in_channels=C_for_conv_t,
+            out_channels=C_for_conv_t,
             kernel_size=module.kernel_size,
             stride=module.stride,
             padding=module.padding,
@@ -178,4 +122,19 @@ class AvgPool2DDerivatives(BaseDerivatives):
         avg_kernel = torch.ones_like(conv2d_t.weight) / conv2d_t.weight.numel()
         conv2d_t.weight.data = avg_kernel
 
+        V_N_C_in = mat.size(0)
+        _, _, H_in, W_in = module.input0.size()
+        output_size = (V_N_C_in, C_for_conv_t, H_in, W_in)
+
         return conv2d_t(mat, output_size=output_size)
+
+    def __check_jmp_in_as_pool(self, mat, jmp_as_pool, module):
+        V = mat.size(0)
+        N, C_in, H_in, W_in = module.input0_shape
+        assert jmp_as_pool.shape == (V * N * C_in, 1, H_in, W_in)
+
+    def __view_as_input(self, mat, module):
+        """Ungroup dimensions after application of Jacobian."""
+        V = -1
+        shape = (V, *module.input0_shape)
+        return mat.view(shape)
