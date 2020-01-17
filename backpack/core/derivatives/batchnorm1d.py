@@ -9,8 +9,8 @@ from backpack.core.derivatives.utils import (
     jac_mat_prod_accept_vectors,
 )
 
-from ...utils.einsum import einsum
-from .basederivatives import BaseDerivatives
+from backpack.utils.einsum import einsum
+from backpack.core.derivatives.basederivatives import BaseDerivatives
 
 
 class BatchNorm1dDerivatives(BaseDerivatives):
@@ -23,12 +23,10 @@ class BatchNorm1dDerivatives(BaseDerivatives):
     def hessian_is_diagonal(self):
         return False
 
-    # Jacobian-matrix product
     @jac_mat_prod_accept_vectors
     def jac_mat_prod(self, module, g_inp, g_out, mat):
         return self.jac_t_mat_prod(module, g_inp, g_out, mat)
 
-    # Transpose Jacobian-matrix product
     @jac_t_mat_prod_accept_vectors
     def jac_t_mat_prod(self, module, g_inp, g_out, mat):
         """
@@ -47,27 +45,16 @@ class BatchNorm1dDerivatives(BaseDerivatives):
         """
         assert module.affine is True
 
-        new_convention = True
-
-        batch = self.get_batch(module)
+        N = self.get_batch(module)
         x_hat, var = self.get_normalized_input_and_var(module)
         ivar = 1.0 / (var + module.eps).sqrt()
 
-        if new_convention:
-            dx_hat = einsum("cbi,i->cbi", (mat, module.weight))
+        dx_hat = einsum("vni,i->vni", (mat, module.weight))
 
-            jac_t_mat = batch * dx_hat
-            jac_t_mat -= dx_hat.sum(1).unsqueeze(1).expand_as(jac_t_mat)
-            jac_t_mat -= einsum("bi,csi,si->cbi", (x_hat, dx_hat, x_hat))
-            jac_t_mat = einsum("cbi,i->cbi", (jac_t_mat, ivar / batch))
-
-        else:
-            dx_hat = einsum("bic,i->bic", (mat, module.weight))
-
-            jac_t_mat = batch * dx_hat
-            jac_t_mat -= dx_hat.sum(0).unsqueeze(0).expand_as(jac_t_mat)
-            jac_t_mat -= einsum("bi,sic,si->bic", (x_hat, dx_hat, x_hat))
-            jac_t_mat = einsum("bic,i->bic", (jac_t_mat, ivar / batch))
+        jac_t_mat = N * dx_hat
+        jac_t_mat -= dx_hat.sum(1).unsqueeze(1).expand_as(jac_t_mat)
+        jac_t_mat -= einsum("ni,vsi,si->vni", (x_hat, dx_hat, x_hat))
+        jac_t_mat = einsum("vni,i->vni", (jac_t_mat, ivar / N))
 
         return jac_t_mat
 
@@ -79,47 +66,25 @@ class BatchNorm1dDerivatives(BaseDerivatives):
 
     @weight_jac_mat_prod_accept_vectors
     def weight_jac_mat_prod(self, module, g_inp, g_out, mat):
-        new_convention = True
-
         x_hat, _ = self.get_normalized_input_and_var(module)
-
-        if new_convention:
-            return einsum("bi,ci->cbi", (x_hat, mat))
-        else:
-            return einsum("bi,ic->bic", (x_hat, mat))
+        return einsum("ni,vi->vni", (x_hat, mat))
 
     @weight_jac_t_mat_prod_accept_vectors
     def weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
-        new_convention = True
-
         x_hat, _ = self.get_normalized_input_and_var(module)
-
-        if new_convention:
-            equation = "cbi,bi->c{}i".format("" if sum_batch is True else "b")
-        else:
-            equation = "bic,bi->{}ic".format("" if sum_batch is True else "b")
+        equation = "vni,ni->v{}i".format("" if sum_batch is True else "n")
         operands = [mat, x_hat]
         return einsum(equation, operands)
 
     @bias_jac_mat_prod_accept_vectors
     def bias_jac_mat_prod(self, module, g_inp, g_out, mat):
-        new_convention = True
-
-        batch = self.get_batch(module)
-
-        if new_convention:
-            return mat.unsqueeze(1).repeat(1, batch, 1)
-        else:
-            return mat.unsqueeze(0).repeat(batch, 1, 1)
+        N = self.get_batch(module)
+        return mat.unsqueeze(1).repeat(1, N, 1)
 
     @bias_jac_t_mat_prod_accept_vectors
     def bias_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
-        new_convention = True
-
-        if sum_batch is True:
-            if new_convention:
-                return mat.sum(1)
-            else:
-                return mat.sum(0)
+        if sum_batch:
+            N_axis = 1
+            return mat.sum(N_axis)
         else:
             return mat
