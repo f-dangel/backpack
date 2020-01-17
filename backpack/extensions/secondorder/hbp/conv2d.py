@@ -44,17 +44,9 @@ class HBPConv2d(HBPBaseModule):
     def _factor_from_sqrt(self, module, backproped):
         sqrt_ggn = backproped
 
-        new_convention = True
-        if new_convention:
-            sqrt_ggn = convUtils.separate_channels_and_pixels(
-                module, sqrt_ggn, new_convention=new_convention
-            )
-            sqrt_ggn = einsum("cbij->cbi", (sqrt_ggn,))
-            return einsum("cbi,cbl->il", (sqrt_ggn, sqrt_ggn))
-        else:
-            sqrt_ggn = convUtils.separate_channels_and_pixels(module, sqrt_ggn)
-            sqrt_ggn = einsum("bijc->bic", (sqrt_ggn,))
-            return einsum("bic,blc->il", (sqrt_ggn, sqrt_ggn))
+        sqrt_ggn = convUtils.separate_channels_and_pixels(module, sqrt_ggn)
+        sqrt_ggn = einsum("cbij->cbi", (sqrt_ggn,))
+        return einsum("cbi,cbl->il", (sqrt_ggn, sqrt_ggn))
 
     def bias(self, ext, module, g_inp, g_out, backproped):
         bp_strategy = ext.get_backprop_strategy()

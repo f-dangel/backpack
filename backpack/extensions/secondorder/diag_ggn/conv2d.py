@@ -10,21 +10,12 @@ class DiagGGNConv2d(DiagGGNBaseModule):
         super().__init__(derivatives=Conv2DDerivatives(), params=["bias", "weight"])
 
     def bias(self, ext, module, grad_inp, grad_out, backproped):
-        new_convention = True
-        if new_convention:
-            sqrt_ggn = backproped
-            return einsum("cbijl,cbikm->i", (sqrt_ggn, sqrt_ggn))
-        else:
-            sqrt_ggn = convUtils.separate_channels_and_pixels(module, backproped)
-            return einsum("bijc,bikc->i", (sqrt_ggn, sqrt_ggn))
+        sqrt_ggn = backproped
+        return einsum("cbijl,cbikm->i", (sqrt_ggn, sqrt_ggn))
 
     def weight(self, ext, module, grad_inp, grad_out, backproped):
-        new_convention = True
-
         X = convUtils.unfold_func(module)(module.input0)
 
-        weight_diag = convUtils.extract_weight_diagonal(
-            module, X, backproped, new_convention=new_convention
-        )
+        weight_diag = convUtils.extract_weight_diagonal(module, X, backproped)
 
         return weight_diag.view_as(module.weight)
