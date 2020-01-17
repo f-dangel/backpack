@@ -9,9 +9,9 @@ from backpack.core.derivatives.utils import (
     jac_mat_prod_accept_vectors,
 )
 
-from ...utils import conv as convUtils
-from ...utils.einsum import einsum
-from .basederivatives import BaseDerivatives
+from backpack.utils import conv as convUtils
+from backpack.utils.einsum import einsum, eingroup
+from backpack.core.derivatives.basederivatives import BaseDerivatives
 
 
 class AvgPool2DDerivatives(BaseDerivatives):
@@ -53,73 +53,22 @@ class AvgPool2DDerivatives(BaseDerivatives):
             + "like count_include_pad=False"
         )
 
-    # Jacobian-matrix product
     @jac_mat_prod_accept_vectors
     def jac_mat_prod(self, module, g_inp, g_out, mat):
         self.check_exotic_parameters(module)
 
-        new_convention = True
-
-        convUtils.check_sizes_input_jac(mat, module, new_convention=new_convention)
-        mat_as_pool = self.__reshape_for_conv(
-            mat, module, new_convention=new_convention
-        )
+        mat_as_pool = self.__reshape_for_conv(mat, module)
         jmp_as_pool = self.__apply_jacobian_of(module, mat_as_pool)
-        self.__check_jmp_out_as_pool(
-            mat, jmp_as_pool, module, new_convention=new_convention
-        )
+        self.__check_jmp_out_as_pool(mat, jmp_as_pool, module)
 
-        return self.__reshape_for_matmul(
-            jmp_as_pool, module, new_convention=new_convention
-        )
+        return self.__reshape_for_matmul(jmp_as_pool, module)
 
-    def __check_jmp_out_as_pool(self, mat, jmp_as_pool, module, new_convention=False):
-        batch, channels, out_x, out_y = module.output_shape
-        if new_convention:
-            num_classes = mat.size(0)
-        else:
-            num_classes = mat.size(2)
-
-        assert jmp_as_pool.size(0) == num_classes * batch * channels
-        assert jmp_as_pool.size(1) == 1
-        assert jmp_as_pool.size(2) == out_x
-        assert jmp_as_pool.size(3) == out_y
-
-    def __reshape_for_conv(self, mat, module, new_convention=False):
+    def __reshape_for_conv(self, mat, module):
         """Create fake single-channel images, grouping batch,
         class and channel dimension."""
-        batch, in_channels, in_x, in_y = module.input0.size()
-
-        if new_convention:
-            num_columns = mat.size(0)
-            mat_used = mat
-        else:
-            num_columns = mat.size(-1)
-            mat_used = einsum("bic->bci", mat)
-
-        # 'fake' image for convolution
-        # (batch * class * channel, 1,  out_x, out_y)
-        return mat_used.contiguous().view(
-            batch * num_columns * in_channels, 1, in_x, in_y
-        )
-
-    def __reshape_for_matmul(self, mat, module, new_convention=False):
-        """Ungroup dimensions after application of Jacobian."""
-        batch, channels, out_x, out_y = module.output_shape
-        features = channels * out_x * out_y
-
-        # mat is of shape (batch * class * channel, 1, out_x, out_y)
-        if new_convention:
-            shape = (-1, batch, channels, out_x, out_y)
-        else:
-            shape = (batch, -1, features)
-        mat_view = mat.view(shape)
-
-        if new_convention:
-            return mat_view.contiguous()
-        else:
-            # move class dimension to last
-            return einsum("bci->bic", mat_view).contiguous()
+        result = eingroup("v,n,c,w,h->vnc,w,h", mat)
+        C_axis = 1
+        return result.unsqueeze(C_axis)
 
     def __apply_jacobian_of(self, module, mat):
         conv2d = Conv2d(
@@ -137,7 +86,17 @@ class AvgPool2DDerivatives(BaseDerivatives):
 
         return conv2d(mat)
 
-    # Transpose Jacobian-matrix product
+    def __check_jmp_out_as_pool(self, mat, jmp_as_pool, module):
+        V = mat.size(0)
+        N, C_out, H_out, W_out = module.output_shape
+        assert jmp_as_pool.shape == (V * N * C_out, 1, H_out, W_out)
+
+    def __reshape_for_matmul(self, mat, module):
+        """Ungroup dimensions after application of Jacobian."""
+        V = -1
+        shape = (V, *module.output_shape)
+        return mat.view(shape)
+
     @jac_t_mat_prod_accept_vectors
     def jac_t_mat_prod(self, module, g_inp, g_out, mat):
         new_convention = True

@@ -19,7 +19,7 @@ def get_weight_gradient_factors(input, grad_out, module):
     return X, dE_dY
 
 
-def separate_channels_and_pixels(module, tensor, new_convention=False):
+def separate_channels_and_pixels(module, tensor, new_convention=True):
     """Reshape (batch, out_features, classes)
     into       (batch, out_channels, pixels, classes).
     """
@@ -35,7 +35,7 @@ def separate_channels_and_pixels(module, tensor, new_convention=False):
         return tensor.contiguous().view(batch, channels, pixels, classes)
 
 
-def check_sizes_input_jac_t(mat, module, new_convention=False):
+def check_sizes_input_jac_t(mat, module, new_convention=True):
     batch, out_channels, out_x, out_y = module.output_shape
     if new_convention:
         assert tuple(mat.size())[1:] == (batch, out_channels, out_x, out_y)
