@@ -17,6 +17,7 @@ class CrossEntropyLossDerivatives(BaseDerivatives):
     def get_module(self):
         return CrossEntropyLoss
 
+    # TODO: Convert [N, C, V] to  new convention [V, N, C]
     @hessian_old_shape_convention
     def sqrt_hessian(self, module, g_inp, g_out):
         probs = self.get_probs(module)
@@ -26,10 +27,12 @@ class CrossEntropyLossDerivatives(BaseDerivatives):
         sqrt_H = einsum("ni,nij->nij", tau, Id_tautau)
 
         if module.reduction == "mean":
-            sqrt_H /= sqrt(module.input0.shape[0])
+            N = module.input0.shape[0]
+            sqrt_H /= sqrt(N)
 
         return sqrt_H
 
+    # TODO: Convert [N, C, V] to  new convention [V, N, C]
     @hessian_old_shape_convention
     def sqrt_hessian_sampled(self, module, g_inp, g_out):
         M = self.MC_SAMPLES
@@ -44,7 +47,8 @@ class CrossEntropyLossDerivatives(BaseDerivatives):
         sqrt_mc_h = (probs_unsqueezed - classes) / sqrt(M)
 
         if module.reduction == "mean":
-            sqrt_mc_h /= sqrt(module.input0.shape[0])
+            N = module.input0.shape[0]
+            sqrt_mc_h /= sqrt(N)
 
         return sqrt_mc_h
 
@@ -53,7 +57,8 @@ class CrossEntropyLossDerivatives(BaseDerivatives):
         sum_H = diag(probs.sum(0)) - einsum("bi,bj->ij", (probs, probs))
 
         if module.reduction == "mean":
-            sum_H /= module.input0.shape[0]
+            N = module.input0.shape[0]
+            sum_H /= N
 
         return sum_H
 
@@ -63,18 +68,13 @@ class CrossEntropyLossDerivatives(BaseDerivatives):
         probs = self.get_probs(module)
 
         def hmp(mat):
-            new_convention = True
-            if new_convention:
-                Hmat = einsum("bi,cbi->cbi", (probs, mat)) - einsum(
-                    "bi,bj,cbj->cbi", (probs, probs, mat)
-                )
-            else:
-                Hmat = einsum("bi,bic->bic", (probs, mat)) - einsum(
-                    "bi,bj,bjc->bic", (probs, probs, mat)
-                )
+            Hmat = einsum("bi,cbi->cbi", (probs, mat)) - einsum(
+                "bi,bj,cbj->cbi", (probs, probs, mat)
+            )
 
             if module.reduction == "mean":
-                Hmat /= module.input0.shape[0]
+                N = module.input0.shape[0]
+                Hmat /= N
 
             return Hmat
 
