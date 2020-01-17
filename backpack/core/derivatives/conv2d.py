@@ -61,12 +61,7 @@ class Conv2DDerivatives(BaseDerivatives):
             dilation=module.dilation,
             groups=module.groups,
         )
-        return self.__view_as_output(jmp_as_conv, module)
-
-    def __view_as_output(self, bconv, module):
-        V = -1
-        shape = (V, *module.output_shape)
-        return bconv.view(shape)
+        return self.view_like_output(jmp_as_conv, module)
 
     @jac_t_mat_prod_accept_vectors
     def jac_t_mat_prod(self, module, g_inp, g_out, mat):
@@ -79,12 +74,7 @@ class Conv2DDerivatives(BaseDerivatives):
             dilation=module.dilation,
             groups=module.groups,
         )
-        return self.__reshape_for_matmul_t(jmp_as_conv, module)
-
-    def __reshape_for_matmul_t(self, bconv, module):
-        V = -1
-        shape = (V, *module.input0_shape)
-        return bconv.view(shape)
+        return self.view_like_input(jmp_as_conv, module)
 
     # TODO: Improve performance
     @bias_jac_mat_prod_accept_vectors

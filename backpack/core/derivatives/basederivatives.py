@@ -97,3 +97,21 @@ class BaseDerivatives:
 
     def get_output(self, module):
         return module.output
+
+    @staticmethod
+    def _view_like(mat, like):
+        """View as like with trailing and additional 0th dimension.
+
+        If like is [N, C, H, ...], returns shape [-1, N, C, H, ...]
+        """
+        V = -1
+        shape = (V, *like.shape)
+        return mat.view(shape)
+
+    @classmethod
+    def view_like_input(cls, mat, module):
+        return cls._view_like(mat, module.input0)
+
+    @classmethod
+    def view_like_output(cls, mat, module):
+        return cls._view_like(mat, module.output)

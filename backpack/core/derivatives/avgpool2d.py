@@ -60,7 +60,8 @@ class AvgPool2DDerivatives(BaseDerivatives):
         jmp_as_pool = self.__apply_jacobian_of(module, mat_as_pool)
         self.__check_jmp_out_as_pool(mat, jmp_as_pool, module)
 
-        return self.__view_as_output(jmp_as_pool, module)
+        return self.view_like_output(jmp_as_pool, module)
+        # return self.__view_as_output(jmp_as_pool, module)
 
     def __make_single_channel(self, mat, module):
         """Create fake single-channel images, grouping batch,
@@ -90,11 +91,11 @@ class AvgPool2DDerivatives(BaseDerivatives):
         N, C_out, H_out, W_out = module.output_shape
         assert jmp_as_pool.shape == (V * N * C_out, 1, H_out, W_out)
 
-    def __view_as_output(self, mat, module):
-        """Ungroup dimensions after application of Jacobian."""
-        V = -1
-        shape = (V, *module.output_shape)
-        return mat.view(shape)
+    # def __view_as_output(self, mat, module):
+    #     """Ungroup dimensions after application of Jacobian."""
+    #     V = -1
+    #     shape = (V, *module.output_shape)
+    #     return mat.view(shape)
 
     @jac_t_mat_prod_accept_vectors
     def jac_t_mat_prod(self, module, g_inp, g_out, mat):
@@ -104,7 +105,8 @@ class AvgPool2DDerivatives(BaseDerivatives):
         jmp_as_pool = self.__apply_jacobian_t_of(module, mat_as_pool)
         self.__check_jmp_in_as_pool(mat, jmp_as_pool, module)
 
-        return self.__view_as_input(jmp_as_pool, module)
+        return self.view_like_input(jmp_as_pool, module)
+        # return self.__view_as_input(jmp_as_pool, module)
 
     def __apply_jacobian_t_of(self, module, mat):
         C_for_conv_t = 1
@@ -133,8 +135,8 @@ class AvgPool2DDerivatives(BaseDerivatives):
         N, C_in, H_in, W_in = module.input0_shape
         assert jmp_as_pool.shape == (V * N * C_in, 1, H_in, W_in)
 
-    def __view_as_input(self, mat, module):
-        """Ungroup dimensions after application of Jacobian."""
-        V = -1
-        shape = (V, *module.input0_shape)
-        return mat.view(shape)
+    # def __view_as_input(self, mat, module):
+    #     """Ungroup dimensions after application of Jacobian."""
+    #     V = -1
+    #     shape = (V, *module.input0_shape)
+    #     return mat.view(shape)
