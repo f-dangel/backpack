@@ -5,8 +5,8 @@ from torch import sqrt as torchsqrt
 from torch.nn import CrossEntropyLoss
 from torch.nn.functional import one_hot
 
-from ...utils.einsum import einsum
-from .basederivatives import BaseDerivatives
+from backpack.utils.einsum import einsum
+from backpack.core.derivatives.basederivatives import BaseDerivatives
 from backpack.core.derivatives.utils import (
     hessian_old_shape_convention,
     hessian_matrix_product_accept_vectors,

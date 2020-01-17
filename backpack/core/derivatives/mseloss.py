@@ -2,7 +2,7 @@ from warnings import warn
 from math import sqrt
 from torch import diag_embed, ones_like, diag, ones
 from torch.nn import MSELoss
-from .basederivatives import BaseDerivatives
+from backpack.core.derivatives.basederivatives import BaseDerivatives
 
 from backpack.core.derivatives.utils import (
     hessian_old_shape_convention,

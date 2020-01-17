@@ -7,8 +7,8 @@ from backpack.core.derivatives.utils import (
     jac_mat_prod_accept_vectors,
 )
 
-from ...utils import conv as convUtils
-from .basederivatives import BaseDerivatives
+from backpack.utils import conv as convUtils
+from backpack.core.derivatives.basederivatives import BaseDerivatives
 
 
 class MaxPool2DDerivatives(BaseDerivatives):

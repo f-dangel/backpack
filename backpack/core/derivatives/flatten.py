@@ -5,7 +5,7 @@ from backpack.core.derivatives.utils import (
     jac_mat_prod_accept_vectors,
 )
 
-from .basederivatives import BaseDerivatives
+from backpack.core.derivatives.basederivatives import BaseDerivatives
 
 
 class FlattenDerivatives(BaseDerivatives):

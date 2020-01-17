@@ -7,8 +7,8 @@ from backpack.core.derivatives.utils import (
     jac_mat_prod_accept_vectors,
 )
 
-from ...utils.einsum import einsum
-from .basederivatives import BaseDerivatives
+from backpack.utils.einsum import einsum
+from backpack.core.derivatives.basederivatives import BaseDerivatives
 
 
 class ZeroPad2dDerivatives(BaseDerivatives):
