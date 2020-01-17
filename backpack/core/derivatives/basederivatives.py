@@ -1,3 +1,6 @@
+from backpack.utils.einsum import try_view
+
+
 class BaseDerivatives:
     """First- and second-order partial derivatives of a module.
 
@@ -106,7 +109,7 @@ class BaseDerivatives:
         """
         V = -1
         shape = (V, *like.shape)
-        return mat.view(shape)
+        return try_view(mat, shape)
 
     @classmethod
     def view_like_input(cls, mat, module):
