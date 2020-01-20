@@ -1,6 +1,9 @@
 from backpack.utils.einsum import try_view
 
-from backpack.core.derivatives.utils import jac_t_mat_prod_accept_vectors
+from backpack.core.derivatives.utils import (
+    jac_t_mat_prod_accept_vectors,
+    jac_mat_prod_accept_vectors,
+)
 
 
 class BaseDerivatives:
@@ -33,6 +36,7 @@ class BaseDerivatives:
 
     MC_SAMPLES = 1
 
+    @jac_mat_prod_accept_vectors
     def jac_mat_prod(self, module, g_inp, g_out, mat):
         """Apply Jacobian of the output w.r.t. input to a matrix.
 
@@ -51,6 +55,9 @@ class BaseDerivatives:
             Transposed-Jacobian-matrix product.
             Has shape [V, N, C_out, H_out, ...].
         """
+        return self._jac_mat_prod(module, g_inp, g_out, mat)
+
+    def _jac_mat_prod(self, module, g_inp, g_out, mat):
         raise NotImplementedError
 
     @jac_t_mat_prod_accept_vectors

@@ -1,6 +1,5 @@
 from torch.nn import Flatten
 
-from backpack.core.derivatives.utils import jac_mat_prod_accept_vectors
 
 from backpack.core.derivatives.basederivatives import BaseDerivatives
 
@@ -18,6 +17,5 @@ class FlattenDerivatives(BaseDerivatives):
     def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
         return self.view_like_input(mat, module)
 
-    @jac_mat_prod_accept_vectors
-    def jac_mat_prod(self, module, g_inp, g_out, mat):
+    def _jac_mat_prod(self, module, g_inp, g_out, mat):
         return self.view_like_output(mat, module)

@@ -4,7 +4,6 @@ convolution over single channels with a constant kernel."""
 import torch.nn
 from torch.nn import AvgPool2d, Conv2d, ConvTranspose2d
 
-from backpack.core.derivatives.utils import jac_mat_prod_accept_vectors
 
 from backpack.utils.einsum import einsum, eingroup
 from backpack.core.derivatives.basederivatives import BaseDerivatives
@@ -49,8 +48,7 @@ class AvgPool2DDerivatives(BaseDerivatives):
             + "like count_include_pad=False"
         )
 
-    @jac_mat_prod_accept_vectors
-    def jac_mat_prod(self, module, g_inp, g_out, mat):
+    def _jac_mat_prod(self, module, g_inp, g_out, mat):
         self.check_exotic_parameters(module)
 
         mat_as_pool = self.__make_single_channel(mat, module)

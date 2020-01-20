@@ -5,7 +5,6 @@ from backpack.core.derivatives.utils import (
     bias_jac_t_mat_prod_accept_vectors,
     bias_jac_mat_prod_accept_vectors,
     weight_jac_mat_prod_accept_vectors,
-    jac_mat_prod_accept_vectors,
 )
 
 from backpack.utils.einsum import einsum
@@ -22,8 +21,7 @@ class BatchNorm1dDerivatives(BaseParameterDerivatives):
     def hessian_is_diagonal(self):
         return False
 
-    @jac_mat_prod_accept_vectors
-    def jac_mat_prod(self, module, g_inp, g_out, mat):
+    def _jac_mat_prod(self, module, g_inp, g_out, mat):
         return self.jac_t_mat_prod(module, g_inp, g_out, mat)
 
     def _jac_t_mat_prod(self, module, g_inp, g_out, mat):

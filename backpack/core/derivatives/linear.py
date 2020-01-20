@@ -5,7 +5,6 @@ from backpack.core.derivatives.utils import (
     weight_jac_mat_prod_accept_vectors,
     bias_jac_t_mat_prod_accept_vectors,
     bias_jac_mat_prod_accept_vectors,
-    jac_mat_prod_accept_vectors,
 )
 
 from backpack.utils.einsum import einsum
@@ -34,8 +33,7 @@ class LinearDerivatives(BaseParameterDerivatives):
         d_input = module.weight.data
         return einsum("oi,vno->vni", (d_input, mat))
 
-    @jac_mat_prod_accept_vectors
-    def jac_mat_prod(self, module, g_inp, g_out, mat):
+    def _jac_mat_prod(self, module, g_inp, g_out, mat):
         """Apply Jacobian of the output w.r.t. the input."""
         d_input = module.weight.data
         return einsum("oi,vni->vno", (d_input, mat))
