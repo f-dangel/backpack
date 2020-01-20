@@ -1,15 +1,11 @@
-from backpack.core.derivatives.utils import (
-    jac_t_mat_prod_accept_vectors,
-    jac_mat_prod_accept_vectors,
-)
+from backpack.core.derivatives.utils import jac_mat_prod_accept_vectors
 
 from backpack.utils.einsum import einsum
 from backpack.core.derivatives.basederivatives import BaseDerivatives
 
 
 class ElementwiseDerivatives(BaseDerivatives):
-    @jac_t_mat_prod_accept_vectors
-    def jac_t_mat_prod(self, module, g_inp, g_out, mat):
+    def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
         df_elementwise = self.df(module, g_inp, g_out)
         return einsum("...,v...->v...", (df_elementwise, mat))
 

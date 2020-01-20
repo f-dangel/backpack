@@ -1,9 +1,6 @@
 from torch.nn import ZeroPad2d, functional
 
-from backpack.core.derivatives.utils import (
-    jac_t_mat_prod_accept_vectors,
-    jac_mat_prod_accept_vectors,
-)
+from backpack.core.derivatives.utils import jac_mat_prod_accept_vectors
 
 from backpack.utils.einsum import eingroup
 from backpack.core.derivatives.basederivatives import BaseDerivatives
@@ -31,8 +28,7 @@ class ZeroPad2dDerivatives(BaseDerivatives):
 
         return result.view(in_features, in_features)
 
-    @jac_t_mat_prod_accept_vectors
-    def jac_t_mat_prod(self, module, g_inp, g_out, mat):
+    def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
         (W_top, W_bottom), (H_bottom, H_top) = self.__unpad_indices(module)
         return mat[:, :, :, W_top:W_bottom, H_bottom:H_top]
 

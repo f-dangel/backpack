@@ -6,7 +6,6 @@ from backpack.core.derivatives.utils import (
     weight_jac_mat_prod_accept_vectors,
     bias_jac_t_mat_prod_accept_vectors,
     bias_jac_mat_prod_accept_vectors,
-    jac_t_mat_prod_accept_vectors,
     jac_mat_prod_accept_vectors,
 )
 
@@ -63,8 +62,7 @@ class Conv2DDerivatives(BaseParameterDerivatives):
         )
         return self.view_like_output(jmp_as_conv, module)
 
-    @jac_t_mat_prod_accept_vectors
-    def jac_t_mat_prod(self, module, g_inp, g_out, mat):
+    def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
         mat_as_conv = eingroup("v,n,c,h,w->vn,c,h,w", mat)
         jmp_as_conv = conv_transpose2d(
             mat_as_conv,

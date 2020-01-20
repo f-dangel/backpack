@@ -3,7 +3,6 @@ from torch.nn import BatchNorm1d
 from backpack.core.derivatives.utils import (
     weight_jac_t_mat_prod_accept_vectors,
     bias_jac_t_mat_prod_accept_vectors,
-    jac_t_mat_prod_accept_vectors,
     bias_jac_mat_prod_accept_vectors,
     weight_jac_mat_prod_accept_vectors,
     jac_mat_prod_accept_vectors,
@@ -27,8 +26,7 @@ class BatchNorm1dDerivatives(BaseParameterDerivatives):
     def jac_mat_prod(self, module, g_inp, g_out, mat):
         return self.jac_t_mat_prod(module, g_inp, g_out, mat)
 
-    @jac_t_mat_prod_accept_vectors
-    def jac_t_mat_prod(self, module, g_inp, g_out, mat):
+    def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
         """
         Note:
         -----

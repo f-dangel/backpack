@@ -5,7 +5,6 @@ from backpack.core.derivatives.utils import (
     weight_jac_mat_prod_accept_vectors,
     bias_jac_t_mat_prod_accept_vectors,
     bias_jac_mat_prod_accept_vectors,
-    jac_t_mat_prod_accept_vectors,
     jac_mat_prod_accept_vectors,
 )
 
@@ -30,8 +29,7 @@ class LinearDerivatives(BaseParameterDerivatives):
     def hessian_is_zero(self):
         return True
 
-    @jac_t_mat_prod_accept_vectors
-    def jac_t_mat_prod(self, module, g_inp, g_out, mat):
+    def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
         """Apply transposed Jacobian of the output w.r.t. the input."""
         d_input = module.weight.data
         return einsum("oi,vno->vni", (d_input, mat))

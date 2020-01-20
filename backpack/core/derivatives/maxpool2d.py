@@ -2,10 +2,7 @@ from torch import zeros
 from torch.nn import MaxPool2d
 from torch.nn.functional import max_pool2d
 
-from backpack.core.derivatives.utils import (
-    jac_t_mat_prod_accept_vectors,
-    jac_mat_prod_accept_vectors,
-)
+from backpack.core.derivatives.utils import jac_mat_prod_accept_vectors
 
 from backpack.core.derivatives.basederivatives import BaseDerivatives
 
@@ -76,8 +73,7 @@ class MaxPool2DDerivatives(BaseDerivatives):
             .expand(V, -1, -1, -1)
         )
 
-    @jac_t_mat_prod_accept_vectors
-    def jac_t_mat_prod(self, module, g_inp, g_out, mat):
+    def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
         mat_as_pool = eingroup("v,n,c,h,w->v,n,c,hw", mat)
         jmp_as_pool = self.__apply_jacobian_t_of(module, mat_as_pool)
         return self.view_like_input(jmp_as_pool, module)

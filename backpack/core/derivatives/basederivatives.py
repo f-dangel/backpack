@@ -1,5 +1,7 @@
 from backpack.utils.einsum import try_view
 
+from backpack.core.derivatives.utils import jac_t_mat_prod_accept_vectors
+
 
 class BaseDerivatives:
     """First- and second-order partial derivatives of a module.
@@ -51,6 +53,7 @@ class BaseDerivatives:
         """
         raise NotImplementedError
 
+    @jac_t_mat_prod_accept_vectors
     def jac_t_mat_prod(self, module, g_inp, g_out, mat):
         """Apply transposed Jacobian of module output w.r.t. input to a matrix.
 
@@ -70,7 +73,9 @@ class BaseDerivatives:
             Jacobian-matrix product.
             Has shape [V, N, C_in, H_in, ...].
         """
+        return self._jac_t_mat_prod(module, g_inp, g_out, mat)
 
+    def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
         raise NotImplementedError
 
     def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):

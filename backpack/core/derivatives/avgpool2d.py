@@ -4,10 +4,7 @@ convolution over single channels with a constant kernel."""
 import torch.nn
 from torch.nn import AvgPool2d, Conv2d, ConvTranspose2d
 
-from backpack.core.derivatives.utils import (
-    jac_t_mat_prod_accept_vectors,
-    jac_mat_prod_accept_vectors,
-)
+from backpack.core.derivatives.utils import jac_mat_prod_accept_vectors
 
 from backpack.utils.einsum import einsum, eingroup
 from backpack.core.derivatives.basederivatives import BaseDerivatives
@@ -91,14 +88,7 @@ class AvgPool2DDerivatives(BaseDerivatives):
         N, C_out, H_out, W_out = module.output_shape
         assert jmp_as_pool.shape == (V * N * C_out, 1, H_out, W_out)
 
-    # def __view_as_output(self, mat, module):
-    #     """Ungroup dimensions after application of Jacobian."""
-    #     V = -1
-    #     shape = (V, *module.output_shape)
-    #     return mat.view(shape)
-
-    @jac_t_mat_prod_accept_vectors
-    def jac_t_mat_prod(self, module, g_inp, g_out, mat):
+    def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
         self.check_exotic_parameters(module)
 
         mat_as_pool = self.__make_single_channel(mat, module)
@@ -106,7 +96,6 @@ class AvgPool2DDerivatives(BaseDerivatives):
         self.__check_jmp_in_as_pool(mat, jmp_as_pool, module)
 
         return self.view_like_input(jmp_as_pool, module)
-        # return self.__view_as_input(jmp_as_pool, module)
 
     def __apply_jacobian_t_of(self, module, mat):
         C_for_conv_t = 1
@@ -134,9 +123,3 @@ class AvgPool2DDerivatives(BaseDerivatives):
         V = mat.size(0)
         N, C_in, H_in, W_in = module.input0_shape
         assert jmp_as_pool.shape == (V * N * C_in, 1, H_in, W_in)
-
-    # def __view_as_input(self, mat, module):
-    #     """Ungroup dimensions after application of Jacobian."""
-    #     V = -1
-    #     shape = (V, *module.input0_shape)
-    #     return mat.view(shape)
