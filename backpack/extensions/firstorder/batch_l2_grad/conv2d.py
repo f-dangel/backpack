@@ -8,10 +8,11 @@ class BatchL2Conv2d(FirstOrderModuleExtension):
         super().__init__(params=["bias", "weight"])
 
     def bias(self, ext, module, g_inp, g_out, backproped):
-        return (g_out[0].sum(3).sum(2) ** 2).sum(1)
+        C_axis = 1
+        return (einsum("nchw->nc", g_out[0]) ** 2).sum(C_axis)
 
     def weight(self, ext, module, g_inp, g_out, backproped):
         X, dE_dY = convUtils.get_weight_gradient_factors(
             module.input0, g_out[0], module
         )
-        return einsum("bml,bkl,bmi,bki->b", (dE_dY, X, dE_dY, X))
+        return einsum("nml,nkl,nmi,nki->n", (dE_dY, X, dE_dY, X))
