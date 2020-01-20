@@ -7,7 +7,8 @@ class SGSLinear(FirstOrderModuleExtension):
         super().__init__(params=["bias", "weight"])
 
     def bias(self, ext, module, g_inp, g_out, backproped):
-        return (g_out[0] ** 2).sum(0)
+        N_axis = 0
+        return (g_out[0] ** 2).sum(N_axis)
 
     def weight(self, ext, module, g_inp, g_out, backproped):
-        return einsum("bi,bj->ij", (g_out[0] ** 2, module.input0 ** 2))
+        return einsum("ni,nj->ij", (g_out[0] ** 2, module.input0 ** 2))

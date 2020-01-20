@@ -8,11 +8,13 @@ class SGSConv2d(FirstOrderModuleExtension):
         super().__init__(params=["bias", "weight"])
 
     def bias(self, ext, module, g_inp, g_out, backproped):
-        return (g_out[0].sum(3).sum(2) ** 2).sum(0)
+        N_axis = 0
+        return (einsum("nchw->nc", g_out[0]) ** 2).sum(N_axis)
 
     def weight(self, ext, module, g_inp, g_out, backproped):
+        N_axis = 0
         X, dE_dY = convUtils.get_weight_gradient_factors(
             module.input0, g_out[0], module
         )
-        d1 = einsum("bml,bkl->bmk", (dE_dY, X))
-        return (d1 ** 2).sum(0).view_as(module.weight)
+        d1 = einsum("nml,nkl->nmk", (dE_dY, X))
+        return (d1 ** 2).sum(N_axis).view_as(module.weight)
