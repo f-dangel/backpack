@@ -33,3 +33,12 @@ def extract_weight_diagonal(module, input, grad_output):
     AX = einsum("nkl,vnml->vnkm", (input, grad_output_viewed))
     weight_diagonal = (AX ** 2).sum([0, 1]).transpose(0, 1)
     return weight_diagonal.view_as(module.weight)
+
+
+def extract_bias_diagonal(module, sqrt):
+    """
+    `sqrt` must be the backpropagated quantity for DiagH or DiagGGN(MC)
+    """
+    V_axis, N_axis = 0, 1
+    bias_diagonal = (einsum("vnchw->vnc", sqrt) ** 2).sum([V_axis, N_axis])
+    return bias_diagonal
