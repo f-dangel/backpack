@@ -1,16 +1,18 @@
 from backpack.utils.einsum import try_view
 
-from backpack.core.derivatives.utils import (
-    weight_jac_mat_prod_accept_vectors,
-    weight_jac_t_mat_prod_accept_vectors,
-    bias_jac_t_mat_prod_accept_vectors,
-    bias_jac_mat_prod_accept_vectors,
-)
 from backpack.core.derivatives.shape_check import (
     jac_t_mat_prod_accept_vectors,
     jac_t_mat_prod_check_shapes,
     jac_mat_prod_accept_vectors,
     jac_mat_prod_check_shapes,
+    bias_jac_t_mat_prod_accept_vectors,
+    bias_jac_t_mat_prod_check_shapes,
+    bias_jac_mat_prod_accept_vectors,
+    bias_jac_mat_prod_check_shapes,
+    weight_jac_t_mat_prod_accept_vectors,
+    weight_jac_t_mat_prod_check_shapes,
+    weight_jac_mat_prod_accept_vectors,
+    weight_jac_mat_prod_check_shapes,
 )
 
 
@@ -160,6 +162,7 @@ class BaseParameterDerivatives(BaseDerivatives):
     """
 
     @bias_jac_mat_prod_accept_vectors
+    @bias_jac_mat_prod_check_shapes
     def bias_jac_mat_prod(self, module, g_inp, g_out, mat):
         """Apply Jacobian of the output w.r.t. bias to a matrix.
 
@@ -182,6 +185,7 @@ class BaseParameterDerivatives(BaseDerivatives):
         raise NotImplementedError
 
     @bias_jac_t_mat_prod_accept_vectors
+    @bias_jac_t_mat_prod_check_shapes
     def bias_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
         """Apply transposed Jacobian of the output w.r.t. bias to a matrix.
 
@@ -207,6 +211,7 @@ class BaseParameterDerivatives(BaseDerivatives):
         raise NotImplementedError
 
     @weight_jac_mat_prod_accept_vectors
+    @weight_jac_mat_prod_check_shapes
     def weight_jac_mat_prod(self, module, g_inp, g_out, mat):
         """Apply Jacobian of the output w.r.t. weight to a matrix.
 
@@ -229,6 +234,7 @@ class BaseParameterDerivatives(BaseDerivatives):
         raise NotImplementedError
 
     @weight_jac_t_mat_prod_accept_vectors
+    @weight_jac_t_mat_prod_check_shapes
     def weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
         """Apply transposed Jacobian of the output w.r.t. weight to a matrix.
 

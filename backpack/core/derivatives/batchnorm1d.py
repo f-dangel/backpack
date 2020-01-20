@@ -1,4 +1,5 @@
 from torch.nn import BatchNorm1d
+from warnings import warn
 
 
 from backpack.utils.einsum import einsum
@@ -16,7 +17,7 @@ class BatchNorm1dDerivatives(BaseParameterDerivatives):
         return False
 
     def _jac_mat_prod(self, module, g_inp, g_out, mat):
-        return self.jac_t_mat_prod(module, g_inp, g_out, mat)
+        return self._jac_t_mat_prod(module, g_inp, g_out, mat)
 
     def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
         """
@@ -58,7 +59,12 @@ class BatchNorm1dDerivatives(BaseParameterDerivatives):
         x_hat, _ = self.get_normalized_input_and_var(module)
         return einsum("ni,vi->vni", (x_hat, mat))
 
-    def _weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
+    def _weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch):
+        if not sum_batch:
+            warn(
+                "BatchNorm batch summation disabled."
+                "This may not compute meaningful quantities"
+            )
         x_hat, _ = self.get_normalized_input_and_var(module)
         equation = "vni,ni->v{}i".format("" if sum_batch is True else "n")
         operands = [mat, x_hat]
@@ -69,8 +75,12 @@ class BatchNorm1dDerivatives(BaseParameterDerivatives):
         return mat.unsqueeze(1).repeat(1, N, 1)
 
     def _bias_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
-        if sum_batch:
+        if not sum_batch:
+            warn(
+                "BatchNorm batch summation disabled."
+                "This may not compute meaningful quantities"
+            )
+            return mat
+        else:
             N_axis = 1
             return mat.sum(N_axis)
-        else:
-            return mat
