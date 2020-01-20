@@ -1,12 +1,16 @@
 from backpack.utils.einsum import try_view
 
 from backpack.core.derivatives.utils import (
-    jac_t_mat_prod_accept_vectors,
-    jac_mat_prod_accept_vectors,
     weight_jac_mat_prod_accept_vectors,
     weight_jac_t_mat_prod_accept_vectors,
     bias_jac_t_mat_prod_accept_vectors,
     bias_jac_mat_prod_accept_vectors,
+)
+from backpack.core.derivatives.shape_check import (
+    jac_t_mat_prod_accept_vectors,
+    jac_t_mat_prod_check_shapes,
+    jac_mat_prod_accept_vectors,
+    jac_mat_prod_check_shapes,
 )
 
 
@@ -41,6 +45,7 @@ class BaseDerivatives:
     MC_SAMPLES = 1
 
     @jac_mat_prod_accept_vectors
+    @jac_mat_prod_check_shapes
     def jac_mat_prod(self, module, g_inp, g_out, mat):
         """Apply Jacobian of the output w.r.t. input to a matrix.
 
@@ -66,6 +71,7 @@ class BaseDerivatives:
         raise NotImplementedError
 
     @jac_t_mat_prod_accept_vectors
+    @jac_t_mat_prod_check_shapes
     def jac_t_mat_prod(self, module, g_inp, g_out, mat):
         """Apply transposed Jacobian of module output w.r.t. input to a matrix.
 

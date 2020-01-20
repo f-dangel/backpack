@@ -299,24 +299,6 @@ def bias_jac_mat_prod_accept_vectors(jac_mat_prod):
     return param_jac_mat_prod_accept_vectors(jac_mat_prod, "bias")
 
 
-def jac_t_mat_prod_accept_vectors(jac_t_mat_prod):
-    @functools.wraps(jac_t_mat_prod)
-    def wrapped_jac_t_mat_prod(self, module, g_inp, g_out, mat, **kwargs):
-
-        is_vec = check_like_output_and_is_vec(module, mat)
-        mat_used = mat if not is_vec else add_V_dim_new_convention(mat)
-
-        result = jac_t_mat_prod(self, module, g_inp, g_out, mat_used, **kwargs)
-
-        check_like_input_and_is_vec(module, result)
-
-        result = result if not is_vec else remove_V_dim_new_convention(result)
-
-        return result
-
-    return wrapped_jac_t_mat_prod
-
-
 def jac_mat_prod_accept_vectors(jac_mat_prod):
     @functools.wraps(jac_mat_prod)
     def wrapped_jac_mat_prod(self, module, g_inp, g_out, mat, **kwargs):
