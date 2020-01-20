@@ -73,6 +73,13 @@ class Curvature:
         return cls.REQUIRE_RESIDUAL[curv_type]
 
     @classmethod
+    def is_pch(cls, curv_type):
+        """Is `curv_type` one of the PCHs proposed by Chen et al."""
+        cls.__check_exists(curv_type)
+        PCH = [cls.PCH_ABS, cls.PCH_CLIP]
+        return curv_type in PCH
+
+    @classmethod
     def modify_residual(cls, residual, curv_type):
         # None if zero or curvature neglects 2nd-order module effects
         if residual is None:

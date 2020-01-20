@@ -79,55 +79,6 @@ def hessian_matrix_product_accept_vectors(hessian_matrix_product):
     return wrapped_hessian_matrix_product
 
 
-def CMP_in_accept_vectors(module):
-    def wrapped_CMP_in_accept_vectors(CMP_in):
-        @functools.wraps(CMP_in)
-        def wrapped_CMP_in(mat):
-            is_vec = check_like_input_and_is_vec(module, mat)
-            mat_used = mat if not is_vec else add_V_dim_new_convention(mat)
-
-            result = CMP_in(mat_used)
-
-            check_like_input_and_is_vec(module, result)
-
-            result = result if not is_vec else remove_V_dim_new_convention(result)
-
-            return result
-
-        return wrapped_CMP_in
-
-    return wrapped_CMP_in_accept_vectors
-
-
-def param_CMP_accept_vectors(module, name):
-    def wrapped_param_CMP_accept_vectors(param_cmp):
-        @functools.wraps(param_cmp)
-        def wrapped_param_cmp(mat):
-            sum_batch = True
-            is_vec = check_like_param_and_is_vec(module, mat, sum_batch, name)
-
-            mat_used = mat if not is_vec else add_V_dim_new_convention(mat)
-            result = param_cmp(mat_used)
-
-            check_like_param_and_is_vec(module, result, sum_batch, name)
-
-            result = result if not is_vec else remove_V_dim_new_convention(result)
-
-            return result
-
-        return wrapped_param_cmp
-
-    return wrapped_param_CMP_accept_vectors
-
-
-def weight_CMP_accept_vectors(module):
-    return param_CMP_accept_vectors(module, "weight")
-
-
-def bias_CMP_accept_vectors(module):
-    return param_CMP_accept_vectors(module, "bias")
-
-
 def hessian_old_shape_convention(h_func):
     """Use old convention internally, new convention for IO."""
 

@@ -4,6 +4,10 @@ from warnings import warn
 
 from backpack.utils.einsum import einsum
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
+from backpack.core.derivatives.shape_check import (
+    R_mat_prod_accept_vectors,
+    R_mat_prod_check_shapes,
+)
 
 
 class BatchNorm1dDerivatives(BaseParameterDerivatives):
@@ -54,6 +58,21 @@ class BatchNorm1dDerivatives(BaseParameterDerivatives):
         mean = input.mean(dim=0)
         var = input.var(dim=0, unbiased=False)
         return (input - mean) / (var + module.eps).sqrt(), var
+
+    @R_mat_prod_accept_vectors
+    @R_mat_prod_check_shapes
+    def make_residual_mat_prod(self, module, g_inp, g_out):
+        # TODO: Implement R_mat_prod for BatchNorm
+        def R_mat_prod(mat):
+            """Multiply with the residual: mat → [∑_{k} Hz_k(x) 𝛿z_k] mat.
+
+            Second term of the module input Hessian backpropagation equation.
+            """
+            raise NotImplementedError
+
+        # TODO: Enable tests in test/automated_bn_test.py
+        raise NotImplementedError
+        return R_mat_prod
 
     def _weight_jac_mat_prod(self, module, g_inp, g_out, mat):
         x_hat, _ = self.get_normalized_input_and_var(module)
