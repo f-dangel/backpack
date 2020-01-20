@@ -1,8 +1,8 @@
 from backpack.core.derivatives.mseloss import MSELossDerivatives
 from backpack.core.derivatives.crossentropyloss import CrossEntropyLossDerivatives
-from .hbp_options import LossHessianStrategy
+from backpack.extensions.secondorder.hbp.hbp_options import LossHessianStrategy
 from backpack.extensions.curvature import Curvature
-from .hbpbase import HBPBaseModule
+from backpack.extensions.secondorder.hbp.hbpbase import HBPBaseModule
 
 
 class HBPLoss(HBPBaseModule):

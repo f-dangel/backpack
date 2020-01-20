@@ -2,8 +2,11 @@ from backpack.core.derivatives.conv2d import Conv2DDerivatives
 from backpack.utils import conv as convUtils
 from backpack.utils.einsum import einsum
 
-from .hbp_options import BackpropStrategy, ExpectationApproximation
-from .hbpbase import HBPBaseModule
+from backpack.extensions.secondorder.hbp.hbpbase import HBPBaseModule
+from backpack.extensions.secondorder.hbp.hbp_options import (
+    BackpropStrategy,
+    ExpectationApproximation,
+)
 
 
 class HBPConv2d(HBPBaseModule):

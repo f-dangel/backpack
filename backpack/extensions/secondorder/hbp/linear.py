@@ -1,8 +1,11 @@
 from backpack.core.derivatives.linear import LinearDerivatives
 from backpack.utils.einsum import einsum
 
-from .hbp_options import BackpropStrategy, ExpectationApproximation
-from .hbpbase import HBPBaseModule
+from backpack.extensions.secondorder.hbp.hbp_options import (
+    BackpropStrategy,
+    ExpectationApproximation,
+)
+from backpack.extensions.secondorder.hbp.hbpbase import HBPBaseModule
 
 
 class HBPLinear(HBPBaseModule):
@@ -38,11 +41,7 @@ class HBPLinear(HBPBaseModule):
             return [self.__mean_input_outer(module)]
 
     def _factor_from_sqrt(self, backproped):
-        new_convention = True
-        if new_convention:
-            return [einsum("cbi,cbj->ij", (backproped, backproped))]
-        else:
-            return [einsum("bic,bjc->ij", (backproped, backproped))]
+        return [einsum("vni,vnj->ij", (backproped, backproped))]
 
     def bias(self, ext, module, g_inp, g_out, backproped):
         bp_strategy = ext.get_backprop_strategy()
@@ -61,4 +60,4 @@ class HBPLinear(HBPBaseModule):
 
     def __mean_input_outer(self, module):
         N, flat_input = self.derivatives.batch_flat(module.input0)
-        return einsum("bi,bj->ij", (flat_input, flat_input)) / N
+        return einsum("ni,nj->ij", (flat_input, flat_input)) / N
