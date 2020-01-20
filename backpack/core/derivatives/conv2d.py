@@ -205,8 +205,10 @@ class Conv2DDerivatives(BaseDerivatives):
         )
 
         grad_weight = grad_weight.view(
-            num_cols, batch, out_channels * in_channels, k_x, k_y
+            num_cols, batch, -1, grad_weight.shape[2], grad_weight.shape[3]
         )
+        grad_weight = grad_weight.narrow(3, 0, k_x).narrow(4, 0, k_y)
+
         if sum_batch is True:
             grad_weight = grad_weight.sum(1)
             batch = 1
