@@ -29,5 +29,5 @@ class DiagHConv2d(DiagHBaseModule):
 
         for h_sqrt, sign in zip(sqrt_h_outs, sqrt_h_outs_signs):
             h_diag_curr = convUtils.extract_weight_diagonal(module, X, h_sqrt)
-            h_diag.add_(sign * h_diag_curr.view_as(module.weight))
+            h_diag.add_(sign * h_diag_curr)
         return h_diag

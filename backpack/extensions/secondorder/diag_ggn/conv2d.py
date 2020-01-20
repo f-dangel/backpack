@@ -16,7 +16,5 @@ class DiagGGNConv2d(DiagGGNBaseModule):
 
     def weight(self, ext, module, grad_inp, grad_out, backproped):
         X = convUtils.unfold_func(module)(module.input0)
-
         weight_diag = convUtils.extract_weight_diagonal(module, X, backproped)
-
-        return weight_diag.view_as(module.weight)
+        return weight_diag

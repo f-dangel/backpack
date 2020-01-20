@@ -31,4 +31,5 @@ def extract_weight_diagonal(module, input, grad_output):
     """
     grad_output_viewed = separate_channels_and_pixels(module, grad_output)
     AX = einsum("nkl,vnml->vnkm", (input, grad_output_viewed))
-    return (AX ** 2).sum([0, 1]).transpose(0, 1)
+    weight_diagonal = (AX ** 2).sum([0, 1]).transpose(0, 1)
+    return weight_diagonal.view_as(module.weight)
