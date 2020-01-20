@@ -12,10 +12,10 @@ from backpack.core.derivatives.utils import (
 
 from backpack.utils import conv as convUtils
 from backpack.utils.einsum import einsum, eingroup
-from backpack.core.derivatives.basederivatives import BaseDerivatives
+from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 
 
-class Conv2DDerivatives(BaseDerivatives):
+class Conv2DDerivatives(BaseParameterDerivatives):
     def get_module(self):
         return Conv2d
 

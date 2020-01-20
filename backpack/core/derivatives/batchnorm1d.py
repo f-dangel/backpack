@@ -10,10 +10,10 @@ from backpack.core.derivatives.utils import (
 )
 
 from backpack.utils.einsum import einsum
-from backpack.core.derivatives.basederivatives import BaseDerivatives
+from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 
 
-class BatchNorm1dDerivatives(BaseDerivatives):
+class BatchNorm1dDerivatives(BaseParameterDerivatives):
     def get_module(self):
         return BatchNorm1d
 

@@ -119,6 +119,27 @@ class BaseDerivatives:
     def view_like_output(cls, mat, module):
         return cls._view_like(mat, module.output)
 
+
+class BaseParameterDerivatives(BaseDerivatives):
+    """First- and second order partial derivatives of a module with parameters.
+
+    Assumptions (true for `nn.Linear`, `nn.Conv(Transpose)Nd`, `nn.BatchNormNd`):
+    - Parameters are saved as `.weight` and `.bias` fields in a module
+    - The output is linear in the model parameters
+    """
+
+    def bias_jac_mat_prod(self, module, g_inp, g_out, mat):
+        raise NotImplementedError
+
+    def bias_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
+        raise NotImplementedError
+
+    def weight_jac_mat_prod(self, module, g_inp, g_out, mat):
+        raise NotImplementedError
+
+    def weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
+        raise NotImplementedError
+
     @classmethod
     def view_like_weight(cls, mat, module, batch_dim=False):
         V, N = -1, module.input0.shape[0]

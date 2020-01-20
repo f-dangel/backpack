@@ -10,10 +10,10 @@ from backpack.core.derivatives.utils import (
 )
 
 from backpack.utils.einsum import einsum
-from backpack.core.derivatives.basederivatives import BaseDerivatives
+from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 
 
-class LinearDerivatives(BaseDerivatives):
+class LinearDerivatives(BaseParameterDerivatives):
     """Partial derivatives for the Linear layer.
 
     Index conventions:
