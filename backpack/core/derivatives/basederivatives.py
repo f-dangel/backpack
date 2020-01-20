@@ -3,6 +3,10 @@ from backpack.utils.einsum import try_view
 from backpack.core.derivatives.utils import (
     jac_t_mat_prod_accept_vectors,
     jac_mat_prod_accept_vectors,
+    weight_jac_mat_prod_accept_vectors,
+    weight_jac_t_mat_prod_accept_vectors,
+    bias_jac_t_mat_prod_accept_vectors,
+    bias_jac_mat_prod_accept_vectors,
 )
 
 
@@ -46,18 +50,19 @@ class BaseDerivatives:
         Parameters:
         -----------
         mat: torch.Tensor
-            Matrix the transposed Jacobian will be applied to.
+            Matrix the Jacobian will be applied to.
             Must have shape [V, N, C_in, H_in, ...].
 
         Returns:
         --------
         result: torch.Tensor
-            Transposed-Jacobian-matrix product.
+            Jacobian-matrix product.
             Has shape [V, N, C_out, H_out, ...].
         """
         return self._jac_mat_prod(module, g_inp, g_out, mat)
 
     def _jac_mat_prod(self, module, g_inp, g_out, mat):
+        """Internal implementation of the Jacobian."""
         raise NotImplementedError
 
     @jac_t_mat_prod_accept_vectors
@@ -71,18 +76,19 @@ class BaseDerivatives:
         Parameters:
         -----------
         mat: torch.Tensor
-            Matrix the Jacobian will be applied to.
+            Matrix the transposed Jacobian will be applied to.
             Must have shape [V, N, C_out, H_out, ...].
 
         Returns:
         --------
         result: torch.Tensor
-            Jacobian-matrix product.
+            Transposed Jacobian-matrix product.
             Has shape [V, N, C_in, H_in, ...].
         """
         return self._jac_t_mat_prod(module, g_inp, g_out, mat)
 
     def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
+        """Internal implementation of transposed Jacobian."""
         raise NotImplementedError
 
     def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
@@ -138,18 +144,109 @@ class BaseParameterDerivatives(BaseDerivatives):
     Assumptions (true for `nn.Linear`, `nn.Conv(Transpose)Nd`, `nn.BatchNormNd`):
     - Parameters are saved as `.weight` and `.bias` fields in a module
     - The output is linear in the model parameters
+
+    Shape conventions:
+    ------------------
+    Weight [C_w, H_w, W_w, ...] (usually 1d, 2d, 4d)
+    Bias [C_b, ...] (usually 1d)
+
+    For most layers, these shapes correspond to shapes of the module input or output.
     """
 
+    @bias_jac_mat_prod_accept_vectors
     def bias_jac_mat_prod(self, module, g_inp, g_out, mat):
+        """Apply Jacobian of the output w.r.t. bias to a matrix.
+
+        Parameters:
+        -----------
+        mat: torch.Tensor
+            Matrix the Jacobian will be applied to.
+            Must have shape [V, C_b, ...].
+
+        Returns:
+        --------
+        result: torch.Tensor
+            Jacobian-matrix product.
+            Has shape [V, N, C_out, H_out, ...].
+        """
+        return self._bias_jac_mat_prod(module, g_inp, g_out, mat)
+
+    def _bias_jac_mat_prod(self, module, g_inp, g_out, mat):
+        """Internal implementation of the bias Jacobian."""
         raise NotImplementedError
 
+    @bias_jac_t_mat_prod_accept_vectors
     def bias_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
+        """Apply transposed Jacobian of the output w.r.t. bias to a matrix.
+
+        Parameters:
+        -----------
+        mat: torch.Tensor
+            Matrix the transposed Jacobian will be applied to.
+            Must have shape [V, N, C_out, H_out, ...].
+        sum_batch: bool
+            Whether to sum over the batch dimension on the fly.
+
+        Returns:
+        --------
+        result: torch.Tensor
+            Jacobian-matrix product.
+            Has shape [V, N, C_b, ...] if `sum_batch == False`.
+            Has shape [V, C_b, ...] if `sum_batch == True`.
+        """
+        return self._bias_jac_t_mat_prod(module, g_inp, g_out, mat, sum_batch=sum_batch)
+
+    def _bias_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
+        """Internal implementation of the transposed bias Jacobian."""
         raise NotImplementedError
 
+    @weight_jac_mat_prod_accept_vectors
     def weight_jac_mat_prod(self, module, g_inp, g_out, mat):
+        """Apply Jacobian of the output w.r.t. weight to a matrix.
+
+        Parameters:
+        -----------
+        mat: torch.Tensor
+            Matrix the Jacobian will be applied to.
+            Must have shape [V, C_w, H_w, ...].
+
+        Returns:
+        --------
+        result: torch.Tensor
+            Jacobian-matrix product.
+            Has shape [V, N, C_out, H_out, ...].
+        """
+        return self._weight_jac_mat_prod(module, g_inp, g_out, mat)
+
+    def _weight_jac_mat_prod(self, module, g_inp, g_out, mat):
+        """Internal implementation of weight Jacobian."""
         raise NotImplementedError
 
+    @weight_jac_t_mat_prod_accept_vectors
     def weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
+        """Apply transposed Jacobian of the output w.r.t. weight to a matrix.
+
+        Parameters:
+        -----------
+        mat: torch.Tensor
+            Matrix the transposed Jacobian will be applied to.
+            Must have shape [V, N, C_out, H_out, ...].
+        sum_batch: bool
+            Whether to sum over the batch dimension on the fly.
+
+        Returns:
+        --------
+        result: torch.Tensor
+            Jacobian-matrix product.
+            Has shape [V, N, C_w, H_w, ...] if `sum_batch == False`.
+            Has shape [V, C_w, H_w, ...] if `sum_batch == True`.
+        """
+        return self._weight_jac_t_mat_prod(
+            module, g_inp, g_out, mat, sum_batch=sum_batch
+        )
+
+    def _weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
+        """Internal implementation of transposed weight Jacobian."""
         raise NotImplementedError
 
     @classmethod

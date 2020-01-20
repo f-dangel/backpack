@@ -1,11 +1,5 @@
 from torch.nn import BatchNorm1d
 
-from backpack.core.derivatives.utils import (
-    weight_jac_t_mat_prod_accept_vectors,
-    bias_jac_t_mat_prod_accept_vectors,
-    bias_jac_mat_prod_accept_vectors,
-    weight_jac_mat_prod_accept_vectors,
-)
 
 from backpack.utils.einsum import einsum
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
@@ -60,25 +54,21 @@ class BatchNorm1dDerivatives(BaseParameterDerivatives):
         var = input.var(dim=0, unbiased=False)
         return (input - mean) / (var + module.eps).sqrt(), var
 
-    @weight_jac_mat_prod_accept_vectors
-    def weight_jac_mat_prod(self, module, g_inp, g_out, mat):
+    def _weight_jac_mat_prod(self, module, g_inp, g_out, mat):
         x_hat, _ = self.get_normalized_input_and_var(module)
         return einsum("ni,vi->vni", (x_hat, mat))
 
-    @weight_jac_t_mat_prod_accept_vectors
-    def weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
+    def _weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
         x_hat, _ = self.get_normalized_input_and_var(module)
         equation = "vni,ni->v{}i".format("" if sum_batch is True else "n")
         operands = [mat, x_hat]
         return einsum(equation, operands)
 
-    @bias_jac_mat_prod_accept_vectors
-    def bias_jac_mat_prod(self, module, g_inp, g_out, mat):
+    def _bias_jac_mat_prod(self, module, g_inp, g_out, mat):
         N = self.get_batch(module)
         return mat.unsqueeze(1).repeat(1, N, 1)
 
-    @bias_jac_t_mat_prod_accept_vectors
-    def bias_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
+    def _bias_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
         if sum_batch:
             N_axis = 1
             return mat.sum(N_axis)

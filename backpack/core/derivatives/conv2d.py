@@ -1,12 +1,6 @@
 from torch.nn import Conv2d
 from torch.nn.functional import conv2d, conv_transpose2d
 
-from backpack.core.derivatives.utils import (
-    weight_jac_t_mat_prod_accept_vectors,
-    weight_jac_mat_prod_accept_vectors,
-    bias_jac_t_mat_prod_accept_vectors,
-    bias_jac_mat_prod_accept_vectors,
-)
 
 from backpack.utils import conv as convUtils
 from backpack.utils.einsum import einsum, eingroup
@@ -72,8 +66,7 @@ class Conv2DDerivatives(BaseParameterDerivatives):
         )
         return self.view_like_input(jmp_as_conv, module)
 
-    @bias_jac_mat_prod_accept_vectors
-    def bias_jac_mat_prod(self, module, g_inp, g_out, mat):
+    def _bias_jac_mat_prod(self, module, g_inp, g_out, mat):
         """mat has shape [V, C_out]"""
         # expand for each batch and for each channel
         N_axis, H_axis, W_axis = 1, 3, 4
@@ -82,8 +75,7 @@ class Conv2DDerivatives(BaseParameterDerivatives):
         N, _, H_out, W_out = module.output_shape
         return jac_mat.expand(-1, N, -1, H_out, W_out)
 
-    @bias_jac_t_mat_prod_accept_vectors
-    def bias_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
+    def _bias_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
         N_axis, H_axis, W_axis = 1, 3, 4
         axes = [H_axis, W_axis]
         if sum_batch:
@@ -92,16 +84,15 @@ class Conv2DDerivatives(BaseParameterDerivatives):
         return mat.sum(axes)
 
     # TODO: Improve performance by using conv instead of unfold
-    @weight_jac_mat_prod_accept_vectors
-    def weight_jac_mat_prod(self, module, g_inp, g_out, mat):
+
+    def _weight_jac_mat_prod(self, module, g_inp, g_out, mat):
         jac_mat = eingroup("v,o,i,h,w->v,o,ihw", mat)
         X = self.get_unfolded_input(module)
 
         jac_mat = einsum("nij,vki->vnkj", (X, jac_mat))
         return self.view_like_output(jac_mat, module)
 
-    @weight_jac_t_mat_prod_accept_vectors
-    def weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
+    def _weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
         """Unintuitive, but faster due to convolution."""
         V, N, C_in = mat.shape[0], module.input0_shape[0], module.input0_shape[1]
 
