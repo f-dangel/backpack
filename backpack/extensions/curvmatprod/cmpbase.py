@@ -33,12 +33,7 @@ class CMPBase(ModuleExtension):
             JTCJmat = self.derivatives.jac_t_mat_prod(module, g_inp, g_out, CJmat)
 
             if residual_mod is not None:
-
-                new_convention = True
-                if new_convention:
-                    JTCJmat.add_(einsum("b...,cb...->cb...", (residual_mod, mat)))
-                else:
-                    JTCJmat.add_(einsum("bi,bic->bic", (residual_mod, mat)))
+                JTCJmat.add_(einsum("b...,cb...->cb...", (residual_mod, mat)))
 
             return JTCJmat
 
