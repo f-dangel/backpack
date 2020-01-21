@@ -4,22 +4,19 @@ from torch import diag_embed, ones_like, diag, ones
 from torch.nn import MSELoss
 from backpack.core.derivatives.basederivatives import BaseDerivatives
 
-from backpack.core.derivatives.utils import (
-    hessian_old_shape_convention,
-    hessian_matrix_product_accept_vectors,
-)
+from backpack.core.derivatives.utils import hessian_matrix_product_accept_vectors
 
 
 class MSELossDerivatives(BaseDerivatives):
     def get_module(self):
         return MSELoss
 
-    # TODO: Convert [N, C, V] to  new convention [V, N, C]
-    @hessian_old_shape_convention
     def sqrt_hessian(self, module, g_inp, g_out):
         self.check_input_dims(module)
 
-        sqrt_H = diag_embed(sqrt(2) * ones_like(module.input0))
+        V_dim, C_dim = 0, 2
+        diag = sqrt(2) * ones_like(module.input0)
+        sqrt_H = diag_embed(diag, dim1=V_dim, dim2=C_dim)
 
         if module.reduction == "mean":
             N = module.input0.shape[0]
