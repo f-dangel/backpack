@@ -8,6 +8,7 @@ import opt_einsum as oe
 import torch
 import numpy
 
+
 TORCH = "torch"
 OPT_EINSUM = "opt_einsum"
 
@@ -37,28 +38,65 @@ def einsum(equation, *operands):
     return EINSUMS[BPEXTS_EINSUM](equation, *operands)
 
 
-def eingroup(equation, operand):
+def eingroup(equation, operand, dim=None):
     """Use einsum notation for grouping dimensions.
+
+    Dimensions that cannot be inferred can be handed in via the dictionary `dim`.
 
     Idea:
     -----
     * 'a,b,c->ab,c' to group a and b dimension
     * 'a,b,c->ba,c' to transpose, then group b and a dimension
     """
+    dim = {} if dim is None else dim
+    in_shape, out_shape, einsum_eq = _eingroup_preprocess(equation, operand, dim=dim)
+
+    operand_in = try_view(operand, in_shape)
+    result = einsum(einsum_eq, operand_in)
+    return try_view(result, out_shape)
+
+
+def _eingroup_preprocess(equation, operand, dim):
     split, sep = "->", ","
 
-    in_string = equation.split(split)[0].replace(sep, "")
-    in_shapes = {axis: operand.shape[idx] for idx, axis in enumerate(in_string)}
+    def groups(string):
+        return string.split(sep)
 
-    out_groups = equation.split(split)[1].split(sep)
-    out_shape = []
-    for group in out_groups:
-        out_shape.append(numpy.prod([in_shapes[axis] for axis in group]))
+    def infer(lhs, operand, dim):
+        in_groups = groups(lhs)
+        assert len(in_groups) == len(operand.shape)
 
-    einsum_eq = equation.replace(sep, "")
+        for group, size in zip(in_groups, operand.shape):
+            if len(group) == 1:
+                axis = group[0]
+                if axis in dim.keys():
+                    print("[eingroup] Can infer dim of input group {}".format(group))
+                    assert dim[axis] == size
+                dim[axis] = size
+            else:
+                print("[eingroup] Cannot infer dim of input group {}".format(group))
 
-    result = einsum(einsum_eq, operand)
-    return try_view(result, out_shape)
+        return dim
+
+    def shape(groups, dim):
+        return [group_dim(group, dim) for group in groups]
+
+    def group_dim(group, dim):
+        return numpy.prod([dim[g] for g in group])
+
+    lhs, rhs = equation.split(split)
+    dim = infer(lhs, operand, dim)
+
+    in_groups, out_groups = groups(lhs), groups(rhs)
+    out_shape = shape(out_groups, dim)
+
+    in_groups_flat = []
+    for group in in_groups:
+        for letter in group:
+            in_groups_flat.append(letter)
+    in_shape_flat = shape(in_groups_flat, dim)
+
+    return in_shape_flat, out_shape, equation.replace(sep, "")
 
 
 def try_view(tensor, shape):
