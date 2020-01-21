@@ -6,15 +6,14 @@ from torch.nn import CrossEntropyLoss
 from torch.nn.functional import one_hot
 
 from backpack.utils.einsum import einsum
-from backpack.core.derivatives.basederivatives import BaseDerivatives
-from backpack.core.derivatives.utils import hessian_matrix_product_accept_vectors
+from backpack.core.derivatives.basederivatives import BaseLossDerivatives
 
 
-class CrossEntropyLossDerivatives(BaseDerivatives):
+class CrossEntropyLossDerivatives(BaseLossDerivatives):
     def get_module(self):
         return CrossEntropyLoss
 
-    def sqrt_hessian(self, module, g_inp, g_out):
+    def _sqrt_hessian(self, module, g_inp, g_out):
         probs = self.get_probs(module)
         tau = torchsqrt(probs)
         V_dim, C_dim = 0, 2
@@ -28,7 +27,7 @@ class CrossEntropyLossDerivatives(BaseDerivatives):
 
         return sqrt_H
 
-    def sqrt_hessian_sampled(self, module, g_inp, g_out):
+    def _sqrt_hessian_sampled(self, module, g_inp, g_out):
         M = self.MC_SAMPLES
         C = module.input0.shape[1]
 
@@ -48,7 +47,7 @@ class CrossEntropyLossDerivatives(BaseDerivatives):
 
         return sqrt_mc_h
 
-    def sum_hessian(self, module, g_inp, g_out):
+    def _sum_hessian(self, module, g_inp, g_out):
         probs = self.get_probs(module)
         sum_H = diag(probs.sum(0)) - einsum("bi,bj->ij", (probs, probs))
 
@@ -58,12 +57,11 @@ class CrossEntropyLossDerivatives(BaseDerivatives):
 
         return sum_H
 
-    @hessian_matrix_product_accept_vectors
-    def hessian_matrix_product(self, module, g_inp, g_out):
+    def _make_hessian_mat_prod(self, module, g_inp, g_out):
         """Multiplication of the input Hessian with a matrix."""
         probs = self.get_probs(module)
 
-        def hmp(mat):
+        def hessian_mat_prod(mat):
             Hmat = einsum("bi,cbi->cbi", (probs, mat)) - einsum(
                 "bi,bj,cbj->cbi", (probs, probs, mat)
             )
@@ -74,7 +72,7 @@ class CrossEntropyLossDerivatives(BaseDerivatives):
 
             return Hmat
 
-        return hmp
+        return hessian_mat_prod
 
     def hessian_is_psd(self):
         return True

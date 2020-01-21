@@ -2,16 +2,14 @@ from warnings import warn
 from math import sqrt
 from torch import diag_embed, ones_like, diag, ones
 from torch.nn import MSELoss
-from backpack.core.derivatives.basederivatives import BaseDerivatives
-
-from backpack.core.derivatives.utils import hessian_matrix_product_accept_vectors
+from backpack.core.derivatives.basederivatives import BaseLossDerivatives
 
 
-class MSELossDerivatives(BaseDerivatives):
+class MSELossDerivatives(BaseLossDerivatives):
     def get_module(self):
         return MSELoss
 
-    def sqrt_hessian(self, module, g_inp, g_out):
+    def _sqrt_hessian(self, module, g_inp, g_out):
         self.check_input_dims(module)
 
         V_dim, C_dim = 0, 2
@@ -24,7 +22,7 @@ class MSELossDerivatives(BaseDerivatives):
 
         return sqrt_H
 
-    def sqrt_hessian_sampled(self, module, g_inp, g_out):
+    def _sqrt_hessian_sampled(self, module, g_inp, g_out):
         warn(
             "[MC Sampling Hessian of MSE loss] "
             + "Returning the symmetric factorization of the full Hessian "
@@ -33,7 +31,7 @@ class MSELossDerivatives(BaseDerivatives):
         )
         return self.sqrt_hessian(module, g_inp, g_out)
 
-    def sum_hessian(self, module, g_inp, g_out):
+    def _sum_hessian(self, module, g_inp, g_out):
         self.check_input_dims(module)
 
         N = module.input0_shape[0]
@@ -45,11 +43,10 @@ class MSELossDerivatives(BaseDerivatives):
 
         return sum_H
 
-    @hessian_matrix_product_accept_vectors
-    def hessian_matrix_product(self, module, g_inp, g_out):
+    def _make_hessian_mat_prod(self, module, g_inp, g_out):
         """Multiplication of the input Hessian with a matrix."""
 
-        def hmp(mat):
+        def hessian_mat_prod(mat):
             Hmat = 2 * mat
 
             if module.reduction == "mean":
@@ -58,7 +55,7 @@ class MSELossDerivatives(BaseDerivatives):
 
             return Hmat
 
-        return hmp
+        return hessian_mat_prod
 
     def check_input_dims(self, module):
         if not len(module.input0.shape) == 2:
