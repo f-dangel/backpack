@@ -7,24 +7,20 @@ from torch.nn.functional import one_hot
 
 from backpack.utils.einsum import einsum
 from backpack.core.derivatives.basederivatives import BaseDerivatives
-from backpack.core.derivatives.utils import (
-    hessian_old_shape_convention,
-    hessian_matrix_product_accept_vectors,
-)
+from backpack.core.derivatives.utils import hessian_matrix_product_accept_vectors
 
 
 class CrossEntropyLossDerivatives(BaseDerivatives):
     def get_module(self):
         return CrossEntropyLoss
 
-    # TODO: Convert [N, C, V] to  new convention [V, N, C]
-    @hessian_old_shape_convention
     def sqrt_hessian(self, module, g_inp, g_out):
         probs = self.get_probs(module)
         tau = torchsqrt(probs)
-        Id = diag_embed(ones_like(probs))
-        Id_tautau = Id - einsum("ni,nj->nij", tau, tau)
-        sqrt_H = einsum("ni,nij->nij", tau, Id_tautau)
+        V_dim, C_dim = 0, 2
+        Id = diag_embed(ones_like(probs), dim1=V_dim, dim2=C_dim)
+        Id_tautau = Id - einsum("nv,nc->vnc", tau, tau)
+        sqrt_H = einsum("nc,vnc->vnc", tau, Id_tautau)
 
         if module.reduction == "mean":
             N = module.input0.shape[0]
@@ -32,17 +28,17 @@ class CrossEntropyLossDerivatives(BaseDerivatives):
 
         return sqrt_H
 
-    # TODO: Convert [N, C, V] to  new convention [V, N, C]
-    @hessian_old_shape_convention
     def sqrt_hessian_sampled(self, module, g_inp, g_out):
         M = self.MC_SAMPLES
         C = module.input0.shape[1]
 
         probs = self.get_probs(module)
-        probs_unsqueezed = probs.unsqueeze(-1).repeat(1, 1, M)
+        V_dim = 0
+        probs_unsqueezed = probs.unsqueeze(V_dim).repeat(M, 1, 1)
 
-        classes = one_hot(multinomial(probs, M, replacement=True), num_classes=C)
-        classes = classes.transpose(1, 2).float()
+        multi = multinomial(probs, M, replacement=True)
+        classes = one_hot(multi, num_classes=C)
+        classes = einsum("nvc->vnc", classes).float()
 
         sqrt_mc_h = (probs_unsqueezed - classes) / sqrt(M)
 

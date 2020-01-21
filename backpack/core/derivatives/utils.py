@@ -1,5 +1,4 @@
 import functools
-from backpack.utils.einsum import einsum
 
 
 def add_V_dim(old_mat):
@@ -46,16 +45,6 @@ def check_like_input_and_is_vec(module, mat):
     return check_like_and_is_vec(mat_shape, in_shape)
 
 
-def check_like_param_and_is_vec(module, mat, sum_batch, name):
-    mat_shape = [int(dim) for dim in mat.shape]
-    param_shape = [int(dim) for dim in getattr(module, name).shape]
-
-    N = int(module.output_shape[0])
-    out_shape = param_shape if sum_batch else [N, *param_shape]
-
-    return check_like_and_is_vec(mat_shape, out_shape)
-
-
 def hessian_matrix_product_accept_vectors(hessian_matrix_product):
     @functools.wraps(hessian_matrix_product)
     def wrapped_hessian_matrix_product(self, module, g_inp, g_out, **kwargs):
@@ -77,17 +66,3 @@ def hessian_matrix_product_accept_vectors(hessian_matrix_product):
         return new_hmp
 
     return wrapped_hessian_matrix_product
-
-
-def hessian_old_shape_convention(h_func):
-    """Use old convention internally, new convention for IO."""
-
-    @functools.wraps(h_func)
-    def wrapped_h_use_old_convention(*args, **kwargs):
-        print("[hessian]")
-
-        result = h_func(*args, **kwargs)
-
-        return einsum("nic->cni", result)
-
-    return wrapped_h_use_old_convention
