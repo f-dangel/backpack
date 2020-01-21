@@ -94,7 +94,9 @@ class Conv2DDerivatives(BaseParameterDerivatives):
 
     def _weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
         """Unintuitive, but faster due to convolution."""
-        V, N, C_in = mat.shape[0], module.input0_shape[0], module.input0_shape[1]
+        V = mat.shape[0]
+        N, C_out, _, _ = module.output_shape
+        _, C_in, _, _ = module.input0_shape
 
         mat = eingroup("v,n,c,w,h->vn,c,w,h", mat).repeat(1, C_in, 1, 1)
         C_in_axis = 1
@@ -113,13 +115,9 @@ class Conv2DDerivatives(BaseParameterDerivatives):
             padding=module.padding,
             dilation=module.stride,
             groups=C_in * N * V,
+        ).squeeze(0)
+
+        eingroup_eq = "vnio,x,y->v,{}o,i,x,y".format("" if sum_batch else "n,")
+        return eingroup(
+            eingroup_eq, grad_weight, dim={"v": V, "n": N, "i": C_in, "o": C_out}
         )
-        grad_weight = self.view_like_weight(grad_weight, module, batch_dim=True)
-
-        if sum_batch is True:
-            N_axis = 1
-            grad_weight = grad_weight.sum(N_axis, keepdim=True)
-
-        # swap in/out channel dimensions
-        grad_weight = einsum("vnoixy->vnioxy", grad_weight)
-        return self.view_like_weight(grad_weight, module, batch_dim=not sum_batch)
