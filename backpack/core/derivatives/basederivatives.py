@@ -13,6 +13,8 @@ from backpack.core.derivatives.shape_check import (
     weight_jac_t_mat_prod_check_shapes,
     weight_jac_mat_prod_accept_vectors,
     weight_jac_mat_prod_check_shapes,
+    make_hessian_mat_prod_accept_vectors,
+    make_hessian_mat_prod_check_shapes,
 )
 
 
@@ -99,8 +101,9 @@ class BaseDerivatives:
         """Internal implementation of transposed Jacobian."""
         raise NotImplementedError
 
+    # TODO Add shape check
+    # TODO Use new convention
     def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
-        # TODO: Use new convention
         raise NotImplementedError
 
     def hessian_is_zero(self):
@@ -115,6 +118,8 @@ class BaseDerivatives:
     def hessian_is_psd(self):
         raise NotImplementedError
 
+    # TODO make accept vectors
+    # TODO add shape check
     def make_residual_mat_prod(self, module, g_inp, g_out):
         """Return multiplication routine with the residual term.
 
@@ -128,15 +133,18 @@ class BaseDerivatives:
         """
         raise NotImplementedError
 
+    # TODO Refactor and remove
     def batch_flat(self, tensor):
         batch = tensor.size(0)
-        # TODO: Removing the clone().detach() will destroy the computation graph
+        # TODO Removing the clone().detach() will destroy the computation graph
         # Tests will fail
         return batch, tensor.clone().detach().view(batch, -1)
 
+    # TODO Refactor and remove
     def get_batch(self, module):
         return module.input0.size(0)
 
+    # TODO Refactor and remove
     def get_output(self, module):
         return module.output
 
@@ -274,11 +282,44 @@ class BaseParameterDerivatives(BaseDerivatives):
         """Internal implementation of transposed weight Jacobian."""
         raise NotImplementedError
 
-    @classmethod
-    def view_like_weight(cls, mat, module, batch_dim=False):
-        V, N = -1, module.input0.shape[0]
-        shape = (*module.weight.shape,)
-        if batch_dim:
-            shape = (N, *shape)
-        shape = (V, *shape)
-        return try_view(mat, shape)
+
+class BaseLossDerivatives(BaseDerivatives):
+    """Second- order partial derivatives of loss functions.
+
+    """
+
+    # TODO Add shape check
+    def sqrt_hessian(self, module, g_inp, g_out):
+        """Symmetric factorization ('sqrt') of the loss Hessian."""
+        return self._sqrt_hessian(module, g_inp, g_out)
+
+    def _sqrt_hessian(self, module, g_inp, g_out):
+        raise NotImplementedError
+
+    # TODO Add shape check
+    def sqrt_hessian_sampled(self, module, g_inp, g_out):
+        """Monte-Carlo sampled symmetric factorization of the loss Hessian."""
+        return self._sqrt_hessian_sampled(module, g_inp, g_out)
+
+    def _sqrt_hessian_sampled(self, module, g_inp, g_out):
+        raise NotImplementedError
+
+    @make_hessian_mat_prod_accept_vectors
+    @make_hessian_mat_prod_check_shapes
+    def make_hessian_mat_prod(self, module, g_inp, g_out):
+        """Multiplication of the input Hessian with a matrix.
+
+        Return a function that maps mat to H * mat.
+        """
+        return self._make_hessian_mat_prod(module, g_inp, g_out)
+
+    def _make_hessian_mat_prod(self, module, g_inp, g_out):
+        raise NotImplementedError
+
+    # TODO Add shape check
+    def sum_hessian(self, module, g_inp, g_out):
+        """Loss Hessians, summed over the batch dimension."""
+        return self._sum_hessian(module, g_inp, g_out)
+
+    def _sum_hessian(self, module, g_inp, g_out):
+        raise NotImplementedError

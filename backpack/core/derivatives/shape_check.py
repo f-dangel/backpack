@@ -248,3 +248,40 @@ def R_mat_prod_accept_vectors(make_R_mat_prod):
         return new_R_mat_prod
 
     return wrapped_make_R_mat_prod
+
+
+def make_hessian_mat_prod_accept_vectors(make_hessian_mat_prod):
+    @functools.wraps(make_hessian_mat_prod)
+    def wrapped_make_hessian_mat_prod(self, module, g_inp, g_out):
+
+        hessian_mat_prod = make_hessian_mat_prod(self, module, g_inp, g_out)
+
+        def new_hessian_mat_prod(mat):
+            is_vec = same_dim_as(mat, module, "input0")
+            mat_in = mat if not is_vec else add_V_dim(mat)
+            mat_out = hessian_mat_prod(mat_in)
+            mat_out = mat_out if not is_vec else remove_V_dim(mat_out)
+
+            return mat_out
+
+        return new_hessian_mat_prod
+
+    return wrapped_make_hessian_mat_prod
+
+
+def make_hessian_mat_prod_check_shapes(make_hessian_mat_prod):
+    @functools.wraps(make_hessian_mat_prod)
+    def wrapped_make_hessian_mat_prod(self, module, g_inp, g_out):
+
+        hessian_mat_prod = make_hessian_mat_prod(self, module, g_inp, g_out)
+
+        def new_hessian_mat_prod(mat):
+            check_like(mat, module, "input0")
+            result = hessian_mat_prod(mat)
+            check_like(result, module, "input0")
+
+            return result
+
+        return new_hessian_mat_prod
+
+    return wrapped_make_hessian_mat_prod
