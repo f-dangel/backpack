@@ -11,7 +11,7 @@ PACKAGES = find_packages()
 DESCRIPTION = r"""BACKpropagation PACKage - A backpack for PyTorch to compute quantities beyond the gradient."""
 LONG_DESCR = "https://github.com/f-dangel/backpack"
 
-VERSION = "1.0.1"
+VERSION = "1.1.0"
 URL = "https://github.com/f-dangel/backpack"
 LICENSE = "MIT"
 
