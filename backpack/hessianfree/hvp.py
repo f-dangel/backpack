@@ -37,6 +37,6 @@ def hessian_vector_product(f, params, v, detach=True):
     Hv = R_op(df_dx, params, v)
 
     if detach:
-        return tuple([j.detach() for j in Hv])
+        return tuple(j.detach() for j in Hv)
     else:
         return Hv

@@ -18,7 +18,7 @@ def _oe_einsum(equation, *operands):
     # see https://pytorch.org/docs/stable/_modules/torch/functional.html#einsum
     if len(operands) == 1 and isinstance(operands[0], (list, tuple)):
         operands = operands[0]
-    return oe.contract(equation, *operands, backend='torch')
+    return oe.contract(equation, *operands, backend="torch")
 
 
 EINSUMS = {

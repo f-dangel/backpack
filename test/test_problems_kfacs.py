@@ -9,7 +9,7 @@ TEST_SETTINGS = {
     "bias": True,
     "batch": 1,
     "rtol": 1e-5,
-    "atol": 1e-5
+    "atol": 1e-5,
 }
 INPUT_SHAPE = (TEST_SETTINGS["batch"], TEST_SETTINGS["in_features"])
 assert TEST_SETTINGS["batch"] == 1
@@ -17,11 +17,12 @@ assert TEST_SETTINGS["batch"] == 1
 REGRESSION_PROBLEMS = {}
 for act_name, act_cls in ACTIVATIONS.items():
     for lin_name, lin_cls in LINEARS.items():
-        REGRESSION_PROBLEMS["{}{}-regression".format(
-            lin_name, act_name)] = make_regression_problem(
-                INPUT_SHAPE,
-                single_linear_layer(
-                    TEST_SETTINGS, lin_cls, activation_cls=act_cls))
+        REGRESSION_PROBLEMS[
+            "{}{}-regression".format(lin_name, act_name)
+        ] = make_regression_problem(
+            INPUT_SHAPE,
+            single_linear_layer(TEST_SETTINGS, lin_cls, activation_cls=act_cls),
+        )
 
 TEST_PROBLEMS = {
     **REGRESSION_PROBLEMS,
@@ -29,14 +30,16 @@ TEST_PROBLEMS = {
 for act_name, act_cls in ACTIVATIONS.items():
     for lin_name, lin_cls in LINEARS.items():
 
-        TEST_PROBLEMS["{}{}-classification".format(
-            lin_name, act_name)] = make_classification_problem(
-                INPUT_SHAPE,
-                single_linear_layer(
-                    TEST_SETTINGS, lin_cls, activation_cls=act_cls))
+        TEST_PROBLEMS[
+            "{}{}-classification".format(lin_name, act_name)
+        ] = make_classification_problem(
+            INPUT_SHAPE,
+            single_linear_layer(TEST_SETTINGS, lin_cls, activation_cls=act_cls),
+        )
 
-        TEST_PROBLEMS["{}{}-2layer-classification".format(
-            lin_name, act_name)] = make_classification_problem(
-                INPUT_SHAPE,
-                two_linear_layers(
-                    TEST_SETTINGS, lin_cls, activation_cls=act_cls))
+        TEST_PROBLEMS[
+            "{}{}-2layer-classification".format(lin_name, act_name)
+        ] = make_classification_problem(
+            INPUT_SHAPE,
+            two_linear_layers(TEST_SETTINGS, lin_cls, activation_cls=act_cls),
+        )

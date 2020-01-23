@@ -99,19 +99,22 @@ class BpextImpl(Implementation):
     def kfac_blocks(self):
         return self.matrices_from_kronecker_curvature(new_ext.KFAC, "kfac")
 
-    def hbp_with_curv(self,
-                      curv_type,
-                      loss_hessian_strategy=LossHessianStrategy.AVERAGE,
-                      backprop_strategy=BackpropStrategy.BATCH_AVERAGE,
-                      ea_strategy=ExpectationApproximation.BOTEV_MARTENS):
+    def hbp_with_curv(
+        self,
+        curv_type,
+        loss_hessian_strategy=LossHessianStrategy.AVERAGE,
+        backprop_strategy=BackpropStrategy.BATCH_AVERAGE,
+        ea_strategy=ExpectationApproximation.BOTEV_MARTENS,
+    ):
         results = []
         with backpack(
-                new_ext.HBP(
-                    curv_type=curv_type,
-                    loss_hessian_strategy=loss_hessian_strategy,
-                    backprop_strategy=backprop_strategy,
-                    ea_strategy=ea_strategy,
-                )):
+            new_ext.HBP(
+                curv_type=curv_type,
+                loss_hessian_strategy=loss_hessian_strategy,
+                backprop_strategy=backprop_strategy,
+                ea_strategy=ea_strategy,
+            )
+        ):
             self.loss().backward()
             for p in self.model.parameters():
                 factors = p.hbp

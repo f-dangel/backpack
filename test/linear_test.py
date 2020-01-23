@@ -33,13 +33,13 @@ g_lin = make_lin_layer(ExtLinear, in_features, out_features, weight, bias)
 
 def loss_function(tensor):
     """Test loss function. Sum over squared entries."""
-    return ((tensor.view(-1))**2).sum()
+    return ((tensor.view(-1)) ** 2).sum()
 
 
 EXAMPLE_1 = {
     "in": Tensor([[1, 1, 1]]).float(),
     "out": Tensor([[6 + 7, 15 + 8]]).float(),
-    "loss": 13**2 + 23**2,
+    "loss": 13 ** 2 + 23 ** 2,
     "bias_grad": Tensor([2 * 13, 2 * 23]).float(),
     "bias_grad_batch": Tensor([2 * 13, 2 * 23]).float(),
     "weight_grad": Tensor([[26, 26, 26], [46, 46, 46]]).float(),
@@ -47,20 +47,15 @@ EXAMPLE_1 = {
 }
 
 EXAMPLE_2 = {
-    "in":
-    Tensor([[1, 0, 1], [0, 1, 0]]).float(),
-    "out":
-    Tensor([[4 + 7, 10 + 8], [2 + 7, 5 + 8]]).float(),
-    "loss":
-    11**2 + 18**2 + 9**2 + 13**2,
-    "bias_grad":
-    Tensor([2 * (11 + 9), 2 * (18 + 13)]),
-    "bias_grad_batch":
-    Tensor([[2 * 11, 2 * 18], [2 * 9, 2 * 13]]).float(),
-    "weight_grad":
-    Tensor([[22, 18, 22], [36, 26, 36]]).float(),
-    "weight_grad_batch":
-    Tensor([[[22, 0, 22], [36, 0, 36]], [[0, 18, 0], [0, 26, 0]]]).float(),
+    "in": Tensor([[1, 0, 1], [0, 1, 0]]).float(),
+    "out": Tensor([[4 + 7, 10 + 8], [2 + 7, 5 + 8]]).float(),
+    "loss": 11 ** 2 + 18 ** 2 + 9 ** 2 + 13 ** 2,
+    "bias_grad": Tensor([2 * (11 + 9), 2 * (18 + 13)]),
+    "bias_grad_batch": Tensor([[2 * 11, 2 * 18], [2 * 9, 2 * 13]]).float(),
+    "weight_grad": Tensor([[22, 18, 22], [36, 26, 36]]).float(),
+    "weight_grad_batch": Tensor(
+        [[[22, 0, 22], [36, 0, 36]], [[0, 18, 0], [0, 26, 0]]]
+    ).float(),
 }
 
 EXAMPLES = [EXAMPLE_1, EXAMPLE_2]
@@ -109,18 +104,22 @@ def test_grad():
 def test_grad_batch():
     """Test computation of bias/weight batch gradients."""
     for ex in EXAMPLES:
-        input, b_grad_batch, w_grad_batch = ex["in"], ex[
-            "bias_grad_batch"], ex["weight_grad_batch"]
+        input, b_grad_batch, w_grad_batch = (
+            ex["in"],
+            ex["bias_grad_batch"],
+            ex["weight_grad_batch"],
+        )
 
         loss = loss_function(g_lin(input))
         with backpack(new_ext.BatchGrad()):
             loss.backward()
 
         assert allclose(g_lin.bias.grad_batch, b_grad_batch), "{} ≠ {}".format(
-            g_lin.bias.grad_batch, b_grad_batch)
-        assert allclose(g_lin.weight.grad_batch,
-                        w_grad_batch), "{} ≠ {}".format(
-                            g_lin.weight.grad_batch, w_grad_batch)
+            g_lin.bias.grad_batch, b_grad_batch
+        )
+        assert allclose(g_lin.weight.grad_batch, w_grad_batch), "{} ≠ {}".format(
+            g_lin.weight.grad_batch, w_grad_batch
+        )
 
         del g_lin.bias.grad
         del g_lin.weight.grad

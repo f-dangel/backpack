@@ -11,4 +11,3 @@ class DiagHAvgPool2d(DiagHBaseModule):
 class DiagHMaxPool2d(DiagHBaseModule):
     def __init__(self):
         super().__init__(derivatives=MaxPool2DDerivatives())
-

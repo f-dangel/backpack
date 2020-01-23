@@ -6,9 +6,9 @@ The example is taken from
     for Document Processing (2007).
 """
 import pytest
-from torch import (Tensor, randn, allclose)
+from torch import Tensor, randn, allclose
 from torch.nn import Conv2d
-from random import (randint, choice)
+from random import randint, choice
 from backpack import extend, backpack
 import backpack.extensions as new_ext
 
@@ -19,13 +19,15 @@ def ExtConv2d(*args, **kwargs):
 
 TEST_ATOL = 1e-4
 
+
 ###
 # Problem settings
 ###
 
 
-def make_conv_params(in_channels, out_channels, kernel_size, stride, padding,
-                     dilation, bias, kernel):
+def make_conv_params(
+    in_channels, out_channels, kernel_size, stride, padding, dilation, bias, kernel
+):
     return {
         "in_channels": in_channels,
         "out_channels": out_channels,
@@ -46,7 +48,8 @@ def make_conv_layer(LayerClass, conv_params):
         stride=conv_params["stride"],
         padding=conv_params["padding"],
         dilation=conv_params["dilation"],
-        bias=conv_params["bias"])
+        bias=conv_params["bias"],
+    )
     layer.weight.data = conv_params["kernel"]
     return layer
 
@@ -57,8 +60,9 @@ kernel13 = [[0, 1], [1, 0]]
 kernel21 = [[1, 0], [0, 1]]
 kernel22 = [[2, 1], [2, 1]]
 kernel23 = [[1, 2], [2, 0]]
-kernel = Tensor([[kernel11, kernel12, kernel13],
-                 [kernel21, kernel22, kernel23]]).float()
+kernel = Tensor(
+    [[kernel11, kernel12, kernel13], [kernel21, kernel22, kernel23]]
+).float()
 
 CONV_PARAMS = make_conv_params(
     in_channels=3,
@@ -68,7 +72,8 @@ CONV_PARAMS = make_conv_params(
     padding=(0, 0),
     dilation=(1, 1),
     bias=False,
-    kernel=kernel)
+    kernel=kernel,
+)
 
 # input (1 sample)
 in_feature1 = [[1, 2, 0], [1, 1, 3], [0, 2, 2]]
@@ -88,7 +93,7 @@ results = [out1]
 
 def loss_function(tensor):
     """Test loss function. Sum over squared entries."""
-    return ((tensor.contiguous().view(-1))**2).sum()
+    return ((tensor.contiguous().view(-1)) ** 2).sum()
 
 
 def test_forward():
@@ -103,19 +108,34 @@ def test_forward():
 
 
 def random_convolutions_and_inputs(
-        in_channels=randint(1, 3),
-        out_channels=randint(1, 3),
-        kernel_size=(randint(1, 3), randint(1, 3)),
-        stride=(randint(1, 3), randint(1, 3)),
-        padding=(randint(0, 2), randint(0, 2)),
-        dilation=(randint(1, 3), randint(1, 3)),
-        bias=choice([True, False]),
-        batch_size=randint(1, 3),
-        in_size=(randint(8, 12), randint(8, 12))):
+    in_channels=None,
+    out_channels=None,
+    kernel_size=None,
+    stride=None,
+    padding=None,
+    dilation=None,
+    bias=None,
+    batch_size=None,
+    in_size=None,
+):
     """Return same torch/exts 2d conv modules and random inputs.
 
     Arguments can be fixed by handing them over.
     """
+
+    def __replace_if_none(var, by):
+        return by if var is None else var
+
+    in_channels = __replace_if_none(in_channels, randint(1, 3))
+    out_channels = __replace_if_none(out_channels, randint(1, 3))
+    kernel_size = __replace_if_none(kernel_size, (randint(1, 3), randint(1, 3)))
+    stride = __replace_if_none(stride, (randint(1, 3), randint(1, 3)))
+    padding = __replace_if_none(padding, (randint(0, 2), randint(0, 2)))
+    dilation = __replace_if_none(dilation, (randint(1, 3), randint(1, 3)))
+    bias = __replace_if_none(bias, choice([True, False]))
+    batch_size = __replace_if_none(batch_size, randint(1, 3))
+    in_size = __replace_if_none(in_size, (randint(8, 12), randint(8, 12)))
+
     kernel_shape = (out_channels, in_channels) + kernel_size
     kernel = randn(kernel_shape)
     in_shape = (batch_size, in_channels) + in_size
@@ -129,7 +149,8 @@ def random_convolutions_and_inputs(
         padding=padding,
         dilation=dilation,
         bias=bias,
-        kernel=kernel)
+        kernel=kernel,
+    )
 
     conv2d = make_conv_layer(Conv2d, conv_params)
     g_conv2d = make_conv_layer(ExtConv2d, conv_params)
@@ -155,24 +176,25 @@ def compare_grads(conv2d, g_conv2d, input):
 
     assert allclose(g_conv2d.bias.grad, conv2d.bias.grad, atol=TEST_ATOL)
     assert allclose(g_conv2d.weight.grad, conv2d.weight.grad, atol=TEST_ATOL)
+    assert allclose(g_conv2d.bias.grad_batch.sum(0), conv2d.bias.grad, atol=TEST_ATOL)
     assert allclose(
-        g_conv2d.bias.grad_batch.sum(0), conv2d.bias.grad, atol=TEST_ATOL)
-    assert allclose(
-        g_conv2d.weight.grad_batch.sum(0), conv2d.weight.grad, atol=TEST_ATOL)
+        g_conv2d.weight.grad_batch.sum(0), conv2d.weight.grad, atol=TEST_ATOL
+    )
 
 
 @pytest.mark.skip("Test does not consistently fail or pass")
 def test_random_grad(random_runs=10):
     """Compare bias gradients for a single sample."""
-    for i in range(random_runs):
+    for _ in range(random_runs):
         conv2d, g_conv2d, input = random_convolutions_and_inputs(
-            bias=True, batch_size=1)
+            bias=True, batch_size=1
+        )
         compare_grads(conv2d, g_conv2d, input)
 
 
 @pytest.mark.skip("Test does not consistently fail or pass")
 def test_random_grad_batch(random_runs=10):
     """Check bias gradients for a batch."""
-    for i in range(random_runs):
+    for _ in range(random_runs):
         conv2d, g_conv2d, input = random_convolutions_and_inputs(bias=True)
         compare_grads(conv2d, g_conv2d, input)

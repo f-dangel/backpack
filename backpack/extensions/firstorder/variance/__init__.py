@@ -12,6 +12,7 @@ class Variance(BackpropExtension):
 
     Stores the output in :code:`variance`, has the same dimension as the gradient.
     """
+
     def __init__(self):
         super().__init__(
             savefield="variance",
@@ -21,6 +22,5 @@ class Variance(BackpropExtension):
                 LinearConcat: linear.VarianceLinearConcat(),
                 Conv2d: conv2d.VarianceConv2d(),
                 Conv2dConcat: conv2d.VarianceConv2dConcat(),
-            }
+            },
         )
-

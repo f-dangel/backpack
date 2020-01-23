@@ -18,8 +18,8 @@ class CrossEntropyLossDerivatives(BaseDerivatives):
         probs = self.get_probs(module)
         tau = torchsqrt(probs)
         Id = diag_embed(ones_like(probs))
-        Id_tautau = Id - einsum('ni,nj->nij', tau, tau)
-        sqrt_H = einsum('ni,nij->nij', tau, Id_tautau)
+        Id_tautau = Id - einsum("ni,nj->nij", tau, tau)
+        sqrt_H = einsum("ni,nij->nij", tau, Id_tautau)
 
         if module.reduction == "mean":
             sqrt_H /= sqrt(module.input0.shape[0])
@@ -45,7 +45,7 @@ class CrossEntropyLossDerivatives(BaseDerivatives):
 
     def sum_hessian(self, module, g_inp, g_out):
         probs = self.get_probs(module)
-        sum_H = diag(probs.sum(0)) - einsum('bi,bj->ij', (probs, probs))
+        sum_H = diag(probs.sum(0)) - einsum("bi,bj->ij", (probs, probs))
 
         if module.reduction == "mean":
             sum_H /= module.input0.shape[0]
@@ -58,9 +58,9 @@ class CrossEntropyLossDerivatives(BaseDerivatives):
 
         @hmp_unsqueeze_if_missing_dim(mat_dim=3)
         def hmp(mat):
-            Hmat = einsum('bi,bic->bic',
-                          (probs, mat)) - einsum('bi,bj,bjc->bic',
-                                                 (probs, probs, mat))
+            Hmat = einsum("bi,bic->bic", (probs, mat)) - einsum(
+                "bi,bj,bjc->bic", (probs, probs, mat)
+            )
 
             if module.reduction == "mean":
                 Hmat /= module.input0.shape[0]

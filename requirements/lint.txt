@@ -1,0 +1,8 @@
+flake8
+mccabe
+pycodestyle
+pyflakes
+pep8-naming
+flake8-bugbear
+flake8-comprehensions
+black

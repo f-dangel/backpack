@@ -68,14 +68,10 @@ class ModuleExtension:
         for param in self.__params:
             if self.__param_exists_and_requires_grad(module, param):
                 extFunc = getattr(self, param)
-                extValue = extFunc(
-                    ext, module, g_inp, g_out, bpQuantities
-                )
+                extValue = extFunc(ext, module, g_inp, g_out, bpQuantities)
                 self.__save(extValue, ext, module, param)
 
-        bpQuantities = self.backpropagate(
-            ext, module, g_inp, g_out, bpQuantities
-        )
+        bpQuantities = self.backpropagate(ext, module, g_inp, g_out, bpQuantities)
 
         self.__backprop_quantities(ext, inp, out, bpQuantities)
 

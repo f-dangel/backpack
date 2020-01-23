@@ -22,40 +22,33 @@ class LinearDerivatives(BaseDerivatives):
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     def jac_t_mat_prod(self, module, g_inp, g_out, mat):
         d_linear = self.get_weight_data(module)
-        return einsum('ij,bic->bjc', (d_linear, mat))
+        return einsum("ij,bic->bjc", (d_linear, mat))
 
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     def jac_mat_prod(self, module, g_inp, g_out, mat):
         d_linear = self.get_weight_data(module)
-        return einsum('ij,bjc->bic', (d_linear, mat))
+        return einsum("ij,bjc->bic", (d_linear, mat))
 
     def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
         jac = self.get_weight_data(module)
-        return einsum('ik,ij,jl->kl', (jac, mat, jac))
+        return einsum("ik,ij,jl->kl", (jac, mat, jac))
 
     @jmp_unsqueeze_if_missing_dim(mat_dim=2)
     def weight_jac_mat_prod(self, module, g_inp, g_out, mat):
         num_cols = mat.size(1)
-        shape = tuple(module.weight.size()) + (num_cols, )
+        shape = tuple(module.weight.size()) + (num_cols,)
 
-        jac_mat = einsum('bj,ijc->bic',
-                         (self.get_input(module), mat.view(shape)))
+        jac_mat = einsum("bj,ijc->bic", (self.get_input(module), mat.view(shape)))
         return jac_mat
 
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
-    def weight_jac_t_mat_prod(self,
-                              module,
-                              g_inp,
-                              g_out,
-                              mat,
-                              sum_batch=True):
+    def weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
         batch = self.get_batch(module)
         num_cols = mat.size(2)
 
-        equation = 'bjc,bi->jic' if sum_batch is True else 'bjc,bi->bjic'
+        equation = "bjc,bi->jic" if sum_batch is True else "bjc,bi->bjic"
 
-        jac_t_mat = einsum(equation,
-                           (mat, self.get_input(module))).contiguous()
+        jac_t_mat = einsum(equation, (mat, self.get_input(module))).contiguous()
 
         sum_shape = [module.weight.numel(), num_cols]
         shape = sum_shape if sum_batch is True else [batch] + sum_shape
@@ -68,12 +61,7 @@ class LinearDerivatives(BaseDerivatives):
         return mat.unsqueeze(0).expand(batch, -1, -1)
 
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
-    def bias_jac_t_mat_prod(self,
-                            module,
-                            g_inp,
-                            g_out,
-                            mat,
-                            sum_batch=True):
+    def bias_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
         if sum_batch is True:
             return mat.sum(0)
         else:

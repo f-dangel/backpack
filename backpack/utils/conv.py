@@ -3,10 +3,13 @@ from backpack.utils.einsum import einsum
 
 
 def unfold_func(module):
-    return Unfold(kernel_size=module.kernel_size,
-                  dilation=module.dilation,
-                  padding=module.padding,
-                  stride=module.stride)
+    return Unfold(
+        kernel_size=module.kernel_size,
+        dilation=module.dilation,
+        padding=module.padding,
+        stride=module.stride,
+    )
+
 
 def get_weight_gradient_factors(input, grad_out, module):
     batch = input.size(0)
@@ -41,17 +44,24 @@ def check_sizes_input_jac(mat, module):
 def check_sizes_output_jac_t(jtmp, module):
     if tuple(jtmp.size())[1:] != tuple(module.input0.size())[1:]:
         raise ValueError(
-            "Size after conv_transpose does not match", "Got {}, and {}.",
+            "Size after conv_transpose does not match",
+            "Got {}, and {}.",
             "Expected all dimensions to match, except for the first.".format(
-                jtmp.size(), module.input0.size()))
+                jtmp.size(), module.input0.size()
+            ),
+        )
 
 
 def check_sizes_output_jac(jmp, module):
     if tuple(jmp.size())[1:] != tuple(module.output_shape)[1:]:
         raise ValueError(
-            "Size after conv does not match", "Got {}, and {}.",
+            "Size after conv does not match",
+            "Got {}, and {}.",
             "Expected all dimensions to match, except for the first.".format(
-                jmp.size(), module.output_shape))
+                jmp.size(), module.output_shape
+            ),
+        )
+
 
 def extract_weight_diagonal(module, input, grad_output):
     """
@@ -59,5 +69,5 @@ def extract_weight_diagonal(module, input, grad_output):
     and grad_output the backpropagated gradient
     """
     grad_output_viewed = separate_channels_and_pixels(module, grad_output)
-    AX = einsum('bkl,bmlc->cbkm', (input, grad_output_viewed))
+    AX = einsum("bkl,bmlc->cbkm", (input, grad_output_viewed))
     return (AX ** 2).sum([0, 1]).transpose(0, 1)

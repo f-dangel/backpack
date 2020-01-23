@@ -6,10 +6,7 @@ from .hbp_options import BackpropStrategy, ExpectationApproximation
 
 class HBPLinear(HBPBaseModule):
     def __init__(self):
-        super().__init__(
-            derivatives=LinearDerivatives(),
-            params=["weight", "bias"]
-        )
+        super().__init__(derivatives=LinearDerivatives(), params=["weight", "bias"])
 
     def weight(self, ext, module, g_inp, g_out, backproped):
         bp_strategy = ext.get_backprop_strategy()
@@ -37,22 +34,18 @@ class HBPLinear(HBPBaseModule):
             mean_input = self.__mean_input(module).unsqueeze(-1)
             return [mean_input, mean_input.transpose()]
         else:
-            yield self.__mean_input_outer(module)
+            return [self.__mean_input_outer(module)]
 
     def _factor_from_sqrt(self, backproped):
-        return [einsum('bic,bjc->ij', (backproped, backproped))]
+        return [einsum("bic,bjc->ij", (backproped, backproped))]
 
     def bias(self, ext, module, g_inp, g_out, backproped):
         bp_strategy = ext.get_backprop_strategy()
 
         if BackpropStrategy.is_batch_average(bp_strategy):
-            return self._bias_for_batch_average(
-                backproped
-            )
+            return self._bias_for_batch_average(backproped)
         elif BackpropStrategy.is_sqrt(bp_strategy):
-            return self._factor_from_sqrt(
-                backproped
-            )
+            return self._factor_from_sqrt(backproped)
 
     def _bias_for_batch_average(self, backproped):
         return [backproped]
@@ -63,15 +56,12 @@ class HBPLinear(HBPBaseModule):
 
     def __mean_input_outer(self, module):
         N, flat_input = self.derivatives.batch_flat(module.input0)
-        return einsum('bi,bj->ij', (flat_input, flat_input)) / N
+        return einsum("bi,bj->ij", (flat_input, flat_input)) / N
 
 
 class HBPLinearConcat(HBPBaseModule):
     def __init__(self):
-        super().__init__(
-            derivatives=LinearConcatDerivatives(),
-            params=["weight"]
-        )
+        super().__init__(derivatives=LinearConcatDerivatives(), params=["weight"])
 
     def weight(self, ext, module, g_inp, g_out, backproped):
         bp_strategy = ext.get_backprop_strategy()
@@ -101,7 +91,7 @@ class HBPLinearConcat(HBPBaseModule):
             return [self.__mean_input_outer(module)]
 
     def _factor_from_sqrt(self, backproped):
-        return [einsum('bic,bjc->ij', (backproped, backproped))]
+        return [einsum("bic,bjc->ij", (backproped, backproped))]
 
     def _bias_for_batch_average(self, backproped):
         return [backproped]
@@ -112,4 +102,4 @@ class HBPLinearConcat(HBPBaseModule):
 
     def __mean_input_outer(self, module):
         N, flat_input = self.derivatives.batch_flat(module.homogeneous_input())
-        return einsum('bi,bj->ij', (flat_input, flat_input)) / N
+        return einsum("bi,bj->ij", (flat_input, flat_input)) / N

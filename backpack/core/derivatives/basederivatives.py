@@ -1,4 +1,4 @@
-class BaseDerivatives():
+class BaseDerivatives:
 
     MC_SAMPLES = 1
 
@@ -21,6 +21,19 @@ class BaseDerivatives():
         raise NotImplementedError
 
     def hessian_is_psd(self):
+        raise NotImplementedError
+
+    def make_residual_mat_prod(self, module, g_inp, g_out):
+        """Return multiplication routine with the residual term.
+
+        The function performs the mapping: mat → [∑_{k} Hz_k(x) 𝛿z_k] mat.
+        (required for extension `curvmatprod`)
+
+        Note:
+        -----
+            This function only has to be implemented if the residual is not
+            zero and not diagonal (for instance, `BatchNorm`).
+        """
         raise NotImplementedError
 
     def batch_flat(self, tensor):
