@@ -7,7 +7,7 @@ from . import linear, conv2d
 
 class BatchL2Grad(BackpropExtension):
     """
-    The L2 norm of individual gradients in the minibatch.
+    The squared L2 norm of individual gradients in the minibatch.
     Is only meaningful is the individual functions are independent (no batchnorm).
 
     Stores the output in :code:`batch_l2`
