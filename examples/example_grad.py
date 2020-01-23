@@ -2,17 +2,14 @@
 
 from torch.nn import CrossEntropyLoss, Flatten, Linear, Sequential
 
-from utils import load_mnist_data
+from backpack.utils.examples import load_mnist_data
 
 B = 4
 X, y = load_mnist_data(B)
 
 print("# Gradient with PyTorch | B =", B)
 
-model = Sequential(
-    Flatten(),
-    Linear(784, 10),
-)
+model = Sequential(Flatten(), Linear(784, 10),)
 lossfunc = CrossEntropyLoss()
 
 loss = lossfunc(model(X), y)
