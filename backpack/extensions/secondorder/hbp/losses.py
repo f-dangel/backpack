@@ -28,7 +28,7 @@ class HBPLoss(HBPBaseModule):
         elif hessian_strategy == LossHessianStrategy.AVERAGE:
             return self.derivatives.sum_hessian
         else:
-            raise ValueError(f"Unknown Hessian strategy: {hessian_strategy}")
+            raise ValueError("Unknown Hessian strategy: {}".format(hessian_strategy))
 
 
 class HBPMSELoss(HBPLoss):
