@@ -1,3 +1,5 @@
+from functools import partial
+
 from backpack.core.derivatives.mseloss import MSELossDerivatives
 from backpack.core.derivatives.crossentropyloss import CrossEntropyLossDerivatives
 from backpack.extensions.secondorder.hbp import LossHessianStrategy
@@ -19,10 +21,12 @@ class DiagGGNLoss(DiagGGNBaseModule):
             return self.derivatives.sqrt_hessian
         elif loss_hessian_strategy == LossHessianStrategy.SAMPLING:
             mc_samples = ext.get_num_mc_samples()
-            return self.derivatives.make_sqrt_hessian_sampled_fn(mc_samples)
+            return partial(self.derivatives.sqrt_hessian_sampled, mc_samples=mc_samples)
+
         else:
             raise ValueError(
-                "Unknown hessian strategy {}".format(loss_hessian_strategy))
+                "Unknown hessian strategy {}".format(loss_hessian_strategy)
+            )
 
 
 class DiagGGNMSELoss(DiagGGNLoss):

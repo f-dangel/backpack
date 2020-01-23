@@ -21,17 +21,18 @@ class MSELossDerivatives(BaseDerivatives):
 
         return sqrt_H
 
-    def make_sqrt_hessian_sampled_fn(self, mc_samples=None):
-        def _sqrt_hessian_sampled_fn(module, g_inp, g_out):
-            return self.sqrt_hessian_sampled(module, g_inp, g_out, mc_samples)
-
-        return _sqrt_hessian_sampled_fn
-
     def sqrt_hessian_sampled(self, module, g_inp, g_out, mc_samples=None):
         """
         Note:
         -----
-        Parameter `mc_samples` will be ignored.
+        The parameter `mc_samples` is ignored.
+        The method always returns the full square root.
+
+        The computational cost between the sampled and full version is the same,
+        so the method always return the more accurate version.
+
+        The cost is the same because the hessian of the loss w.r.t. its inputs
+        for a single sample is one-dimensional.
         """
         warn(
             "[MC Sampling Hessian of MSE loss] "
