@@ -1,4 +1,14 @@
-from torch.nn import Sigmoid, Tanh, ReLU, Dropout, ZeroPad2d, MaxPool2d, Linear, AvgPool2d, Conv2d
+from torch.nn import (
+    Sigmoid,
+    Tanh,
+    ReLU,
+    Dropout,
+    ZeroPad2d,
+    MaxPool2d,
+    Linear,
+    AvgPool2d,
+    Conv2d,
+)
 from backpack.core.layers import LinearConcat, Conv2dConcat
 from .linear import LinearDerivatives, LinearConcatDerivatives
 from .conv2d import Conv2DDerivatives, Conv2DConcatDerivatives
@@ -22,5 +32,5 @@ derivatives_for = {
     Dropout: DropoutDerivatives,
     ReLU: ReLUDerivatives,
     Tanh: TanhDerivatives,
-    Sigmoid: SigmoidDerivatives
+    Sigmoid: SigmoidDerivatives,
 }

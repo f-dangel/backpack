@@ -6,7 +6,7 @@ import unittest
 import torch
 
 import scipy.linalg
-from backpack.extensions.secondorder import utils as bp_utils
+from backpack.utils import kroneckers as bp_utils
 
 
 class KroneckerUtilsTest(unittest.TestCase):

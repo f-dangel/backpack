@@ -1,7 +1,7 @@
 import torch
 import torch.nn.functional as F
 from torch.nn import Module, Linear, Parameter, Conv2d
-from torch import flatten, cat, Tensor, empty
+from torch import cat, empty
 from ...utils.conv import unfold_func
 
 
@@ -13,16 +13,17 @@ class LinearConcat(Module):
     """
     Drop-in replacement for torch.nn.Linear with only one parameter.
     """
+
     def __init__(self, in_features, out_features, bias=True):
         super().__init__()
 
         lin = Linear(in_features, out_features, bias=bias)
 
         if bias:
-            self.weight = Parameter(
-                empty(size=(out_features, in_features + 1)))
+            self.weight = Parameter(empty(size=(out_features, in_features + 1)))
             self.weight.data = cat(
-                [lin.weight.data, lin.bias.data.unsqueeze(-1)], dim=1)
+                [lin.weight.data, lin.bias.data.unsqueeze(-1)], dim=1
+            )
         else:
             self.weight = Parameter(empty(size=(out_features, in_features)))
             self.weight.data = lin.weight.data
@@ -63,17 +64,20 @@ class Conv2dConcat(Module):
     """
     Drop-in replacement for torch.nn.Conv2d with only one parameter.
     """
-    def __init__(self,
-                 in_channels,
-                 out_channels,
-                 kernel_size,
-                 stride=1,
-                 padding=0,
-                 dilation=1,
-                 groups=1,
-                 bias=True,
-                 padding_mode="zeros"):
-        assert padding_mode is "zeros"
+
+    def __init__(
+        self,
+        in_channels,
+        out_channels,
+        kernel_size,
+        stride=1,
+        padding=0,
+        dilation=1,
+        groups=1,
+        bias=True,
+        padding_mode="zeros",
+    ):
+        assert padding_mode == "zeros"
         assert groups == 1
 
         super().__init__()
@@ -87,7 +91,8 @@ class Conv2dConcat(Module):
             dilation=dilation,
             groups=groups,
             bias=bias,
-            padding_mode=padding_mode)
+            padding_mode=padding_mode,
+        )
 
         self._KERNEL_SHAPE = conv.weight.shape
 
@@ -125,7 +130,8 @@ class Conv2dConcat(Module):
             stride=self.stride,
             padding=self.padding,
             dilation=self.dilation,
-            groups=self.groups)
+            groups=self.groups,
+        )
 
     def has_bias(self):
         return self.__bias is True
@@ -143,13 +149,12 @@ class Conv2dConcat(Module):
         return torch.cat([input, ones], dim=1)
 
     def _slice_weight(self):
-        return self.weight.narrow(1, 0,
-                                  self.weight.size(1) - 1).view(
-                                      self._KERNEL_SHAPE)
+        return self.weight.narrow(1, 0, self.weight.size(1) - 1).view(
+            self._KERNEL_SHAPE
+        )
 
     def _slice_bias(self):
         if not self.has_bias():
             return None
         else:
-            return self.weight.narrow(1,
-                                      self.weight.size(1) - 1, 1).squeeze(-1)
+            return self.weight.narrow(1, self.weight.size(1) - 1, 1).squeeze(-1)

@@ -12,10 +12,10 @@ def L_op(ys, xs, ws, retain_graph=True, detach=True):
         grad_outputs=ws,
         create_graph=True,
         retain_graph=retain_graph,
-        allow_unused=True
+        allow_unused=True,
     )
     if detach:
-        return tuple([j.detach() for j in vJ])
+        return tuple(j.detach() for j in vJ)
     else:
         return vJ
 

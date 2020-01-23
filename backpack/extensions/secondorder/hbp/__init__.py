@@ -1,17 +1,38 @@
 from backpack.extensions.curvature import Curvature
 from backpack.extensions.secondorder.hbp.hbp_options import (
-    LossHessianStrategy, BackpropStrategy, ExpectationApproximation
+    LossHessianStrategy,
+    BackpropStrategy,
+    ExpectationApproximation,
 )
 from backpack.extensions.backprop_extension import BackpropExtension
 
 from backpack.core.layers import Conv2dConcat, LinearConcat
-from torch.nn import (Linear, Conv2d, Dropout, MaxPool2d, Tanh, Sigmoid, ReLU,
-                      CrossEntropyLoss, MSELoss, AvgPool2d, ZeroPad2d, Flatten)
+from torch.nn import (
+    Linear,
+    Conv2d,
+    Dropout,
+    MaxPool2d,
+    Tanh,
+    Sigmoid,
+    ReLU,
+    CrossEntropyLoss,
+    MSELoss,
+    AvgPool2d,
+    ZeroPad2d,
+    Flatten,
+)
 from . import pooling, conv2d, linear, activations, losses, padding, dropout, flatten
 
 
 class HBP(BackpropExtension):
-    def __init__(self, curv_type, loss_hessian_strategy, backprop_strategy, ea_strategy, savefield="hbp"):
+    def __init__(
+        self,
+        curv_type,
+        loss_hessian_strategy,
+        backprop_strategy,
+        ea_strategy,
+        savefield="hbp",
+    ):
         self.curv_type = curv_type
         self.loss_hessian_strategy = loss_hessian_strategy
         self.backprop_strategy = backprop_strategy
@@ -35,7 +56,7 @@ class HBP(BackpropExtension):
                 ReLU: activations.HBPReLU(),
                 Sigmoid: activations.HBPSigmoid(),
                 Tanh: activations.HBPTanh(),
-            }
+            },
         )
 
     def get_curv_type(self):
@@ -84,13 +105,16 @@ class KFAC(HBP):
       <http://proceedings.mlr.press/v48/grosse16.html>`_
       by Roger Grosse and James Martens, 2016
     """
+
     def __init__(self, mc_samples=1):
         self._mc_samples = mc_samples
-        super().__init__(curv_type=Curvature.GGN,
-                         loss_hessian_strategy=LossHessianStrategy.SAMPLING,
-                         backprop_strategy=BackpropStrategy.SQRT,
-                         ea_strategy=ExpectationApproximation.BOTEV_MARTENS,
-                         savefield="kfac")
+        super().__init__(
+            curv_type=Curvature.GGN,
+            loss_hessian_strategy=LossHessianStrategy.SAMPLING,
+            backprop_strategy=BackpropStrategy.SQRT,
+            ea_strategy=ExpectationApproximation.BOTEV_MARTENS,
+            savefield="kfac",
+        )
 
     def get_num_mc_samples(self):
         return self._mc_samples

@@ -1,4 +1,4 @@
-class Implementation():
+class Implementation:
     def __init__(self, test_problem, device=None):
         self.problem = test_problem
         self.model = self.problem.model

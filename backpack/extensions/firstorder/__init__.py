@@ -17,4 +17,4 @@ from .batch_grad import BatchGrad
 from .sum_grad_squared import SumGradSquared
 from .variance import Variance
 
-
+__all__ = ["BatchL2Grad", "BatchGrad", "SumGradSquared", "Variance"]

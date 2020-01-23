@@ -1,0 +1,18 @@
+repos:
+- repo: https://github.com/psf/black
+  rev: stable
+  hooks:
+    - id: black
+      args: [--config=black.toml]
+- repo: https://gitlab.com/pycqa/flake8
+  rev: '3.7.9'
+  hooks:
+    - id: flake8
+      additional_dependencies: [
+        mccabe,
+        pycodestyle,
+        pyflakes,
+        pep8-naming,
+        flake8-bugbear,
+        flake8-comprehensions,
+      ]

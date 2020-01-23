@@ -1,10 +1,10 @@
 from warnings import warn
 from math import sqrt
-from torch import diag_embed, ones_like, randn, diag, ones
+from torch import diag_embed, ones_like, diag, ones
 from torch.nn import MSELoss
 from .basederivatives import BaseDerivatives
 
-from .utils import hmp_unsqueeze_if_missing_dim
+from backpack.utils.unsqueeze import hmp_unsqueeze_if_missing_dim
 
 
 class MSELossDerivatives(BaseDerivatives):
@@ -16,7 +16,7 @@ class MSELossDerivatives(BaseDerivatives):
 
         sqrt_H = diag_embed(sqrt(2) * ones_like(module.input0))
 
-        if module.reduction is "mean":
+        if module.reduction == "mean":
             sqrt_H /= sqrt(module.input0.shape[0])
 
         return sqrt_H
@@ -34,10 +34,10 @@ class MSELossDerivatives(BaseDerivatives):
         Parameter `mc_samples` will be ignored.
         """
         warn(
-            "[MC Sampling Hessian of MSE loss] " +
-            "Returning the symmetric factorization of the full Hessian " +
-            "(same computation cost)",
-            UserWarning
+            "[MC Sampling Hessian of MSE loss] "
+            + "Returning the symmetric factorization of the full Hessian "
+            + "(same computation cost)",
+            UserWarning,
         )
         return self.sqrt_hessian(module, g_inp, g_out)
 
@@ -46,10 +46,9 @@ class MSELossDerivatives(BaseDerivatives):
 
         batch = module.input0_shape[0]
         num_features = module.input0.numel() // batch
-        sum_H = 2 * batch * diag(
-            ones(num_features, device=module.input0.device))
+        sum_H = 2 * batch * diag(ones(num_features, device=module.input0.device))
 
-        if module.reduction is "mean":
+        if module.reduction == "mean":
             sum_H /= module.input0.shape[0]
         print("sum H ", sum_H.shape)
         return sum_H
@@ -61,7 +60,7 @@ class MSELossDerivatives(BaseDerivatives):
         def hmp(mat):
             Hmat = 2 * mat
 
-            if module.reduction is "mean":
+            if module.reduction == "mean":
                 Hmat /= module.input0.shape[0]
 
             return Hmat
@@ -70,8 +69,7 @@ class MSELossDerivatives(BaseDerivatives):
 
     def check_input_dims(self, module):
         if not len(module.input0.shape) == 2:
-            raise ValueError(
-                "Only 2D inputs are currently supported for MSELoss.")
+            raise ValueError("Only 2D inputs are currently supported for MSELoss.")
 
     def hessian_is_psd(self):
         return True

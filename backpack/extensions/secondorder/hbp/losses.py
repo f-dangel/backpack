@@ -7,8 +7,9 @@ from .hbpbase import HBPBaseModule
 
 class HBPLoss(HBPBaseModule):
     def backpropagate(self, ext, module, g_inp, g_out, backproped):
-        Curvature.check_loss_hessian(self.derivatives.hessian_is_psd(),
-                                     curv_type=ext.get_curv_type())
+        Curvature.check_loss_hessian(
+            self.derivatives.hessian_is_psd(), curv_type=ext.get_curv_type()
+        )
 
         H_func = self.make_loss_hessian_func(ext)
         H_loss = H_func(module, g_inp, g_out)

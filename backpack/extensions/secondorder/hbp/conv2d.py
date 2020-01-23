@@ -1,9 +1,6 @@
-import warnings
-
-from backpack.core.derivatives.conv2d import (Conv2DConcatDerivatives,
-                                              Conv2DDerivatives)
+from backpack.core.derivatives.conv2d import Conv2DConcatDerivatives, Conv2DDerivatives
 from backpack.utils import conv as convUtils
-from backpack.utils.utils import einsum
+from backpack.utils.einsum import einsum
 
 from .hbp_options import BackpropStrategy, ExpectationApproximation
 from .hbpbase import HBPBaseModule
@@ -11,8 +8,7 @@ from .hbpbase import HBPBaseModule
 
 class HBPConv2d(HBPBaseModule):
     def __init__(self):
-        super().__init__(derivatives=Conv2DDerivatives(),
-                         params=["weight", "bias"])
+        super().__init__(derivatives=Conv2DDerivatives(), params=["weight", "bias"])
 
     def weight(self, ext, module, g_inp, g_out, backproped):
         bp_strategy = ext.get_backprop_strategy()
@@ -43,13 +39,13 @@ class HBPConv2d(HBPBaseModule):
         if ExpectationApproximation.should_average_param_jac(ea_strategy):
             raise NotImplementedError("Undefined")
         else:
-            yield einsum('bik,bjk->ij', (X, X)) / batch
+            yield einsum("bik,bjk->ij", (X, X)) / batch
 
     def _factor_from_sqrt(self, module, backproped):
         sqrt_ggn = backproped
         sqrt_ggn = convUtils.separate_channels_and_pixels(module, sqrt_ggn)
-        sqrt_ggn = einsum('bijc->bic', (sqrt_ggn, ))
-        return einsum('bic,blc->il', (sqrt_ggn, sqrt_ggn))
+        sqrt_ggn = einsum("bijc->bic", (sqrt_ggn,))
+        return einsum("bic,blc->il", (sqrt_ggn, sqrt_ggn))
 
     def bias(self, ext, module, g_inp, g_out, backproped):
         bp_strategy = ext.get_backprop_strategy()
@@ -70,15 +66,13 @@ class HBPConv2d(HBPBaseModule):
         _, out_c, out_x, out_y = module.output.size()
         out_pixels = out_x * out_y
         # sum over spatial coordinates
-        result = backproped.view(out_c, out_pixels, out_c,
-                                 out_pixels).sum([1, 3])
+        result = backproped.view(out_c, out_pixels, out_c, out_pixels).sum([1, 3])
         return result.contiguous()
 
 
 class HBPConv2dConcat(HBPBaseModule):
     def __init__(self):
-        super().__init__(derivatives=Conv2DConcatDerivatives(),
-                         params=["weight"])
+        super().__init__(derivatives=Conv2DConcatDerivatives(), params=["weight"])
 
     def weight(self, ext, module, g_inp, g_out, backproped):
         bp_strategy = ext.get_backprop_strategy()
@@ -103,13 +97,13 @@ class HBPConv2dConcat(HBPBaseModule):
         if ExpectationApproximation.should_average_param_jac(ea_strategy):
             raise NotImplementedError
         else:
-            yield einsum('bik,bjk->ij', (X, X)) / batch
+            yield einsum("bik,bjk->ij", (X, X)) / batch
 
     def _factor_from_sqrt(self, module, backproped):
         sqrt_ggn = backproped
         sqrt_ggn = convUtils.separate_channels_and_pixels(module, sqrt_ggn)
-        sqrt_ggn = einsum('bijc->bic', (sqrt_ggn, ))
-        return einsum('bic,blc->il', (sqrt_ggn, sqrt_ggn))
+        sqrt_ggn = einsum("bijc->bic", (sqrt_ggn,))
+        return einsum("bic,blc->il", (sqrt_ggn, sqrt_ggn))
 
 
 EXTENSIONS = [HBPConv2d(), HBPConv2dConcat()]

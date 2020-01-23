@@ -1,14 +1,12 @@
-import warnings
-
 import torch
 from torch.nn import Conv2d
 from torch.nn.functional import conv2d, conv_transpose2d
 
 from ...core.layers import Conv2dConcat
 from ...utils import conv as convUtils
-from ...utils.utils import einsum, random_psd_matrix
+from ...utils.einsum import einsum
 from .basederivatives import BaseDerivatives
-from .utils import jmp_unsqueeze_if_missing_dim
+from backpack.utils.unsqueeze import jmp_unsqueeze_if_missing_dim
 
 
 class Conv2DDerivatives(BaseDerivatives):
@@ -36,10 +34,11 @@ class Conv2DDerivatives(BaseDerivatives):
 
         # 1) apply conv_transpose to multiply with W^T
         result = mat.view(out_c, out_x, out_y, out_features)
-        result = einsum('cxyf->fcxy', (result, ))
+        result = einsum("cxyf->fcxy", (result,))
         # result: W^T mat
         result = self.__apply_jacobian_t_of(module, result).view(
-            out_features, in_features)
+            out_features, in_features
+        )
 
         # 2) transpose: mat^T W
         result = result.t()
@@ -62,17 +61,19 @@ class Conv2DDerivatives(BaseDerivatives):
         return self.__reshape_for_matmul(jmp_as_conv, module)
 
     def __apply_jacobian_of(self, module, mat):
-        return conv2d(mat,
-                      self.get_weight_data(module),
-                      stride=module.stride,
-                      padding=module.padding,
-                      dilation=module.dilation,
-                      groups=module.groups)
+        return conv2d(
+            mat,
+            self.get_weight_data(module),
+            stride=module.stride,
+            padding=module.padding,
+            dilation=module.dilation,
+            groups=module.groups,
+        )
 
     def __reshape_for_conv_in(self, bmat, module):
         batch, in_channels, in_x, in_y = module.input0.size()
         num_classes = bmat.size(2)
-        bmat = einsum('boc->cbo', (bmat, )).contiguous()
+        bmat = einsum("boc->cbo", (bmat,)).contiguous()
         bmat = bmat.view(num_classes * batch, in_channels, in_x, in_y)
         return bmat
 
@@ -80,7 +81,7 @@ class Conv2DDerivatives(BaseDerivatives):
         batch = module.output_shape[0]
         out_features = torch.prod(module.output_shape) / batch
         bconv = bconv.view(-1, batch, out_features)
-        bconv = einsum('cbi->bic', (bconv, ))
+        bconv = einsum("cbi->bic", (bconv,))
         return bconv
 
     # Transposed Jacobian-matrix product
@@ -97,7 +98,7 @@ class Conv2DDerivatives(BaseDerivatives):
         batch, out_channels, out_x, out_y = module.output_shape
         num_classes = bmat.size(2)
 
-        bmat = einsum('boc->cbo', (bmat, )).contiguous()
+        bmat = einsum("boc->cbo", (bmat,)).contiguous()
         bmat = bmat.view(num_classes * batch, out_channels, out_x, out_y)
         return bmat
 
@@ -105,16 +106,18 @@ class Conv2DDerivatives(BaseDerivatives):
         batch = module.output_shape[0]
         in_features = module.input0.numel() / batch
         bconv = bconv.view(-1, batch, in_features)
-        bconv = einsum('cbi->bic', (bconv, ))
+        bconv = einsum("cbi->bic", (bconv,))
         return bconv
 
     def __apply_jacobian_t_of(self, module, mat):
-        return conv_transpose2d(mat,
-                                self.get_weight_data(module),
-                                stride=module.stride,
-                                padding=module.padding,
-                                dilation=module.dilation,
-                                groups=module.groups)
+        return conv_transpose2d(
+            mat,
+            self.get_weight_data(module),
+            stride=module.stride,
+            padding=module.padding,
+            dilation=module.dilation,
+            groups=module.groups,
+        )
 
     # TODO: Improve performance
     @jmp_unsqueeze_if_missing_dim(mat_dim=2)
@@ -147,17 +150,12 @@ class Conv2DDerivatives(BaseDerivatives):
         jac_mat = jac_mat.expand(batch, out_channels, -1, -1)
 
         X = self.get_unfolded_input(module)
-        jac_mat = einsum('bij,bkic->bkjc', (X, jac_mat)).contiguous()
+        jac_mat = einsum("bij,bkic->bkjc", (X, jac_mat)).contiguous()
         jac_mat = jac_mat.view(batch, out_features, num_cols)
         return jac_mat
 
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
-    def __weight_jac_t_mat_prod2(self,
-                                 module,
-                                 g_inp,
-                                 g_out,
-                                 mat,
-                                 sum_batch=True):
+    def __weight_jac_t_mat_prod2(self, module, g_inp, g_out, mat, sum_batch=True):
         """Intuitive, using unfold operation."""
         batch, out_channels, out_x, out_y = module.output_shape
         _, in_channels, in_x, in_y = module.input0.shape
@@ -165,7 +163,7 @@ class Conv2DDerivatives(BaseDerivatives):
 
         jac_t_mat = mat.view(batch, out_channels, -1, num_cols)
 
-        equation = 'bij,bkjc->kic' if sum_batch is True else 'bij,bkjc->bkic'
+        equation = "bij,bkjc->kic" if sum_batch is True else "bij,bkjc->bkic"
 
         X = self.get_unfolded_input(module)
         jac_t_mat = einsum(equation, (X, jac_t_mat)).contiguous()
@@ -185,32 +183,42 @@ class Conv2DDerivatives(BaseDerivatives):
         num_cols = mat.shape[-1]
 
         mat = mat.view(batch, out_channels, out_x, out_y, num_cols)
-        mat = einsum('boxyc->cboxy',
-                     (mat, )).contiguous().view(num_cols * batch, out_channels,
-                                                out_x, out_y)
+        mat = (
+            einsum("boxyc->cboxy", (mat,))
+            .contiguous()
+            .view(num_cols * batch, out_channels, out_x, out_y)
+        )
 
         mat = mat.repeat(1, in_channels, 1, 1)
-        mat = mat.view(num_cols * batch * out_channels * in_channels, 1, out_x,
-                       out_y)
+        mat = mat.view(num_cols * batch * out_channels * in_channels, 1, out_x, out_y)
 
         input = module.input0.view(1, -1, in_x, in_y).repeat(1, num_cols, 1, 1)
 
-        grad_weight = conv2d(input, mat, None, module.dilation, module.padding,
-                             module.stride, in_channels * batch * num_cols)
+        grad_weight = conv2d(
+            input,
+            mat,
+            None,
+            module.dilation,
+            module.padding,
+            module.stride,
+            in_channels * batch * num_cols,
+        )
 
-        grad_weight = grad_weight.view(num_cols, batch,
-                                       out_channels * in_channels, k_x, k_y)
+        grad_weight = grad_weight.view(
+            num_cols, batch, out_channels * in_channels, k_x, k_y
+        )
         if sum_batch is True:
             grad_weight = grad_weight.sum(1)
             batch = 1
 
-        grad_weight = grad_weight.view(num_cols, batch, in_channels,
-                                       out_channels, k_x, k_y)
-        grad_weight = einsum('cbmnxy->bnmxyc', grad_weight).contiguous()
+        grad_weight = grad_weight.view(
+            num_cols, batch, in_channels, out_channels, k_x, k_y
+        )
+        grad_weight = einsum("cbmnxy->bnmxyc", grad_weight).contiguous()
 
-        grad_weight = grad_weight.view(batch,
-                                       in_channels * out_channels * k_x * k_y,
-                                       num_cols)
+        grad_weight = grad_weight.view(
+            batch, in_channels * out_channels * k_x * k_y, num_cols
+        )
 
         if sum_batch is True:
             grad_weight = grad_weight.squeeze(0)
@@ -239,21 +247,17 @@ class Conv2DConcatDerivatives(Conv2DDerivatives):
     # override
     @jmp_unsqueeze_if_missing_dim(mat_dim=3)
     def weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
-        weight_part = super().weight_jac_t_mat_prod(module,
-                                                    g_inp,
-                                                    g_out,
-                                                    mat,
-                                                    sum_batch=sum_batch)
+        weight_part = super().weight_jac_t_mat_prod(
+            module, g_inp, g_out, mat, sum_batch=sum_batch
+        )
 
         if not module.has_bias():
             return weight_part
 
         else:
-            bias_part = super().bias_jac_t_mat_prod(module,
-                                                    g_inp,
-                                                    g_out,
-                                                    mat,
-                                                    sum_batch=sum_batch)
+            bias_part = super().bias_jac_t_mat_prod(
+                module, g_inp, g_out, mat, sum_batch=sum_batch
+            )
 
             batch = 1 if sum_batch is True else self.get_batch(module)
             num_cols = mat.size(2)

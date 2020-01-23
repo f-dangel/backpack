@@ -1,6 +1,6 @@
 import torch
 import torch.nn
-from backpack.utils.utils import einsum
+from backpack.utils.einsum import einsum
 from backpack.utils import conv as convUtils
 from backpack.core.derivatives.conv2d import Conv2DDerivatives, Conv2DConcatDerivatives
 from .diag_h_base import DiagHBaseModule
@@ -16,10 +16,8 @@ class DiagHConv2d(DiagHBaseModule):
 
         h_diag = torch.zeros_like(module.bias)
         for h_sqrt, sign in zip(sqrt_h_outs, sqrt_h_outs_signs):
-            h_sqrt_view = convUtils.separate_channels_and_pixels(
-                module, h_sqrt)
-            h_diag.add_(sign * einsum('bijc,bikc->i',
-                                      (h_sqrt_view, h_sqrt_view)))
+            h_sqrt_view = convUtils.separate_channels_and_pixels(module, h_sqrt)
+            h_diag.add_(sign * einsum("bijc,bikc->i", (h_sqrt_view, h_sqrt_view)))
         return h_diag
 
     def weight(self, ext, module, g_inp, g_out, backproped):

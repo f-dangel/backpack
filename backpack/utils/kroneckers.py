@@ -1,5 +1,5 @@
-from backpack.core.derivatives.utils import kfacmp_unsqueeze_if_missing_dim
-from backpack.utils.utils import einsum
+from backpack.utils.unsqueeze import kfacmp_unsqueeze_if_missing_dim
+from backpack.utils.einsum import einsum
 
 
 def kfacs_to_mat(factors):
@@ -130,7 +130,7 @@ def kfac_mat_prod_einsum_equation(num_factors):
 
 
 def all_tensors_of_order(order, tensors):
-    return all([is_tensor_of_order(order, t) for t in tensors])
+    return all(is_tensor_of_order(order, t) for t in tensors)
 
 
 def is_tensor_of_order(order, tensor):

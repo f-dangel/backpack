@@ -2,9 +2,10 @@ from torch import randn
 from torch.nn import ZeroPad2d
 from backpack import extend
 
+
 def data(device="cpu"):
     N, C, Hin, Win = 100, 10, 32, 32
-    padding = [1,2,3,4]
+    padding = [1, 2, 3, 4]
     Hout = Hin + padding[2] + padding[3]
     Wout = Win + padding[0] + padding[1]
 

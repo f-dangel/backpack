@@ -27,6 +27,7 @@ def data_conv2d(device="cpu"):
         "vin_bp": vin.view(N, -1, 1),
     }
 
+
 def data_conv2dconcat(device="cpu"):
     N, Cin, Hin, Win = 100, 10, 32, 32
     Cout, KernelH, KernelW = 25, 5, 5

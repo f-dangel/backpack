@@ -1,4 +1,4 @@
-from backpack.utils.utils import einsum
+from backpack.utils.einsum import einsum
 from backpack.extensions.firstorder.base import FirstOrderModuleExtension
 
 
@@ -10,7 +10,7 @@ class SGSLinear(FirstOrderModuleExtension):
         return (g_out[0] ** 2).sum(0)
 
     def weight(self, ext, module, g_inp, g_out, backproped):
-        return einsum('bi,bj->ij', (g_out[0] ** 2, module.input0 ** 2))
+        return einsum("bi,bj->ij", (g_out[0] ** 2, module.input0 ** 2))
 
 
 class SGSLinearConcat(FirstOrderModuleExtension):
@@ -19,4 +19,4 @@ class SGSLinearConcat(FirstOrderModuleExtension):
 
     def weight(self, ext, module, g_inp, g_out, backproped):
         input = module.homogeneous_input()
-        return einsum('bi,bj->ij', (g_out[0] ** 2, input ** 2))
+        return einsum("bi,bj->ij", (g_out[0] ** 2, input ** 2))

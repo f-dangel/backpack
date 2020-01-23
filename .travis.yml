@@ -4,12 +4,14 @@ python:
 - '3.7'
 install:
 - pip install -r requirements.txt
-- pip install -r requirements-dev.txt
+- pip install -r requirements/test.txt
 - pip install .
 cache:
 - pip
 script:
-- pytest -vx .
+- pytest -vx --cov=backpack/ .
+after_success:
+- coveralls
 notifications:
   email: false
   slack:

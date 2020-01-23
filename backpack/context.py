@@ -1,23 +1,10 @@
-import warnings
-
-
-def get_from_ctx(name):
-    value = CTX.backproped_quantities.get(name, None)
-    if value is None:
-        warnings.warn("The attribute {} does not exist in CTX".format(name))
-    return value
-
-
-def set_in_ctx(name, value):
-    CTX.backproped_quantities[name] = value
-
-
 class CTX:
     """
     Global Class holding the configuration of the backward pass
     """
+
     active_exts = tuple()
-    backproped_quantities = {}
+    debug = False
 
     @staticmethod
     def set_active_exts(active_exts):
@@ -42,6 +29,16 @@ class CTX:
         CTX.hook_handles = []
 
     @staticmethod
-    def clear():
-        del CTX.backproped_quantities
-        CTX.backproped_quantities = {}
+    def is_extension_active(extension_class):
+        for backpack_ext in CTX.get_active_exts():
+            if isinstance(backpack_ext, extension_class):
+                return True
+        return False
+
+    @staticmethod
+    def get_debug():
+        return CTX.debug
+
+    @staticmethod
+    def set_debug(debug):
+        CTX.debug = debug

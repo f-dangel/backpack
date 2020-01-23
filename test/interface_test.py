@@ -52,10 +52,7 @@ forward_func, weights, bias = dummy_forward_pass()
 forward_func_conv, weights_conv, bias_conv = dummy_forward_pass_conv()
 
 
-def interface_test(feature,
-                   weight_has_attr=True,
-                   bias_has_attr=True,
-                   use_conv=False):
+def interface_test(feature, weight_has_attr=True, bias_has_attr=True, use_conv=False):
     if use_conv:
         f, ws, bs = forward_func_conv, weights_conv, bias_conv
     else:

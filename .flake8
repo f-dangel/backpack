@@ -1,0 +1,40 @@
+[flake8]
+select = B,C,E,F,P,W,B9
+max-line-length = 80
+max-complexity = 10
+ignore =
+	# replaced by B950 (max-line-length + 10%)
+	E501, # max-line-length
+	# ignored because pytorch uses dict
+	C408, # use {} instead of dict()
+	# Not Black-compatible
+	E203, # whitespace before :
+	E231, # missing whitespace after ','
+	W291, # trailing whitespace
+	W503, # line break before binary operator
+	W504, # line break after binary operator
+exclude = docs, docs_src, build, .git
+
+
+# Differences with pytorch
+#
+# 	Smaller max-line-length
+# 	Enabled max-complexity
+#	No flake8-mypy (T4 range)
+#
+# Set of rules ignore by pytorch, probably to get around the C
+#
+#	F401 (import unused in __init__.py) not ignored
+#   F403 'from module import *' used; unable to detect undefined names
+#   F405 Name may be undefined, or defined from star imports: module
+#   F821 Undefined name name
+#   F841 Local variable name is assigned to but never used
+#
+# Pytorch ignored rules that I don't see a reason to ignore (yet?):
+#
+#   E305 Expected 2 blank lines after end of function or class
+#   E402 Module level import not at top of file
+#   E721 Do not compare types, use 'isinstance()'
+#   E741 Do not use variables named 'l', 'o', or 'i'
+#   E302 Expected 2 blank lines, found 0
+#	E303 Too many blank lines (3)

@@ -1,14 +1,13 @@
 from math import sqrt
-from warnings import warn
 
-from torch import diag, diag_embed, multinomial, ones_like, randn, softmax
+from torch import diag, diag_embed, multinomial, ones_like, softmax
 from torch import sqrt as torchsqrt
 from torch.nn import CrossEntropyLoss
 from torch.nn.functional import one_hot
 
-from ...utils.utils import einsum
+from ...utils.einsum import einsum
 from .basederivatives import BaseDerivatives
-from .utils import hmp_unsqueeze_if_missing_dim
+from backpack.utils.unsqueeze import hmp_unsqueeze_if_missing_dim
 
 
 class CrossEntropyLossDerivatives(BaseDerivatives):
@@ -19,10 +18,10 @@ class CrossEntropyLossDerivatives(BaseDerivatives):
         probs = self.get_probs(module)
         tau = torchsqrt(probs)
         Id = diag_embed(ones_like(probs))
-        Id_tautau = Id - einsum('ni,nj->nij', tau, tau)
-        sqrt_H = einsum('ni,nij->nij', tau, Id_tautau)
+        Id_tautau = Id - einsum("ni,nj->nij", tau, tau)
+        sqrt_H = einsum("ni,nij->nij", tau, Id_tautau)
 
-        if module.reduction is "mean":
+        if module.reduction == "mean":
             sqrt_H /= sqrt(module.input0.shape[0])
 
         return sqrt_H
@@ -45,16 +44,16 @@ class CrossEntropyLossDerivatives(BaseDerivatives):
 
         sqrt_mc_h = (probs_unsqueezed - classes) / sqrt(M)
 
-        if module.reduction is "mean":
+        if module.reduction == "mean":
             sqrt_mc_h /= sqrt(module.input0.shape[0])
 
         return sqrt_mc_h
 
     def sum_hessian(self, module, g_inp, g_out):
         probs = self.get_probs(module)
-        sum_H = diag(probs.sum(0)) - einsum('bi,bj->ij', (probs, probs))
+        sum_H = diag(probs.sum(0)) - einsum("bi,bj->ij", (probs, probs))
 
-        if module.reduction is "mean":
+        if module.reduction == "mean":
             sum_H /= module.input0.shape[0]
 
         return sum_H
@@ -65,11 +64,11 @@ class CrossEntropyLossDerivatives(BaseDerivatives):
 
         @hmp_unsqueeze_if_missing_dim(mat_dim=3)
         def hmp(mat):
-            Hmat = einsum('bi,bic->bic',
-                          (probs, mat)) - einsum('bi,bj,bjc->bic',
-                                                 (probs, probs, mat))
+            Hmat = einsum("bi,bic->bic", (probs, mat)) - einsum(
+                "bi,bj,bjc->bic", (probs, probs, mat)
+            )
 
-            if module.reduction is "mean":
+            if module.reduction == "mean":
                 Hmat /= module.input0.shape[0]
 
             return Hmat

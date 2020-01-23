@@ -5,5 +5,6 @@ from .base import GradBaseModule
 
 class GradBatchNorm1d(GradBaseModule):
     def __init__(self):
-        super().__init__(derivatives=BatchNorm1dDerivatives(),
-                         params=["bias", "weight"])
+        super().__init__(
+            derivatives=BatchNorm1dDerivatives(), params=["bias", "weight"]
+        )
