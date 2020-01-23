@@ -10,7 +10,7 @@ from backpack.hessianfree.ggnvp import ggn_vector_product
 from backpack.utils.convert_parameters import vector_to_parameter_list
 from utils import load_mnist_data
 
-B = 64
+B = 4
 X, y = load_mnist_data(B)
 
 print("# GGN-vector product and gradients with PyTorch | B =", B)
