@@ -158,7 +158,7 @@ class KFRA(HBP):
     def __init__(self):
         super().__init__(
             curv_type=Curvature.GGN,
-            loss_hessian_strategy=LossHessianStrategy.AVERAGE,
+            loss_hessian_strategy=LossHessianStrategy.SUM,
             backprop_strategy=BackpropStrategy.BATCH_AVERAGE,
             ea_strategy=ExpectationApproximation.BOTEV_MARTENS,
             savefield="kfra",

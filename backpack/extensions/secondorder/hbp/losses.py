@@ -27,7 +27,7 @@ class HBPLoss(HBPBaseModule):
         elif hessian_strategy == LossHessianStrategy.SAMPLING:
             mc_samples = ext.get_num_mc_samples()
             return partial(self.derivatives.sqrt_hessian_sampled, mc_samples=mc_samples)
-        elif hessian_strategy == LossHessianStrategy.AVERAGE:
+        elif hessian_strategy == LossHessianStrategy.SUM:
             return self.derivatives.sum_hessian
         else:
             raise ValueError("Unknown Hessian strategy: {}".format(hessian_strategy))
