@@ -176,14 +176,5 @@ class AutogradImpl(Implementation):
 
         return torch.cat(ggn_cols, dim=0)
 
-        # for i in range(mat.size(1)):
-        #     col_i = vector_to_parameter_list(mat[:, i], [p])
-
-        #     GGN_col_i = ggn_vector_product_from_plist(loss, out, [p], col_i)
-        #     GGN_col_i = torch.cat([g.detach().view(-1) for g in GGN_col_i])
-        #     ggn_cols.append(GGN_col_i.view(-1, 1))
-
-        # return torch.cat(ggn_cols, dim=1)
-
     def plist_like(self, plist):
         return [torch.zeros(*p.size()).to(self.device) for p in plist]
