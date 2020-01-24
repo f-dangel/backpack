@@ -3,6 +3,9 @@
 .PHONY: install install-dev install-devtools install-test install-lint
 .PHONY: test
 .PHONY: conda-env
+.PHONY: black isort format
+.PHONY: black-check isort-check format-check
+.PHONY: flake8
 
 .DEFAULT: help
 help:
@@ -44,6 +47,20 @@ black-check:
 
 flake8:
 	@flake8 .
+
+isort:
+	@isort
+
+isort-check:
+	@isort --check
+
+format:
+	@make black
+	@make isort
+	@make black-check
+
+format-check: black-check isort-check
+
 
 ###
 # Installation
