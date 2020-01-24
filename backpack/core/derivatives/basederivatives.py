@@ -46,8 +46,6 @@ class BaseDerivatives:
         = 𝜕output[n, c, w, ...] / 𝜕input[̃n, ̃c, ̃w, ...]
     """
 
-    MC_SAMPLES = 1
-
     @jac_mat_prod_accept_vectors
     @jac_mat_prod_check_shapes
     def jac_mat_prod(self, module, g_inp, g_out, mat):
@@ -297,11 +295,11 @@ class BaseLossDerivatives(BaseDerivatives):
         raise NotImplementedError
 
     # TODO Add shape check
-    def sqrt_hessian_sampled(self, module, g_inp, g_out):
+    def sqrt_hessian_sampled(self, module, g_inp, g_out, mc_samples=1):
         """Monte-Carlo sampled symmetric factorization of the loss Hessian."""
-        return self._sqrt_hessian_sampled(module, g_inp, g_out)
+        return self._sqrt_hessian_sampled(module, g_inp, g_out, mc_samples=mc_samples)
 
-    def _sqrt_hessian_sampled(self, module, g_inp, g_out):
+    def _sqrt_hessian_sampled(self, module, g_inp, g_out, mc_samples=1):
         raise NotImplementedError
 
     @make_hessian_mat_prod_accept_vectors

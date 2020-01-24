@@ -117,6 +117,10 @@ class Conv2DDerivatives(BaseParameterDerivatives):
             groups=C_in * N * V,
         ).squeeze(0)
 
+        K_H_axis, K_W_axis = 1, 2
+        _, _, K_H, K_W = module.weight.shape
+        grad_weight = grad_weight.narrow(K_H_axis, 0, K_H).narrow(K_W_axis, 0, K_W)
+
         eingroup_eq = "vnio,x,y->v,{}o,i,x,y".format("" if sum_batch else "n,")
         return eingroup(
             eingroup_eq, grad_weight, dim={"v": V, "n": N, "i": C_in, "o": C_out}

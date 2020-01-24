@@ -1,3 +1,4 @@
+"""Utility functions for examples."""
 import torch
 import torchvision
 

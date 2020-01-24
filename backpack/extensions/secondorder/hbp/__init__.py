@@ -104,7 +104,8 @@ class KFAC(HBP):
       by Roger Grosse and James Martens, 2016
     """
 
-    def __init__(self):
+    def __init__(self, mc_samples=1):
+        self._mc_samples = mc_samples
         super().__init__(
             curv_type=Curvature.GGN,
             loss_hessian_strategy=LossHessianStrategy.SAMPLING,
@@ -112,6 +113,9 @@ class KFAC(HBP):
             ea_strategy=ExpectationApproximation.BOTEV_MARTENS,
             savefield="kfac",
         )
+
+    def get_num_mc_samples(self):
+        return self._mc_samples
 
 
 class KFRA(HBP):
@@ -152,7 +156,7 @@ class KFRA(HBP):
     def __init__(self):
         super().__init__(
             curv_type=Curvature.GGN,
-            loss_hessian_strategy=LossHessianStrategy.AVERAGE,
+            loss_hessian_strategy=LossHessianStrategy.SUM,
             backprop_strategy=BackpropStrategy.BATCH_AVERAGE,
             ea_strategy=ExpectationApproximation.BOTEV_MARTENS,
             savefield="kfra",

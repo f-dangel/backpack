@@ -5,9 +5,9 @@ Compute the gradient with PyTorch and other quantities with BackPACK.
 from torch.nn import CrossEntropyLoss, Flatten, Linear, Sequential
 
 from backpack import backpack, extend, extensions
-from utils import load_mnist_data
+from backpack.utils.examples import load_mnist_data
 
-B = 64
+B = 4
 X, y = load_mnist_data(B)
 
 print("# Gradient with PyTorch, other quantities with BackPACK | B =", B)

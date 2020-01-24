@@ -7,10 +7,12 @@ install:
 - pip install -r requirements.txt
 - pip install -r requirements/test.txt
 - pip install .
+- pip install pillow==6.1.0
 cache:
 - pip
 script:
 - pytest -vx --cov=backpack/ .
+- python examples/run_examples.py
 after_success:
 - coveralls
 notifications:
