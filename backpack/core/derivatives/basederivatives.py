@@ -1,7 +1,4 @@
 class BaseDerivatives:
-
-    MC_SAMPLES = 1
-
     def jac_mat_prod(self, module, g_inp, g_out, mat):
         raise NotImplementedError
 

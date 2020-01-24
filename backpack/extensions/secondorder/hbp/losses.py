@@ -1,3 +1,5 @@
+from functools import partial
+
 from backpack.core.derivatives.mseloss import MSELossDerivatives
 from backpack.core.derivatives.crossentropyloss import CrossEntropyLossDerivatives
 from .hbp_options import LossHessianStrategy
@@ -6,25 +8,29 @@ from .hbpbase import HBPBaseModule
 
 
 class HBPLoss(HBPBaseModule):
-    def __init__(self, derivatives, params=None):
-        super().__init__(derivatives=derivatives, params=params)
-
-        self.LOSS_HESSIAN_GETTERS = {
-            LossHessianStrategy.EXACT: self.derivatives.sqrt_hessian,
-            LossHessianStrategy.SAMPLING: self.derivatives.sqrt_hessian_sampled,
-            LossHessianStrategy.AVERAGE: self.derivatives.sum_hessian,
-        }
-
     def backpropagate(self, ext, module, g_inp, g_out, backproped):
         Curvature.check_loss_hessian(
             self.derivatives.hessian_is_psd(), curv_type=ext.get_curv_type()
         )
 
-        hessian_strategy = ext.get_loss_hessian_strategy()
-        H_func = self.LOSS_HESSIAN_GETTERS[hessian_strategy]
+        H_func = self.make_loss_hessian_func(ext)
         H_loss = H_func(module, g_inp, g_out)
 
         return H_loss
+
+    def make_loss_hessian_func(self, ext):
+        """Get function that produces the backpropagated quantity."""
+        hessian_strategy = ext.get_loss_hessian_strategy()
+
+        if hessian_strategy == LossHessianStrategy.EXACT:
+            return self.derivatives.sqrt_hessian
+        elif hessian_strategy == LossHessianStrategy.SAMPLING:
+            mc_samples = ext.get_num_mc_samples()
+            return partial(self.derivatives.sqrt_hessian_sampled, mc_samples=mc_samples)
+        elif hessian_strategy == LossHessianStrategy.SUM:
+            return self.derivatives.sum_hessian
+        else:
+            raise ValueError("Unknown Hessian strategy: {}".format(hessian_strategy))
 
 
 class HBPMSELoss(HBPLoss):

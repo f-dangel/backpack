@@ -102,7 +102,7 @@ class BpextImpl(Implementation):
     def hbp_with_curv(
         self,
         curv_type,
-        loss_hessian_strategy=LossHessianStrategy.AVERAGE,
+        loss_hessian_strategy=LossHessianStrategy.SUM,
         backprop_strategy=BackpropStrategy.BATCH_AVERAGE,
         ea_strategy=ExpectationApproximation.BOTEV_MARTENS,
     ):

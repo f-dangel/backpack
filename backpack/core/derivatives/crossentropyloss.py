@@ -26,8 +26,8 @@ class CrossEntropyLossDerivatives(BaseDerivatives):
 
         return sqrt_H
 
-    def sqrt_hessian_sampled(self, module, g_inp, g_out):
-        M = self.MC_SAMPLES
+    def sqrt_hessian_sampled(self, module, g_inp, g_out, mc_samples=1):
+        M = mc_samples
         C = module.input0.shape[1]
 
         probs = self.get_probs(module)
