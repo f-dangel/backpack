@@ -26,6 +26,9 @@ from backpack import backpack, extend
 # The diagonal GGN extension
 from backpack.extensions import DiagGGNMC
 
+# Utility function to load the MNIST dataset
+from backpack.utils.examples import download_mnist
+
 # Hyperparameters
 BATCH_SIZE = 64
 STEP_SIZE = 0.01
@@ -41,21 +44,9 @@ We're going to load the MNIST dataset,
 and fit a 3-layer MLP with ReLU activations.
 """
 
-
+mnist_dataset = download_mnist()
 mnist_loader = torch.utils.data.dataloader.DataLoader(
-    torchvision.datasets.MNIST(
-        "./data",
-        train=True,
-        download=True,
-        transform=torchvision.transforms.Compose(
-            [
-                torchvision.transforms.ToTensor(),
-                torchvision.transforms.Normalize((0.1307,), (0.3081,)),
-            ]
-        ),
-    ),
-    batch_size=BATCH_SIZE,
-    shuffle=True,
+    mnist_dataset, batch_size=BATCH_SIZE, shuffle=True
 )
 
 model = torch.nn.Sequential(
