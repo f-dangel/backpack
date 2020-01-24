@@ -54,89 +54,55 @@ def one_more_dim_as(mat, module, name):
     return len(mat.shape) - len(getattr(module, name).shape) == 1
 
 
-def jac_t_mat_prod_accept_vectors(jac_t_mat_prod):
-    """Add support for vectors to Jᵀ-matrix products."""
+shape_like_output = functools.partial(check_like, name="output")
+shape_like_input = functools.partial(check_like, name="input0")
 
-    @functools.wraps(jac_t_mat_prod)
-    def wrapped_jac_t_mat_prod(self, module, g_inp, g_out, mat):
-        is_vec = same_dim_as(mat, module, "output")
+same_dim_as_output = functools.partial(same_dim_as, name="output")
+same_dim_as_input = functools.partial(same_dim_as, name="input0")
+same_dim_as_weight = functools.partial(same_dim_as, name="weight")
+same_dim_as_bias = functools.partial(same_dim_as, name="bias")
 
+
+def mat_prod_accept_vectors(mat_prod, vec_criterion):
+    """Add support for vectors to matrix products.
+
+    vec_criterion(mat, module) returns if mat is a vector.
+    """
+
+    @functools.wraps(mat_prod)
+    def wrapped_mat_prod(self, module, g_inp, g_out, mat, *args, **kwargs):
+        is_vec = vec_criterion(mat, module)
         mat_in = mat if not is_vec else add_V_dim(mat)
-        mat_out = jac_t_mat_prod(self, module, g_inp, g_out, mat_in)
+        mat_out = mat_prod(self, module, g_inp, g_out, mat_in, *args, **kwargs)
         mat_out = mat_out if not is_vec else remove_V_dim(mat_out)
 
         return mat_out
 
-    return wrapped_jac_t_mat_prod
+    return wrapped_mat_prod
 
 
-def _param_jac_t_mat_prod_accept_vectors(jac_t_mat_prod):
-    """Make transpose Jacobian w.r.t. parameter accept vectors."""
+jac_t_mat_prod_accept_vectors = functools.partial(
+    mat_prod_accept_vectors, vec_criterion=same_dim_as_output,
+)
 
-    def jac_t_mat_prod_accept_vectors(jac_t_mat_prod):
-        """Add support for vectors to Jᵀ-matrix products."""
+weight_jac_t_mat_prod_accept_vectors = functools.partial(
+    mat_prod_accept_vectors, vec_criterion=same_dim_as_output,
+)
+bias_jac_t_mat_prod_accept_vectors = functools.partial(
+    mat_prod_accept_vectors, vec_criterion=same_dim_as_output,
+)
 
-        @functools.wraps(jac_t_mat_prod)
-        def wrapped_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
-            is_vec = same_dim_as(mat, module, "output")
+jac_mat_prod_accept_vectors = functools.partial(
+    mat_prod_accept_vectors, vec_criterion=same_dim_as_input,
+)
 
-            mat_in = mat if not is_vec else add_V_dim(mat)
-            mat_out = jac_t_mat_prod(
-                self, module, g_inp, g_out, mat_in, sum_batch=sum_batch
-            )
-            mat_out = mat_out if not is_vec else remove_V_dim(mat_out)
+weight_jac_mat_prod_accept_vectors = functools.partial(
+    mat_prod_accept_vectors, vec_criterion=same_dim_as_weight,
+)
 
-            return mat_out
-
-        return wrapped_jac_t_mat_prod
-
-    return jac_t_mat_prod_accept_vectors(jac_t_mat_prod)
-
-
-def weight_jac_t_mat_prod_accept_vectors(weight_jac_t_mat_prod):
-    """Make transpose Jacobian w.r.t. weight accept vectors."""
-    return _param_jac_t_mat_prod_accept_vectors(weight_jac_t_mat_prod)
-
-
-def bias_jac_t_mat_prod_accept_vectors(bias_jac_t_mat_prod):
-    """Make transpose Jacobian w.r.t. bias accept vectors."""
-    return _param_jac_t_mat_prod_accept_vectors(bias_jac_t_mat_prod)
-
-
-def _param_jac_mat_prod_accept_vectors(jac_mat_prod, param):
-    """Make Jacobian w.r.t. parameter accept vectors."""
-
-    def jac_mat_prod_accept_vectors(jac_mat_prod):
-        """Add support for vectors to J-matrix products."""
-
-        @functools.wraps(jac_mat_prod)
-        def wrapped_jac_mat_prod(self, module, g_inp, g_out, mat):
-            is_vec = same_dim_as(mat, module, param)
-
-            mat_in = mat if not is_vec else add_V_dim(mat)
-            mat_out = jac_mat_prod(self, module, g_inp, g_out, mat_in)
-            mat_out = mat_out if not is_vec else remove_V_dim(mat_out)
-
-            return mat_out
-
-        return wrapped_jac_mat_prod
-
-    return jac_mat_prod_accept_vectors(jac_mat_prod)
-
-
-def jac_mat_prod_accept_vectors(jac_mat_prod):
-    """Make Jacobian w.r.t. input accept vectors."""
-    return _param_jac_mat_prod_accept_vectors(jac_mat_prod, "input0")
-
-
-def weight_jac_mat_prod_accept_vectors(weight_jac_mat_prod):
-    """Make Jacobian w.r.t. weight accept vectors."""
-    return _param_jac_mat_prod_accept_vectors(weight_jac_mat_prod, "weight")
-
-
-def bias_jac_mat_prod_accept_vectors(bias_jac_mat_prod):
-    """Make Jacobian w.r.t. bias accept vectors."""
-    return _param_jac_mat_prod_accept_vectors(bias_jac_mat_prod, "bias")
+bias_jac_mat_prod_accept_vectors = functools.partial(
+    mat_prod_accept_vectors, vec_criterion=same_dim_as_bias,
+)
 
 
 def _param_jac_mat_prod_check_shapes(jac_mat_prod, param):
