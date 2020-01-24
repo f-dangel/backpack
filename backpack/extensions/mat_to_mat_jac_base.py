@@ -12,12 +12,6 @@ class MatToJacMat(ModuleExtension):
 
     def backpropagate(self, ext, module, grad_inp, grad_out, backproped):
 
-        # TODO Need confirmation: Is this an artifact from the Flatten layer?
-        # If so: It is no longer a no-op, so it should be removed
-        if self.derivatives is None:
-            return backproped
-        # end of TODO
-
         if isinstance(backproped, list):
             M_list = [
                 self.derivatives.jac_t_mat_prod(module, grad_inp, grad_out, M)
