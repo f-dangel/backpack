@@ -5,6 +5,9 @@ Helpers to check input and output sizes of Jacobian-matrix products.
 import functools
 
 
+###############################################################################
+#                              Utility functions                              #
+###############################################################################
 def add_V_dim(mat):
     return mat.unsqueeze(0)
 
@@ -42,27 +45,22 @@ def check_same_V_dim(mat1, mat2):
         raise RuntimeError("Number of vectors changed. Got {} and {}".format(V1, V2))
 
 
-def check_like(mat, module, name, diff=1):
+def check_like(mat, module, name, diff=1, *args, **kwargs):
     return check_shape(mat, getattr(module, name), diff=diff)
 
 
-def same_dim_as(mat, module, name):
+def check_like_with_sum_batch(mat, module, name, sum_batch=True, *args, **kwargs):
+    diff = 1 if sum_batch else 2
+    return check_shape(mat, getattr(module, name), diff=diff)
+
+
+def same_dim_as(mat, module, name, *args, **kwargs):
     return len(mat.shape) == len(getattr(module, name).shape)
 
 
-def one_more_dim_as(mat, module, name):
-    return len(mat.shape) - len(getattr(module, name).shape) == 1
-
-
-shape_like_output = functools.partial(check_like, name="output")
-shape_like_input = functools.partial(check_like, name="input0")
-
-same_dim_as_output = functools.partial(same_dim_as, name="output")
-same_dim_as_input = functools.partial(same_dim_as, name="input0")
-same_dim_as_weight = functools.partial(same_dim_as, name="weight")
-same_dim_as_bias = functools.partial(same_dim_as, name="bias")
-
-
+###############################################################################
+#            Decorators for handling vectors as matrix special case           #
+###############################################################################
 def mat_prod_accept_vectors(mat_prod, vec_criterion):
     """Add support for vectors to matrix products.
 
@@ -70,17 +68,26 @@ def mat_prod_accept_vectors(mat_prod, vec_criterion):
     """
 
     @functools.wraps(mat_prod)
-    def wrapped_mat_prod(self, module, g_inp, g_out, mat, *args, **kwargs):
-        is_vec = vec_criterion(mat, module)
+    def wrapped_mat_prod_accept_vectors(
+        self, module, g_inp, g_out, mat, *args, **kwargs
+    ):
+        is_vec = vec_criterion(mat, module, *args, **kwargs)
         mat_in = mat if not is_vec else add_V_dim(mat)
         mat_out = mat_prod(self, module, g_inp, g_out, mat_in, *args, **kwargs)
         mat_out = mat_out if not is_vec else remove_V_dim(mat_out)
 
         return mat_out
 
-    return wrapped_mat_prod
+    return wrapped_mat_prod_accept_vectors
 
 
+# vec criteria
+same_dim_as_output = functools.partial(same_dim_as, name="output")
+same_dim_as_input = functools.partial(same_dim_as, name="input0")
+same_dim_as_weight = functools.partial(same_dim_as, name="weight")
+same_dim_as_bias = functools.partial(same_dim_as, name="bias")
+
+# decorators for handling vectors
 jac_t_mat_prod_accept_vectors = functools.partial(
     mat_prod_accept_vectors, vec_criterion=same_dim_as_output,
 )
@@ -105,79 +112,70 @@ bias_jac_mat_prod_accept_vectors = functools.partial(
 )
 
 
-def _param_jac_mat_prod_check_shapes(jac_mat_prod, param):
+###############################################################################
+#       Decorators for checking inputs and outputs of mat_prod routines       #
+###############################################################################
+def mat_prod_check_shapes(mat_prod, in_check, out_check):
     """Check that input and output have correct shapes."""
 
-    def jac_mat_prod_check_shapes(jac_mat_prod):
-        @functools.wraps(jac_mat_prod)
-        def wrapped_jac_mat_prod(self, module, g_inp, g_out, mat):
-            check_like(mat, module, param)
-            mat_out = jac_mat_prod(self, module, g_inp, g_out, mat)
-            check_like(mat_out, module, "output")
-            check_same_V_dim(mat_out, mat)
-
-            return mat_out
-
-        return wrapped_jac_mat_prod
-
-    return jac_mat_prod_check_shapes(jac_mat_prod)
-
-
-def bias_jac_mat_prod_check_shapes(bias_jac_mat_prod):
-    return _param_jac_mat_prod_check_shapes(bias_jac_mat_prod, "bias")
-
-
-def weight_jac_mat_prod_check_shapes(weight_jac_mat_prod):
-    return _param_jac_mat_prod_check_shapes(weight_jac_mat_prod, "weight")
-
-
-def jac_mat_prod_check_shapes(jac_mat_prod):
-    return _param_jac_mat_prod_check_shapes(jac_mat_prod, "input0")
-
-
-def jac_t_mat_prod_check_shapes(jac_t_mat_prod):
-    """Check that input and output have correct shapes."""
-
-    @functools.wraps(jac_t_mat_prod)
-    def wrapped_jac_t_mat_prod(self, module, g_inp, g_out, mat):
-        check_like(mat, module, "output")
-        mat_out = jac_t_mat_prod(self, module, g_inp, g_out, mat)
-        check_like(mat_out, module, "input0")
-        check_same_V_dim(mat, mat_out)
+    @functools.wraps(mat_prod)
+    def wrapped_mat_prod_check_shapes(self, module, g_inp, g_out, mat, *args, **kwargs):
+        in_check(mat, module, *args, **kwargs)
+        mat_out = mat_prod(self, module, g_inp, g_out, mat, *args, **kwargs)
+        out_check(mat_out, module, *args, **kwargs)
+        check_same_V_dim(mat_out, mat)
 
         return mat_out
 
-    return wrapped_jac_t_mat_prod
+    return wrapped_mat_prod_check_shapes
 
 
-def _param_jac_t_mat_prod_check_shapes(jac_t_mat_prod, param):
-    """Check that input and output have correct shapes."""
+# input/output checker
+shape_like_output = functools.partial(check_like, name="output")
+shape_like_input = functools.partial(check_like, name="input0")
+shape_like_weight = functools.partial(check_like, name="weight")
+shape_like_bias = functools.partial(check_like, name="bias")
+shape_like_weight_with_sum_batch = functools.partial(
+    check_like_with_sum_batch, name="weight"
+)
+shape_like_bias_with_sum_batch = functools.partial(
+    check_like_with_sum_batch, name="bias"
+)
 
-    def jac_t_mat_prod_check_shapes(jac_t_mat_prod):
-        @functools.wraps(jac_t_mat_prod)
-        def wrapped_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
-            check_like(mat, module, "output")
-            mat_out = jac_t_mat_prod(
-                self, module, g_inp, g_out, mat, sum_batch=sum_batch
-            )
-            diff = 1 if sum_batch else 2
-            print(diff, sum_batch, mat_out.shape, getattr(module, param).shape)
-            check_like(mat_out, module, param, diff=diff)
-            check_same_V_dim(mat_out, mat)
+# decorators for shape checking
+jac_mat_prod_check_shapes = functools.partial(
+    mat_prod_check_shapes, in_check=shape_like_input, out_check=shape_like_output
+)
 
-            return mat_out
+weight_jac_mat_prod_check_shapes = functools.partial(
+    mat_prod_check_shapes, in_check=shape_like_weight, out_check=shape_like_output
+)
 
-        return wrapped_jac_t_mat_prod
+bias_jac_mat_prod_check_shapes = functools.partial(
+    mat_prod_check_shapes, in_check=shape_like_bias, out_check=shape_like_output
+)
 
-    return jac_t_mat_prod_check_shapes(jac_t_mat_prod)
-
-
-def bias_jac_t_mat_prod_check_shapes(bias_jac_t_mat_prod):
-    return _param_jac_t_mat_prod_check_shapes(bias_jac_t_mat_prod, "bias")
+jac_t_mat_prod_check_shapes = functools.partial(
+    mat_prod_check_shapes, in_check=shape_like_output, out_check=shape_like_input
+)
 
 
-def weight_jac_t_mat_prod_check_shapes(weight_jac_t_mat_prod):
-    return _param_jac_t_mat_prod_check_shapes(weight_jac_t_mat_prod, "weight")
+weight_jac_t_mat_prod_check_shapes = functools.partial(
+    mat_prod_check_shapes,
+    in_check=shape_like_output,
+    out_check=shape_like_weight_with_sum_batch,
+)
+bias_jac_t_mat_prod_check_shapes = functools.partial(
+    mat_prod_check_shapes,
+    in_check=shape_like_output,
+    out_check=shape_like_bias_with_sum_batch,
+)
+
+###############################################################################
+#                     Wrapper for second-order extensions                     #
+###############################################################################
+
+# TODO Refactor using partials
 
 
 def R_mat_prod_check_shapes(make_R_mat_prod):
