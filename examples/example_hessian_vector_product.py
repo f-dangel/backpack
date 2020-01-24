@@ -55,3 +55,24 @@ print("Model parameters:                  ", num_params)
 print("flat vector shape:                 ", v_flat.shape)
 # individual gradient L2 norm
 print("flat Hessian-vector product shape: ", Hv_flat.shape)
+
+
+print("# 3) Using gradients to save one backward pass | B =", B)
+
+loss = lossfunc(model(X), y)
+# has to be called with create_graph=True
+loss.backward(create_graph=True)
+
+v = [torch.randn_like(p) for p in model.parameters()]
+params = list(model.parameters())
+grad_params = [p.grad for p in params]
+Hv = hessian_vector_product(loss, params, v, grad_params=grad_params)
+
+
+for (name, param), vec, Hvec in zip(model.named_parameters(), v, Hv):
+    print(name)
+    print(".grad.shape:                  ", param.grad.shape)
+    # vector
+    print("vector shape:                 ", vec.shape)
+    # Hessian-vector product
+    print("Hessian-vector product shape: ", Hvec.shape)
