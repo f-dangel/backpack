@@ -1,5 +1,5 @@
 from backpack.core.derivatives.linear import LinearDerivatives
-from backpack.utils.einsum import einsum
+from backpack.utils.ein import einsum
 
 from backpack.extensions.secondorder.hbp.hbp_options import (
     BackpropStrategy,

@@ -1,4 +1,4 @@
-from backpack.utils.einsum import try_view
+from backpack.utils.ein import try_view
 
 from backpack.core.derivatives.shape_check import (
     jac_t_mat_prod_accept_vectors,

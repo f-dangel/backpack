@@ -1,6 +1,6 @@
 from backpack.extensions.curvature import Curvature
 from backpack.extensions.module_extension import ModuleExtension
-from backpack.utils.einsum import einsum
+from backpack.utils.ein import einsum
 from backpack.core.derivatives.shape_check import (
     R_mat_prod_accept_vectors,
     R_mat_prod_check_shapes,

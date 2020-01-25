@@ -67,7 +67,7 @@ def eingroup(equation, operand, dim=None):
     Example usage:
     ```
     import torch
-    from backpack.utils.einsum import einsum, eingroup
+    from backpack.utils.ein import einsum, eingroup
 
     dim_a, dim_b, dim_c, dim_d = torch.randint(low=1, high=10, size=(4,))
     tensor = torch.randn((dim_a, dim_b, dim_c, dim_d))

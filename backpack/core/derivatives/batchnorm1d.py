@@ -2,7 +2,7 @@ from torch.nn import BatchNorm1d
 from warnings import warn
 
 
-from backpack.utils.einsum import einsum
+from backpack.utils.ein import einsum
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 from backpack.core.derivatives.shape_check import (
     R_mat_prod_accept_vectors,

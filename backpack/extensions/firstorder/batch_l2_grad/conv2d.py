@@ -1,6 +1,6 @@
 from backpack.extensions.firstorder.base import FirstOrderModuleExtension
 from backpack.utils import conv as convUtils
-from backpack.utils.einsum import einsum
+from backpack.utils.ein import einsum
 
 
 class BatchL2Conv2d(FirstOrderModuleExtension):

@@ -1,4 +1,4 @@
-from backpack.utils.einsum import einsum
+from backpack.utils.ein import einsum
 
 
 def extract_weight_diagonal(module, backproped):

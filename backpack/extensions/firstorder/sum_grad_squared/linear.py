@@ -1,5 +1,5 @@
 from backpack.extensions.firstorder.base import FirstOrderModuleExtension
-from backpack.utils.einsum import einsum
+from backpack.utils.ein import einsum
 
 
 class SGSLinear(FirstOrderModuleExtension):

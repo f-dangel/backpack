@@ -1,6 +1,6 @@
 from torch.nn import Unfold
 
-from backpack.utils.einsum import einsum, eingroup
+from backpack.utils.ein import einsum, eingroup
 
 
 def unfold_func(module):

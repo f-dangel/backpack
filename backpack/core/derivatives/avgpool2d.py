@@ -5,7 +5,7 @@ import torch.nn
 from torch.nn import AvgPool2d, Conv2d, ConvTranspose2d
 
 
-from backpack.utils.einsum import einsum, eingroup
+from backpack.utils.ein import einsum, eingroup
 from backpack.core.derivatives.basederivatives import BaseDerivatives
 
 

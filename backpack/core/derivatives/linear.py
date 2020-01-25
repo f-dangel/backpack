@@ -1,7 +1,7 @@
 from torch.nn import Linear
 
 
-from backpack.utils.einsum import einsum
+from backpack.utils.ein import einsum
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 
 

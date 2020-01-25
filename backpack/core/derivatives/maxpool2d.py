@@ -5,7 +5,7 @@ from torch.nn.functional import max_pool2d
 
 from backpack.core.derivatives.basederivatives import BaseDerivatives
 
-from backpack.utils.einsum import eingroup
+from backpack.utils.ein import eingroup
 
 
 class MaxPool2DDerivatives(BaseDerivatives):

@@ -1,7 +1,7 @@
 from torch.nn import ZeroPad2d, functional
 
 
-from backpack.utils.einsum import eingroup
+from backpack.utils.ein import eingroup
 from backpack.core.derivatives.basederivatives import BaseDerivatives
 
 

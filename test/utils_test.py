@@ -7,7 +7,7 @@ import torch
 
 import scipy.linalg
 from backpack.utils import kroneckers as bp_utils
-from backpack.utils.einsum import einsum
+from backpack.utils.ein import einsum
 
 
 class KroneckerUtilsTest(unittest.TestCase):

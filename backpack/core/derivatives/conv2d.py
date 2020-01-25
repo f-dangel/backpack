@@ -3,7 +3,7 @@ from torch.nn.functional import conv2d, conv_transpose2d
 
 
 from backpack.utils import conv as convUtils
-from backpack.utils.einsum import einsum, eingroup
+from backpack.utils.ein import einsum, eingroup
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 
 
