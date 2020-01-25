@@ -7,6 +7,7 @@ import torch
 
 import scipy.linalg
 from backpack.utils import kroneckers as bp_utils
+from backpack.utils.einsum import einsum
 
 
 class KroneckerUtilsTest(unittest.TestCase):
@@ -60,7 +61,7 @@ class KroneckerUtilsTest(unittest.TestCase):
     def make_random_psd_kfacs(self, num_facs=None):
         def make_quadratic_psd(mat):
             """Make matrix positive semi-definite: A -> AAᵀ."""
-            mat_squared = torch.einsum("ij,kj->ik", (mat, mat))
+            mat_squared = einsum("ij,kj->ik", (mat, mat))
             shift = self.PSD_KFAC_MIN_EIGVAL * self.torch_eye_like(mat_squared)
             return mat_squared + shift
 
