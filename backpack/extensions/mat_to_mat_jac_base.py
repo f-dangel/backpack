@@ -12,9 +12,6 @@ class MatToJacMat(ModuleExtension):
 
     def backpropagate(self, ext, module, grad_inp, grad_out, backproped):
 
-        if self.derivatives is None:
-            return backproped
-
         if isinstance(backproped, list):
             M_list = [
                 self.derivatives.jac_t_mat_prod(module, grad_inp, grad_out, M)

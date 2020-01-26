@@ -2,26 +2,27 @@ from warnings import warn
 from math import sqrt
 from torch import diag_embed, ones_like, diag, ones
 from torch.nn import MSELoss
-from .basederivatives import BaseDerivatives
-
-from backpack.utils.unsqueeze import hmp_unsqueeze_if_missing_dim
+from backpack.core.derivatives.basederivatives import BaseLossDerivatives
 
 
-class MSELossDerivatives(BaseDerivatives):
+class MSELossDerivatives(BaseLossDerivatives):
     def get_module(self):
         return MSELoss
 
-    def sqrt_hessian(self, module, g_inp, g_out):
+    def _sqrt_hessian(self, module, g_inp, g_out):
         self.check_input_dims(module)
 
-        sqrt_H = diag_embed(sqrt(2) * ones_like(module.input0))
+        V_dim, C_dim = 0, 2
+        diag = sqrt(2) * ones_like(module.input0)
+        sqrt_H = diag_embed(diag, dim1=V_dim, dim2=C_dim)
 
         if module.reduction == "mean":
-            sqrt_H /= sqrt(module.input0.shape[0])
+            N = module.input0.shape[0]
+            sqrt_H /= sqrt(N)
 
         return sqrt_H
 
-    def sqrt_hessian_sampled(self, module, g_inp, g_out, mc_samples=None):
+    def _sqrt_hessian_sampled(self, module, g_inp, g_out, mc_samples=None):
         """
         Note:
         -----
@@ -42,31 +43,31 @@ class MSELossDerivatives(BaseDerivatives):
         )
         return self.sqrt_hessian(module, g_inp, g_out)
 
-    def sum_hessian(self, module, g_inp, g_out):
+    def _sum_hessian(self, module, g_inp, g_out):
         self.check_input_dims(module)
 
-        batch = module.input0_shape[0]
-        num_features = module.input0.numel() // batch
-        sum_H = 2 * batch * diag(ones(num_features, device=module.input0.device))
+        N = module.input0_shape[0]
+        num_features = module.input0.numel() // N
+        sum_H = 2 * N * diag(ones(num_features, device=module.input0.device))
 
         if module.reduction == "mean":
-            sum_H /= module.input0.shape[0]
-        print("sum H ", sum_H.shape)
+            sum_H /= N
+
         return sum_H
 
-    def hessian_matrix_product(self, module, g_inp, g_out):
+    def _make_hessian_mat_prod(self, module, g_inp, g_out):
         """Multiplication of the input Hessian with a matrix."""
 
-        @hmp_unsqueeze_if_missing_dim(mat_dim=3)
-        def hmp(mat):
+        def hessian_mat_prod(mat):
             Hmat = 2 * mat
 
             if module.reduction == "mean":
-                Hmat /= module.input0.shape[0]
+                N = module.input0.shape[0]
+                Hmat /= N
 
             return Hmat
 
-        return hmp
+        return hessian_mat_prod
 
     def check_input_dims(self, module):
         if not len(module.input0.shape) == 2:

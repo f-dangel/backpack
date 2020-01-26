@@ -20,7 +20,8 @@ lossfunc = extend(lossfunc)
 
 loss = lossfunc(model(X), y)
 
-with backpack(extensions.KFAC()):
+# number of MC samples is optional, defaults to 1
+with backpack(extensions.KFAC(mc_samples=1)):
     loss.backward()
 
 for name, param in model.named_parameters():

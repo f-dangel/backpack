@@ -3,6 +3,7 @@ from torch.nn import (
     Conv2d,
     CrossEntropyLoss,
     Dropout,
+    Flatten,
     Linear,
     MaxPool2d,
     MSELoss,
@@ -10,10 +11,8 @@ from torch.nn import (
     Sigmoid,
     Tanh,
     ZeroPad2d,
-    Flatten,
 )
 
-from backpack.core.layers import Conv2dConcat, LinearConcat
 from backpack.extensions.backprop_extension import BackpropExtension
 from backpack.extensions.secondorder.hbp import LossHessianStrategy
 
@@ -43,12 +42,10 @@ class DiagGGN(BackpropExtension):
                 MSELoss: losses.DiagGGNMSELoss(),
                 CrossEntropyLoss: losses.DiagGGNCrossEntropyLoss(),
                 Linear: linear.DiagGGNLinear(),
-                LinearConcat: linear.DiagGGNLinearConcat(),
                 MaxPool2d: pooling.DiagGGNMaxPool2d(),
                 AvgPool2d: pooling.DiagGGNAvgPool2d(),
                 ZeroPad2d: padding.DiagGGNZeroPad2d(),
                 Conv2d: conv2d.DiagGGNConv2d(),
-                Conv2dConcat: conv2d.DiagGGNConv2dConcat(),
                 Dropout: dropout.DiagGGNDropout(),
                 Flatten: flatten.DiagGGNFlatten(),
                 ReLU: activations.DiagGGNReLU(),

@@ -1,5 +1,5 @@
 from backpack.core.derivatives.zeropad2d import ZeroPad2dDerivatives
-from .diag_h_base import DiagHBaseModule
+from backpack.extensions.secondorder.diag_hessian.diag_h_base import DiagHBaseModule
 
 
 class DiagHZeroPad2d(DiagHBaseModule):

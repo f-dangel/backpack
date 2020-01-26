@@ -1,6 +1,6 @@
 from torch import gt
 from torch.nn import ReLU
-from .elementwise import ElementwiseDerivatives
+from backpack.core.derivatives.elementwise import ElementwiseDerivatives
 
 
 class ReLUDerivatives(ElementwiseDerivatives):

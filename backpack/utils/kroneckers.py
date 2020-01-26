@@ -1,5 +1,5 @@
 from backpack.utils.unsqueeze import kfacmp_unsqueeze_if_missing_dim
-from backpack.utils.einsum import einsum
+from backpack.utils.ein import einsum
 
 
 def kfacs_to_mat(factors):

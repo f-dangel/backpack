@@ -3,8 +3,7 @@ from functools import partial
 from backpack.core.derivatives.mseloss import MSELossDerivatives
 from backpack.core.derivatives.crossentropyloss import CrossEntropyLossDerivatives
 from backpack.extensions.secondorder.hbp import LossHessianStrategy
-
-from .diag_ggn_base import DiagGGNBaseModule
+from backpack.extensions.secondorder.diag_ggn.diag_ggn_base import DiagGGNBaseModule
 
 
 class DiagGGNLoss(DiagGGNBaseModule):

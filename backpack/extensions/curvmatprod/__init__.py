@@ -9,14 +9,13 @@ functions to compute Matrix-Matrix products with Block-Diagonal approximations
 of the curvature, such as the Block-diagonal Generalized Gauss-Newton
 """
 
-from backpack.core.layers import Conv2dConcat, LinearConcat
-from backpack.extensions.backprop_extension import BackpropExtension
 from torch.nn import (
     AvgPool2d,
     BatchNorm1d,
     Conv2d,
     CrossEntropyLoss,
     Dropout,
+    Flatten,
     Linear,
     MaxPool2d,
     MSELoss,
@@ -24,8 +23,9 @@ from torch.nn import (
     Sigmoid,
     Tanh,
     ZeroPad2d,
-    Flatten,
 )
+
+from backpack.extensions.backprop_extension import BackpropExtension
 
 from . import (
     activations,
@@ -51,12 +51,10 @@ class CMP(BackpropExtension):
                 MSELoss: losses.CMPMSELoss(),
                 CrossEntropyLoss: losses.CMPCrossEntropyLoss(),
                 Linear: linear.CMPLinear(),
-                LinearConcat: linear.CMPLinearConcat(),
                 MaxPool2d: pooling.CMPMaxpool2d(),
                 AvgPool2d: pooling.CMPAvgPool2d(),
                 ZeroPad2d: padding.CMPZeroPad2d(),
                 Conv2d: conv2d.CMPConv2d(),
-                Conv2dConcat: conv2d.CMPConv2dConcat(),
                 Dropout: dropout.CMPDropout(),
                 Flatten: flatten.CMPFlatten(),
                 ReLU: activations.CMPReLU(),

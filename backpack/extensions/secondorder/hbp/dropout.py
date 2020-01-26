@@ -1,5 +1,5 @@
 from backpack.core.derivatives.dropout import DropoutDerivatives
-from .hbpbase import HBPBaseModule
+from backpack.extensions.secondorder.hbp.hbpbase import HBPBaseModule
 
 
 class HBPDropout(HBPBaseModule):

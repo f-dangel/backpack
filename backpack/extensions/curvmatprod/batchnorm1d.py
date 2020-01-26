@@ -1,6 +1,5 @@
 from backpack.core.derivatives.batchnorm1d import BatchNorm1dDerivatives
-
-from .cmpbase import CMPBase
+from backpack.extensions.curvmatprod.cmpbase import CMPBase
 
 
 class CMPBatchNorm1d(CMPBase):

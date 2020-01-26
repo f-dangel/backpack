@@ -2,18 +2,19 @@ from functools import partial
 
 import pytest
 import torch
+from torch import allclose
+from torch.nn import Dropout, ReLU, Sigmoid, Tanh
+
 from backpack.core.derivatives import derivatives_for
 from backpack.hessianfree.lop import transposed_jacobian_vector_product
 from backpack.hessianfree.rop import jacobian_vector_product
-from torch import allclose
 
-from .jvp_linear import data_linear, data_linearconcat
-from .jvp_conv2d import data_conv2d, data_conv2dconcat
+from .jvp_activations import data as data_activation
 from .jvp_avgpool2d import data as data_avgpool2d
+from .jvp_conv2d import data_conv2d
+from .jvp_linear import data_linear
 from .jvp_maxpool2d import data as data_maxpool2d
 from .jvp_zeropad2d import data as data_zeropad2d
-from .jvp_activations import data as data_activation
-from torch.nn import Dropout, ReLU, Tanh, Sigmoid
 
 ATOL = 1e-3
 RTOL = 1e-3
@@ -22,9 +23,7 @@ torch.manual_seed(0)
 
 PROBLEMS = {
     "Linear": data_linear,
-    "LinearConcat": data_linearconcat,
     "Conv2d": data_conv2d,
-    "Conv2dConcat": data_conv2dconcat,
     "AvgPool2d": data_avgpool2d,
     "MaxPool2d": data_maxpool2d,
     "ZeroPad2d": data_zeropad2d,

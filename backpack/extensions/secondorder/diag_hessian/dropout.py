@@ -1,5 +1,5 @@
 from backpack.core.derivatives.dropout import DropoutDerivatives
-from .diag_h_base import DiagHBaseModule
+from backpack.extensions.secondorder.diag_hessian.diag_h_base import DiagHBaseModule
 
 
 class DiagHDropout(DiagHBaseModule):

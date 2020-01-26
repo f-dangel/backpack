@@ -1,6 +1,6 @@
 from backpack.core.derivatives.avgpool2d import AvgPool2DDerivatives
 from backpack.core.derivatives.maxpool2d import MaxPool2DDerivatives
-from .hbpbase import HBPBaseModule
+from backpack.extensions.secondorder.hbp.hbpbase import HBPBaseModule
 
 
 class HBPAvgPool2d(HBPBaseModule):
