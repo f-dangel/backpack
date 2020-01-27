@@ -15,6 +15,8 @@ from backpack.core.derivatives.shape_check import (
     weight_jac_mat_prod_check_shapes,
     make_hessian_mat_prod_accept_vectors,
     make_hessian_mat_prod_check_shapes,
+    R_mat_prod_accept_vectors,
+    R_mat_prod_check_shapes,
 )
 
 
@@ -116,8 +118,8 @@ class BaseDerivatives:
     def hessian_is_psd(self):
         raise NotImplementedError
 
-    # TODO make accept vectors
-    # TODO add shape check
+    @R_mat_prod_accept_vectors
+    @R_mat_prod_check_shapes
     def make_residual_mat_prod(self, module, g_inp, g_out):
         """Return multiplication routine with the residual term.
 
@@ -129,6 +131,9 @@ class BaseDerivatives:
             This function only has to be implemented if the residual is not
             zero and not diagonal (for instance, `BatchNorm`).
         """
+        return self._make_residual_mat_prod(module, g_inp, g_out)
+
+    def _make_residual_mat_prod(self, module, g_inp, g_out):
         raise NotImplementedError
 
     # TODO Refactor and remove

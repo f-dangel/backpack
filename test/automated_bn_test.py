@@ -75,18 +75,12 @@ def test_ggn_vp(problem, device):
 
 
 @pytest.mark.parametrize("problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
-def test_hvp_is_not_implemented(problem, device):
-    # TODO: Rename after implementing BatchNorm R_mat_prod
+def test_hvp(problem, device):
     problem.to(device)
 
     vecs = [torch.randn(*p.shape, device=device) for p in problem.model.parameters()]
 
-    # TODO: Implement BatchNorm R_mat_prod in backpack/core/derivatives/batchnorm1d.py
-    try:
-        backpack_res = BpextImpl(problem).hvp(vecs)
-    except NotImplementedError:
-        return
-
+    backpack_res = BpextImpl(problem).hvp(vecs)
     autograd_res = AutogradImpl(problem).hvp(vecs)
 
     check_sizes(autograd_res, backpack_res)
@@ -94,8 +88,7 @@ def test_hvp_is_not_implemented(problem, device):
 
 
 @pytest.mark.parametrize("problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
-def test_hmp_is_not_implemented(problem, device):
-    # TODO: Rename after implementing BatchNorm R_mat_prod
+def test_hmp(problem, device):
     problem.to(device)
 
     NUM_COLS = 10
@@ -104,12 +97,7 @@ def test_hmp_is_not_implemented(problem, device):
         for p in problem.model.parameters()
     ]
 
-    # TODO: Implement BatchNorm R_mat_prod in backpack/core/derivatives/batchnorm1d.py
-    try:
-        backpack_res = BpextImpl(problem).hmp(matrices)
-    except NotImplementedError:
-        return
-
+    backpack_res = BpextImpl(problem).hmp(matrices)
     autograd_res = AutogradImpl(problem).hmp(matrices)
 
     check_sizes(autograd_res, backpack_res)
