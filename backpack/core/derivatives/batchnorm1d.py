@@ -1,16 +1,11 @@
 from torch.nn import BatchNorm1d
-from warnings import warn
+
+from ...utils.einsum import einsum
+from .basederivatives import BaseDerivatives
+from backpack.utils.unsqueeze import jmp_unsqueeze_if_missing_dim
 
 
-from backpack.utils.ein import einsum
-from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
-from backpack.core.derivatives.shape_check import (
-    R_mat_prod_accept_vectors,
-    R_mat_prod_check_shapes,
-)
-
-
-class BatchNorm1dDerivatives(BaseParameterDerivatives):
+class BatchNorm1dDerivatives(BaseDerivatives):
     def get_module(self):
         return BatchNorm1d
 
@@ -20,10 +15,14 @@ class BatchNorm1dDerivatives(BaseParameterDerivatives):
     def hessian_is_diagonal(self):
         return False
 
-    def _jac_mat_prod(self, module, g_inp, g_out, mat):
-        return self._jac_t_mat_prod(module, g_inp, g_out, mat)
+    # Jacobian-matrix product
+    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
+    def jac_mat_prod(self, module, g_inp, g_out, mat):
+        return self.jac_t_mat_prod(module, g_inp, g_out, mat)
 
-    def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
+    # Transpose Jacobian-matrix product
+    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
+    def jac_t_mat_prod(self, module, g_inp, g_out, mat):
         """
         Note:
         -----
@@ -40,66 +39,77 @@ class BatchNorm1dDerivatives(BaseParameterDerivatives):
         """
         assert module.affine is True
 
-        N = self.get_batch(module)
+        batch = self.get_batch(module)
         x_hat, var = self.get_normalized_input_and_var(module)
         ivar = 1.0 / (var + module.eps).sqrt()
 
-        dx_hat = einsum("vni,i->vni", (mat, module.weight))
+        dx_hat = einsum("bic,i->bic", (mat, module.weight))
 
-        jac_t_mat = N * dx_hat
-        jac_t_mat -= dx_hat.sum(1).unsqueeze(1).expand_as(jac_t_mat)
-        jac_t_mat -= einsum("ni,vsi,si->vni", (x_hat, dx_hat, x_hat))
-        jac_t_mat = einsum("vni,i->vni", (jac_t_mat, ivar / N))
+        jac_t_mat = batch * dx_hat
+        jac_t_mat -= dx_hat.sum(0).unsqueeze(0).expand_as(jac_t_mat)
+        jac_t_mat -= einsum("bi,sic,si->bic", (x_hat, dx_hat, x_hat))
+        jac_t_mat = einsum("bic,i->bic", (jac_t_mat, ivar / batch))
 
         return jac_t_mat
 
     def get_normalized_input_and_var(self, module):
-        input = module.input0
+        input = self.get_input(module)
         mean = input.mean(dim=0)
         var = input.var(dim=0, unbiased=False)
         return (input - mean) / (var + module.eps).sqrt(), var
 
-    @R_mat_prod_accept_vectors
-    @R_mat_prod_check_shapes
     def make_residual_mat_prod(self, module, g_inp, g_out):
-        # TODO: Implement R_mat_prod for BatchNorm
+        batch = self.get_batch(module)
+        x_hat, var = self.get_normalized_input_and_var(module)
+        gamma = module.weight
+        eps = module.eps
+
         def R_mat_prod(mat):
             """Multiply with the residual: mat → [∑_{k} Hz_k(x) 𝛿z_k] mat.
 
             Second term of the module input Hessian backpropagation equation.
             """
-            raise NotImplementedError
+            factor = gamma / (batch * (var + eps))
 
-        # TODO: Enable tests in test/automated_bn_test.py
-        raise NotImplementedError
+            sum_127 = einsum("ml,mls->ls", (x_hat, mat))
+            sum_24 = einsum("il->l", g_out[0])
+            sum_3 = einsum("ml,mls->ls", (g_out[0], mat))
+            sum_46 = einsum("mls->ls", mat)
+            sum_567 = einsum("il,il->l", (x_hat, g_out[0]))
+
+            r_mat = - einsum("kl,ls->kls", (g_out[0], sum_127))
+            r_mat += (1/batch) * einsum("l,ls->ls", (sum_24, sum_127))
+            r_mat -= einsum("kl,ls->kls", (x_hat, sum_3))
+            r_mat += (1/batch) * einsum("kl,l,ls->kls", (x_hat, sum_24, sum_46))
+            r_mat -= einsum("kls,l->kls", (mat, sum_567))
+            r_mat += (1/batch) * einsum("l,ls->ls", (sum_567, sum_46))
+            r_mat += (3/batch) * einsum("kl,ls,l->kls", (x_hat, sum_127, sum_567))
+
+            return einsum("l,kls->kls", (factor, r_mat))
+
+
         return R_mat_prod
 
-    def _weight_jac_mat_prod(self, module, g_inp, g_out, mat):
+    @jmp_unsqueeze_if_missing_dim(mat_dim=2)
+    def weight_jac_mat_prod(self, module, g_inp, g_out, mat):
         x_hat, _ = self.get_normalized_input_and_var(module)
-        return einsum("ni,vi->vni", (x_hat, mat))
+        return einsum("bi,ic->bic", (x_hat, mat))
 
-    def _weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch):
-        if not sum_batch:
-            warn(
-                "BatchNorm batch summation disabled."
-                "This may not compute meaningful quantities"
-            )
+    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
+    def weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
         x_hat, _ = self.get_normalized_input_and_var(module)
-        equation = "vni,ni->v{}i".format("" if sum_batch is True else "n")
+        equation = "bic,bi->{}ic".format("" if sum_batch is True else "b")
         operands = [mat, x_hat]
         return einsum(equation, operands)
 
-    def _bias_jac_mat_prod(self, module, g_inp, g_out, mat):
-        N = self.get_batch(module)
-        return mat.unsqueeze(1).repeat(1, N, 1)
+    @jmp_unsqueeze_if_missing_dim(mat_dim=2)
+    def bias_jac_mat_prod(self, module, g_inp, g_out, mat):
+        batch = self.get_batch(module)
+        return mat.unsqueeze(0).repeat(batch, 1, 1)
 
-    def _bias_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
-        if not sum_batch:
-            warn(
-                "BatchNorm batch summation disabled."
-                "This may not compute meaningful quantities"
-            )
-            return mat
+    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
+    def bias_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
+        if sum_batch is True:
+            return mat.sum(0)
         else:
-            N_axis = 1
-            return mat.sum(N_axis)
+            return mat
