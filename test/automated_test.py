@@ -6,6 +6,7 @@ from .test_problems_linear import TEST_PROBLEMS as LIN_TEST_PROBLEMS
 from .test_problems_activations import TEST_PROBLEMS as ACT_TEST_PROBLEMS
 from .test_problems_pooling import TEST_PROBLEMS as POOL_TEST_PROBLEMS
 from .test_problems_padding import TEST_PROBLEMS as PAD_TEST_PROBLEMS
+from .test_problems_bn import TEST_PROBLEMS as BN_TEST_PROBLEMS
 from .implementation.implementation_autograd import AutogradImpl
 from .implementation.implementation_bpext import BpextImpl
 
@@ -18,7 +19,8 @@ else:
     DEVICES = {
         "cpu": "cpu",
     }
-TEST_PROBLEMS = {
+
+TEST_PROBLEMS_NO_BN = {
     **CONV_TEST_PROBLEMS,
     **LIN_TEST_PROBLEMS,
     **ACT_TEST_PROBLEMS,
@@ -26,12 +28,23 @@ TEST_PROBLEMS = {
     **PAD_TEST_PROBLEMS,
 }
 
-ALL_CONFIGURATIONS = []
-CONFIGURATION_IDS = []
+NO_BN_CONFIGURATIONS = []
+NO_BN_CONFIGURATION_IDS = []
 for dev_name, dev in DEVICES.items():
-    for probname, prob in TEST_PROBLEMS.items():
-        ALL_CONFIGURATIONS.append((prob, dev))
-        CONFIGURATION_IDS.append(probname + "-" + dev_name)
+    for probname, prob in TEST_PROBLEMS_NO_BN.items():
+        NO_BN_CONFIGURATIONS.append((prob, dev))
+        NO_BN_CONFIGURATION_IDS.append(probname + "-" + dev_name)
+
+TEST_PROBLEMS_BN = {
+    **BN_TEST_PROBLEMS,
+}
+BN_CONFIGURATIONS = []
+BN_CONFIGURATION_IDS = []
+for dev_name, dev in DEVICES.items():
+    for probname, prob in TEST_PROBLEMS_BN.items():
+        BN_CONFIGURATIONS.append((prob, dev))
+        BN_CONFIGURATION_IDS.append(probname + "-" + dev_name)
+
 
 atol = 1e-5
 rtol = 1e-5
@@ -74,7 +87,9 @@ def check_values(list1, list2, atol=atol, rtol=rtol):
 ###
 
 
-@pytest.mark.parametrize("problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
+@pytest.mark.parametrize(
+    "problem,device", NO_BN_CONFIGURATIONS, ids=NO_BN_CONFIGURATION_IDS
+)
 def test_batch_gradients(problem, device):
     problem.to(device)
     backpack_res = BpextImpl(problem).batch_gradients()
@@ -84,7 +99,11 @@ def test_batch_gradients(problem, device):
     check_values(autograd_res, backpack_res)
 
 
-@pytest.mark.parametrize("problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
+@pytest.mark.parametrize(
+    "problem,device",
+    NO_BN_CONFIGURATIONS + BN_CONFIGURATIONS,
+    ids=NO_BN_CONFIGURATION_IDS + BN_CONFIGURATION_IDS,
+)
 def test_batch_gradients_sum_to_grad(problem, device):
     problem.to(device)
     backpack_batch_res = BpextImpl(problem).batch_gradients()
@@ -95,7 +114,9 @@ def test_batch_gradients_sum_to_grad(problem, device):
     check_values(autograd_res, backpack_res)
 
 
-@pytest.mark.parametrize("problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
+@pytest.mark.parametrize(
+    "problem,device", NO_BN_CONFIGURATIONS, ids=NO_BN_CONFIGURATION_IDS
+)
 def test_sgs(problem, device):
     problem.to(device)
     autograd_res = AutogradImpl(problem).sgs()
@@ -105,7 +126,9 @@ def test_sgs(problem, device):
     check_values(autograd_res, backpack_res)
 
 
-@pytest.mark.parametrize("problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
+@pytest.mark.parametrize(
+    "problem,device", NO_BN_CONFIGURATIONS, ids=NO_BN_CONFIGURATION_IDS
+)
 def test_diag_ggn(problem, device):
     problem.to(device)
 
@@ -117,7 +140,9 @@ def test_diag_ggn(problem, device):
 
 
 @pytest.mark.montecarlo
-@pytest.mark.parametrize("problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
+@pytest.mark.parametrize(
+    "problem,device", NO_BN_CONFIGURATIONS, ids=NO_BN_CONFIGURATION_IDS
+)
 def test_diag_ggn_mc_approx_ggn_montecarlo(problem, device):
     problem.to(device)
 
@@ -141,7 +166,9 @@ def test_diag_ggn_mc_approx_ggn_montecarlo(problem, device):
     check_values(bp_diagggn, bp_diagggn_mc_avg, atol=1e-1, rtol=1e-1)
 
 
-@pytest.mark.parametrize("problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
+@pytest.mark.parametrize(
+    "problem,device", NO_BN_CONFIGURATIONS, ids=NO_BN_CONFIGURATION_IDS
+)
 def test_batch_l2(problem, device):
     problem.to(device)
 
@@ -152,7 +179,9 @@ def test_batch_l2(problem, device):
     check_values(autograd_res, backpack_res)
 
 
-@pytest.mark.parametrize("problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
+@pytest.mark.parametrize(
+    "problem,device", NO_BN_CONFIGURATIONS, ids=NO_BN_CONFIGURATION_IDS
+)
 def test_variance(problem, device):
     problem.to(device)
 
@@ -163,7 +192,9 @@ def test_variance(problem, device):
     check_values(autograd_res, backpack_res)
 
 
-@pytest.mark.parametrize("problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
+@pytest.mark.parametrize(
+    "problem,device", NO_BN_CONFIGURATIONS, ids=NO_BN_CONFIGURATION_IDS
+)
 def test_diag_h(problem, device):
     problem.to(device)
 
@@ -174,7 +205,11 @@ def test_diag_h(problem, device):
     check_values(autograd_res, backpack_res)
 
 
-@pytest.mark.parametrize("problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
+@pytest.mark.parametrize(
+    "problem,device",
+    NO_BN_CONFIGURATIONS + BN_CONFIGURATIONS,
+    ids=NO_BN_CONFIGURATION_IDS + BN_CONFIGURATION_IDS,
+)
 def test_hmp(problem, device):
     problem.to(device)
 
@@ -191,7 +226,11 @@ def test_hmp(problem, device):
     check_values(autograd_res, backpack_res)
 
 
-@pytest.mark.parametrize("problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
+@pytest.mark.parametrize(
+    "problem,device",
+    NO_BN_CONFIGURATIONS + BN_CONFIGURATIONS,
+    ids=NO_BN_CONFIGURATION_IDS + BN_CONFIGURATION_IDS,
+)
 def test_ggn_mp(problem, device):
     problem.to(device)
 
@@ -208,7 +247,11 @@ def test_ggn_mp(problem, device):
     check_values(autograd_res, backpack_res)
 
 
-@pytest.mark.parametrize("problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
+@pytest.mark.parametrize(
+    "problem,device",
+    NO_BN_CONFIGURATIONS + BN_CONFIGURATIONS,
+    ids=NO_BN_CONFIGURATION_IDS + BN_CONFIGURATION_IDS,
+)
 def test_hvp(problem, device):
     problem.to(device)
 
@@ -221,7 +264,11 @@ def test_hvp(problem, device):
     check_values(autograd_res, backpack_res)
 
 
-@pytest.mark.parametrize("problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
+@pytest.mark.parametrize(
+    "problem,device",
+    NO_BN_CONFIGURATIONS + BN_CONFIGURATIONS,
+    ids=NO_BN_CONFIGURATION_IDS + BN_CONFIGURATION_IDS,
+)
 def test_ggn_vp(problem, device):
     problem.to(device)
 
