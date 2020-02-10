@@ -49,7 +49,7 @@ flake8:
 	@flake8 .
 
 isort:
-	@isort
+	@isort --apply
 
 isort-check:
 	@isort --check
