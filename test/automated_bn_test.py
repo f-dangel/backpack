@@ -1,6 +1,5 @@
 """ TODO: Implement all features for BN, then add to automated tests. """
 import pytest
-
 import torch
 
 from .automated_test import check_sizes, check_values

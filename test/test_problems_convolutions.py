@@ -1,9 +1,10 @@
 import numpy as np
 import torch
+
 from backpack import extend
+
+from .layers import ACTIVATIONS, CONVS
 from .test_problem import TestProblem
-from .layers import CONVS
-from .layers import ACTIVATIONS
 
 TEST_SETTINGS = {
     "in_features": (3, 4, 5),

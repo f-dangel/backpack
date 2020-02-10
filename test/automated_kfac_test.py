@@ -1,11 +1,11 @@
-import torch
 import pytest
-from .test_problems_kfacs import TEST_PROBLEMS as BATCH1_PROBLEMS
-from .test_problems_kfacs import REGRESSION_PROBLEMS as BATCH1_REGRESSION_PROBLEMS
-from .implementation.implementation_autograd import AutogradImpl
-from .implementation.implementation_bpext import BpextImpl
+import torch
 
 from .automated_test import check_sizes, check_values
+from .implementation.implementation_autograd import AutogradImpl
+from .implementation.implementation_bpext import BpextImpl
+from .test_problems_kfacs import REGRESSION_PROBLEMS as BATCH1_REGRESSION_PROBLEMS
+from .test_problems_kfacs import TEST_PROBLEMS as BATCH1_PROBLEMS
 
 if torch.cuda.is_available():
     DEVICES = {

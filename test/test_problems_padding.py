@@ -1,7 +1,9 @@
 import torch
+
 from backpack import extend
-from .test_problem import TestProblem
+
 from .layers import PADDINGS
+from .test_problem import TestProblem
 
 TEST_SETTINGS = {
     "in_features": (3, 4, 5),

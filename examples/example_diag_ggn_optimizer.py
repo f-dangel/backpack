@@ -18,15 +18,9 @@ x_{t+1} = x_t - (G_t + bI)^{-1} g_t
 """
 
 import torch
-import torchvision
 
-# The main BackPACK functionalities
 from backpack import backpack, extend
-
-# The diagonal GGN extension
 from backpack.extensions import DiagGGNMC
-
-# Utility function to load the MNIST dataset
 from backpack.utils.examples import download_mnist
 
 # Hyperparameters
