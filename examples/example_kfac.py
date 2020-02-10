@@ -5,9 +5,9 @@ Compute the gradient with PyTorch and the KFAC approximation with BackPACK.
 from torch.nn import CrossEntropyLoss, Flatten, Linear, Sequential
 
 from backpack import backpack, extend, extensions
-from utils import load_mnist_data
+from backpack.utils.examples import load_mnist_data
 
-B = 64
+B = 4
 X, y = load_mnist_data(B)
 
 print("# Gradient with PyTorch, KFAC approximation with BackPACK | B =", B)
@@ -20,7 +20,8 @@ lossfunc = extend(lossfunc)
 
 loss = lossfunc(model(X), y)
 
-with backpack(extensions.KFAC()):
+# number of MC samples is optional, defaults to 1
+with backpack(extensions.KFAC(mc_samples=1)):
     loss.backward()
 
 for name, param in model.named_parameters():

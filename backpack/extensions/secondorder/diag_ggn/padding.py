@@ -1,5 +1,5 @@
 from backpack.core.derivatives.zeropad2d import ZeroPad2dDerivatives
-from .diag_ggn_base import DiagGGNBaseModule
+from backpack.extensions.secondorder.diag_ggn.diag_ggn_base import DiagGGNBaseModule
 
 
 class DiagGGNZeroPad2d(DiagGGNBaseModule):

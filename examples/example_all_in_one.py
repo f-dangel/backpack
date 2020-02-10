@@ -5,9 +5,9 @@ Compute the gradient with PyTorch and other quantities with BackPACK.
 from torch.nn import CrossEntropyLoss, Flatten, Linear, Sequential
 
 from backpack import backpack, extend, extensions
-from utils import load_mnist_data
+from backpack.utils.examples import load_mnist_data
 
-B = 64
+B = 4
 X, y = load_mnist_data(B)
 
 print("# Gradient with PyTorch, other quantities with BackPACK | B =", B)
@@ -30,13 +30,15 @@ with backpack(
     # individual gradient L2 norm
     extensions.BatchL2Grad(),
     # MC-sampled GGN diagonal
-    extensions.DiagGGNMC(),
+    # number of samples optional (default: 1)
+    extensions.DiagGGNMC(mc_samples=1),
     # Exact GGN diagonal
     extensions.DiagGGNExact(),
     # Exact Hessian diagonal
     extensions.DiagHessian(),
     # KFAC (Martens et al.)
-    extensions.KFAC(),
+    # number of samples optional (default: 1)
+    extensions.KFAC(mc_samples=1),
     # KFLR (Botev et al.)
     extensions.KFLR(),
     # KFRA (Botev et al.)

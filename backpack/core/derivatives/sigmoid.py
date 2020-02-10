@@ -1,5 +1,5 @@
 from torch.nn import Sigmoid
-from .elementwise import ElementwiseDerivatives
+from backpack.core.derivatives.elementwise import ElementwiseDerivatives
 
 
 class SigmoidDerivatives(ElementwiseDerivatives):

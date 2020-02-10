@@ -1,5 +1,5 @@
 from torch.nn import Tanh
-from .elementwise import ElementwiseDerivatives
+from backpack.core.derivatives.elementwise import ElementwiseDerivatives
 
 
 class TanhDerivatives(ElementwiseDerivatives):

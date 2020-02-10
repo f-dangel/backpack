@@ -1,7 +1,10 @@
-from backpack.utils.unsqueeze import hmp_unsqueeze_if_missing_dim
 from backpack.extensions.curvature import Curvature
 from backpack.extensions.module_extension import ModuleExtension
-from backpack.utils.einsum import einsum
+from backpack.utils.ein import einsum
+from backpack.core.derivatives.shape_check import (
+    R_mat_prod_accept_vectors,
+    R_mat_prod_check_shapes,
+)
 
 
 class CMPBase(ModuleExtension):
@@ -24,7 +27,6 @@ class CMPBase(ModuleExtension):
         if R_required:
             R_mat_prod = self._make_R_mat_prod(ext, module, g_inp, g_out, backproped)
 
-        @hmp_unsqueeze_if_missing_dim(mat_dim=3)
         def CMP_in(mat):
             """Multiplication with curvature matrix w.r.t. the module input.
 
@@ -84,14 +86,19 @@ class CMPBase(ModuleExtension):
         R = self.derivatives.hessian_diagonal(module, g_inp, g_out)
         R_mod = Curvature.modify_residual(R, ext.get_curv_type())
 
-        def R_mat_prod(mat):
-            """Multiply with the residual: mat → [∑_{k} Hz_k(x) 𝛿z_k] mat.
+        @R_mat_prod_accept_vectors
+        @R_mat_prod_check_shapes
+        def make_residual_mat_prod(self, module, g_inp, g_out):
+            def R_mat_prod(mat):
+                """Multiply with the residual: mat → [∑_{k} Hz_k(x) 𝛿z_k] mat.
 
-            Second term of the module input Hessian backpropagation equation.
-            """
-            return einsum("bi,bic->bic", (R_mod, mat))
+                Second term of the module input Hessian backpropagation equation.
+                """
+                return einsum("n...,vn...->vn...", (R_mod, mat))
 
-        return R_mat_prod
+            return R_mat_prod
+
+        return make_residual_mat_prod(self, module, g_inp, g_out)
 
     def __make_nondiagonal_R_mat_prod(self, ext, module, g_inp, g_out, backproped):
         curv_type = ext.get_curv_type()

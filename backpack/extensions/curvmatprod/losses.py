@@ -10,7 +10,7 @@ class CMPLoss(CMPBase):
             self.derivatives.hessian_is_psd(), curv_type=ext.get_curv_type()
         )
 
-        CMP = self.derivatives.hessian_matrix_product(module, g_inp, g_out)
+        CMP = self.derivatives.make_hessian_mat_prod(module, g_inp, g_out)
         return CMP
 
 

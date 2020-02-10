@@ -1,7 +1,7 @@
 from backpack.core.derivatives.relu import ReLUDerivatives
 from backpack.core.derivatives.sigmoid import SigmoidDerivatives
 from backpack.core.derivatives.tanh import TanhDerivatives
-from .diag_h_base import DiagHBaseModule
+from backpack.extensions.secondorder.diag_hessian.diag_h_base import DiagHBaseModule
 
 
 class DiagHReLU(DiagHBaseModule):

@@ -1,20 +1,21 @@
-from backpack.extensions.backprop_extension import BackpropExtension
-from backpack.core.layers import Conv2dConcat, LinearConcat
 from torch.nn import (
-    Linear,
-    Conv2d,
-    Dropout,
-    MaxPool2d,
-    Tanh,
-    Sigmoid,
-    ReLU,
-    CrossEntropyLoss,
-    MSELoss,
     AvgPool2d,
-    ZeroPad2d,
+    Conv2d,
+    CrossEntropyLoss,
+    Dropout,
     Flatten,
+    Linear,
+    MaxPool2d,
+    MSELoss,
+    ReLU,
+    Sigmoid,
+    Tanh,
+    ZeroPad2d,
 )
-from . import pooling, conv2d, linear, activations, losses, padding, dropout, flatten
+
+from backpack.extensions.backprop_extension import BackpropExtension
+
+from . import activations, conv2d, dropout, flatten, linear, losses, padding, pooling
 
 
 class DiagHessian(BackpropExtension):
@@ -37,12 +38,10 @@ class DiagHessian(BackpropExtension):
                 MSELoss: losses.DiagHMSELoss(),
                 CrossEntropyLoss: losses.DiagHCrossEntropyLoss(),
                 Linear: linear.DiagHLinear(),
-                LinearConcat: linear.DiagHLinearConcat(),
                 MaxPool2d: pooling.DiagHMaxPool2d(),
                 AvgPool2d: pooling.DiagHAvgPool2d(),
                 ZeroPad2d: padding.DiagHZeroPad2d(),
                 Conv2d: conv2d.DiagHConv2d(),
-                Conv2dConcat: conv2d.DiagHConv2dConcat(),
                 Dropout: dropout.DiagHDropout(),
                 Flatten: flatten.DiagHFlatten(),
                 ReLU: activations.DiagHReLU(),

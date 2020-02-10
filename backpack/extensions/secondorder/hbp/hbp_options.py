@@ -1,12 +1,12 @@
 class LossHessianStrategy:
     EXACT = "exact"
     SAMPLING = "sampling"
-    AVERAGE = "average"
+    SUM = "sum"
 
     CHOICES = [
         EXACT,
         SAMPLING,
-        AVERAGE,
+        SUM,
     ]
 
     @classmethod
