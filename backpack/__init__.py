@@ -2,8 +2,9 @@
 BackPACK
 """
 import torch
-from .context import CTX
+
 from . import extensions
+from .context import CTX
 
 
 class backpack:

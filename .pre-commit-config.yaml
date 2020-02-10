@@ -16,7 +16,3 @@ repos:
         flake8-bugbear,
         flake8-comprehensions,
       ]
--   repo: https://github.com/pre-commit/mirrors-isort
-    rev: 'v4.3.21'
-    hooks:
-    -   id: isort

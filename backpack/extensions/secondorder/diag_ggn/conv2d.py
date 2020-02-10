@@ -1,7 +1,6 @@
 from backpack.core.derivatives.conv2d import Conv2DDerivatives
-from backpack.utils import conv as convUtils
-
 from backpack.extensions.secondorder.diag_ggn.diag_ggn_base import DiagGGNBaseModule
+from backpack.utils import conv as convUtils
 
 
 class DiagGGNConv2d(DiagGGNBaseModule):

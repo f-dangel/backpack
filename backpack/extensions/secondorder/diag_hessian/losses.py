@@ -1,5 +1,5 @@
-from backpack.core.derivatives.mseloss import MSELossDerivatives
 from backpack.core.derivatives.crossentropyloss import CrossEntropyLossDerivatives
+from backpack.core.derivatives.mseloss import MSELossDerivatives
 from backpack.extensions.secondorder.diag_hessian.diag_h_base import DiagHBaseModule
 
 

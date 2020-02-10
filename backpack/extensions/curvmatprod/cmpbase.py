@@ -1,10 +1,10 @@
-from backpack.extensions.curvature import Curvature
-from backpack.extensions.module_extension import ModuleExtension
-from backpack.utils.ein import einsum
 from backpack.core.derivatives.shape_check import (
     R_mat_prod_accept_vectors,
     R_mat_prod_check_shapes,
 )
+from backpack.extensions.curvature import Curvature
+from backpack.extensions.module_extension import ModuleExtension
+from backpack.utils.ein import einsum
 
 
 class CMPBase(ModuleExtension):

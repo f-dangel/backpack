@@ -4,9 +4,8 @@ convolution over single channels with a constant kernel."""
 import torch.nn
 from torch.nn import AvgPool2d, Conv2d, ConvTranspose2d
 
-
-from backpack.utils.ein import einsum, eingroup
 from backpack.core.derivatives.basederivatives import BaseDerivatives
+from backpack.utils.ein import eingroup, einsum
 
 
 class AvgPool2DDerivatives(BaseDerivatives):

@@ -2,8 +2,8 @@ import torch
 import torch.nn
 
 from backpack.core.derivatives.conv2d import Conv2DDerivatives
-from backpack.utils import conv as convUtils
 from backpack.extensions.secondorder.diag_hessian.diag_h_base import DiagHBaseModule
+from backpack.utils import conv as convUtils
 
 
 class DiagHConv2d(DiagHBaseModule):

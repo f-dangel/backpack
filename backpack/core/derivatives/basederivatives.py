@@ -1,21 +1,5 @@
+from backpack.core.derivatives import shape_check
 from backpack.utils.ein import try_view
-
-from backpack.core.derivatives.shape_check import (
-    jac_t_mat_prod_accept_vectors,
-    jac_t_mat_prod_check_shapes,
-    jac_mat_prod_accept_vectors,
-    jac_mat_prod_check_shapes,
-    bias_jac_t_mat_prod_accept_vectors,
-    bias_jac_t_mat_prod_check_shapes,
-    bias_jac_mat_prod_accept_vectors,
-    bias_jac_mat_prod_check_shapes,
-    weight_jac_t_mat_prod_accept_vectors,
-    weight_jac_t_mat_prod_check_shapes,
-    weight_jac_mat_prod_accept_vectors,
-    weight_jac_mat_prod_check_shapes,
-    make_hessian_mat_prod_accept_vectors,
-    make_hessian_mat_prod_check_shapes,
-)
 
 
 class BaseDerivatives:
@@ -46,8 +30,8 @@ class BaseDerivatives:
         = 𝜕output[n, c, w, ...] / 𝜕input[̃n, ̃c, ̃w, ...]
     """
 
-    @jac_mat_prod_accept_vectors
-    @jac_mat_prod_check_shapes
+    @shape_check.jac_mat_prod_accept_vectors
+    @shape_check.jac_mat_prod_check_shapes
     def jac_mat_prod(self, module, g_inp, g_out, mat):
         """Apply Jacobian of the output w.r.t. input to a matrix.
 
@@ -72,8 +56,8 @@ class BaseDerivatives:
         """Internal implementation of the Jacobian."""
         raise NotImplementedError
 
-    @jac_t_mat_prod_accept_vectors
-    @jac_t_mat_prod_check_shapes
+    @shape_check.jac_t_mat_prod_accept_vectors
+    @shape_check.jac_t_mat_prod_check_shapes
     def jac_t_mat_prod(self, module, g_inp, g_out, mat):
         """Apply transposed Jacobian of module output w.r.t. input to a matrix.
 
@@ -180,8 +164,8 @@ class BaseParameterDerivatives(BaseDerivatives):
     For most layers, these shapes correspond to shapes of the module input or output.
     """
 
-    @bias_jac_mat_prod_accept_vectors
-    @bias_jac_mat_prod_check_shapes
+    @shape_check.bias_jac_mat_prod_accept_vectors
+    @shape_check.bias_jac_mat_prod_check_shapes
     def bias_jac_mat_prod(self, module, g_inp, g_out, mat):
         """Apply Jacobian of the output w.r.t. bias to a matrix.
 
@@ -203,8 +187,8 @@ class BaseParameterDerivatives(BaseDerivatives):
         """Internal implementation of the bias Jacobian."""
         raise NotImplementedError
 
-    @bias_jac_t_mat_prod_accept_vectors
-    @bias_jac_t_mat_prod_check_shapes
+    @shape_check.bias_jac_t_mat_prod_accept_vectors
+    @shape_check.bias_jac_t_mat_prod_check_shapes
     def bias_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
         """Apply transposed Jacobian of the output w.r.t. bias to a matrix.
 
@@ -229,8 +213,8 @@ class BaseParameterDerivatives(BaseDerivatives):
         """Internal implementation of the transposed bias Jacobian."""
         raise NotImplementedError
 
-    @weight_jac_mat_prod_accept_vectors
-    @weight_jac_mat_prod_check_shapes
+    @shape_check.weight_jac_mat_prod_accept_vectors
+    @shape_check.weight_jac_mat_prod_check_shapes
     def weight_jac_mat_prod(self, module, g_inp, g_out, mat):
         """Apply Jacobian of the output w.r.t. weight to a matrix.
 
@@ -252,8 +236,8 @@ class BaseParameterDerivatives(BaseDerivatives):
         """Internal implementation of weight Jacobian."""
         raise NotImplementedError
 
-    @weight_jac_t_mat_prod_accept_vectors
-    @weight_jac_t_mat_prod_check_shapes
+    @shape_check.weight_jac_t_mat_prod_accept_vectors
+    @shape_check.weight_jac_t_mat_prod_check_shapes
     def weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
         """Apply transposed Jacobian of the output w.r.t. weight to a matrix.
 
@@ -302,8 +286,8 @@ class BaseLossDerivatives(BaseDerivatives):
     def _sqrt_hessian_sampled(self, module, g_inp, g_out, mc_samples=1):
         raise NotImplementedError
 
-    @make_hessian_mat_prod_accept_vectors
-    @make_hessian_mat_prod_check_shapes
+    @shape_check.make_hessian_mat_prod_accept_vectors
+    @shape_check.make_hessian_mat_prod_check_shapes
     def make_hessian_mat_prod(self, module, g_inp, g_out):
         """Multiplication of the input Hessian with a matrix.
 

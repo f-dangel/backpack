@@ -1,6 +1,7 @@
-from backpack.extensions.mat_to_mat_jac_base import MatToJacMat
-from torch import clamp, diag_embed
 from numpy import prod
+from torch import clamp, diag_embed
+
+from backpack.extensions.mat_to_mat_jac_base import MatToJacMat
 from backpack.utils.ein import einsum
 
 
