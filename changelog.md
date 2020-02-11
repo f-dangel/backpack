@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   [PR](https://github.com/f-dangel/backpack/pull/36)]
 - Utilities to handle Kronecker factors 
   [[PR](https://github.com/f-dangel/backpack/pull/17)]
+- Examples 
+  [PR](https://github.com/f-dangel/backpack/pull/34)
   
 ### Fixed
 - Fixed documentation issue in `Batch l2` 
