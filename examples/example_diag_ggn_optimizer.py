@@ -18,13 +18,10 @@ x_{t+1} = x_t - (G_t + bI)^{-1} g_t
 """
 
 import torch
-import torchvision
-# The main BackPACK functionalities
+
 from backpack import backpack, extend
-# The diagonal GGN extension
 from backpack.extensions import DiagGGNMC
-# This layer did not exist in Pytorch 1.0
-from backpack.core.layers import Flatten
+from backpack.utils.examples import download_mnist
 
 # Hyperparameters
 BATCH_SIZE = 64
@@ -41,20 +38,9 @@ We're going to load the MNIST dataset,
 and fit a 3-layer MLP with ReLU activations.
 """
 
-
+mnist_dataset = download_mnist()
 mnist_loader = torch.utils.data.dataloader.DataLoader(
-    torchvision.datasets.MNIST(
-        './data',
-        train=True,
-        download=True,
-        transform=torchvision.transforms.Compose([
-            torchvision.transforms.ToTensor(),
-            torchvision.transforms.Normalize(
-                (0.1307,), (0.3081,)
-            )
-        ])),
-    batch_size=BATCH_SIZE,
-    shuffle=True
+    mnist_dataset, batch_size=BATCH_SIZE, shuffle=True
 )
 
 model = torch.nn.Sequential(
@@ -64,14 +50,14 @@ model = torch.nn.Sequential(
     torch.nn.Conv2d(20, 50, 5, 1),
     torch.nn.ReLU(),
     torch.nn.MaxPool2d(2, 2),
-    Flatten(), 
-    # Pytorch <1.2 doesn't have a Flatten layer
-    torch.nn.Linear(4*4*50, 500),
+    torch.nn.Flatten(),
+    torch.nn.Linear(4 * 4 * 50, 500),
     torch.nn.ReLU(),
     torch.nn.Linear(500, 10),
 )
 
 loss_function = torch.nn.CrossEntropyLoss()
+
 
 def get_accuracy(output, targets):
     """Helper function to print the accuracy"""
@@ -96,10 +82,7 @@ and update the weights
 
 class DiagGGNOptimizer(torch.optim.Optimizer):
     def __init__(self, parameters, step_size, damping):
-        super().__init__(
-            parameters, 
-            dict(step_size=step_size, damping=damping)
-        )
+        super().__init__(parameters, dict(step_size=step_size, damping=damping))
 
     def step(self):
         for group in self.param_groups:
@@ -107,7 +90,6 @@ class DiagGGNOptimizer(torch.optim.Optimizer):
                 step_direction = p.grad / (p.diag_ggn_mc + group["damping"])
                 p.data.add_(-group["step_size"], step_direction)
         return loss
-
 
 
 """
@@ -118,11 +100,7 @@ create the optimizer, and we will be ready to go
 extend(model)
 extend(loss_function)
 
-optimizer = DiagGGNOptimizer(
-    model.parameters(), 
-    step_size=STEP_SIZE, 
-    damping=DAMPING
-)
+optimizer = DiagGGNOptimizer(model.parameters(), step_size=STEP_SIZE, damping=DAMPING)
 
 
 """
@@ -149,9 +127,10 @@ for batch_idx, (x, y) in enumerate(mnist_loader):
         optimizer.step()
 
     print(
-        "Iteration %3.d/%d   " % (batch_idx, MAX_ITER) +
-        "Minibatch Loss %.3f  " % (loss) +
-        "Accuracy %.0f" % (accuracy * 100) + "%"
+        "Iteration %3.d/%d   " % (batch_idx, MAX_ITER)
+        + "Minibatch Loss %.3f  " % (loss)
+        + "Accuracy %.0f" % (accuracy * 100)
+        + "%"
     )
 
     if batch_idx >= MAX_ITER:

@@ -1,6 +1,6 @@
-from backpack.extensions.module_extension import ModuleExtension
-from .hbp_options import BackpropStrategy
 from backpack.extensions.curvature import Curvature
+from backpack.extensions.module_extension import ModuleExtension
+from backpack.extensions.secondorder.hbp.hbp_options import BackpropStrategy
 
 
 class HBPBaseModule(ModuleExtension):
@@ -17,19 +17,13 @@ class HBPBaseModule(ModuleExtension):
             )
 
         elif BackpropStrategy.is_sqrt(bp_strategy):
-            return self.backpropagate_sqrt(
-                ext, module, g_inp, g_out, backproped
-            )
+            return self.backpropagate_sqrt(ext, module, g_inp, g_out, backproped)
 
     def backpropagate_sqrt(self, ext, module, g_inp, g_out, H):
-        return self.derivatives.jac_t_mat_prod(
-            module, g_inp, g_out, H
-        )
+        return self.derivatives.jac_t_mat_prod(module, g_inp, g_out, H)
 
     def backpropagate_batch_average(self, ext, module, g_inp, g_out, H):
-        ggn = self.derivatives.ea_jac_t_mat_jac_prod(
-            module, g_inp, g_out, H
-        )
+        ggn = self.derivatives.ea_jac_t_mat_jac_prod(module, g_inp, g_out, H)
 
         residual = self.second_order_module_effects(module, g_inp, g_out)
         residual_mod = Curvature.modify_residual(residual, ext.get_curv_type())
@@ -49,9 +43,7 @@ class HBPBaseModule(ModuleExtension):
             )
 
         else:
-            return self.derivatives.hessian_diagonal(
-                module, g_inp, g_out
-            ).sum(0)
+            return self.derivatives.hessian_diagonal(module, g_inp, g_out).sum(0)
 
     @staticmethod
     def add_diag_to_mat(diag, mat):

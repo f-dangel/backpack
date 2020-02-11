@@ -1,0 +1,3 @@
+-r requirements/test.txt
+-r requirements/lint.txt
+pre-commit

@@ -19,3 +19,14 @@ to second-order information, such as
 from .diag_ggn import DiagGGN, DiagGGNExact, DiagGGNMC
 from .diag_hessian import DiagHessian
 from .hbp import HBP, KFAC, KFLR, KFRA
+
+__all__ = [
+    "DiagGGN",
+    "DiagGGNExact",
+    "DiagGGNMC",
+    "DiagHessian",
+    "HBP",
+    "KFAC",
+    "KFLR",
+    "KFRA",
+]

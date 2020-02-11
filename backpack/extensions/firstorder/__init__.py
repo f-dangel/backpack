@@ -12,9 +12,9 @@ backpropagated through the computational graph, such as
 - `BatchL2Grad`: The L2 norm of the individual gradients
 """
 
-from .batch_l2_grad import BatchL2Grad
 from .batch_grad import BatchGrad
+from .batch_l2_grad import BatchL2Grad
 from .sum_grad_squared import SumGradSquared
 from .variance import Variance
 
-
+__all__ = ["BatchL2Grad", "BatchGrad", "SumGradSquared", "Variance"]

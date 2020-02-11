@@ -1,24 +1,24 @@
-class LossHessianStrategy():
+class LossHessianStrategy:
     EXACT = "exact"
     SAMPLING = "sampling"
-    AVERAGE = "average"
+    SUM = "sum"
 
     CHOICES = [
         EXACT,
         SAMPLING,
-        AVERAGE,
+        SUM,
     ]
 
     @classmethod
     def check_exists(cls, strategy):
-        if not strategy in cls.CHOICES:
+        if strategy not in cls.CHOICES:
             raise AttributeError(
-                "Unknown loss Hessian strategy: {}. ".format(strategy) +
-                "Expecting one of {}".format(cls.CHOICES)
+                "Unknown loss Hessian strategy: {}. ".format(strategy)
+                + "Expecting one of {}".format(cls.CHOICES)
             )
 
 
-class BackpropStrategy():
+class BackpropStrategy:
     SQRT = "sqrt"
     BATCH_AVERAGE = "average"
 
@@ -39,14 +39,14 @@ class BackpropStrategy():
 
     @classmethod
     def check_exists(cls, strategy):
-        if not strategy in cls.CHOICES:
+        if strategy not in cls.CHOICES:
             raise AttributeError(
-                "Unknown backpropagation strategy: {}. ".format(strategy) +
-                "Expect {}".format(cls.CHOICES)
+                "Unknown backpropagation strategy: {}. ".format(strategy)
+                + "Expect {}".format(cls.CHOICES)
             )
 
 
-class ExpectationApproximation():
+class ExpectationApproximation:
     BOTEV_MARTENS = "E[J^T E(H) J]"
     CHEN = "E(J^T) E(H) E(J)"
 
@@ -62,8 +62,8 @@ class ExpectationApproximation():
 
     @classmethod
     def check_exists(cls, strategy):
-        if not strategy in cls.CHOICES:
+        if strategy not in cls.CHOICES:
             raise AttributeError(
-                "Unknown EA strategy: {}. ".format(strategy) +
-                "Expect {}".format(cls.CHOICES)
+                "Unknown EA strategy: {}. ".format(strategy)
+                + "Expect {}".format(cls.CHOICES)
             )

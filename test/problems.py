@@ -1,10 +1,11 @@
 import torch
-from .test_problem import TestProblem
+
 from backpack import extend
-from backpack.core.layers import Flatten
+
+from .test_problem import TestProblem
 
 
-class ProblemBase():
+class ProblemBase:
     def __init__(self, input_shape, network_modules):
         self.input_shape = input_shape
         self.net_modules = network_modules
@@ -54,14 +55,13 @@ class Regression(ProblemBase):
 
     def get_modules(self):
         modules = self.get_network_modules()
-        modules.append(Flatten())
+        modules.append(torch.nn.Flatten())
         modules.append(self.sum_output_layer())
         return modules
 
     def sum_output_layer(self):
         num_outputs = self.get_num_network_outputs()
-        return torch.nn.Linear(
-            in_features=num_outputs, out_features=1, bias=True)
+        return torch.nn.Linear(in_features=num_outputs, out_features=1, bias=True)
 
     def get_XY(self, model):
         X = torch.randn(size=self.input_shape)
@@ -77,12 +77,12 @@ class Classification(ProblemBase):
 
     def get_modules(self):
         modules = self.get_network_modules()
-        modules.append(Flatten())
+        modules.append(torch.nn.Flatten())
         return modules
 
     def get_XY(self, model):
         X = torch.randn(size=self.input_shape)
-        Y = torch.randint(high=model(X).shape[1], size=(X.shape[0], ))
+        Y = torch.randint(high=model(X).shape[1], size=(X.shape[0],))
         return X, Y
 
 

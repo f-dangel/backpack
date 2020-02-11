@@ -1,7 +1,7 @@
 from backpack.core.derivatives.relu import ReLUDerivatives
-from backpack.core.derivatives.tanh import TanhDerivatives
 from backpack.core.derivatives.sigmoid import SigmoidDerivatives
-from .hbpbase import HBPBaseModule
+from backpack.core.derivatives.tanh import TanhDerivatives
+from backpack.extensions.secondorder.hbp.hbpbase import HBPBaseModule
 
 
 class HBPReLU(HBPBaseModule):

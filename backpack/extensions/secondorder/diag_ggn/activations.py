@@ -1,7 +1,7 @@
 from backpack.core.derivatives.relu import ReLUDerivatives
-from backpack.core.derivatives.tanh import TanhDerivatives
 from backpack.core.derivatives.sigmoid import SigmoidDerivatives
-from .diag_ggn_base import DiagGGNBaseModule
+from backpack.core.derivatives.tanh import TanhDerivatives
+from backpack.extensions.secondorder.diag_ggn.diag_ggn_base import DiagGGNBaseModule
 
 
 class DiagGGNReLU(DiagGGNBaseModule):

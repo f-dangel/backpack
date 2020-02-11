@@ -1,5 +1,6 @@
 from torch.nn import Sigmoid
-from .elementwise import ElementwiseDerivatives
+
+from backpack.core.derivatives.elementwise import ElementwiseDerivatives
 
 
 class SigmoidDerivatives(ElementwiseDerivatives):
@@ -13,7 +14,7 @@ class SigmoidDerivatives(ElementwiseDerivatives):
         return True
 
     def df(self, module, g_inp, g_out):
-        return module.output * (1. - module.output)
+        return module.output * (1.0 - module.output)
 
     def d2f(self, module, g_inp, g_out):
         return module.output * (1 - module.output) * (1 - 2 * module.output)

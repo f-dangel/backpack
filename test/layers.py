@@ -1,31 +1,28 @@
-from backpack.core.layers import Conv2dConcat, LinearConcat
 from torch import nn
 
 LINEARS = {
-    'Linear': nn.Linear,
-    'LinearConcat': LinearConcat,
+    "Linear": nn.Linear,
 }
 
 ACTIVATIONS = {
-    'ReLU': nn.ReLU,
-    'Sigmoid': nn.Sigmoid,
-    'Tanh': nn.Tanh,
+    "ReLU": nn.ReLU,
+    "Sigmoid": nn.Sigmoid,
+    "Tanh": nn.Tanh,
 }
 
 CONVS = {
-    'Conv2d': nn.Conv2d,
-    'Conv2dConcat': Conv2dConcat,
+    "Conv2d": nn.Conv2d,
 }
 
 PADDINGS = {
-    'ZeroPad2d': nn.ZeroPad2d,
+    "ZeroPad2d": nn.ZeroPad2d,
 }
 
 POOLINGS = {
-    'MaxPool2d': nn.MaxPool2d,
-    'AvgPool2d': nn.AvgPool2d,
+    "MaxPool2d": nn.MaxPool2d,
+    "AvgPool2d": nn.AvgPool2d,
 }
 
 BN = {
-    'BatchNorm1d': nn.BatchNorm1d,
+    "BatchNorm1d": nn.BatchNorm1d,
 }
