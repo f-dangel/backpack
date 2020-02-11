@@ -1,13 +1,14 @@
 # BACKpropagation PACKage - a backpack for `PyTorch`
 
-| branch | tests (*TODO* & examples) | coverage | *TODO* docs-coverage |
-|--------|---------------------------|----------|----------------------|
-|`master` | [![Build Status](https://travis-ci.org/f-dangel/backpack.svg?branch=master)](https://travis-ci.org/f-dangel/backpack) | [![Coverage Status](https://coveralls.io/repos/github/f-dangel/backpack/badge.svg?branch=master)](https://coveralls.io/github/f-dangel/backpack) | *TODO* | 
-| `development` | [![Build Status](https://travis-ci.org/f-dangel/backpack.svg?branch=development)](https://travis-ci.org/f-dangel/backpack) | [![Coverage Status](https://coveralls.io/repos/github/f-dangel/backpack/badge.svg?branch=development)](https://coveralls.io/github/f-dangel/backpack) | *TODO* |
+| branch | tests & examples | coverage |
+|--------|---------------------------|----------|
+|`master` | [![Build Status](https://travis-ci.org/f-dangel/backpack.svg?branch=master)](https://travis-ci.org/f-dangel/backpack) | [![Coverage Status](https://coveralls.io/repos/github/f-dangel/backpack/badge.svg?branch=master)](https://coveralls.io/github/f-dangel/backpack) |
+| `development` | [![Build Status](https://travis-ci.org/f-dangel/backpack.svg?branch=development)](https://travis-ci.org/f-dangel/backpack) | [![Coverage Status](https://coveralls.io/repos/github/f-dangel/backpack/badge.svg?branch=development)](https://coveralls.io/github/f-dangel/backpack) |
 
-A backpack for PyTorch that extends the backward pass of feedforward networks to compute quantities beyond the gradient (check out the [cheatsheet](examples/cheatsheet.pdf) for an overview).
+A backpack for PyTorch that extends the backward pass of feedforward networks to compute quantities beyond the gradient.
 
-Check out the [examples](https://f-dangel.github.io/backpack/) on how to use the code.
+- Check out the [cheatsheet](examples/cheatsheet.pdf) for an overview of quantities.
+- Check out the [examples](https://f-dangel.github.io/backpack/) on how to use the code.
 
 ## Installation
 ```bash
