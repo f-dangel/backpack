@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Utilities to handle Kronecker factors 
   [[PR](https://github.com/f-dangel/backpack/pull/17)]
 - Examples 
-  [PR](https://github.com/f-dangel/backpack/pull/34)
+  [[PR](https://github.com/f-dangel/backpack/pull/34)]
   
 ### Fixed
 - Fixed documentation issue in `Batch l2` 
@@ -29,6 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   continuous integration [[PR](https://github.com/f-dangel/backpack/pull/19)],
   test coverage [[PR](https://github.com/f-dangel/backpack/pull/25)],
   style guide enforcement [[PR](https://github.com/f-dangel/backpack/pull/27)]
+- Changed internal shape conventions of backpropagated quantities 
+  [[PR](https://github.com/f-dangel/backpack/pull/37)]
 
 ## [1.0.1] - 2019-09-05
 ### Fixed
