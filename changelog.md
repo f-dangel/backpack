@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [1.1.0] - 2020-02-11
+
 ### Added
 - Support MC sampling 
   [[Issue](https://github.com/f-dangel/backpack/issues/21),
@@ -29,16 +32,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   continuous integration [[PR](https://github.com/f-dangel/backpack/pull/19)],
   test coverage [[PR](https://github.com/f-dangel/backpack/pull/25)],
   style guide enforcement [[PR](https://github.com/f-dangel/backpack/pull/27)]
-- Changed internal shape conventions of backpropagated quantities 
+- Changed internal shape conventions of backpropagated quantities for performance improvements 
   [[PR](https://github.com/f-dangel/backpack/pull/37)]
 
 ## [1.0.1] - 2019-09-05
+
 ### Fixed
 - Fixed PyPI installaton 
 
 ## [1.0.0] - 2019-10-03 
+
 Initial release
 
-[Unreleased]: https://github.com/f-dangel/backpack/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/f-dangel/backpack/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/f-dangel/backpack/compare/1.0.1...1.1.0
 [1.0.1]: https://github.com/f-dangel/backpack/compare/1.0.0...1.0.1
-[1.0.0]: https://github.com/f-dangel/backpack/releases/tag/1.0.1
+[1.0.0]: https://github.com/f-dangel/backpack/releases/tag/1.0.0
