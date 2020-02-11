@@ -1,6 +1,6 @@
 from backpack.core.derivatives.avgpool2d import AvgPool2DDerivatives
 from backpack.core.derivatives.maxpool2d import MaxPool2DDerivatives
-from .diag_h_base import DiagHBaseModule
+from backpack.extensions.secondorder.diag_hessian.diag_h_base import DiagHBaseModule
 
 
 class DiagHAvgPool2d(DiagHBaseModule):
@@ -11,4 +11,3 @@ class DiagHAvgPool2d(DiagHBaseModule):
 class DiagHMaxPool2d(DiagHBaseModule):
     def __init__(self):
         super().__init__(derivatives=MaxPool2DDerivatives())
-

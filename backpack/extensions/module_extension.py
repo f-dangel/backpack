@@ -1,7 +1,4 @@
 import warnings
-from backpack.context import get_from_ctx, set_in_ctx
-
-SAVE_BP_QUANTITIES_IN_COMPUTATION_GRAPH = True
 
 
 class ModuleExtension:
@@ -71,40 +68,30 @@ class ModuleExtension:
         for param in self.__params:
             if self.__param_exists_and_requires_grad(module, param):
                 extFunc = getattr(self, param)
-                extValue = extFunc(
-                    ext, module, g_inp, g_out, bpQuantities
-                )
+                extValue = extFunc(ext, module, g_inp, g_out, bpQuantities)
                 self.__save(extValue, ext, module, param)
 
-        bpQuantities = self.backpropagate(
-            ext, module, g_inp, g_out, bpQuantities
-        )
+        bpQuantities = self.backpropagate(ext, module, g_inp, g_out, bpQuantities)
 
         self.__backprop_quantities(ext, inp, out, bpQuantities)
 
     @staticmethod
     def __backproped_quantities(ext, out):
-        if not SAVE_BP_QUANTITIES_IN_COMPUTATION_GRAPH:
-            return get_from_ctx(ext.savefield)
-        else:
-            return getattr(out, ext.savefield, None)
+        return getattr(out, ext.savefield, None)
 
     @staticmethod
     def __backprop_quantities(ext, inp, out, bpQuantities):
 
-        if not SAVE_BP_QUANTITIES_IN_COMPUTATION_GRAPH:
-            set_in_ctx(ext.savefield, bpQuantities)
-        else:
-            setattr(inp, ext.savefield, bpQuantities)
+        setattr(inp, ext.savefield, bpQuantities)
 
-            is_a_leaf = out.grad_fn is None
-            retain_grad_is_on = getattr(out, "retains_grad", False)
-            inp_is_out = id(inp) == id(out)
-            should_retain_grad = is_a_leaf or retain_grad_is_on or inp_is_out
+        is_a_leaf = out.grad_fn is None
+        retain_grad_is_on = getattr(out, "retains_grad", False)
+        inp_is_out = id(inp) == id(out)
+        should_retain_grad = is_a_leaf or retain_grad_is_on or inp_is_out
 
-            if not should_retain_grad:
-                if hasattr(out, ext.savefield):
-                    delattr(out, ext.savefield)
+        if not should_retain_grad:
+            if hasattr(out, ext.savefield):
+                delattr(out, ext.savefield)
 
     @staticmethod
     def __param_exists_and_requires_grad(module, param):

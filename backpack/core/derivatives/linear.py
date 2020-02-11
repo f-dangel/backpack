@@ -1,101 +1,60 @@
-import torch
-from ...utils.utils import einsum
 from torch.nn import Linear
-from .basederivatives import BaseDerivatives
-from ..layers import LinearConcat
 
-from .utils import jmp_unsqueeze_if_missing_dim
+from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
+from backpack.utils.ein import einsum
 
 
-class LinearDerivatives(BaseDerivatives):
+class LinearDerivatives(BaseParameterDerivatives):
+    """Partial derivatives for the Linear layer.
+
+    Index conventions:
+    ------------------
+    * v: Free dimension
+    * n: Batch dimension
+    * o: Output dimension
+    * i: Input dimension
+    """
+
     def get_module(self):
         return Linear
-
-    def get_input(self, module):
-        return module.input0
 
     def hessian_is_zero(self):
         return True
 
-    def get_weight_data(self, module):
-        return module.weight.data
+    def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
+        """Apply transposed Jacobian of the output w.r.t. the input."""
+        d_input = module.weight.data
+        return einsum("oi,vno->vni", (d_input, mat))
 
-    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
-    def jac_t_mat_prod(self, module, g_inp, g_out, mat):
-        d_linear = self.get_weight_data(module)
-        return einsum('ij,bic->bjc', (d_linear, mat))
-
-    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
-    def jac_mat_prod(self, module, g_inp, g_out, mat):
-        d_linear = self.get_weight_data(module)
-        return einsum('ij,bjc->bic', (d_linear, mat))
+    def _jac_mat_prod(self, module, g_inp, g_out, mat):
+        """Apply Jacobian of the output w.r.t. the input."""
+        d_input = module.weight.data
+        return einsum("oi,vni->vno", (d_input, mat))
 
     def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
-        jac = self.get_weight_data(module)
-        return einsum('ik,ij,jl->kl', (jac, mat, jac))
+        jac = module.weight.data
+        return einsum("ik,ij,jl->kl", (jac, mat, jac))
 
-    @jmp_unsqueeze_if_missing_dim(mat_dim=2)
-    def weight_jac_mat_prod(self, module, g_inp, g_out, mat):
-        batch = self.get_batch(module)
-        num_cols = mat.size(1)
-        shape = tuple(module.weight.size()) + (num_cols, )
+    def _weight_jac_mat_prod(self, module, g_inp, g_out, mat):
+        """Apply Jacobian of the output w.r.t. the weight."""
+        d_weight = module.input0
+        return einsum("ni,voi->vno", (d_weight, mat))
 
-        jac_mat = einsum('bj,ijc->bic',
-                         (self.get_input(module), mat.view(shape)))
-        return jac_mat
+    def _weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
+        """Apply transposed Jacobian of the output w.r.t. the weight."""
+        d_weight = module.input0
+        contract = "vno,ni->voi" if sum_batch else "vno,ni->vnoi"
+        return einsum(contract, (mat, d_weight))
 
-    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
-    def weight_jac_t_mat_prod(self,
-                              module,
-                              g_inp,
-                              g_out,
-                              mat,
-                              sum_batch=True):
-        batch = self.get_batch(module)
-        num_cols = mat.size(2)
+    def _bias_jac_mat_prod(self, module, g_inp, g_out, mat):
+        """Apply Jacobian of the output w.r.t. the bias."""
+        N = self.get_batch(module)
+        return mat.unsqueeze(1).expand(-1, N, -1)
 
-        equation = 'bjc,bi->jic' if sum_batch is True else 'bjc,bi->bjic'
-
-        jac_t_mat = einsum(equation,
-                           (mat, self.get_input(module))).contiguous()
-
-        sum_shape = [module.weight.numel(), num_cols]
-        shape = sum_shape if sum_batch is True else [batch] + sum_shape
-
-        return jac_t_mat.view(*shape)
-
-    @jmp_unsqueeze_if_missing_dim(mat_dim=2)
-    def bias_jac_mat_prod(self, module, g_inp, g_out, mat):
-        batch = self.get_batch(module)
-        return mat.unsqueeze(0).expand(batch, -1, -1)
-
-    @jmp_unsqueeze_if_missing_dim(mat_dim=3)
-    def bias_jac_t_mat_prod(self,
-                            module,
-                            g_inp,
-                            g_out,
-                            mat,
-                            sum_batch=True):
-        if sum_batch is True:
-            return mat.sum(0)
+    def _bias_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
+        """Apply transposed Jacobian of the output w.r.t. the bias."""
+        if sum_batch:
+            N_axis = 1
+            return mat.sum(N_axis)
         else:
             return mat
-
-
-class LinearConcatDerivatives(LinearDerivatives):
-    # override
-    def get_module(self):
-        return LinearConcat
-
-    # override
-    def get_input(self, module):
-        """Return homogeneous input, if bias exists """
-        input = super().get_input(module)
-        if module.has_bias():
-            return module.append_ones(input)
-        else:
-            return input
-
-    # override
-    def get_weight_data(self, module):
-        return module._slice_weight().data

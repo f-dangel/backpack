@@ -1,50 +1,58 @@
-from torch.nn import (AvgPool2d, Conv2d, CrossEntropyLoss, Dropout, Linear,
-                      MaxPool2d, MSELoss, ReLU, Sigmoid, Tanh, ZeroPad2d)
+from torch.nn import (
+    AvgPool2d,
+    Conv2d,
+    CrossEntropyLoss,
+    Dropout,
+    Flatten,
+    Linear,
+    MaxPool2d,
+    MSELoss,
+    ReLU,
+    Sigmoid,
+    Tanh,
+    ZeroPad2d,
+)
 
-from backpack.core.layers import Conv2dConcat, Flatten, LinearConcat
 from backpack.extensions.backprop_extension import BackpropExtension
 from backpack.extensions.secondorder.hbp import LossHessianStrategy
 
-from . import (activations, conv2d, dropout, flatten, linear, losses, padding,
-               pooling)
+from . import activations, conv2d, dropout, flatten, linear, losses, padding, pooling
 
 
 class DiagGGN(BackpropExtension):
     VALID_LOSS_HESSIAN_STRATEGIES = [
-        LossHessianStrategy.EXACT, LossHessianStrategy.SAMPLING
+        LossHessianStrategy.EXACT,
+        LossHessianStrategy.SAMPLING,
     ]
 
-    def __init__(self,
-                 loss_hessian_strategy=LossHessianStrategy.EXACT,
-                 savefield=None):
+    def __init__(self, loss_hessian_strategy=LossHessianStrategy.EXACT, savefield=None):
         if savefield is None:
             savefield = "diag_ggn"
         if loss_hessian_strategy not in self.VALID_LOSS_HESSIAN_STRATEGIES:
             raise ValueError(
-                "Unknown hessian strategy: {}".format(loss_hessian_strategy) +
-                "Valid strategies: [{}]".format(
-                    self.VALID_LOSS_HESSIAN_STRATEGIES))
+                "Unknown hessian strategy: {}".format(loss_hessian_strategy)
+                + "Valid strategies: [{}]".format(self.VALID_LOSS_HESSIAN_STRATEGIES)
+            )
 
         self.loss_hessian_strategy = loss_hessian_strategy
-        super().__init__(savefield=savefield,
-                         fail_mode="ERROR",
-                         module_exts={
-                             MSELoss: losses.DiagGGNMSELoss(),
-                             CrossEntropyLoss:
-                             losses.DiagGGNCrossEntropyLoss(),
-                             Linear: linear.DiagGGNLinear(),
-                             LinearConcat: linear.DiagGGNLinearConcat(),
-                             MaxPool2d: pooling.DiagGGNMaxPool2d(),
-                             AvgPool2d: pooling.DiagGGNAvgPool2d(),
-                             ZeroPad2d: padding.DiagGGNZeroPad2d(),
-                             Conv2d: conv2d.DiagGGNConv2d(),
-                             Conv2dConcat: conv2d.DiagGGNConv2dConcat(),
-                             Dropout: dropout.DiagGGNDropout(),
-                             Flatten: flatten.DiagGGNFlatten(),
-                             ReLU: activations.DiagGGNReLU(),
-                             Sigmoid: activations.DiagGGNSigmoid(),
-                             Tanh: activations.DiagGGNTanh(),
-                         })
+        super().__init__(
+            savefield=savefield,
+            fail_mode="ERROR",
+            module_exts={
+                MSELoss: losses.DiagGGNMSELoss(),
+                CrossEntropyLoss: losses.DiagGGNCrossEntropyLoss(),
+                Linear: linear.DiagGGNLinear(),
+                MaxPool2d: pooling.DiagGGNMaxPool2d(),
+                AvgPool2d: pooling.DiagGGNAvgPool2d(),
+                ZeroPad2d: padding.DiagGGNZeroPad2d(),
+                Conv2d: conv2d.DiagGGNConv2d(),
+                Dropout: dropout.DiagGGNDropout(),
+                Flatten: flatten.DiagGGNFlatten(),
+                ReLU: activations.DiagGGNReLU(),
+                Sigmoid: activations.DiagGGNSigmoid(),
+                Tanh: activations.DiagGGNTanh(),
+            },
+        )
 
 
 class DiagGGNExact(DiagGGN):
@@ -59,9 +67,11 @@ class DiagGGNExact(DiagGGN):
     see :py:meth:`backpack.extensions.DiagGGNMC`.
 
     """
+
     def __init__(self):
-        super().__init__(loss_hessian_strategy=LossHessianStrategy.EXACT,
-                         savefield="diag_ggn_exact")
+        super().__init__(
+            loss_hessian_strategy=LossHessianStrategy.EXACT, savefield="diag_ggn_exact"
+        )
 
 
 class DiagGGNMC(DiagGGN):
@@ -77,6 +87,12 @@ class DiagGGNMC(DiagGGN):
     see :py:meth:`backpack.extensions.DiagGGNExact`.
 
     """
-    def __init__(self):
-        super().__init__(loss_hessian_strategy=LossHessianStrategy.SAMPLING,
-                         savefield="diag_ggn_mc")
+
+    def __init__(self, mc_samples=1):
+        self._mc_samples = mc_samples
+        super().__init__(
+            loss_hessian_strategy=LossHessianStrategy.SAMPLING, savefield="diag_ggn_mc"
+        )
+
+    def get_num_mc_samples(self):
+        return self._mc_samples

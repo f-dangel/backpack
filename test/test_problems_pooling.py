@@ -1,9 +1,9 @@
-import numpy as np
 import torch
-from backpack.core.layers import Flatten
+
 from backpack import extend
-from .test_problem import TestProblem
+
 from .layers import POOLINGS
+from .test_problem import TestProblem
 
 TEST_SETTINGS = {
     "in_features": (3, 4, 5),
@@ -25,10 +25,12 @@ def convlayer():
             out_channels=TEST_SETTINGS["out_channels"],
             kernel_size=TEST_SETTINGS["kernel_size"],
             padding=TEST_SETTINGS["padding"],
-            bias=TEST_SETTINGS["bias"]))
+            bias=TEST_SETTINGS["bias"],
+        )
+    )
 
 
-input_size = (TEST_SETTINGS["batch"], ) + TEST_SETTINGS["in_features"]
+input_size = (TEST_SETTINGS["batch"],) + TEST_SETTINGS["in_features"]
 X = torch.randn(size=input_size)
 
 
@@ -41,8 +43,9 @@ def pooling(pooling_cls):
 
 
 def make_regression_problem(pooling_cls):
-    model = torch.nn.Sequential(convlayer(), pooling(pooling_cls), Flatten(),
-                                linearlayer())
+    model = torch.nn.Sequential(
+        convlayer(), pooling(pooling_cls), torch.nn.Flatten(), linearlayer()
+    )
 
     Y = torch.randn(size=(model(X).shape[0], 1))
 
@@ -52,9 +55,9 @@ def make_regression_problem(pooling_cls):
 
 
 def make_classification_problem(pooling_cls):
-    model = torch.nn.Sequential(convlayer(), pooling(pooling_cls), Flatten())
+    model = torch.nn.Sequential(convlayer(), pooling(pooling_cls), torch.nn.Flatten())
 
-    Y = torch.randint(high=X.shape[1], size=(model(X).shape[0], ))
+    Y = torch.randint(high=X.shape[1], size=(model(X).shape[0],))
 
     lossfunc = extend(torch.nn.CrossEntropyLoss())
 
@@ -62,10 +65,15 @@ def make_classification_problem(pooling_cls):
 
 
 def make_2layer_classification_problem(pooling_cls):
-    model = torch.nn.Sequential(convlayer(), pooling(pooling_cls), convlayer(),
-                                pooling(pooling_cls), Flatten())
+    model = torch.nn.Sequential(
+        convlayer(),
+        pooling(pooling_cls),
+        convlayer(),
+        pooling(pooling_cls),
+        torch.nn.Flatten(),
+    )
 
-    Y = torch.randint(high=X.shape[1], size=(model(X).shape[0], ))
+    Y = torch.randint(high=X.shape[1], size=(model(X).shape[0],))
 
     lossfunc = extend(torch.nn.CrossEntropyLoss())
 
@@ -74,9 +82,12 @@ def make_2layer_classification_problem(pooling_cls):
 
 TEST_PROBLEMS = {}
 for pool_name, pool_cls in POOLINGS.items():
-    TEST_PROBLEMS["conv+{}-regression".format(
-        pool_name)] = make_regression_problem(pool_cls)
-    TEST_PROBLEMS["conv+{}-classification".format(
-        pool_name)] = make_classification_problem(pool_cls)
-    TEST_PROBLEMS["conv+{}-classification-2layer".format(
-        pool_name)] = make_2layer_classification_problem(pool_cls)
+    TEST_PROBLEMS["conv+{}-regression".format(pool_name)] = make_regression_problem(
+        pool_cls
+    )
+    TEST_PROBLEMS[
+        "conv+{}-classification".format(pool_name)
+    ] = make_classification_problem(pool_cls)
+    TEST_PROBLEMS[
+        "conv+{}-classification-2layer".format(pool_name)
+    ] = make_2layer_classification_problem(pool_cls)

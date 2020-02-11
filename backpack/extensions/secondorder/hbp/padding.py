@@ -1,5 +1,5 @@
 from backpack.core.derivatives.zeropad2d import ZeroPad2dDerivatives
-from .hbpbase import HBPBaseModule
+from backpack.extensions.secondorder.hbp.hbpbase import HBPBaseModule
 
 
 class HBPZeroPad2d(HBPBaseModule):

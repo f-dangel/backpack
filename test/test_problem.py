@@ -1,10 +1,12 @@
 import torch
+
 from backpack import extend
 
+DEVICE_CPU = torch.device("cpu")
 
-class TestProblem():
 
-    def __init__(self, X, Y, model, lossfunc, device=torch.device("cpu")):
+class TestProblem:
+    def __init__(self, X, Y, model, lossfunc, device=DEVICE_CPU):
         """
         A traditional machine learning test problem, loss(model(X), Y)
 
@@ -48,12 +50,7 @@ class TestProblem():
         """
         Clear saved state
         """
-        attrs = [
-            "sum_grad_squared"
-            "grad_batch"
-            "grad"
-            "diag_ggn"
-        ]
+        attrs = ["sum_grad_squared" "grad_batch" "grad" "diag_ggn"]
 
         def safeclear(p, attr):
             if hasattr(p, attr):

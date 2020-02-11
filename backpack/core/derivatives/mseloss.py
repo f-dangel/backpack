@@ -1,63 +1,79 @@
-from warnings import warn
 from math import sqrt
-from torch import diag_embed, ones_like, randn, diag, ones
+from warnings import warn
+
+from torch import diag, diag_embed, ones, ones_like
 from torch.nn import MSELoss
-from .basederivatives import BaseDerivatives
 
-from .utils import hmp_unsqueeze_if_missing_dim
+from backpack.core.derivatives.basederivatives import BaseLossDerivatives
 
 
-class MSELossDerivatives(BaseDerivatives):
+class MSELossDerivatives(BaseLossDerivatives):
     def get_module(self):
         return MSELoss
 
-    def sqrt_hessian(self, module, g_inp, g_out):
+    def _sqrt_hessian(self, module, g_inp, g_out):
         self.check_input_dims(module)
 
-        sqrt_H = diag_embed(sqrt(2) * ones_like(module.input0))
+        V_dim, C_dim = 0, 2
+        diag = sqrt(2) * ones_like(module.input0)
+        sqrt_H = diag_embed(diag, dim1=V_dim, dim2=C_dim)
 
-        if module.reduction is "mean":
-            sqrt_H /= sqrt(module.input0.shape[0])
+        if module.reduction == "mean":
+            N = module.input0.shape[0]
+            sqrt_H /= sqrt(N)
 
         return sqrt_H
 
-    def sqrt_hessian_sampled(self, module, g_inp, g_out):
-        warn("[MC Sampling Hessian of CrossEntropy] " +
-             "Returning the symmetric factorization of the full Hessian " +
-             "(same computation cost)")
+    def _sqrt_hessian_sampled(self, module, g_inp, g_out, mc_samples=None):
+        """
+        Note:
+        -----
+        The parameter `mc_samples` is ignored.
+        The method always returns the full square root.
+
+        The computational cost between the sampled and full version is the same,
+        so the method always return the more accurate version.
+
+        The cost is the same because the hessian of the loss w.r.t. its inputs
+        for a single sample is one-dimensional.
+        """
+        warn(
+            "[MC Sampling Hessian of MSE loss] "
+            + "Returning the symmetric factorization of the full Hessian "
+            + "(same computation cost)",
+            UserWarning,
+        )
         return self.sqrt_hessian(module, g_inp, g_out)
 
-    def sum_hessian(self, module, g_inp, g_out):
+    def _sum_hessian(self, module, g_inp, g_out):
         self.check_input_dims(module)
 
-        batch = module.input0_shape[0]
-        num_features = module.input0.numel() // batch
-        sum_H = 2 * batch * diag(
-            ones(num_features, device=module.input0.device))
+        N = module.input0_shape[0]
+        num_features = module.input0.numel() // N
+        sum_H = 2 * N * diag(ones(num_features, device=module.input0.device))
 
-        if module.reduction is "mean":
-            sum_H /= module.input0.shape[0]
-        print("sum H ", sum_H.shape)
+        if module.reduction == "mean":
+            sum_H /= N
+
         return sum_H
 
-    def hessian_matrix_product(self, module, g_inp, g_out):
+    def _make_hessian_mat_prod(self, module, g_inp, g_out):
         """Multiplication of the input Hessian with a matrix."""
 
-        @hmp_unsqueeze_if_missing_dim(mat_dim=3)
-        def hmp(mat):
+        def hessian_mat_prod(mat):
             Hmat = 2 * mat
 
-            if module.reduction is "mean":
-                Hmat /= module.input0.shape[0]
+            if module.reduction == "mean":
+                N = module.input0.shape[0]
+                Hmat /= N
 
             return Hmat
 
-        return hmp
+        return hessian_mat_prod
 
     def check_input_dims(self, module):
         if not len(module.input0.shape) == 2:
-            raise ValueError(
-                "Only 2D inputs are currently supported for MSELoss.")
+            raise ValueError("Only 2D inputs are currently supported for MSELoss.")
 
     def hessian_is_psd(self):
         return True

@@ -3,12 +3,10 @@ Test of the interface - calls every method that needs implementation
 """
 import pytest
 import torch
-from torch.nn import Linear, ReLU, CrossEntropyLoss
-from torch.nn import Sequential
-from torch.nn import Conv2d
-from backpack.core.layers import Flatten
-from backpack import extend, backpack
+from torch.nn import Conv2d, CrossEntropyLoss, Linear, ReLU, Sequential
+
 import backpack.extensions as new_ext
+from backpack import backpack, extend
 
 
 def dummy_forward_pass():
@@ -40,7 +38,7 @@ def dummy_forward_pass_conv():
     Y = torch.randint(high=5, size=(N,))
     conv = Conv2d(3, 2, 2)
     lin = Linear(18, 5)
-    model = extend(Sequential(conv, Flatten(), lin))
+    model = extend(Sequential(conv, torch.nn.Flatten(), lin))
     loss = extend(CrossEntropyLoss())
 
     def forward():
@@ -53,10 +51,7 @@ forward_func, weights, bias = dummy_forward_pass()
 forward_func_conv, weights_conv, bias_conv = dummy_forward_pass_conv()
 
 
-def interface_test(feature,
-                   weight_has_attr=True,
-                   bias_has_attr=True,
-                   use_conv=False):
+def interface_test(feature, weight_has_attr=True, bias_has_attr=True, use_conv=False):
     if use_conv:
         f, ws, bs = forward_func_conv, weights_conv, bias_conv
     else:

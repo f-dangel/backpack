@@ -1,6 +1,6 @@
+from .hvp import hessian_vector_product
 from .lop import L_op
 from .rop import R_op
-from .hvp import hessian_vector_product
 
 
 def ggn_vector_product(loss, output, model, v):
@@ -33,9 +33,7 @@ def ggn_vector_product(loss, output, model, v):
         v: [torch.Tensor]
             List of tensors matching the sizes of model.parameters()
     """
-    return ggn_vector_product_from_plist(
-        loss, output, list(model.parameters()), v
-    )
+    return ggn_vector_product_from_plist(loss, output, list(model.parameters()), v)
 
 
 def ggn_vector_product_from_plist(loss, output, plist, v):
