@@ -3,11 +3,10 @@ Test of the interface - calls every method that needs implementation
 """
 import pytest
 import torch
-from torch.nn import Linear, ReLU, CrossEntropyLoss
-from torch.nn import Sequential
-from torch.nn import Conv2d
-from backpack import extend, backpack
+from torch.nn import Conv2d, CrossEntropyLoss, Linear, ReLU, Sequential
+
 import backpack.extensions as new_ext
+from backpack import backpack, extend
 
 
 def dummy_forward_pass():

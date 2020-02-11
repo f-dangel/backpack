@@ -2,9 +2,7 @@ from torch import zeros
 from torch.nn import MaxPool2d
 from torch.nn.functional import max_pool2d
 
-
 from backpack.core.derivatives.basederivatives import BaseDerivatives
-
 from backpack.utils.ein import eingroup
 
 

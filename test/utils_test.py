@@ -3,9 +3,9 @@
 import random
 import unittest
 
+import scipy.linalg
 import torch
 
-import scipy.linalg
 from backpack.utils import kroneckers as bp_utils
 from backpack.utils.ein import einsum
 

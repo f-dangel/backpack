@@ -1,6 +1,7 @@
 from backpack.core.derivatives.relu import ReLUDerivatives
-from backpack.core.derivatives.tanh import TanhDerivatives
 from backpack.core.derivatives.sigmoid import SigmoidDerivatives
+from backpack.core.derivatives.tanh import TanhDerivatives
+
 from .cmpbase import CMPBase
 
 

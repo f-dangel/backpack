@@ -1,9 +1,9 @@
 from functools import partial
 
-from backpack.core.derivatives.mseloss import MSELossDerivatives
 from backpack.core.derivatives.crossentropyloss import CrossEntropyLossDerivatives
-from backpack.extensions.secondorder.hbp.hbp_options import LossHessianStrategy
+from backpack.core.derivatives.mseloss import MSELossDerivatives
 from backpack.extensions.curvature import Curvature
+from backpack.extensions.secondorder.hbp.hbp_options import LossHessianStrategy
 from backpack.extensions.secondorder.hbp.hbpbase import HBPBaseModule
 
 

@@ -1,13 +1,14 @@
-import torch
 import numpy as np
 import pytest
-from .test_problems_convolutions import TEST_PROBLEMS as CONV_TEST_PROBLEMS
-from .test_problems_linear import TEST_PROBLEMS as LIN_TEST_PROBLEMS
-from .test_problems_activations import TEST_PROBLEMS as ACT_TEST_PROBLEMS
-from .test_problems_pooling import TEST_PROBLEMS as POOL_TEST_PROBLEMS
-from .test_problems_padding import TEST_PROBLEMS as PAD_TEST_PROBLEMS
+import torch
+
 from .implementation.implementation_autograd import AutogradImpl
 from .implementation.implementation_bpext import BpextImpl
+from .test_problems_activations import TEST_PROBLEMS as ACT_TEST_PROBLEMS
+from .test_problems_convolutions import TEST_PROBLEMS as CONV_TEST_PROBLEMS
+from .test_problems_linear import TEST_PROBLEMS as LIN_TEST_PROBLEMS
+from .test_problems_padding import TEST_PROBLEMS as PAD_TEST_PROBLEMS
+from .test_problems_pooling import TEST_PROBLEMS as POOL_TEST_PROBLEMS
 
 if torch.cuda.is_available():
     DEVICES = {

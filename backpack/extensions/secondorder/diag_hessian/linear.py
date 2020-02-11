@@ -1,6 +1,6 @@
 import torch
-import backpack.utils.linear as LinUtils
 
+import backpack.utils.linear as LinUtils
 from backpack.core.derivatives.linear import LinearDerivatives
 from backpack.extensions.secondorder.diag_hessian.diag_h_base import DiagHBaseModule
 

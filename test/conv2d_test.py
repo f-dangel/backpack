@@ -5,12 +5,14 @@ The example is taken from
     Chellapilla: High Performance Convolutional Neural Networks
     for Document Processing (2007).
 """
+from random import choice, randint
+
 import pytest
-from torch import Tensor, randn, allclose
+from torch import Tensor, allclose, randn
 from torch.nn import Conv2d
-from random import randint, choice
-from backpack import extend, backpack
+
 import backpack.extensions as new_ext
+from backpack import backpack, extend
 
 
 def ExtConv2d(*args, **kwargs):

@@ -1,7 +1,9 @@
-from warnings import warn
 from math import sqrt
-from torch import diag_embed, ones_like, diag, ones
+from warnings import warn
+
+from torch import diag, diag_embed, ones, ones_like
 from torch.nn import MSELoss
+
 from backpack.core.derivatives.basederivatives import BaseLossDerivatives
 
 

@@ -3,6 +3,7 @@ Compute the full Hessian matrix with automatic differentiation.
 Use Hessian-vector products for row-wise construction.
 """
 import time
+
 import torch
 from torch.nn import CrossEntropyLoss, Flatten, Linear, Sequential
 from torch.nn.utils.convert_parameters import parameters_to_vector

@@ -1,9 +1,11 @@
-import torch
 import pytest
+import torch
+
 from backpack import extend
-from ..test_problem import TestProblem
+
 from ..implementation.implementation_autograd import AutogradImpl
 from ..implementation.implementation_bpext import BpextImpl
+from ..test_problem import TestProblem
 
 
 def make_large_linear_classification_problem():

@@ -4,10 +4,9 @@ Einsum utility functions.
 Makes it easy to switch to opt_einsum rather than torch's einsum for tests.
 """
 
+import numpy as np
 import opt_einsum as oe
 import torch
-import numpy
-
 
 TORCH = "torch"
 OPT_EINSUM = "opt_einsum"
@@ -136,7 +135,7 @@ def __eingroup_shapes(in_groups, out_groups, dim):
 
     def group_dim(group, dim):
         try:
-            return numpy.prod([dim[g] for g in group])
+            return np.prod([dim[g] for g in group])
         except KeyError as e:
             raise KeyError("Unknown dimension for an axis {}".format(e))
 

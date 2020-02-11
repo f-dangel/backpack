@@ -5,8 +5,8 @@ from torch import sqrt as torchsqrt
 from torch.nn import CrossEntropyLoss
 from torch.nn.functional import one_hot
 
-from backpack.utils.ein import einsum
 from backpack.core.derivatives.basederivatives import BaseLossDerivatives
+from backpack.utils.ein import einsum
 
 
 class CrossEntropyLossDerivatives(BaseLossDerivatives):

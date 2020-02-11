@@ -1,6 +1,6 @@
+import backpack.utils.linear as LinUtils
 from backpack.core.derivatives.linear import LinearDerivatives
 from backpack.extensions.secondorder.diag_ggn.diag_ggn_base import DiagGGNBaseModule
-import backpack.utils.linear as LinUtils
 
 
 class DiagGGNLinear(DiagGGNBaseModule):

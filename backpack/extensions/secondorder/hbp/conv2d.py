@@ -1,12 +1,11 @@
 from backpack.core.derivatives.conv2d import Conv2DDerivatives
-from backpack.utils import conv as convUtils
-from backpack.utils.ein import einsum
-
-from backpack.extensions.secondorder.hbp.hbpbase import HBPBaseModule
 from backpack.extensions.secondorder.hbp.hbp_options import (
     BackpropStrategy,
     ExpectationApproximation,
 )
+from backpack.extensions.secondorder.hbp.hbpbase import HBPBaseModule
+from backpack.utils import conv as convUtils
+from backpack.utils.ein import einsum
 
 
 class HBPConv2d(HBPBaseModule):
