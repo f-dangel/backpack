@@ -1,5 +1,4 @@
 from backpack.core.derivatives import shape_check
-from backpack.utils.ein import try_view
 
 
 class BaseDerivatives:
@@ -138,7 +137,7 @@ class BaseDerivatives:
         """
         V = -1
         shape = (V, *like.shape)
-        return try_view(mat, shape)
+        return mat.reshape(shape)
 
     @classmethod
     def view_like_input(cls, mat, module):
