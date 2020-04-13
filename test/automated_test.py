@@ -233,3 +233,23 @@ def test_ggn_vp(problem, device):
 
     check_sizes(autograd_res, backpack_res)
     check_values(autograd_res, backpack_res)
+
+
+@pytest.mark.parametrize("problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
+def test_kfac_shape(problem, device):
+    problem.to(device)
+
+    backpack_res = [kfac.shape for kfac in BpextImpl(problem).kfac_blocks()]
+    autograd_res = [(dim, dim) for dim in AutogradImpl(problem).parameter_numels()]
+
+    assert backpack_res == autograd_res
+
+
+@pytest.mark.parametrize("problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
+def test_kflr_shape(problem, device):
+    problem.to(device)
+
+    backpack_res = [kflr.shape for kflr in BpextImpl(problem).kflr_blocks()]
+    autograd_res = [(dim, dim) for dim in AutogradImpl(problem).parameter_numels()]
+
+    assert backpack_res == autograd_res
