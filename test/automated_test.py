@@ -246,6 +246,16 @@ def test_kfac_shape(problem, device):
 
 
 @pytest.mark.parametrize("problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
+def test_kfra_shape(problem, device):
+    problem.to(device)
+
+    backpack_res = [kfra.shape for kfra in BpextImpl(problem).kfra_blocks()]
+    autograd_res = [(dim, dim) for dim in AutogradImpl(problem).parameter_numels()]
+
+    assert backpack_res == autograd_res
+
+
+@pytest.mark.parametrize("problem,device", ALL_CONFIGURATIONS, ids=CONFIGURATION_IDS)
 def test_kflr_shape(problem, device):
     problem.to(device)
 
