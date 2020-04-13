@@ -27,16 +27,14 @@ class Conv2DDerivatives(BaseParameterDerivatives):
         result = mat.view(out_c, out_x, out_y, out_features)
         result = einsum("cxyf->fcxy", (result,))
         # result: W^T mat
-        result = self.__apply_jacobian_t_of(module, result).view(
-            out_features, in_features
-        )
+        result = self.__jac_t(module, result).view(out_features, in_features)
 
         # 2) transpose: mat^T W
         result = result.t()
 
         # 3) apply conv_transpose
         result = result.view(in_features, out_c, out_x, out_y)
-        result = self.__apply_jacobian_t_of(module, result)
+        result = self.__jac_t(module, result)
 
         # 4) transpose to obtain W^T mat W
         return result.view(in_features, in_features).t()
@@ -55,15 +53,19 @@ class Conv2DDerivatives(BaseParameterDerivatives):
 
     def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
         mat_as_conv = eingroup("v,n,c,h,w->vn,c,h,w", mat)
-        jmp_as_conv = conv_transpose2d(
-            mat_as_conv,
+        jmp_as_conv = self.__jac_t(module, mat_as_conv)
+        return self.view_like_input(jmp_as_conv, module)
+
+    def __jac_t(self, module, mat):
+        """Apply Conv2d backward operation."""
+        return conv_transpose2d(
+            mat,
             module.weight.data,
             stride=module.stride,
             padding=module.padding,
             dilation=module.dilation,
             groups=module.groups,
         )
-        return self.view_like_input(jmp_as_conv, module)
 
     def _bias_jac_mat_prod(self, module, g_inp, g_out, mat):
         """mat has shape [V, C_out]"""
