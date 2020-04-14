@@ -1,29 +1,31 @@
 # <img alt="BackPACK" src="./logo/backpack_logo_no_torch.svg" height="90"> BackPACK: Packing more into backprop
 
-| branch | tests & examples | coverage |
-|--------|---------------------------|----------|
-|`master` | [![Build Status](https://travis-ci.org/f-dangel/backpack.svg?branch=master)](https://travis-ci.org/f-dangel/backpack) | [![Coverage Status](https://coveralls.io/repos/github/f-dangel/backpack/badge.svg?branch=master)](https://coveralls.io/github/f-dangel/backpack) |
-| `development` | [![Build Status](https://travis-ci.org/f-dangel/backpack.svg?branch=development)](https://travis-ci.org/f-dangel/backpack) | [![Coverage Status](https://coveralls.io/repos/github/f-dangel/backpack/badge.svg?branch=development)](https://coveralls.io/github/f-dangel/backpack) |
+[![Travis](https://travis-ci.org/f-dangel/backpack.svg?branch=master)](https://travis-ci.org/f-dangel/backpack)
+[![Coveralls](https://coveralls.io/repos/github/f-dangel/backpack/badge.svg?branch=master)](https://coveralls.io/github/f-dangel/backpack)
 
-A backpack for PyTorch that extends the backward pass of feedforward networks to compute quantities beyond the gradient.
+BackPACK is built on top of [PyTorch](https://github.com/pytorch/pytorch). It efficiently computes quantities other than the gradient.
 
-- Check out the [cheatsheet](examples/cheatsheet.pdf) for an overview of quantities.
-- Check out the [examples](https://f-dangel.github.io/backpack/) on how to use the code.
+- **Website:** https://backpack.pt
+- **Documentation:** https://readthedocs.org/projects/backpack/
+- **Bug reports & feature requests:** https://github.com/f-dangel/backpack/issues
+
+Provided quantities include:
+- Individual gradients from a mini-batch
+- Estimates of the gradient variance or second moment
+- Approximate second-order information (diagonal and Kronecker approximations)
 
 ## Installation
 ```bash
 pip install backpack-for-pytorch
 ```
 
-Alternative: Clone the repository and run `setup.py`
-```bash
-git clone https://github.com/f-dangel/backpack.git ~/backpack
-cd ~/backpack
-python setup.py install
-```
+## Getting started
+
+- Check out the [cheatsheet](examples/cheatsheet.pdf) for an overview of quantities.
+- Check out the [examples](https://f-dangel.github.io/backpack/) on how to use the code.
 
 ## How to cite
-If you are using `backpack` for your research, consider citing the [paper](https://openreview.net/forum?id=BJlrF24twB) 
+If you are using BackPACK, consider citing the [paper](https://openreview.net/forum?id=BJlrF24twB) 
 ```
 @inproceedings{dangel2020backpack,
     title     = {Back{PACK}: Packing more into Backprop},
