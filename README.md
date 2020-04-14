@@ -1,4 +1,4 @@
-# BACKpropagation PACKage - a backpack for `PyTorch`
+# <img alt="BackPACK" src="./logo/backpack_logo_no_torch.svg" height="90"> BackPACK: Packing more into backprop
 
 | branch | tests & examples | coverage |
 |--------|---------------------------|----------|
