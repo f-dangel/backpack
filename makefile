@@ -58,7 +58,7 @@ pydocstyle-check:
 	@pydocstyle --count .
 
 darglint-check:
-	@find . -name "*.py" | xargs darglint --verbosity 2
+	@darglint --verbosity 2 .
 
 isort:
 	@isort --apply
