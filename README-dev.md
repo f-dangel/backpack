@@ -1,10 +1,61 @@
-Basics about the development setup 
+# <img alt="BackPACK" src="./logo/backpack_logo_no_torch.svg" height="90"> BackPACK developer manual
 
-|-|-|
-|-|-|
-| Python version | The subset of Python 3 and Pytorch (`3.5, 3.6, 3.7`) and use `3.7` for development |
-| Tooling management | [`make`](https://www.gnu.org/software/make/) as an interface to the dev tools ([makefile](makefile)) |
-| Testing | [`pytest`](https://docs.pytest.org) ([testing readme](test/readme.md))
-| Style | [`black`](https://black.readthedocs.io) ([rules](black.toml)) for formatting and [`flake8`](http://flake8.pycqa.org/) ([rules](.flake8)) for linting |
-| CI/QA | [`Travis`](https://travis-ci.org/f-dangel/backpack) ([config](.travis.yaml)) to run tests and [`Github workflows`](https://github.com/f-dangel/backpack/actions) ([config](.github/workflows)) to check formatting and linting |
+## General standards 
+- Python version: support 3.5+, use 3.7 for development
+- Docstring style:  [Google](https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html)
+- Test runner: [`pytest`](https://docs.pytest.org/en/latest/)
+- Formatting: [`black`](https://black.readthedocs.io) ([`black` config](black.toml))
+- Linting: [`flake8`](http://flake8.pycqa.org/) ([`flake8` config](.flake8))
+
+---
+
+The development tools are managed using [`make`](https://www.gnu.org/software/make/) as an interface ([`makefile`](makefile)). For an overview, call
+```bash
+make help 
+```
+  
+## Suggested workflow with [Anaconda](https://docs.anaconda.com/anaconda/install/)
+1. Clone the repository. Check out the `development` branch
+```bash
+git clone https://github.com/f-dangel/backpack.git ~/backpack
+cd ~/backpack
+git checkout development
+```
+2. Create `conda` environment `backpack` with the [environment file](.conda_env.yml). It comes with all dependencies installed, and BackPACK installed with the [--editable](http://codumentary.blogspot.com/2014/11/python-tip-of-year-pip-install-editable.html) option. Activate it.
+```bash
+make conda-env
+conda activate backpack
+```
+3. Install the development dependencies and `pre-commit` hooks
+```bash
+make install-dev
+```
+4. **You're set up!** Here are some useful commands for developing
+  - Run the tests
+    ```bash
+    make test
+    ```
+  - Lint code
+    ```bash
+    make flake8
+    ```
+  - Check format (code, imports, and docstrings)
+    ```bash
+    make format-check
+    ```
+
+## Details
+
+- Running quick/extensive tests: ([testing readme](test/readme.md))
+- Continuous Integration (CI)/Quality Assurance (QA)
+  - [`Travis`](https://travis-ci.org/f-dangel/backpack) ([`Travis` config](.travis.yaml))
+    - Run tests: [`pytest`](https://docs.pytest.org/en/latest/)
+    - Report test coverage: [`coveralls`](https://coveralls.io)
+    - Run examples
+  - [`Github workflows`](https://github.com/f-dangel/backpack/actions) ([config](.github/workflows))
+    - Check code formatting: [`black`](https://black.readthedocs.io) ([`black` config](black.toml))
+    - Lint code: [`flake8`](http://flake8.pycqa.org/) ([`flake8` config](.flake8))
+    - Check docstring style: [`pydocstyle`](https://github.com/PyCQA/pydocstyle) ([`pydocstyle` config](.pydocstyle))
+    - Check docstring description matches definition: [`darglint`](https://github.com/terrencepreilly/darglint) ([`darglint` config](.darglint))
+- Optional [`pre-commit`](https://github.com/pre-commit/pre-commit) hooks [ `pre-commit` config ](.pre-commit-config.yaml)
 
