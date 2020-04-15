@@ -16,3 +16,9 @@ repos:
         flake8-bugbear,
         flake8-comprehensions,
       ]
+- repo: https://github.com/pycqa/pydocstyle
+  rev: 5.0.2
+  hooks:
+  - id: pydocstyle
+    args:
+    - --count
