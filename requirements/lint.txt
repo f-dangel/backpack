@@ -1,3 +1,4 @@
+darglint
 flake8
 mccabe
 pycodestyle
