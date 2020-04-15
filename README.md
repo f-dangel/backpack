@@ -23,13 +23,17 @@ Provided quantities include:
 pip install backpack-for-pytorch
 ```
 
-## Getting started
+## Examples
+- **Basic:**
+  -  [Individual gradients](https://github.com/f-dangel/backpack/blob/master/examples/example_indiv_grads.py) (logistic regression)
 
-- Check out the [cheatsheet](examples/cheatsheet.pdf) for an overview of quantities.
-- Check out the [examples](https://f-dangel.github.io/backpack/) on how to use the code.
+- **Full demos:** We recommend to **start with these templates** and strip off unneeded quantities.
+  -  [Full demo](https://github.com/f-dangel/backpack/blob/master/examples/example_all_in_one.py) (logistic regression)
+  -  [Full demo](https://github.com/f-dangel/backpack/blob/master/examples/example_cnn_all_in_one.py) (convolutional neural network classification)
+- **More:** Check out the [`examples/` directory](https://github.com/f-dangel/backpack/blob/master/examples)
+- **Math details:** For an overview, see the [cheatsheet](examples/cheatsheet.pdf)
 
 ## Contributing
-
 BackPACK is actively being developed. 
 We are appreciating any help.
 If you are considering to contribute, do not hesitate to contact us.
