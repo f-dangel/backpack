@@ -15,6 +15,9 @@ Provided quantities include:
 - Estimates of the gradient variance or second moment
 - Approximate second-order information (diagonal and Kronecker approximations)
 
+**Motivation:** Computation of most quantities is not necessarily expensive (often just a small modification of the existing backward pass where backpropagated information can be reused). But it is difficult to do in the current software environment.
+
+
 ## Installation
 ```bash
 pip install backpack-for-pytorch
