@@ -2,6 +2,7 @@
 
 ## General standards 
 - Python version: support 3.5+, use 3.7 for development
+- `git` [branching model](https://nvie.com/posts/a-successful-git-branching-model/)
 - Docstring style:  [Google](https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html)
 - Test runner: [`pytest`](https://docs.pytest.org/en/latest/)
 - Formatting: [`black`](https://black.readthedocs.io) ([`black` config](black.toml))
