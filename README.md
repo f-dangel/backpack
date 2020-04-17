@@ -50,15 +50,3 @@ If you are using BackPACK, consider citing the [paper](https://openreview.net/fo
     url       = {https://openreview.net/forum?id=BJlrF24twB}
 }
 ```
-
-## Other interesting projects
-Here is an alphabetical overview of interesting projects at the intersection of automatic differentiation and machine learning (without claiming completeness):
-- [`autograd-hacks`](https://github.com/cybertronai/autograd-hacks) (PyTorch)
-- [DiffSharp](http://diffsharp.github.io/DiffSharp/) (F#)
-- [`grad-cnns`](https://github.com/owkin/grad-cnns) (PyTorch)
-- [`higher`](https://github.com/facebookresearch/higher) (PyTorch)
-- [JAX](https://github.com/google/jax) (Python)
-- [`pyhessian`](https://github.com/amirgholami/PyHessian) (PyTorch)
-- [`pytorch-hessian-eigenthings`](https://github.com/noahgolmant/pytorch-hessian-eigenthings) (PyTorch)
-- [Zygote](https://github.com/FluxML/Zygote.jl) (Julia)
-
