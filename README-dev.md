@@ -1,4 +1,4 @@
-# <img alt="BackPACK" src="./logo/backpack_logo_no_torch.svg" height="90"> BackPACK developer manual
+# <img alt="BackPACK" src="./logo/backpack_logo_torch.svg" height="90"> BackPACK developer manual[¹]
 
 ## General standards 
 - Python version: support 3.5+, use 3.7 for development
@@ -60,3 +60,5 @@ make install-dev
     - Check docstring description matches definition: [`darglint`](https://github.com/terrencepreilly/darglint) ([`darglint` config](.darglint))
 - Optional [`pre-commit`](https://github.com/pre-commit/pre-commit) hooks [ `pre-commit` config ](.pre-commit-config.yaml)
 
+###### ¹ *BackPACK is not endorsed by or affiliated with Facebook, Inc. PyTorch, the PyTorch logo and any related marks are trademarks of Facebook, Inc.*
+[¹]:#-attribution-statement
