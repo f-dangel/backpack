@@ -102,8 +102,10 @@ torch.manual_seed(0)
 ARGS = "layer,input_shape"
 SETTINGS = [
     # (layer, input_shape)
-    [Linear(20, 10), (5, 20),],
+    [Linear(20, 10), (5, 20)],
     [MaxPool2d(kernel_size=2), (5, 3, 10, 8)],
+    [MaxPool2d(kernel_size=2), (1, 2, 4, 4)],
+    [MaxPool2d(kernel_size=3, stride=2, padding=1), (3, 2, 9, 11)],
     [AvgPool2d(kernel_size=3), (3, 4, 7, 6)],
     [Sigmoid(), (6, 20)],
     [Sigmoid(), (6, 2, 7)],
