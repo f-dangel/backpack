@@ -1,5 +1,4 @@
-"""
-Einsum utility functions.
+"""Einsum utility functions.
 
 Makes it easy to switch to opt_einsum rather than torch's einsum for tests.
 """
@@ -42,7 +41,7 @@ def eingroup(equation, operand, dim=None):
 
     Dimensions that cannot be inferred can be handed in via a mapping `dim`.
 
-    Parameters:
+    Arguments:
         equation (str): Equation specifying the (un-)grouping of axes.
         operand (torch.Tensor): The tensor that `equation` will be applied to.
         dim (dict, optional): A mapping from letters in `equation` to
@@ -91,7 +90,6 @@ def eingroup(equation, operand, dim=None):
             the number of axes of `operand` # noqa: DAR402
 
     """
-
     dim = {} if dim is None else dim
     in_shape, out_shape, einsum_eq = _eingroup_preprocess(equation, operand, dim=dim)
 
@@ -121,7 +119,7 @@ def _eingroup_preprocess(equation, operand, dim):
 
 
 def __eingroup_shapes(in_groups, out_groups, dim):
-    """Return shape the input needs to be reshaped, and the output shape"""
+    """Return shape the input needs to be reshaped, and the output shape."""
 
     def shape(groups, dim):
         return [group_dim(group, dim) for group in groups]
