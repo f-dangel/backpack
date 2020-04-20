@@ -22,11 +22,13 @@ class Conv2DDerivatives(BaseParameterDerivatives):
         _, C_out, H_out, W_out = module.output.size()
         out_features = C_out * H_out * W_out
 
-        mat = mat.view(out_features, C_out, H_out, W_out)
-        jac_t_mat = self.__jac_t(module, mat).view(out_features, in_features)
+        mat = mat.reshape(out_features, C_out, H_out, W_out)
+        jac_t_mat = self.__jac_t(module, mat).reshape(out_features, in_features)
 
-        mat_t_jac = jac_t_mat.t().view(in_features, C_out, H_out, W_out)
-        jac_t_mat_t_jac = self.__jac_t(module, mat_t_jac).view(in_features, in_features)
+        mat_t_jac = jac_t_mat.t().reshape(in_features, C_out, H_out, W_out)
+        jac_t_mat_t_jac = self.__jac_t(module, mat_t_jac).reshape(
+            in_features, in_features
+        )
 
         return jac_t_mat_t_jac.t()
 
