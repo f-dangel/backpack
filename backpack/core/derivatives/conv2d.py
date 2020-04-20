@@ -1,5 +1,5 @@
-from torch.nn import Conv2d
-from torch.nn.functional import conv2d, conv_transpose2d
+from torch.nn import Conv2d, ConvTranspose2d
+from torch.nn.functional import conv2d
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 from backpack.utils import conv as convUtils
@@ -51,32 +51,33 @@ class Conv2DDerivatives(BaseParameterDerivatives):
 
     def __jac_t(self, module, mat):
         """Apply Conv2d backward operation."""
-        self.check_jac_t_ambiguous_out_shape(module)
+        _, C_in, H_in, W_in = module.input0.size()
+        _, C_out, H_out, W_out = module.output.size()
+        H_axis = 2
+        W_axis = 3
 
-        return conv_transpose2d(
-            mat,
-            module.weight.data,
+        conv2d_t = ConvTranspose2d(
+            in_channels=C_out,
+            out_channels=C_in,
+            kernel_size=module.kernel_size,
             stride=module.stride,
             padding=module.padding,
+            bias=False,
             dilation=module.dilation,
             groups=module.groups,
+        ).to(module.input0.device)
+
+        conv2d_t.weight.data = module.weight
+
+        V_N = mat.size(0)
+        output_size = (V_N, C_in, H_in, W_in)
+
+        jac_t_mat = (
+            conv2d_t(mat, output_size=output_size)
+            .narrow(H_axis, 0, H_in)
+            .narrow(W_axis, 0, W_in)
         )
-
-    def check_jac_t_ambiguous_out_shape(self, module):
-        """When stride > 1, `Conv2d` maps multiple in shapes to the same out shape.
-
-        https://pytorch.org/docs/stable/nn.html#torch.nn.ConvTranspose2d
-
-        Raises:
-            ValueError: if the stride is larger than 1.
-
-        """
-        if any(s > 1 for s in module.stride):
-            raise ValueError(
-                "Module has stride {}. >1 leads to ambiguous out shape".format(
-                    module.stride
-                )
-            )
+        return jac_t_mat
 
     def _bias_jac_mat_prod(self, module, g_inp, g_out, mat):
         """mat has shape [V, C_out]"""

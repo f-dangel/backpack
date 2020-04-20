@@ -38,11 +38,10 @@ SETTINGS = [
     [Sigmoid(), (6, 2, 7)],
     [Tanh(), (6, 20)],
     [Tanh(), (6, 2, 7)],
-    [Conv2d(2, 3, kernel_size=2), (3, 2, 7, 9)],
-    [Conv2d(2, 3, kernel_size=2, padding=1), (3, 2, 7, 9)],
-    # TODO: ambiguous size if stride > 1
-    # [Conv2d(2, 3, kernel_size=2, padding=1, stride=2), (3, 2, 7, 9)],
-    [Conv2d(2, 3, kernel_size=2, padding=1, stride=1, dilation=2), (3, 2, 7, 9)],
+    [Conv2d(2, 3, kernel_size=2), (3, 2, 11, 13)],
+    [Conv2d(2, 3, kernel_size=2, padding=1), (3, 2, 11, 13)],
+    [Conv2d(2, 3, kernel_size=2, padding=1, stride=2), (3, 2, 11, 13)],
+    [Conv2d(2, 3, kernel_size=2, padding=1, stride=2, dilation=2), (3, 2, 11, 13)],
     [ZeroPad2d(2), (4, 3, 4, 5)],
 ]
 IDS = [make_id(layer, input_shape) for (layer, input_shape) in SETTINGS]
