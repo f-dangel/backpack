@@ -49,6 +49,8 @@ class Conv2DDerivatives(BaseParameterDerivatives):
 
     def __jac_t(self, module, mat):
         """Apply Conv2d backward operation."""
+        self.check_jac_t_ambiguous_out_shape(module)
+
         return conv_transpose2d(
             mat,
             module.weight.data,
@@ -57,6 +59,22 @@ class Conv2DDerivatives(BaseParameterDerivatives):
             dilation=module.dilation,
             groups=module.groups,
         )
+
+    def check_jac_t_ambiguous_out_shape(self, module):
+        """When stride > 1, `Conv2d` maps multiple in shapes to the same out shape.
+
+        https://pytorch.org/docs/stable/nn.html#torch.nn.ConvTranspose2d
+
+        Raises:
+            ValueError: if the stride is larger than 1.
+
+        """
+        if any(s > 1 for s in module.stride):
+            raise ValueError(
+                "Module has stride {}. >1 leads to ambiguous out shape".format(
+                    module.stride
+                )
+            )
 
     def _bias_jac_mat_prod(self, module, g_inp, g_out, mat):
         """mat has shape [V, C_out]"""
