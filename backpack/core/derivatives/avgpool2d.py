@@ -5,7 +5,7 @@ import torch.nn
 from torch.nn import AvgPool2d, Conv2d, ConvTranspose2d
 
 from backpack.core.derivatives.basederivatives import BaseDerivatives
-from backpack.utils.ein import eingroup, einsum
+from backpack.utils.ein import eingroup
 
 
 class AvgPool2DDerivatives(BaseDerivatives):
@@ -18,28 +18,21 @@ class AvgPool2DDerivatives(BaseDerivatives):
     # TODO: Require tests
     def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
         """Use fact that average pooling can be implemented as conv."""
-        _, channels, in_x, in_y = module.input0.size()
-        in_features = channels * in_x * in_y
-        _, _, out_x, out_y = module.output.size()
-        out_features = channels * out_x * out_y
+        _, C, H_in, W_in = module.input0.size()
+        in_features = C * H_in * W_in
+        _, _, H_out, W_out = module.output.size()
+        out_features = C * H_out * W_out
 
-        # 1) apply conv_transpose to multiply with W^T
-        result = mat.view(channels, out_x, out_y, out_features)
-        result = einsum("cxyf->fcxy", (result,)).contiguous()
-        result = result.view(out_features * channels, 1, out_x, out_y)
-        # result: W^T mat
-        result = self.__apply_jacobian_t_of(module, result)
-        result = result.view(out_features, in_features)
+        mat = mat.view(out_features * C, 1, H_out, W_out)
+        jac_t_mat = self.__apply_jacobian_t_of(module, mat).view(
+            out_features, in_features
+        )
+        mat_t_jac = jac_t_mat.t().reshape(in_features * C, 1, H_out, W_out)
+        jac_t_mat_t_jac = self.__apply_jacobian_t_of(module, mat_t_jac).reshape(
+            in_features, in_features
+        )
 
-        # 2) transpose: mat^T W
-        result = result.t().contiguous()
-
-        # 3) apply conv_transpose
-        result = result.view(in_features * channels, 1, out_x, out_y)
-        result = self.__apply_jacobian_t_of(module, result)
-
-        # 4) transpose to obtain W^T mat W
-        return result.view(in_features, in_features).t()
+        return jac_t_mat_t_jac.t()
 
     def check_exotic_parameters(self, module):
         assert module.count_include_pad, (

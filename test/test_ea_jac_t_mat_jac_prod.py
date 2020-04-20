@@ -2,23 +2,50 @@
 
 H_in →  1/N ∑ₙ Jₙ^T H_out Jₙ
 
+Notes:
+    - `Dropout` cannot be tested,as the `autograd` implementation does a forward
+       pass over each sample, while the `backpack` implementation requires only
+       one forward pass over the batched data. This leads to different outputs,
+       as `Dropout` is not deterministic.
 """
 import pytest
 import torch
-from torch.nn import (  # AvgPool2d,; Dropout,
-    Conv2d,
-    Linear,
-    MaxPool2d,
-    Sigmoid,
-    Tanh,
-    ZeroPad2d,
-)
+from torch.nn import AvgPool2d, Conv2d, Linear, MaxPool2d, Sigmoid, Tanh, ZeroPad2d
 
 from backpack import extend
 from backpack.core.derivatives import derivatives_for
 from backpack.hessianfree.lop import transposed_jacobian_vector_product
 
 from .automated_test import check_sizes, check_values
+
+
+def make_id(layer, input_shape):
+    return "in{}-{}".format(input_shape, layer)
+
+
+torch.manual_seed(0)
+ARGS = "layer,input_shape"
+SETTINGS = [
+    # (layer, input_shape)
+    [Linear(20, 10), (5, 20)],
+    [MaxPool2d(kernel_size=2), (5, 3, 10, 8)],
+    [MaxPool2d(kernel_size=2), (1, 2, 4, 4)],
+    [MaxPool2d(kernel_size=3, stride=2, padding=1), (3, 2, 9, 11)],
+    [AvgPool2d(kernel_size=3), (3, 2, 15, 13)],
+    [AvgPool2d(kernel_size=3, stride=2), (3, 2, 15, 13)],
+    [AvgPool2d(kernel_size=3, stride=2, padding=1), (3, 2, 15, 13)],
+    [Sigmoid(), (6, 20)],
+    [Sigmoid(), (6, 2, 7)],
+    [Tanh(), (6, 20)],
+    [Tanh(), (6, 2, 7)],
+    [Conv2d(2, 3, kernel_size=2), (3, 2, 7, 9)],
+    [Conv2d(2, 3, kernel_size=2, padding=1), (3, 2, 7, 9)],
+    # TODO: ambiguous size if stride > 1
+    # [Conv2d(2, 3, kernel_size=2, padding=1, stride=2), (3, 2, 7, 9)],
+    [Conv2d(2, 3, kernel_size=2, padding=1, stride=1, dilation=2), (3, 2, 7, 9)],
+    [ZeroPad2d(2), (4, 3, 4, 5)],
+]
+IDS = [make_id(layer, input_shape) for (layer, input_shape) in SETTINGS]
 
 
 def get_output_shape(input, layer):
@@ -90,34 +117,6 @@ def generate_data_ea_jac_t_mat_jac_prod(layer, input_shape):
     out_features = get_output_shape(input, layer)[1:].numel()
     mat = torch.rand(out_features, out_features)
     return input, mat
-
-
-def make_id(layer, input_shape):
-    return "in{}-{}".format(input_shape, layer)
-
-
-torch.manual_seed(0)
-ARGS = "layer,input_shape"
-SETTINGS = [
-    # (layer, input_shape)
-    [Linear(20, 10), (5, 20)],
-    [MaxPool2d(kernel_size=2), (5, 3, 10, 8)],
-    [MaxPool2d(kernel_size=2), (1, 2, 4, 4)],
-    [MaxPool2d(kernel_size=3, stride=2, padding=1), (3, 2, 9, 11)],
-    # [AvgPool2d(kernel_size=3), (3, 4, 7, 6)],
-    [Sigmoid(), (6, 20)],
-    [Sigmoid(), (6, 2, 7)],
-    [Tanh(), (6, 20)],
-    [Tanh(), (6, 2, 7)],
-    [Conv2d(2, 3, kernel_size=2), (3, 2, 7, 9)],
-    [Conv2d(2, 3, kernel_size=2, padding=1), (3, 2, 7, 9)],
-    # [Conv2d(2, 3, kernel_size=2, padding=1, stride=2), (3, 2, 7, 9)],
-    [Conv2d(2, 3, kernel_size=2, padding=1, stride=1, dilation=2), (3, 2, 7, 9)],
-    [ZeroPad2d(2), (4, 3, 4, 5)],
-    # not deterministic
-    # [Dropout(0.2), (5, 10, 4)],
-]
-IDS = [make_id(layer, input_shape) for (layer, input_shape) in SETTINGS]
 
 
 @pytest.mark.parametrize(ARGS, SETTINGS, ids=IDS)
