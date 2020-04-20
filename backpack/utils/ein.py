@@ -99,9 +99,17 @@ def __eingroup_shapes(in_groups, out_groups, dim):
     def shape(groups, dim):
         return [group_dim(group, dim) for group in groups]
 
+    def product(nums):
+        assert len(nums) > 0
+
+        result = 1
+        for num in nums:
+            result *= num
+        return result
+
     def group_dim(group, dim):
         try:
-            return np.prod([dim[g] for g in group])
+            return product([dim[g] for g in group])
         except KeyError as e:
             raise KeyError("Unknown dimension for an axis {}".format(e))
 
