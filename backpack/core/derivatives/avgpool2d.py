@@ -15,7 +15,6 @@ class AvgPool2DDerivatives(BaseDerivatives):
     def hessian_is_zero(self):
         return True
 
-    # TODO: Require tests
     def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
         """Use fact that average pooling can be implemented as conv."""
         _, C, H_in, W_in = module.input0.size()
