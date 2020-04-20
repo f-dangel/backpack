@@ -1,5 +1,6 @@
+from torch import einsum
+
 from backpack.extensions.firstorder.base import FirstOrderModuleExtension
-from backpack.utils.ein import einsum
 
 
 class SGSLinear(FirstOrderModuleExtension):

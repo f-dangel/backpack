@@ -1,9 +1,10 @@
+from torch import einsum
 from torch.nn import Conv2d
 from torch.nn.functional import conv2d, conv_transpose2d
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 from backpack.utils import conv as convUtils
-from backpack.utils.ein import eingroup, einsum
+from backpack.utils.ein import eingroup
 
 
 class Conv2DDerivatives(BaseParameterDerivatives):

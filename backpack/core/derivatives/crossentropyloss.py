@@ -1,12 +1,11 @@
 from math import sqrt
 
-from torch import diag, diag_embed, multinomial, ones_like, softmax
+from torch import diag, diag_embed, einsum, multinomial, ones_like, softmax
 from torch import sqrt as torchsqrt
 from torch.nn import CrossEntropyLoss
 from torch.nn.functional import one_hot
 
 from backpack.core.derivatives.basederivatives import BaseLossDerivatives
-from backpack.utils.ein import einsum
 
 
 class CrossEntropyLossDerivatives(BaseLossDerivatives):

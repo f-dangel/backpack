@@ -1,4 +1,5 @@
-from backpack.utils.ein import einsum
+from torch import einsum
+
 from backpack.utils.unsqueeze import kfacmp_unsqueeze_if_missing_dim
 
 
