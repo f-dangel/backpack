@@ -5,10 +5,8 @@ H_in →  1/N ∑ₙ Jₙ^T H_out Jₙ
 """
 import pytest
 import torch
-from torch.nn import (
-    AvgPool2d,
+from torch.nn import (  # AvgPool2d,; Dropout,
     Conv2d,
-    Dropout,
     Linear,
     MaxPool2d,
     Sigmoid,
@@ -106,12 +104,15 @@ SETTINGS = [
     [MaxPool2d(kernel_size=2), (5, 3, 10, 8)],
     [MaxPool2d(kernel_size=2), (1, 2, 4, 4)],
     [MaxPool2d(kernel_size=3, stride=2, padding=1), (3, 2, 9, 11)],
-    [AvgPool2d(kernel_size=3), (3, 4, 7, 6)],
+    # [AvgPool2d(kernel_size=3), (3, 4, 7, 6)],
     [Sigmoid(), (6, 20)],
     [Sigmoid(), (6, 2, 7)],
     [Tanh(), (6, 20)],
     [Tanh(), (6, 2, 7)],
-    [Conv2d(3, 5, kernel_size=2), (4, 3, 5, 7)],
+    [Conv2d(2, 3, kernel_size=2), (3, 2, 7, 9)],
+    [Conv2d(2, 3, kernel_size=2, padding=1), (3, 2, 7, 9)],
+    # [Conv2d(2, 3, kernel_size=2, padding=1, stride=2), (3, 2, 7, 9)],
+    [Conv2d(2, 3, kernel_size=2, padding=1, stride=1, dilation=2), (3, 2, 7, 9)],
     [ZeroPad2d(2), (4, 3, 4, 5)],
     # not deterministic
     # [Dropout(0.2), (5, 10, 4)],

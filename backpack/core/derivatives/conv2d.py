@@ -16,28 +16,19 @@ class Conv2DDerivatives(BaseParameterDerivatives):
     def get_unfolded_input(self, module):
         return convUtils.unfold_func(module)(module.input0)
 
-    # TODO: Require tests
     def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
-        _, in_c, in_x, in_y = module.input0.size()
-        in_features = in_c * in_x * in_y
-        _, out_c, out_x, out_y = module.output.size()
-        out_features = out_c * out_x * out_y
+        _, C_in, H_in, W_in = module.input0.size()
+        in_features = C_in * H_in * W_in
+        _, C_out, H_out, W_out = module.output.size()
+        out_features = C_out * H_out * W_out
 
-        # 1) apply conv_transpose to multiply with W^T
-        result = mat.view(out_c, out_x, out_y, out_features)
-        result = einsum("cxyf->fcxy", (result,))
-        # result: W^T mat
-        result = self.__jac_t(module, result).view(out_features, in_features)
+        mat = mat.view(out_features, C_out, H_out, W_out)
+        jac_t_mat = self.__jac_t(module, mat).view(out_features, in_features)
 
-        # 2) transpose: mat^T W
-        result = result.t()
+        mat_t_jac = jac_t_mat.t().view(in_features, C_out, H_out, W_out)
+        jac_t_mat_t_jac = self.__jac_t(module, mat_t_jac).view(in_features, in_features)
 
-        # 3) apply conv_transpose
-        result = result.view(in_features, out_c, out_x, out_y)
-        result = self.__jac_t(module, result)
-
-        # 4) transpose to obtain W^T mat W
-        return result.view(in_features, in_features).t()
+        return jac_t_mat_t_jac.t()
 
     def _jac_mat_prod(self, module, g_inp, g_out, mat):
         mat_as_conv = eingroup("v,n,c,h,w->vn,c,h,w", mat)
