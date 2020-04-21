@@ -133,10 +133,6 @@ class BaseDerivatives:
     def get_batch(self, module):
         return module.input0.size(0)
 
-    # TODO Refactor and remove
-    def get_output(self, module):
-        return module.output
-
     @staticmethod
     def _reshape_like(mat, like):
         """Reshape as like with trailing and additional 0th dimension.
