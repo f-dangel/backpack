@@ -1,3 +1,4 @@
+"""Partial derivatives for cross-entropy loss."""
 from math import sqrt
 
 from torch import diag, diag_embed, multinomial, ones_like, softmax
@@ -10,7 +11,14 @@ from backpack.utils.ein import einsum
 
 
 class CrossEntropyLossDerivatives(BaseLossDerivatives):
+    """Partial derivatives for cross-entropy loss.
+
+    The `torch.nn.CrossEntropyLoss` operation is a composition of softmax
+    and negative log-likelihood.
+    """
+
     def get_module(self):
+        """Return the `torch.nn` module for cross-entropy loss."""
         return CrossEntropyLoss
 
     def _sqrt_hessian(self, module, g_inp, g_out):
@@ -75,7 +83,9 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
         return hessian_mat_prod
 
     def hessian_is_psd(self):
+        """Return whether cross-entropy loss Hessian is positive semi-definite."""
         return True
 
     def get_probs(self, module):
+        """Return probabilities used for negative likelihood."""
         return softmax(module.input0, dim=1)
