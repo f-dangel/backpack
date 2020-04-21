@@ -102,9 +102,9 @@ def eingroup(equation, operand, dim=None):
     dim = {} if dim is None else dim
     in_shape, out_shape, einsum_eq = _eingroup_preprocess(equation, operand, dim=dim)
 
-    operand_in = try_view(operand, in_shape)
+    operand_in = operand.reshape(in_shape)
     result = einsum(einsum_eq, operand_in)
-    return try_view(result, out_shape)
+    return result.reshape(out_shape)
 
 
 def _eingroup_preprocess(equation, operand, dim):
@@ -170,11 +170,3 @@ def __eingroup_infer(in_groups, operand, dim):
             dim[axis] = size
 
     return dim
-
-
-def try_view(tensor, shape):
-    """Fall back to reshape (more expensive) if viewing does not work."""
-    try:
-        return tensor.view(shape)
-    except RuntimeError:
-        return tensor.reshape(shape)

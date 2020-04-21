@@ -73,7 +73,7 @@ class MaxPool2DDerivatives(BaseDerivatives):
     def _jac_mat_prod(self, module, g_inp, g_out, mat):
         mat_as_pool = eingroup("v,n,c,h,w->v,n,c,hw", mat)
         jmp_as_pool = self.__apply_jacobian_of(module, mat_as_pool)
-        return self.view_like_output(jmp_as_pool, module)
+        return self.reshape_like_output(jmp_as_pool, module)
 
     def __apply_jacobian_of(self, module, mat):
         V, HW_axis = mat.shape[0], 3
@@ -94,7 +94,7 @@ class MaxPool2DDerivatives(BaseDerivatives):
     def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
         mat_as_pool = eingroup("v,n,c,h,w->v,n,c,hw", mat)
         jmp_as_pool = self.__apply_jacobian_t_of(module, mat_as_pool)
-        return self.view_like_input(jmp_as_pool, module)
+        return self.reshape_like_input(jmp_as_pool, module)
 
     def __apply_jacobian_t_of(self, module, mat):
         V = mat.shape[0]

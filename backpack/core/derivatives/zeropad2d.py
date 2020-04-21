@@ -41,4 +41,4 @@ class ZeroPad2dDerivatives(BaseDerivatives):
     def _jac_mat_prod(self, module, g_inp, g_out, mat):
         mat = eingroup("v,n,c,h,w->vn,c,h,w", mat)
         pad_mat = functional.pad(mat, module.padding, "constant", module.value)
-        return self.view_like_output(pad_mat, module)
+        return self.reshape_like_output(pad_mat, module)

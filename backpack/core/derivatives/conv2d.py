@@ -42,12 +42,12 @@ class Conv2DDerivatives(BaseParameterDerivatives):
             dilation=module.dilation,
             groups=module.groups,
         )
-        return self.view_like_output(jmp_as_conv, module)
+        return self.reshape_like_output(jmp_as_conv, module)
 
     def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
         mat_as_conv = eingroup("v,n,c,h,w->vn,c,h,w", mat)
         jmp_as_conv = self.__jac_t(module, mat_as_conv)
-        return self.view_like_input(jmp_as_conv, module)
+        return self.reshape_like_input(jmp_as_conv, module)
 
     def __jac_t(self, module, mat):
         """Apply Conv2d backward operation."""
@@ -103,7 +103,7 @@ class Conv2DDerivatives(BaseParameterDerivatives):
         X = self.get_unfolded_input(module)
 
         jac_mat = einsum("nij,vki->vnkj", (X, jac_mat))
-        return self.view_like_output(jac_mat, module)
+        return self.reshape_like_output(jac_mat, module)
 
     def _weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
         """Unintuitive, but faster due to convolution."""

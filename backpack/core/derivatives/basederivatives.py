@@ -1,5 +1,4 @@
 from backpack.core.derivatives import shape_check
-from backpack.utils.ein import try_view
 
 
 class BaseDerivatives:
@@ -38,17 +37,25 @@ class BaseDerivatives:
         Implicit application of J:
             result[v, n, c, w, ...]
             =  ∑_{̃n, ̃c, ̃w} J[n, c, w, ..., ̃n, ̃c, ̃w, ...] mat[̃n, ̃c, ̃w, ...].
-        Parameters:
-        -----------
-        mat: torch.Tensor
-            Matrix the Jacobian will be applied to.
-            Must have shape [V, N, C_in, H_in, ...].
+
+        Arguments:
+            module (torch.nn.Module): Extended module that has been used in a
+                `forward` pass.
+            g_inp ([torch.Tensor]): Gradients of the module w.r.t. its inputs.
+            g_out ([torch.Tensor]): Gradients of the module w.r.t. its outputs.
+            mat (torch.Tensor): Matrix the Jacobian will be applied to. Must have
+                shape [V, N, C_in, H_in, ...].
+
+        Notes:
+            - The Jacobian can be applied without knowledge about backpropagated
+              derivatives. Both `g_inp` and `g_out` are usually not required and
+              can be set to `None`.
+            - It is currently unclear whether the additional information about the
+              computational graph, encoded in `g_inp`, `g_out` might become relevant.
 
         Returns:
-        --------
-        result: torch.Tensor
-            Jacobian-matrix product.
-            Has shape [V, N, C_out, H_out, ...].
+            torch.Tensor: Jacobian-matrix product.
+                Has shape [V, N, C_out, H_out, ...].
         """
         return self._jac_mat_prod(module, g_inp, g_out, mat)
 
@@ -126,27 +133,23 @@ class BaseDerivatives:
     def get_batch(self, module):
         return module.input0.size(0)
 
-    # TODO Refactor and remove
-    def get_output(self, module):
-        return module.output
-
     @staticmethod
-    def _view_like(mat, like):
-        """View as like with trailing and additional 0th dimension.
+    def _reshape_like(mat, like):
+        """Reshape as like with trailing and additional 0th dimension.
 
         If like is [N, C, H, ...], returns shape [-1, N, C, H, ...]
         """
         V = -1
         shape = (V, *like.shape)
-        return try_view(mat, shape)
+        return mat.reshape(shape)
 
     @classmethod
-    def view_like_input(cls, mat, module):
-        return cls._view_like(mat, module.input0)
+    def reshape_like_input(cls, mat, module):
+        return cls._reshape_like(mat, module.input0)
 
     @classmethod
-    def view_like_output(cls, mat, module):
-        return cls._view_like(mat, module.output)
+    def reshape_like_output(cls, mat, module):
+        return cls._reshape_like(mat, module.output)
 
 
 class BaseParameterDerivatives(BaseDerivatives):

@@ -46,7 +46,7 @@ class AvgPool2DDerivatives(BaseDerivatives):
         jmp_as_pool = self.__apply_jacobian_of(module, mat_as_pool)
         self.__check_jmp_out_as_pool(mat, jmp_as_pool, module)
 
-        return self.view_like_output(jmp_as_pool, module)
+        return self.reshape_like_output(jmp_as_pool, module)
 
     def __make_single_channel(self, mat, module):
         """Create fake single-channel images, grouping batch,
@@ -83,7 +83,7 @@ class AvgPool2DDerivatives(BaseDerivatives):
         jmp_as_pool = self.__apply_jacobian_t_of(module, mat_as_pool)
         self.__check_jmp_in_as_pool(mat, jmp_as_pool, module)
 
-        return self.view_like_input(jmp_as_pool, module)
+        return self.reshape_like_input(jmp_as_pool, module)
 
     def __apply_jacobian_t_of(self, module, mat):
         C_for_conv_t = 1
