@@ -22,6 +22,8 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
         return CrossEntropyLoss
 
     def _sqrt_hessian(self, module, g_inp, g_out):
+        self._check_2nd_order_hyperparameters(module, g_inp, g_out)
+
         probs = self.get_probs(module)
         tau = torchsqrt(probs)
         V_dim, C_dim = 0, 2
@@ -36,6 +38,8 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
         return sqrt_H
 
     def _sqrt_hessian_sampled(self, module, g_inp, g_out, mc_samples=1):
+        self._check_2nd_order_hyperparameters(module, g_inp, g_out)
+
         M = mc_samples
         C = module.input0.shape[1]
 
@@ -56,6 +60,8 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
         return sqrt_mc_h
 
     def _sum_hessian(self, module, g_inp, g_out):
+        self._check_2nd_order_hyperparameters(module, g_inp, g_out)
+
         probs = self.get_probs(module)
         sum_H = diag(probs.sum(0)) - einsum("bi,bj->ij", (probs, probs))
 
@@ -67,6 +73,8 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
 
     def _make_hessian_mat_prod(self, module, g_inp, g_out):
         """Multiplication of the input Hessian with a matrix."""
+        self._check_2nd_order_hyperparameters(module, g_inp, g_out)
+
         probs = self.get_probs(module)
 
         def hessian_mat_prod(mat):
@@ -89,3 +97,31 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
     def get_probs(self, module):
         """Return probabilities used for negative likelihood."""
         return softmax(module.input0, dim=1)
+
+    def _check_2nd_order_hyperparameters(self, module, g_inp, g_out):
+        """Verify that hyperparameter setting is supported by 2nd-order quantities.
+
+        Attributes:
+            module (torch.nn.CrossEntropyLoss): Extended module for cross-entropy loss.
+            g_inp ([torch.Tensor]): Gradients of `module` w.r.t. its input(s).
+            g_out ([torch.Tensor]): Gradients of `module` w.r.t. its output(s).
+
+        Raises:
+            NotImplementedError: If setting is not implemented.
+        """
+        implemented_ignore_index = -100
+        implemented_weight = None
+
+        if module.ignore_index != implemented_ignore_index:
+            raise NotImplementedError(
+                "ignore_index must be {}, but got {}".format(
+                    implemented_ignore_index, module.ignore_index
+                )
+            )
+
+        if module.weight != implemented_weight:
+            raise NotImplementedError(
+                "weight must be {}, but got {}".format(
+                    implemented_weight, module.weight
+                )
+            )
