@@ -1,3 +1,7 @@
+import warnings
+
+import torch
+
 from backpack.core.derivatives import shape_check
 from backpack.utils.ein import try_view
 
@@ -268,11 +272,21 @@ class BaseParameterDerivatives(BaseDerivatives):
 class BaseLossDerivatives(BaseDerivatives):
     """Second- order partial derivatives of loss functions.
 
+    2nd-order extensions are only guaranteed to be working if the `loss`, on which
+    `backward()` is called, satisfies the following conditions:
+
+        1. The model is a `torch.nn.Sequential`. Its output is used to compute
+           a *scalar* `loss`.
+
+        2. The second-order backpropagation in BackPACK starts at the loss function
+           *module*. If this module's output was modified further, BackPACK
+           does not know about these operations.
     """
 
     # TODO Add shape check
     def sqrt_hessian(self, module, g_inp, g_out):
         """Symmetric factorization ('sqrt') of the loss Hessian."""
+        self.check_2nd_order_conditions(module, g_inp, g_out)
         return self._sqrt_hessian(module, g_inp, g_out)
 
     def _sqrt_hessian(self, module, g_inp, g_out):
@@ -281,6 +295,7 @@ class BaseLossDerivatives(BaseDerivatives):
     # TODO Add shape check
     def sqrt_hessian_sampled(self, module, g_inp, g_out, mc_samples=1):
         """Monte-Carlo sampled symmetric factorization of the loss Hessian."""
+        self.check_2nd_order_conditions(module, g_inp, g_out)
         return self._sqrt_hessian_sampled(module, g_inp, g_out, mc_samples=mc_samples)
 
     def _sqrt_hessian_sampled(self, module, g_inp, g_out, mc_samples=1):
@@ -293,6 +308,7 @@ class BaseLossDerivatives(BaseDerivatives):
 
         Return a function that maps mat to H * mat.
         """
+        self.check_2nd_order_conditions(module, g_inp, g_out)
         return self._make_hessian_mat_prod(module, g_inp, g_out)
 
     def _make_hessian_mat_prod(self, module, g_inp, g_out):
@@ -301,7 +317,33 @@ class BaseLossDerivatives(BaseDerivatives):
     # TODO Add shape check
     def sum_hessian(self, module, g_inp, g_out):
         """Loss Hessians, summed over the batch dimension."""
+        self.check_2nd_order_conditions(module, g_inp, g_out)
         return self._sum_hessian(module, g_inp, g_out)
 
     def _sum_hessian(self, module, g_inp, g_out):
         raise NotImplementedError
+
+    def check_2nd_order_conditions(self, module, g_inp, g_out):
+        """Verify conditions for 2nd-order extensions to be working."""
+        self._check_output(module, g_inp, g_out)
+        self._check_backward_called_on_output(module, g_inp, g_out)
+
+    def _check_output(self, module, g_inp, g_out):
+        """Verify `module`'s output is a scalar."""
+        scalar_shape = torch.Size([])
+
+        if module.output.shape != scalar_shape:
+            raise ValueError(
+                "Output must be of shape {} (scalar), got {}".format(
+                    scalar_shape, module.output.shape
+                )
+            )
+
+    # TODO: Is there a way to assert that?
+    def _check_backward_called_on_output(self, module, g_inp, g_out):
+        """Should berify that `backward` was called on the module output."""
+        warnings.warn(
+            "Please make sure backward is called on the output of {}.".format(module)
+            + " If the output was modified further, this will be ignored"
+            + " in the extended backpropagation pass for 2nd-order extensions."
+        )
