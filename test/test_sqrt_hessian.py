@@ -75,8 +75,8 @@ SETTINGS = [
         (),
     ],
     # reduction mean
-    # [MSELoss(reduction="mean"), (5, 1), regression_targets(shape=(5, 1)), ()],
-    # [MSELoss(reduction="mean"), (5, 2), regression_targets(shape=(5, 2)), ()],
+    [MSELoss(reduction="mean"), (5, 1), regression_targets(shape=(5, 1)), ()],
+    [MSELoss(reduction="mean"), (5, 2), regression_targets(shape=(5, 2)), ()],
     # [MSELoss(reduction="sum"), (5, 1), regression_targets(shape=(5, 1)), ()],
     # non-scalar outputs are not supported
     [
