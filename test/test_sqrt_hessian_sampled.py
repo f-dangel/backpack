@@ -67,9 +67,22 @@ SETTINGS = [
         (),
     ],
     # reduction mean
-    # [MSELoss(reduction="mean"), (5, 1), regression_targets(shape=(5, 1)), ()],
-    # [MSELoss(reduction="mean"), (5, 2), regression_targets(shape=(5, 2)), ()],
-    # [MSELoss(reduction="sum"), (5, 1), regression_targets(shape=(5, 1)), ()],
+    [MSELoss(reduction="mean"), (5, 1), regression_targets(shape=(5, 1)), ()],
+    # reduction sum
+    [MSELoss(reduction="sum"), (5, 1), regression_targets(shape=(5, 1)), ()],
+    # no sampling implemented yet
+    [
+        MSELoss(reduction="sum"),
+        (5, 2),
+        regression_targets(shape=(5, 2)),
+        (NotImplementedError,),
+    ],
+    [
+        MSELoss(reduction="mean"),
+        (5, 2),
+        regression_targets(shape=(5, 2)),
+        (NotImplementedError,),
+    ],
     # non-scalar outputs are not supported
     [
         MSELoss(reduction="none"),

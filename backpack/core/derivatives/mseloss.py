@@ -36,13 +36,22 @@ class MSELossDerivatives(BaseLossDerivatives):
         The cost is the same because the hessian of the loss w.r.t. its inputs
         for a single sample is one-dimensional.
         """
-        warn(
-            "[MC Sampling Hessian of MSE loss] "
-            + "Returning the symmetric factorization of the full Hessian "
-            + "(same computation cost)",
-            UserWarning,
-        )
-        return self.sqrt_hessian(module, g_inp, g_out)
+        N = module.input0_shape[0]
+        input_numel = self._mean_factor(module)
+        num_features = input_numel // N
+
+        if num_features == 1:
+            warn(
+                "[MC Sampling Hessian of MSE loss] "
+                + "Returning the symmetric factorization of the full Hessian "
+                + "(same computation cost)",
+                UserWarning,
+            )
+            return self.sqrt_hessian(module, g_inp, g_out)
+        else:
+            raise NotImplementedError(
+                "No sampling supported for features >1 (got {})".format(input_numel)
+            )
 
     def _sum_hessian(self, module, g_inp, g_out):
         self.check_input_dims(module)
