@@ -10,8 +10,7 @@ python:
   version: 3.7
   install:
     - requirements: requirements.txt
+    - requirements: requirements/docs.txt
     - method: pip
       path: .
-    - method: pip
-      path: sphinx-gallery
   system_packages: true
