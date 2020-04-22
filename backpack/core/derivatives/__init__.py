@@ -5,6 +5,7 @@ from torch.nn import (
     Dropout,
     Linear,
     MaxPool2d,
+    MSELoss,
     ReLU,
     Sigmoid,
     Tanh,
@@ -17,6 +18,7 @@ from .crossentropyloss import CrossEntropyLossDerivatives
 from .dropout import DropoutDerivatives
 from .linear import LinearDerivatives
 from .maxpool2d import MaxPool2DDerivatives
+from .mseloss import MSELossDerivatives
 from .relu import ReLUDerivatives
 from .sigmoid import SigmoidDerivatives
 from .tanh import TanhDerivatives
@@ -33,4 +35,5 @@ derivatives_for = {
     Tanh: TanhDerivatives,
     Sigmoid: SigmoidDerivatives,
     CrossEntropyLoss: CrossEntropyLossDerivatives,
+    MSELoss: MSELossDerivatives,
 }
