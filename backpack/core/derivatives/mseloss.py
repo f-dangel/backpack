@@ -48,11 +48,12 @@ class MSELossDerivatives(BaseLossDerivatives):
         self.check_input_dims(module)
 
         N = module.input0_shape[0]
-        num_features = module.input0.numel() // N
-        sum_H = 2 * N * diag(ones(num_features, device=module.input0.device))
+        input_numel = self._mean_factor(module)
+        num_features = input_numel // N
+        sum_H = 2 * input_numel * diag(ones(num_features, device=module.input0.device))
 
         if module.reduction == "mean":
-            sum_H /= N
+            sum_H /= input_numel
 
         return sum_H
 
