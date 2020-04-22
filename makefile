@@ -6,6 +6,8 @@
 .PHONY: black isort format
 .PHONY: black-check isort-check format-check
 .PHONY: flake8
+.PHONY: pydocstyle-check
+.PHONY: darglint-check
 
 .DEFAULT: help
 help:
@@ -17,6 +19,10 @@ help:
 	@echo "        Check if black would change files"
 	@echo "flake8"
 	@echo "        Run flake8 on the project"
+	@echo "pydocstyle-check"
+	@echo "        Run pydocstyle on the project"
+	@echo "darglint-check"
+	@echo "        Run darglint on the project"
 	@echo "install"
 	@echo "        Install backpack and dependencies"
 	@echo "install-dev"
@@ -48,6 +54,12 @@ black-check:
 flake8:
 	@flake8 .
 
+pydocstyle-check:
+	@pydocstyle --count .
+
+darglint-check:
+	@darglint --verbosity 2 .
+
 isort:
 	@isort --apply
 
@@ -59,7 +71,7 @@ format:
 	@make isort
 	@make black-check
 
-format-check: black-check isort-check
+format-check: black-check isort-check pydocstyle-check darglint-check
 
 
 ###

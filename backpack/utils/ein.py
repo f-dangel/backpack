@@ -4,67 +4,59 @@ import torch
 
 
 def eingroup(equation, operand, dim=None):
-    """Use einsum notation for (un-)grouping dimensions.
+    """Use einsum-like notation for (un-)grouping dimensions.
 
-    Dimensions that cannot be inferred can be handed in via the
-    dictionary `dim`.
+    Dimensions that cannot be inferred can be handed in via a mapping `dim`.
 
-    Many operations in `backpack` require that certain axes of a tensor
-    be treated identically, and will therefore be grouped into a single
-    dimesion of the tensor. One way to do that is using `view`s or
-    `reshape`s. `eingroup` helps facilitate this process. It can be
-    used in the same way as `einsum`, but acts only on a single tensor at
-    a time (although this could be fixed with an improved syntax and
-    equation analysis).
+    Arguments:
+        equation (str): Equation specifying the (un-)grouping of axes.
+        operand (torch.Tensor): The tensor that `equation` will be applied to.
+        dim (dict, optional): A mapping from letters in `equation` to
+            dimensions. Only required if `eingroup` cannot infer the dimension.
+            For instance, consider you want to interpret a vector with 10
+            elements as a 5x2 matrix. The equation `"i,j->ij"` is not
+            sufficient, you need to specify `dim = {"i": 5, "j": 2}`.
 
-    Idea:
-    -----
-    * "a,b,c->ab,c": group dimension a and b into a single one
-    * "a,b,c->ba,c" to transpose, then group b and a dimension
+    Note:
+        Many operations in `backpack` require that certain axes of a tensor
+        be treated identically, and will therefore be grouped into a single
+        dimension. One way to do that is using `view`s or `reshape`s.
+        `eingroup` helps facilitate this process. It can be used in roughly
+        the same way as `einsum`, but acts only on a single tensor at
+        a time (although this could be fixed with an improved syntax and
+        equation analysis).
+
+        Idea:
+        * `"a,b,c->ab,c"`: group dimension `a` and `b` into a single one.
+        * `"a,b,c->ba,c"` to transpose, then group `b` and `a` dimension.
+
+    Examples:
+        Different reshapes of a [2 x 2 x 2] tensor:
+        >>> t = torch.Tensor([0, 1, 2, 3, 4, 5, 6, 7]).reshape(2, 2, 2)
+        >>> t_flat = t.reshape(-1)
+        >>> # group all dimensions
+        >>> eingroup("i,j,k->ijk", t)
+        torch.Tensor([0, 1, 2, 3, 4, 5, 6, 7])
+        >>> # interpret as 2 x 4 matrix
+        >>> eingroup("i,j,k->i,jk", t)
+        torch.Tensor([[0, 1, 2, 3], [4, 5, 6, 7]])
+        >>> # grouping (specifying grouping dimensions)
+        >>> eingroup("ijk->i,j,k", dim={"i": 2, "j": 2, "k": 2})
+        torch.Tensor([[[0, 1], [2, 3]], [[4, 5], [6, 7]]])
+        >>> # grouping with additional contraction
+        >>> eingroup("ijk->j,k", dim={"j": 2, "k": 2})
+        torch.Tensor([[[4, 5], [8, 10]])
+
+    Returns:
+        torch.Tensor: Result of the (un-)grouping operation.
 
     Raises:
-    -------
-    `KeyError`: If information about a dimension in `dim` is missing
-                or can be removed.
-    `RuntimeError`: If the groups inferred from `equation` do not match
-                    the number of axes of `operand`
+        KeyError: If information about a dimension in `dim` is missing
+            or can be removed. # noqa: DAR402
+        RuntimeError: If the groups inferred from `equation` do not match
+            the number of axes of `operand` # noqa: DAR402
 
-    Example usage:
-    ```
-    import torch
-    from backpack.utils.ein import einsum, eingroup
-
-    dim_a, dim_b, dim_c, dim_d = torch.randint(low=1, high=10, size=(4,))
-    tensor = torch.randn((dim_a, dim_b, dim_c, dim_d))
-
-    # 1) Transposition: Note the slightly different syntax for `eingroup`
-    tensor_trans = einsum("abcd->cbad", tensor)
-    tensor_trans_eingroup = eingroup("a,b,c,d->c,b,a,d", tensor)
-    assert torch.allclose(tensor_trans, tensor_trans_eingroup)
-
-    # 2) Grouping axes (a,c) and (b,d) together
-    tensor_group = einsum("abcd->acbd", tensor).reshape((dim_a * dim_c, dim_b * dim_d))
-    tensor_group_eingroup = eingroup("a,b,c,d->ac,bd", tensor)
-    assert torch.allclose(tensor_group, tensor_group_eingroup)
-
-    # 3) Ungrouping a tensor whose axes where merged
-    tensor_merge = tensor.reshape(dim_a * dim_b, dim_c, dim_d)
-    tensor_unmerge = tensor.reshape(dim_a, dim_b, dim_c, dim_d)
-    assert torch.allclose(tensor_unmerge, tensor)
-    # eingroup needs to know the dimensions of the ungrouped dimension
-    tensor_unmerge_eingroup = eingroup(
-        "ab,c,d->a,b,c,d", tensor_merge, dim={"a": dim_a, "b": dim_b}
-    )
-    assert torch.allclose(tensor_unmerge, tensor_unmerge_eingroup)
-
-    # 4) `einsum` functionality to sum out dimensions
-    # sum over dim_c, group dim_a and dim_d
-    tensor_sum = einsum("abcd->adb", tensor).reshape(dim_a * dim_d, dim_b)
-    tensor_sum_eingroup = eingroup("a,b,c,d->ad,b", tensor)
-    assert torch.allclose(tensor_sum, tensor_sum_eingroup)
-    ```
     """
-
     dim = {} if dim is None else dim
     in_shape, out_shape, einsum_eq = _eingroup_preprocess(equation, operand, dim=dim)
 
@@ -94,7 +86,7 @@ def _eingroup_preprocess(equation, operand, dim):
 
 
 def __eingroup_shapes(in_groups, out_groups, dim):
-    """Return shape the input needs to be reshaped, and the output shape"""
+    """Return shape the input needs to be reshaped, and the output shape."""
 
     def shape(groups, dim):
         return [group_dim(group, dim) for group in groups]
