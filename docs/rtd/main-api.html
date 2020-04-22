@@ -162,7 +162,7 @@ before calling the <code class="code docutils literal notranslate"><span class="
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">torch</span>
 
 <span class="n">model</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
-        <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">764</span><span class="p">,</span> <span class="mi">64</span><span class="p">),</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">784</span><span class="p">,</span> <span class="mi">64</span><span class="p">),</span>
         <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
         <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
 <span class="p">)</span>
@@ -180,7 +180,7 @@ before calling the <code class="code docutils literal notranslate"><span class="
 <dl class="simple">
 <dt>module: torch.nn.Module</dt><dd><p>The module to extend</p>
 </dd>
-<dt>debug: Bool, optional (default: False)</dt><dd><p>If true, will print debug messages during the extension and backward.</p>
+<dt>debug: Bool, optional (default: False)</dt><dd><p>If true, will print debug messages during the extension.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -207,7 +207,7 @@ before calling the <code class="code docutils literal notranslate"><span class="
 <p>See <a class="reference internal" href="extensions.html#extensions"><span class="std std-ref">Extensions</span></a> for the list of available extensions and how to access the quantities.</p>
 <dl class="function">
 <dt id="backpack.backpack">
-<code class="sig-prename descclassname">backpack.</code><code class="sig-name descname">backpack</code><span class="sig-paren">(</span><em class="sig-param">*args</em><span class="sig-paren">)</span><a class="headerlink" href="#backpack.backpack" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">backpack.</code><code class="sig-name descname">backpack</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">debug=False</em><span class="sig-paren">)</span><a class="headerlink" href="#backpack.backpack" title="Permalink to this definition">¶</a></dt>
 <dd><p>Activates the BackPACK extensions passed as arguments for the
 <code class="code docutils literal notranslate"><span class="pre">backward</span></code> calls in the current <code class="code docutils literal notranslate"><span class="pre">with</span></code> block.</p>
 </dd></dl>

@@ -2,4 +2,4 @@ title: BackPACK
 description: Get more out of your backward pass
 show_downloads: false
 theme: jekyll-theme-minimal
-baseurl: "/backpack"
+baseurl: "/"

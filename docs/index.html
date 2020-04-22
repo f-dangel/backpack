@@ -4,7 +4,7 @@
         <meta charset="utf-8"/>
         <meta content="IE=edge" http-equiv="X-UA-Compatible"/>
         <meta content="width=device-width, initial-scale=1" name="viewport"/>
-        <link href="/backpack/assets/css/style.css" rel="stylesheet">
+        <link href="/assets/css/style.css" rel="stylesheet">
         </link>
     </head>
 </html>
@@ -101,7 +101,7 @@ Compute the gradient with Pytorch
 
 
 <span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">load_mnist_data</span><span class="p">()</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n">Linear</span><span class="p">(</span><span class="mi">764</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">Linear</span><span class="p">(</span><span class="mi">784</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
 <span class="n">lossfunc</span> <span class="o">=</span> <span class="n">CrossEntropyLoss</span><span class="p">()</span>
 <span class="n">loss</span> <span class="o">=</span> <span class="n">lossfunc</span><span class="p">(</span><span class="n">model</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="n">y</span><span class="p">)</span>
 
@@ -127,7 +127,7 @@ and the variance with BackPACK
 <span style="color: blue;"><span class="kn">from</span> <span class="nn">backpack</span> <span class="kn">import</span> <span class="n">extend</span><span class="p">,</span> <span class="n">backpack</span><span class="p">,</span> <span class="n">Variance</span></span>
 
 <span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">load_mnist_data</span><span class="p">()</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n"><span style="color: blue;">extend</span></span><span class="p">(</span><span class="n">Linear</span><span class="p">(</span><span class="mi">764</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n"><span style="color: blue;">extend</span></span><span class="p">(</span><span class="n">Linear</span><span class="p">(</span><span class="mi">784</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
 <span class="n">lossfunc</span> <span class="o">=</span> <span class="n"><span style="color: blue;">extend</span></span><span class="p">(</span><span class="n">CrossEntropyLoss</span><span class="p">())</span>
 <span class="n">loss</span> <span class="o">=</span> <span class="n">lossfunc</span><span class="p">(</span><span class="n">model</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="n">y</span><span class="p">)</span>
 
@@ -136,7 +136,7 @@ and the variance with BackPACK
 
 <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">():</span>
     <span class="k">print</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">grad</span><span class="p">)</span>
-    <span style="color: blue;"><span class="k">print</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">var</span><span class="p">)</span></span>
+    <span style="color: blue;"><span class="k">print</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">variance</span><span class="p">)</span></span>
 </code></pre></div></div></div>
 
 <!--- SECOND MOMENT CODE --->
@@ -147,19 +147,19 @@ and the second moment with BackPACK
 """</span>
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">CrossEntropyLoss</span><span class="p">,</span> <span class="n">Linear</span>
 <span class="kn">from</span> <span class="nn">utils</span> <span class="kn">import</span> <span class="n">load_mnist_data</span>
-<span style="color: blue;"><span class="kn">from</span> <span class="nn">backpack</span> <span class="kn">import</span> <span class="n">extend</span><span class="p">,</span> <span class="n">backpack</span><span class="p">,</span> <span class="n">SecondMoment</span></span>
+<span style="color: blue;"><span class="kn">from</span> <span class="nn">backpack</span> <span class="kn">import</span> <span class="n">extend</span><span class="p">,</span> <span class="n">backpack</span><span class="p">,</span> <span class="n">SumGradSquared</span></span>
 
 <span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">load_mnist_data</span><span class="p">()</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n"><span style="color: blue;">extend</span></span><span class="p">(</span><span class="n">Linear</span><span class="p">(</span><span class="mi">764</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n"><span style="color: blue;">extend</span></span><span class="p">(</span><span class="n">Linear</span><span class="p">(</span><span class="mi">784</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
 <span class="n">lossfunc</span> <span class="o">=</span> <span class="n"><span style="color: blue;">extend</span></span><span class="p">(</span><span class="n">CrossEntropyLoss</span><span class="p">())</span>
 <span class="n">loss</span> <span class="o">=</span> <span class="n">lossfunc</span><span class="p">(</span><span class="n">model</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="n">y</span><span class="p">)</span>
 
-<span style="color: blue;"><span class="k">with</span> <span class="n">backpack</span><span class="p">(</span><span class="n">SecondMoment</span><span class="p">()):</span></span>
+<span style="color: blue;"><span class="k">with</span> <span class="n">backpack</span><span class="p">(</span><span class="n">SumGradSquared</span><span class="p">()):</span></span>
     <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
 
 <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">():</span>
     <span class="k">print</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">grad</span><span class="p">)</span>
-    <span style="color: blue;"><span class="k">print</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">secondMoment</span><span class="p">)</span></span>
+    <span style="color: blue;"><span class="k">print</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">sum_grad_squared</span><span class="p">)</span></span>
 </code></pre></div></div></div>
 
 <!--- DIAGGGN CODE --->
@@ -170,19 +170,19 @@ and the diagonal of the Gauss-Newton with BackPACK
 """</span>
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">CrossEntropyLoss</span><span class="p">,</span> <span class="n">Linear</span>
 <span class="kn">from</span> <span class="nn">utils</span> <span class="kn">import</span> <span class="n">load_mnist_data</span>
-<span style="color: blue;"><span class="kn">from</span> <span class="nn">backpack</span> <span class="kn">import</span> <span class="n">extend</span><span class="p">,</span> <span class="n">backpack</span><span class="p">,</span> <span class="n">DiagGGN</span></span>
+<span style="color: blue;"><span class="kn">from</span> <span class="nn">backpack</span> <span class="kn">import</span> <span class="n">extend</span><span class="p">,</span> <span class="n">backpack</span><span class="p">,</span> <span class="n">DiagGGNExact</span></span>
 
 <span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">load_mnist_data</span><span class="p">()</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n"><span style="color: blue;">extend</span></span><span class="p">(</span><span class="n">Linear</span><span class="p">(</span><span class="mi">764</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n"><span style="color: blue;">extend</span></span><span class="p">(</span><span class="n">Linear</span><span class="p">(</span><span class="mi">784</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
 <span class="n">lossfunc</span> <span class="o">=</span> <span class="n"><span style="color: blue;">extend</span></span><span class="p">(</span><span class="n">CrossEntropyLoss</span><span class="p">())</span>
 <span class="n">loss</span> <span class="o">=</span> <span class="n">lossfunc</span><span class="p">(</span><span class="n">model</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="n">y</span><span class="p">)</span>
 
-<span style="color: blue;"><span class="k">with</span> <span class="n">backpack</span><span class="p">(</span><span class="n">DiagGGN</span><span class="p">()):</span></span>
+<span style="color: blue;"><span class="k">with</span> <span class="n">backpack</span><span class="p">(</span><span class="n">DiagGGNExact</span><span class="p">()):</span></span>
     <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
 
 <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">():</span>
     <span class="k">print</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">grad</span><span class="p">)</span>
-    <span style="color: blue;"><span class="k">print</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">diagggn</span><span class="p">)</span></span>
+    <span style="color: blue;"><span class="k">print</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">diag_ggn_exact</span><span class="p">)</span></span>
 </code></pre></div></div></div>
 
 <!--- KFAC CODE --->
@@ -196,7 +196,7 @@ and KFAC with BackPACK
 <span style="color: blue;"><span class="kn">from</span> <span class="nn">backpack</span> <span class="kn">import</span> <span class="n">extend</span><span class="p">,</span> <span class="n">backpack</span><span class="p">,</span> <span class="n">KFAC</span></span>
 
 <span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">load_mnist_data</span><span class="p">()</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n"><span style="color: blue;">extend</span></span><span class="p">(</span><span class="n">Linear</span><span class="p">(</span><span class="mi">764</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n"><span style="color: blue;">extend</span></span><span class="p">(</span><span class="n">Linear</span><span class="p">(</span><span class="mi">784</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
 <span class="n">lossfunc</span> <span class="o">=</span> <span class="n"><span style="color: blue;">extend</span></span><span class="p">(</span><span class="n">CrossEntropyLoss</span><span class="p">())</span>
 <span class="n">loss</span> <span class="o">=</span> <span class="n">lossfunc</span><span class="p">(</span><span class="n">model</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="n">y</span><span class="p">)</span>
 
@@ -205,7 +205,7 @@ and KFAC with BackPACK
 
 <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">():</span>
     <span class="k">print</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">grad</span><span class="p">)</span>
-    <span style="color: blue;"><span class="k">print</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">kfac1</span><span class="p">,</span> <span class="n">param</span><span class="o">.</span><span class="n">kfac2</span><span class="p">)</span></span>
+    <span style="color: blue;"><span class="k">print</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">kfac</span><span class="p">)</span></span>
 </code></pre></div></div>
 </div>
 
@@ -303,6 +303,6 @@ h        }
             </p>
         </footer>
     </div>
-    <script src="/backpack/assets/js/scale.fix.js">
+    <script src="/assets/js/scale.fix.js">
     </script>
 </body>
