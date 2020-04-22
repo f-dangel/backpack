@@ -1,3 +1,5 @@
+from torch import einsum
+
 from backpack.core.derivatives.conv2d import Conv2DDerivatives
 from backpack.extensions.secondorder.hbp.hbp_options import (
     BackpropStrategy,
@@ -5,7 +7,6 @@ from backpack.extensions.secondorder.hbp.hbp_options import (
 )
 from backpack.extensions.secondorder.hbp.hbpbase import HBPBaseModule
 from backpack.utils import conv as convUtils
-from backpack.utils.ein import einsum
 
 
 class HBPConv2d(HBPBaseModule):
