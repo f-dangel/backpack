@@ -12,4 +12,6 @@ python:
     - requirements: requirements.txt
     - method: pip
       path: .
+    - method: pip
+      path: sphinx-gallery
   system_packages: true
