@@ -1,10 +1,11 @@
+from torch import einsum
+
 from backpack.core.derivatives.linear import LinearDerivatives
 from backpack.extensions.secondorder.hbp.hbp_options import (
     BackpropStrategy,
     ExpectationApproximation,
 )
 from backpack.extensions.secondorder.hbp.hbpbase import HBPBaseModule
-from backpack.utils.ein import einsum
 
 
 class HBPLinear(HBPBaseModule):

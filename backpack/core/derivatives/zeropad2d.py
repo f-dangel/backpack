@@ -11,7 +11,6 @@ class ZeroPad2dDerivatives(BaseDerivatives):
     def hessian_is_zero(self):
         return True
 
-    # TODO: Require tests
     def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
         _, C_out, H_out, W_out = module.output_shape
         _, in_c, in_x, in_y = module.input0_shape

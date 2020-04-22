@@ -1,5 +1,6 @@
+from torch import einsum
+
 from backpack.core.derivatives.basederivatives import BaseDerivatives
-from backpack.utils.ein import einsum
 
 
 class ElementwiseDerivatives(BaseDerivatives):

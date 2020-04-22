@@ -1,6 +1,7 @@
+from torch import einsum
+
 from backpack.extensions.firstorder.base import FirstOrderModuleExtension
 from backpack.utils import conv as convUtils
-from backpack.utils.ein import einsum
 
 
 class SGSConv2d(FirstOrderModuleExtension):

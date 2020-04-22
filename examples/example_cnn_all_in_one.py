@@ -1,10 +1,23 @@
 """
 Compute the gradient with PyTorch and other quantities with BackPACK.
 
-Logistic regression example
+CNN example with many different layers.
 """
 
-from torch.nn import CrossEntropyLoss, Flatten, Linear, Sequential
+
+from torch.nn import (
+    AvgPool2d,
+    Conv2d,
+    CrossEntropyLoss,
+    Dropout,
+    Flatten,
+    Linear,
+    MaxPool2d,
+    ReLU,
+    Sequential,
+    Sigmoid,
+    Tanh,
+)
 
 from backpack import backpack, extend, extensions
 from backpack.utils.examples import load_mnist_data
@@ -14,7 +27,20 @@ X, y = load_mnist_data(B)
 
 print("# Gradient with PyTorch, other quantities with BackPACK | B =", B)
 
-model = Sequential(Flatten(), Linear(784, 10),)
+model = Sequential(
+    Conv2d(in_channels=1, out_channels=8, kernel_size=5),
+    ReLU(),
+    Conv2d(in_channels=8, out_channels=8, kernel_size=5),
+    MaxPool2d(kernel_size=2),
+    Sigmoid(),
+    Conv2d(in_channels=8, out_channels=16, kernel_size=5),
+    AvgPool2d(kernel_size=2),
+    Dropout(p=0.5),
+    Flatten(),
+    Linear(3 * 3 * 16, 64),
+    Tanh(),
+    Linear(64, 10),
+)
 lossfunc = CrossEntropyLoss()
 
 model = extend(model)
