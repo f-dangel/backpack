@@ -330,13 +330,9 @@ class BaseLossDerivatives(BaseDerivatives):
 
     def _check_output(self, module, g_inp, g_out):
         """Verify `module`'s output is a scalar."""
-        scalar_shape = torch.Size([])
-
-        if module.output.shape != scalar_shape:
+        if module.output.numel() != 1:
             raise ValueError(
-                "Output must be of shape {} (scalar), got {}".format(
-                    scalar_shape, module.output.shape
-                )
+                "Output must be scalar. Got {}".format(module.output.shape)
             )
 
     # TODO: Is there a way to assert that?

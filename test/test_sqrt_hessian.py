@@ -62,7 +62,8 @@ def autograd_hessian(loss, x):
         torch.Tensor: Hessian tensor of `loss` w.r.t. `x`. The Hessian has shape
             `[A, B, C, ..., A, B, C, ...]`.
     """
-    assert loss.shape == torch.Size([])
+    assert loss.numel() == 1
+
     vectorized_shape = (x.numel(), x.numel())
     final_shape = (*x.shape, *x.shape)
 
