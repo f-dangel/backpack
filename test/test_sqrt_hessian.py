@@ -28,23 +28,56 @@ def make_id(layer, input_shape):
 
 
 torch.manual_seed(0)
-ARGS = "layer,input_shape,targets"
+ARGS = "layer,input_shape,targets,raises"
 SETTINGS = [
-    # (layer, input_shape, targets)
+    # reduction mean
     [
+        # layer
         CrossEntropyLoss(reduction="mean"),
+        # input_shape
         (2, 3),
+        # targets
         classification_targets(shape=(2,), num_classes=3),
+        # tuple of exceptions that should be raised
+        (),
     ],
     [
         CrossEntropyLoss(reduction="mean"),
         (8, 2),
         classification_targets(shape=(8,), num_classes=2),
+        (),
+    ],
+    # reduction sum
+    [
+        CrossEntropyLoss(reduction="sum"),
+        (2, 3),
+        classification_targets(shape=(2,), num_classes=3),
+        (),
+    ],
+    [
+        CrossEntropyLoss(reduction="sum"),
+        (8, 2),
+        classification_targets(shape=(8,), num_classes=2),
+        (),
+    ],
+    # non-scalar outputs are not supported
+    [
+        CrossEntropyLoss(reduction="none"),
+        (8, 2),
+        classification_targets(shape=(8,), num_classes=2),
+        (ValueError,),
+    ],
+    # no reduction for a single number as input should be fine
+    [
+        CrossEntropyLoss(reduction="none"),
+        (1, 1),
+        classification_targets(shape=(1,), num_classes=1),
+        (),
     ],
     # [MSELoss(reduction="mean"), (1, 5), None],
     # [MSELoss(reduction="sum"), (2, 6), None],
 ]
-IDS = [make_id(layer, input_shape) for (layer, input_shape, _) in SETTINGS]
+IDS = [make_id(layer, input_shape) for (layer, input_shape, _, _) in SETTINGS]
 
 
 def autograd_hessian(loss, x):
@@ -101,18 +134,7 @@ def derivative_from_layer(layer):
     raise RuntimeError("No derivative available for {}".format(layer))
 
 
-def backpack_input_hessian_with_sqrt_hessian(layer, input, targets):
-    layer = extend(layer)
-    derivative = derivative_from_layer(layer)
-
-    # forward pass to initialize backpack buffers
-    _ = layer(input, targets)
-
-    sqrt_hessian = derivative.sqrt_hessian(layer, None, None)
-    individual_hessians = sample_hessians_from_sqrt(sqrt_hessian)
-
-    # embed
-    # TODO improve readability
+def embed(individual_hessians, input):
     hessian_shape = (*input.shape, *input.shape)
     hessian = torch.zeros(hessian_shape)
 
@@ -125,6 +147,31 @@ def backpack_input_hessian_with_sqrt_hessian(layer, input, targets):
             hessian[n, :, n, :] = individual_hessians[n]
         else:
             raise ValueError("Only 2D inputs are currently supported.")
+
+    return hessian
+
+
+def backpack_hessian_via_sqrt_hessian(layer, input, targets):
+    layer = extend(layer)
+    derivative = derivative_from_layer(layer)
+
+    # forward pass to initialize backpack buffers
+    _ = layer(input, targets)
+
+    sqrt_hessian = derivative.sqrt_hessian(layer, None, None)
+    individual_hessians = sample_hessians_from_sqrt(sqrt_hessian)
+
+    hessian = embed(individual_hessians, input)
+
+    return hessian
+
+
+    # embed
+    # TODO improve readability
+    hessian_shape = (*input.shape, *input.shape)
+    hessian = torch.zeros(hessian_shape)
+
+    hessian = embed(individual_hessians, input)
 
     return hessian
 
@@ -149,15 +196,22 @@ def generate_data_input_hessian(input_shape):
 
 
 @pytest.mark.parametrize(ARGS, SETTINGS, ids=IDS)
-def test_input_hessian(layer, input_shape, targets):
+def test_sqrt_hessian_via_input_hessian(layer, input_shape, targets, raises):
+    """Compare the Hessian to reconstruction from individual Hessian sqrt."""
     torch.manual_seed(0)
     input = generate_data_input_hessian(input_shape)
-    return _compare_input_hessian(layer, input, targets)
+    try:
+        return _compare_hessian_via_sqrt_hessian(layer, input, targets)
+    except Exception as e:
+        if isinstance(e, raises):
+            return
+        else:
+            raise e
 
 
-def _compare_input_hessian(layer, input, targets):
+def _compare_hessian_via_sqrt_hessian(layer, input, targets):
+    backpack_result = backpack_hessian_via_sqrt_hessian(layer, input, targets)
     autograd_result = autograd_input_hessian(layer, input, targets)
-    backpack_result = backpack_input_hessian_with_sqrt_hessian(layer, input, targets)
 
     check_sizes(autograd_result, backpack_result)
     check_values(autograd_result, backpack_result)
