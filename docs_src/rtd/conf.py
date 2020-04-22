@@ -17,13 +17,13 @@ import sys
 import mock
 
 MOCK_MODULES = [
-    "numpy",
-    "matplotlib",
-    "matplotlib.pyplot",
-    "torch",
-    "torch.nn",
-    "torch.nn.functional",
-    "opt_einsum",
+    #    "numpy",
+    #    "matplotlib",
+    #    "matplotlib.pyplot",
+    #    "torch",
+    #    "torch.nn",
+    #    "torch.nn.functional",
+    #    "opt_einsum",
 ]
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock()
@@ -48,6 +48,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.coverage",
     "sphinx.ext.autosectionlabel",
+    "sphinx_gallery.gen_gallery",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -58,6 +59,13 @@ templates_path = ["_templates"]
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = []
 
+# -- Sphinx Gallery config ---------------------------------------------------
+
+sphinx_gallery_conf = {
+    "examples_dirs": "../../examples/rtd_examples",  # path to your example scripts
+    "gallery_dirs": "auto_examples",  # path to where to save gallery generated output
+    "default_thumb_file": "assets/backpack_logo_torch.png",
+}
 
 # -- Options for HTML output -------------------------------------------------
 
