@@ -166,6 +166,20 @@ def backpack_hessian_via_sqrt_hessian(layer, input, targets):
     return hessian
 
 
+def backpack_hessian_via_sqrt_hessian_sampled(layer, input, targets):
+    MC_SAMPLES = 100000
+
+    layer = extend(layer)
+    derivative = derivative_from_layer(layer)
+
+    # forward pass to initialize backpack buffers
+    _ = layer(input, targets)
+
+    sqrt_hessian = derivative.sqrt_hessian_sampled(
+        layer, None, None, mc_samples=MC_SAMPLES
+    )
+    individual_hessians = sample_hessians_from_sqrt(sqrt_hessian)
+
     # embed
     # TODO improve readability
     hessian_shape = (*input.shape, *input.shape)
@@ -215,5 +229,30 @@ def _compare_hessian_via_sqrt_hessian(layer, input, targets):
 
     check_sizes(autograd_result, backpack_result)
     check_values(autograd_result, backpack_result)
+
+    return backpack_result
+
+
+@pytest.mark.parametrize(ARGS, SETTINGS, ids=IDS)
+def test_sqrt_hessian_via_input_hessian_sampled(layer, input_shape, targets, raises):
+    """Compare the Hessian to reconstruction from individual sampled Hessian sqrt."""
+    torch.manual_seed(0)
+    input = generate_data_input_hessian(input_shape)
+    try:
+        return _compare_input_hessian_sampled(layer, input, targets)
+    except Exception as e:
+        if isinstance(e, raises):
+            return
+        else:
+            raise e
+
+
+def _compare_input_hessian_sampled(layer, input, targets):
+    RTOL = 1e-2
+    backpack_result = backpack_hessian_via_sqrt_hessian_sampled(layer, input, targets)
+    autograd_result = autograd_input_hessian(layer, input, targets)
+
+    check_sizes(autograd_result, backpack_result)
+    check_values(autograd_result, backpack_result, rtol=RTOL)
 
     return backpack_result
