@@ -19,8 +19,7 @@ class MSELossDerivatives(BaseLossDerivatives):
         sqrt_H = diag_embed(diag, dim1=V_dim, dim2=C_dim)
 
         if module.reduction == "mean":
-            N = module.input0.shape[0]
-            sqrt_H /= sqrt(N)
+            sqrt_H /= sqrt(self._mean_factor(module))
 
         return sqrt_H
 
@@ -70,6 +69,10 @@ class MSELossDerivatives(BaseLossDerivatives):
             return Hmat
 
         return hessian_mat_prod
+
+    def _mean_factor(self, module):
+        """Factor for division with reduction 'mean'."""
+        return module.input0.numel()
 
     def check_input_dims(self, module):
         if not len(module.input0.shape) == 2:
