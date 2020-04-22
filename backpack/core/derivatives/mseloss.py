@@ -63,8 +63,7 @@ class MSELossDerivatives(BaseLossDerivatives):
             Hmat = 2 * mat
 
             if module.reduction == "mean":
-                N = module.input0.shape[0]
-                Hmat /= N
+                Hmat /= self._mean_factor(module)
 
             return Hmat
 
