@@ -1,6 +1,7 @@
 from torch.nn import (
     AvgPool2d,
     Conv2d,
+    CrossEntropyLoss,
     Dropout,
     Linear,
     MaxPool2d,
@@ -12,6 +13,7 @@ from torch.nn import (
 
 from .avgpool2d import AvgPool2DDerivatives
 from .conv2d import Conv2DDerivatives
+from .crossentropyloss import CrossEntropyLossDerivatives
 from .dropout import DropoutDerivatives
 from .linear import LinearDerivatives
 from .maxpool2d import MaxPool2DDerivatives
@@ -30,4 +32,5 @@ derivatives_for = {
     ReLU: ReLUDerivatives,
     Tanh: TanhDerivatives,
     Sigmoid: SigmoidDerivatives,
+    CrossEntropyLoss: CrossEntropyLossDerivatives,
 }
