@@ -1,7 +1,5 @@
 import warnings
 
-import torch
-
 from backpack.core.derivatives import shape_check
 
 
