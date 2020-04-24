@@ -8,10 +8,10 @@ from torch.nn.utils import parameters_to_vector
 
 from backpack.hessianfree.ggnvp import ggn_vector_product
 from backpack.utils.convert_parameters import vector_to_parameter_list
-from backpack.utils.examples import load_mnist_one_batch
+from backpack.utils.examples import load_one_batch_mnist
 
 B = 4
-X, y = load_mnist_one_batch(B)
+X, y = load_one_batch_mnist(B)
 
 print("# GGN-vector product and gradients with PyTorch | B =", B)
 
