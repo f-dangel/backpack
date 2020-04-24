@@ -21,7 +21,7 @@ import torch
 
 from backpack import backpack, extend
 from backpack.extensions import DiagGGNMC
-from backpack.utils.examples import download_mnist
+from backpack.utils.examples import load_mnist_dataset
 
 # Hyperparameters
 BATCH_SIZE = 64
@@ -38,7 +38,7 @@ We're going to load the MNIST dataset,
 and fit a 3-layer MLP with ReLU activations.
 """
 
-mnist_dataset = download_mnist()
+mnist_dataset = load_mnist_dataset()
 mnist_loader = torch.utils.data.dataloader.DataLoader(
     mnist_dataset, batch_size=BATCH_SIZE, shuffle=True
 )
