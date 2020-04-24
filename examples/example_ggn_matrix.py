@@ -8,10 +8,10 @@ from torch.nn.utils.convert_parameters import parameters_to_vector
 
 from backpack.hessianfree.ggnvp import ggn_vector_product
 from backpack.utils.convert_parameters import vector_to_parameter_list
-from backpack.utils.examples import load_mnist_data
+from backpack.utils.examples import load_mnist_one_batch
 
 B = 4
-X, y = load_mnist_data(B)
+X, y = load_mnist_one_batch(B)
 
 print("# GGN matrix with automatic differentiation | B =", B)
 

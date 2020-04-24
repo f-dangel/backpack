@@ -20,10 +20,10 @@ from torch.nn import (
 )
 
 from backpack import backpack, extend, extensions
-from backpack.utils.examples import load_mnist_data
+from backpack.utils.examples import load_mnist_one_batch
 
 B = 4
-X, y = load_mnist_data(B)
+X, y = load_mnist_one_batch(B)
 
 print("# Gradient with PyTorch, other quantities with BackPACK | B =", B)
 
