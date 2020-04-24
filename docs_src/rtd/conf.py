@@ -50,6 +50,7 @@ sphinx_gallery_conf = {
     "examples_dirs": "../../examples/rtd_examples",  # path to your example scripts
     "gallery_dirs": "examples",  # path to where to save gallery generated output
     "default_thumb_file": "assets/backpack_logo_torch.png",
+    "filename_pattern": "example",
 }
 
 # -- Options for HTML output -------------------------------------------------
