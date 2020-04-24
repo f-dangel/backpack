@@ -3,10 +3,10 @@
 from torch.nn import CrossEntropyLoss, Flatten, Linear, Sequential
 
 from backpack import backpack, extend, extensions
-from backpack.utils.examples import load_mnist_one_batch
+from backpack.utils.examples import load_one_batch_mnist
 
 B = 4
-X, y = load_mnist_one_batch(B)
+X, y = load_one_batch_mnist(B)
 
 print("# Gradient with PyTorch, individual gradients with BackPACK | B =", B)
 
