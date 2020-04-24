@@ -23,76 +23,9 @@ Goal:
 
 import torch
 
-"""Example 1: one sample, C_in = 1, C_out = 1"""
-N = 1
-C_in = 1
-sample = torch.Tensor([[[[1, 2, 3], [4, 5, 6], [7, 8, 9]]]]).float()
-print(sample.shape)
-
-C_out = 1
-K_H = 2
-K_W = 2
-kernel = torch.Tensor([[[[1, -1], [2, 3]]]]).float()
-# print(kernel.shape)
-
-layer = torch.nn.Conv2d(1, 1, kernel_size=2, bias=False)
-layer.weight.data = kernel
-# print(layer)
-
-
-output = layer(sample)
-# print(output.data)
-
-unfolded_sample = torch.nn.Unfold(kernel_size=layer.kernel_size,)(sample)
-print(unfolded_sample.shape)
-
-# Let's try to do that unfold with convolutions
-
-groups = C_in
-unfold_kernel = torch.zeros(K_H * K_W, 1, K_H, K_W)
-
-for i in range(K_H * K_W):
-    extraction = torch.zeros(K_H * K_W)
-    extraction[i] = 1.0
-    extraction = extraction.reshape(1, K_H, K_W)
-
-    unfold_kernel[i] = extraction
-
-# print(unfold_kernel)
-# print(unfold_kernel.shape)
-
-unfold_module = layer = torch.nn.Conv2d(
-    C_in, K_H * K_W, kernel_size=layer.kernel_size, bias=False, groups=C_in
-)
-
-# print(unfold_module.weight.shape)
-unfold_module.weight.data = unfold_kernel
-
-unfold_output = unfold_module(sample)
-# print(unfold_output)
-# print(unfold_output.shape)
-# print(unfolded_sample)
-# print(unfolded_sample.shape)
-
-unfold_output = unfold_output.reshape(N, -1, K_H * K_W)
-
-print("Unfold via torch.nn.Conv2d (idea)")
-print(unfold_output)
-print(unfold_output.shape)
-print("Unfold via torch.nn.Unfold:")
-print(unfolded_sample)
-print(unfolded_sample.shape)
-
-print("Match: {}".format(torch.allclose(unfold_output, unfolded_sample)))
-
-# Let's do this with a function
-
 
 def unfold(input, module):
     """Return unfolded input."""
-    if len(input.shape) != 4:
-        raise NotImplementedError("Only 4d-input supported, got {}".format(input.shape))
-
     return torch.nn.Unfold(
         kernel_size=module.kernel_size,
         dilation=module.dilation,
@@ -103,9 +36,6 @@ def unfold(input, module):
 
 def unfold_by_conv(input, module):
     """Return the unfolded input using convolution"""
-    assert module.groups == 1
-    assert len(input.shape) == 4
-
     N, C_in, H_in, W_in = input.shape
     K_H, K_W = module.kernel_size
 
@@ -117,51 +47,50 @@ def unfold_by_conv(input, module):
             extraction[i] = 1.0
             weight[i] = extraction.reshape(1, K_H, K_W)
 
-        return weight
-
-    # print(weight)
-    # print(weight.shape)
+        return weight.repeat(C_in, 1, 1, 1)
 
     # might change for groups !=1
     groups = C_in
 
     unfold_module = torch.nn.Conv2d(
         in_channels=C_in,
-        out_channels=K_H * K_W,
-        kernel_size=layer.kernel_size,
-        stride=layer.stride,
-        dilation=layer.dilation,
+        out_channels=C_in * K_H * K_W,
+        kernel_size=module.kernel_size,
+        stride=module.stride,
+        dilation=module.dilation,
         bias=False,
         groups=groups,
     )
 
     unfold_weight = make_weight()
-    assert unfold_weight.shape == unfold_module.weight.shape
+    if unfold_weight.shape != unfold_module.weight.shape:
+        raise ValueError(
+            "weight should have shape {}, got {}".format(
+                unfold_module.weight.shape, unfold_weight.shape
+            )
+        )
 
-    # print(unfold_module.weight.shape)
     unfold_module.weight.data = unfold_weight
 
-    unfold_output = unfold_module(sample)
-    # print(unfold_output)
-    # print(unfold_output.shape)
-    # print(unfolded_sample)
-    # print(unfolded_sample.shape)
-
+    unfold_output = unfold_module(input)
     unfold_output = unfold_output.reshape(N, -1, K_H * K_W)
 
     return unfold_output
 
 
-# check that
+# check
 SETTINGS = [
     [torch.nn.Conv2d(1, 1, kernel_size=2, bias=False), (1, 1, 3, 3)],
+    [torch.nn.Conv2d(1, 2, kernel_size=2, bias=False), (1, 1, 3, 3)],
+    [torch.nn.Conv2d(2, 1, kernel_size=2, bias=False), (1, 2, 3, 3)],
+    [torch.nn.Conv2d(2, 2, kernel_size=2, bias=False), (1, 2, 3, 3)],
     [torch.nn.Conv2d(2, 3, kernel_size=2), (3, 2, 11, 13)],
-    # [torch.nn.Conv2d(2, 3, kernel_size=2, padding=1), (3, 2, 11, 13)],
-    # [torch.nn.Conv2d(2, 3, kernel_size=2, padding=1, stride=2), (3, 2, 11, 13)],
-    # [
-    #     torch.nn.Conv2d(2, 3, kernel_size=2, padding=1, stride=2, dilation=2),
-    #     (3, 2, 11, 13),
-    # ],
+    [torch.nn.Conv2d(2, 3, kernel_size=2, padding=1), (3, 2, 11, 13)],
+    [torch.nn.Conv2d(2, 3, kernel_size=2, padding=1, stride=2), (3, 2, 11, 13)],
+    [
+        torch.nn.Conv2d(2, 3, kernel_size=2, padding=1, stride=2, dilation=2),
+        (3, 2, 11, 13),
+    ],
 ]
 
 for module, in_shape in SETTINGS:
