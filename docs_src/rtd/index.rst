@@ -7,3 +7,4 @@ BackPACK
    main-api
    supported-layers
    extensions
+   examples/index
