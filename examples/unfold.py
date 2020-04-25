@@ -100,8 +100,93 @@ for module, in_shape in SETTINGS:
     result_unfold_by_conv = unfold_by_conv(input, module)
 
     if not torch.allclose(result_unfold, result_unfold):
-        print("[FAILED] {}".format(module))
-        print(result_unfold)
-        print(result_unfold_by_conv)
+        print("[FAILED-unfold] {}".format(module))
+        # print(result_unfold)
+        # print(result_unfold_by_conv)
+        raise Exception
     else:
+        print("[PASSED] {}".format(module))
+
+
+def convolution_with_unfold(input, module):
+    """Perform convlution via matrix multiplication."""
+    N, C_in, H_in, W_in = input.shape
+    _, _, H_out, W_out = get_output_shape(input, module)
+    C_out, _, K_H, K_W = module.weight.shape
+
+    G = module.groups
+
+    if module.groups == 1:
+        weight_matrix = module.weight.data.reshape(C_out, C_in // G * K_H * K_W)
+        unfolded_input = unfold_by_conv(input, module).reshape(
+            N, C_in // G * K_H * K_W, H_out, W_out
+        )
+        result = torch.einsum("op,nphw->nohw", weight_matrix, unfolded_input)
+        return result
+
+    else:
+        weight_matrix = module.weight.data.reshape(C_out, C_in // G, K_H, K_W)
+        weight_matrix = module.weight.data.reshape(G, C_out // G, C_in // G, K_H, K_W)
+        unfolded_input = unfold_by_conv(input, module).reshape(
+            N, G, C_in // G, K_H, K_W, H_out, W_out
+        )
+        result = torch.einsum("gocxy,ngcxyhw->ngohw", weight_matrix, unfolded_input)
+
+        result = result.reshape(N, C_out, H_out, W_out)
+        return result
+
+
+def get_output_shape(input, module):
+    return module(input).shape
+
+
+SETTINGS += [
+    [
+        torch.nn.Conv2d(
+            2, 6, kernel_size=2, padding=1, stride=2, dilation=2, bias=False, groups=2
+        ),
+        (3, 2, 11, 13),
+    ],
+    [
+        torch.nn.Conv2d(
+            3, 6, kernel_size=2, padding=1, stride=2, dilation=2, bias=False, groups=3
+        ),
+        (5, 3, 11, 13),
+    ],
+    [
+        torch.nn.Conv2d(
+            16,
+            33,
+            kernel_size=(3, 5),
+            stride=(2, 1),
+            padding=(4, 2),
+            dilation=(3, 1),
+            bias=False,
+        ),
+        (20, 16, 50, 100),
+    ],
+]
+
+print("Conv via unfold check")
+for module, in_shape in SETTINGS:
+    input = torch.rand(in_shape)
+
+    result_conv = module(input)
+    result_conv_by_unfold = convolution_with_unfold(input, module)
+
+    # print(result_conv.shape)
+    # print(result_conv_by_unfold.shape)
+
+    # print(result_conv[0, 0, :, :])
+    # print(result_conv_by_unfold[0, 0, 0, :])
+    if not torch.allclose(result_conv, result_conv_by_unfold, rtol=1e-5, atol=1e-6):
+        # print(result_conv)
+        # print(result_conv_by_unfold)
+        print("[FAILED-conv] {}".format(module))
+        raise Exception
+    else:
+        # print(result_conv)
+        # print(result_conv_by_unfold)
+        # print(result_conv.shape)
+        # print(result_conv_by_unfold.shape)
         print("[PASSED] {}".format(module))
