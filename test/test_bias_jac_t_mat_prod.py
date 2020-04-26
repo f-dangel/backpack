@@ -5,7 +5,7 @@ Notes:
 """
 import pytest
 import torch
-from torch.nn import Conv2d, Linear
+from torch.nn import Conv2d, ConvTranspose2d, Linear
 
 from backpack import extend
 from backpack.hessianfree.lop import transposed_jacobian_vector_product
@@ -33,6 +33,14 @@ SETTINGS = [
         (3, 2, 11, 13),
         True,
     ],
+    [ConvTranspose2d(2, 3, kernel_size=2), (3, 2, 11, 13), True],
+    [ConvTranspose2d(2, 3, kernel_size=2, padding=1), (3, 2, 11, 13), True],
+    [ConvTranspose2d(2, 3, kernel_size=2, padding=1, stride=2), (3, 2, 11, 13), True],
+    [
+        ConvTranspose2d(2, 3, kernel_size=2, padding=1, stride=2, dilation=2),
+        (3, 2, 11, 13),
+        True,
+    ],
     # sum_batch = False
     [Linear(5, 1), (3, 5), False],
     [Linear(20, 10), (5, 20), False],
@@ -41,6 +49,14 @@ SETTINGS = [
     [Conv2d(2, 3, kernel_size=2, padding=1, stride=2), (3, 2, 11, 13), False],
     [
         Conv2d(2, 3, kernel_size=2, padding=1, stride=2, dilation=2),
+        (3, 2, 11, 13),
+        False,
+    ],
+    [ConvTranspose2d(2, 3, kernel_size=2), (3, 2, 11, 13), False],
+    [ConvTranspose2d(2, 3, kernel_size=2, padding=1), (3, 2, 11, 13), False],
+    [ConvTranspose2d(2, 3, kernel_size=2, padding=1, stride=2), (3, 2, 11, 13), False],
+    [
+        ConvTranspose2d(2, 3, kernel_size=2, padding=1, stride=2, dilation=2),
         (3, 2, 11, 13),
         False,
     ],

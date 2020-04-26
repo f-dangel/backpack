@@ -14,6 +14,7 @@ from .automated_test import check_sizes, check_values
 from .test_bias_jac_t_mat_prod import ARGS, SETTINGS, make_id
 from .test_ea_jac_t_mat_jac_prod import derivative_from_layer, get_output_shape
 
+SETTINGS = [s for s in SETTINGS if not isinstance(s[0], torch.nn.ConvTranspose2d)]
 IDS = [
     make_id(layer, input_shape, sum_batch)
     for (layer, input_shape, sum_batch) in SETTINGS
