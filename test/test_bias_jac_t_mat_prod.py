@@ -34,7 +34,7 @@ SETTINGS = [
         True,
     ],
     # sum_batch = False
-    # [Linear(5, 1), (3, 5), False],
+    [Linear(5, 1), (3, 5), False],
     [Linear(20, 10), (5, 20), False],
     [Conv2d(2, 3, kernel_size=2), (3, 2, 11, 13), False],
     [Conv2d(2, 3, kernel_size=2, padding=1), (3, 2, 11, 13), False],
