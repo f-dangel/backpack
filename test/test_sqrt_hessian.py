@@ -1,21 +1,25 @@
-""" Test implementation of `sqrt_hessian` for loss derivatives. """
+"""Test implementation of `sqrt_hessian` for loss derivatives."""
+
 
 import pytest
 import torch
-from torch.nn import CrossEntropyLoss
+from torch.nn import CrossEntropyLoss, MSELoss
 
 from backpack import extend
 from backpack.core.derivatives import derivatives_for
 from backpack.hessianfree.hvp import hessian_vector_product
-from backpack import backpack as bp
-import backpack.extensions as bpext
 
 from .automated_test import check_sizes, check_values
 
 
-def classification_targets(N, num_classes):
+def classification_targets(shape, num_classes):
     """Create random targets for classes 0, ..., `num_classes - 1`."""
-    return torch.randint(size=(N,), low=0, high=num_classes)
+    return torch.randint(size=shape, low=0, high=num_classes)
+
+
+def regression_targets(shape):
+    """Create random targets for regression."""
+    return torch.rand(size=shape)
 
 
 def make_id(layer, input_shape):
@@ -33,60 +37,79 @@ SETTINGS = [
         # input_shape
         (2, 3),
         # targets
-        classification_targets(N=2, num_classes=3),
+        classification_targets(shape=(2,), num_classes=3),
         # tuple of exceptions that should be raised
         (),
     ],
     [
         CrossEntropyLoss(reduction="mean"),
         (8, 2),
-        classification_targets(N=8, num_classes=2),
+        classification_targets(shape=(8,), num_classes=2),
         (),
     ],
     # reduction sum
     [
         CrossEntropyLoss(reduction="sum"),
         (2, 3),
-        classification_targets(N=2, num_classes=3),
+        classification_targets(shape=(2,), num_classes=3),
         (),
     ],
     [
         CrossEntropyLoss(reduction="sum"),
         (8, 2),
-        classification_targets(N=8, num_classes=2),
+        classification_targets(shape=(8,), num_classes=2),
         (),
     ],
     # non-scalar outputs are not supported
     [
         CrossEntropyLoss(reduction="none"),
         (8, 2),
-        classification_targets(N=8, num_classes=2),
+        classification_targets(shape=(8,), num_classes=2),
         (ValueError,),
     ],
     # no reduction for a single number as input should be fine
     [
         CrossEntropyLoss(reduction="none"),
         (1, 1),
-        classification_targets(N=1, num_classes=1),
+        classification_targets(shape=(1,), num_classes=1),
         (),
     ],
-    # [MSELoss(reduction="mean"), (1, 5), None],
-    # [MSELoss(reduction="sum"), (2, 6), None],
+    # reduction mean
+    [MSELoss(reduction="mean"), (5, 1), regression_targets(shape=(5, 1)), ()],
+    [
+        MSELoss(reduction="mean"),
+        (5, 2),
+        regression_targets(shape=(5, 2)),
+        (NotImplementedError,),
+    ],
+    # reduction sum
+    [MSELoss(reduction="sum"), (5, 1), regression_targets(shape=(5, 1)), ()],
+    [
+        MSELoss(reduction="sum"),
+        (5, 2),
+        regression_targets(shape=(5, 2)),
+        (NotImplementedError,),
+    ],
+    # non-scalar outputs are not supported
+    [
+        MSELoss(reduction="none"),
+        (5, 1),
+        regression_targets(shape=(5, 1)),
+        (ValueError,),
+    ],
 ]
 IDS = [make_id(layer, input_shape) for (layer, input_shape, _, _) in SETTINGS]
 
 
 def autograd_hessian(loss, x):
     """Return the Hessian matrix of `loss` w.r.t. `x`.
-
+    
     Arguments:
         loss (torch.Tensor): A scalar-valued tensor.
         x (torch.Tensor): Tensor used in the computation graph of `loss`.
-
     Shapes:
         loss: `[1,]`
         x: `[A, B, C, ...]`
-
     Returns:
         torch.Tensor: Hessian tensor of `loss` w.r.t. `x`. The Hessian has shape
             `[A, B, C, ..., A, B, C, ...]`.
@@ -162,30 +185,6 @@ def backpack_hessian_via_sqrt_hessian(layer, input, targets):
     return hessian
 
 
-def backpack_hessian_via_sqrt_hessian_sampled(layer, input, targets):
-    MC_SAMPLES = 100000
-
-    layer = extend(layer)
-    derivative = derivative_from_layer(layer)
-
-    # forward pass to initialize backpack buffers
-    _ = layer(input, targets)
-
-    sqrt_hessian = derivative.sqrt_hessian_sampled(
-        layer, None, None, mc_samples=MC_SAMPLES
-    )
-    individual_hessians = sample_hessians_from_sqrt(sqrt_hessian)
-
-    # embed
-    # TODO improve readability
-    hessian_shape = (*input.shape, *input.shape)
-    hessian = torch.zeros(hessian_shape)
-
-    hessian = embed(individual_hessians, input)
-
-    return hessian
-
-
 def sample_hessians_from_sqrt(sqrt):
     """Convert individual matrix square root into individual full matrix. """
     equation = None
@@ -201,7 +200,8 @@ def sample_hessians_from_sqrt(sqrt):
 
 
 def generate_data_input_hessian(input_shape):
-    return torch.rand(input_shape)
+    input = torch.rand(input_shape)
+    return input
 
 
 @pytest.mark.parametrize(ARGS, SETTINGS, ids=IDS)
@@ -226,74 +226,3 @@ def _compare_hessian_via_sqrt_hessian(layer, input, targets):
     check_values(autograd_result, backpack_result)
 
     return backpack_result
-
-
-@pytest.mark.parametrize(ARGS, SETTINGS, ids=IDS)
-def test_sqrt_hessian_via_input_hessian_sampled(layer, input_shape, targets, raises):
-    """Compare the Hessian to reconstruction from individual sampled Hessian sqrt."""
-    torch.manual_seed(0)
-    input = generate_data_input_hessian(input_shape)
-    try:
-        return _compare_input_hessian_sampled(layer, input, targets)
-    except Exception as e:
-        if isinstance(e, raises):
-            return
-        else:
-            raise e
-
-
-def _compare_input_hessian_sampled(layer, input, targets):
-    RTOL = 1e-2
-    backpack_result = backpack_hessian_via_sqrt_hessian_sampled(layer, input, targets)
-    autograd_result = autograd_input_hessian(layer, input, targets)
-
-    check_sizes(autograd_result, backpack_result)
-    check_values(autograd_result, backpack_result, rtol=RTOL)
-
-    return backpack_result
-
-
-# %%
-# Test if backpack correctly recognizes when the loss if not the output of
-# a torch.nn module, and thus the second-order backpropagation would be wrong.
-
-ext_2nd_order = [
-    bpext.KFAC,
-    bpext.KFRA,
-    bpext.KFLR,
-    bpext.DiagGGNExact,
-    bpext.DiagGGNMC,
-]
-ext_2nd_order_name = [
-    "KFAC",
-    "KFRA",
-    "KFLR",
-    "DiagGGNExact",
-    "DiagGGNExactMC",
-]
-
-
-def sqrt_hessian_modified_dummy_loss_function():
-    N = 5
-    y_pred = torch.rand((N, 2))
-    y_pred.requires_grad = True
-    y = classification_targets(N, 2)
-    loss_module = extend(CrossEntropyLoss())
-    return loss_module(y_pred, y)
-
-
-@pytest.mark.parametrize("extension", ext_2nd_order, ids=ext_2nd_order_name)
-def test_sqrt_hessian_modified_loss_should_pass(extension):
-    loss = sqrt_hessian_modified_dummy_loss_function()
-
-    with bp(extension()):
-        loss.backward()
-
-
-@pytest.mark.parametrize("extension", ext_2nd_order, ids=ext_2nd_order_name)
-def test_sqrt_hessian_modified_loss_should_fail(extension):
-    loss = sqrt_hessian_modified_dummy_loss_function() * 2
-
-    with pytest.warns(UserWarning):
-        with bp(extension()):
-            loss.backward()
