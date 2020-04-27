@@ -86,12 +86,10 @@ class KFAC(HBP):
       of all row dimensions (or column dimensions) yields the dimension of the
       layer parameter.
 
-    .. note::
-
-        The literature uses column-stacking as vectorization convention.
-        This is in contrast to the default row-major storing scheme of tensors
-        in :code:`torch`. Therefore, the order of factors differs from the
-        presentation in the literature.
+    Note:
+        The literature uses column-stacking as vectorization convention,
+        but ``torch`` defaults to a row-major storing scheme of tensors.
+        The order of factors might differs from the presentation in the literature.
 
     Implements the procedures described by
 

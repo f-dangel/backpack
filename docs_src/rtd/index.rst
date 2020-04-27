@@ -1,10 +1,31 @@
 BackPACK
 ====================================
 
-.. toctree::
-   :maxdepth: 2
+BackPACK is a library built on top of PyTorch
+to extract more information from a backward pass.
 
-   main-api
-   supported-layers
-   extensions
-   examples/index
+.. code:: bash
+
+	pip install backpack-for-pytorch
+
+For a quick overview of the features, check `backpack.pt <http://www.backpack.pt>`_.
+The code lives on `Github <www.github.com/f-dangel/backpack>`_.
+
+
+.. toctree::
+	:maxdepth: 2
+	:caption: Getting started
+
+	main-api
+	examples/example_all_in_one
+
+.. toctree::
+	:maxdepth: 2
+	:caption: Backpack
+
+	supported-layers
+	extensions
+	good-to-know
+	use_cases/index
+
+

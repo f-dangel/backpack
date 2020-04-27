@@ -28,7 +28,7 @@ First-order extensions that extract information might work outside of this frame
 For first-order extensions
 --------------------------------------
 
-You can use any layers, as long as they do not have parameters.
+First-order extensions support any module as long as they do not have parameters.
 BackPACK can extract more information about the gradient w.r.t. the parameters of those layers:
 
 * `Conv2d <https://pytorch.org/docs/stable/nn.html#conv2d>`_
@@ -47,6 +47,11 @@ For second-order extensions
 BackPACK needs to know how to compute an additional backward pass.
 In addition to the parametrized layers above, this implemented for the following layers:
 
+**Parametrized layers**
+
+* `Conv2d <https://pytorch.org/docs/stable/nn.html#conv2d>`_
+* `Linear <https://pytorch.org/docs/stable/nn.html#linear>`_
+
 **Loss functions**
 
 * `MSELoss <https://pytorch.org/docs/stable/nn.html#mseloss>`_
@@ -60,10 +65,3 @@ In addition to the parametrized layers above, this implemented for the following
 * `ReLU <https://pytorch.org/docs/stable/nn.html#relu>`_
 * `Sigmoid <https://pytorch.org/docs/stable/nn.html#sigmoid>`_
 * `Tanh <https://pytorch.org/docs/stable/nn.html#tanh>`_
-
-
-Custom layers
---------------------------------------
-
-:code:`torch.nn.functional.flatten` can not be used in this setup because it is a function, not a module.
-Use :code:`backpack.core.layers.Flatten` instead.
