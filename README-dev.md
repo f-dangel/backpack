@@ -48,14 +48,14 @@ make install-dev
 ## Documentation
 
 ### Build
-- Go to `docs/rtd`, and `make html`
+- Use `make build-docs`
 - To use the RTD theme, uncomment the line `html_theme = "sphinx_rtd_theme"` in `docs/rtd/conf.py` (this line needs to be uncommented for automatic deployment to RTD)
 
 ### View
-- Go to `docs/rtd_output/html`, open `index.html`
+- Go to `docs_src/rtd_output/html`, open `index.html`
 
 ### Edit
-- Content in `docs/rtd/*.rst*`
+- Content in `docs_src/rtd/*.rst`
 - Docstrings in code
 - Examples in `examples/rtd_examples` (compiled automatically)
 
