@@ -76,20 +76,10 @@ SETTINGS = [
     ],
     # reduction mean
     [MSELoss(reduction="mean"), (5, 1), regression_targets(shape=(5, 1)), ()],
-    [
-        MSELoss(reduction="mean"),
-        (5, 2),
-        regression_targets(shape=(5, 2)),
-        (NotImplementedError,),
-    ],
+    [MSELoss(reduction="mean"), (5, 2), regression_targets(shape=(5, 2)), (),],
     # reduction sum
     [MSELoss(reduction="sum"), (5, 1), regression_targets(shape=(5, 1)), ()],
-    [
-        MSELoss(reduction="sum"),
-        (5, 2),
-        regression_targets(shape=(5, 2)),
-        (NotImplementedError,),
-    ],
+    [MSELoss(reduction="sum"), (5, 2), regression_targets(shape=(5, 2)), (),],
     # non-scalar outputs are not supported
     [
         MSELoss(reduction="none"),
@@ -103,7 +93,7 @@ IDS = [make_id(layer, input_shape) for (layer, input_shape, _, _) in SETTINGS]
 
 def autograd_hessian(loss, x):
     """Return the Hessian matrix of `loss` w.r.t. `x`.
-    
+
     Arguments:
         loss (torch.Tensor): A scalar-valued tensor.
         x (torch.Tensor): Tensor used in the computation graph of `loss`.
@@ -210,11 +200,9 @@ def test_sqrt_hessian_via_input_hessian(layer, input_shape, targets, raises):
     torch.manual_seed(0)
     input = generate_data_input_hessian(input_shape)
     try:
-        return _compare_hessian_via_sqrt_hessian(layer, input, targets)
+        _compare_hessian_via_sqrt_hessian(layer, input, targets)
     except Exception as e:
-        if isinstance(e, raises):
-            return
-        else:
+        if not isinstance(e, raises):
             raise e
 
 

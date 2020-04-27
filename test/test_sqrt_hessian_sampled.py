@@ -148,11 +148,11 @@ def test_sqrt_hessian_via_input_hessian_sampled(layer, input_shape, targets, rai
 
 
 def _compare_input_hessian_sampled(layer, input, targets):
-    RTOL = 1e-2
+    RTOL, ATOL = 1e-2, 1e-2
     backpack_result = backpack_hessian_via_sqrt_hessian_sampled(layer, input, targets)
     autograd_result = autograd_input_hessian(layer, input, targets)
 
     check_sizes(autograd_result, backpack_result)
-    check_values(autograd_result, backpack_result, rtol=RTOL)
+    check_values(autograd_result, backpack_result, rtol=RTOL, atol=ATOL)
 
     return backpack_result

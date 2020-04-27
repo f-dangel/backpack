@@ -1,83 +1,109 @@
-from math import sqrt
-from warnings import warn
+"""Derivatives of the MSE Loss."""
 
-from torch import diag, diag_embed, ones, ones_like
+from math import sqrt
+
+from torch import eye, einsum, normal
 from torch.nn import MSELoss
 
 from backpack.core.derivatives.basederivatives import BaseLossDerivatives
 
 
 class MSELossDerivatives(BaseLossDerivatives):
+    """Derivatives of the MSE Loss.
+
+    We only support 2D tensors.
+
+    For `X : [n, d]` and `Y : [n, d]`, if `reduce=sum`, the MSE computes
+    `∑ᵢ₌₁ⁿ ‖X[i,∶] − Y[i,∶]‖²`. If `reduce=mean`, the result is divided by `nd`.
+
+
+    """
+
     def get_module(self):
         return MSELoss
 
     def _sqrt_hessian(self, module, g_inp, g_out):
+        """Square-root of the hessian of the MSE for each minibatch elements.
+
+        Returns the Hessian in format `Hs = [D, N, D]`, where
+        `Hs[:, n, :]` is the Hessian for the `n`th element.
+
+        Attributes:
+            module: (torch.nn.MSELoss) module
+            g_inp: Gradient of loss w.r.t. input
+            g_out: Gradient of loss w.r.t. output
+
+        Returns:
+             Batch of hessians, in format [D, N, D]
+        """
         self.check_input_dims(module)
 
-        V_dim, C_dim = 0, 2
-        diag = sqrt(2) * ones_like(module.input0)
-        sqrt_H = diag_embed(diag, dim1=V_dim, dim2=C_dim)
-        N = module.input0_shape[0]
+        N, D = module.input0.shape
+        sqrt_H = sqrt(2) * eye(D, device=module.input0.device)  # [D, D]
+        sqrt_H = sqrt_H.unsqueeze(0).repeat(N, 1, 1)  # [N, D, D]
+        sqrt_H = einsum("nab->anb", sqrt_H)  # [D, N, D]
 
         if module.reduction == "mean":
-            sqrt_H /= sqrt(N)
+            sqrt_H /= sqrt(module.input0.numel())
 
         return sqrt_H
 
-    def _sqrt_hessian_sampled(self, module, g_inp, g_out, mc_samples=None):
+    def _sqrt_hessian_sampled(self, module, g_inp, g_out, mc_samples=1):
+        """A Monte-Carlo estimate of the square-root of the Hessian.
+
+        Attributes:
+            module: (torch.nn.MSELoss) module.
+            g_inp: Gradient of loss w.r.t. input.
+            g_out: Gradient of loss w.r.t. output.
+            mc_samples: (int, optional) Number of MC samples to use. Default: 1.
+
+        Returns:
+            tensor:
         """
-        Note:
-        -----
-        The parameter `mc_samples` is ignored.
-        The method always returns the full square root.
-
-        The computational cost between the sampled and full version is the same,
-        so the method always return the more accurate version.
-
-        The cost is the same because the hessian of the loss w.r.t. its inputs
-        for a single sample is one-dimensional.
-        """
-        warn(
-            "[MC Sampling Hessian of MSE loss] "
-            + "Returning the symmetric factorization of the full Hessian "
-            + "(same computation cost)",
-            UserWarning,
-        )
-        return self.sqrt_hessian(module, g_inp, g_out)
-
-    def _sum_hessian(self, module, g_inp, g_out):
-        self.check_input_dims(module)
-
-        N = module.input0_shape[0]
-        num_features = module.input0.numel() // N
-        sum_H = 2 * N * diag(ones(num_features, device=module.input0.device))
+        N, D = module.input0.shape
+        samples = sqrt(2) * normal(0, 1, size=[mc_samples, N, D]) / sqrt(mc_samples)
 
         if module.reduction == "mean":
-            sum_H /= N
+            samples /= sqrt(module.input0.numel())
 
-        return sum_H
+        return samples
+
+    def _sum_hessian(self, module, g_inp, g_out):
+        """The Hessian, summed across the batch dimension.
+
+        Args:
+            module: (torch.nn.MSELoss) module
+            g_inp: Gradient of loss w.r.t. input
+            g_out: Gradient of loss w.r.t. output
+
+        Returns: a `[D, D]` tensor of the Hessian, summed across batch
+
+        """
+        self.check_input_dims(module)
+
+        N, D = module.input0_shape
+        H = 2 * eye(D, device=module.input0.device)
+
+        if module.reduction == "sum":
+            H *= N
+
+        return H
 
     def _make_hessian_mat_prod(self, module, g_inp, g_out):
         """Multiplication of the input Hessian with a matrix."""
 
         def hessian_mat_prod(mat):
             Hmat = 2 * mat
-
             if module.reduction == "mean":
-                N = module.input0.shape[0]
-                Hmat /= N
-
+                Hmat /= module.input0.numel()
             return Hmat
 
         return hessian_mat_prod
 
     def check_input_dims(self, module):
+        """Raises an exception if the shapes of the input are not supported."""
         if not len(module.input0.shape) == 2:
             raise ValueError("Only 2D inputs are currently supported for MSELoss.")
-        if not module.input0.shape[1] == 1:
-            raise NotImplementedError(
-                "MSE between batches of vectors is not implemented yet."
-            )
 
     def hessian_is_psd(self):
         return True
