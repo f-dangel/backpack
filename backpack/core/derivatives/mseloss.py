@@ -17,9 +17,9 @@ class MSELossDerivatives(BaseLossDerivatives):
         V_dim, C_dim = 0, 2
         diag = sqrt(2) * ones_like(module.input0)
         sqrt_H = diag_embed(diag, dim1=V_dim, dim2=C_dim)
+        N = module.input0_shape[0]
 
         if module.reduction == "mean":
-            N = module.input0.shape[0]
             sqrt_H /= sqrt(N)
 
         return sqrt_H
@@ -74,6 +74,10 @@ class MSELossDerivatives(BaseLossDerivatives):
     def check_input_dims(self, module):
         if not len(module.input0.shape) == 2:
             raise ValueError("Only 2D inputs are currently supported for MSELoss.")
+        if not module.input0.shape[1] == 1:
+            raise NotImplementedError(
+                "MSE between batches of vectors is not implemented yet."
+            )
 
     def hessian_is_psd(self):
         return True
