@@ -1,21 +1,22 @@
-"""
-BackPACK
-"""
+"""BackPACK."""
+import inspect
+
 import torch
+from backpack.extensions.backprop_extension import BackpropExtension
 
 from . import extensions
 from .context import CTX
 
 
 class backpack:
-    """
+    """Activates Backpack Extensions.
+
     Activates the BackPACK extensions passed as arguments for the
     :code:`backward` calls in the current :code:`with` block.
     """
 
     def __init__(self, *args, debug=False):
-        """
-        Activate the Backpack extensions.
+        """Activate the Backpack extensions.
 
         Example usage:
         ```
@@ -38,12 +39,26 @@ class backpack:
             exiting the `with` clause. Use them within the `with` clause or
             assign them to another variable.
 
-        Parameters:
+        Attributes:
             args: [BackpropExtension]
                 The extensions to activate for the backward pass.
             debug: Bool, optional (default: False)
                 If true, will print debug messages during the backward pass.
         """
+        for ext in args:
+            if not isinstance(ext, BackpropExtension):
+                if inspect.isclass(ext) and issubclass(ext, BackpropExtension):
+                    raise ValueError(
+                        "backpack expect instances of BackpropExtension,"
+                        + " but received a class instead [{}].".format(ext)
+                        + " Instantiate it before passing it to backpack."
+                    )
+                else:
+                    raise ValueError(
+                        "backpack expects instances of BackpropExtension,"
+                        + " but received [{}].".format(ext)
+                    )
+
         self.args = args
         self.debug = debug
 
@@ -59,13 +74,26 @@ class backpack:
 
 
 def hook_store_io(module, input, output):
+    """Saves the input and output as attributes of the module.
+
+    Args:
+        module: module
+        input: List of input tensors
+        output: output tensor
+    """
     for i in range(len(input)):
         setattr(module, "input{}".format(i), input[i])
     module.output = output
 
 
 def hook_store_shapes(module, input, output):
-    """Store dimensionality of output as buffer."""
+    """Store dimensionality of output as buffer.
+
+    Args:
+        module: module
+        input: List of input tensors shapes
+        output: output tensor shape
+    """
     for i in range(len(input)):
         module.register_buffer(
             "input{}_shape".format(i), torch.IntTensor([*input[i].size()])
@@ -74,6 +102,10 @@ def hook_store_shapes(module, input, output):
 
 
 def memory_cleanup(module):
+    """Remove I/O stored by backpack during the forward pass.
+
+    Deletes the attributes created by `hook_store_io` and `hook_store_shapes`.
+    """
     if hasattr(module, "output"):
         delattr(module, "output")
     if hasattr(module, "output_shape"):
@@ -99,8 +131,7 @@ def hook_run_extensions(module, g_inp, g_out):
 
 
 def extend(module, debug=False):
-    """
-    Extends the `module` to make it backPACK-ready.
+    """Extends the `module` to make it backPACK-ready.
 
     Attributes
     ----------
