@@ -61,7 +61,8 @@ class MSELossDerivatives(BaseLossDerivatives):
             tensor:
         """
         N, D = module.input0.shape
-        samples = sqrt(2) * normal(0, 1, size=[mc_samples, N, D]) / sqrt(mc_samples)
+        samples = normal(0, 1, size=[mc_samples, N, D], device=module.input0.device)
+        samples *= sqrt(2) / sqrt(mc_samples)
 
         if module.reduction == "mean":
             samples /= sqrt(module.input0.numel())
@@ -81,11 +82,13 @@ class MSELossDerivatives(BaseLossDerivatives):
         """
         self.check_input_dims(module)
 
-        N, D = module.input0_shape
+        N, D = module.input0.shape
         H = 2 * eye(D, device=module.input0.device)
 
         if module.reduction == "sum":
             H *= N
+        elif module.reduction == "mean":
+            H /= D
 
         return H
 

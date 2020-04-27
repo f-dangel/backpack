@@ -81,14 +81,3 @@ def test_sqrt_hessian_modified_mse_should_fail(extension):
     with pytest.warns(UserWarning):
         with bp(extension()):
             loss.backward()
-
-
-@pytest.mark.parametrize("extension", ext_2nd_order, ids=ext_2nd_order_name)
-def test_sqrt_hessian_mse_on_vectors_should_fail(extension):
-    loss = dummy_mse(D=2) * 2
-
-    with pytest.raises(
-        RuntimeError, match=r".*MSE between batches of vectors is not implemented yet.*"
-    ):
-        with bp(extension()):
-            loss.backward()
