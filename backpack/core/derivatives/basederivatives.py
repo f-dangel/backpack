@@ -1,3 +1,5 @@
+import warnings
+
 from backpack.core.derivatives import shape_check
 
 
@@ -269,13 +271,12 @@ class BaseParameterDerivatives(BaseDerivatives):
 
 
 class BaseLossDerivatives(BaseDerivatives):
-    """Second- order partial derivatives of loss functions.
-
-    """
+    """Second- order partial derivatives of loss functions."""
 
     # TODO Add shape check
     def sqrt_hessian(self, module, g_inp, g_out):
         """Symmetric factorization ('sqrt') of the loss Hessian."""
+        self.check_2nd_order_make_sense(module, g_inp, g_out)
         return self._sqrt_hessian(module, g_inp, g_out)
 
     def _sqrt_hessian(self, module, g_inp, g_out):
@@ -284,6 +285,7 @@ class BaseLossDerivatives(BaseDerivatives):
     # TODO Add shape check
     def sqrt_hessian_sampled(self, module, g_inp, g_out, mc_samples=1):
         """Monte-Carlo sampled symmetric factorization of the loss Hessian."""
+        self.check_2nd_order_make_sense(module, g_inp, g_out)
         return self._sqrt_hessian_sampled(module, g_inp, g_out, mc_samples=mc_samples)
 
     def _sqrt_hessian_sampled(self, module, g_inp, g_out, mc_samples=1):
@@ -296,6 +298,7 @@ class BaseLossDerivatives(BaseDerivatives):
 
         Return a function that maps mat to H * mat.
         """
+        self.check_2nd_order_make_sense(module, g_inp, g_out)
         return self._make_hessian_mat_prod(module, g_inp, g_out)
 
     def _make_hessian_mat_prod(self, module, g_inp, g_out):
@@ -304,7 +307,37 @@ class BaseLossDerivatives(BaseDerivatives):
     # TODO Add shape check
     def sum_hessian(self, module, g_inp, g_out):
         """Loss Hessians, summed over the batch dimension."""
+        self.check_2nd_order_make_sense(module, g_inp, g_out)
         return self._sum_hessian(module, g_inp, g_out)
 
     def _sum_hessian(self, module, g_inp, g_out):
         raise NotImplementedError
+
+    def check_2nd_order_make_sense(self, module, g_inp, g_out):
+        """Verify conditions for 2nd-order extensions to be working.
+
+        2nd-order extensions are only guaranteed to work if the `loss`,
+        on which `backward()` is called, is a scalar that has not been
+        modified further after passing through the loss function module.
+        """
+        self._check_output_is_scalar(module)
+        self._check_loss_has_not_been_modified(module, g_out)
+
+    def _check_output_is_scalar(self, module):
+        """Raise an exception is the module output is not a scalar."""
+        if module.output.numel() != 1:
+            raise ValueError(
+                "Output must be scalar. Got {}".format(module.output.shape)
+            )
+
+    def _check_loss_has_not_been_modified(self, module, g_out):
+        """Raise a warning if the module output seems to have been changed."""
+        grad_out_is_identity = g_out is None or (g_out[0] == 1.0).all().item()
+        if not grad_out_is_identity:
+            warnings.warn(
+                "The output of {} seems to have been modified.".format(module)
+                + " Backpack might give wrong second-order information."
+                + " Make sure you call backward() on the output of a loss"
+                + " function module from torch.nn",
+                UserWarning,
+            )
