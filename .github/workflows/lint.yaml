@@ -43,6 +43,7 @@ jobs:
       run: |
         make black-check
   pydocstyle:
+    if: false
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -58,6 +59,7 @@ jobs:
       run: |
         make pydocstyle-check
   darglint:
+    if: false
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
