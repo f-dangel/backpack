@@ -7,7 +7,7 @@
 BackPACK is built on top of [PyTorch](https://github.com/pytorch/pytorch). It efficiently computes quantities other than the gradient.
 
 - **Website:** https://backpack.pt
-- **Documentation:** https://readthedocs.org/projects/backpack/
+- **Documentation:** https://docs.backpack.pt/en/master/
 - **Bug reports & feature requests:** https://github.com/f-dangel/backpack/issues
 
 Provided quantities include:
