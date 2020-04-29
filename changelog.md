@@ -6,6 +6,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2020-04-29
+
+### Added
+- Improved documentation, moved to [ReadTheDocs](https://docs.backpack.pt) 
+  [[PR1](https://github.com/f-dangel/backpack/pull/57), 
+  [PR2](https://github.com/f-dangel/backpack/pull/58),
+  [PR3](https://github.com/f-dangel/backpack/pull/66)]
+- Tested compatibility with PyTorch 1.5.0.
+- Support 2nd-order backprop for vectors in `MSELoss` 
+  [[PR](https://github.com/f-dangel/backpack/pull/61)]
+- Sanity checks to raise warnings if the following are used.
+  `inplace` modification 
+  [[PR](https://github.com/f-dangel/backpack/pull/59)],
+  unsupported loss parameters 
+  [[PR](https://github.com/f-dangel/backpack/pull/60)],
+  custom losses in 2nd-order backpropagation 
+  [[PR](https://github.com/f-dangel/backpack/pull/60)]
+
+### Fixed
+- Removed `opt_einsum` dependency 
+  [[PR](https://github.com/f-dangel/backpack/pull/54)]
+- Missing implementations and wrong backpropagation of KFRA 
+  for `Conv2d`, `MaxPool2d`, and `AvgPool2d` 
+  [[PR](https://github.com/f-dangel/backpack/pull/53)]
+- Remove `try_view` and use `reshape` to use PyTorch 1.4.0 improvements 
+  [[PR](https://github.com/f-dangel/backpack/pull/50)]
+
+### Internal
+- Docstring style [[PR](https://github.com/f-dangel/backpack/pull/52)]
+
+
 ## [1.1.0] - 2020-02-11
 
 ### Added
@@ -45,6 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Initial release
 
 [Unreleased]: https://github.com/f-dangel/backpack/compare/v1.1.0...HEAD
+[1.1.1]: https://github.com/f-dangel/backpack/compare/1.1.0...1.1.1
 [1.1.0]: https://github.com/f-dangel/backpack/compare/1.0.1...1.1.0
 [1.0.1]: https://github.com/f-dangel/backpack/compare/1.0.0...1.0.1
 [1.0.0]: https://github.com/f-dangel/backpack/releases/tag/1.0.0

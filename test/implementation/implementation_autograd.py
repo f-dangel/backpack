@@ -179,3 +179,6 @@ class AutogradImpl(Implementation):
 
     def plist_like(self, plist):
         return [torch.zeros(*p.size()).to(self.device) for p in plist]
+
+    def parameter_numels(self):
+        return [p.numel() for p in self.model.parameters()]

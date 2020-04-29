@@ -1,11 +1,14 @@
 .PHONY: help
 .PHONY: black black-check flake8
-.PHONY: install install-dev install-devtools install-test install-lint
+.PHONY: install install-dev install-devtools install-test install-lint install-docs
 .PHONY: test
 .PHONY: conda-env
 .PHONY: black isort format
 .PHONY: black-check isort-check format-check
 .PHONY: flake8
+.PHONY: pydocstyle-check
+.PHONY: darglint-check
+.PHONY: build-docs
 
 .DEFAULT: help
 help:
@@ -17,6 +20,10 @@ help:
 	@echo "        Check if black would change files"
 	@echo "flake8"
 	@echo "        Run flake8 on the project"
+	@echo "pydocstyle-check"
+	@echo "        Run pydocstyle on the project"
+	@echo "darglint-check"
+	@echo "        Run darglint on the project"
 	@echo "install"
 	@echo "        Install backpack and dependencies"
 	@echo "install-dev"
@@ -25,8 +32,12 @@ help:
 	@echo "        Install only the linter tools (included in install-dev)"
 	@echo "install-test"
 	@echo "        Install only the testing tools (included in install-dev)"
+	@echo "install-docs"
+	@echo "        Install only the tools to build/view the docs (included in install-dev)"
 	@echo "conda-env"
 	@echo "        Create conda environment 'backpack' with dev setup"
+	@echo "build-docs"
+	@echo "        Build the docs"
 ###
 # Test coverage
 test:
@@ -48,6 +59,12 @@ black-check:
 flake8:
 	@flake8 .
 
+pydocstyle-check:
+	@pydocstyle --count .
+
+darglint-check:
+	@darglint --verbosity 2 .
+
 isort:
 	@isort --apply
 
@@ -59,7 +76,7 @@ format:
 	@make isort
 	@make black-check
 
-format-check: black-check isort-check
+format-check: black-check isort-check pydocstyle-check darglint-check
 
 
 ###
@@ -74,6 +91,9 @@ install-lint:
 
 install-test:
 	@pip install -r requirements/test.txt
+
+install-docs:
+	@pip install -r requirements/docs.txt
 
 install-devtools:
 	@echo "Install dev tools..."
@@ -93,3 +113,8 @@ install-dev: install-devtools
 # Conda environment
 conda-env:
 	@conda env create --file .conda_env.yml
+
+###
+# Documentation
+build-docs:
+	@cd docs_src/rtd && make html

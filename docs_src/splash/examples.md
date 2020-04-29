@@ -19,11 +19,8 @@ pip install backpack-for-pytorch
 
 ## An example: Diagonal GGN Preconditioner
 
-You can download the [example code](
-https://raw.githubusercontent.com/f-dangel/backpack/master/examples/example_diag_ggn_optimizer.py) and run it using 
-```
-python example_diag_ggn_optimizer.py
-```
+You can find the code 
+[in the documentation](https://docs.backpack.pt/en/master/use_cases/example_diag_ggn_optimizer.html).
 It runs SGD with a preconditioner based on the diagonal of the GGN.
 
 

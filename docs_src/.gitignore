@@ -1,1 +1,5 @@
 rtd_output/*
+rtd/basic_usage/*
+rtd/use_cases/*
+examples/use_cases/data/*
+examples/basic_usage/data/*
