@@ -112,7 +112,7 @@ def extend(module, debug=False):
     if debug:
         print("[DEBUG] Extending", module)
 
-    for child in module.children():        
+    for child in module.children():
         extend(child, debug=debug)
 
     module_was_already_extended = getattr(module, "_backpack_extend", False)
