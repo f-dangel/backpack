@@ -16,9 +16,10 @@ before calling ``backward()``.
 Extending the model and loss function
 --------------------------------------------
 
-The :func:`extend(module) <backpack.extend>` function
-tells backpack which parts of the model will be used
-(and that it needs to track of to compute additional quantities).
+The :func:`extend(torch.nn.Module) <backpack.extend>` function
+tells BackPACK what part of the computation graph needs to be tracked.
+If your model is a :py:class:`torch.nn.Sequential` and you use one of the
+:py:class:`torch.nn` loss functions;
 
 .. code-block:: python
 
@@ -42,8 +43,8 @@ tells backpack which parts of the model will be used
 Calling the extension
 ---------------------------------
 
-To activate an extension during the backward pass,
-call ``backward()`` within a ``with backpack(extension):`` block;
+To activate an extension, call ``backward()`` inside a
+``with backpack(extension):`` block;
 
 .. code-block:: python
 
