@@ -12,7 +12,6 @@ cache:
 - pip
 script:
 - pytest -vx --cov=backpack/ .
-- python examples/run_examples.py
 after_success:
 - coveralls
 notifications:
