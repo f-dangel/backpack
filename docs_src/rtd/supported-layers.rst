@@ -28,40 +28,37 @@ First-order extensions that extract information might work outside of this frame
 For first-order extensions
 --------------------------------------
 
-First-order extensions support any module as long as they do not have parameters.
-BackPACK can extract more information about the gradient w.r.t. the parameters of those layers:
+BackPACK can extract more information about the gradient with respect to the
+parameters of :py:class:`torch.nn.Linear` and :py:class:`torch.nn.Conv2d` layers.
 
-* `Conv2d <https://pytorch.org/docs/stable/nn.html#conv2d>`_
-* `Linear <https://pytorch.org/docs/stable/nn.html#linear>`_
+First-order extensions should support any module as long as they do not have parameters,
+but some layers lead to the concept of "individual gradient for a sample in a minibatch"
+to be ill-defined, as they introduce dependencies across examples
+(like :py:class:`torch.nn.BatchNorm`).
 
-**Some layers lead to the concept of "inidividual gradient for a sample in a minibatch" to be ill-defined.**
-This is the case for Batch Normalization layers, for example.
-
-.. raw:: html 
-	
-	<hr/>
+-----
 
 For second-order extensions
 --------------------------------------
 
-BackPACK needs to know how to compute an additional backward pass.
-In addition to the parametrized layers above, this implemented for the following layers:
+BackPACK needs to know how to propagate second-order information.
+This is implemented for:
 
-**Parametrized layers**
-
-* `Conv2d <https://pytorch.org/docs/stable/nn.html#conv2d>`_
-* `Linear <https://pytorch.org/docs/stable/nn.html#linear>`_
-
-**Loss functions**
-
-* `MSELoss <https://pytorch.org/docs/stable/nn.html#mseloss>`_
-* `CrossEntropyLoss <https://pytorch.org/docs/stable/nn.html#crossentropyloss>`_
-
-**Layers without parameters**
-
-* `MaxPool2d <https://pytorch.org/docs/stable/nn.html#maxpool2d>`_
-* `AvgPool2d <https://pytorch.org/docs/stable/nn.html#avgpool2d>`_
-* `Dropout <https://pytorch.org/docs/stable/nn.html#dropout>`_
-* `ReLU <https://pytorch.org/docs/stable/nn.html#relu>`_
-* `Sigmoid <https://pytorch.org/docs/stable/nn.html#sigmoid>`_
-* `Tanh <https://pytorch.org/docs/stable/nn.html#tanh>`_
++-------------------------------+---------------------------------------+
+| **Parametrized layers**       | :py:class:`torch.nn.Conv2d`           |
+|                               +---------------------------------------+
+|                               | :py:class:`torch.nn.Linear`           |
++-------------------------------+---------------------------------------+
+| **Loss functions**            | :py:class:`torch.nn.MSELoss`          |
+|                               +---------------------------------------+
+|                               | :py:class:`torch.nn.CrossEntropyLoss` |
++-------------------------------+---------------------------------------+
+| **Layers without parameters** | :py:class:`torch.nn.MaxPool2d`        |
+|                               | :py:class:`torch.nn.AvgPool2d`        |
+|                               +---------------------------------------+
+|                               | :py:class:`torch.nn.Dropout`          |
+|                               +---------------------------------------+
+|                               | :py:class:`torch.nn.ReLU`             |
+|                               | :py:class:`torch.nn.Sigmoid`          |
+|                               | :py:class:`torch.nn.Tanh`             |
++-------------------------------+---------------------------------------+

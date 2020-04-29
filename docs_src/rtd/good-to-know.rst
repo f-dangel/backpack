@@ -1,28 +1,94 @@
 Good to know
 ====================================
 
-.. warning::
 
-	Work in progress
+We try to make BackPACK easy to use,
+but some conventions differ from standard PyTorch and can be a bit obscure.
+Here are some common pitfalls and recommendations.
 
-Backpack does not do aggregating like pytorch for the gradient. Calling backward with backpack multiple time resets the quantities, it does not add them.
 
-Not everything needs to be extended for first order extensions. Only modules with parameters need to be.
+Check that BackPACK does what you think it should do
+-----------------------------------------------------
 
-The Sequential module format is only necessary for second-order extensions, and needs to be respected in that case, otherwise bad things happen. But for first-order extension, you can rewrite the forward pass of your thingy as long as the module with parameters are extended.
+Most of the quantities provided by BackPACK can also be computed with the
+standard automatic differentiation in PyTorch, although not efficiently.
+For example, the individual gradients given by
+:py:class:`BatchGrad <backpack.extensions.BatchGrad>`
+can be computed by doing a ``for loop`` over each example, and doing a forward
+and a backward pass over each sample individually.
+This is slow, but can be used to check that the values returned by BackPACK
+match what you expect them to be.
 
-Background: The Sequential defines the computational graph assumed by BackPACK for 2nd-order backpropagation.
+While we test many a use-case and try to write solid code, unexpected
+behavior (such as some listed on this page) or bugs are not impossible.
+We recommend that you check that the outputs match your expectations,
+especially if you're using non-default values on slightly more unusual parameters
+like ``groups`` for convolutions or pooling operators.
+BackPACK will try to raise warnings if you use modules or parameters
+in obvious unsupported ways, but it can't anticipate everything.
 
-Note: BackPACK cannot (yet) fully support residual neural networks!
 
-You should not use the Diagonal Hessian. It’s there if you need it, but it’s not going to be efficient. Our implementation is made to work best when the network is simple, but is going to struggle if you have many nonlinearities. The goal is to make it possible, not efficient. That’s why many people have been working on approximations that work. Use those.
+Aggregating quantities and :py:meth:`zero_grad() <torch.nn.Module.zero_grad>`
+-----------------------------------------------------------------------------
 
-The first order extensions will change depending on the scaling, including mean or sum. Double check what you’re doing.
+When computing multiple gradients, one after the other, PyTorch accumulates
+all the gradients seen so far in the :py:attr:`.grad <torch.Tensor.grad>` field
+by summing the result of each :py:meth:`.backward() <torch.Tensor.backward>` call.
+To compute a new gradient, it is standard practice to call
+:py:meth:`zero_grad() <torch.nn.Module.zero_grad>`
+on the model or optimizer to reset the accumulation.
+This means that to compute the gradient of a sum, you can compute one element
+of the sum, do a :py:meth:`.backward() <torch.Tensor.backward>`,
+and iterate through the next one, and :py:attr:`.grad <torch.Tensor.grad>`
+will hold the sum of the gradient (which is also the gradient of the sum).
 
-Generally, we recommend double checking the output of Backpack. It’s a relatively new library and while we’re trying hard, bugs might lurk. Check that Backpack is computing what you think it is computing and let us know if something is weird. (There might be utility scripts for that in the near future)
+Because the quantities returned by BackPACK are not necessarily additive
+(the variance over two batches is not the sum of the variance on each batch),
+BackPACK does not aggregate like PyTorch.
+Every call to :py:meth:`.backward() <torch.Tensor.backward>`,
+inside a :py:func:`with backpack(...): <backpack.backpack>`,
+reset the corresponding field, and the fields returned by BackPACK
+are not affected by :py:meth:`zero_grad() <torch.nn.Module.zero_grad>`.
 
-This especially applies to exotic hyperparameters (e.g. dilation, groups for convolution or pooling)
+:py:func:`extend <backpack.extend()>`-ing for first and second-order extension
+------------------------------------------------------------------------------------------------
 
-Please do not use the same module (e.g. `torch.nn.Sigmoid`) multiple times. We do not know what is going to happen in that case. The results will be wrong with high probability.
+The :ref:`intro example <How to use BackPACK>` shows how to make a model
+using a :py:class:`torch.nn.Sequential` module
+and how to :py:func:`extend() <backpack.extend>` the model and the loss function,
+but this setup is only really necessary for
+:ref:`second order quantities <Second order extensions>`.
+For those, BackPACK needs to know about the structure of the whole network
+to propagate additional information.
 
-Please do not use `inplace=True` for activation functions such as `torch.nn.Sigmoid`. We have no experience/tests how/if this is going to affect the computation.
+:ref:`First order extensions <First order extensions>` are more flexible,
+and the only :py:class:`torch.nn.Module` that need to be extended
+are modules with parameters, to extract more information,
+as the gradients are already propagated by PyTorch.
+For every operations that is not parametrized, you can use standard operations
+from the :std:doc:`torch.nn.functional <nn.functional>` module or standard
+tensor operations. This makes it possible to use first order extensions
+for ResNets (see :ref:`this example <First order extensions with a ResNet>`).
+
+
+Not (yet) supported models
+----------------------------------
+
+The second-order extensions for BackPACK don't support (yet) residual networks,
+and no extension support recurrent architectures.
+We're working on how to handle those, as well as adding more
+:ref:`layers <Supported models>`.
+Along those lines, some things that will (most likely) not work with BackPACK,
+but that we're trying to build support for:
+
+- Inplace operations (e.g., using ``inplace=True`` for activation functions like
+  :py:class:`torch.nn.Sigmoid`.
+- Reusing the same parameters or module multiple time in the computation graph.
+
+  For second order extensions, this also holds for any module,
+  whether or not they have parameters.
+  This sadly mean that BackPACK can't compute the individual gradients or
+  second-order information of a L2-regularized loss, for example.
+
+
+

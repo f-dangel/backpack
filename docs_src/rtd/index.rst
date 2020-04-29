@@ -17,7 +17,7 @@ The code lives on `Github <www.github.com/f-dangel/backpack>`_.
 	:caption: Getting started
 
 	main-api
-	examples/example_all_in_one
+	basic_usage/example_all_in_one
 
 .. toctree::
 	:maxdepth: 2
