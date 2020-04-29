@@ -82,7 +82,7 @@ Along those lines, some things that will (most likely) not work with BackPACK,
 but that we're trying to build support for:
 
 - Inplace operations (e.g., using ``inplace=True`` for activation functions like
-  :py:class:`torch.nn.Sigmoid`.
+  :py:class:`torch.nn.ReLU`.
 - Reusing the same parameters or module multiple time in the computation graph.
 
   For second order extensions, this also holds for any module,
