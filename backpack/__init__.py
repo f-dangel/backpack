@@ -1,6 +1,5 @@
 """BackPACK."""
 import inspect
-from typing import List
 
 import torch
 from backpack.extensions.backprop_extension import BackpropExtension

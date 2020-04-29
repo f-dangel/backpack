@@ -18,15 +18,17 @@ The implemented extensions are
 - The diagonal of the Hessian :func:`DiagHessian <backpack.extensions.DiagHessian>`
 """
 
-from .diag_ggn import DiagGGN, DiagGGNExact, DiagGGNMC
+from .diag_ggn import DiagGGNExact, DiagGGNMC, DiagGGN
 from .diag_hessian import DiagHessian
-from .hbp import HBP, KFAC, KFLR, KFRA
+from .hbp import KFAC, KFLR, KFRA, HBP
 
 __all__ = [
     "DiagGGNExact",
     "DiagGGNMC",
+    "DiagGGN",
     "DiagHessian",
     "KFAC",
     "KFLR",
     "KFRA",
+    "HBP",
 ]
