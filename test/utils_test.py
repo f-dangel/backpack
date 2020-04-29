@@ -5,9 +5,9 @@ import unittest
 
 import scipy.linalg
 import torch
+from torch import einsum
 
 from backpack.utils import kroneckers as bp_utils
-from backpack.utils.ein import einsum
 
 
 class KroneckerUtilsTest(unittest.TestCase):

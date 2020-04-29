@@ -6,12 +6,18 @@ from . import conv2d, linear
 
 
 class BatchL2Grad(BackpropExtension):
-    """
-    The squared L2 norm of individual gradients in the minibatch.
-    Is only meaningful is the individual functions are independent (no batchnorm).
+    """The squared L2 norm of individual gradients in the minibatch.
 
-    Stores the output in :code:`batch_l2`
-    as a vector of the size as the minibatch.
+    Stores the output in ``batch_l2`` as a tensor of size ``[N]``,
+    where ``N`` is the batch size.
+
+    Note: beware of scaling issue
+        The individual L2 norm depends on the scaling of the overall function.
+        Let ``fᵢ`` be the loss of the ``i`` th sample, with gradient ``gᵢ``.
+        ``BatchL2Grad`` will return the L2 norm of
+
+        - ``[g₁, …, gₙ]`` if the loss is a sum, ``∑ᵢ₌₁ⁿ fᵢ``,
+        - ``[¹/ₙ g₁, …, ¹/ₙ gₙ]`` if the loss is a mean, ``¹/ₙ ∑ᵢ₌₁ⁿ fᵢ``.
     """
 
     def __init__(self):

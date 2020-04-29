@@ -28,21 +28,43 @@ class MaxPool2DDerivatives(BaseDerivatives):
 
         Note: It is highly questionable whether this makes sense both
               in terms of the approximation and memory costs.
+
+        Note:
+            Need to loop over the samples, as dealing with all at once
+            requires memory for `N * C² * H_in * W_in * H_out * W_out`
+            elements
         """
         device = mat.device
-        N, channels, H_in, W_in = module.input0.size()
-        in_features = channels * H_in * W_in
+        N, C, H_in, W_in = module.input0.size()
         _, _, H_out, W_out = module.output.size()
-        out_features = channels * H_out * W_out
 
-        pool_idx = self.get_pooling_idx(module).view(N, channels, H_out * W_out)
+        in_pixels = H_in * W_in
+        in_features = C * in_pixels
+
+        pool_idx = self.get_pooling_idx(module).view(N, C, H_out * W_out)
+
+        def sample_ea_jac_t_mat_jac_prod(n, mat):
+            jac_t_mat = sample_jac_t_mat_prod(n, mat)
+            mat_t_jac = jac_t_mat.t()
+            jac_t_mat_t_jac = sample_jac_t_mat_prod(n, mat_t_jac)
+            return jac_t_mat_t_jac.t()
+
+        def sample_jac_t_mat_prod(n, mat):
+            num_cols = mat.size(1)
+            idx = pool_idx[n, :, :].unsqueeze(-1).expand(-1, -1, num_cols)
+
+            jac_t_mat = zeros(C, H_in * W_in, num_cols, device=device)
+            mat = mat.reshape(C, H_out * W_out, num_cols)
+
+            jac_t_mat.scatter_add_(1, idx, mat)
+
+            return jac_t_mat.reshape(in_features, num_cols)
+
         result = zeros(in_features, in_features, device=device)
 
-        for b in range(N):
-            idx = pool_idx[b, :, :]
-            temp = zeros(in_features, out_features, device=device)
-            temp.scatter_add_(1, idx, mat)
-            result.scatter_add_(0, idx.t(), temp)
+        for n in range(N):
+            result += sample_ea_jac_t_mat_jac_prod(n, mat)
+
         return result / N
 
     def hessian_is_zero(self):
@@ -51,7 +73,7 @@ class MaxPool2DDerivatives(BaseDerivatives):
     def _jac_mat_prod(self, module, g_inp, g_out, mat):
         mat_as_pool = eingroup("v,n,c,h,w->v,n,c,hw", mat)
         jmp_as_pool = self.__apply_jacobian_of(module, mat_as_pool)
-        return self.view_like_output(jmp_as_pool, module)
+        return self.reshape_like_output(jmp_as_pool, module)
 
     def __apply_jacobian_of(self, module, mat):
         V, HW_axis = mat.shape[0], 3
@@ -72,7 +94,7 @@ class MaxPool2DDerivatives(BaseDerivatives):
     def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
         mat_as_pool = eingroup("v,n,c,h,w->v,n,c,hw", mat)
         jmp_as_pool = self.__apply_jacobian_t_of(module, mat_as_pool)
-        return self.view_like_input(jmp_as_pool, module)
+        return self.reshape_like_input(jmp_as_pool, module)
 
     def __apply_jacobian_t_of(self, module, mat):
         V = mat.shape[0]
