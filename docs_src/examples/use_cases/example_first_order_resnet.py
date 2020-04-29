@@ -29,8 +29,13 @@ x, y = x.to(DEVICE), y.to(DEVICE)
 
 
 # %%
-#
-#
+# We can build a ResNet by extending :py:class:`torch.nn.Module`.
+# As long as the layers with parameters
+# (:py:class:`torch.nn.Conv2d` and :py:class:`torch.nn.Linear`) are
+# ``nn`` modules, BackPACK can extend them,
+# and this is all that is needed for first order extensions.
+# We can rewrite the forward to implement the residual connection,
+# and :py:func:`extend() <backpack.extend>` the resulting model.
 
 
 class MyFirstResNet(torch.nn.Module):
@@ -57,8 +62,13 @@ class MyFirstResNet(torch.nn.Module):
 model = extend(MyFirstResNet()).to(DEVICE)
 
 # %%
+# Using :py:class:`BatchGrad <backpack.extensions.BatchGrad>` in a
+# :py:class:`with backpack(...) <backpack.backpack>` block,
+# we can access the individual gradients for each sample.
 #
-#
+# The loss does not need to be extended in this case either, as it does not
+# have model parameters and BackPACK does not need to know about it for
+# first order extensions. This also means you can use any custom loss function.
 
 model.zero_grad()
 loss = F.cross_entropy(model(x), y, reduction="sum")
@@ -73,8 +83,9 @@ for name, p in model.named_parameters():
     )
 
 # %%
-#
-#
+# To check that everything works, let's compute one individual gradient with
+# PyTorch (using a single sample in a forward and backward pass)
+# and compare it with the one computed by BackPACK.
 
 sample_to_check = 1
 x_to_check = x[sample_to_check, :].unsqueeze(0)
@@ -86,6 +97,5 @@ loss.backward()
 
 print("Do the individual gradient match?")
 for param_id, (name, p) in enumerate(model.named_parameters()):
-    print(
-        name, torch.allclose(p.grad_batch[sample_to_check, :], p.grad, atol=1e-7),
-    )
+    match = torch.allclose(p.grad_batch[sample_to_check, :], p.grad, atol=1e-7)
+    print("{:<20} {}".format(name, match))
