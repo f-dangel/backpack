@@ -1,34 +1,40 @@
+"""Base classes for more flexible Jacobians and second-order information."""
+
 import warnings
 
 from backpack.core.derivatives import shape_check
 
 
 class BaseDerivatives:
-    """First- and second-order partial derivatives of a module.
+    """First- and second-order partial derivatives of unparameterized module.
 
-    Shape conventions:
-    ------------------
-    * Batch size: N
-    * Free dimension for vectorization: V
+    Note:
+        Throughout the code, use these conventions if possible:
 
-    For vector-processing layers (2d input):
-    * input [N, C_in],  output [N, C_out]
+        - `N`: batch size
+        - Vectors
+          - Layer input shape `[N, D_in]`
+          - Layer output shape `[N, D_out]`
+        - Images
+          - Layer input shape `[N, C_in, H_in, W_in]`
+          - Layer output shape `[N, C_out, H_out, W_out]`
+        - `V`: vectorization axis
 
-    For image-processing layers (4d input)
-    * Input/output channels: C_in/C_out
-    * Input/output height: H_in/H_out
-    * Input/output width: W_in/W_out
-    * input [N, C_in, H_in, W_in],  output [N, C_out, H_in, W_in]
+    Definition:
+        For simplicity, consider the vector case, i.e. a function which maps an
+        `[N, D_in]` `input` into an `[N, D_out]` `output`.
 
+        The Jacobian `J` of  is tensor of shape `[N, D_out, N_in, D_in]`.
+        Partial derivatives are ordered as
 
-    Definitions:
-    ------------
-    * The Jacobian J is defined as
-        J[n, c, w, ..., ̃n, ̃c, ̃w, ...]
-        = 𝜕output[n, c, w, ...] / 𝜕input[̃n, ̃c, ̃w, ...]
-    * The transposed Jacobian Jᵀ is defined as
-        Jᵀ[̃n, ̃c, ̃w, ..., n, c, w, ...]
-        = 𝜕output[n, c, w, ...] / 𝜕input[̃n, ̃c, ̃w, ...]
+            `J[i, j, k, l] = 𝜕output[i, j] / 𝜕input[k, l].
+
+        The transposed Jacobian `Jᵀ` has shape `[N, D_in, N, D_out]`.
+        Partial derivatives are ordered as
+
+            `Jᵀ[i, j, k, l] = 𝜕output[k, l] / 𝜕input[i, j]`.
+
+        In general, feature dimension indices `j, l` are product indices.
     """
 
     @shape_check.jac_mat_prod_accept_vectors
@@ -36,28 +42,27 @@ class BaseDerivatives:
     def jac_mat_prod(self, module, g_inp, g_out, mat):
         """Apply Jacobian of the output w.r.t. input to a matrix.
 
-        Implicit application of J:
-            result[v, n, c, w, ...]
-            =  ∑_{̃n, ̃c, ̃w} J[n, c, w, ..., ̃n, ̃c, ̃w, ...] mat[̃n, ̃c, ̃w, ...].
+        It is assumed that the module input has shape `[N, *]`, while the output is
+        of shape `[N, •]`. Both `*`, `•` denote arbitrary shapes.
 
-        Arguments:
-            module (torch.nn.Module): Extended module that has been used in a
-                `forward` pass.
+        Apply Jacobian to all slices among the vectorization axis.
+
+            `result[v, n, •] =  ∑ₖ ∑_* J[n, •, k, *] mat[v, n, *]`.
+
+        Args:
+            module (torch.nn.Module): Extended module.
             g_inp ([torch.Tensor]): Gradients of the module w.r.t. its inputs.
             g_out ([torch.Tensor]): Gradients of the module w.r.t. its outputs.
             mat (torch.Tensor): Matrix the Jacobian will be applied to. Must have
-                shape [V, N, C_in, H_in, ...].
+                shape `[V, N, *]`.
 
-        Notes:
+        Returns:
+            torch.Tensor: Jacobian-matrix product. Has shape [V, N, *].
+
+        Note:
             - The Jacobian can be applied without knowledge about backpropagated
               derivatives. Both `g_inp` and `g_out` are usually not required and
               can be set to `None`.
-            - It is currently unclear whether the additional information about the
-              computational graph, encoded in `g_inp`, `g_out` might become relevant.
-
-        Returns:
-            torch.Tensor: Jacobian-matrix product.
-                Has shape [V, N, C_out, H_out, ...].
         """
         return self._jac_mat_prod(module, g_inp, g_out, mat)
 
