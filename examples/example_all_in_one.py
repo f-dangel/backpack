@@ -1,5 +1,7 @@
 """
 Compute the gradient with PyTorch and other quantities with BackPACK.
+
+Logistic regression example
 """
 
 from torch.nn import CrossEntropyLoss, Flatten, Linear, Sequential

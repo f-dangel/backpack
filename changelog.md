@@ -6,6 +6,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2020-04-27
+
+### Added
+- Support 2nd-order backpropagation for vectors in `MSELoss` [[PR](https://github.com/f-dangel/backpack/pull/61)]
+- Sanity checks
+  - No inplace modification [[PR](https://github.com/f-dangel/backpack/pull/59)]
+  - Unsupported loss function hyperparameters [[PR](https://github.com/f-dangel/backpack/pull/60)]
+  - 2nd-order backpropagation [[PR](https://github.com/f-dangel/backpack/pull/60)]
+- Tests for KFRA backpropagation [[PR](https://github.com/f-dangel/backpack/pull/53)]
+- Documentation on readthedocs [[PR1](https://github.com/f-dangel/backpack/pull/57), [PR2](https://github.com/f-dangel/backpack/pull/58)]
+
+### Fixed
+- Remove `opt_einsum` dependency [[PR](https://github.com/f-dangel/backpack/pull/54)]
+- Missing implementations in and wrong backpropagation of KFRA for `Conv2d`, `MaxPool2d`, and `AvgPool2d` [[PR](https://github.com/f-dangel/backpack/pull/53)]
+
+### Internal
+- Docstring style [[PR](https://github.com/f-dangel/backpack/pull/52)]
+- Remove `try_view` by `reshape` [[PR](https://github.com/f-dangel/backpack/pull/50)]
+
+
 ## [1.1.0] - 2020-02-11
 
 ### Added
@@ -45,6 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Initial release
 
 [Unreleased]: https://github.com/f-dangel/backpack/compare/v1.1.0...HEAD
+[1.1.1]: https://github.com/f-dangel/backpack/compare/1.1.0...1.1.1
 [1.1.0]: https://github.com/f-dangel/backpack/compare/1.0.1...1.1.0
 [1.0.1]: https://github.com/f-dangel/backpack/compare/1.0.0...1.0.1
 [1.0.0]: https://github.com/f-dangel/backpack/releases/tag/1.0.0

@@ -1,6 +1,8 @@
+darglint
 flake8
 mccabe
 pycodestyle
+pydocstyle
 pyflakes
 pep8-naming
 flake8-bugbear

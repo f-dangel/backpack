@@ -13,7 +13,7 @@ Extending the model and loss function
 	import torch 
 	
 	model = torch.nn.Sequential(
-		torch.nn.Linear(764, 64),
+		torch.nn.Linear(784, 64),
 		torch.nn.ReLU(),
 		torch.nn.Linear(64, 10)
 	)

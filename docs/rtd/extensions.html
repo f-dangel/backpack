@@ -179,7 +179,7 @@ as a vector of the size as the minibatch.</p>
 <code class="sig-prename descclassname">backpack.extensions.</code><code class="sig-name descname">SumGradSquared</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#backpack.extensions.SumGradSquared" title="Permalink to this definition">¶</a></dt>
 <dd><p>The sum of individual-gradients-squared, or second moment of the gradient.
 Is only meaningful is the individual functions are independent (no batchnorm).</p>
-<p>Stores the output in <code class="code docutils literal notranslate"><span class="pre">sum_grad_squared</span></code>, has the same dimension as the gradient.</p>
+<p>Stores the output in <code class="code docutils literal notranslate"><span class="pre">sum_grad_squared</span></code>. Same dimension as the gradient.</p>
 </dd></dl>
 
 <dl class="function">
@@ -195,7 +195,7 @@ Is only meaningful is the individual functions are independent (no batchnorm).</
 <h2>Second-order extensions<a class="headerlink" href="#second-order-extensions" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="backpack.extensions.KFAC">
-<code class="sig-prename descclassname">backpack.extensions.</code><code class="sig-name descname">KFAC</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#backpack.extensions.KFAC" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">backpack.extensions.</code><code class="sig-name descname">KFAC</code><span class="sig-paren">(</span><em class="sig-param">mc_samples=1</em><span class="sig-paren">)</span><a class="headerlink" href="#backpack.extensions.KFAC" title="Permalink to this definition">¶</a></dt>
 <dd><p>Approximate Kronecker factorization of the Generalized Gauss-Newton/Fisher
 using Monte-Carlo sampling.</p>
 <p>Stores the output in <code class="code docutils literal notranslate"><span class="pre">kfac</span></code> as a list of Kronecker factors.</p>
@@ -297,7 +297,7 @@ by Roger Grosse and James Martens, 2016</p></li>
 
 <dl class="function">
 <dt id="backpack.extensions.DiagGGNMC">
-<code class="sig-prename descclassname">backpack.extensions.</code><code class="sig-name descname">DiagGGNMC</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#backpack.extensions.DiagGGNMC" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">backpack.extensions.</code><code class="sig-name descname">DiagGGNMC</code><span class="sig-paren">(</span><em class="sig-param">mc_samples=1</em><span class="sig-paren">)</span><a class="headerlink" href="#backpack.extensions.DiagGGNMC" title="Permalink to this definition">¶</a></dt>
 <dd><p>Diagonal of the Generalized Gauss-Newton/Fisher.
 Uses a Monte-Carlo approximation of
 the Hessian of the loss w.r.t. the model output.</p>

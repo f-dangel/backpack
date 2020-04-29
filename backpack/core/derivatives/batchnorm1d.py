@@ -1,5 +1,6 @@
 from warnings import warn
 
+from torch import einsum
 from torch.nn import BatchNorm1d
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
@@ -7,7 +8,6 @@ from backpack.core.derivatives.shape_check import (
     R_mat_prod_accept_vectors,
     R_mat_prod_check_shapes,
 )
-from backpack.utils.ein import einsum
 
 
 class BatchNorm1dDerivatives(BaseParameterDerivatives):

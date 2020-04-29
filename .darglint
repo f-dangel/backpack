@@ -1,0 +1,4 @@
+[darglint]
+docstring_style = google
+# short, long, full
+strictness = full
