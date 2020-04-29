@@ -15,7 +15,7 @@ class backpack:
     :code:`backward` calls in the current :code:`with` block.
     """
 
-    def __init__(self, *args, debug=False):
+    def __init__(self, *exts: BackpropExtension, debug=False):
         """Activate the Backpack extensions.
 
         Example usage:
@@ -45,7 +45,7 @@ class backpack:
             debug: Bool, optional (default: False)
                 If true, will print debug messages during the backward pass.
         """
-        for ext in args:
+        for ext in exts:
             if not isinstance(ext, BackpropExtension):
                 if inspect.isclass(ext) and issubclass(ext, BackpropExtension):
                     raise ValueError(
@@ -59,13 +59,13 @@ class backpack:
                         + " but received [{}].".format(ext)
                     )
 
-        self.args = args
+        self.exts = exts
         self.debug = debug
 
     def __enter__(self):
         self.old_CTX = CTX.get_active_exts()
         self.old_debug = CTX.get_debug()
-        CTX.set_active_exts(self.args)
+        CTX.set_active_exts(self.exts)
         CTX.set_debug(self.debug)
 
     def __exit__(self, type, value, traceback):
@@ -130,15 +130,17 @@ def hook_run_extensions(module, g_inp, g_out):
         memory_cleanup(module)
 
 
-def extend(module, debug=False):
-    """Extends the `module` to make it backPACK-ready.
+def extend(module: torch.nn.Module, debug=False):
+    """Extends the ``module`` to make it backPACK-ready.
 
-    Attributes
-    ----------
-    module: torch.nn.Module
-        The module to extend
-    debug: Bool, optional (default: False)
-        If true, will print debug messages during the extension.
+    If the ``module`` has children, e.g. for a ``torch.nn.Sequential``,
+    they will also be extended.
+
+    Args:
+        module: torch.nn.Module
+            The module to extend
+        debug: Bool, optional (default: False)
+            If true, will print debug messages during the extension.
     """
     if debug:
         print("[DEBUG] Extending", module)
