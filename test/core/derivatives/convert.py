@@ -88,6 +88,10 @@ class DerivativesTestProblem:
             if opt not in setting.keys():
                 setting[opt] = default
 
+        for s in setting.keys():
+            if s not in required + list(optional.keys()):
+                raise ValueError("Unknown config: {}".format(s))
+
         module_cls = setting["module_cls"]
         module_kwargs = setting["module_kwargs"]
         module = module_cls(**module_kwargs)

@@ -9,7 +9,6 @@ Required entries:
 Optional entries:
     "device" [list(torch.device)]: List of devices to run the test on.
     "id_prefix" (str): Prefix to be included in the test name.
-    "raises" (Exeption): Class of exception that should be raised.
 """
 
 import torch
@@ -22,7 +21,6 @@ example = {
     "in_shape": (10, 5),
     "device": [torch.device("cpu")],
     "id_prefix": "config-example",
-    "raises": None,
 }
 SETTINGS.append(example)
 
