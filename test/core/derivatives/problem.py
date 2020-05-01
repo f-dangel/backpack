@@ -4,7 +4,6 @@ import copy
 from test.core.derivatives.utils import derivative_cls_for, get_available_devices
 
 import torch
-
 from backpack import extend
 
 
@@ -53,6 +52,16 @@ class DerivativesTestProblem:
         self.device = device
         self.id_prefix = "" if id_prefix is None else id_prefix
         self.out_shape = self.get_output_shape()
+
+    def forward_pass(self, input_requires_grad=False):
+        """Do a forward pass. Return input, output, and parameters."""
+        input = self.input
+        if input_requires_grad:
+            input.requires_grad = True
+
+        output = self.module(input)
+
+        return input, output, list(self.module.parameters())
 
     def get_output_shape(self):
         output = self.module(self.input)

@@ -8,9 +8,9 @@
 """
 
 from test.automated_test import check_sizes, check_values
-from test.core.derivatives.convert import make_test_problems
 from test.core.derivatives.implementation.autograd import AutogradDerivatives
 from test.core.derivatives.implementation.backpack import BackpackDerivatives
+from test.core.derivatives.problem import make_test_problems
 from test.core.derivatives.settings import SETTINGS
 
 import pytest
