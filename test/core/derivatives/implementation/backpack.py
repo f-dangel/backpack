@@ -8,6 +8,9 @@ class BackpackDerivatives(DerivativesImplementation):
         problem.extend()
         super().__init__(problem)
 
+    def store_forward_io(self):
+        self.problem.forward_pass()
+
     def jac_mat_prod(self, mat):
         """
         Input:
@@ -17,61 +20,37 @@ class BackpackDerivatives(DerivativesImplementation):
             jmp: Jacobian matrix product obatined from backPACK
 
         """
-        g_inp, g_out = None, None
-
-        # forward pass to initialize buffer
-        self.problem.module(self.problem.input)
-
+        self.store_forward_io()
         return self.problem.derivative.jac_mat_prod(
-            self.problem.module, g_inp, g_out, mat
+            self.problem.module, None, None, mat
         )
 
     def jac_t_mat_prod(self, mat):
-        g_inp, g_out = None, None
-
-        # forward pass to initialize buffer
-        self.problem.module(self.problem.input)
-
+        self.store_forward_io()
         return self.problem.derivative.jac_t_mat_prod(
-            self.problem.module, g_inp, g_out, mat
+            self.problem.module, None, None, mat
         )
 
     def weight_jac_t_mat_prod(self, mat, sum_batch):
-        g_inp, g_out = None, None
-
-        # forward pass to initialize buffer
-        self.problem.module(self.problem.input)
-
+        self.store_forward_io()
         return self.problem.derivative.weight_jac_t_mat_prod(
-            self.problem.module, g_inp, g_out, mat, sum_batch=sum_batch
+            self.problem.module, None, None, mat, sum_batch=sum_batch
         )
 
     def bias_jac_t_mat_prod(self, mat, sum_batch):
-        g_inp, g_out = None, None
-
-        # forward pass to initialize buffer
-        self.problem.module(self.problem.input)
-
+        self.store_forward_io()
         return self.problem.derivative.bias_jac_t_mat_prod(
-            self.problem.module, g_inp, g_out, mat, sum_batch=sum_batch
+            self.problem.module, None, None, mat, sum_batch=sum_batch
         )
 
     def weight_jac_mat_prod(self, mat):
-        g_inp, g_out = None, None
-
-        # forward pass to initialize buffer
-        self.problem.module(self.problem.input)
-
+        self.store_forward_io()
         return self.problem.derivative.weight_jac_mat_prod(
-            self.problem.module, g_inp, g_out, mat
+            self.problem.module, None, None, mat
         )
 
     def bias_jac_mat_prod(self, mat):
-        g_inp, g_out = None, None
-
-        # forward pass to initialize buffer
-        self.problem.module(self.problem.input)
-
+        self.store_forward_io()
         return self.problem.derivative.bias_jac_mat_prod(
-            self.problem.module, g_inp, g_out, mat
+            self.problem.module, None, None, mat
         )
