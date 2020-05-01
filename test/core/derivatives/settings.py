@@ -27,7 +27,7 @@ SETTINGS.append(example)
 SETTINGS += [
     {
         "module_cls": torch.nn.Linear,
-        "module_kwargs": {"in_features": 7, "out_features": 3, "bias": True,},
+        "module_kwargs": {"in_features": 7, "out_features": 3, "bias": False,},
         "in_shape": (10, 7,),
     },
     {"module_cls": torch.nn.ReLU, "in_shape": (10, 5)},

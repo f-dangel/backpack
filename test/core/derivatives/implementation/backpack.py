@@ -35,3 +35,43 @@ class BackpackDerivatives(DerivativesImplementation):
         return self.problem.derivative.jac_t_mat_prod(
             self.problem.module, g_inp, g_out, mat
         )
+
+    def weight_jac_t_mat_prod(self, mat, sum_batch):
+        g_inp, g_out = None, None
+
+        # forward pass to initialize buffer
+        self.problem.module(self.problem.input)
+
+        return self.problem.derivative.weight_jac_t_mat_prod(
+            self.problem.module, g_inp, g_out, mat, sum_batch=sum_batch
+        )
+
+    def bias_jac_t_mat_prod(self, mat, sum_batch):
+        g_inp, g_out = None, None
+
+        # forward pass to initialize buffer
+        self.problem.module(self.problem.input)
+
+        return self.problem.derivative.bias_jac_t_mat_prod(
+            self.problem.module, g_inp, g_out, mat, sum_batch=sum_batch
+        )
+
+    def weight_jac_mat_prod(self, mat):
+        g_inp, g_out = None, None
+
+        # forward pass to initialize buffer
+        self.problem.module(self.problem.input)
+
+        return self.problem.derivative.weight_jac_mat_prod(
+            self.problem.module, g_inp, g_out, mat
+        )
+
+    def bias_jac_mat_prod(self, mat):
+        g_inp, g_out = None, None
+
+        # forward pass to initialize buffer
+        self.problem.module(self.problem.input)
+
+        return self.problem.derivative.bias_jac_mat_prod(
+            self.problem.module, g_inp, g_out, mat
+        )

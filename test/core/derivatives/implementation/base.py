@@ -1,11 +1,5 @@
-import torch
-
-
 class DerivativesImplementation:
-    """Base class for autograd and BackPACK implementations.
-
-    self.input_mat: The input matrix required for testing is initialized
-    """
+    """Base class for autograd and BackPACK implementations."""
 
     def __init__(self, problem):
         self.problem = problem
@@ -14,4 +8,16 @@ class DerivativesImplementation:
         raise NotImplementedError
 
     def jac_t_mat_prod(self, mat):
+        raise NotImplementedError
+
+    def weight_jac_t_mat_prod(self, mat, sum_batch):
+        raise NotImplementedError
+
+    def bias_jac_t_mat_prod(self, mat, sum_batch):
+        raise NotImplementedError
+
+    def weight_jac_mat_prod(self, mat):
+        raise NotImplementedError
+
+    def bias_jac_mat_prod(self, mat):
         raise NotImplementedError
