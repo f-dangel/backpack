@@ -12,14 +12,6 @@ class BackpackDerivatives(DerivativesImplementation):
         self.problem.forward_pass()
 
     def jac_mat_prod(self, mat):
-        """
-        Input:
-            mat: Matrix with which the jacobian is multiplied.
-                 shape: [V, N, C_in, H_in, W_in]
-        Return:
-            jmp: Jacobian matrix product obatined from backPACK
-
-        """
         self.store_forward_io()
         return self.problem.derivative.jac_mat_prod(
             self.problem.module, None, None, mat

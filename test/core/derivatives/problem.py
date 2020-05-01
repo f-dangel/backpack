@@ -61,7 +61,7 @@ class DerivativesTestProblem:
 
         output = self.module(input)
 
-        return input, output, list(self.module.parameters())
+        return input, output, dict(self.module.named_parameters())
 
     def get_output_shape(self):
         output = self.module(self.input)
