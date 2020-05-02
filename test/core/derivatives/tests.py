@@ -21,7 +21,11 @@ PROBLEMS = make_test_problems(SETTINGS)
 IDS = [problem.make_id() for problem in PROBLEMS]
 
 
-@pytest.mark.parametrize("problem", PROBLEMS, ids=IDS)
+NO_LOSS_PROBLEMS = [problem for problem in PROBLEMS if not problem.is_loss()]
+NO_LOSS_IDS = [problem.make_id() for problem in NO_LOSS_PROBLEMS]
+
+
+@pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
 def test_jac_mat_prod(problem, V=3):
     """Test the Jacobian-matrix product.
 
@@ -30,7 +34,7 @@ def test_jac_mat_prod(problem, V=3):
         V (int): Number of vectorized Jacobian-vector products.
     """
     torch.manual_seed(123)
-    mat = torch.rand(V, *problem.in_shape).to(problem.device)
+    mat = torch.rand(V, *problem.input_shape).to(problem.device)
 
     backpack_res = BackpackDerivatives(problem).jac_mat_prod(mat)
     autograd_res = AutogradDerivatives(problem).jac_mat_prod(mat)
@@ -39,7 +43,7 @@ def test_jac_mat_prod(problem, V=3):
     check_values(autograd_res, backpack_res)
 
 
-@pytest.mark.parametrize("problem", PROBLEMS, ids=IDS)
+@pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
 def test_jac_t_mat_prod(problem, V=3):
     """Test the transposed Jacobian-matrix product.
 
@@ -48,7 +52,7 @@ def test_jac_t_mat_prod(problem, V=3):
         V (int): Number of vectorized transposed Jacobian-vector products.
     """
     torch.manual_seed(123)
-    mat = torch.rand(V, *problem.out_shape).to(problem.device)
+    mat = torch.rand(V, *problem.output_shape).to(problem.device)
 
     backpack_res = BackpackDerivatives(problem).jac_t_mat_prod(mat)
     autograd_res = AutogradDerivatives(problem).jac_t_mat_prod(mat)
@@ -60,7 +64,7 @@ def test_jac_t_mat_prod(problem, V=3):
 PROBLEMS_WITH_WEIGHTS = []
 IDS_WITH_WEIGHTS = []
 for problem, problem_id in zip(PROBLEMS, IDS):
-    if hasattr(problem.module, "weight"):
+    if hasattr(problem.module, "weight") and problem.module.weight is not None:
         PROBLEMS_WITH_WEIGHTS.append(problem)
         IDS_WITH_WEIGHTS.append(problem_id)
 
@@ -78,7 +82,7 @@ def test_weight_jac_t_mat_prod(problem, sum_batch, V=3):
         V (int): Number of vectorized transposed Jacobian-vector products.
     """
     torch.manual_seed(123)
-    mat = torch.rand(V, *problem.out_shape).to(problem.device)
+    mat = torch.rand(V, *problem.output_shape).to(problem.device)
 
     backpack_res = BackpackDerivatives(problem).weight_jac_t_mat_prod(mat, sum_batch)
     autograd_res = AutogradDerivatives(problem).weight_jac_t_mat_prod(mat, sum_batch)
@@ -126,7 +130,7 @@ def test_bias_jac_t_mat_prod(problem, sum_batch, V=3):
         V (int): Number of vectorized transposed Jacobian-vector products.
     """
     torch.manual_seed(123)
-    mat = torch.rand(V, *problem.out_shape).to(problem.device)
+    mat = torch.rand(V, *problem.output_shape).to(problem.device)
 
     backpack_res = BackpackDerivatives(problem).bias_jac_t_mat_prod(mat, sum_batch)
     autograd_res = AutogradDerivatives(problem).bias_jac_t_mat_prod(mat, sum_batch)

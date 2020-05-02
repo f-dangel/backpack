@@ -1,37 +1,78 @@
 """Convert problem settings."""
 
 import copy
-from test.core.derivatives.utils import derivative_cls_for, get_available_devices
+from test.core.derivatives.utils import (
+    derivative_cls_for,
+    get_available_devices,
+    is_loss,
+)
 
 import torch
 from backpack import extend
 
 
 def make_test_problems(settings):
-    individual_settings = make_individual_settings(settings)
-
-    return [DerivativesTestProblem.from_setting(s) for s in individual_settings]
-
-
-def make_individual_settings(settings):
-    individual_settings = []
+    problem_dicts = []
 
     for setting in settings:
-        if "device" not in setting.keys():
-            setting["device"] = get_available_devices()
+        setting = add_missing_defaults(setting)
+        devices = setting["device"]
 
-    for setting in settings:
-        if isinstance(setting["device"], list):
-            for dev in setting["device"]:
-                individual_setting = copy.deepcopy(setting)
-                individual_setting["device"] = dev
-                individual_settings.append(individual_setting)
+        for dev in devices:
+            problem = copy.deepcopy(setting)
+            problem["device"] = dev
+            problem_dicts.append(problem)
 
-    return individual_settings
+    return [DerivativesTestProblem(**p) for p in problem_dicts]
+
+
+def add_missing_defaults(setting):
+    """Create derivative test problem from setting.
+
+    Args:
+        setting (dict): configuration dictionary
+
+    Returns:
+        DerivativesTestProblem: problem with specified settings.
+    """
+    required = ["module_fn", "module_kwargs", "input_kwargs"]
+    optional = {
+        "input_fn": torch.rand,
+        "id_prefix": "",
+        "seed": 0,
+        "target_fn": lambda: None,
+        "target_kwargs": {},
+        "device": get_available_devices(),
+    }
+
+    for req in required:
+        if req not in setting.keys():
+            raise ValueError("Missing configuration entry for {}".format(req))
+
+    for opt, default in optional.items():
+        if opt not in setting.keys():
+            setting[opt] = default
+
+    for s in setting.keys():
+        if s not in required and s not in optional.keys():
+            raise ValueError("Unknown config: {}".format(s))
+
+    return setting
 
 
 class DerivativesTestProblem:
-    def __init__(self, module, in_shape, device, id_prefix=None):
+    def __init__(
+        self,
+        module_fn,
+        module_kwargs,
+        input_fn,
+        input_kwargs,
+        target_fn,
+        target_kwargs,
+        device,
+        seed,
+        id_prefix,
+    ):
         """Collection of information required to test derivatives.
 
         Args:
@@ -44,14 +85,28 @@ class DerivativesTestProblem:
             Shape of module input → output:
             [N, C_in, H_in, W_in, ...] → [N, C_out, H_out, W_out, ...]
         """
-        self.module = module.to(device)
-        self.derivative = derivative_cls_for(module.__class__)()
-        self.in_shape = in_shape
-        torch.manual_seed(123)
-        self.input = torch.rand(*in_shape).to(device)
+        torch.manual_seed(seed)
+
+        self.module = module_fn(**module_kwargs).to(device)
+
+        print(input_fn)
+        print(input_kwargs)
+        self.input = input_fn(**input_kwargs).to(device)
+        self.target = target_fn(**target_kwargs)
+        if self.target is not None:
+            self.target = self.target.to(device)
+
+        self.derivative = derivative_cls_for(self.module.__class__)()
+
+        self.input_shape = self.input.shape
+        self.output_shape = self.get_output_shape()
+
         self.device = device
-        self.id_prefix = "" if id_prefix is None else id_prefix
-        self.out_shape = self.get_output_shape()
+
+        self.id_prefix = id_prefix
+
+    def is_loss(self):
+        return is_loss(self.module)
 
     def forward_pass(self, input_requires_grad=False):
         """Do a forward pass. Return input, output, and parameters."""
@@ -59,54 +114,22 @@ class DerivativesTestProblem:
         if input_requires_grad:
             input.requires_grad = True
 
-        output = self.module(input)
+        if self.is_loss():
+            output = self.module(input, self.target)
+        else:
+            output = self.module(input)
 
         return input, output, dict(self.module.named_parameters())
 
     def get_output_shape(self):
-        output = self.module(self.input)
+        _, output, _ = self.forward_pass()
         return tuple(output.shape)
 
     def make_id(self):
-        prefix = (self.id_prefix + "-") if self.id_prefix is not None else ""
+        prefix = (self.id_prefix + "-") if self.id_prefix != "" else ""
         return prefix + "dev={}-in={}-{}".format(
-            self.device, self.in_shape, self.module
+            self.device, tuple(self.input_shape), self.module
         ).replace(" ", "")
 
     def extend(self):
         self.module = extend(self.module)
-
-    @classmethod
-    def from_setting(cls, setting):
-        """Create derivative test problem from setting.
-
-        Args:
-            setting (dict): configuration dictionary
-
-        Returns:
-            DerivativesTestProblem: problem with specified settings.
-        """
-        required = ["module_cls", "in_shape", "device"]
-        optional = {"id_prefix": None, "module_kwargs": {}}
-
-        for req in required:
-            if req not in setting.keys():
-                raise ValueError("Missing configuration entry for {}".format(req))
-
-        for opt, default in optional.items():
-            if opt not in setting.keys():
-                setting[opt] = default
-
-        for s in setting.keys():
-            if s not in required + list(optional.keys()):
-                raise ValueError("Unknown config: {}".format(s))
-
-        module_cls = setting["module_cls"]
-        module_kwargs = setting["module_kwargs"]
-        module = module_cls(**module_kwargs)
-
-        in_shape = setting["in_shape"]
-        device = setting["device"]
-        id_prefix = setting["id_prefix"]
-
-        return cls(module, in_shape, device, id_prefix=id_prefix)
