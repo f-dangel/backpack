@@ -24,12 +24,12 @@ class BaseDerivatives:
         For simplicity, consider the vector case, i.e. a function which maps an
         `[N, D_in]` `input` into an `[N, D_out]` `output`.
 
-        The Jacobian `J` of  is tensor of shape `[N, D_out, N_in, D_in]`.
+        The input-output Jacobian `J` of  is tensor of shape `[N, D_out, N_in, D_in]`.
         Partial derivatives are ordered as
 
             `J[i, j, k, l] = 𝜕output[i, j] / 𝜕input[k, l].
 
-        The transposed Jacobian `Jᵀ` has shape `[N, D_in, N, D_out]`.
+        The transposed input-output Jacobian `Jᵀ` has shape `[N, D_in, N, D_out]`.
         Partial derivatives are ordered as
 
             `Jᵀ[i, j, k, l] = 𝜕output[k, l] / 𝜕input[i, j]`.
@@ -67,13 +67,13 @@ class BaseDerivatives:
         return self._jac_mat_prod(module, g_inp, g_out, mat)
 
     def _jac_mat_prod(self, module, g_inp, g_out, mat):
-        """Internal implementation of the Jacobian."""
+        """Internal implementation of the input-output Jacobian."""
         raise NotImplementedError
 
     @shape_check.jac_t_mat_prod_accept_vectors
     @shape_check.jac_t_mat_prod_check_shapes
     def jac_t_mat_prod(self, module, g_inp, g_out, mat):
-        """Apply transposed Jacobian of module output w.r.t. input to a matrix.
+        """Apply transposed input-ouput Jacobian of module output to a matrix.
 
         Implicit application of Jᵀ:
             result[v, ̃n, ̃c, ̃w, ...]
