@@ -106,12 +106,18 @@ class BaseDerivatives:
         raise NotImplementedError
 
     def hessian_is_diagonal(self):
+        """Is `∂²output[i] / ∂input[j] ∂input[k]` nonzero only if `i = j = k`."""
         raise NotImplementedError
 
     def hessian_diagonal(self):
+        """Return `∂²output[i] / ∂input[i]²`.
+
+        Only required if `hessian_is_diagonal` returns `True`.
+        """
         raise NotImplementedError
 
     def hessian_is_psd(self):
+        """Is `∂²output[i] / ∂input[j] ∂input[k]` positive semidefinite (PSD)."""
         raise NotImplementedError
 
     # TODO make accept vectors

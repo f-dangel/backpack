@@ -22,14 +22,34 @@ class ElementwiseDerivatives(BaseDerivatives):
         return einsum("ni,nj,ij->ij", (df_flat, df_flat, mat)) / batch
 
     def hessian_diagonal(self, module, g_inp, g_out):
+        """Return `∂²output[i] / ∂input[i]²`.
+
+        Only required if `hessian_is_diagonal` returns `True`.
+        """
         self._no_inplace(module)
 
         return self.d2f(module, g_inp, g_out) * g_out[0]
 
     def df(self, module, g_inp, g_out):
+        """Elementwise first derivative.
+
+        Let `f(x)` denote the activation function.
+
+        Returns:
+            (torch.Tensor): Tensor containing the derivatives `f'(x)`
+        """
+
         raise NotImplementedError("First derivatives not implemented")
 
     def d2f(self, module, g_inp, g_out):
+        """Elementwise second derivative.
+
+        Let `f(x)` denote the activation function.
+
+        Returns:
+            (torch.Tensor): Tensor containing the derivatives `f''(x)`
+        """
+
         raise NotImplementedError("Second derivatives not implemented")
 
     @staticmethod
