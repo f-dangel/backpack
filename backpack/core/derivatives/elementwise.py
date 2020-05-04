@@ -30,6 +30,13 @@ class ElementwiseDerivatives(BaseDerivatives):
 
         return self.d2f(module, g_inp, g_out) * g_out[0]
 
+    def hessian_is_diagonal(self):
+        """`∂²output[i] / ∂input[j] ∂input[k] = f''(input[i]) δᵢⱼₖ `.
+
+        `δᵢⱼₖ` is the Kronecker delta (`1` if `i = j = k`, else `0`).
+        """
+        return True
+
     def df(self, module, g_inp, g_out):
         """Elementwise first derivative.
 

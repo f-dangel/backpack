@@ -12,9 +12,6 @@ class SigmoidDerivatives(ElementwiseDerivatives):
         """`σ''(x) ≠ 0`."""
         return False
 
-    def hessian_is_diagonal(self):
-        return True
-
     def df(self, module, g_inp, g_out):
         """First sigmoid derivative: `σ'(x) = σ(x) (1 - σ(x))`."""
         return module.output * (1.0 - module.output)
