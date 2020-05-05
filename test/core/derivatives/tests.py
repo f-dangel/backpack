@@ -172,6 +172,8 @@ def test_sqrt_hessian_squared_equals_hessian(problem):
 
     Compares the Hessian to reconstruction from individual Hessian sqrt.
     """
+    torch.manual_seed(123)
+
     backpack_res = BackpackDerivatives(problem).input_hessian_via_sqrt_hessian()
     autograd_res = AutogradDerivatives(problem).input_hessian()
 
@@ -188,13 +190,15 @@ def test_sqrt_hessian_sampled_squared_approximates_hessian(problem, mc_samples=1
 
     Compares the Hessian to reconstruction from individual Hessian MC-sampled sqrt.
     """
+    torch.manual_seed(123)
+
     backpack_res = BackpackDerivatives(problem).input_hessian_via_sqrt_hessian(
         mc_samples=mc_samples
     )
     autograd_res = AutogradDerivatives(problem).input_hessian()
 
     check_sizes(autograd_res, backpack_res)
-    RTOL, ATOL = 1e-2, 1e-2
+    RTOL, ATOL = 1e-2, 2e-2
     check_values(autograd_res, backpack_res, rtol=RTOL, atol=ATOL)
 
 
@@ -205,6 +209,8 @@ def test_sum_hessian(problem):
     Args:
         problem (DerivativesProblem): Problem for derivative test.
     """
+    torch.manual_seed(123)
+
     backpack_res = BackpackDerivatives(problem).sum_hessian()
     autograd_res = AutogradDerivatives(problem).sum_hessian()
 
