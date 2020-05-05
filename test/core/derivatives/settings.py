@@ -196,4 +196,11 @@ LOSS_FAIL_SETTINGS = [
         "target_fn": classification_targets,
         "target_kwargs": {"size": (8,), "num_classes": 2},
     },
+    {
+        "module_fn": torch.nn.MSELoss,
+        "module_kwargs": {"reduction": "none"},
+        "input_kwargs": {"size": (5, 1)},
+        "target_fn": regression_targets,
+        "target_kwargs": {"size": (5, 1)},
+    },
 ]
