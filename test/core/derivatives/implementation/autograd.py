@@ -89,6 +89,42 @@ class AutogradDerivatives(DerivativesImplementation):
 
         return torch.stack(jac_vec_prods)
 
+    def ea_jac_t_mat_jac_prod(self, mat):
+        def sample_jac_t_mat_jac_prod(sample_idx, mat):
+            assert len(mat.shape) == 2
+
+            def sample_jac_t_mat_prod(sample_idx, mat):
+                sample, output, _ = self.problem.forward_pass(
+                    input_requires_grad=True, sample_idx=sample_idx
+                )
+
+                result = torch.zeros(sample.numel(), mat.size(1))
+
+                for col in range(mat.size(1)):
+                    column = mat[:, col].reshape(output.shape)
+                    result[:, col] = transposed_jacobian_vector_product(
+                        [output], [sample], [column], retain_graph=True
+                    )[0].reshape(-1)
+
+                return result
+
+            jac_t_mat = sample_jac_t_mat_prod(sample_idx, mat)
+            mat_t_jac = jac_t_mat.t()
+            jac_t_mat_t_jac = sample_jac_t_mat_prod(sample_idx, mat_t_jac)
+            jac_t_mat_jac = jac_t_mat_t_jac.t()
+
+            return jac_t_mat_jac
+
+        N = self.problem.input.shape[0]
+        input_features = self.problem.input.shape.numel() // N
+
+        result = torch.zeros(input_features, input_features).to(self.problem.device)
+
+        for n in range(N):
+            result += sample_jac_t_mat_jac_prod(n, mat)
+
+        return result / N
+
     def hessian(self, loss, x):
         """Return the Hessian matrix of `loss` w.r.t. `x`.
 

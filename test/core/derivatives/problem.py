@@ -8,6 +8,7 @@ from test.core.derivatives.utils import (
 )
 
 import torch
+
 from backpack import extend
 
 
@@ -108,9 +109,13 @@ class DerivativesTestProblem:
     def is_loss(self):
         return is_loss(self.module)
 
-    def forward_pass(self, input_requires_grad=False):
+    def forward_pass(self, input_requires_grad=False, sample_idx=None):
         """Do a forward pass. Return input, output, and parameters."""
-        input = self.input
+        if sample_idx is None:
+            input = self.input.clone().detach()
+        else:
+            input = self.input.clone()[sample_idx, :].unsqueeze(0).detach()
+
         if input_requires_grad:
             input.requires_grad = True
 

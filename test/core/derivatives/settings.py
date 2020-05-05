@@ -61,14 +61,29 @@ SETTINGS += [
         "input_kwargs": {"size": (10, 5)},
     },
     {
+        "module_fn": torch.nn.ReLU,
+        "module_kwargs": {},
+        "input_kwargs": {"size": (6, 2, 7)},
+    },
+    {
         "module_fn": torch.nn.Tanh,
         "module_kwargs": {},
         "input_kwargs": {"size": (1, 5, 6)},
     },
     {
+        "module_fn": torch.nn.Tanh,
+        "module_kwargs": {},
+        "input_kwargs": {"size": (6, 2, 7)},
+    },
+    {
         "module_fn": torch.nn.Sigmoid,
         "module_kwargs": {},
         "input_kwargs": {"size": (1, 5)},
+    },
+    {
+        "module_fn": torch.nn.Sigmoid,
+        "module_kwargs": {},
+        "input_kwargs": {"size": (6, 2, 7)},
     },
     {
         "module_fn": torch.nn.Conv2d,
@@ -81,14 +96,81 @@ SETTINGS += [
         "input_kwargs": {"size": (1, 3, 32, 32)},
     },
     {
+        "module_fn": torch.nn.Conv2d,
+        "module_kwargs": {"in_channels": 2, "out_channels": 3, "kernel_size": 2,},
+        "input_kwargs": {"size": (3, 2, 11, 13)},
+    },
+    {
+        "module_fn": torch.nn.Conv2d,
+        "module_kwargs": {
+            "in_channels": 2,
+            "out_channels": 3,
+            "kernel_size": 2,
+            "padding": 1,
+        },
+        "input_kwargs": {"size": (3, 2, 11, 13)},
+    },
+    {
+        "module_fn": torch.nn.Conv2d,
+        "module_kwargs": {
+            "in_channels": 2,
+            "out_channels": 3,
+            "kernel_size": 2,
+            "padding": 1,
+            "stride": 2,
+            "dilation": 2,
+        },
+        "input_kwargs": {"size": (3, 2, 11, 13)},
+    },
+    {
         "module_fn": torch.nn.MaxPool2d,
         "module_kwargs": {"kernel_size": 2, "stride": 2},
         "input_kwargs": {"size": (1, 5, 32, 32)},
     },
     {
+        "module_fn": torch.nn.MaxPool2d,
+        "module_kwargs": {"kernel_size": 2},
+        "input_kwargs": {"size": (5, 3, 10, 8)},
+    },
+    {
+        "module_fn": torch.nn.MaxPool2d,
+        "module_kwargs": {"kernel_size": 2},
+        "input_kwargs": {"size": (1, 2, 4, 4)},
+    },
+    {
+        "module_fn": torch.nn.MaxPool2d,
+        "module_kwargs": {"kernel_size": 3, "stride": 2},
+        "input_kwargs": {"size": (3, 2, 15, 13)},
+    },
+    {
         "module_fn": torch.nn.AvgPool2d,
         "module_kwargs": {"kernel_size": 2},
         "input_kwargs": {"size": (1, 3, 32, 32)},
+    },
+    {
+        "module_fn": torch.nn.AvgPool2d,
+        "module_kwargs": {"kernel_size": 3},
+        "input_kwargs": {"size": (3, 2, 15, 13)},
+    },
+    {
+        "module_fn": torch.nn.AvgPool2d,
+        "module_kwargs": {"kernel_size": 3, "stride": 2},
+        "input_kwargs": {"size": (3, 2, 15, 13)},
+    },
+    {
+        "module_fn": torch.nn.AvgPool2d,
+        "module_kwargs": {"kernel_size": 3, "stride": 2, "padding": 1},
+        "input_kwargs": {"size": (3, 2, 15, 13)},
+    },
+    {
+        "module_fn": torch.nn.ZeroPad2d,
+        "module_kwargs": {"padding": 2},
+        "input_kwargs": {"size": (4, 3, 4, 5)},
+    },
+    {
+        "module_fn": torch.nn.Linear,
+        "module_kwargs": {"in_features": 20, "out_features": 10, "bias": True,},
+        "input_kwargs": {"size": (5, 20,)},
     },
     # loss functions
     {

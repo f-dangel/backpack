@@ -49,6 +49,12 @@ class BackpackDerivatives(DerivativesImplementation):
             self.problem.module, None, None, mat
         )
 
+    def ea_jac_t_mat_jac_prod(self, mat):
+        self.store_forward_io()
+        return self.problem.derivative.ea_jac_t_mat_jac_prod(
+            self.problem.module, None, None, mat
+        )
+
     def sum_hessian(self):
         self.store_forward_io()
         return self.problem.derivative.sum_hessian(self.problem.module, None, None)

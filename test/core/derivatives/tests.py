@@ -234,3 +234,29 @@ def test_sum_hessian(problem):
 def test_sum_hessian_should_fail(problem):
     with pytest.raises(ValueError):
         test_sum_hessian(problem)
+
+
+@pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
+def test_ea_jac_t_mat_jac_prod(problem):
+    """Test KFRA backpropagation
+
+    H_in →  1/N ∑ₙ Jₙ^T H_out Jₙ
+
+    Notes:
+        - `Dropout` cannot be tested,as the `autograd` implementation does a forward
+        pass over each sample, while the `backpack` implementation requires only
+        one forward pass over the batched data. This leads to different outputs,
+        as `Dropout` is not deterministic.
+
+    Args:
+        problem (DerivativesProblem): Problem for derivative test.
+    """
+    torch.manual_seed(123)
+    out_features = torch.prod(torch.tensor(problem.output_shape[1:]))
+    mat = torch.rand(out_features, out_features).to(problem.device)
+
+    backpack_res = BackpackDerivatives(problem).ea_jac_t_mat_jac_prod(mat)
+    autograd_res = AutogradDerivatives(problem).ea_jac_t_mat_jac_prod(mat)
+
+    check_sizes(autograd_res, backpack_res)
+    check_values(autograd_res, backpack_res)
