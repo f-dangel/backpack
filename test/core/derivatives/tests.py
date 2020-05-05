@@ -181,6 +181,12 @@ def test_sqrt_hessian_squared_equals_hessian(problem):
     check_values(autograd_res, backpack_res)
 
 
+@pytest.mark.parametrize("problem", LOSS_FAIL_PROBLEMS, ids=LOSS_FAIL_IDS)
+def test_sqrt_hessian_should_fail(problem):
+    with pytest.raises(ValueError):
+        test_sqrt_hessian_squared_equals_hessian(problem)
+
+
 @pytest.mark.parametrize("problem", LOSS_PROBLEMS, ids=LOSS_IDS)
 def test_sqrt_hessian_sampled_squared_approximates_hessian(problem, mc_samples=100000):
     """Test the MC-sampled sqrt decomposition of the input Hessian.
@@ -200,6 +206,12 @@ def test_sqrt_hessian_sampled_squared_approximates_hessian(problem, mc_samples=1
     check_sizes(autograd_res, backpack_res)
     RTOL, ATOL = 1e-2, 2e-2
     check_values(autograd_res, backpack_res, rtol=RTOL, atol=ATOL)
+
+
+@pytest.mark.parametrize("problem", LOSS_FAIL_PROBLEMS, ids=LOSS_FAIL_IDS)
+def test_sqrt_hessian_sampled_should_fail(problem):
+    with pytest.raises(ValueError):
+        test_sqrt_hessian_sampled_squared_approximates_hessian(problem)
 
 
 @pytest.mark.parametrize("problem", LOSS_PROBLEMS, ids=LOSS_IDS)
