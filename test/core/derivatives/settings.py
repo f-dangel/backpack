@@ -90,6 +90,7 @@ SETTINGS += [
         "module_kwargs": {"kernel_size": 2},
         "input_kwargs": {"size": (1, 3, 32, 32)},
     },
+    # loss functions
     {
         "module_fn": torch.nn.CrossEntropyLoss,
         "module_kwargs": {"reduction": "mean"},
@@ -103,5 +104,96 @@ SETTINGS += [
         "input_kwargs": {"size": (5, 1)},
         "target_fn": regression_targets,
         "target_kwargs": {"size": (5, 1)},
+    },
+    ## CrossEntropyLoss
+    ### reduction 'mean'
+    {
+        "module_fn": torch.nn.CrossEntropyLoss,
+        "module_kwargs": {"reduction": "mean"},
+        "input_kwargs": {"size": (2, 3)},
+        "target_fn": classification_targets,
+        "target_kwargs": {"size": (2,), "num_classes": 3},
+    },
+    {
+        "module_fn": torch.nn.CrossEntropyLoss,
+        "module_kwargs": {"reduction": "mean"},
+        "input_kwargs": {"size": (8, 2)},
+        "target_fn": classification_targets,
+        "target_kwargs": {"size": (8,), "num_classes": 2},
+    },
+    ### reduction 'sum'
+    {
+        "module_fn": torch.nn.CrossEntropyLoss,
+        "module_kwargs": {"reduction": "sum"},
+        "input_kwargs": {"size": (2, 3)},
+        "target_fn": classification_targets,
+        "target_kwargs": {"size": (2,), "num_classes": 3},
+    },
+    {
+        "module_fn": torch.nn.CrossEntropyLoss,
+        "module_kwargs": {"reduction": "sum"},
+        "input_kwargs": {"size": (8, 2)},
+        "target_fn": classification_targets,
+        "target_kwargs": {"size": (8,), "num_classes": 2},
+    },
+    ### reduction 'none': while non-scalar outputs are not
+    ### supported, a single number as output should be fine
+    {
+        "module_fn": torch.nn.CrossEntropyLoss,
+        "module_kwargs": {"reduction": "none"},
+        "input_kwargs": {"size": (1, 1)},
+        "target_fn": classification_targets,
+        "target_kwargs": {"size": (1,), "num_classes": 3},
+    },
+    ## MSELoss
+    ### reduction 'mean'
+    {
+        "module_fn": torch.nn.MSELoss,
+        "module_kwargs": {"reduction": "mean"},
+        "input_kwargs": {"size": (5, 1)},
+        "target_fn": regression_targets,
+        "target_kwargs": {"size": (5, 1)},
+    },
+    {
+        "module_fn": torch.nn.MSELoss,
+        "module_kwargs": {"reduction": "mean"},
+        "input_kwargs": {"size": (5, 2)},
+        "target_fn": regression_targets,
+        "target_kwargs": {"size": (5, 2)},
+    },
+    ### reduction 'sum'
+    {
+        "module_fn": torch.nn.MSELoss,
+        "module_kwargs": {"reduction": "sum"},
+        "input_kwargs": {"size": (5, 1)},
+        "target_fn": regression_targets,
+        "target_kwargs": {"size": (5, 1)},
+    },
+    {
+        "module_fn": torch.nn.MSELoss,
+        "module_kwargs": {"reduction": "sum"},
+        "input_kwargs": {"size": (5, 2)},
+        "target_fn": regression_targets,
+        "target_kwargs": {"size": (5, 2)},
+    },
+    ### reduction 'none': while non-scalar outputs are not
+    ### supported, a single number as output should be fine
+    {
+        "module_fn": torch.nn.MSELoss,
+        "module_kwargs": {"reduction": "none"},
+        "input_kwargs": {"size": (1, 1)},
+        "target_fn": regression_targets,
+        "target_kwargs": {"size": (1, 1)},
+    },
+]
+
+LOSS_FAIL_SETTINGS = [
+    # non-scalar outputs are not supported
+    {
+        "module_fn": torch.nn.CrossEntropyLoss,
+        "module_kwargs": {"reduction": "none"},
+        "input_kwargs": {"size": (8, 2)},
+        "target_fn": classification_targets,
+        "target_kwargs": {"size": (8,), "num_classes": 2},
     },
 ]

@@ -11,10 +11,9 @@ from test.automated_test import check_sizes, check_values
 from test.core.derivatives.implementation.autograd import AutogradDerivatives
 from test.core.derivatives.implementation.backpack import BackpackDerivatives
 from test.core.derivatives.problem import make_test_problems
-from test.core.derivatives.settings import SETTINGS
+from test.core.derivatives.settings import LOSS_FAIL_SETTINGS, SETTINGS
 
 import pytest
-
 import torch
 
 PROBLEMS = make_test_problems(SETTINGS)
@@ -23,6 +22,13 @@ IDS = [problem.make_id() for problem in PROBLEMS]
 
 NO_LOSS_PROBLEMS = [problem for problem in PROBLEMS if not problem.is_loss()]
 NO_LOSS_IDS = [problem.make_id() for problem in NO_LOSS_PROBLEMS]
+
+LOSS_PROBLEMS = [problem for problem in PROBLEMS if problem.is_loss()]
+LOSS_IDS = [problem.make_id() for problem in LOSS_PROBLEMS]
+
+# second-order does not make sense
+LOSS_FAIL_PROBLEMS = make_test_problems(LOSS_FAIL_SETTINGS)
+LOSS_FAIL_IDS = [problem.make_id() for problem in LOSS_FAIL_PROBLEMS]
 
 
 @pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
@@ -155,3 +161,58 @@ def test_bias_jac_mat_prod(problem, V=3):
 
     check_sizes(autograd_res, backpack_res)
     check_values(autograd_res, backpack_res)
+
+
+@pytest.mark.parametrize("problem", LOSS_PROBLEMS, ids=LOSS_IDS)
+def test_sqrt_hessian_squared_equals_hessian(problem):
+    """Test the sqrt decomposition of the input Hessian.
+
+    Args:
+        problem (DerivativesProblem): Problem for derivative test.
+
+    Compares the Hessian to reconstruction from individual Hessian sqrt.
+    """
+    backpack_res = BackpackDerivatives(problem).input_hessian_via_sqrt_hessian()
+    autograd_res = AutogradDerivatives(problem).input_hessian()
+
+    check_sizes(autograd_res, backpack_res)
+    check_values(autograd_res, backpack_res)
+
+
+@pytest.mark.parametrize("problem", LOSS_PROBLEMS, ids=LOSS_IDS)
+def test_sqrt_hessian_sampled_squared_approximates_hessian(problem, mc_samples=100000):
+    """Test the MC-sampled sqrt decomposition of the input Hessian.
+
+    Args:
+        problem (DerivativesProblem): Problem for derivative test.
+
+    Compares the Hessian to reconstruction from individual Hessian MC-sampled sqrt.
+    """
+    backpack_res = BackpackDerivatives(problem).input_hessian_via_sqrt_hessian(
+        mc_samples=mc_samples
+    )
+    autograd_res = AutogradDerivatives(problem).input_hessian()
+
+    check_sizes(autograd_res, backpack_res)
+    RTOL, ATOL = 1e-2, 1e-2
+    check_values(autograd_res, backpack_res, rtol=RTOL, atol=ATOL)
+
+
+@pytest.mark.parametrize("problem", LOSS_PROBLEMS, ids=LOSS_IDS)
+def test_sum_hessian(problem):
+    """Test the summed Hessian.
+
+    Args:
+        problem (DerivativesProblem): Problem for derivative test.
+    """
+    backpack_res = BackpackDerivatives(problem).sum_hessian()
+    autograd_res = AutogradDerivatives(problem).sum_hessian()
+
+    check_sizes(autograd_res, backpack_res)
+    check_values(autograd_res, backpack_res)
+
+
+@pytest.mark.parametrize("problem", LOSS_FAIL_PROBLEMS, ids=LOSS_FAIL_IDS)
+def test_sum_hessian_should_fail(problem):
+    with pytest.raises(ValueError):
+        test_sum_hessian(problem)
