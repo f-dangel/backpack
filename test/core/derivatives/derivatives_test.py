@@ -23,7 +23,6 @@ import torch
 PROBLEMS = make_test_problems(SETTINGS)
 IDS = [problem.make_id() for problem in PROBLEMS]
 
-
 NO_LOSS_PROBLEMS = [problem for problem in PROBLEMS if not problem.is_loss()]
 NO_LOSS_IDS = [problem.make_id() for problem in NO_LOSS_PROBLEMS]
 
@@ -33,6 +32,10 @@ LOSS_IDS = [problem.make_id() for problem in LOSS_PROBLEMS]
 # second-order does not make sense
 LOSS_FAIL_PROBLEMS = make_test_problems(LOSS_FAIL_SETTINGS)
 LOSS_FAIL_IDS = [problem.make_id() for problem in LOSS_FAIL_PROBLEMS]
+
+# for ConvTranspose2d development
+CONV_T_PROBLEMS = [problem for problem in make_test_problems(CONV_TRANSPOSE_SETTINGS)]
+CONV_T_IDS = [problem.make_id() for problem in CONV_T_PROBLEMS]
 
 
 @pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
@@ -52,7 +55,9 @@ def test_jac_mat_prod(problem, V=3):
     check_sizes_and_values(autograd_res, backpack_res)
 
 
-@pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
+@pytest.mark.parametrize(
+    "problem", NO_LOSS_PROBLEMS + CONV_T_PROBLEMS, ids=NO_LOSS_IDS + CONV_T_IDS
+)
 def test_jac_t_mat_prod(problem, V=3):
     """Test the transposed Jacobian-matrix product.
 
@@ -123,16 +128,13 @@ for problem, problem_id in zip(PROBLEMS, IDS):
         IDS_WITH_BIAS.append(problem_id)
 
 
-PROBLEMS_CONV_T = [problem for problem in make_test_problems(CONV_TRANSPOSE_SETTINGS)]
-IDS_CONV_T = [problem.make_id() for problem in PROBLEMS_CONV_T]
-
 PROBLEMS_CONV_T_WITH_BIAS = []
-IDS_CONV_T_WITH_BIAS = []
+CONV_T_IDS_WITH_BIAS = []
 
-for problem, problem_id in zip(PROBLEMS_CONV_T, IDS_CONV_T):
+for problem, problem_id in zip(CONV_T_PROBLEMS, CONV_T_IDS):
     if hasattr(problem.module, "bias") and problem.module.bias is not None:
         PROBLEMS_CONV_T_WITH_BIAS.append(problem)
-        IDS_CONV_T_WITH_BIAS.append(problem_id)
+        CONV_T_IDS_WITH_BIAS.append(problem_id)
 
 
 @pytest.mark.parametrize(
@@ -141,7 +143,7 @@ for problem, problem_id in zip(PROBLEMS_CONV_T, IDS_CONV_T):
 @pytest.mark.parametrize(
     "problem",
     PROBLEMS_WITH_BIAS + PROBLEMS_CONV_T_WITH_BIAS,
-    ids=IDS_WITH_BIAS + IDS_CONV_T_WITH_BIAS,
+    ids=IDS_WITH_BIAS + CONV_T_IDS_WITH_BIAS,
 )
 def test_bias_jac_t_mat_prod(problem, sum_batch, V=3):
     """Test the transposed Jacobian-matrix product w.r.t. to the biass.
