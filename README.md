@@ -7,7 +7,7 @@
 BackPACK is built on top of [PyTorch](https://github.com/pytorch/pytorch). It efficiently computes quantities other than the gradient.
 
 - **Website:** https://backpack.pt
-- **Documentation:** https://readthedocs.org/projects/backpack/
+- **Documentation:** https://docs.backpack.pt/en/master/
 - **Bug reports & feature requests:** https://github.com/f-dangel/backpack/issues
 
 Provided quantities include:
@@ -24,15 +24,10 @@ pip install backpack-for-pytorch
 ```
 
 ## Examples
-- **Basic:**
-  -  [Individual gradients](https://github.com/f-dangel/backpack/blob/master/examples/example_indiv_grads.py) (logistic regression)
+- [Basic usage](https://docs.backpack.pt/en/use-cases/examples/example_all_in_one.html)
+- [Some use cases](https://docs.backpack.pt/en/use-cases/use_cases/index.html)
 
-- **Full demos:** We recommend to **start with these templates** and strip off unneeded quantities.
-  -  [Full demo](https://github.com/f-dangel/backpack/blob/master/examples/example_all_in_one.py) (logistic regression)
-  -  [Full demo](https://github.com/f-dangel/backpack/blob/master/examples/example_cnn_all_in_one.py) (convolutional neural network classification)
-- **More:** Check out the [`examples/` directory](https://github.com/f-dangel/backpack/blob/master/examples)
-- **Math details:** For an overview, see the [cheatsheet](examples/cheatsheet.pdf)
-
+#
 ## Contributing
 BackPACK is actively being developed. 
 We are appreciating any help.

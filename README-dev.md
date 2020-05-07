@@ -45,6 +45,21 @@ make install-dev
     make format-check
     ```
 
+## Documentation
+
+### Build
+- Use `make build-docs`
+- To use the RTD theme, uncomment the line `html_theme = "sphinx_rtd_theme"` in `docs/rtd/conf.py` (this line needs to be uncommented for automatic deployment to RTD)
+
+### View
+- Go to `docs_src/rtd_output/html`, open `index.html`
+
+### Edit
+- Content in `docs_src/rtd/*.rst`
+- Docstrings in code
+- Examples in `examples/rtd_examples` (compiled automatically)
+
+
 ## Details
 
 - Running quick/extensive tests: ([testing readme](test/readme.md))

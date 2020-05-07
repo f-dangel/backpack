@@ -2,9 +2,11 @@ from torch.nn import (
     AvgPool2d,
     Conv2d,
     ConvTranspose2d,
+    CrossEntropyLoss,
     Dropout,
     Linear,
     MaxPool2d,
+    MSELoss,
     ReLU,
     Sigmoid,
     Tanh,
@@ -14,9 +16,11 @@ from torch.nn import (
 from .avgpool2d import AvgPool2DDerivatives
 from .conv2d import Conv2DDerivatives
 from .conv_transpose2d import ConvTranspose2DDerivatives
+from .crossentropyloss import CrossEntropyLossDerivatives
 from .dropout import DropoutDerivatives
 from .linear import LinearDerivatives
 from .maxpool2d import MaxPool2DDerivatives
+from .mseloss import MSELossDerivatives
 from .relu import ReLUDerivatives
 from .sigmoid import SigmoidDerivatives
 from .tanh import TanhDerivatives
@@ -33,4 +37,6 @@ derivatives_for = {
     Tanh: TanhDerivatives,
     Sigmoid: SigmoidDerivatives,
     ConvTranspose2d: ConvTranspose2DDerivatives,
+    CrossEntropyLoss: CrossEntropyLossDerivatives,
+    MSELoss: MSELossDerivatives,
 }

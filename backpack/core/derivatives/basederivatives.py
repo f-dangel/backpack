@@ -1,32 +1,40 @@
+"""Base classes for more flexible Jacobians and second-order information."""
+
+import warnings
+
 from backpack.core.derivatives import shape_check
 
 
 class BaseDerivatives:
-    """First- and second-order partial derivatives of a module.
+    """First- and second-order partial derivatives of unparameterized module.
 
-    Shape conventions:
-    ------------------
-    * Batch size: N
-    * Free dimension for vectorization: V
+    Note:
+        Throughout the code, use these conventions if possible:
 
-    For vector-processing layers (2d input):
-    * input [N, C_in],  output [N, C_out]
+        - `N`: batch size
+        - Vectors
+          - Layer input shape `[N, D_in]`
+          - Layer output shape `[N, D_out]`
+        - Images
+          - Layer input shape `[N, C_in, H_in, W_in]`
+          - Layer output shape `[N, C_out, H_out, W_out]`
+        - `V`: vectorization axis
 
-    For image-processing layers (4d input)
-    * Input/output channels: C_in/C_out
-    * Input/output height: H_in/H_out
-    * Input/output width: W_in/W_out
-    * input [N, C_in, H_in, W_in],  output [N, C_out, H_in, W_in]
+    Definition:
+        For simplicity, consider the vector case, i.e. a function which maps an
+        `[N, D_in]` `input` into an `[N, D_out]` `output`.
 
+        The input-output Jacobian `J` of  is tensor of shape `[N, D_out, N_in, D_in]`.
+        Partial derivatives are ordered as
 
-    Definitions:
-    ------------
-    * The Jacobian J is defined as
-        J[n, c, w, ..., ̃n, ̃c, ̃w, ...]
-        = 𝜕output[n, c, w, ...] / 𝜕input[̃n, ̃c, ̃w, ...]
-    * The transposed Jacobian Jᵀ is defined as
-        Jᵀ[̃n, ̃c, ̃w, ..., n, c, w, ...]
-        = 𝜕output[n, c, w, ...] / 𝜕input[̃n, ̃c, ̃w, ...]
+            `J[i, j, k, l] = 𝜕output[i, j] / 𝜕input[k, l].
+
+        The transposed input-output Jacobian `Jᵀ` has shape `[N, D_in, N, D_out]`.
+        Partial derivatives are ordered as
+
+            `Jᵀ[i, j, k, l] = 𝜕output[k, l] / 𝜕input[i, j]`.
+
+        In general, feature dimension indices `j, l` are product indices.
     """
 
     @shape_check.jac_mat_prod_accept_vectors
@@ -34,39 +42,38 @@ class BaseDerivatives:
     def jac_mat_prod(self, module, g_inp, g_out, mat):
         """Apply Jacobian of the output w.r.t. input to a matrix.
 
-        Implicit application of J:
-            result[v, n, c, w, ...]
-            =  ∑_{̃n, ̃c, ̃w} J[n, c, w, ..., ̃n, ̃c, ̃w, ...] mat[̃n, ̃c, ̃w, ...].
+        It is assumed that the module input has shape `[N, *]`, while the output is
+        of shape `[N, •]`. Both `*`, `•` denote arbitrary shapes.
 
-        Arguments:
-            module (torch.nn.Module): Extended module that has been used in a
-                `forward` pass.
+        Apply Jacobian to all slices among the vectorization axis.
+
+            `result[v, n, •] =  ∑ₖ ∑_* J[n, •, k, *] mat[v, n, *]`.
+
+        Args:
+            module (torch.nn.Module): Extended module.
             g_inp ([torch.Tensor]): Gradients of the module w.r.t. its inputs.
             g_out ([torch.Tensor]): Gradients of the module w.r.t. its outputs.
             mat (torch.Tensor): Matrix the Jacobian will be applied to. Must have
-                shape [V, N, C_in, H_in, ...].
+                shape `[V, N, *]`.
 
-        Notes:
+        Returns:
+            torch.Tensor: Jacobian-matrix product. Has shape [V, N, *].
+
+        Note:
             - The Jacobian can be applied without knowledge about backpropagated
               derivatives. Both `g_inp` and `g_out` are usually not required and
               can be set to `None`.
-            - It is currently unclear whether the additional information about the
-              computational graph, encoded in `g_inp`, `g_out` might become relevant.
-
-        Returns:
-            torch.Tensor: Jacobian-matrix product.
-                Has shape [V, N, C_out, H_out, ...].
         """
         return self._jac_mat_prod(module, g_inp, g_out, mat)
 
     def _jac_mat_prod(self, module, g_inp, g_out, mat):
-        """Internal implementation of the Jacobian."""
+        """Internal implementation of the input-output Jacobian."""
         raise NotImplementedError
 
     @shape_check.jac_t_mat_prod_accept_vectors
     @shape_check.jac_t_mat_prod_check_shapes
     def jac_t_mat_prod(self, module, g_inp, g_out, mat):
-        """Apply transposed Jacobian of module output w.r.t. input to a matrix.
+        """Apply transposed input-ouput Jacobian of module output to a matrix.
 
         Implicit application of Jᵀ:
             result[v, ̃n, ̃c, ̃w, ...]
@@ -99,12 +106,18 @@ class BaseDerivatives:
         raise NotImplementedError
 
     def hessian_is_diagonal(self):
+        """Is `∂²output[i] / ∂input[j] ∂input[k]` nonzero only if `i = j = k`."""
         raise NotImplementedError
 
     def hessian_diagonal(self):
+        """Return `∂²output[i] / ∂input[i]²`.
+
+        Only required if `hessian_is_diagonal` returns `True`.
+        """
         raise NotImplementedError
 
     def hessian_is_psd(self):
+        """Is `∂²output[i] / ∂input[j] ∂input[k]` positive semidefinite (PSD)."""
         raise NotImplementedError
 
     # TODO make accept vectors
@@ -269,13 +282,12 @@ class BaseParameterDerivatives(BaseDerivatives):
 
 
 class BaseLossDerivatives(BaseDerivatives):
-    """Second- order partial derivatives of loss functions.
-
-    """
+    """Second- order partial derivatives of loss functions."""
 
     # TODO Add shape check
     def sqrt_hessian(self, module, g_inp, g_out):
         """Symmetric factorization ('sqrt') of the loss Hessian."""
+        self.check_2nd_order_make_sense(module, g_inp, g_out)
         return self._sqrt_hessian(module, g_inp, g_out)
 
     def _sqrt_hessian(self, module, g_inp, g_out):
@@ -284,6 +296,7 @@ class BaseLossDerivatives(BaseDerivatives):
     # TODO Add shape check
     def sqrt_hessian_sampled(self, module, g_inp, g_out, mc_samples=1):
         """Monte-Carlo sampled symmetric factorization of the loss Hessian."""
+        self.check_2nd_order_make_sense(module, g_inp, g_out)
         return self._sqrt_hessian_sampled(module, g_inp, g_out, mc_samples=mc_samples)
 
     def _sqrt_hessian_sampled(self, module, g_inp, g_out, mc_samples=1):
@@ -296,6 +309,7 @@ class BaseLossDerivatives(BaseDerivatives):
 
         Return a function that maps mat to H * mat.
         """
+        self.check_2nd_order_make_sense(module, g_inp, g_out)
         return self._make_hessian_mat_prod(module, g_inp, g_out)
 
     def _make_hessian_mat_prod(self, module, g_inp, g_out):
@@ -304,7 +318,37 @@ class BaseLossDerivatives(BaseDerivatives):
     # TODO Add shape check
     def sum_hessian(self, module, g_inp, g_out):
         """Loss Hessians, summed over the batch dimension."""
+        self.check_2nd_order_make_sense(module, g_inp, g_out)
         return self._sum_hessian(module, g_inp, g_out)
 
     def _sum_hessian(self, module, g_inp, g_out):
         raise NotImplementedError
+
+    def check_2nd_order_make_sense(self, module, g_inp, g_out):
+        """Verify conditions for 2nd-order extensions to be working.
+
+        2nd-order extensions are only guaranteed to work if the `loss`,
+        on which `backward()` is called, is a scalar that has not been
+        modified further after passing through the loss function module.
+        """
+        self._check_output_is_scalar(module)
+        self._check_loss_has_not_been_modified(module, g_out)
+
+    def _check_output_is_scalar(self, module):
+        """Raise an exception is the module output is not a scalar."""
+        if module.output.numel() != 1:
+            raise ValueError(
+                "Output must be scalar. Got {}".format(module.output.shape)
+            )
+
+    def _check_loss_has_not_been_modified(self, module, g_out):
+        """Raise a warning if the module output seems to have been changed."""
+        grad_out_is_identity = g_out is None or (g_out[0] == 1.0).all().item()
+        if not grad_out_is_identity:
+            warnings.warn(
+                "The output of {} seems to have been modified.".format(module)
+                + " Backpack might give wrong second-order information."
+                + " Make sure you call backward() on the output of a loss"
+                + " function module from torch.nn",
+                UserWarning,
+            )

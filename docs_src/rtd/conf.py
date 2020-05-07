@@ -1,4 +1,4 @@
-# Configuration file for the Sphinx documentation builder.
+# Sphinx Configuration file
 #
 # This file only contains a selection of the most common options. For a full
 # list see the documentation:
@@ -21,7 +21,7 @@ copyright = ""
 author = ""
 
 # The full version, including alpha/beta/rc tags
-release = "0.1"
+release = "1.1.0"
 master_doc = "index"
 
 # -- General configuration ---------------------------------------------------
@@ -33,6 +33,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.coverage",
     "sphinx.ext.autosectionlabel",
+    "sphinx.ext.intersphinx",
     "sphinx_gallery.gen_gallery",
 ]
 
@@ -44,12 +45,23 @@ templates_path = ["_templates"]
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = []
 
+# -- Intersphinx config -----------------------------------------------------
+
+intersphinx_mapping = {"torch": ("https://pytorch.org/docs/stable/", None)}
+
 # -- Sphinx Gallery config ---------------------------------------------------
 
 sphinx_gallery_conf = {
-    "examples_dirs": "../../examples/rtd_examples",  # path to your example scripts
-    "gallery_dirs": "examples",  # path to where to save gallery generated output
+    "examples_dirs": [
+        "../examples/basic_usage",
+        "../examples/use_cases",
+    ],  # path to your example scripts
+    "gallery_dirs": [
+        "basic_usage",
+        "use_cases",
+    ],  # path to where to save gallery generated output
     "default_thumb_file": "assets/backpack_logo_torch.png",
+    "filename_pattern": "example",
 }
 
 # -- Options for HTML output -------------------------------------------------

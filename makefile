@@ -1,6 +1,6 @@
 .PHONY: help
 .PHONY: black black-check flake8
-.PHONY: install install-dev install-devtools install-test install-lint
+.PHONY: install install-dev install-devtools install-test install-lint install-docs
 .PHONY: test
 .PHONY: conda-env
 .PHONY: black isort format
@@ -8,6 +8,7 @@
 .PHONY: flake8
 .PHONY: pydocstyle-check
 .PHONY: darglint-check
+.PHONY: build-docs
 
 .DEFAULT: help
 help:
@@ -31,8 +32,12 @@ help:
 	@echo "        Install only the linter tools (included in install-dev)"
 	@echo "install-test"
 	@echo "        Install only the testing tools (included in install-dev)"
+	@echo "install-docs"
+	@echo "        Install only the tools to build/view the docs (included in install-dev)"
 	@echo "conda-env"
 	@echo "        Create conda environment 'backpack' with dev setup"
+	@echo "build-docs"
+	@echo "        Build the docs"
 ###
 # Test coverage
 test:
@@ -87,6 +92,9 @@ install-lint:
 install-test:
 	@pip install -r requirements/test.txt
 
+install-docs:
+	@pip install -r requirements/docs.txt
+
 install-devtools:
 	@echo "Install dev tools..."
 	@pip install -r requirements-dev.txt
@@ -105,3 +113,8 @@ install-dev: install-devtools
 # Conda environment
 conda-env:
 	@conda env create --file .conda_env.yml
+
+###
+# Documentation
+build-docs:
+	@cd docs_src/rtd && make html

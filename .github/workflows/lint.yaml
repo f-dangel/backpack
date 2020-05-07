@@ -3,7 +3,13 @@ name: Lint
 on:
   push:
     branches:
-      - pep8-style
+      - development
+      - master
+  pull_request:
+    branches:
+      - development
+      - master
+    
 
 jobs:
   flake8:
@@ -37,6 +43,7 @@ jobs:
       run: |
         make black-check
   pydocstyle:
+    if: false
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -52,6 +59,7 @@ jobs:
       run: |
         make pydocstyle-check
   darglint:
+    if: false
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
