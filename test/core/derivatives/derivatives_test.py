@@ -7,7 +7,7 @@
 - Transposed Jacobian-matrix products with respect to layer parameters
 """
 
-from test.automated_test import check_sizes, check_values
+from test.automated_test import check_sizes_and_values
 from test.core.derivatives.implementation.autograd import AutogradDerivatives
 from test.core.derivatives.implementation.backpack import BackpackDerivatives
 from test.core.derivatives.problem import make_test_problems
@@ -45,8 +45,7 @@ def test_jac_mat_prod(problem, V=3):
     backpack_res = BackpackDerivatives(problem).jac_mat_prod(mat)
     autograd_res = AutogradDerivatives(problem).jac_mat_prod(mat)
 
-    check_sizes(autograd_res, backpack_res)
-    check_values(autograd_res, backpack_res)
+    check_sizes_and_values(autograd_res, backpack_res)
 
 
 @pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
@@ -63,8 +62,7 @@ def test_jac_t_mat_prod(problem, V=3):
     backpack_res = BackpackDerivatives(problem).jac_t_mat_prod(mat)
     autograd_res = AutogradDerivatives(problem).jac_t_mat_prod(mat)
 
-    check_sizes(autograd_res, backpack_res)
-    check_values(autograd_res, backpack_res)
+    check_sizes_and_values(autograd_res, backpack_res)
 
 
 PROBLEMS_WITH_WEIGHTS = []
@@ -93,8 +91,7 @@ def test_weight_jac_t_mat_prod(problem, sum_batch, V=3):
     backpack_res = BackpackDerivatives(problem).weight_jac_t_mat_prod(mat, sum_batch)
     autograd_res = AutogradDerivatives(problem).weight_jac_t_mat_prod(mat, sum_batch)
 
-    check_sizes(autograd_res, backpack_res)
-    check_values(autograd_res, backpack_res)
+    check_sizes_and_values(autograd_res, backpack_res)
 
 
 @pytest.mark.parametrize("problem", PROBLEMS_WITH_WEIGHTS, ids=IDS_WITH_WEIGHTS)
@@ -111,8 +108,7 @@ def test_weight_jac_mat_prod(problem, V=3):
     backpack_res = BackpackDerivatives(problem).weight_jac_mat_prod(mat)
     autograd_res = AutogradDerivatives(problem).weight_jac_mat_prod(mat)
 
-    check_sizes(autograd_res, backpack_res)
-    check_values(autograd_res, backpack_res)
+    check_sizes_and_values(autograd_res, backpack_res)
 
 
 PROBLEMS_WITH_BIAS = []
@@ -141,8 +137,7 @@ def test_bias_jac_t_mat_prod(problem, sum_batch, V=3):
     backpack_res = BackpackDerivatives(problem).bias_jac_t_mat_prod(mat, sum_batch)
     autograd_res = AutogradDerivatives(problem).bias_jac_t_mat_prod(mat, sum_batch)
 
-    check_sizes(autograd_res, backpack_res)
-    check_values(autograd_res, backpack_res)
+    check_sizes_and_values(autograd_res, backpack_res)
 
 
 @pytest.mark.parametrize("problem", PROBLEMS_WITH_BIAS, ids=IDS_WITH_BIAS)
@@ -159,8 +154,7 @@ def test_bias_jac_mat_prod(problem, V=3):
     backpack_res = BackpackDerivatives(problem).bias_jac_mat_prod(mat)
     autograd_res = AutogradDerivatives(problem).bias_jac_mat_prod(mat)
 
-    check_sizes(autograd_res, backpack_res)
-    check_values(autograd_res, backpack_res)
+    check_sizes_and_values(autograd_res, backpack_res)
 
 
 @pytest.mark.parametrize("problem", LOSS_PROBLEMS, ids=LOSS_IDS)
@@ -177,8 +171,7 @@ def test_sqrt_hessian_squared_equals_hessian(problem):
     backpack_res = BackpackDerivatives(problem).input_hessian_via_sqrt_hessian()
     autograd_res = AutogradDerivatives(problem).input_hessian()
 
-    check_sizes(autograd_res, backpack_res)
-    check_values(autograd_res, backpack_res)
+    check_sizes_and_values(autograd_res, backpack_res)
 
 
 @pytest.mark.parametrize("problem", LOSS_FAIL_PROBLEMS, ids=LOSS_FAIL_IDS)
@@ -203,9 +196,8 @@ def test_sqrt_hessian_sampled_squared_approximates_hessian(problem, mc_samples=1
     )
     autograd_res = AutogradDerivatives(problem).input_hessian()
 
-    check_sizes(autograd_res, backpack_res)
     RTOL, ATOL = 1e-2, 2e-2
-    check_values(autograd_res, backpack_res, rtol=RTOL, atol=ATOL)
+    check_sizes_and_values(autograd_res, backpack_res, rtol=RTOL, atol=ATOL)
 
 
 @pytest.mark.parametrize("problem", LOSS_FAIL_PROBLEMS, ids=LOSS_FAIL_IDS)
@@ -226,8 +218,7 @@ def test_sum_hessian(problem):
     backpack_res = BackpackDerivatives(problem).sum_hessian()
     autograd_res = AutogradDerivatives(problem).sum_hessian()
 
-    check_sizes(autograd_res, backpack_res)
-    check_values(autograd_res, backpack_res)
+    check_sizes_and_values(autograd_res, backpack_res)
 
 
 @pytest.mark.parametrize("problem", LOSS_FAIL_PROBLEMS, ids=LOSS_FAIL_IDS)
@@ -258,5 +249,4 @@ def test_ea_jac_t_mat_jac_prod(problem):
     backpack_res = BackpackDerivatives(problem).ea_jac_t_mat_jac_prod(mat)
     autograd_res = AutogradDerivatives(problem).ea_jac_t_mat_jac_prod(mat)
 
-    check_sizes(autograd_res, backpack_res)
-    check_values(autograd_res, backpack_res)
+    check_sizes_and_values(autograd_res, backpack_res)
