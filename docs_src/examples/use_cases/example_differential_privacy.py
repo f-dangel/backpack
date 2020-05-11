@@ -55,7 +55,7 @@ import matplotlib.pyplot as plt
 NUM_EPOCHS = 1
 PRINT_EVERY = 50
 MAX_ITER = 200
-BATCH_SIZE = 512
+BATCH_SIZE = 64
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 torch.manual_seed(0)
 
@@ -108,7 +108,7 @@ def make_small_cnn(outputs=10, channels=(16, 32), fc_dim=32, kernels=(8, 4)):
     )
 
 
-mnist_dataloader = get_mnist_dataloder()
+mnist_dataloader = get_mnist_dataloder(batch_size=BATCH_SIZE)
 
 model = make_small_cnn().to(DEVICE)
 loss_function = nn.CrossEntropyLoss().to(DEVICE)
