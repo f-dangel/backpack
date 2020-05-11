@@ -24,8 +24,8 @@ pip install backpack-for-pytorch
 ```
 
 ## Examples
-- [Basic usage](https://docs.backpack.pt/en/use-cases/examples/example_all_in_one.html)
-- [Some use cases](https://docs.backpack.pt/en/use-cases/use_cases/index.html)
+- [Basic usage](https://docs.backpack.pt/en/master/basic_usage/example_all_in_one.html)
+- [Some use cases](https://docs.backpack.pt/en/master/use_cases/index.html)
 
 #
 ## Contributing
