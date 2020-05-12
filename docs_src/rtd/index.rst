@@ -9,7 +9,7 @@ to extract more information from a backward pass.
 	pip install backpack-for-pytorch
 
 For a quick overview of the features, check `backpack.pt <http://www.backpack.pt>`_.
-The code lives on `Github <www.github.com/f-dangel/backpack>`_.
+The code lives on `Github <http://www.github.com/f-dangel/backpack>`_.
 
 
 .. toctree::
