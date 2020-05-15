@@ -178,7 +178,7 @@ SETTINGS += [
         "module_kwargs": {"reduction": "mean"},
         "input_kwargs": {"size": (2, 4)},
         "target_fn": classification_targets,
-        "target_kwargs": {"size": (2,), "num_classes": 3},
+        "target_kwargs": {"size": (2,), "num_classes": 4},
     },
     {
         "module_fn": torch.nn.MSELoss,
@@ -225,7 +225,7 @@ SETTINGS += [
         "module_kwargs": {"reduction": "none"},
         "input_kwargs": {"size": (1, 1)},
         "target_fn": classification_targets,
-        "target_kwargs": {"size": (1,), "num_classes": 3},
+        "target_kwargs": {"size": (1,), "num_classes": 1},
     },
     ## MSELoss
     ### reduction 'mean'
