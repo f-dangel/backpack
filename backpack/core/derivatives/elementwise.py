@@ -18,8 +18,9 @@ class ElementwiseDerivatives(BaseDerivatives):
     def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
         self._no_inplace(module)
 
-        batch, df_flat = self.batch_flat(self.df(module, g_inp, g_out))
-        return einsum("ni,nj,ij->ij", (df_flat, df_flat, mat)) / batch
+        N = module.input0.size(0)
+        df_flat = self.df(module, g_inp, g_out).reshape(N, -1)
+        return einsum("ni,nj,ij->ij", (df_flat, df_flat, mat)) / N
 
     def hessian_diagonal(self, module, g_inp, g_out):
         self._no_inplace(module)

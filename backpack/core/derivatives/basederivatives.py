@@ -129,12 +129,6 @@ class BaseDerivatives:
         """
         raise NotImplementedError
 
-    # TODO Refactor and remove
-    def batch_flat(self, tensor):
-        batch = tensor.size(0)
-        # TODO Removing the clone().detach() will destroy the computation graph
-        # Tests will fail
-        return batch, tensor.clone().detach().view(batch, -1)
 
     # TODO Refactor and remove
     def get_batch(self, module):
