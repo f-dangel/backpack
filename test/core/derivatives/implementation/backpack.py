@@ -93,7 +93,7 @@ class BackpackDerivatives(DerivativesImplementation):
 
     def _embed_sample_hessians(self, individual_hessians, input):
         hessian_shape = (*input.shape, *input.shape)
-        hessian = torch.zeros(hessian_shape)
+        hessian = torch.zeros(hessian_shape, device=input.device)
 
         N = input.shape[0]
 

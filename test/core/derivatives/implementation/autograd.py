@@ -98,7 +98,7 @@ class AutogradDerivatives(DerivativesImplementation):
                     input_requires_grad=True, sample_idx=sample_idx
                 )
 
-                result = torch.zeros(sample.numel(), mat.size(1))
+                result = torch.zeros(sample.numel(), mat.size(1), device=sample.device)
 
                 for col in range(mat.size(1)):
                     column = mat[:, col].reshape(output.shape)
@@ -182,9 +182,11 @@ class AutogradDerivatives(DerivativesImplementation):
         N = input.shape[0]
         num_features = input.numel() // N
 
-        sum_hessian = torch.zeros(num_features, num_features)
+        sum_hessian = torch.zeros(num_features, num_features, device=input.device)
 
-        hessian_different_samples = torch.zeros(num_features, num_features)
+        hessian_different_samples = torch.zeros(
+            num_features, num_features, device=input.device
+        )
         for n_1 in range(N):
             for n_2 in range(N):
                 block = hessian[n_1, :, n_2, :]
