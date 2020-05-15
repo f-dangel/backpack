@@ -40,7 +40,7 @@ class BatchNorm1dDerivatives(BaseParameterDerivatives):
         """
         assert module.affine is True
 
-        N = self.get_batch(module)
+        N = module.input0.size(0)
         x_hat, var = self.get_normalized_input_and_var(module)
         ivar = 1.0 / (var + module.eps).sqrt()
 
@@ -90,7 +90,7 @@ class BatchNorm1dDerivatives(BaseParameterDerivatives):
         return einsum(equation, operands)
 
     def _bias_jac_mat_prod(self, module, g_inp, g_out, mat):
-        N = self.get_batch(module)
+        N = module.input0.size(0)
         return mat.unsqueeze(1).repeat(1, N, 1)
 
     def _bias_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
