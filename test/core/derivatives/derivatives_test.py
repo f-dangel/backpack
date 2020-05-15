@@ -39,13 +39,14 @@ def test_jac_mat_prod(problem, V=3):
         problem (DerivativesProblem): Problem for derivative test.
         V (int): Number of vectorized Jacobian-vector products.
     """
-    torch.manual_seed(123)
+    problem.set_up()
     mat = torch.rand(V, *problem.input_shape).to(problem.device)
 
     backpack_res = BackpackDerivatives(problem).jac_mat_prod(mat)
     autograd_res = AutogradDerivatives(problem).jac_mat_prod(mat)
 
     check_sizes_and_values(autograd_res, backpack_res)
+    problem.tear_down()
 
 
 @pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
@@ -56,19 +57,20 @@ def test_jac_t_mat_prod(problem, V=3):
         problem (DerivativesProblem): Problem for derivative test.
         V (int): Number of vectorized transposed Jacobian-vector products.
     """
-    torch.manual_seed(123)
+    problem.set_up()
     mat = torch.rand(V, *problem.output_shape).to(problem.device)
 
     backpack_res = BackpackDerivatives(problem).jac_t_mat_prod(mat)
     autograd_res = AutogradDerivatives(problem).jac_t_mat_prod(mat)
 
     check_sizes_and_values(autograd_res, backpack_res)
+    problem.tear_down()
 
 
 PROBLEMS_WITH_WEIGHTS = []
 IDS_WITH_WEIGHTS = []
 for problem, problem_id in zip(PROBLEMS, IDS):
-    if hasattr(problem.module, "weight") and problem.module.weight is not None:
+    if problem.has_weight():
         PROBLEMS_WITH_WEIGHTS.append(problem)
         IDS_WITH_WEIGHTS.append(problem_id)
 
@@ -85,13 +87,14 @@ def test_weight_jac_t_mat_prod(problem, sum_batch, V=3):
         sum_batch (bool): Sum results over the batch dimension.
         V (int): Number of vectorized transposed Jacobian-vector products.
     """
-    torch.manual_seed(123)
+    problem.set_up()
     mat = torch.rand(V, *problem.output_shape).to(problem.device)
 
     backpack_res = BackpackDerivatives(problem).weight_jac_t_mat_prod(mat, sum_batch)
     autograd_res = AutogradDerivatives(problem).weight_jac_t_mat_prod(mat, sum_batch)
 
     check_sizes_and_values(autograd_res, backpack_res)
+    problem.tear_down()
 
 
 @pytest.mark.parametrize("problem", PROBLEMS_WITH_WEIGHTS, ids=IDS_WITH_WEIGHTS)
@@ -102,19 +105,20 @@ def test_weight_jac_mat_prod(problem, V=3):
         problem (DerivativesProblem): Problem for derivative test.
         V (int): Number of vectorized transposed Jacobian-vector products.
     """
-    torch.manual_seed(123)
+    problem.set_up()
     mat = torch.rand(V, *problem.module.weight.shape).to(problem.device)
 
     backpack_res = BackpackDerivatives(problem).weight_jac_mat_prod(mat)
     autograd_res = AutogradDerivatives(problem).weight_jac_mat_prod(mat)
 
     check_sizes_and_values(autograd_res, backpack_res)
+    problem.tear_down()
 
 
 PROBLEMS_WITH_BIAS = []
 IDS_WITH_BIAS = []
 for problem, problem_id in zip(PROBLEMS, IDS):
-    if hasattr(problem.module, "bias") and problem.module.bias is not None:
+    if problem.has_bias():
         PROBLEMS_WITH_BIAS.append(problem)
         IDS_WITH_BIAS.append(problem_id)
 
@@ -131,13 +135,14 @@ def test_bias_jac_t_mat_prod(problem, sum_batch, V=3):
         sum_batch (bool): Sum results over the batch dimension.
         V (int): Number of vectorized transposed Jacobian-vector products.
     """
-    torch.manual_seed(123)
+    problem.set_up()
     mat = torch.rand(V, *problem.output_shape).to(problem.device)
 
     backpack_res = BackpackDerivatives(problem).bias_jac_t_mat_prod(mat, sum_batch)
     autograd_res = AutogradDerivatives(problem).bias_jac_t_mat_prod(mat, sum_batch)
 
     check_sizes_and_values(autograd_res, backpack_res)
+    problem.tear_down()
 
 
 @pytest.mark.parametrize("problem", PROBLEMS_WITH_BIAS, ids=IDS_WITH_BIAS)
@@ -148,13 +153,14 @@ def test_bias_jac_mat_prod(problem, V=3):
         problem (DerivativesProblem): Problem for derivative test.
         V (int): Number of vectorized transposed Jacobian-vector products.
     """
-    torch.manual_seed(123)
+    problem.set_up()
     mat = torch.rand(V, *problem.module.bias.shape).to(problem.device)
 
     backpack_res = BackpackDerivatives(problem).bias_jac_mat_prod(mat)
     autograd_res = AutogradDerivatives(problem).bias_jac_mat_prod(mat)
 
     check_sizes_and_values(autograd_res, backpack_res)
+    problem.tear_down()
 
 
 @pytest.mark.parametrize("problem", LOSS_PROBLEMS, ids=LOSS_IDS)
@@ -166,12 +172,16 @@ def test_sqrt_hessian_squared_equals_hessian(problem):
 
     Compares the Hessian to reconstruction from individual Hessian sqrt.
     """
-    torch.manual_seed(123)
+    problem.set_up()
 
     backpack_res = BackpackDerivatives(problem).input_hessian_via_sqrt_hessian()
     autograd_res = AutogradDerivatives(problem).input_hessian()
 
+    print(backpack_res.device)
+    print(autograd_res.device)
+
     check_sizes_and_values(autograd_res, backpack_res)
+    problem.tear_down()
 
 
 @pytest.mark.parametrize("problem", LOSS_FAIL_PROBLEMS, ids=LOSS_FAIL_IDS)
@@ -189,7 +199,7 @@ def test_sqrt_hessian_sampled_squared_approximates_hessian(problem, mc_samples=1
 
     Compares the Hessian to reconstruction from individual Hessian MC-sampled sqrt.
     """
-    torch.manual_seed(123)
+    problem.set_up()
 
     backpack_res = BackpackDerivatives(problem).input_hessian_via_sqrt_hessian(
         mc_samples=mc_samples
@@ -198,6 +208,7 @@ def test_sqrt_hessian_sampled_squared_approximates_hessian(problem, mc_samples=1
 
     RTOL, ATOL = 1e-2, 2e-2
     check_sizes_and_values(autograd_res, backpack_res, rtol=RTOL, atol=ATOL)
+    problem.tear_down()
 
 
 @pytest.mark.parametrize("problem", LOSS_FAIL_PROBLEMS, ids=LOSS_FAIL_IDS)
@@ -213,12 +224,13 @@ def test_sum_hessian(problem):
     Args:
         problem (DerivativesProblem): Problem for derivative test.
     """
-    torch.manual_seed(123)
+    problem.set_up()
 
     backpack_res = BackpackDerivatives(problem).sum_hessian()
     autograd_res = AutogradDerivatives(problem).sum_hessian()
 
     check_sizes_and_values(autograd_res, backpack_res)
+    problem.tear_down()
 
 
 @pytest.mark.parametrize("problem", LOSS_FAIL_PROBLEMS, ids=LOSS_FAIL_IDS)
@@ -242,7 +254,7 @@ def test_ea_jac_t_mat_jac_prod(problem):
     Args:
         problem (DerivativesProblem): Problem for derivative test.
     """
-    torch.manual_seed(123)
+    problem.set_up()
     out_features = torch.prod(torch.tensor(problem.output_shape[1:]))
     mat = torch.rand(out_features, out_features).to(problem.device)
 
@@ -250,3 +262,5 @@ def test_ea_jac_t_mat_jac_prod(problem):
     autograd_res = AutogradDerivatives(problem).ea_jac_t_mat_jac_prod(mat)
 
     check_sizes_and_values(autograd_res, backpack_res)
+    problem.tear_down()
+
