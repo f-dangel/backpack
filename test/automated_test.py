@@ -1,14 +1,15 @@
-import torch
 import numpy as np
 import pytest
-from .test_problems_convolutions import TEST_PROBLEMS as CONV_TEST_PROBLEMS
-from .test_problems_linear import TEST_PROBLEMS as LIN_TEST_PROBLEMS
-from .test_problems_activations import TEST_PROBLEMS as ACT_TEST_PROBLEMS
-from .test_problems_pooling import TEST_PROBLEMS as POOL_TEST_PROBLEMS
-from .test_problems_padding import TEST_PROBLEMS as PAD_TEST_PROBLEMS
-from .test_problems_bn import TEST_PROBLEMS as BN_TEST_PROBLEMS
+import torch
+
 from .implementation.implementation_autograd import AutogradImpl
 from .implementation.implementation_bpext import BpextImpl
+from .test_problems_activations import TEST_PROBLEMS as ACT_TEST_PROBLEMS
+from .test_problems_bn import TEST_PROBLEMS as BN_TEST_PROBLEMS
+from .test_problems_convolutions import TEST_PROBLEMS as CONV_TEST_PROBLEMS
+from .test_problems_linear import TEST_PROBLEMS as LIN_TEST_PROBLEMS
+from .test_problems_padding import TEST_PROBLEMS as PAD_TEST_PROBLEMS
+from .test_problems_pooling import TEST_PROBLEMS as POOL_TEST_PROBLEMS
 
 if torch.cuda.is_available():
     DEVICES = {
@@ -45,6 +46,8 @@ for dev_name, dev in DEVICES.items():
         BN_CONFIGURATIONS.append((prob, dev))
         BN_CONFIGURATION_IDS.append(probname + "-" + dev_name)
 
+ALL_CONFIGURATIONS = BN_CONFIGURATIONS + NO_BN_CONFIGURATIONS
+ALL_CONFIGURATION_IDS = BN_CONFIGURATION_IDS + NO_BN_CONFIGURATION_IDS
 
 atol = 1e-5
 rtol = 1e-5
@@ -100,9 +103,7 @@ def test_batch_gradients(problem, device):
 
 
 @pytest.mark.parametrize(
-    "problem,device",
-    NO_BN_CONFIGURATIONS + BN_CONFIGURATIONS,
-    ids=NO_BN_CONFIGURATION_IDS + BN_CONFIGURATION_IDS,
+    "problem,device", ALL_CONFIGURATIONS, ids=ALL_CONFIGURATION_IDS,
 )
 def test_batch_gradients_sum_to_grad(problem, device):
     problem.to(device)
@@ -206,9 +207,7 @@ def test_diag_h(problem, device):
 
 
 @pytest.mark.parametrize(
-    "problem,device",
-    NO_BN_CONFIGURATIONS + BN_CONFIGURATIONS,
-    ids=NO_BN_CONFIGURATION_IDS + BN_CONFIGURATION_IDS,
+    "problem,device", ALL_CONFIGURATIONS, ids=ALL_CONFIGURATION_IDS,
 )
 def test_hmp(problem, device):
     problem.to(device)
@@ -227,9 +226,7 @@ def test_hmp(problem, device):
 
 
 @pytest.mark.parametrize(
-    "problem,device",
-    NO_BN_CONFIGURATIONS + BN_CONFIGURATIONS,
-    ids=NO_BN_CONFIGURATION_IDS + BN_CONFIGURATION_IDS,
+    "problem,device", ALL_CONFIGURATIONS, ids=ALL_CONFIGURATION_IDS,
 )
 def test_ggn_mp(problem, device):
     problem.to(device)
@@ -248,9 +245,7 @@ def test_ggn_mp(problem, device):
 
 
 @pytest.mark.parametrize(
-    "problem,device",
-    NO_BN_CONFIGURATIONS + BN_CONFIGURATIONS,
-    ids=NO_BN_CONFIGURATION_IDS + BN_CONFIGURATION_IDS,
+    "problem,device", ALL_CONFIGURATIONS, ids=ALL_CONFIGURATION_IDS,
 )
 def test_hvp(problem, device):
     problem.to(device)
@@ -265,9 +260,7 @@ def test_hvp(problem, device):
 
 
 @pytest.mark.parametrize(
-    "problem,device",
-    NO_BN_CONFIGURATIONS + BN_CONFIGURATIONS,
-    ids=NO_BN_CONFIGURATION_IDS + BN_CONFIGURATION_IDS,
+    "problem,device", ALL_CONFIGURATIONS, ids=ALL_CONFIGURATION_IDS,
 )
 def test_ggn_vp(problem, device):
     problem.to(device)
@@ -279,3 +272,39 @@ def test_ggn_vp(problem, device):
 
     check_sizes(autograd_res, backpack_res)
     check_values(autograd_res, backpack_res)
+
+
+@pytest.mark.parametrize(
+    "problem,device", NO_BN_CONFIGURATIONS, ids=NO_BN_CONFIGURATION_IDS
+)
+def test_kfac_shape(problem, device):
+    problem.to(device)
+
+    backpack_res = [kfac.shape for kfac in BpextImpl(problem).kfac_blocks()]
+    autograd_res = [(dim, dim) for dim in AutogradImpl(problem).parameter_numels()]
+
+    assert backpack_res == autograd_res
+
+
+@pytest.mark.parametrize(
+    "problem,device", NO_BN_CONFIGURATIONS, ids=NO_BN_CONFIGURATION_IDS
+)
+def test_kfra_shape(problem, device):
+    problem.to(device)
+
+    backpack_res = [kfra.shape for kfra in BpextImpl(problem).kfra_blocks()]
+    autograd_res = [(dim, dim) for dim in AutogradImpl(problem).parameter_numels()]
+
+    assert backpack_res == autograd_res
+
+
+@pytest.mark.parametrize(
+    "problem,device", NO_BN_CONFIGURATIONS, ids=NO_BN_CONFIGURATION_IDS
+)
+def test_kflr_shape(problem, device):
+    problem.to(device)
+
+    backpack_res = [kflr.shape for kflr in BpextImpl(problem).kflr_blocks()]
+    autograd_res = [(dim, dim) for dim in AutogradImpl(problem).parameter_numels()]
+
+    assert backpack_res == autograd_res

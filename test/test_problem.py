@@ -1,4 +1,5 @@
 import torch
+
 from backpack import extend
 
 DEVICE_CPU = torch.device("cpu")

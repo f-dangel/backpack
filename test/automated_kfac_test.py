@@ -1,11 +1,10 @@
-import torch
 import pytest
-from .test_problems_kfacs import TEST_PROBLEMS as BATCH1_PROBLEMS
-from .test_problems_kfacs import REGRESSION_PROBLEMS as BATCH1_REGRESSION_PROBLEMS
-from .implementation.implementation_autograd import AutogradImpl
-from .implementation.implementation_bpext import BpextImpl
+import torch
 
 from .automated_test import check_sizes, check_values
+from .implementation.implementation_autograd import AutogradImpl
+from .implementation.implementation_bpext import BpextImpl
+from .test_problems_kfacs import TEST_PROBLEMS as BATCH1_PROBLEMS
 
 if torch.cuda.is_available():
     DEVICES = {
@@ -17,27 +16,12 @@ else:
         "cpu": "cpu",
     }
 
-BATCH1_TEST_PROBLEMS = {
-    **BATCH1_PROBLEMS,
-}
-
 BATCH1_CONFIGURATIONS = []
 CONFIGURATION_IDS = []
 for dev_name, dev in DEVICES.items():
-    for probname, prob in BATCH1_TEST_PROBLEMS.items():
+    for probname, prob in BATCH1_PROBLEMS.items():
         BATCH1_CONFIGURATIONS.append((prob, dev))
         CONFIGURATION_IDS.append(probname + "-" + dev_name)
-
-BATCH1_TEST_REGRESSION_PROBLEMS = {
-    **BATCH1_REGRESSION_PROBLEMS,
-}
-
-BATCH1_REGRESSION_CONFIGURATIONS = []
-REGRESSION_CONFIGURATION_IDS = []
-for dev_name, dev in DEVICES.items():
-    for probname, prob in BATCH1_TEST_REGRESSION_PROBLEMS.items():
-        BATCH1_REGRESSION_CONFIGURATIONS.append((prob, dev))
-        REGRESSION_CONFIGURATION_IDS.append(probname + "-" + dev_name)
 
 
 ###
@@ -82,19 +66,6 @@ def test_hbp_h_mode_should_equal_h(problem, device):
 
     backpack_res = BpextImpl(problem).hbp_single_sample_h_blocks()
     autograd_res = AutogradImpl(problem).h_blocks()
-
-    check_sizes(autograd_res, backpack_res)
-    check_values(autograd_res, backpack_res)
-
-
-@pytest.mark.parametrize(
-    "problem,device", BATCH1_REGRESSION_CONFIGURATIONS, ids=REGRESSION_CONFIGURATION_IDS
-)
-def test_kfac_regression_should_equal_ggn(problem, device):
-    problem.to(device)
-
-    backpack_res = BpextImpl(problem).kfac_blocks()
-    autograd_res = AutogradImpl(problem).ggn_blocks()
 
     check_sizes(autograd_res, backpack_res)
     check_values(autograd_res, backpack_res)

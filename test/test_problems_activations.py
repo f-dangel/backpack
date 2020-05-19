@@ -1,6 +1,6 @@
-from .layers import LINEARS, ACTIVATIONS
-from .problems import make_regression_problem, make_classification_problem
+from .layers import ACTIVATIONS, LINEARS
 from .networks import single_linear_layer, two_linear_layers
+from .problems import make_classification_problem, make_regression_problem
 
 TEST_SETTINGS = {
     "in_features": 7,

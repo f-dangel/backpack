@@ -1,6 +1,8 @@
 import torch
-from .test_problem import TestProblem
+
 from backpack import extend
+
+from .test_problem import TestProblem
 
 
 class ProblemBase:

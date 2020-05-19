@@ -5,7 +5,7 @@
 # from the environment for the first two.
 SPHINXOPTS    ?=
 SPHINXBUILD   ?= sphinx-build
-SOURCEDIR     = source
+SOURCEDIR     = .
 BUILDDIR      = ../rtd_output
 
 # Put it first so that "make" without argument is like "make help".

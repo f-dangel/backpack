@@ -3,7 +3,7 @@ import torch
 import torchvision
 
 
-def download_mnist():
+def load_mnist_dataset():
     """Download and normalize MNIST training data."""
     mnist_dataset = torchvision.datasets.MNIST(
         root="./data",
@@ -19,12 +19,15 @@ def download_mnist():
     return mnist_dataset
 
 
-def load_mnist_data(batch_size=64, shuffle=True):
-    """Return (inputs, labels) for an MNIST mini-batch."""
-    mnist_dataset = download_mnist()
-    mnist_loader = torch.utils.data.dataloader.DataLoader(
-        mnist_dataset, batch_size=batch_size, shuffle=shuffle,
+def get_mnist_dataloder(batch_size=64, shuffle=True):
+    """Returns a dataloader for MNIST"""
+    return torch.utils.data.dataloader.DataLoader(
+        load_mnist_dataset(), batch_size=batch_size, shuffle=shuffle,
     )
 
-    X, y = next(iter(mnist_loader))
+
+def load_one_batch_mnist(batch_size=64, shuffle=True):
+    """Return a single batch (inputs, labels) of MNIST data."""
+    dataloader = get_mnist_dataloder(batch_size, shuffle)
+    X, y = next(iter(dataloader))
     return X, y

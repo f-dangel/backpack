@@ -1,10 +1,11 @@
 import torch
-from .implementation import Implementation
 
-from backpack.hessianfree.hvp import hessian_vector_product
 from backpack.hessianfree.ggnvp import ggn_vector_product_from_plist
+from backpack.hessianfree.hvp import hessian_vector_product
 from backpack.hessianfree.rop import R_op
 from backpack.utils.convert_parameters import vector_to_parameter_list
+
+from .implementation import Implementation
 
 
 class AutogradImpl(Implementation):
@@ -178,3 +179,6 @@ class AutogradImpl(Implementation):
 
     def plist_like(self, plist):
         return [torch.zeros(*p.size()).to(self.device) for p in plist]
+
+    def parameter_numels(self):
+        return [p.numel() for p in self.model.parameters()]

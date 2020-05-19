@@ -1,6 +1,6 @@
+from .hvp import hessian_vector_product
 from .lop import L_op
 from .rop import R_op
-from .hvp import hessian_vector_product
 
 
 def ggn_vector_product(loss, output, model, v):

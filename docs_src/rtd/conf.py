@@ -1,4 +1,4 @@
-# Configuration file for the Sphinx documentation builder.
+# Sphinx Configuration file
 #
 # This file only contains a selection of the most common options. For a full
 # list see the documentation:
@@ -14,26 +14,15 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
-import os
-import sys
-sys.path.append('../../backpack/backpack')
-print(sys.path)
-
-import mock
-
-MOCK_MODULES = ['numpy', 'matplotlib', 'matplotlib.pyplot', 'torch', 'torch.nn', 'torch.nn.functional', 'opt_einsum']
-for mod_name in MOCK_MODULES:
-    sys.modules[mod_name] = mock.Mock()
-
 # -- Project information -----------------------------------------------------
 
-project = 'BackPACK'
-copyright = ''
-author = ''
+project = "BackPACK"
+copyright = ""
+author = ""
 
 # The full version, including alpha/beta/rc tags
-release = '0.1'
-
+release = "1.1.0"
+master_doc = "index"
 
 # -- General configuration ---------------------------------------------------
 
@@ -44,25 +33,44 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.coverage",
     "sphinx.ext.autosectionlabel",
+    "sphinx.ext.intersphinx",
+    "sphinx_gallery.gen_gallery",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = []
 
+# -- Intersphinx config -----------------------------------------------------
+
+intersphinx_mapping = {"torch": ("https://pytorch.org/docs/stable/", None)}
+
+# -- Sphinx Gallery config ---------------------------------------------------
+
+sphinx_gallery_conf = {
+    "examples_dirs": [
+        "../examples/basic_usage",
+        "../examples/use_cases",
+    ],  # path to your example scripts
+    "gallery_dirs": [
+        "basic_usage",
+        "use_cases",
+    ],  # path to where to save gallery generated output
+    "default_thumb_file": "assets/backpack_logo_torch.png",
+    "filename_pattern": "example",
+}
 
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-#
-html_theme = "sphinx_rtd_theme"
+# html_theme = "sphinx_rtd_theme"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['']
+# html_static_path = [""]

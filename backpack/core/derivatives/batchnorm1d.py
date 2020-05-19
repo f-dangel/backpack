@@ -1,8 +1,8 @@
-from torch.nn import BatchNorm1d
 from warnings import warn
 
+from torch import einsum
+from torch.nn import BatchNorm1d
 
-from backpack.utils.ein import einsum
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 
 

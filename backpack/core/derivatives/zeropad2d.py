@@ -1,8 +1,7 @@
 from torch.nn import ZeroPad2d, functional
 
-
-from backpack.utils.ein import eingroup
 from backpack.core.derivatives.basederivatives import BaseDerivatives
+from backpack.utils.ein import eingroup
 
 
 class ZeroPad2dDerivatives(BaseDerivatives):
@@ -12,7 +11,6 @@ class ZeroPad2dDerivatives(BaseDerivatives):
     def hessian_is_zero(self):
         return True
 
-    # TODO: Require tests
     def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
         _, C_out, H_out, W_out = module.output_shape
         _, in_c, in_x, in_y = module.input0_shape
@@ -43,4 +41,4 @@ class ZeroPad2dDerivatives(BaseDerivatives):
     def _jac_mat_prod(self, module, g_inp, g_out, mat):
         mat = eingroup("v,n,c,h,w->vn,c,h,w", mat)
         pad_mat = functional.pad(mat, module.padding, "constant", module.value)
-        return self.view_like_output(pad_mat, module)
+        return self.reshape_like_output(pad_mat, module)

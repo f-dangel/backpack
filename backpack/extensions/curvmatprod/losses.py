@@ -1,7 +1,7 @@
-from backpack.core.derivatives.mseloss import MSELossDerivatives
 from backpack.core.derivatives.crossentropyloss import CrossEntropyLossDerivatives
-from .cmpbase import CMPBase
+from backpack.core.derivatives.mseloss import MSELossDerivatives
 from backpack.extensions.curvature import Curvature
+from backpack.extensions.curvmatprod.cmpbase import CMPBase
 
 
 class CMPLoss(CMPBase):

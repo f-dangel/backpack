@@ -1,6 +1,6 @@
-from backpack.core.derivatives.linear import LinearDerivatives
-from backpack.utils.ein import einsum
+from torch import einsum
 
+from backpack.core.derivatives.linear import LinearDerivatives
 from backpack.extensions.secondorder.hbp.hbp_options import (
     BackpropStrategy,
     ExpectationApproximation,

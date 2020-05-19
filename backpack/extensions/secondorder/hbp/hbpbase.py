@@ -1,6 +1,6 @@
+from backpack.extensions.curvature import Curvature
 from backpack.extensions.module_extension import ModuleExtension
 from backpack.extensions.secondorder.hbp.hbp_options import BackpropStrategy
-from backpack.extensions.curvature import Curvature
 
 
 class HBPBaseModule(ModuleExtension):

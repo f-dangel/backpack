@@ -1,6 +1,5 @@
 from torch.nn import Flatten
 
-
 from backpack.core.derivatives.basederivatives import BaseDerivatives
 
 
@@ -15,10 +14,10 @@ class FlattenDerivatives(BaseDerivatives):
         return mat
 
     def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
-        return self.view_like_input(mat, module)
+        return self.reshape_like_input(mat, module)
 
     def _jac_mat_prod(self, module, g_inp, g_out, mat):
-        return self.view_like_output(mat, module)
+        return self.reshape_like_output(mat, module)
 
     def is_no_op(self, module):
         """Does flatten add an operation to the computational graph.

@@ -8,13 +8,18 @@ AUTHORS = "F. Dangel, F. Kunstner"
 NAME = "backpack-for-pytorch"
 PACKAGES = find_packages()
 
-DESCRIPTION = r"""BACKpropagation PACKage"""
+DESCRIPTION = "BackPACK: Packing more into backprop"
 LONG_DESCR = """
-    A backpack for PyTorch to compute quantities beyond the gradient.
-    https://github.com/f-dangel/backpack
+    BackPACK is built on top of PyTorch.
+    It efficiently computes quantities other than the gradient.
+
+    Website: https://backpack.pt
+    Code: https://github.com/f-dangel/backpack
+    Documentation: https://readthedocs.org/projects/backpack/
+    Bug reports & feature requests: https://github.com/f-dangel/backpack/issues
     """
 
-VERSION = "1.0.1"
+VERSION = "1.1.1"
 URL = "https://github.com/f-dangel/backpack"
 LICENSE = "MIT"
 
