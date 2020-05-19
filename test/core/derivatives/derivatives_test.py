@@ -250,3 +250,24 @@ def test_ea_jac_t_mat_jac_prod(problem):
     autograd_res = AutogradDerivatives(problem).ea_jac_t_mat_jac_prod(mat)
 
     check_sizes_and_values(autograd_res, backpack_res)
+
+
+@pytest.mark.skip
+@pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
+def test_hessian_is_diagonal(problem):
+    # TODO
+    pass
+
+
+@pytest.mark.skip
+@pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
+def test_hessian_diagonal(problem):
+    # TODO
+    pass
+
+
+@pytest.mark.skip
+@pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
+def test_hessian_is_psd(problem):
+    # TODO
+    pass
