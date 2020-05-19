@@ -85,7 +85,11 @@ for problem, problem_id in zip(PROBLEMS, IDS):
 @pytest.mark.parametrize(
     "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
 )
-@pytest.mark.parametrize("problem", PROBLEMS_WITH_WEIGHTS, ids=IDS_WITH_WEIGHTS)
+@pytest.mark.parametrize(
+    "problem",
+    PROBLEMS_WITH_WEIGHTS + CONV_T_PROBLEMS,
+    ids=IDS_WITH_WEIGHTS + CONV_T_IDS,
+)
 def test_weight_jac_t_mat_prod(problem, sum_batch, V=3):
     """Test the transposed Jacobian-matrix product w.r.t. to the weights.
 

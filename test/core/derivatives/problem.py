@@ -90,8 +90,6 @@ class DerivativesTestProblem:
 
         self.module = module_fn(**module_kwargs).to(device)
 
-        print(input_fn)
-        print(input_kwargs)
         self.input = input_fn(**input_kwargs).to(device)
         self.target = target_fn(**target_kwargs)
         if self.target is not None:
