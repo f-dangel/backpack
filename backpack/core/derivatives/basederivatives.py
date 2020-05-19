@@ -1,5 +1,4 @@
 """Base classes for more flexible Jacobians and second-order information."""
-
 import warnings
 
 from backpack.core.derivatives import shape_check
@@ -114,8 +113,8 @@ class BaseDerivatives:
     def hessian_is_psd(self):
         raise NotImplementedError
 
-    # TODO make accept vectors
-    # TODO add shape check
+    @shape_check.R_mat_prod_accept_vectors
+    @shape_check.R_mat_prod_check_shapes
     def make_residual_mat_prod(self, module, g_inp, g_out):
         """Return multiplication routine with the residual term.
 
@@ -127,6 +126,9 @@ class BaseDerivatives:
             This function only has to be implemented if the residual is not
             zero and not diagonal (for instance, `BatchNorm`).
         """
+        return self._make_residual_mat_prod(module, g_inp, g_out)
+
+    def _make_residual_mat_prod(self, module, g_inp, g_out):
         raise NotImplementedError
 
     # TODO Refactor and remove
