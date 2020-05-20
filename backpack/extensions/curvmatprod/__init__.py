@@ -38,6 +38,7 @@ from . import (
     padding,
     pooling,
 )
+from .hmp import HMP
 
 
 class CMP(BackpropExtension):
