@@ -264,3 +264,15 @@ def test_ea_jac_t_mat_jac_prod(problem):
     check_sizes_and_values(autograd_res, backpack_res)
     problem.tear_down()
 
+
+@pytest.mark.skip("[WAITING] Autograd issue with Hessian-vector products")
+@pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
+def test_hessian_is_zero(problem):
+    """Check if the input-output Hessian is (non-)zero."""
+    problem.set_up()
+
+    backpack_res = BackpackDerivatives(problem).hessian_is_zero()
+    autograd_res = AutogradDerivatives(problem).hessian_is_zero()
+
+    assert backpack_res == autograd_res
+    problem.tear_down()
