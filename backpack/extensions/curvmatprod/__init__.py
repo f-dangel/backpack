@@ -40,6 +40,7 @@ from . import (
 )
 from .ggnmp import GGNMP
 from .hmp import HMP
+from .pchmp import PCHMP
 
 
 class CMP(BackpropExtension):

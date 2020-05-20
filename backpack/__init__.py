@@ -131,6 +131,7 @@ def hook_run_extensions(module, g_inp, g_out):
         CTX.is_extension_active(extensions.curvmatprod.CMP)
         or CTX.is_extension_active(extensions.curvmatprod.HMP)
         or CTX.is_extension_active(extensions.curvmatprod.GGNMP)
+        or CTX.is_extension_active(extensions.curvmatprod.PCHMP)
     ):
         memory_cleanup(module)
 
