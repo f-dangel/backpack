@@ -32,6 +32,17 @@ class ElementwiseDerivatives(BaseDerivatives):
     def d2f(self, module, g_inp, g_out):
         raise NotImplementedError("Second derivatives not implemented")
 
+    def _make_residual_mat_prod(self, module, g_inp, g_out):
+        def residual_mat_prod(mat):
+            """Multiply with the residual: mat → [∑_{k} Hz_k(x) 𝛿z_k] mat.
+
+            Second term of the module input Hessian backpropagation equation.
+            """
+            residual = self.d2f(module, g_inp, g_out) * g_out[0]
+            return einsum("n...,vn...->vn...", (residual, mat))
+
+        return residual_mat_prod
+
     @staticmethod
     def _no_inplace(module):
         """Do not support inplace modification.
