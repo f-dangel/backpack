@@ -65,10 +65,10 @@ class BpextImpl(Implementation):
     def hmp(self, mat_list):
         assert len(mat_list) == len(list(self.model.parameters()))
         results = []
-        with backpack(new_ext.CMP(Curvature.HESSIAN)):
+        with backpack(new_ext.HMP()):
             self.loss().backward()
             for p, mat in zip(self.model.parameters(), mat_list):
-                results.append(p.cmp(mat))
+                results.append(p.hmp(mat))
         return results
 
     def ggn_mp(self, mat_list):
