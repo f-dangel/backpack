@@ -68,6 +68,12 @@ def report_nonclose_values(x, y):
         print("{} versus {}. Ratio of {}".format(x, y, y / x))
 
 
+def check_sizes_and_values(*plists, atol=atol, rtol=rtol):
+    check_sizes(*plists)
+    list1, list2 = plists
+    check_values(list1, list2, atol=atol, rtol=rtol)
+
+
 def check_sizes(*plists):
     for i in range(len(plists) - 1):
         assert len(plists[i]) == len(plists[i + 1])

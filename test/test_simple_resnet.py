@@ -1,11 +1,12 @@
 """An example to check if BackPACK' first-order extensions are working for ResNets."""
 
+from test.core.derivatives.utils import classification_targets
+
 import torch
 
 from backpack import backpack, extend, extensions
 
 from .automated_test import check_sizes, check_values
-from .test_sum_hessian import classification_targets
 
 
 def autograd_individual_gradients(X, y, model, loss_func):

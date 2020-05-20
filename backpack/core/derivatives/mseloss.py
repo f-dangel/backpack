@@ -2,7 +2,7 @@
 
 from math import sqrt
 
-from torch import eye, einsum, normal
+from torch import einsum, eye, normal
 from torch.nn import MSELoss
 
 from backpack.core.derivatives.basederivatives import BaseLossDerivatives
