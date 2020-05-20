@@ -4,10 +4,6 @@ from torch import einsum
 from torch.nn import BatchNorm1d
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
-from backpack.core.derivatives.shape_check import (
-    R_mat_prod_accept_vectors,
-    R_mat_prod_check_shapes,
-)
 
 
 class BatchNorm1dDerivatives(BaseParameterDerivatives):
@@ -59,19 +55,41 @@ class BatchNorm1dDerivatives(BaseParameterDerivatives):
         var = input.var(dim=0, unbiased=False)
         return (input - mean) / (var + module.eps).sqrt(), var
 
-    @R_mat_prod_accept_vectors
-    @R_mat_prod_check_shapes
-    def make_residual_mat_prod(self, module, g_inp, g_out):
-        # TODO: Implement R_mat_prod for BatchNorm
+    def _make_residual_mat_prod(self, module, g_inp, g_out):
+
+        N = self.get_batch(module)
+        x_hat, var = self.get_normalized_input_and_var(module)
+        gamma = module.weight
+        eps = module.eps
+
         def R_mat_prod(mat):
             """Multiply with the residual: mat → [∑_{k} Hz_k(x) 𝛿z_k] mat.
 
             Second term of the module input Hessian backpropagation equation.
             """
-            raise NotImplementedError
+            factor = gamma / (N * (var + eps))
 
-        # TODO: Enable tests in test/automated_bn_test.py
-        raise NotImplementedError
+            sum_127 = einsum("nc,vnc->vc", (x_hat, mat))
+            sum_24 = einsum("nc->c", g_out[0])
+            sum_3 = einsum("nc,vnc->vc", (g_out[0], mat))
+            sum_46 = einsum("vnc->vc", mat)
+            sum_567 = einsum("nc,nc->c", (x_hat, g_out[0]))
+
+            r_mat = -einsum("nc,vc->vnc", (g_out[0], sum_127))
+            r_mat += (1.0 / N) * einsum("c,vc->vc", (sum_24, sum_127)).unsqueeze(
+                1
+            ).expand(-1, N, -1)
+            r_mat -= einsum("nc,vc->vnc", (x_hat, sum_3))
+            r_mat += (1.0 / N) * einsum("nc,c,vc->vnc", (x_hat, sum_24, sum_46))
+
+            r_mat -= einsum("vnc,c->vnc", (mat, sum_567))
+            r_mat += (1.0 / N) * einsum("c,vc->vc", (sum_567, sum_46)).unsqueeze(
+                1
+            ).expand(-1, N, -1)
+            r_mat += (3.0 / N) * einsum("nc,vc,c->vnc", (x_hat, sum_127, sum_567))
+
+            return einsum("c,vnc->vnc", (factor, r_mat))
+
         return R_mat_prod
 
     def _weight_jac_mat_prod(self, module, g_inp, g_out, mat):

@@ -1,5 +1,4 @@
 """Base classes for more flexible Jacobians and second-order information."""
-
 import warnings
 
 from backpack.core.derivatives import shape_check
@@ -100,6 +99,29 @@ class BaseDerivatives:
     # TODO Add shape check
     # TODO Use new convention
     def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
+        """Expectation approximation of outer product with input-output Jacobian.
+
+        Used for backpropagation in KFRA.
+
+        For `yₙ = f(xₙ) n=1,...,n`, compute `E(Jₙᵀ mat Jₙ) = 1/n ∑ₙ Jₙᵀ mat Jₙ`.
+        In index notation, let `output[n]=f(input[n]) n = 1,...,n`. Then,
+        `result[i,j]
+        = 1/n ∑ₙₖₗ (𝜕output[n,k] / 𝜕input[n,i]) mat[k,l] (𝜕output[n,j] / 𝜕input[n,l])
+
+        Args:
+            module (torch.nn.Module): Extended module.
+            g_inp ([torch.Tensor]): Gradients of the module w.r.t. its inputs.
+            g_out ([torch.Tensor]): Gradients of the module w.r.t. its outputs.
+            mat (torch.Tensor): Matrix of shape `[D_out, D_out]`.
+
+        Returns:
+            torch.Tensor: Matrix of shape `[D_in, D_in]`.
+
+        Note:
+            - This operation can be applied without knowledge about backpropagated
+              derivatives. Both `g_inp` and `g_out` are usually not required and
+              can be set to `None`.
+        """
         raise NotImplementedError
 
     def hessian_is_zero(self):
@@ -120,8 +142,8 @@ class BaseDerivatives:
         """Is `∂²output[i] / ∂input[j] ∂input[k]` positive semidefinite (PSD)."""
         raise NotImplementedError
 
-    # TODO make accept vectors
-    # TODO add shape check
+    @shape_check.R_mat_prod_accept_vectors
+    @shape_check.R_mat_prod_check_shapes
     def make_residual_mat_prod(self, module, g_inp, g_out):
         """Return multiplication routine with the residual term.
 
@@ -133,6 +155,9 @@ class BaseDerivatives:
             This function only has to be implemented if the residual is not
             zero and not diagonal (for instance, `BatchNorm`).
         """
+        return self._make_residual_mat_prod(module, g_inp, g_out)
+
+    def _make_residual_mat_prod(self, module, g_inp, g_out):
         raise NotImplementedError
 
     # TODO Refactor and remove
