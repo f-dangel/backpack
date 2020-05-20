@@ -30,9 +30,7 @@ class HMPBase(ModuleExtension):
 
             # Multiply with the residual term: mat → [∑ᵢ Hzᵢ(x) δzᵢ] mat.
             if not self.derivatives.hessian_is_zero():
-                result += self.derivatives.make_residual_mat_prod(module, g_inp, g_out)(
-                    mat
-                )
+                result += self.derivatives.residual_mat_prod(module, g_inp, g_out, mat)
 
             return result
 

@@ -90,16 +90,9 @@ class ElementwiseDerivatives(BaseDerivatives):
         batch, df_flat = self.batch_flat(self.df(module, g_inp, g_out))
         return einsum("ni,nj,ij->ij", (df_flat, df_flat, mat)) / batch
 
-    def _make_residual_mat_prod(self, module, g_inp, g_out):
-        def residual_mat_prod(mat):
-            """Multiply with the residual: mat → [∑_{k} Hz_k(x) 𝛿z_k] mat.
-
-            Second term of the module input Hessian backpropagation equation.
-            """
-            residual = self.d2f(module, g_inp, g_out) * g_out[0]
-            return einsum("n...,vn...->vn...", (residual, mat))
-
-        return residual_mat_prod
+    def _residual_mat_prod(self, module, g_inp, g_out, mat):
+        residual = self.d2f(module, g_inp, g_out) * g_out[0]
+        return einsum("...,v...->v...", (residual, mat))
 
     @staticmethod
     def _no_inplace(module):
