@@ -2,6 +2,7 @@
 import inspect
 
 import torch
+
 from backpack.extensions.backprop_extension import BackpropExtension
 
 from . import extensions

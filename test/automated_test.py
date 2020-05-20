@@ -68,6 +68,12 @@ def report_nonclose_values(x, y):
         print("{} versus {}. Ratio of {}".format(x, y, y / x))
 
 
+def check_sizes_and_values(*plists, atol=atol, rtol=rtol):
+    check_sizes(*plists)
+    list1, list2 = plists
+    check_values(list1, list2, atol=atol, rtol=rtol)
+
+
 def check_sizes(*plists):
     for i in range(len(plists) - 1):
         assert len(plists[i]) == len(plists[i + 1])
@@ -222,7 +228,9 @@ def test_hmp(problem, device):
     autograd_res = AutogradImpl(problem).hmp(matrices)
 
     check_sizes(autograd_res, backpack_res)
-    check_values(autograd_res, backpack_res)
+    atol= 5e-4
+    rtol = 5e-4
+    check_values(autograd_res, backpack_res, atol=atol, rtol=rtol)
 
 
 @pytest.mark.parametrize(
