@@ -185,6 +185,24 @@ class AutogradDerivatives(DerivativesImplementation):
 
         return torch.cat(list(self.elementwise_hessian(tensor, x))).reshape(shape)
 
+    def hessian_is_zero(self):
+        """Return whether the input-output Hessian is zero.
+
+        Returns:
+            bool: `True`, if Hessian is zero, else `False`.
+        """
+        input, output, _ = self.problem.forward_pass(input_requires_grad=True)
+
+        zero = None
+        for hessian in self.elementwise_hessian(output, input):
+            if zero is None:
+                zero = torch.zeros_like(hessian)
+
+            if not torch.allclose(hessian, zero):
+                return False
+
+        return True
+
     def input_hessian(self):
         """Compute the Hessian of the module output w.r.t. the input."""
         input, output, _ = self.problem.forward_pass(input_requires_grad=True)
