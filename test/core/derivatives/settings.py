@@ -17,9 +17,9 @@ import torch
 
 SETTINGS = []
 
-###############################################################################
+##############
 #                                   examples                                  #
-###############################################################################
+##############
 
 example = {
     "module_fn": torch.nn.Linear,
@@ -45,9 +45,9 @@ loss_example = {
 }
 SETTINGS.append(loss_example)
 
-###############################################################################
+##############
 #                                test settings                                #
-###############################################################################
+##############
 
 SETTINGS += [
     {
@@ -187,8 +187,8 @@ SETTINGS += [
         "target_fn": regression_targets,
         "target_kwargs": {"size": (5, 1)},
     },
-    ## CrossEntropyLoss
-    ### reduction 'mean'
+    # CrossEntropyLoss
+    # reduction 'mean'
     {
         "module_fn": torch.nn.CrossEntropyLoss,
         "module_kwargs": {"reduction": "mean"},
@@ -203,7 +203,7 @@ SETTINGS += [
         "target_fn": classification_targets,
         "target_kwargs": {"size": (8,), "num_classes": 2},
     },
-    ### reduction 'sum'
+    # reduction 'sum'
     {
         "module_fn": torch.nn.CrossEntropyLoss,
         "module_kwargs": {"reduction": "sum"},
@@ -218,8 +218,8 @@ SETTINGS += [
         "target_fn": classification_targets,
         "target_kwargs": {"size": (8,), "num_classes": 2},
     },
-    ### reduction 'none': while non-scalar outputs are not
-    ### supported, a single number as output should be fine
+    # reduction 'none': while non-scalar outputs are not
+    # supported, a single number as output should be fine
     {
         "module_fn": torch.nn.CrossEntropyLoss,
         "module_kwargs": {"reduction": "none"},
@@ -227,8 +227,8 @@ SETTINGS += [
         "target_fn": classification_targets,
         "target_kwargs": {"size": (1,), "num_classes": 1},
     },
-    ## MSELoss
-    ### reduction 'mean'
+    # MSELoss
+    # reduction 'mean'
     {
         "module_fn": torch.nn.MSELoss,
         "module_kwargs": {"reduction": "mean"},
@@ -243,7 +243,7 @@ SETTINGS += [
         "target_fn": regression_targets,
         "target_kwargs": {"size": (5, 2)},
     },
-    ### reduction 'sum'
+    # reduction 'sum'
     {
         "module_fn": torch.nn.MSELoss,
         "module_kwargs": {"reduction": "sum"},
@@ -258,8 +258,8 @@ SETTINGS += [
         "target_fn": regression_targets,
         "target_kwargs": {"size": (5, 2)},
     },
-    ### reduction 'none': while non-scalar outputs are not
-    ### supported, a single number as output should be fine
+    # reduction 'none': while non-scalar outputs are not
+    # supported, a single number as output should be fine
     {
         "module_fn": torch.nn.MSELoss,
         "module_kwargs": {"reduction": "none"},
