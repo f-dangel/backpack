@@ -126,7 +126,7 @@ class AutogradDerivatives(DerivativesImplementation):
         return result / N
 
     def hessian(self, loss, x):
-        """Return the Hessian matrix of `loss` w.r.t. `x`.
+        """Return the Hessian matrix of a scalar `loss` w.r.t. a tensor `x`.
 
         Arguments:
             loss (torch.Tensor): A scalar-valued tensor.
@@ -156,6 +156,34 @@ class AutogradDerivatives(DerivativesImplementation):
             hessian_vec_x[:, column_idx] = column
 
         return hessian_vec_x.reshape(final_shape)
+
+    def elementwise_hessian(self, tensor, x):
+        """Yield the Hessian of each element in `tensor` w.r.t `x`.
+
+        Hessians are returned in the order of elements in the flattened tensor.
+        """
+        for t in tensor.flatten():
+            yield self.hessian(t, x)
+
+    def tensor_hessian(self, tensor, x):
+        """Return the Hessian of a tensor `tensor` w.r.t. a tensor `x`.
+
+        Given a `tensor` of shape `[A, B, C]` and another tensor `x` with shape `[D, E]`
+        used in the computation of `tensor`, the generalized Hessian has shape
+        [A, B, C, D, E, D, E]. Let `hessian` denote this generalized Hessian. Then,
+        `hessian[a, b, c]` contains the Hessian of the scalar entry `tensor[a, b, c]`
+        w.r.t. `x[a, b, c]`.
+
+        Arguments:
+            tensor (torch.Tensor): An arbitrary tensor.
+            x (torch.Tensor): Tensor used in the computation graph of `tensor`.
+
+        Returns:
+            torch.Tensor: Generalized Hessian of `tensor` w.r.t. `x`.
+        """
+        shape = (*tensor.shape, *x.shape, *x.shape)
+
+        return torch.cat(list(self.elementwise_hessian(tensor, x))).reshape(shape)
 
     def input_hessian(self):
         """Compute the Hessian of the module output w.r.t. the input."""
