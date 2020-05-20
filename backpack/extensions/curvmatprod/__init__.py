@@ -38,6 +38,7 @@ from . import (
     padding,
     pooling,
 )
+from .ggnmp import GGNMP
 from .hmp import HMP
 
 
