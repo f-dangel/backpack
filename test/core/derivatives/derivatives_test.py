@@ -276,3 +276,36 @@ def test_hessian_is_zero(problem):
 
     assert backpack_res == autograd_res
     problem.tear_down()
+
+
+@pytest.mark.skip
+@pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
+def test_hessian_is_diagonal(problem):
+    problem.set_up()
+
+    # TODO
+    raise NotImplementedError
+
+    problem.tear_down()
+
+
+@pytest.mark.skip
+@pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
+def test_hessian_diagonal(problem):
+    problem.set_up()
+
+    # TODO
+    raise NotImplementedError
+
+    problem.tear_down()
+
+
+@pytest.mark.skip
+@pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
+def test_hessian_is_psd(problem):
+    problem.set_up()
+
+    # TODO
+    raise NotImplementedError
+
+    problem.tear_down()
