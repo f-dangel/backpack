@@ -128,10 +128,12 @@ def hook_run_extensions(module, g_inp, g_out):
         backpack_extension.apply(module, g_inp, g_out)
 
     if not (
-        CTX.is_extension_active(extensions.curvmatprod.CMP)
-        or CTX.is_extension_active(extensions.curvmatprod.HMP)
-        or CTX.is_extension_active(extensions.curvmatprod.GGNMP)
-        or CTX.is_extension_active(extensions.curvmatprod.PCHMP)
+        CTX.is_extension_active(
+            extensions.curvmatprod.CMP,
+            extensions.curvmatprod.HMP,
+            extensions.curvmatprod.GGNMP,
+            extensions.curvmatprod.PCHMP,
+        )
     ):
         memory_cleanup(module)
 
