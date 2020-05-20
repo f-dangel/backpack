@@ -174,40 +174,16 @@ bias_jac_t_mat_prod_check_shapes = functools.partial(
 ###############################################################################
 #                     Wrapper for second-order extensions                     #
 ###############################################################################
+residual_mat_prod_check_shapes = functools.partial(
+    mat_prod_check_shapes, in_check=shape_like_output, out_check=shape_like_output
+)
+
+residual_mat_prod_accept_vectors = functools.partial(
+    mat_prod_accept_vectors, vec_criterion=same_dim_as_input,
+)
+
 
 # TODO Refactor using partials
-
-
-def residual_mat_prod_check_shapes(residual_mat_prod):
-    """Check that input and output have correct shapes."""
-
-    @functools.wraps(residual_mat_prod)
-    def wrapped_residual_mat_prod(self, module, g_inp, g_out, mat):
-        check_like(mat, module, "input0")
-        mat_out = residual_mat_prod(self, module, g_inp, g_out, mat)
-        check_like(mat_out, module, "input0")
-        check_same_V_dim(mat, mat_out)
-
-        return mat_out
-
-    return wrapped_residual_mat_prod
-
-
-def residual_mat_prod_accept_vectors(residual_mat_prod):
-    """Add support for vectors to Residual-matrix products."""
-
-    @functools.wraps(residual_mat_prod)
-    def wrapped_residual_mat_prod(self, module, g_inp, g_out, mat):
-        is_vec = same_dim_as(mat, module, "input0")
-        mat_in = mat if not is_vec else add_V_dim(mat)
-        mat_out = residual_mat_prod(self, module, g_inp, g_out, mat_in)
-        mat_out = mat_out if not is_vec else remove_V_dim(mat_out)
-
-        return mat_out
-
-    return wrapped_residual_mat_prod
-
-
 def make_hessian_mat_prod_accept_vectors(make_hessian_mat_prod):
     @functools.wraps(make_hessian_mat_prod)
     def wrapped_make_hessian_mat_prod(self, module, g_inp, g_out):

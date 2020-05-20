@@ -51,6 +51,7 @@ class PCHMPBase(ModuleExtension):
 
         return h_in_mat_prod
 
+    # TODO: Add shape check and accept vectors
     def modified_residual_mat_prod(self, ext, module, g_inp, g_out, mat, modify):
         if modify not in self.modifications.keys():
             raise KeyError(
