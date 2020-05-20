@@ -83,6 +83,15 @@ class BpextImpl(Implementation):
     def ggn_vp(self, vec_list):
         return self.ggn_mp(vec_list)
 
+    def pchmp(self, mat_list, modify):
+        assert len(mat_list) == len(list(self.model.parameters()))
+        results = []
+        with backpack(new_ext.PCHMP()):
+            self.loss().backward()
+            for p, mat in zip(self.model.parameters(), mat_list):
+                results.append(p.pchmp(mat, modify))
+        return results
+
     def matrices_from_kronecker_curvature(self, extension_cls, savefield):
         results = []
         with backpack(extension_cls()):

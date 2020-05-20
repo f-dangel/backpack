@@ -310,3 +310,20 @@ def test_kflr_shape(problem, device):
     autograd_res = [(dim, dim) for dim in AutogradImpl(problem).parameter_numels()]
 
     assert backpack_res == autograd_res
+
+
+@pytest.mark.parametrize("modify", ["abs", "clip"])
+@pytest.mark.parametrize(
+    "problem,device", NO_BN_CONFIGURATIONS, ids=NO_BN_CONFIGURATION_IDS
+)
+def test_pchmp_shape(problem, device, modify):
+    problem.to(device)
+
+    NUM_COLS = 10
+    matrices = [
+        torch.randn(NUM_COLS, *p.shape, device=device)
+        for p in problem.model.parameters()
+    ]
+
+    backpack_res = BpextImpl(problem).pchmp(matrices, modify)
+    check_sizes(matrices, backpack_res)
