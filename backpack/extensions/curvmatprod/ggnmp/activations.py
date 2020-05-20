@@ -1,7 +1,7 @@
 from backpack.core.derivatives.relu import ReLUDerivatives
 from backpack.core.derivatives.sigmoid import SigmoidDerivatives
 from backpack.core.derivatives.tanh import TanhDerivatives
-from backpack.extensions.curvmatprod.ggnmp.ggnbase import GGNMPBase
+from backpack.extensions.curvmatprod.ggnmp.ggnmpbase import GGNMPBase
 
 
 class GGNMPReLU(GGNMPBase):
