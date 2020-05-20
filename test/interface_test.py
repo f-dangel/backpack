@@ -143,13 +143,13 @@ def test_interface_hbp_conv():
     interface_test(new_ext.HBP(), use_conv=True)
 
 
-def test_interface_hmp():
+def test_interface_hmp_conv():
     interface_test(new_ext.HMP(), use_conv=True)
 
 
-def test_interface_ggnmp():
+def test_interface_ggnmp_conv():
     interface_test(new_ext.PCHMP(), use_conv=True)
 
 
-def test_interface_pchmp():
+def test_interface_pchmp_conv():
     interface_test(new_ext.GGNMP(), use_conv=True)
