@@ -5,6 +5,9 @@ from test.core.derivatives.utils import (
     derivative_cls_for,
     get_available_devices,
     is_loss,
+    is_activation,
+    is_pooling,
+    is_layer,
 )
 
 import torch
@@ -169,9 +172,27 @@ class DerivativesTestProblem:
 
         return input, output, dict(self.module.named_parameters())
 
+    def derivative_prefix_for(self):
+        self.derivative = self.make_derivative()
+        if is_activation(self.derivative):
+            prefix = "act"
+        elif is_layer(self.derivative):
+            prefix = "layer"
+        elif is_pooling(self.derivative):
+            prefix = "pool"
+        elif is_loss(self.derivative):
+            prefix = "loss"
+        else:
+            prefix = ""
+        return prefix
+
     def make_id(self):
         """Needs to function without call to `set_up`."""
-        prefix = (self.id_prefix + "-") if self.id_prefix != "" else ""
+        prefix = (
+            (self.id_prefix + "-")
+            if self.id_prefix != ""
+            else self.derivative_prefix_for()
+        )
         return prefix + "dev={}-in={}-{}".format(
             self.device, tuple(self.make_input_shape()), self.make_module(),
         ).replace(" ", "")
