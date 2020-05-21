@@ -1,6 +1,7 @@
 """Utility functions to test `backpack.core.derivatives`"""
 
 import torch
+
 from backpack.core.derivatives import derivatives_for
 
 

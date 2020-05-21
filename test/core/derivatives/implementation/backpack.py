@@ -78,6 +78,14 @@ class BackpackDerivatives(DerivativesImplementation):
             individual_hessians, self.problem.module.input0
         )
 
+    def hessian_is_zero(self):
+        """Return whether the input-output Hessian is zero.
+
+        Returns:
+            bool: `True`, if Hessian is zero, else `False`.
+        """
+        return self.problem.derivative.hessian_is_zero()
+
     def _sample_hessians_from_sqrt(self, sqrt):
         """Convert individual matrix square root into individual full matrix. """
         equation = None
@@ -93,7 +101,7 @@ class BackpackDerivatives(DerivativesImplementation):
 
     def _embed_sample_hessians(self, individual_hessians, input):
         hessian_shape = (*input.shape, *input.shape)
-        hessian = torch.zeros(hessian_shape)
+        hessian = torch.zeros(hessian_shape, device=input.device)
 
         N = input.shape[0]
 

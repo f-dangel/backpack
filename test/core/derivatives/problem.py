@@ -76,6 +76,10 @@ class DerivativesTestProblem:
     ):
         """Collection of information required to test derivatives.
 
+        Warning:
+            Initialization is lazy. `set_up` needs to be called before the
+            test problem can be used
+
         Args:
             module (torch.nn.Module): Layer to be tested.
             input_shape (tuple(int)): Layer input shape with batch size
@@ -86,26 +90,67 @@ class DerivativesTestProblem:
             Shape of module input → output:
             [N, C_in, H_in, W_in, ...] → [N, C_out, H_out, W_out, ...]
         """
-        torch.manual_seed(seed)
-
-        self.module = module_fn(**module_kwargs).to(device)
-
-        self.input = input_fn(**input_kwargs).to(device)
-        self.target = target_fn(**target_kwargs)
-        if self.target is not None:
-            self.target = self.target.to(device)
-
-        self.derivative = derivative_cls_for(self.module.__class__)()
-
-        self.input_shape = self.input.shape
-        self.output_shape = self.get_output_shape()
-
+        self.module_fn = module_fn
+        self.module_kwargs = module_kwargs
+        self.input_fn = input_fn
+        self.input_kwargs = input_kwargs
+        self.target_fn = target_fn
+        self.target_kwargs = target_kwargs
         self.device = device
-
+        self.seed = seed
         self.id_prefix = id_prefix
 
+    def set_up(self):
+        torch.manual_seed(self.seed)
+
+        self.module = self.make_module()
+        self.input = self.make_input()
+        self.target = self.make_target()
+        self.derivative = self.make_derivative()
+        self.input_shape = self.make_input_shape()
+        self.output_shape = self.make_output_shape()
+
+    def tear_down(self):
+        del self.module
+        del self.input
+        del self.target
+        del self.derivative
+        del self.input_shape
+        del self.output_shape
+
+    def make_module(self):
+        return self.module_fn(**self.module_kwargs).to(self.device)
+
+    def make_input(self):
+        return self.input_fn(**self.input_kwargs).to(self.device)
+
+    def make_target(self):
+        target = self.target_fn(**self.target_kwargs)
+        if target is not None:
+            target = target.to(self.device)
+        return target
+
+    def make_derivative(self):
+        module = self.make_module()
+        return derivative_cls_for(module.__class__)()
+
+    def make_input_shape(self):
+        return self.make_input().shape
+
+    def make_output_shape(self):
+        module = self.make_module()
+        input = self.make_input()
+        target = self.make_target()
+
+        if target is None:
+            output = module(input)
+        else:
+            output = module(input, target)
+
+        return output.shape
+
     def is_loss(self):
-        return is_loss(self.module)
+        return is_loss(self.make_module())
 
     def forward_pass(self, input_requires_grad=False, sample_idx=None):
         """Do a forward pass. Return input, output, and parameters."""
@@ -124,15 +169,20 @@ class DerivativesTestProblem:
 
         return input, output, dict(self.module.named_parameters())
 
-    def get_output_shape(self):
-        _, output, _ = self.forward_pass()
-        return tuple(output.shape)
-
     def make_id(self):
+        """Needs to function without call to `set_up`."""
         prefix = (self.id_prefix + "-") if self.id_prefix != "" else ""
         return prefix + "dev={}-in={}-{}".format(
-            self.device, tuple(self.input_shape), self.module
+            self.device, tuple(self.make_input_shape()), self.make_module(),
         ).replace(" ", "")
 
     def extend(self):
         self.module = extend(self.module)
+
+    def has_weight(self):
+        module = self.make_module()
+        return hasattr(module, "weight") and module.weight is not None
+
+    def has_bias(self):
+        module = self.make_module()
+        return hasattr(module, "bias") and module.bias is not None

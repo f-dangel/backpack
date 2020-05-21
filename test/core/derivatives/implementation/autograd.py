@@ -98,7 +98,7 @@ class AutogradDerivatives(DerivativesImplementation):
                     input_requires_grad=True, sample_idx=sample_idx
                 )
 
-                result = torch.zeros(sample.numel(), mat.size(1))
+                result = torch.zeros(sample.numel(), mat.size(1), device=sample.device)
 
                 for col in range(mat.size(1)):
                     column = mat[:, col].reshape(output.shape)
@@ -126,7 +126,7 @@ class AutogradDerivatives(DerivativesImplementation):
         return result / N
 
     def hessian(self, loss, x):
-        """Return the Hessian matrix of `loss` w.r.t. `x`.
+        """Return the Hessian matrix of a scalar `loss` w.r.t. a tensor `x`.
 
         Arguments:
             loss (torch.Tensor): A scalar-valued tensor.
@@ -157,6 +157,52 @@ class AutogradDerivatives(DerivativesImplementation):
 
         return hessian_vec_x.reshape(final_shape)
 
+    def elementwise_hessian(self, tensor, x):
+        """Yield the Hessian of each element in `tensor` w.r.t `x`.
+
+        Hessians are returned in the order of elements in the flattened tensor.
+        """
+        for t in tensor.flatten():
+            yield self.hessian(t, x)
+
+    def tensor_hessian(self, tensor, x):
+        """Return the Hessian of a tensor `tensor` w.r.t. a tensor `x`.
+
+        Given a `tensor` of shape `[A, B, C]` and another tensor `x` with shape `[D, E]`
+        used in the computation of `tensor`, the generalized Hessian has shape
+        [A, B, C, D, E, D, E]. Let `hessian` denote this generalized Hessian. Then,
+        `hessian[a, b, c]` contains the Hessian of the scalar entry `tensor[a, b, c]`
+        w.r.t. `x[a, b, c]`.
+
+        Arguments:
+            tensor (torch.Tensor): An arbitrary tensor.
+            x (torch.Tensor): Tensor used in the computation graph of `tensor`.
+
+        Returns:
+            torch.Tensor: Generalized Hessian of `tensor` w.r.t. `x`.
+        """
+        shape = (*tensor.shape, *x.shape, *x.shape)
+
+        return torch.cat(list(self.elementwise_hessian(tensor, x))).reshape(shape)
+
+    def hessian_is_zero(self):
+        """Return whether the input-output Hessian is zero.
+
+        Returns:
+            bool: `True`, if Hessian is zero, else `False`.
+        """
+        input, output, _ = self.problem.forward_pass(input_requires_grad=True)
+
+        zero = None
+        for hessian in self.elementwise_hessian(output, input):
+            if zero is None:
+                zero = torch.zeros_like(hessian)
+
+            if not torch.allclose(hessian, zero):
+                return False
+
+        return True
+
     def input_hessian(self):
         """Compute the Hessian of the module output w.r.t. the input."""
         input, output, _ = self.problem.forward_pass(input_requires_grad=True)
@@ -182,9 +228,11 @@ class AutogradDerivatives(DerivativesImplementation):
         N = input.shape[0]
         num_features = input.numel() // N
 
-        sum_hessian = torch.zeros(num_features, num_features)
+        sum_hessian = torch.zeros(num_features, num_features, device=input.device)
 
-        hessian_different_samples = torch.zeros(num_features, num_features)
+        hessian_different_samples = torch.zeros(
+            num_features, num_features, device=input.device
+        )
         for n_1 in range(N):
             for n_2 in range(N):
                 block = hessian[n_1, :, n_2, :]
