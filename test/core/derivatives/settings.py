@@ -51,6 +51,26 @@ SETTINGS.append(loss_example)
 
 SETTINGS += [
     {
+        "module_fn": torch.nn.LeakyReLU,
+        "module_kwargs": {"negative_slope": 0.1},
+        "input_kwargs": {"size": (10, 5)},
+    },
+    {
+        "module_fn": torch.nn.LogSigmoid,
+        "module_kwargs": {},
+        "input_kwargs": {"size": (10, 5)},  # , "data": (-1, 43, 1.2)
+    },
+    {
+        "module_fn": torch.nn.ELU,
+        "module_kwargs": {"alpha": 0.3},  # test for different channels
+        "input_kwargs": {"size": (10, 5)},  # Note: Tensor has to be n x m
+    },
+    {
+        "module_fn": torch.nn.SELU,
+        "module_kwargs": {},
+        "input_kwargs": {"size": (10, 5, 5)},  # Note: Tensor has to be n x m
+    },
+    {
         "module_fn": torch.nn.Linear,
         "module_kwargs": {"in_features": 7, "out_features": 3, "bias": False,},
         "input_kwargs": {"size": (10, 7,)},
@@ -178,12 +198,12 @@ SETTINGS += [
         "module_kwargs": {"reduction": "mean"},
         "input_kwargs": {"size": (2, 4)},
         "target_fn": classification_targets,
-        "target_kwargs": {"size": (2,), "num_classes": 4},
+        "target_kwargs": {"size": (2,), "num_classes": 3},
     },
     {
         "module_fn": torch.nn.MSELoss,
         "module_kwargs": {"reduction": "mean"},
-        "input_kwargs": {"size": (5, 1)},
+        "input_kwargs": {"size": (5, 2)},
         "target_fn": regression_targets,
         "target_kwargs": {"size": (5, 1)},
     },
