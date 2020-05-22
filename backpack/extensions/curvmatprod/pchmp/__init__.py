@@ -1,12 +1,5 @@
 """
-Curvature-matrix product backPACK extensions.
-
-Those extension propagate additional information through the computation graph.
-They are more expensive to run than a standard gradient backpropagation.
-
-This extension does not compute information directly, but gives access to
-functions to compute Matrix-Matrix products with Block-Diagonal approximations
-of the curvature, such as the Block-diagonal Generalized Gauss-Newton
+Matrix-free multiplication with the block-diagonal positive-curvature Hessian (PCH).
 """
 
 from torch.nn import (
@@ -30,6 +23,36 @@ from . import activations, conv2d, dropout, flatten, linear, losses, padding, po
 
 
 class PCHMP(BackpropExtension):
+    """
+    Matrix-free multiplication with the block-diagonal positive-curvature Hessian (PCH).
+
+    Stores the multiplication function in :code:`hmp`.
+
+    The function receives a tensor with trailing size identical to the
+    parameter, and an additional leading dimension. Each slice across this leading
+    dimension will be multiplied with the block-diagonal positive curvature Hessian.
+
+    The PCH is proposed in
+
+  - `BDA-PCH: Block-Diagonal Approximation of Positive-Curvature Hessian for
+    Training Neural Networks <https://arxiv.org/abs/1802.06502v2>`_
+    by Sheng-Wei Chen, Chun-Nan Chou and Edward Y. Chang, 2018.
+
+    There exist different concavity-eliminating modifications which can be selected
+    by the multiplication routine's `modify` argument (`"abs"` or `"clip"`).
+
+    Note:
+       The name positive-curvature Hessian may be misleading. While the PCH is
+       always positive semi-definite (PSD), it does not refer to the projection of
+       the exact Hessian on to the space of PSD matrices.
+
+    Implements the procedures described by
+
+    - `Modular Block-diagonal Curvature Approximations for Feedforward Architectures
+      <https://arxiv.org/abs/1802.06502v2>`_
+      by Felix Dangel, Stefan Harmeling, Philipp Hennig, 2020.
+    """
+
     def __init__(self, savefield="pchmp"):
         super().__init__(
             savefield=savefield,

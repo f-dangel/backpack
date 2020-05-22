@@ -1,12 +1,5 @@
 """
-Curvature-matrix product backPACK extensions.
-
-Those extension propagate additional information through the computation graph.
-They are more expensive to run than a standard gradient backpropagation.
-
-This extension does not compute information directly, but gives access to
-functions to compute Matrix-Matrix products with Block-Diagonal approximations
-of the curvature, such as the Block-diagonal Generalized Gauss-Newton
+Matrix-free multiplication with the block-diagonal generalized Gauss-Newton/Fisher.
 """
 
 from torch.nn import (
@@ -41,6 +34,22 @@ from . import (
 
 
 class GGNMP(BackpropExtension):
+    """
+    Matrix-free Multiplication with the block-diagonal generalized Gauss-Newton/Fisher.
+
+    Stores the multiplication function in :code:`ggnmp`.
+
+    The function receives a tensor with trailing size identical to the
+    parameter, and an additional leading dimension. Each slice across this leading
+    dimension will be multiplied with the block-diagonal GGN/Fisher.
+
+    Implements the procedures described by
+
+    - `Modular Block-diagonal Curvature Approximations for Feedforward Architectures
+      <https://arxiv.org/abs/1802.06502v2>`_
+      by Felix Dangel, Stefan Harmeling, Philipp Hennig, 2020.
+    """
+
     def __init__(self, savefield="ggnmp"):
         super().__init__(
             savefield=savefield,
