@@ -57,7 +57,7 @@ class BatchNorm1dDerivatives(BaseParameterDerivatives):
 
     def _make_residual_mat_prod(self, module, g_inp, g_out):
 
-        N = self.get_batch(module)
+        N = module.input0.size(0)
         x_hat, var = self.get_normalized_input_and_var(module)
         gamma = module.weight
         eps = module.eps
