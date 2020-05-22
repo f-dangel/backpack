@@ -56,6 +56,17 @@ class BatchNorm1dDerivatives(BaseParameterDerivatives):
         return (input - mean) / (var + module.eps).sqrt(), var
 
     def _residual_mat_prod(self, module, g_inp, g_out, mat):
+        """Multiply with BatchNorm1d residual-matrix.
+
+        Paul Fischer (GitHub: @paulkogni) contributed this code during a research
+        project in winter 2019.
+
+        Details are described in
+
+        - `TODO: Add tech report title`
+          <TODO: Wait for tech report upload>_
+          by Paul Fischer, 2020.
+        """
         N = self.get_batch(module)
         x_hat, var = self.get_normalized_input_and_var(module)
         gamma = module.weight
