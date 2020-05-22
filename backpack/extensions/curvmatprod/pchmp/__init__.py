@@ -26,7 +26,7 @@ class PCHMP(BackpropExtension):
     """
     Matrix-free multiplication with the block-diagonal positive-curvature Hessian (PCH).
 
-    Stores the multiplication function in :code:`hmp`.
+    Stores the multiplication function in :code:`pchmp`.
 
     The function receives a tensor with trailing size identical to the
     parameter, and an additional leading dimension. Each slice across this leading
