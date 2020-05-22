@@ -91,6 +91,10 @@ class ElementwiseDerivatives(BaseDerivatives):
         df_flat = self.df(module, g_inp, g_out).reshape(N, -1)
         return einsum("ni,nj,ij->ij", (df_flat, df_flat, mat)) / N
 
+    def _residual_mat_prod(self, module, g_inp, g_out, mat):
+        residual = self.d2f(module, g_inp, g_out) * g_out[0]
+        return einsum("...,v...->v...", (residual, mat))
+
     @staticmethod
     def _no_inplace(module):
         """Do not support inplace modification.

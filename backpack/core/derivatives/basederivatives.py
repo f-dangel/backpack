@@ -142,22 +142,21 @@ class BaseDerivatives:
         """Is `∂²output[i] / ∂input[j] ∂input[k]` positive semidefinite (PSD)."""
         raise NotImplementedError
 
-    @shape_check.R_mat_prod_accept_vectors
-    @shape_check.R_mat_prod_check_shapes
-    def make_residual_mat_prod(self, module, g_inp, g_out):
-        """Return multiplication routine with the residual term.
+    @shape_check.residual_mat_prod_accept_vectors
+    @shape_check.residual_mat_prod_check_shapes
+    def residual_mat_prod(self, module, g_inp, g_out, mat):
+        """Multiply with the residual term.
 
-        The function performs the mapping: mat → [∑_{k} Hz_k(x) 𝛿z_k] mat.
-        (required for extension `curvmatprod`)
+        Performs mat → [∑_{k} Hz_k(x) 𝛿z_k] mat.
 
         Note:
         -----
             This function only has to be implemented if the residual is not
             zero and not diagonal (for instance, `BatchNorm`).
         """
-        return self._make_residual_mat_prod(module, g_inp, g_out)
+        return self._residual_mat_prod(module, g_inp, g_out, mat)
 
-    def _make_residual_mat_prod(self, module, g_inp, g_out):
+    def _residual_mat_prod(self, module, g_inp, g_out, mat):
         raise NotImplementedError
 
     @staticmethod
