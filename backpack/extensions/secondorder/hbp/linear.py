@@ -55,9 +55,9 @@ class HBPLinear(HBPBaseModule):
         return [backproped]
 
     def __mean_input(self, module):
-        _, flat_input = self.derivatives.batch_flat(module.input0)
-        return flat_input.mean(0)
+        return module.input0.mean(0).flatten()
 
     def __mean_input_outer(self, module):
-        N, flat_input = self.derivatives.batch_flat(module.input0)
+        N = module.input0.size(0)
+        flat_input = module.input0.reshape(N, -1)
         return einsum("ni,nj->ij", (flat_input, flat_input)) / N
