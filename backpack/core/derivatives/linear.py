@@ -48,7 +48,7 @@ class LinearDerivatives(BaseParameterDerivatives):
 
     def _bias_jac_mat_prod(self, module, g_inp, g_out, mat):
         """Apply Jacobian of the output w.r.t. the bias."""
-        N = self.get_batch(module)
+        N = module.input0.size(0)
         return mat.unsqueeze(1).expand(-1, N, -1)
 
     def _bias_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
