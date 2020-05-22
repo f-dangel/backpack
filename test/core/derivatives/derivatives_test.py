@@ -140,7 +140,7 @@ PROBLEMS_CONV_T_WITH_BIAS = []
 CONV_T_IDS_WITH_BIAS = []
 
 for problem, problem_id in zip(CONV_T_PROBLEMS, CONV_T_IDS):
-    if hasattr(problem.module, "bias") and problem.module.bias is not None:
+    if problem.has_bias():
         PROBLEMS_CONV_T_WITH_BIAS.append(problem)
         CONV_T_IDS_WITH_BIAS.append(problem_id)
 
