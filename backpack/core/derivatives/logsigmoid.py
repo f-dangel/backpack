@@ -19,4 +19,5 @@ class LogSigmoidDerivatives(ElementwiseDerivatives):
 
     def d2f(self, module, g_inp, g_out):
         """Second Logsigmoid derivative: `logsigmoid''(x) = - e^x / (e^x + 1)^2`."""
-        return -(exp(module.input0) / (exp(module.input0) + 1) ** 2)
+        exp_input = exp(module.input0)
+        return -(exp_input / (exp_input + 1) ** 2)
