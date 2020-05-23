@@ -19,5 +19,5 @@ class ELUDerivatives(ElementwiseDerivatives):
         return df_ELU
 
     def d2f(self, module, g_inp, g_out):
-        """Second ELU derivative: `ELU'(x) = alpha * e^x if x < 0 else 1`. """
+        """Second ELU derivative: `ELU''(x) = alpha * e^x if x < 0 else 1`. """
         return self.df(module, g_inp, g_out)
