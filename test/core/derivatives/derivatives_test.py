@@ -34,7 +34,7 @@ LOSS_FAIL_PROBLEMS = make_test_problems(LOSS_FAIL_SETTINGS)
 LOSS_FAIL_IDS = [problem.make_id() for problem in LOSS_FAIL_PROBLEMS]
 
 # for ConvTranspose2d development
-CONV_T_PROBLEMS = [problem for problem in make_test_problems(CONV_TRANSPOSE_SETTINGS)]
+CONV_T_PROBLEMS = make_test_problems(CONV_TRANSPOSE_SETTINGS)
 CONV_T_IDS = [problem.make_id() for problem in CONV_T_PROBLEMS]
 
 

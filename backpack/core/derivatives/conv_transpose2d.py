@@ -2,7 +2,7 @@
 
 import torch
 from torch.nn import ConvTranspose2d
-from torch.nn.functional import conv2d, conv_transpose2d
+from torch.nn.functional import conv2d
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 from backpack.utils.conv_transpose import unfold_by_conv_transpose
