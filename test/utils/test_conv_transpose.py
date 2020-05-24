@@ -1,6 +1,7 @@
 """Test generalization of unfold to transpose convolutions."""
 
 # TODO: @sbharadwajj: impose test suite structure
+# TODO: @sbharadwajj: test with groups≠1
 
 import torch
 
