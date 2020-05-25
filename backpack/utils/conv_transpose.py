@@ -17,7 +17,8 @@ def unfold_by_conv_transpose(input, module):
             weight[0, i] = extraction.reshape(*kernel_size)
 
         repeat = [C_in, 1] + [1 for _ in kernel_size]
-        return weight.repeat(*repeat)
+        weight = weight.repeat(*repeat)
+        return weight.to(module.weight.device)
 
     def get_conv_transpose():
         functional_for_module_cls = {
