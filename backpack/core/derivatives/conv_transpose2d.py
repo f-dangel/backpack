@@ -24,16 +24,20 @@ class ConvTranspose2DDerivatives(BaseParameterDerivatives):
 
         return mat.sum(axes)
 
-    def bias_jac_mat_prod(self, module, g_inp, g_out, mat):
-        # TODO Implement with unfold
-        raise NotImplementedError
+    def _bias_jac_mat_prod(self, module, g_inp, g_out, mat):
+        # expand for each batch and for each channel
+        N_axis, H_axis, W_axis = 1, 3, 4
+        jac_mat = mat.unsqueeze(N_axis).unsqueeze(H_axis).unsqueeze(W_axis)
+
+        N, _, H_out, W_out = module.output_shape
+        return jac_mat.expand(-1, N, -1, H_out, W_out)
 
     def weight_jac_mat_prod(self, module, g_inp, g_out, mat):
         # TODO Implement with unfold
         raise NotImplementedError
 
     def _weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
-        """Unintuitive, but faster due to convolution.
+        """Apply weight-output Jacobian to a matrix.
 
         For 1d transpose convolution (x, W) ↦ y with u = unfold(x):
 
@@ -64,6 +68,40 @@ class ConvTranspose2DDerivatives(BaseParameterDerivatives):
         )
 
         return torch.einsum(equation, u, mat_reshape).reshape(final_shape)
+
+    def _jac_mat_prod(self, module, g_inp, g_out, mat):
+        mat_as_conv = eingroup("v,n,c,h,w->vn,c,h,w", mat)
+        jmp_as_conv = self.__jac(module, mat_as_conv)
+        return self.reshape_like_output(jmp_as_conv, module)
+
+    def __jac(self, module, mat):
+        C_in = module.input0.shape[1]
+        _, C_out, H_out, W_out = module.output.shape
+        H_axis = 2
+        W_axis = 3
+
+        conv2d_t = ConvTranspose2d(
+            in_channels=C_in,
+            out_channels=C_out,
+            kernel_size=module.kernel_size,
+            stride=module.stride,
+            padding=module.padding,
+            bias=False,
+            dilation=module.dilation,
+            groups=module.groups,
+        ).to(module.input0.device)
+
+        conv2d_t.weight.data = module.weight
+
+        V_N = mat.size(0)
+        output_size = (V_N, C_out, H_out, W_out)
+
+        jac_mat = (
+            conv2d_t(mat, output_size=output_size)
+            .narrow(H_axis, 0, H_out)
+            .narrow(W_axis, 0, W_out)
+        )
+        return jac_mat
 
     def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
         mat_as_conv = eingroup("v,n,c,h,w->vn,c,h,w", mat)

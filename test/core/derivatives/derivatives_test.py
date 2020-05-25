@@ -38,7 +38,9 @@ CONV_T_PROBLEMS = make_test_problems(CONV_TRANSPOSE_SETTINGS)
 CONV_T_IDS = [problem.make_id() for problem in CONV_T_PROBLEMS]
 
 
-@pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
+@pytest.mark.parametrize(
+    "problem", NO_LOSS_PROBLEMS + CONV_T_PROBLEMS, ids=NO_LOSS_IDS + CONV_T_IDS
+)
 def test_jac_mat_prod(problem, V=3):
     """Test the Jacobian-matrix product.
 
@@ -171,7 +173,11 @@ def test_bias_jac_t_mat_prod(problem, sum_batch, V=3):
     problem.tear_down()
 
 
-@pytest.mark.parametrize("problem", PROBLEMS_WITH_BIAS, ids=IDS_WITH_BIAS)
+@pytest.mark.parametrize(
+    "problem",
+    PROBLEMS_WITH_BIAS + PROBLEMS_CONV_T_WITH_BIAS,
+    ids=IDS_WITH_BIAS + CONV_T_IDS_WITH_BIAS,
+)
 def test_bias_jac_mat_prod(problem, V=3):
     """Test the Jacobian-matrix product w.r.t. to the biass.
 
