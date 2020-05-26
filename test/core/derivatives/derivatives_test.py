@@ -275,7 +275,9 @@ def test_sum_hessian_should_fail(problem):
         test_sum_hessian(problem)
 
 
-@pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
+@pytest.mark.parametrize(
+    "problem", NO_LOSS_PROBLEMS + CONV_T_PROBLEMS, ids=NO_LOSS_IDS + CONV_T_IDS
+)
 def test_ea_jac_t_mat_jac_prod(problem):
     """Test KFRA backpropagation
 

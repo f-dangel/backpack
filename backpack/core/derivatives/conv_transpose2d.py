@@ -62,8 +62,20 @@ class ConvTranspose2DDerivatives(BaseParameterDerivatives):
         return self.reshape_like_output(jac_mat, module)
 
     def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
-        # TODO Implement with unfold
-        raise NotImplementedError
+        _, C_in, H_in, W_in = module.input0.size()
+        in_features = C_in * H_in * W_in
+        _, C_out, H_out, W_out = module.output.size()
+        out_features = C_out * H_out * W_out
+
+        mat = mat.reshape(out_features, C_out, H_out, W_out)
+        jac_t_mat = self.__jac_t(module, mat).reshape(out_features, in_features)
+
+        mat_t_jac = jac_t_mat.t().reshape(in_features, C_out, H_out, W_out)
+        jac_t_mat_t_jac = self.__jac_t(module, mat_t_jac).reshape(
+            in_features, in_features
+        )
+
+        return jac_t_mat_t_jac.t()
 
     def _weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
         """Apply transposed weight-output Jacobian to a matrix.
