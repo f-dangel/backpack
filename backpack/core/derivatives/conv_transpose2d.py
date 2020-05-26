@@ -32,12 +32,41 @@ class ConvTranspose2DDerivatives(BaseParameterDerivatives):
         N, _, H_out, W_out = module.output_shape
         return jac_mat.expand(-1, N, -1, H_out, W_out)
 
-    def weight_jac_mat_prod(self, module, g_inp, g_out, mat):
+    def _weight_jac_mat_prod(self, module, g_inp, g_out, mat):
+        """Apply weight-output Jacobian to a matrix.
+
+        For 1d transpose convolution (x, W) ↦ y with u = unfold(x):
+
+        y[n,g,o,h] = ∑_{J,Y} W[J,g,o,Y] u[n,J,g,Y,h]
+
+        result[n,g,o,h]
+            = ∑_{I,O,X} ∂y[n,g,o,h]/∂W[I,g,O,X] mat[I,g,O,X]
+            = ∑_{I,O,X,J,Y} ∂( W[J,g,o,Y] u[n,J,g,Y,h] )/∂W[I,g,O,X] mat[I,g,O,X]
+            = ∑_{O,J,Y} ∂( W[J,g,O,Y] u[n,J,g,Y,h] )/∂W[J,g,O,Y] mat[J,g,O,Y]
+            = ∑_{O,J,Y} u[n,J,g,Y,h] mat[J,g,O,Y]
+            = ∑_{o,i,x} u[n,i,g,x,h] mat[i,g,o,x]
+        """
+        V = mat.shape[0]
+        G = module.groups
+        C_in = module.input0.shape[1]
+        _, _, K_X, K_Y = module.weight.shape
+        N, C_out, H_out, W_out = module.output.shape
+
+        mat_reshape = mat.reshape(V, C_in, G, C_out // G, K_X, K_Y)
+        u = unfold_by_conv_transpose(module.input0, module).reshape(
+            N, C_in // G, G, K_X, K_Y, H_out, W_out
+        )
+
+        jac_mat = torch.einsum("nigxyhw,vigoxy->vngohw", u, mat_reshape)
+
+        return self.reshape_like_output(jac_mat, module)
+
+    def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
         # TODO Implement with unfold
         raise NotImplementedError
 
     def _weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
-        """Apply weight-output Jacobian to a matrix.
+        """Apply transposed weight-output Jacobian to a matrix.
 
         For 1d transpose convolution (x, W) ↦ y with u = unfold(x):
 
