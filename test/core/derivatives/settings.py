@@ -123,6 +123,57 @@ SETTINGS += [
         "input_kwargs": {"size": (3, 2, 11, 13)},
     },
     {
+        "module_fn": torch.nn.ConvTranspose2d,
+        "module_kwargs": {
+            "in_channels": 3,
+            "out_channels": 3,
+            "kernel_size": 4,
+            "stride": 1,
+        },
+        "input_kwargs": {"size": (1, 3, 32, 32)},
+    },
+    {
+        "module_fn": torch.nn.ConvTranspose2d,
+        "module_kwargs": {"in_channels": 2, "out_channels": 3, "kernel_size": 2,},
+        "input_kwargs": {"size": (3, 2, 11, 13)},
+    },
+    {
+        "module_fn": torch.nn.ConvTranspose2d,
+        "module_kwargs": {
+            "in_channels": 2,
+            "out_channels": 3,
+            "kernel_size": 2,
+            "padding": 1,
+        },
+        "input_kwargs": {"size": (3, 2, 11, 13)},
+    },
+    {
+        "module_fn": torch.nn.ConvTranspose2d,
+        "module_kwargs": {
+            "in_channels": 2,
+            "out_channels": 3,
+            "kernel_size": 2,
+            "padding": 1,
+            "stride": 2,
+            "dilation": 2,
+        },
+        "input_kwargs": {"size": (3, 2, 11, 13)},
+    },
+    # TODO: Fix groups ≠ 1
+    # {
+    #     "module_fn": torch.nn.ConvTranspose2d,
+    #     "module_kwargs": {
+    #         "in_channels": 6,
+    #         "out_channels": 8,
+    #         "kernel_size": 2,
+    #         "padding": 1,
+    #         "stride": 2,
+    #         "dilation": 2,
+    #         "groups": 2,
+    #     },
+    #     "input_kwargs": {"size": (3, 6, 11, 13)},
+    # },
+    {
         "module_fn": torch.nn.MaxPool2d,
         "module_kwargs": {"kernel_size": 2, "stride": 2},
         "input_kwargs": {"size": (1, 5, 32, 32)},
@@ -285,58 +336,4 @@ LOSS_FAIL_SETTINGS = [
         "target_fn": regression_targets,
         "target_kwargs": {"size": (5, 1)},
     },
-]
-
-CONV_TRANSPOSE_SETTINGS = [
-    {
-        "module_fn": torch.nn.ConvTranspose2d,
-        "module_kwargs": {
-            "in_channels": 3,
-            "out_channels": 3,
-            "kernel_size": 4,
-            "stride": 1,
-        },
-        "input_kwargs": {"size": (1, 3, 32, 32)},
-    },
-    {
-        "module_fn": torch.nn.ConvTranspose2d,
-        "module_kwargs": {"in_channels": 2, "out_channels": 3, "kernel_size": 2,},
-        "input_kwargs": {"size": (3, 2, 11, 13)},
-    },
-    {
-        "module_fn": torch.nn.ConvTranspose2d,
-        "module_kwargs": {
-            "in_channels": 2,
-            "out_channels": 3,
-            "kernel_size": 2,
-            "padding": 1,
-        },
-        "input_kwargs": {"size": (3, 2, 11, 13)},
-    },
-    {
-        "module_fn": torch.nn.ConvTranspose2d,
-        "module_kwargs": {
-            "in_channels": 2,
-            "out_channels": 3,
-            "kernel_size": 2,
-            "padding": 1,
-            "stride": 2,
-            "dilation": 2,
-        },
-        "input_kwargs": {"size": (3, 2, 11, 13)},
-    },
-    # TODO: Fix groups ≠ 1
-    # {
-    #     "module_fn": torch.nn.ConvTranspose2d,
-    #     "module_kwargs": {
-    #         "in_channels": 6,
-    #         "out_channels": 8,
-    #         "kernel_size": 2,
-    #         "padding": 1,
-    #         "stride": 2,
-    #         "dilation": 2,
-    #         "groups": 2,
-    #     },
-    #     "input_kwargs": {"size": (3, 6, 11, 13)},
-    # },
 ]

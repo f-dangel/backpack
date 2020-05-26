@@ -11,11 +11,7 @@ from test.automated_test import check_sizes_and_values
 from test.core.derivatives.implementation.autograd import AutogradDerivatives
 from test.core.derivatives.implementation.backpack import BackpackDerivatives
 from test.core.derivatives.problem import make_test_problems
-from test.core.derivatives.settings import (
-    CONV_TRANSPOSE_SETTINGS,
-    LOSS_FAIL_SETTINGS,
-    SETTINGS,
-)
+from test.core.derivatives.settings import LOSS_FAIL_SETTINGS, SETTINGS
 
 import pytest
 import torch
@@ -33,14 +29,8 @@ LOSS_IDS = [problem.make_id() for problem in LOSS_PROBLEMS]
 LOSS_FAIL_PROBLEMS = make_test_problems(LOSS_FAIL_SETTINGS)
 LOSS_FAIL_IDS = [problem.make_id() for problem in LOSS_FAIL_PROBLEMS]
 
-# for ConvTranspose2d development
-CONV_T_PROBLEMS = make_test_problems(CONV_TRANSPOSE_SETTINGS)
-CONV_T_IDS = [problem.make_id() for problem in CONV_T_PROBLEMS]
 
-
-@pytest.mark.parametrize(
-    "problem", NO_LOSS_PROBLEMS + CONV_T_PROBLEMS, ids=NO_LOSS_IDS + CONV_T_IDS
-)
+@pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
 def test_jac_mat_prod(problem, V=3):
     """Test the Jacobian-matrix product.
 
@@ -58,9 +48,7 @@ def test_jac_mat_prod(problem, V=3):
     problem.tear_down()
 
 
-@pytest.mark.parametrize(
-    "problem", NO_LOSS_PROBLEMS + CONV_T_PROBLEMS, ids=NO_LOSS_IDS + CONV_T_IDS
-)
+@pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
 def test_jac_t_mat_prod(problem, V=3):
     """Test the transposed Jacobian-matrix product.
 
@@ -90,9 +78,7 @@ for problem, problem_id in zip(PROBLEMS, IDS):
     "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
 )
 @pytest.mark.parametrize(
-    "problem",
-    PROBLEMS_WITH_WEIGHTS + CONV_T_PROBLEMS,
-    ids=IDS_WITH_WEIGHTS + CONV_T_IDS,
+    "problem", PROBLEMS_WITH_WEIGHTS, ids=IDS_WITH_WEIGHTS,
 )
 def test_weight_jac_t_mat_prod(problem, sum_batch, V=3):
     """Test the transposed Jacobian-matrix product w.r.t. to the weights.
@@ -113,9 +99,7 @@ def test_weight_jac_t_mat_prod(problem, sum_batch, V=3):
 
 
 @pytest.mark.parametrize(
-    "problem",
-    PROBLEMS_WITH_WEIGHTS + CONV_T_PROBLEMS,
-    ids=IDS_WITH_WEIGHTS + CONV_T_IDS,
+    "problem", PROBLEMS_WITH_WEIGHTS, ids=IDS_WITH_WEIGHTS,
 )
 def test_weight_jac_mat_prod(problem, V=3):
     """Test the Jacobian-matrix product w.r.t. to the weights.
@@ -142,22 +126,11 @@ for problem, problem_id in zip(PROBLEMS, IDS):
         IDS_WITH_BIAS.append(problem_id)
 
 
-PROBLEMS_CONV_T_WITH_BIAS = []
-CONV_T_IDS_WITH_BIAS = []
-
-for problem, problem_id in zip(CONV_T_PROBLEMS, CONV_T_IDS):
-    if problem.has_bias():
-        PROBLEMS_CONV_T_WITH_BIAS.append(problem)
-        CONV_T_IDS_WITH_BIAS.append(problem_id)
-
-
 @pytest.mark.parametrize(
     "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
 )
 @pytest.mark.parametrize(
-    "problem",
-    PROBLEMS_WITH_BIAS + PROBLEMS_CONV_T_WITH_BIAS,
-    ids=IDS_WITH_BIAS + CONV_T_IDS_WITH_BIAS,
+    "problem", PROBLEMS_WITH_BIAS, ids=IDS_WITH_BIAS,
 )
 def test_bias_jac_t_mat_prod(problem, sum_batch, V=3):
     """Test the transposed Jacobian-matrix product w.r.t. to the biass.
@@ -178,9 +151,7 @@ def test_bias_jac_t_mat_prod(problem, sum_batch, V=3):
 
 
 @pytest.mark.parametrize(
-    "problem",
-    PROBLEMS_WITH_BIAS + PROBLEMS_CONV_T_WITH_BIAS,
-    ids=IDS_WITH_BIAS + CONV_T_IDS_WITH_BIAS,
+    "problem", PROBLEMS_WITH_BIAS, ids=IDS_WITH_BIAS,
 )
 def test_bias_jac_mat_prod(problem, V=3):
     """Test the Jacobian-matrix product w.r.t. to the biass.
@@ -275,9 +246,7 @@ def test_sum_hessian_should_fail(problem):
         test_sum_hessian(problem)
 
 
-@pytest.mark.parametrize(
-    "problem", NO_LOSS_PROBLEMS + CONV_T_PROBLEMS, ids=NO_LOSS_IDS + CONV_T_IDS
-)
+@pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
 def test_ea_jac_t_mat_jac_prod(problem):
     """Test KFRA backpropagation
 
