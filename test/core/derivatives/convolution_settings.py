@@ -98,11 +98,9 @@ CONVOLUTION_SETTINGS += [
             "in_channels": 3,
             "out_channels": 6,
             "kernel_size": 2,
-            "stride": 2,
-            "padding": 2,
-            "padding_mode": "cirular",
+            "padding_mode": "circular",
         },
-        "input_kwargs": {"size": (1, 3, 8, 8)},
+        "input_kwargs": {"size": (1, 3, 4, 4)},
     },
     {
         "module_fn": torch.nn.Conv2d,
