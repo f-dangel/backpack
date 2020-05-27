@@ -97,14 +97,21 @@ def test_interface_kfac():
     interface_test(new_ext.KFAC())
 
 
+def test_interface_hmp():
+    interface_test(new_ext.HMP())
+
+
+def test_interface_ggnmp():
+    interface_test(new_ext.PCHMP())
+
+
+def test_interface_pchmp():
+    interface_test(new_ext.GGNMP())
+
+
 @pytest.mark.skip()
 def test_interface_hbp():
     interface_test(new_ext.HBP())
-
-
-@pytest.mark.skip()
-def test_interface_cmp():
-    interface_test(new_ext.CMP())
 
 
 def test_interface_batch_grad_conv():
@@ -132,10 +139,17 @@ def test_interface_kfac_conv():
 
 
 @pytest.mark.skip()
-def test_interface_cmp_conv():
-    interface_test(new_ext.CMP(), use_conv=True)
-
-
-@pytest.mark.skip()
 def test_interface_hbp_conv():
     interface_test(new_ext.HBP(), use_conv=True)
+
+
+def test_interface_hmp_conv():
+    interface_test(new_ext.HMP(), use_conv=True)
+
+
+def test_interface_ggnmp_conv():
+    interface_test(new_ext.PCHMP(), use_conv=True)
+
+
+def test_interface_pchmp_conv():
+    interface_test(new_ext.GGNMP(), use_conv=True)
