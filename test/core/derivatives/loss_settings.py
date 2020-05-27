@@ -15,13 +15,13 @@ from test.core.derivatives.utils import classification_targets, regression_targe
 
 import torch
 
-loss_SETTINGS = []
+LOSS_SETTINGS = []
 
 ###############################################################################
 #                                   examples                                  #
 ###############################################################################
 
-loss_example = {
+example = {
     "module_fn": torch.nn.MSELoss,
     "module_kwargs": {"reduction": "mean"},
     "input_fn": torch.rand,  # optional
@@ -33,9 +33,9 @@ loss_example = {
     "seed": 0,  # optional
 }
 
-loss_SETTINGS.append(loss_example)
+LOSS_SETTINGS.append(example)
 
-loss_SETTINGS += [
+LOSS_SETTINGS += [
     {
         "module_fn": torch.nn.CrossEntropyLoss,
         "module_kwargs": {"reduction": "mean"},
@@ -50,7 +50,6 @@ loss_SETTINGS += [
         "target_fn": regression_targets,
         "target_kwargs": {"size": (5, 1)},
     },
-    # CrossEntropyLoss; reduction 'mean'
     {
         "module_fn": torch.nn.CrossEntropyLoss,
         "module_kwargs": {"reduction": "mean"},
@@ -65,7 +64,6 @@ loss_SETTINGS += [
         "target_fn": classification_targets,
         "target_kwargs": {"size": (8,), "num_classes": 2},
     },
-    # reduction 'sum'
     {
         "module_fn": torch.nn.CrossEntropyLoss,
         "module_kwargs": {"reduction": "sum"},
@@ -80,16 +78,15 @@ loss_SETTINGS += [
         "target_fn": classification_targets,
         "target_kwargs": {"size": (8,), "num_classes": 2},
     },
-    # reduction 'none': while non-scalar outputs are not supported,
-    # a single number as output should be fine
     {
+        # reduction 'none': while non-scalar outputs are not supported,
+        # a single number as output should be fine
         "module_fn": torch.nn.CrossEntropyLoss,
         "module_kwargs": {"reduction": "none"},
         "input_kwargs": {"size": (1, 1)},
         "target_fn": classification_targets,
         "target_kwargs": {"size": (1,), "num_classes": 1},
     },
-    # MSELoss; reduction 'mean'
     {
         "module_fn": torch.nn.MSELoss,
         "module_kwargs": {"reduction": "mean"},
@@ -104,7 +101,6 @@ loss_SETTINGS += [
         "target_fn": regression_targets,
         "target_kwargs": {"size": (5, 2)},
     },
-    # reduction 'sum'
     {
         "module_fn": torch.nn.MSELoss,
         "module_kwargs": {"reduction": "sum"},
@@ -119,9 +115,9 @@ loss_SETTINGS += [
         "target_fn": regression_targets,
         "target_kwargs": {"size": (5, 2)},
     },
-    # reduction 'none': while non-scalar outputs are not supported,
-    # a single number as output should be fine
     {
+        # reduction 'none': while non-scalar outputs are not supported,
+        # a single number as output should be fine
         "module_fn": torch.nn.MSELoss,
         "module_kwargs": {"reduction": "none"},
         "input_kwargs": {"size": (1, 1)},

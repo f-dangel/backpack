@@ -1,4 +1,4 @@
-"""Test configurations for `backpack.core.derivatives` for convolutional layers
+"""Test configurations for `backpack.core.derivatives` for CONVOLUTIONal layers
 
 
 Required entries:
@@ -14,49 +14,45 @@ Optional entries:
 
 import torch
 
-convolution_SETTINGS = []
+CONVOLUTION_SETTINGS = []
 
 ###############################################################################
 #                                   examples                                  #
 ###############################################################################
 
 example = {
-    "module_fn": torch.nn.Linear,
-    "module_kwargs": {"in_features": 5, "out_features": 3, "bias": True},
-    "input_fn": torch.rand,  # optional
-    "input_kwargs": {"size": (10, 5)},  # needs to be modified for different "input_fn"
+    "module_fn": torch.nn.Conv2d,
+    "module_kwargs": {
+        "in_channels": 2,
+        "out_channels": 3,
+        "kernel_size": 2,
+        "bias": False,
+        "padding": 1,
+        "stride": 2,
+        "dilation": 2,
+    },
+    "input_kwargs": {"size": (3, 2, 7, 7)},
     "device": [torch.device("cpu")],  # optional
     "id_prefix": "layer-example",  # optional
     "seed": 0,  # optional
 }
-convolution_SETTINGS.append(example)
+CONVOLUTION_SETTINGS.append(example)
 
 ###############################################################################
 #                                test settings                                #
 ###############################################################################
 
-convolution_SETTINGS += [
+CONVOLUTION_SETTINGS += [
     {
         "module_fn": torch.nn.Conv2d,
         "module_kwargs": {
             "in_channels": 2,
             "out_channels": 3,
             "kernel_size": 2,
+            "bias": False,
             "padding": 1,
         },
-        "input_kwargs": {"size": (3, 2, 11, 13)},
-    },
-    {
-        "module_fn": torch.nn.Conv2d,
-        "module_kwargs": {
-            "in_channels": 2,
-            "out_channels": 3,
-            "kernel_size": 2,
-            "padding": 1,
-            "stride": 2,
-            "dilation": 2,
-        },
-        "input_kwargs": {"size": (3, 2, 11, 13)},
+        "input_kwargs": {"size": (3, 2, 7, 7)},
     },
     {
         "module_fn": torch.nn.Conv2d,

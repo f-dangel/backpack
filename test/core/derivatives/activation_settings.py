@@ -14,7 +14,7 @@ Optional entries:
 
 import torch
 
-activation_SETTINGS = []
+ACTIVATION_SETTINGS = []
 
 ###############################################################################
 #                                   examples                                  #
@@ -24,19 +24,19 @@ example = {
     "module_fn": torch.nn.LeakyReLU,
     "module_kwargs": {"negative_slope": 0.1},
     "input_fn": torch.rand,  # optional
-    "input_kwargs": {
-        "size": (5, 5)
-    },  # needs to be modified for different "input_fn"; shape atleast n x m
+    "input_kwargs": {"size": (5, 5)},
+    # Note: Custom "data" can be added,
+    # "data": [(-1, 43, 1.3),..] is used to test for negative cases
     "device": [torch.device("cpu")],  # optional
     "id_prefix": "act-example",  # optional
     "seed": 0,  # optional
 }
-activation_SETTINGS.append(example)
+ACTIVATION_SETTINGS.append(example)
 
 ###############################################################################
 #                                test settings                                #
 ###############################################################################
-activation_SETTINGS += [
+ACTIVATION_SETTINGS += [
     {
         "module_fn": torch.nn.LeakyReLU,
         "module_kwargs": {"negative_slope": 0.1},
@@ -46,59 +46,46 @@ activation_SETTINGS += [
         "module_fn": torch.nn.LeakyReLU,
         "module_kwargs": {"negative_slope": 0.01},
         "input_fn": torch.Tensor,
-        "input_kwargs": {
-            "data": [(-1, 43, 1.3), (-2, -0.3, 2.3), (0, -4, 0.33)]
-        },  # Note: Tensor has to be n x m
+        "input_kwargs": {"data": [(-1, 43, 1.3), (-2, -0.3, 2.3), (0, -4, 0.33)]},
     },
     {
         "module_fn": torch.nn.LogSigmoid,
         "module_kwargs": {},
-        "input_kwargs": {"size": (10, 5)},  # , "data": (-1, 43, 1.2)
+        "input_kwargs": {"size": (10, 5)},
     },
     {
         "module_fn": torch.nn.LogSigmoid,
         "module_kwargs": {},
         "input_fn": torch.Tensor,
-        "input_kwargs": {
-            "data": [(-1, 43, 1.3), (-2, -0.3, 2.3), (0, -4, 0.33)]
-        },  # Note: Tensor has to be n x m
+        "input_kwargs": {"data": [(-1, 43, 1.3), (-2, -0.3, 2.3), (0, -4, 0.33)]},
     },
     {
         "module_fn": torch.nn.ELU,
-        "module_kwargs": {"alpha": 0.3},  # test for different channels
-        "input_kwargs": {"size": (10, 5)},  # Note: Tensor has to be n x m
+        "module_kwargs": {"alpha": 0.3},
+        "input_kwargs": {"size": (10, 5)},
     },
     {
         "module_fn": torch.nn.ELU,
-        "module_kwargs": {
-            "alpha": 0.1,
-            "inplace": False,
-        },  # test for different channels
+        "module_kwargs": {"alpha": 0.1, "inplace": False,},
         "input_fn": torch.Tensor,
-        "input_kwargs": {
-            "data": [(-1, 43, 1.3), (-2, -0.3, 2.3), (0, -4, 0.33)]
-        },  # Note: Tensor has to be n x m
+        "input_kwargs": {"data": [(-1, 43, 1.3), (-2, -0.3, 2.3), (0, -4, 0.33)]},
     },
     {
         "module_fn": torch.nn.SELU,
         "module_kwargs": {},
-        "input_kwargs": {"size": (10, 5, 5)},  # Note: Tensor has to be n x m
+        "input_kwargs": {"size": (10, 5, 5)},
     },
     {
         "module_fn": torch.nn.SELU,
         "module_kwargs": {"inplace": False},
         "input_fn": torch.Tensor,
-        "input_kwargs": {
-            "data": [(-1, 43, 1.3), (-2, -0.3, 2.3), (0, -4, 0.33)]
-        },  # Note: Tensor has to be n x m
+        "input_kwargs": {"data": [(-1, 43, 1.3), (-2, -0.3, 2.3), (0, -4, 0.33)]},
     },
     {
         "module_fn": torch.nn.ReLU,
         "module_kwargs": {"inplace": False},
         "input_fn": torch.Tensor,
-        "input_kwargs": {
-            "data": [(-1, 43, 1.3), (-2, -0.3, 2.3), (0, -4, 0.33)]
-        },  # Note: Tensor has to be n x m
+        "input_kwargs": {"data": [(-1, 43, 1.3), (-2, -0.3, 2.3), (0, -4, 0.33)]},
     },
     {
         "module_fn": torch.nn.ReLU,
@@ -114,9 +101,7 @@ activation_SETTINGS += [
         "module_fn": torch.nn.Tanh,
         "module_kwargs": {},
         "input_fn": torch.Tensor,
-        "input_kwargs": {
-            "data": [(-1, 43, 1.3), (-2, -0.3, 2.3), (0, -4, 0.33)]
-        },  # Note: Tensor has to be n x m
+        "input_kwargs": {"data": [(-1, 43, 1.3), (-2, -0.3, 2.3), (0, -4, 0.33)]},
     },
     {
         "module_fn": torch.nn.Sigmoid,
@@ -127,8 +112,6 @@ activation_SETTINGS += [
         "module_fn": torch.nn.Sigmoid,
         "module_kwargs": {},
         "input_fn": torch.Tensor,
-        "input_kwargs": {
-            "data": [(-1, 43, 1.3), (-2, -0.3, 2.3), (0, -4, 0.33)]
-        },  # Note: Tensor has to be n x m
+        "input_kwargs": {"data": [(-1, 43, 1.3), (-2, -0.3, 2.3), (0, -4, 0.33)]},
     },
 ]

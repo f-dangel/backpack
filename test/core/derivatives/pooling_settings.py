@@ -1,4 +1,4 @@
-"""Test configurations for `backpack.core.derivatives` for Pooling Layers
+"""Test configurations for `backpack.core.derivatives` for POOLING Layers
 
 Required entries:
     "module_fn" (torch.nn.Module): Module class of layer.
@@ -14,7 +14,7 @@ Optional entries:
 
 import torch
 
-pooling_SETTINGS = []
+POOLING_SETTINGS = []
 
 ###############################################################################
 #                                   examples                                  #
@@ -36,13 +36,13 @@ example = {
     "id_prefix": "pool",  # optional
     "seed": 0,  # optional
 }
-pooling_SETTINGS.append(example)
+POOLING_SETTINGS.append(example)
 
 
 ###############################################################################
 #                                test settings                                #
 ###############################################################################
-pooling_SETTINGS += [
+POOLING_SETTINGS += [
     {
         "module_fn": torch.nn.AvgPool2d,
         "module_kwargs": {"kernel_size": 2},
@@ -72,15 +72,5 @@ pooling_SETTINGS += [
         "module_fn": torch.nn.MaxPool2d,
         "module_kwargs": {"kernel_size": 3, "stride": (2, 1), "dilation": 3},
         "input_kwargs": {"size": (3, 2, 9, 9)},
-    },
-    {
-        "module_fn": torch.nn.ZeroPad2d,
-        "module_kwargs": {"padding": 2},
-        "input_kwargs": {"size": (4, 3, 4, 5)},
-    },
-    {
-        "module_fn": torch.nn.ZeroPad2d,
-        "module_kwargs": {"padding": 5},
-        "input_kwargs": {"size": (4, 3, 4, 4)},
     },
 ]

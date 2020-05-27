@@ -9,20 +9,23 @@ Required entries:
         Linear Layers
         Loss functions
         Pooling layers
+        Padding layers
 """
 
-from test.core.derivatives.activation_settings import activation_SETTINGS
-from test.core.derivatives.convolution_settings import convolution_SETTINGS
-from test.core.derivatives.linear_settings import linear_SETTINGS
-from test.core.derivatives.loss_settings import loss_SETTINGS
-from test.core.derivatives.pooling_settings import pooling_SETTINGS
+from test.core.derivatives.activation_settings import ACTIVATION_SETTINGS
+from test.core.derivatives.convolution_settings import CONVOLUTION_SETTINGS
+from test.core.derivatives.linear_settings import LINEAR_SETTINGS
+from test.core.derivatives.loss_settings import LOSS_SETTINGS
+from test.core.derivatives.pooling_settings import POOLING_SETTINGS
+from test.core.derivatives.padding_settings import PADDING_SETTINGS
 
 SETTINGS = []
 
 SETTINGS.extend(
-    activation_SETTINGS
-    + convolution_SETTINGS
-    + linear_SETTINGS
-    + loss_SETTINGS
-    + pooling_SETTINGS
+    ACTIVATION_SETTINGS
+    + CONVOLUTION_SETTINGS
+    + LINEAR_SETTINGS
+    + LOSS_SETTINGS
+    + PADDING_SETTINGS
+    + POOLING_SETTINGS
 )
