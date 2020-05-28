@@ -70,14 +70,14 @@ CONVOLUTION_SETTINGS += [
     {
         "module_fn": torch.nn.Conv2d,
         "module_kwargs": {
-            "in_channels": 4,
+            "in_channels": 3,
             "out_channels": 4,
             "kernel_size": 2,
             "stride": 2,
             "padding": 2,
             "padding_mode": "reflect",
         },
-        "input_kwargs": {"size": (1, 4, 4, 4)},
+        "input_kwargs": {"size": (1, 3, 4, 4)},
     },
     {
         "module_fn": torch.nn.Conv2d,
