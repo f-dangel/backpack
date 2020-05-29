@@ -4,12 +4,6 @@ import torch
 
 from backpack.core.derivatives import derivatives_for
 
-from backpack.core.derivatives.elementwise import ElementwiseDerivatives
-from backpack.core.derivatives.basederivatives import (
-    BaseParameterDerivatives,
-    BaseDerivatives,
-)
-
 
 def get_available_devices():
     """Return CPU and, if present, GPU device.
@@ -42,42 +36,6 @@ def derivative_cls_for(module_cls):
             "No derivative available for {}".format(module_cls)
             + "Known mappings:\n{}".format(derivatives_for)
         )
-
-
-def is_activation(module):
-    """Return whether `module` is a `torch` activation function.
-
-    Args:
-        module (torch.nn.Module): A PyTorch module.
-
-    Returns:
-        bool: Whether `module` is a activation function.
-    """
-    return isinstance(module, ElementwiseDerivatives)
-
-
-def is_pooling(module):
-    """Return whether `module` is a `torch` pooling function.
-
-    Args:
-        module (torch.nn.Module): A PyTorch module.
-
-    Returns:
-        bool: Whether `module` is a pooling function.
-    """
-    return isinstance(module, BaseDerivatives)
-
-
-def is_layer(module):
-    """Return whether `module` is a `torch` layer function.
-
-    Args:
-        module (torch.nn.Module): A PyTorch module.
-
-    Returns:
-        bool: Whether `module` is a layer function.
-    """
-    return isinstance(module, BaseParameterDerivatives)
 
 
 def is_loss(module):
