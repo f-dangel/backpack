@@ -1,9 +1,8 @@
 from backpack.core.derivatives.flatten import FlattenDerivatives
+from backpack.extensions.curvmatprod.pchmp.pchmpbase import PCHMPBase
 
-from .cmpbase import CMPBase
 
-
-class CMPFlatten(CMPBase):
+class PCHMPFlatten(PCHMPBase):
     def __init__(self):
         super().__init__(derivatives=FlattenDerivatives())
 
