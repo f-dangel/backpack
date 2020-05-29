@@ -89,4 +89,3 @@ CONVOLUTION_SETTINGS += [
         "input_kwargs": {"size": (3, 2, 11, 13)},
     },
 ]
-
