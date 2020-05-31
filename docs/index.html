@@ -1,54 +1,58 @@
 <!DOCTYPE html>
 <html lang="en-US">
-    <head>
-        <meta charset="utf-8"/>
-        <meta content="IE=edge" http-equiv="X-UA-Compatible"/>
-        <meta content="width=device-width, initial-scale=1" name="viewport"/>
-        <link href="/assets/css/style.css" rel="stylesheet">
-        </link>
-    </head>
+<head>
+    <meta charset="utf-8"/>
+    <meta content="IE=edge" http-equiv="X-UA-Compatible"/>
+    <meta content="width=device-width, initial-scale=1" name="viewport"/>
+    <link href="/assets/css/style.css" rel="stylesheet">
+    </link>
+</head>
 </html>
 <body>
-    <div class="wrapper">
-        <header>
-            <h1>
+<div class="wrapper">
+    <header>
+        <div style="display: flex; align-items: center; height: 100%; margin-bottom: 5px;">
+            <img src="/assets/img/backpack_logo_torch.svg"
+                 style="width: 48px; margin-right:10px">
+            <h1  style="margin-top:auto; margin-bottom:auto; display:block">
                 <a href="https://f-dangel.github.io/backpack/">
                     BackPACK
                 </a>
             </h1>
-            <p>
-                Get more out of your backward pass
-            </p>
-            <p class="view">
-                <ul>
-                    <li>
-                        <a href="examples.html">
-                            BackPACK on a small example
-                        </a>
-                    </li>
-                </ul>
-            </p>
-            <p class="view">
-                <ul>
-                    <li>
-                        <a href="https://docs.backpack.pt">
-                            Documentation
-                        </a>
-                    </li>
-                </ul>
-            </p>
-            <p class="view">
-                <ul>
-                    <li>
-                        <a href="https://github.com/f-dangel/backpack">
-                            Github repo
-                        </a>
-                    </li>
-                </ul>
-            </p>
-		</header>
-        <section>
-            <p>BackPACK is a library built on top of <a href="https://pytorch.org/">PyTorch</a>
+        </div>
+        <p>
+            Get more out of your backward pass
+        </p>
+        <p class="view">
+        <ul>
+            <li>
+                <a href="examples.html">
+                    BackPACK on a small example
+                </a>
+            </li>
+        </ul>
+        </p>
+        <p class="view">
+        <ul>
+            <li>
+                <a href="https://docs.backpack.pt">
+                    Documentation
+                </a>
+            </li>
+        </ul>
+        </p>
+        <p class="view">
+        <ul>
+            <li>
+                <a href="https://github.com/f-dangel/backpack">
+                    Github repo
+                </a>
+            </li>
+        </ul>
+        </p>
+    </header>
+    <section>
+        <p>BackPACK is a library built on top of <a href="https://pytorch.org/">PyTorch</a>
 to make it easy to extract more information from a backward pass.
 Some of the things you can compute:</p>
 <center>
@@ -291,18 +295,32 @@ h        }
 <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pip install backpack-for-pytorch 
 </code></pre></div></div>
 
-        </section>
-        <footer>
-            <p>
-                <small>
-                    Hosted on GitHub Pages — Theme by
-                    <a href="https://github.com/orderedlist">
-                        orderedlist
-                    </a>
-                </small>
-            </p>
-        </footer>
-    </div>
-    <script src="/assets/js/scale.fix.js">
-    </script>
+<hr />
+
+<p>If you use BackPACK in your research, please cite <float style="float:right"><a href="/assets/dangel2020backpack.bib">download bibtex</a></float></p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@inproceedings{dangel2020backpack,
+    title = {BackPACK: Packing more into Backprop},
+    author = {Felix Dangel and Frederik Kunstner and Philipp Hennig},
+    booktitle = {International Conference on Learning Representations},
+    year = {2020},
+    url = {https://openreview.net/forum?id=BJlrF24twB}
+}
+</code></pre></div></div>
+
+
+    </section>
+    <footer>
+        <p>
+            <small>
+                Hosted on GitHub Pages — Theme by
+                <a href="https://github.com/orderedlist">
+                    orderedlist
+                </a>
+            </small>
+        </p>
+    </footer>
+</div>
+<script src="/assets/js/scale.fix.js">
+</script>
 </body>
