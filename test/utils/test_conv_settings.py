@@ -77,6 +77,32 @@ SETTINGS += [
         "input_kwargs": {"size": (3, 2, 11)},
     },
     {
+        "module_fn": torch.nn.Conv1d,
+        "module_kwargs": {
+            "in_channels": 2,
+            "out_channels": 4,
+            "kernel_size": 2,
+            "padding": 1,
+            "stride": 2,
+            "groups": 2,
+            "bias": False,
+        },
+        "input_kwargs": {"size": (3, 2, 11)},
+    },
+    {
+        "module_fn": torch.nn.Conv1d,
+        "module_kwargs": {
+            "in_channels": 3,
+            "out_channels": 6,
+            "kernel_size": 2,
+            "padding": 1,
+            "stride": 2,
+            "groups": 3,
+            "bias": False,
+        },
+        "input_kwargs": {"size": (3, 3, 11)},
+    },
+    {
         "module_fn": torch.nn.Conv2d,
         "module_kwargs": {
             "in_channels": 2,
@@ -132,15 +158,15 @@ SETTINGS += [
     {
         "module_fn": torch.nn.Conv2d,
         "module_kwargs": {
-            "in_channels": 16,
-            "out_channels": 33,
+            "in_channels": 8,
+            "out_channels": 15,
             "kernel_size": (3, 5),
             "stride": (2, 1),
             "padding": (4, 2),
             "bias": False,
             "dilation": (3, 1),
         },
-        "input_kwargs": {"size": (20, 16, 50, 100)},
+        "input_kwargs": {"size": (10, 8, 25, 50)},
     },
     {
         "module_fn": torch.nn.Conv3d,
@@ -176,5 +202,31 @@ SETTINGS += [
             "bias": False,
         },
         "input_kwargs": {"size": (3, 2, 5, 13, 17)},
+    },
+    {
+        "module_fn": torch.nn.Conv3d,
+        "module_kwargs": {
+            "in_channels": 2,
+            "out_channels": 4,
+            "kernel_size": 2,
+            "padding": 1,
+            "stride": 2,
+            "groups": 2,
+            "bias": False,
+        },
+        "input_kwargs": {"size": (3, 2, 5, 13, 17)},
+    },
+    {
+        "module_fn": torch.nn.Conv3d,
+        "module_kwargs": {
+            "in_channels": 3,
+            "out_channels": 6,
+            "kernel_size": 2,
+            "padding": 1,
+            "stride": 2,
+            "groups": 3,
+            "bias": False,
+        },
+        "input_kwargs": {"size": (3, 3, 5, 7, 7)},
     },
 ]

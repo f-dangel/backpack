@@ -84,34 +84,3 @@ def unfold_by_conv(input, module):
     )
 
     return unfold.reshape(N, C_in * kernel_size_numel, -1)
-
-
-def convolution_with_unfold(input, module):
-    """Perform convolution via matrix multiplication."""
-    assert module.bias is None
-
-    def get_output_shape(input, module):
-        return module(input).shape
-
-    N, C_in = input.shape[0], input.shape[1]
-
-    output_shape = get_output_shape(input, module)
-    C_out = output_shape[1]
-    spatial_out_size = output_shape[2:]
-    spatial_out_numel = spatial_out_size.numel()
-
-    kernel_size = module.kernel_size
-    kernel_size_numel = int(torch.prod(torch.Tensor(kernel_size)))
-
-    G = module.groups
-
-    weight_matrix = module.weight.data.reshape(
-        G, C_out // G, C_in // G, kernel_size_numel
-    )
-    unfolded_input = unfold_by_conv(input, module).reshape(
-        N, G, C_in // G, kernel_size_numel, spatial_out_numel
-    )
-
-    result = torch.einsum("gocx,ngcxh->ngoh", weight_matrix, unfolded_input)
-
-    return result.reshape(N, C_out, *spatial_out_size)
