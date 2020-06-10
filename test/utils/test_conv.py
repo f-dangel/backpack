@@ -1,54 +1,23 @@
 """Test generalization of unfold to 3d convolutions."""
 
-# TODO: @sbharadwajj: impose test suite structure
-# TODO: @sbharadwajj: Test for groups ≠ 1
-
 import torch
+import pytest
 
 from backpack.utils.conv import unfold_by_conv, unfold_func
-
+from test.utils.test_conv_settings import SETTINGS
 from ..automated_test import check_sizes_and_values
+from test.core.derivatives.problem import make_test_problems
 
-###############################################################################
-#      Get the unfolded input with a convolution instead of torch.unfold      #
-###############################################################################
 
-torch.manual_seed(0)
+PROBLEMS = make_test_problems(SETTINGS)
+IDS = [problem.make_id() for problem in PROBLEMS]
 
-# check
-UNFOLD_SETTINGS = [
-    [torch.nn.Conv2d(1, 1, kernel_size=2, bias=False), (1, 1, 3, 3)],
-    [torch.nn.Conv2d(1, 2, kernel_size=2, bias=False), (1, 1, 3, 3)],
-    [torch.nn.Conv2d(2, 1, kernel_size=2, bias=False), (1, 2, 3, 3)],
-    [torch.nn.Conv2d(2, 2, kernel_size=2, bias=False), (1, 2, 3, 3)],
-    [torch.nn.Conv2d(2, 3, kernel_size=2, bias=False), (3, 2, 11, 13)],
-    [torch.nn.Conv2d(2, 3, kernel_size=2, padding=1, bias=False), (3, 2, 11, 13)],
-    [
-        torch.nn.Conv2d(2, 3, kernel_size=2, padding=1, stride=2, bias=False),
-        (3, 2, 11, 13),
-    ],
-    [
-        torch.nn.Conv2d(
-            2, 3, kernel_size=2, padding=1, stride=2, dilation=2, bias=False
-        ),
-        (3, 2, 11, 13),
-    ],
+CONV2D_PROBLEMS = [
+    problem
+    for problem in PROBLEMS
+    if isinstance(problem.make_module(), torch.nn.Conv2d)
 ]
-
-
-def test_unfold_by_conv():
-    for module, in_shape in UNFOLD_SETTINGS:
-        input = torch.rand(in_shape)
-
-        result_unfold = unfold_func(module)(input).flatten()
-        result_unfold_by_conv = unfold_by_conv(input, module).flatten()
-
-        check_sizes_and_values(result_unfold, result_unfold_by_conv)
-
-
-###############################################################################
-#             Perform a convolution with the unfolded input matrix            #
-###############################################################################
+CONV2D_IDS = [problem.make_id() for problem in CONV2D_PROBLEMS]
 
 
 def convolution_with_unfold(input, module):
@@ -82,100 +51,36 @@ def convolution_with_unfold(input, module):
     return result.reshape(N, C_out, *spatial_out_size)
 
 
-CONV_SETTINGS = UNFOLD_SETTINGS + [
-    [
-        torch.nn.Conv2d(
-            2, 6, kernel_size=2, padding=1, stride=2, dilation=2, bias=False, groups=2
-        ),
-        (3, 2, 11, 13),
-    ],
-    [
-        torch.nn.Conv2d(
-            3, 6, kernel_size=2, padding=1, stride=2, dilation=2, bias=False, groups=3
-        ),
-        (5, 3, 11, 13),
-    ],
-    [
-        torch.nn.Conv2d(
-            16,
-            33,
-            kernel_size=(3, 5),
-            stride=(2, 1),
-            padding=(4, 2),
-            dilation=(3, 1),
-            bias=False,
-        ),
-        (20, 16, 50, 100),
-    ],
-]
+@pytest.mark.parametrize("problem", CONV2D_PROBLEMS, ids=CONV2D_IDS)
+def test_unfold_by_conv(problem):
+    """Test the Unfold by convolution for torch.nn.Conv2d.
+
+    Args:
+        problem (ConvProblem): Problem for testing unfold operation.
+    """
+    problem.set_up()
+    input = torch.rand(problem.input_shape)
+
+    result_unfold = unfold_func(problem.module)(input)
+    result_unfold_by_conv = unfold_by_conv(input, problem.module)
+
+    check_sizes_and_values(result_unfold, result_unfold_by_conv)
+    problem.tear_down()
 
 
-def test_convolution2d_with_unfold():
-    for module, in_shape in CONV_SETTINGS:
-        input = torch.rand(in_shape)
+@pytest.mark.parametrize("problem", PROBLEMS, ids=IDS)
+def test_convolution_with_unfold(problem):
+    """Test the Unfold operation of torch.nn.Conv1d and torch.nn.Conv3d
+    by using convolution.
 
-        result_conv = module(input)
-        result_conv_by_unfold = convolution_with_unfold(input, module)
+    Args:
+        problem (ConvProblem): Problem for testing unfold operation.
+    """
+    problem.set_up()
+    input = torch.rand(problem.input_shape)
 
-        check_sizes_and_values(result_conv, result_conv_by_unfold)
+    result_conv = problem.module(input)
+    result_conv_by_unfold = convolution_with_unfold(input, problem.module)
 
-
-CONV_1D_SETTINGS = [
-    [torch.nn.Conv1d(1, 1, kernel_size=2, bias=False), (1, 1, 3)],
-    [torch.nn.Conv1d(1, 2, kernel_size=2, bias=False), (1, 1, 3)],
-    [torch.nn.Conv1d(2, 1, kernel_size=2, bias=False), (1, 2, 3)],
-    [torch.nn.Conv1d(2, 2, kernel_size=2, bias=False), (1, 2, 3)],
-    [torch.nn.Conv1d(2, 3, kernel_size=2, bias=False), (3, 2, 11)],
-    [torch.nn.Conv1d(2, 3, kernel_size=2, padding=1, bias=False), (3, 2, 11)],
-    [
-        torch.nn.Conv1d(2, 3, kernel_size=2, padding=1, stride=2, bias=False),
-        (3, 2, 11),
-    ],
-    [
-        torch.nn.Conv1d(
-            2, 3, kernel_size=2, padding=1, stride=2, dilation=2, bias=False
-        ),
-        (3, 2, 11),
-    ],
-]
-
-
-def test_convolution1d_with_unfold():
-    for module, in_shape in CONV_1D_SETTINGS:
-        input = torch.rand(in_shape)
-
-        result_conv = module(input)
-        result_conv_by_unfold = convolution_with_unfold(input, module)
-
-        check_sizes_and_values(result_conv, result_conv_by_unfold)
-
-
-CONV_3D_SETTINGS = [
-    [torch.nn.Conv3d(1, 1, kernel_size=2, bias=False), (1, 1, 3, 3, 3)],
-    [torch.nn.Conv3d(1, 2, kernel_size=2, bias=False), (1, 1, 3, 3, 3)],
-    [torch.nn.Conv3d(2, 1, kernel_size=2, bias=False), (1, 2, 3, 3, 3)],
-    [torch.nn.Conv3d(2, 2, kernel_size=2, bias=False), (1, 2, 3, 3, 3)],
-    [torch.nn.Conv3d(2, 3, kernel_size=2, bias=False), (3, 2, 11, 13, 17)],
-    [torch.nn.Conv3d(2, 3, kernel_size=2, padding=1, bias=False), (3, 2, 11, 13, 17)],
-    [
-        torch.nn.Conv3d(2, 3, kernel_size=2, padding=1, stride=2, bias=False),
-        (3, 2, 11, 13, 17),
-    ],
-    [
-        torch.nn.Conv3d(
-            2, 3, kernel_size=2, padding=1, stride=2, dilation=2, bias=False
-        ),
-        (3, 2, 11, 13, 17),
-    ],
-]
-
-
-def test_convolution3d_with_unfold():
-    print("Conv via unfold check")
-    for module, in_shape in CONV_3D_SETTINGS:
-        input = torch.rand(in_shape)
-
-        result_conv = module(input)
-        result_conv_by_unfold = convolution_with_unfold(input, module)
-
-        check_sizes_and_values(result_conv, result_conv_by_unfold)
+    check_sizes_and_values(result_conv, result_conv_by_unfold)
+    problem.tear_down()

@@ -83,4 +83,4 @@ def unfold_by_conv(input, module):
         groups=C_in,
     )
 
-    return unfold.reshape(N, -1, kernel_size_numel)
+    return unfold.reshape(N, C_in * kernel_size_numel, -1)
