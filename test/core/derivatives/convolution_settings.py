@@ -120,6 +120,7 @@ CONVOLUTION_SETTINGS += [
             "out_channels": 3,
             "kernel_size": 2,
             "bias": False,
+            "stride": 2,
             "padding": 1,
         },
         "input_kwargs": {"size": (3, 2, 3, 7, 7)},
