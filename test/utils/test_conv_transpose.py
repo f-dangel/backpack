@@ -1,20 +1,16 @@
 """Test generalization of unfold to transpose convolutions."""
 
-# TODO: @sbharadwajj: impose test suite structure
-# TODO: @sbharadwajj: test with groups≠1
-
 import torch
+import pytest
 
 from backpack.utils.conv_transpose import unfold_by_conv_transpose
-
+from test.utils.test_conv_transpose_settings import SETTINGS
 from ..automated_test import check_sizes_and_values
+from test.core.derivatives.problem import make_test_problems
 
-torch.manual_seed(0)
 
-###############################################################################
-#             Perform a convolution with the unfolded input matrix            #
-###############################################################################
-
+PROBLEMS = make_test_problems(SETTINGS)
+IDS = [problem.make_id() for problem in PROBLEMS]
 
 def conv_transpose_with_unfold(input, module):
     """Perform transpose convolution via matrix multiplication."""
@@ -47,97 +43,19 @@ def conv_transpose_with_unfold(input, module):
     return result.reshape(N, C_out, *spatial_out_size)
 
 
-CONV_TRANSPOSE_2D_SETTINGS = [
-    [torch.nn.ConvTranspose2d(1, 1, kernel_size=2, bias=False), (1, 1, 3, 3)],
-    [torch.nn.ConvTranspose2d(1, 2, kernel_size=2, bias=False), (1, 1, 3, 3)],
-    [torch.nn.ConvTranspose2d(2, 1, kernel_size=2, bias=False), (1, 2, 3, 3)],
-    [torch.nn.ConvTranspose2d(2, 2, kernel_size=2, bias=False), (1, 2, 3, 3)],
-    [torch.nn.ConvTranspose2d(2, 3, kernel_size=2, bias=False), (3, 2, 11, 13)],
-    [
-        torch.nn.ConvTranspose2d(2, 3, kernel_size=2, padding=1, bias=False),
-        (3, 2, 11, 13),
-    ],
-    [
-        torch.nn.ConvTranspose2d(2, 3, kernel_size=2, padding=1, stride=2, bias=False),
-        (3, 2, 11, 13),
-    ],
-    [
-        torch.nn.ConvTranspose2d(
-            2, 3, kernel_size=2, padding=1, stride=2, dilation=2, bias=False
-        ),
-        (3, 2, 11, 13),
-    ],
-]
 
+@pytest.mark.parametrize("problem", PROBLEMS, ids=IDS)
+def test_conv_transpose_with_unfold(problem):
+    """Test the torch.nn.ConvTranspose() using the unfold operation
+    and `conv_transpose_unfold` function.
+    Args:
+        problem (ConvProblem): Problem for testing torch.nn.ConvTranspose() operation.
+    """
+    problem.set_up()
+    input = torch.rand(problem.input_shape)
 
-def test_conv_transpose2d_with_unfold():
-    for module, in_shape in CONV_TRANSPOSE_2D_SETTINGS:
-        input = torch.rand(in_shape)
+    result_conv_transpose = problem.module(input)
+    result_conv_transpose_by_unfold = conv_transpose_with_unfold(input, problem.module)
 
-        result_conv_transpose = module(input)
-        result_conv_transpose_by_unfold = conv_transpose_with_unfold(input, module)
-
-        check_sizes_and_values(result_conv_transpose, result_conv_transpose_by_unfold)
-
-
-CONV_TRANSPOSE_1D_SETTINGS = [
-    [torch.nn.ConvTranspose1d(1, 1, kernel_size=2, bias=False), (1, 1, 3)],
-    [torch.nn.ConvTranspose1d(1, 2, kernel_size=2, bias=False), (1, 1, 3)],
-    [torch.nn.ConvTranspose1d(2, 1, kernel_size=2, bias=False), (1, 2, 3)],
-    [torch.nn.ConvTranspose1d(2, 2, kernel_size=2, bias=False), (1, 2, 3)],
-    [torch.nn.ConvTranspose1d(2, 3, kernel_size=2, bias=False), (3, 2, 11)],
-    [torch.nn.ConvTranspose1d(2, 3, kernel_size=2, padding=1, bias=False), (3, 2, 11)],
-    [
-        torch.nn.ConvTranspose1d(2, 3, kernel_size=2, padding=1, stride=2, bias=False),
-        (3, 2, 11),
-    ],
-    [
-        torch.nn.ConvTranspose1d(
-            2, 3, kernel_size=2, padding=1, stride=2, dilation=2, bias=False
-        ),
-        (3, 2, 11),
-    ],
-]
-
-
-def test_conv_transpose1d_with_unfold():
-    for module, in_shape in CONV_TRANSPOSE_1D_SETTINGS:
-        input = torch.rand(in_shape)
-
-        result_conv_transpose = module(input)
-        result_conv_transpose_by_unfold = conv_transpose_with_unfold(input, module)
-
-        check_sizes_and_values(result_conv_transpose, result_conv_transpose_by_unfold)
-
-
-CONV_TRANSPOSE_3D_SETTINGS = [
-    [torch.nn.ConvTranspose3d(1, 1, kernel_size=2, bias=False), (1, 1, 3, 3, 3)],
-    [torch.nn.ConvTranspose3d(1, 2, kernel_size=2, bias=False), (1, 1, 3, 3, 3)],
-    [torch.nn.ConvTranspose3d(2, 1, kernel_size=2, bias=False), (1, 2, 3, 3, 3)],
-    [torch.nn.ConvTranspose3d(2, 2, kernel_size=2, bias=False), (1, 2, 3, 3, 3)],
-    [torch.nn.ConvTranspose3d(2, 3, kernel_size=2, bias=False), (3, 2, 11, 13, 17)],
-    [
-        torch.nn.ConvTranspose3d(2, 3, kernel_size=2, padding=1, bias=False),
-        (3, 2, 11, 13, 17),
-    ],
-    [
-        torch.nn.ConvTranspose3d(2, 3, kernel_size=2, padding=1, stride=2, bias=False),
-        (3, 2, 11, 13, 17),
-    ],
-    [
-        torch.nn.ConvTranspose3d(
-            2, 3, kernel_size=2, padding=1, stride=2, dilation=2, bias=False
-        ),
-        (3, 2, 11, 13, 17),
-    ],
-]
-
-
-def test_conv_transpose3d_with_unfold():
-    for module, in_shape in CONV_TRANSPOSE_3D_SETTINGS:
-        input = torch.rand(in_shape)
-
-        result_conv_transpose = module(input)
-        result_conv_transpose_by_unfold = conv_transpose_with_unfold(input, module)
-
-        check_sizes_and_values(result_conv_transpose, result_conv_transpose_by_unfold)
+    check_sizes_and_values(result_conv_transpose, result_conv_transpose_by_unfold)
+    problem.tear_down()
