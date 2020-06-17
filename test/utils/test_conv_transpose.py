@@ -12,6 +12,7 @@ from test.core.derivatives.problem import make_test_problems
 PROBLEMS = make_test_problems(SETTINGS)
 IDS = [problem.make_id() for problem in PROBLEMS]
 
+
 def conv_transpose_with_unfold(input, module):
     """Perform transpose convolution via matrix multiplication."""
     assert module.bias is None
@@ -41,7 +42,6 @@ def conv_transpose_with_unfold(input, module):
     result = torch.einsum("cgox,ncgxh->ngoh", weight_matrix, unfolded_input)
 
     return result.reshape(N, C_out, *spatial_out_size)
-
 
 
 @pytest.mark.parametrize("problem", PROBLEMS, ids=IDS)
