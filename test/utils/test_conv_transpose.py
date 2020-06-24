@@ -52,7 +52,7 @@ def test_conv_transpose_with_unfold(problem):
         problem (ConvProblem): Problem for testing torch.nn.ConvTranspose() operation.
     """
     problem.set_up()
-    input = torch.rand(problem.input_shape)
+    input = torch.rand(problem.input_shape).to(problem.device)
 
     result_conv_transpose = problem.module(input)
     result_conv_transpose_by_unfold = conv_transpose_with_unfold(input, problem.module)
