@@ -81,17 +81,6 @@ CONVOLUTION_SETTINGS += [
     {
         "module_fn": torch.nn.Conv2d,
         "module_kwargs": {
-            "in_channels": 2,
-            "out_channels": 3,
-            "kernel_size": 2,
-            "bias": False,
-            "padding": 1,
-        },
-        "input_kwargs": {"size": (3, 2, 7, 7)},
-    },
-    {
-        "module_fn": torch.nn.Conv2d,
-        "module_kwargs": {
             "in_channels": 3,
             "out_channels": 6,
             "kernel_size": 2,
@@ -148,29 +137,49 @@ CONVOLUTION_SETTINGS += [
         "input_kwargs": {"size": (3, 2, 3, 7, 7)},
     },
     {
-        "module_fn": torch.nn.ConvTranspose2d,
+        "module_fn": torch.nn.ConvTranspose1d,
         "module_kwargs": {
-            "in_channels": 3,
+            "in_channels": 2,
             "out_channels": 3,
-            "kernel_size": 4,
-            "stride": 1,
+            "kernel_size": 2,
+            "bias": False,
+            "padding": 1,
         },
-        "input_kwargs": {"size": (1, 3, 32, 32)},
+        "input_kwargs": {"size": (3, 2, 7)},
     },
     {
-        "module_fn": torch.nn.ConvTranspose2d,
-        "module_kwargs": {"in_channels": 2, "out_channels": 3, "kernel_size": 2,},
-        "input_kwargs": {"size": (3, 2, 11, 13)},
+        "module_fn": torch.nn.ConvTranspose1d,
+        "module_kwargs": {
+            "in_channels": 3,
+            "out_channels": 6,
+            "kernel_size": 2,
+            "stride": 4,
+            "padding": 2,
+            "dilation": 3,
+        },
+        "input_kwargs": {"size": (1, 3, 7)},
+    },
+    {
+        "module_fn": torch.nn.ConvTranspose1d,
+        "module_kwargs": {
+            "in_channels": 2,
+            "out_channels": 3,
+            "kernel_size": 2,
+            "padding": 1,
+            "groups": 1,
+        },
+        "input_kwargs": {"size": (3, 2, 11)},
     },
     {
         "module_fn": torch.nn.ConvTranspose2d,
         "module_kwargs": {
             "in_channels": 2,
             "out_channels": 3,
+            "bias": False,
             "kernel_size": 2,
             "padding": 1,
         },
-        "input_kwargs": {"size": (3, 2, 11, 13)},
+        "input_kwargs": {"size": (3, 2, 7, 7)},
     },
     {
         "module_fn": torch.nn.ConvTranspose2d,
@@ -182,9 +191,56 @@ CONVOLUTION_SETTINGS += [
             "stride": 2,
             "dilation": 2,
         },
-        "input_kwargs": {"size": (3, 2, 11, 13)},
+        "input_kwargs": {"size": (3, 2, 7, 7)},
     },
-    # TODO: Fix groups ≠ 1
+    {
+        "module_fn": torch.nn.ConvTranspose2d,
+        "module_kwargs": {
+            "in_channels": 2,
+            "out_channels": 4,
+            "kernel_size": 2,
+            "padding": 1,
+            "groups": 1,
+        },
+        "input_kwargs": {"size": (3, 2, 7, 7)},
+    },
+    {
+        "module_fn": torch.nn.ConvTranspose3d,
+        "module_kwargs": {
+            "in_channels": 2,
+            "out_channels": 3,
+            "kernel_size": 2,
+            "bias": False,
+            "stride": 2,
+            "padding": 1,
+        },
+        "input_kwargs": {"size": (3, 2, 3, 7, 7)},
+    },
+    {
+        "module_fn": torch.nn.ConvTranspose3d,
+        "module_kwargs": {
+            "in_channels": 2,
+            "out_channels": 3,
+            "kernel_size": 2,
+            "padding": 2,
+            "dilation": 2,
+            "stride": 2,
+        },
+        "input_kwargs": {"size": (3, 2, 5, 7, 7)},
+    },
+    {
+        "module_fn": torch.nn.ConvTranspose3d,
+        "module_kwargs": {
+            "in_channels": 2,
+            "out_channels": 3,
+            "kernel_size": 2,
+            "padding": (2, 2, 1),
+            "groups": 1,
+            "stride": (2, 2, 1),
+        },
+        "input_kwargs": {"size": (3, 2, 7, 7, 7)},
+    },
+    # # TODO: Fix groups ≠ 1
     # {
     #     "module_fn": torch.nn.ConvTranspose2d,
     #     "module_kwargs": {

@@ -59,7 +59,7 @@ def test_unfold_by_conv(problem):
         problem (ConvProblem): Problem for testing unfold operation.
     """
     problem.set_up()
-    input = torch.rand(problem.input_shape)
+    input = torch.rand(problem.input_shape).to(problem.device)
 
     result_unfold = unfold_func(problem.module)(input)
     result_unfold_by_conv = unfold_by_conv(input, problem.module)
@@ -77,7 +77,7 @@ def test_convolution_with_unfold(problem):
         problem (ConvProblem): Problem for testing unfold operation.
     """
     problem.set_up()
-    input = torch.rand(problem.input_shape)
+    input = torch.rand(problem.input_shape).to(problem.device)
 
     result_conv = problem.module(input)
     result_conv_by_unfold = convolution_with_unfold(input, problem.module)

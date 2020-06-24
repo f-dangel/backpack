@@ -75,7 +75,7 @@ def unfold_by_conv(input, module):
     conv = get_conv()
     unfold = conv(
         input,
-        make_weight(),
+        make_weight().to(input.device),
         bias=None,
         stride=module.stride,
         padding=module.padding,
