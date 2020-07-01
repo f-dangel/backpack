@@ -86,37 +86,6 @@ class ConvTranspose1DDerivatives(BaseParameterDerivatives):
         )
 
         return torch.einsum(equation, u, mat_reshape).reshape(final_shape)
-        # V = mat.shape[0]
-        # N, C_out, _ = module.output_shape
-        # _, C_in, _ = module.input0_shape
-
-        # mat = eingroup("v,n,c,l->vn,c,l", mat).repeat(1, C_in, 1)
-        # C_in_axis = 1
-        # # a,b represent the combined/repeated dimensions
-        # mat = eingroup("a,b,l->ab,l", mat).unsqueeze(C_in_axis)
-
-        # N_axis = 0
-        # input = eingroup("n,c,l->nc,l", module.input0).unsqueeze(N_axis)
-        # input = input.repeat(1, V, 1)
-
-        # grad_weight = conv1d(
-        #     input,
-        #     mat,
-        #     bias=None,
-        #     stride=module.dilation,
-        #     padding=module.padding,
-        #     dilation=module.stride,
-        #     groups=C_in * N * V,
-        # ).squeeze(0)
-
-        # K_L_axis = 1
-        # _, _, K_L = module.weight.shape
-        # grad_weight = grad_weight.narrow(K_L_axis, 0, K_L)
-
-        # eingroup_eq = "vnio,x->v,{}o,i,x".format("" if sum_batch else "n,")
-        # return eingroup(
-        #     eingroup_eq, grad_weight, dim={"v": V, "n": N, "i": C_in, "o": C_out}
-        # )
 
     def _jac_mat_prod(self, module, g_inp, g_out, mat):
         mat_as_conv = eingroup("v,n,c,l->vn,c,l", mat)
