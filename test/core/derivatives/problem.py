@@ -163,6 +163,7 @@ class DerivativesTestProblem:
             input.requires_grad = True
 
         if self.is_loss():
+            assert sample_idx is None
             output = self.module(input, self.target)
         else:
             output = self.module(input)
