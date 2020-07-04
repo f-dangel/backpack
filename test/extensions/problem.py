@@ -1,6 +1,8 @@
 """Convert problem settings."""
 
-from warnings import warn
+import torch
+
+from backpack import extend
 
 
 class ExtensionsTestProblem:
@@ -28,12 +30,42 @@ class ExtensionsTestProblem:
         self.id_prefix = id_prefix
 
     def set_up(self):
-        warn("Dummy")
+        torch.manual_seed(self.seed)
+
+        self.model = self.module_fn().to(self.device)
+        self.input = self.input_fn().to(self.device)
+        self.target = self.target_fn().to(self.device)
+        self.loss_function = self.loss_function_fn().to(self.device)
 
     def tear_down(self):
-        warn("Dummy")
+        del self.model, self.input, self.target, self.loss_function
 
     def make_id(self):
         """Needs to function without call to `set_up`."""
-        warn("Dummy")
-        return "dummy"
+        prefix = (self.id_prefix + "-") if self.id_prefix != "" else ""
+        return prefix + "dev={}-in={}-model={}-loss={}".format(
+            self.device,
+            tuple(self.input_fn().shape),
+            self.module_fn(),
+            self.loss_function_fn(),
+        ).replace(" ", "")
+
+    def forward_pass(self, sample_idx=None):
+        """Do a forward pass. Return input, output, and parameters."""
+        if sample_idx is None:
+            input = self.input.clone().detach()
+            target = self.target.clone().detach()
+        else:
+            input = self.input.clone()[sample_idx, :].unsqueeze(0).detach()
+            target = self.target.clone()[sample_idx].unsqueeze(0).detach()
+
+        print(self.target.shape)
+        print(target.shape)
+        output = self.model(input)
+        loss = self.loss_function(output, target)
+
+        return input, output, loss
+
+    def extend(self):
+        self.model = extend(self.model)
+        self.loss_function = extend(self.loss_function)

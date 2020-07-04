@@ -1,4 +1,5 @@
 from test.automated_test import check_sizes_and_values
+from test.core.derivatives.utils import classification_targets
 from test.extensions.implementation.autograd import AutogradExtensions
 from test.extensions.implementation.backpack import BackpackExtensions
 from test.extensions.problem import ExtensionsTestProblem
@@ -7,13 +8,15 @@ import pytest
 import torch
 
 dummy_setting = {
-    "input_fn": lambda: None,
-    "module_fn": lambda: None,
-    "loss_function_fn": lambda: None,
-    "target_fn": lambda: None,
+    "input_fn": lambda: torch.rand(3, 10),
+    "module_fn": lambda: torch.nn.Sequential(
+        torch.nn.Linear(10, 7), torch.nn.Sigmoid(), torch.nn.Linear(7, 5)
+    ),
+    "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="mean"),
+    "target_fn": lambda: classification_targets((3,), 5),
     "device": torch.device("cpu"),
     "seed": 0,
-    "id_prefix": "",
+    "id_prefix": "prototype",
 }
 
 
