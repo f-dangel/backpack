@@ -24,8 +24,8 @@ import torch
 from torch.optim import Optimizer
 import torch.nn as nn
 
-from backpack.hessianfree.hvp import hessian_vector_product
 from backpack import backpack, extend
+from backpack.hessianfree.hvp import hessian_vector_product
 from backpack.extensions import HMP, DiagHessian
 from backpack.utils.examples import get_mnist_dataloder
 import matplotlib.pyplot as plt
@@ -82,7 +82,7 @@ with backpack(DiagHessian(), HMP()):
 
 V = 100
 for name, param in model.named_parameters():
-    vec = rademacher((V, *param.shape)).to(param.dtype)
+    vec = rademacher((V, *param.shape)).to(param.dtype).to(DEVICE)
 
     trace = (param.diag_h).sum()
 
@@ -138,7 +138,7 @@ for i in range(8):
     tr = []
     tr_hutchinson = []
     for V in sample_list:       
-        vec = rademacher((V, *param.shape)).to(param.dtype)
+        vec = rademacher((V, *param.shape)).to(param.dtype).to(DEVICE)
 
         trace = (param.diag_h).sum()
         tr.append(trace.detach())
@@ -158,7 +158,7 @@ plt.fill_between(X, max(tr_hutchinson_all), min(tr_hutchinson_all), color=gray, 
 tr_autodiff = torch.zeros((V, len(list(model.parameters()))))
 def trace_pytorch(V):
     for v in range(V):
-        vec = [rademacher(p.shape).to(p.dtype) for n,p in model.named_parameters()]
+        vec = [rademacher(p.shape).to(p.dtype).to(DEVICE) for n,p in model.named_parameters()]
         HV = hessian_vector_product(loss, list(model.parameters()), vec)
         trace_autodiff = torch.Tensor([torch.einsum('ij,ij->i', v, hv).sum() for v,hv in zip(vec, HV)])
         tr_autodiff[v] = trace_autodiff 
@@ -167,7 +167,7 @@ def trace_pytorch(V):
 
 def trace_computation_hutchinson(V):
     for _, param in model.named_parameters():
-        vec = rademacher((V, *param.shape)).to(param.dtype)
+        vec = rademacher((V, *param.shape)).to(param.dtype).to(DEVICE)
         trace_hutchinson = (torch.einsum('ijk,ijk->i', vec, param.hmp(vec)).sum()) / V
 
 def trace_computation_backpack():
