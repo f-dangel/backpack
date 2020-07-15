@@ -1,15 +1,17 @@
 r"""Trace Estimation.
 =============================
 
-Hutchinsons `[Hutchinson, 1990]<https://www.researchgate.net/publication/245083270_A_stochastic_estimator_of_the_trace_of_the_influence_matrix_for_Laplacian_smoothing_splines>`
-method is a simple way to obtain an estimate of the trace of a matrix. Consider an N x N symmetric matrix A, and let z 
-be a vector of size n then the trace can be given as: 
+Hutchinsons `[Hutchinson, 1990] <https://www.researchgate.net/publication/245083270_A_stochastic_estimator_of_the_trace_of_the_influence_matrix_for_Laplacian_smoothing_splines>`_
+method is a simple way to obtain an estimate of the trace of a matrix.  
 
 .. math::
+    \text{Let } A \in \mathbb{R}^{N \times N} \text{ be a square matrix and } x \in \mathbb{R}^D 
+    \text{ be a random vector such that } \mathbb{E}[xx^T] = I. \text{Then,}
 
-    Tr(A) = \frac{1}{N}\sum_{i=1}^{n}z_i^TAz_i
+.. math::
+    Tr(A) = \mathbb{E}[x^TAX] = \frac{1}{N}\sum_{i=1}^{n}x_i^TAx_i
 
-where the vector z is sampled from a Rademacher Distribution. 
+where the random vector x is sampled from a Rademacher Distribution. A simple derivation for the above can be found in `[Adams, R et al.,] <https://arxiv.org/pdf/1802.03451.pdf>`_.
 
 This method is a nice trick, but it is still expensive to calculate the trace of an N x N hessian matrix during backpropagation. Firstly, backPACK provides a function to obtain the
 hessian matrix product where we are able to perform 3-D tensor multiplication and this reduces the computation cost quite drastically. Furthermore, backPACK provides a fast and accurate estimation
@@ -38,6 +40,7 @@ MAX_ITER = 200
 BATCH_SIZE = 512
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 torch.manual_seed(0)
+estimated_batch_size = 10 # This parameter is for the loop and plot code found later
 
 def rademacher(shape):
     return ((torch.rand(shape)<0.5))*2-1
@@ -86,7 +89,7 @@ for name, param in model.named_parameters():
 
     trace = (param.diag_h).sum()
 
-    trace_hutchinson = (torch.einsum('ijk,ijk->i', vec, param.hmp(vec)).sum()) / V 
+    trace_hutchinson = (torch.einsum('ijk,ijk->i', vec, param.hmp(vec).detach()).sum()) / V 
 
     print("Parameter: ", name)
     print("Trace via Hutchinsons: {:.5f} ".format(trace_hutchinson.item()))
@@ -117,12 +120,12 @@ gray = np.array([175.0, 179.0, 183.0]) / 255.0
 # %%
 # here, we can change the number of samples by tweaking the exponential and samples parameter where exponential decides the scale of the samples.
 
-exponential = 4
+exponential = 3
 samples = 10
 sample_list = [pow(samples, i+1) for i in range(exponential)]
 
 # %% The plot is trace (Y-Axis) vs the number of samples (X-Axis). We can observe that as the sample size increases, the trace via hutchinsons method converges to the true trace.
-def plotfig(tr, tr_rad, max_tr, min_tr):
+def plotfig(tr, tr_rad):
     plt.xlabel("Number of Samples")
     plt.ylabel("Trace")
     plt.plot(X, tr, color=dark)
@@ -130,23 +133,20 @@ def plotfig(tr, tr_rad, max_tr, min_tr):
 
 X = np.linspace(samples, samples**exponential, exponential)
 plt.rcParams["figure.figsize"] = (20, 10)
-fig, ax = plt.subplots(1, 1)
+fig = plt.figure()
+ax = fig.add_subplot(1,1,1)
 
 tr_hutchinson_all = []
 for i in range(8):
     torch.manual_seed(i)
-    tr = []
+    trace = [(param.diag_h).sum()]*exponential
     tr_hutchinson = []
-    for V in sample_list:       
-        vec = rademacher((V, *param.shape)).to(param.dtype).to(DEVICE)
-
-        trace = (param.diag_h).sum()
-        tr.append(trace.detach())
-        trace_hutchinson = (torch.einsum('ijk,ijk->i', vec, param.hmp(vec)).sum()) / V
-        tr_hutchinson.append(trace_hutchinson.detach())    
-    plotfig(tr, tr_hutchinson, max(tr_hutchinson), min(tr_hutchinson))
+    for V in sample_list:
+        vec = (rademacher((V, *param.shape)).to(param.dtype)).to(DEVICE)
+        trace_hutchinson = (torch.einsum('ijk,ijk->i', vec, param.hmp(vec).detach()).sum()).item() / V
+        tr_hutchinson.append(trace_hutchinson)
+    plotfig(trace, tr_hutchinson)
     tr_hutchinson_all.append(tr_hutchinson)
-    
     
 plt.fill_between(X, max(tr_hutchinson_all), min(tr_hutchinson_all), color=gray, alpha=0.3)
 
@@ -155,8 +155,9 @@ plt.fill_between(X, max(tr_hutchinson_all), min(tr_hutchinson_all), color=gray, 
 # ----------------------------------------
 # Here, we show a quick runtime comparison where we compare the computational cost of the trace of the hessian obtained via a)Hutchinsons method using Autograd b) Hutchinsons method using backPACK c)True trace using backPACK. 
 
-tr_autodiff = torch.zeros((V, len(list(model.parameters()))))
 def trace_pytorch(V):
+    tr_autodiff = torch.zeros((V, len(list(model.parameters()))))
+
     for v in range(V):
         vec = [rademacher(p.shape).to(p.dtype).to(DEVICE) for n,p in model.named_parameters()]
         HV = hessian_vector_product(loss, list(model.parameters()), vec)
@@ -166,9 +167,14 @@ def trace_pytorch(V):
 
 
 def trace_computation_hutchinson(V):
+    batch_nos = (V // estimated_batch_size) if V > estimated_batch_size else 1
+    tr_hutchinson = torch.zeros((V, len(list(model.parameters()))))
     for _, param in model.named_parameters():
-        vec = rademacher((V, *param.shape)).to(param.dtype).to(DEVICE)
-        trace_hutchinson = (torch.einsum('ijk,ijk->i', vec, param.hmp(vec)).sum()) / V
+        for i in range(batch_nos):
+            vec = (rademacher((estimated_batch_size, *param.shape)).to(param.dtype)).to(DEVICE)
+            trace_hutchinson = (torch.einsum('ijk,ijk->i', vec, param.hmp(vec).detach()).sum()).item()
+            tr_hutchinson[i] = trace_hutchinson
+        trace_hutchinson = torch.sum(tr_hutchinson, axis=0) / V
 
 def trace_computation_backpack():
     for _, param in model.named_parameters():
@@ -177,7 +183,7 @@ def trace_computation_backpack():
 # %%        
 # we can change V and test the time accordingly.
 
-V = 10
+V = 10000
 print("Time taken for {} vectors:".format(V))
 start_hut = time.time()
 trace_computation_hutchinson(V)
@@ -190,3 +196,5 @@ print("true trace with backPACK: {:.5f}".format(time.time() - start_bp))
 start_ad = time.time()
 trace_pytorch(V)
 print("trace via hutchinsons with Autodiff: {:.5f}".format(time.time() - start_ad))
+
+
