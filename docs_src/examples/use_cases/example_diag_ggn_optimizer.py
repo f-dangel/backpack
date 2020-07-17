@@ -29,12 +29,12 @@ where
 # %%
 # Let's get the imports, configuration and some helper functions out of the way first.
 
+import matplotlib.pyplot as plt
 import torch
 
 from backpack import backpack, extend
 from backpack.extensions import DiagGGNMC
 from backpack.utils.examples import get_mnist_dataloder
-import matplotlib.pyplot as plt
 
 BATCH_SIZE = 128
 STEP_SIZE = 0.01
@@ -116,6 +116,8 @@ optimizer = DiagGGNOptimizer(model.parameters(), step_size=STEP_SIZE, damping=DA
 losses = []
 accuracies = []
 for batch_idx, (x, y) in enumerate(mnist_loader):
+    optimizer.zero_grad()
+
     x, y = x.to(DEVICE), y.to(DEVICE)
     outputs = model(x)
     loss = loss_function(outputs, y)
