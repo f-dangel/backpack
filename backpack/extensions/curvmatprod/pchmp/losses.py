@@ -8,7 +8,7 @@ class PCHMPLoss(PCHMPBase):
         if not self.derivatives.hessian_is_psd():
             raise ValueError("Only convex losses supported.")
 
-        def h_in_mat_prod(mat, modify):
+        def h_in_mat_prod(mat):
             """Multiplication with curvature matrix w.r.t. the module input.
 
             Parameters:

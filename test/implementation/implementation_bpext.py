@@ -86,10 +86,10 @@ class BpextImpl(Implementation):
     def pchmp(self, mat_list, modify):
         assert len(mat_list) == len(list(self.model.parameters()))
         results = []
-        with backpack(new_ext.PCHMP()):
+        with backpack(new_ext.PCHMP(modify=modify)):
             self.loss().backward()
             for p, mat in zip(self.model.parameters(), mat_list):
-                results.append(p.pchmp(mat, modify))
+                results.append(p.pchmp(mat))
         return results
 
     def matrices_from_kronecker_curvature(self, extension_cls, savefield):
