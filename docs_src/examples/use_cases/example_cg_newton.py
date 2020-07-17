@@ -29,6 +29,8 @@ where
 # %%
 # Let's get the imports, configuration and some helper functions out of the way first.
 
+import math
+
 import matplotlib.pyplot as plt
 import torch
 
@@ -37,11 +39,12 @@ from backpack.utils.examples import get_mnist_dataloder
 
 BATCH_SIZE = 256
 LR = 0.1
-DAMPING = 1e-4
-CG_RTOL = 0.1
+DAMPING = 1e-2
+CG_TOL = 0.1
+CG_ATOL = 1e-6
 CG_MAX_ITER = 100
-MAX_ITER = 200
-PRINT_EVERY = 50
+MAX_ITER = 100
+PRINT_EVERY = 10
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 torch.manual_seed(0)
 
@@ -49,14 +52,14 @@ mnist_loader = get_mnist_dataloder(batch_size=BATCH_SIZE)
 
 model = torch.nn.Sequential(
     torch.nn.Conv2d(1, 20, 5, 1),
-    torch.nn.ReLU(),
+    torch.nn.Sigmoid(),
     torch.nn.MaxPool2d(2, 2),
     torch.nn.Conv2d(20, 50, 5, 1),
-    torch.nn.ReLU(),
+    torch.nn.Sigmoid(),
     torch.nn.MaxPool2d(2, 2),
     torch.nn.Flatten(),
     torch.nn.Linear(4 * 4 * 50, 500),
-    torch.nn.ReLU(),
+    torch.nn.Sigmoid(),
     torch.nn.Linear(500, 10),
 ).to(DEVICE)
 
@@ -91,7 +94,14 @@ def get_accuracy(output, targets):
 
 class CGNOptimizer(torch.optim.Optimizer):
     def __init__(
-        self, parameters, curvature, lr=0.1, damping=1e-4, cg_maxiter=100, cg_rtol=1e-1
+        self,
+        parameters,
+        curvature,
+        lr=0.1,
+        damping=1e-2,
+        maxiter=100,
+        tol=1e-1,
+        atol=1e-8,
     ):
         super().__init__(
             parameters,
@@ -99,20 +109,12 @@ class CGNOptimizer(torch.optim.Optimizer):
                 lr=lr,
                 curvature=curvature,
                 damping=damping,
-                cg_maxiter=cg_maxiter,
-                cg_rtol=cg_rtol,
+                maxiter=maxiter,
+                tol=tol,
+                atol=atol,
             ),
         )
         self.curvature = curvature
-
-    @staticmethod
-    def damped_curvature_matvec(param, curvature, damping):
-        curvprod_fn = getattr(param, curvature)
-
-        def matvec(v):
-            return damping * v + curvprod_fn(v)
-
-        return matvec
 
     def step(self):
         for group in self.param_groups:
@@ -122,30 +124,98 @@ class CGNOptimizer(torch.optim.Optimizer):
                     p, group["curvature"], group["damping"]
                 )
 
-                step_direction = self.cg_solve(
+                direction, info = self.cg(
                     damped_curvature,
                     -p.grad.data,
-                    group["cg_maxiter"],
-                    group["cg_rtol"],
+                    maxiter=group["maxiter"],
+                    tol=group["tol"],
+                    atol=group["atol"],
                 )
-                step_direction = -p.grad.data
 
-                p.data.add_(group["lr"], step_direction)
+                p.data.add_(direction, alpha=group["lr"])
 
     @staticmethod
-    def cg_solve(A, b, max_iter, rtol):
-        return torch.zeros_like(b)
+    def damped_curvature_matvec(param, curvature, damping):
+        curvprod_fn = getattr(param, curvature)
 
+        def matvec(v):
+            v = v.unsqueeze(0)
+            result = damping * v + curvprod_fn(v)
+            return result.squeeze(0)
 
-class DiagGGNOptimizer(torch.optim.Optimizer):
-    def __init__(self, parameters, step_size, damping):
-        super().__init__(parameters, dict(step_size=step_size, damping=damping))
+        return matvec
 
-    def step(self):
-        for group in self.param_groups:
-            for p in group["params"]:
-                step_direction = p.grad / (p.diag_ggn_mc + group["damping"])
-                p.data.add_(-group["step_size"], step_direction)
+    @staticmethod
+    def cg(A, b, x0=None, maxiter=None, tol=1e-5, atol=1e-8):
+        r"""Solve :math:`Ax = b` for :math:`x` using conjugate gradient.
+
+        The interface is similar to CG provided by :code:`scipy.sparse.linalg.cg`.
+
+        The main iteration loop follows the pseudo code from Wikipedia:
+            https://en.wikipedia.org/w/index.php?title=Conjugate_gradient_method&oldid=855450922
+
+        Parameters
+        ----------
+        A : function
+            Function implementing matrix-vector multiplication by `A`.
+        b : torch.Tensor
+            Right-hand side of the linear system.
+        x0 : torch.Tensor
+            Initialization estimate.
+        atol: float
+            Absolute tolerance to accept convergence. Stop if
+            :math:`|| A x - b || <` `atol`
+        tol: float
+            Relative tolerance to accept convergence. Stop if
+            :math:`|| A x - b || / || b || <` `tol`.
+        maxiter: int
+            Maximum number of iterations.
+
+        Returns
+        -------
+        x (torch.Tensor): Approximate solution :math:`x` of the linear system
+        info (int): Provides convergence information, if CG converges info
+                    corresponds to numiter, otherwise info is set to zero.
+        """
+        maxiter = b.numel() if maxiter is None else min(maxiter, b.numel())
+        x = torch.zeros_like(b) if x0 is None else x0
+
+        # initialize parameters
+        r = (b - A(x)).detach()
+        p = r.clone()
+        rs_old = (r ** 2).sum().item()
+
+        # stopping criterion
+        norm_bound = max([tol * torch.norm(b).item(), atol])
+
+        def converged(rs, numiter):
+            """Check whether CG stops (convergence or steps exceeded)."""
+            norm_converged = norm_bound > math.sqrt(rs)
+            info = numiter if norm_converged else 0
+            iters_exceeded = numiter > maxiter
+            return (norm_converged or iters_exceeded), info
+
+        # iterate
+        iterations = 0
+        while True:
+            Ap = A(p).detach()
+
+            alpha = rs_old / (p * Ap).sum().item()
+            x.add_(p, alpha=alpha)
+            r.sub_(Ap, alpha=alpha)
+            rs_new = (r ** 2).sum().item()
+            iterations += 1
+
+            if iterations == 3:
+                pass
+                # raise Exception
+            stop, info = converged(rs_new, iterations)
+            if stop:
+                return x, info
+
+            p.mul_(rs_new / rs_old)
+            p.add_(r)
+            rs_old = rs_new
 
 
 # %%
@@ -160,7 +230,8 @@ class DiagGGNOptimizer(torch.optim.Optimizer):
 
 def curvature_extension():
     # return extensions.HMP()
-    # return extensions.PCHMP()
+    # return extensions.PCHMP(modify="clip")
+    # return extensions.PCHMP(modify="abs")
     return extensions.GGNMP()
 
 
@@ -171,9 +242,17 @@ optimizer = CGNOptimizer(
     curvature_extension().savefield,
     lr=LR,
     damping=DAMPING,
-    cg_maxiter=CG_MAX_ITER,
-    cg_rtol=CG_RTOL,
+    maxiter=CG_MAX_ITER,
+    tol=CG_TOL,
+    atol=CG_ATOL,
 )
+
+# %%
+# As a fun exercise, try training with SGD. For me, it does not do anything for
+# :code:`lr` ∈ [10, 1, 0.1, 0.01, 0.001] because the sigmoids cause vanishing gradients.
+
+# uncomment this line to use SGD
+# optimizer = torch.optim.SGD(model.parameters(), lr=...)
 
 losses = []
 accuracies = []
@@ -196,8 +275,8 @@ for batch_idx, (x, y) in enumerate(mnist_loader):
     if (batch_idx % PRINT_EVERY) == 0:
         print(
             "Iteration %3.d/%3.d " % (batch_idx, MAX_ITER)
-            + "Minibatch Loss %.3f  " % losses[-1]
-            + "Accuracy %.3f" % accuracies[-1]
+            + "Minibatch Loss %.5f  " % losses[-1]
+            + "Accuracy %.5f" % accuracies[-1]
         )
 
     if MAX_ITER is not None and batch_idx > MAX_ITER:
@@ -213,3 +292,5 @@ axes[0].set_xlabel("Iteration")
 axes[1].plot(accuracies)
 axes[1].set_title("Accuracy")
 axes[1].set_xlabel("Iteration")
+
+plt.show()
