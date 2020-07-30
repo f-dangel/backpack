@@ -414,8 +414,8 @@ for optim_fn, label in zip(optimizers, labels):
     print(label)
     losses, accuracies = train(optim_fn)
 
-    axes[0].plot(losses, label=label)
-    axes[1].plot(accuracies, label=label)
+    axes[0].plot(losses, "--", label=label)
+    axes[1].plot(accuracies, "--", label=label)
 
 plt.legend()
 
