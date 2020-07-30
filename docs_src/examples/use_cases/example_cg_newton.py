@@ -43,7 +43,7 @@ DAMPING = 1e-2
 CG_TOL = 0.1
 CG_ATOL = 1e-6
 CG_MAX_ITER = 100
-MAX_ITER = 100
+MAX_ITER = 50
 PRINT_EVERY = 10
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 torch.manual_seed(0)
@@ -96,7 +96,7 @@ class CGNOptimizer(torch.optim.Optimizer):
     def __init__(
         self,
         parameters,
-        curvature,
+        bp_extensions,
         lr=0.1,
         damping=1e-2,
         maxiter=100,
@@ -107,21 +107,21 @@ class CGNOptimizer(torch.optim.Optimizer):
             parameters,
             dict(
                 lr=lr,
-                curvature=curvature,
                 damping=damping,
                 maxiter=maxiter,
                 tol=tol,
                 atol=atol,
+                savefield=bp_extensions[0].savefield,
             ),
         )
-        self.curvature = curvature
+        self.bp_extensions = bp_extensions
 
     def step(self):
         for group in self.param_groups:
             for p in group["params"]:
 
-                damped_curvature = self.damped_curvature_matvec(
-                    p, group["curvature"], group["damping"]
+                damped_curvature = self.damped_matvec(
+                    p, group["damping"], group["savefield"]
                 )
 
                 direction, info = self.cg(
@@ -134,9 +134,8 @@ class CGNOptimizer(torch.optim.Optimizer):
 
                 p.data.add_(direction, alpha=group["lr"])
 
-    @staticmethod
-    def damped_curvature_matvec(param, curvature, damping):
-        curvprod_fn = getattr(param, curvature)
+    def damped_matvec(self, param, damping, savefield):
+        curvprod_fn = getattr(param, savefield)
 
         def matvec(v):
             v = v.unsqueeze(0)
@@ -206,9 +205,6 @@ class CGNOptimizer(torch.optim.Optimizer):
             rs_new = (r ** 2).sum().item()
             iterations += 1
 
-            if iterations == 3:
-                pass
-                # raise Exception
             stop, info = converged(rs_new, iterations)
             if stop:
                 return x, info
@@ -227,32 +223,17 @@ class CGNOptimizer(torch.optim.Optimizer):
 # so that BackPACK stores the diagonal of the GGN in the
 # ``diag_ggn_mc`` field during the backward pass.
 
-
-def curvature_extension():
-    # return extensions.HMP()
-    # return extensions.PCHMP(modify="clip")
-    # return extensions.PCHMP(modify="abs")
-    return extensions.GGNMP()
-
-
-extend(model)
-extend(loss_function)
+model = extend(model)
+loss_function = extend(loss_function)
 optimizer = CGNOptimizer(
     model.parameters(),
-    curvature_extension().savefield,
+    [extensions.GGNMP()],
     lr=LR,
     damping=DAMPING,
     maxiter=CG_MAX_ITER,
     tol=CG_TOL,
     atol=CG_ATOL,
 )
-
-# %%
-# As a fun exercise, try training with SGD. For me, it does not do anything for
-# :code:`lr` ∈ [10, 1, 0.1, 0.01, 0.001] because the sigmoids cause vanishing gradients.
-
-# uncomment this line to use SGD
-# optimizer = torch.optim.SGD(model.parameters(), lr=...)
 
 losses = []
 accuracies = []
@@ -263,7 +244,7 @@ for batch_idx, (x, y) in enumerate(mnist_loader):
     outputs = model(x)
     loss = loss_function(outputs, y)
 
-    with backpack(curvature_extension()):
+    with backpack(*optimizer.bp_extensions):
         loss.backward()
 
     optimizer.step()
@@ -292,5 +273,150 @@ axes[0].set_xlabel("Iteration")
 axes[1].plot(accuracies)
 axes[1].set_title("Accuracy")
 axes[1].set_xlabel("Iteration")
+
+plt.show()
+
+# %%
+# Here is a comparison of different optimizers
+
+# As a fun exercise, try training with SGD. For me, it does not do anything for
+# :code:`lr` ∈ [10, 1, 0.1, 0.01, 0.001] because the sigmoids cause vanishing gradients.
+
+
+def make_cgn_optimizer_fn(extensions):
+    def optimizer_fn(model):
+        return CGNOptimizer(
+            model.parameters(),
+            extensions,
+            lr=LR,
+            damping=DAMPING,
+            maxiter=CG_MAX_ITER,
+            tol=CG_TOL,
+            atol=CG_ATOL,
+        )
+
+    return optimizer_fn
+
+
+curvatures = [
+    [extensions.GGNMP()],
+    [extensions.HMP()],
+    [extensions.PCHMP(modify="abs")],
+    [extensions.PCHMP(modify="clip")],
+]
+
+labels = [
+    "GGN",
+    "Hessian",
+    "PCH-abs",
+    "PCH-clip",
+]
+
+optimizers = []
+for curvature in curvatures:
+    optimizers.append(make_cgn_optimizer_fn(curvature))
+
+
+def make_sgd_optimizer_fn(lr):
+    def optimizer_fn(model):
+        return torch.optim.SGD(model.parameters(), lr=lr)
+
+    return optimizer_fn
+
+
+sgd_lrs = [
+    10,
+    1,
+    0.1,
+    0.01,
+    0.001,
+]
+
+
+for lr in sgd_lrs:
+    optimizers.append(make_sgd_optimizer_fn(lr))
+    labels.append("SGD, lr={}".format(lr))
+
+
+def train(optim_fn):
+    torch.manual_seed(0)
+
+    mnist_loader = get_mnist_dataloder(batch_size=BATCH_SIZE)
+
+    model = torch.nn.Sequential(
+        torch.nn.Conv2d(1, 20, 5, 1),
+        torch.nn.Sigmoid(),
+        torch.nn.MaxPool2d(2, 2),
+        torch.nn.Conv2d(20, 50, 5, 1),
+        torch.nn.Sigmoid(),
+        torch.nn.MaxPool2d(2, 2),
+        torch.nn.Flatten(),
+        torch.nn.Linear(4 * 4 * 50, 500),
+        torch.nn.Sigmoid(),
+        torch.nn.Linear(500, 10),
+    ).to(DEVICE)
+
+    loss_function = torch.nn.CrossEntropyLoss().to(DEVICE)
+
+    optimizer = optim_fn(model)
+    print(optimizer)
+    need_backpack = isinstance(optimizer, CGNOptimizer)
+
+    if need_backpack:
+        model = extend(model)
+        loss_function = extend(loss_function)
+
+    losses = []
+    accuracies = []
+    for batch_idx, (x, y) in enumerate(mnist_loader):
+        optimizer.zero_grad()
+
+        x, y = x.to(DEVICE), y.to(DEVICE)
+        outputs = model(x)
+        loss = loss_function(outputs, y)
+
+        if need_backpack:
+            with backpack(*optimizer.bp_extensions):
+                loss.backward()
+        else:
+            loss.backward()
+
+        optimizer.step()
+
+        # Logging
+        losses.append(loss.detach().item())
+        accuracies.append(get_accuracy(outputs, y))
+
+        if (batch_idx % PRINT_EVERY) == 0:
+            print(
+                "Iteration %3.d/%3.d " % (batch_idx, MAX_ITER)
+                + "Minibatch Loss %.5f  " % losses[-1]
+                + "Accuracy %.5f" % accuracies[-1]
+            )
+
+        if MAX_ITER is not None and batch_idx > MAX_ITER:
+            break
+
+    return losses, accuracies
+
+
+fig = plt.figure()
+axes = [fig.add_subplot(1, 2, 1), fig.add_subplot(1, 2, 2)]
+
+axes[0].set_title("Loss")
+axes[0].set_ylim(0, 2.5)
+axes[0].set_xlabel("Iteration")
+
+axes[1].set_title("Accuracy")
+axes[1].set_xlabel("Iteration")
+
+for optim_fn, label in zip(optimizers, labels):
+    print(label)
+    losses, accuracies = train(optim_fn)
+
+    axes[0].plot(losses, label=label)
+    axes[1].plot(accuracies, label=label)
+
+plt.legend()
 
 plt.show()
