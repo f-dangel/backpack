@@ -1,6 +1,3 @@
-# TODO @sbharadwajj: Add some descriptive text, like here: ./example_all_in_one.py
-# TODO @sbharadwajj: Add notes how to locally compile the docs/examples to dev guide
-
 """
 Example using curvature-matrix products
 =======================================
@@ -24,6 +21,8 @@ from backpack import backpack, extend
 from backpack.extensions import GGNMP, HMP, PCHMP
 from backpack.utils.examples import load_one_batch_mnist
 
+# %%
+# We first create a simple sequential model and load MNIST data
 X, y = load_one_batch_mnist(batch_size=512)
 
 model = Sequential(Flatten(), Linear(784, 20), Sigmoid(), Linear(20, 10))
@@ -32,21 +31,49 @@ lossfunc = CrossEntropyLoss()
 model = extend(model)
 lossfunc = extend(lossfunc)
 
+
+# %%
+# Hessian matrix product
 loss = lossfunc(model(X), y)
 
-with backpack(HMP(), GGNMP(), PCHMP()):
+with backpack(HMP()):
     loss.backward()
 
 for name, param in model.named_parameters():
     print(name)
     print(".grad.shape:             ", param.grad.shape)
     print("type(.hmp):              ", type(param.hmp))
-    print("type(.ggnmp):            ", type(param.ggnmp))
-    print("type(.pchmp):            ", type(param.pchmp))
 
-# multiply with a vector
+# %%
+# Generalized Gauss Newton Matrix Product 
+loss = lossfunc(model(X), y)
 
-# number of vectors
+with backpack(GGNMP()):
+    loss.backward()
+
+for name, param in model.named_parameters():
+    print(name)
+    print(".grad.shape:             ", param.grad.shape)
+    print("type(.ggnmp):              ", type(param.ggnmp))
+
+# %%
+# The Positive Curvature Hessian
+
+loss = lossfunc(model(X), y)
+
+with backpack(PCHMP()):
+    loss.backward()
+
+for name, param in model.named_parameters():
+    print(name)
+    print(".grad.shape:             ", param.grad.shape)
+    print("type(.pchmp):              ", type(param.pchmp))
+
+
+
+# %% 
+# Here we multiply the curvature methods with vectors and we first show it for a single vector. Its also possible to ask for multiple quantitites at once
+
 V = 1
 
 for name, param in model.named_parameters():
@@ -58,10 +85,10 @@ for name, param in model.named_parameters():
     print("ggnmp(vec).shape:        ", param.ggnmp(vec).shape)
     print("pchmp(vec, 'abs').shape: ", param.pchmp(vec, modify="abs").shape)
     print("pchmp(vec, 'clip').shape:", param.pchmp(vec, modify="clip").shape)
+    print("*"*50)
 
-# multiply with a collection of vectors (a matrix)
-
-# number of vectors
+# %%
+# We can also multiply multiple vectors at once and still have a inexpensive computational cost.
 V = 3
 
 for name, param in model.named_parameters():
@@ -73,3 +100,4 @@ for name, param in model.named_parameters():
     print("ggnmp(vec).shape:        ", param.ggnmp(vec).shape)
     print("pchmp(vec, 'abs').shape: ", param.pchmp(vec, modify="abs").shape)
     print("pchmp(vec, 'clip').shape:", param.pchmp(vec, modify="clip").shape)
+    print("*"*50)
