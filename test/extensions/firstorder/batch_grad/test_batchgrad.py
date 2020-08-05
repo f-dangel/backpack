@@ -1,4 +1,5 @@
-"""Test class for module Batch_grad (batch gradients) from `backpack.core.extensions.firstorder`
+"""Test class for module Batch_grad (batch gradients) 
+from `backpack.core.extensions.firstorder`
 
 - test individual gradients
 - batch gradients of linear layers
@@ -10,11 +11,9 @@ from test.automated_test import check_sizes_and_values
 from test.extensions.problem import make_test_problems
 from test.extensions.implementation.autograd import AutogradExtensions
 from test.extensions.implementation.backpack import BackpackExtensions
-from test.extensions.problem import ExtensionsTestProblem
 from test.extensions.firstorder.batch_grad.batchgrad_settings import BATCHGRAD_SETTINGS
 
 import pytest
-import torch
 
 
 PROBLEMS = make_test_problems(BATCHGRAD_SETTINGS)
@@ -35,4 +34,3 @@ def test_batch_grad(problem):
 
     check_sizes_and_values(autograd_res, backpack_res)
     problem.tear_down()
-
