@@ -1,28 +1,23 @@
+"""Test class for module Batch_grad (batch gradients) from `backpack.core.extensions.firstorder`
+
+- test individual gradients
+- batch gradients of linear layers
+- batch gradients of convolutional layers
+- batch gradiets of batch normalization layers
+
+"""
 from test.automated_test import check_sizes_and_values
-from test.core.derivatives.utils import classification_targets
+from test.extensions.problem import make_test_problems
 from test.extensions.implementation.autograd import AutogradExtensions
 from test.extensions.implementation.backpack import BackpackExtensions
 from test.extensions.problem import ExtensionsTestProblem
+from test.extensions.firstorder.batch_grad.batchgrad_settings import BATCHGRAD_SETTINGS
 
 import pytest
 import torch
 
-dummy_setting = {
-    "input_fn": lambda: torch.rand(3, 10),
-    "module_fn": lambda: torch.nn.Sequential(
-        torch.nn.Linear(10, 7), torch.nn.Sigmoid(), torch.nn.Linear(7, 5)
-    ),
-    "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="mean"),
-    "target_fn": lambda: classification_targets((3,), 5),
-    "device": torch.device("cpu"),
-    "seed": 0,
-    "id_prefix": "prototype",
-}
 
-
-problem = ExtensionsTestProblem(**dummy_setting)
-
-PROBLEMS = [problem]
+PROBLEMS = make_test_problems(BATCHGRAD_SETTINGS)
 IDS = [problem.make_id() for problem in PROBLEMS]
 
 
@@ -40,3 +35,4 @@ def test_batch_grad(problem):
 
     check_sizes_and_values(autograd_res, backpack_res)
     problem.tear_down()
+
