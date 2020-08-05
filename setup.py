@@ -43,5 +43,5 @@ setup(
     license=LICENSE,
     packages=PACKAGES,
     zip_safe=False,
-    python_requires=">=3.5",
+    python_requires=">=3.6",
 )
