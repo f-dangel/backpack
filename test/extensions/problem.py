@@ -1,8 +1,54 @@
 """Convert problem settings."""
 
 import torch
+import copy
 
 from backpack import extend
+from test.core.derivatives.utils import get_available_devices
+
+
+def make_test_problems(settings):
+    problem_dicts = []
+
+    for setting in settings:
+        setting = add_missing_defaults(setting)
+        devices = setting["device"]
+
+        for dev in devices:
+            problem = copy.deepcopy(setting)
+            problem["device"] = dev
+            problem_dicts.append(problem)
+
+    return [ExtensionsTestProblem(**p) for p in problem_dicts]
+
+
+def add_missing_defaults(setting):
+    """Create extensions test problem from setting.
+    Args:
+        setting (dict): configuration dictionary
+    Returns:
+        ExtensionsTestProblem: problem with specified settings.
+    """
+    required = ["module_fn", "input_fn", "loss_function_fn", "target_fn"]
+    optional = {
+        "id_prefix": "",
+        "seed": 0,
+        "device": get_available_devices(),
+    }
+
+    for req in required:
+        if req not in setting.keys():
+            raise ValueError("Missing configuration entry for {}".format(req))
+
+    for opt, default in optional.items():
+        if opt not in setting.keys():
+            setting[opt] = default
+
+    for s in setting.keys():
+        if s not in required and s not in optional.keys():
+            raise ValueError("Unknown config: {}".format(s))
+
+    return setting
 
 
 class ExtensionsTestProblem:
