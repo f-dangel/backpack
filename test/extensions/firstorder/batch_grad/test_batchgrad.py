@@ -1,10 +1,9 @@
 """Test class for module Batch_grad (batch gradients) 
 from `backpack.core.extensions.firstorder`
 
-- test individual gradients
+Test individual gradients for the following layers:
 - batch gradients of linear layers
 - batch gradients of convolutional layers
-- batch gradiets of batch normalization layers
 
 """
 from test.automated_test import check_sizes_and_values

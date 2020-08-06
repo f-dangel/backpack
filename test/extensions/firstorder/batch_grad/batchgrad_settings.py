@@ -2,9 +2,10 @@
 
 
 Required entries:
-    "module_fn" (callable): Contains a model constructed from torch.nn layers
+    "module_fn" (callable): Contains a model constructed from `torch.nn` layers
     "input_fn" (callable): Used for specifying input function
-    "target_fn" (callable): Fetches the groundtruth/target classes of regression task
+    "target_fn" (callable): Fetches the groundtruth/target classes 
+                            of regression/classification task
     "loss_function_fn" (callable): Loss function used in the model
 
 Optional entries:
@@ -15,7 +16,7 @@ Optional entries:
 
 
 import torch
-from test.core.derivatives.utils import classification_targets
+from test.core.derivatives.utils import classification_targets, regression_targets
 
 BATCHGRAD_SETTINGS = []
 
@@ -25,31 +26,62 @@ BATCHGRAD_SETTINGS = []
 
 example = {
     "input_fn": lambda: torch.rand(3, 10),
-    "module_fn": lambda: torch.nn.Sequential(
-        torch.nn.Linear(10, 7), torch.nn.Sigmoid(), torch.nn.Linear(7, 5)
-    ),
+    "module_fn": lambda: torch.nn.Sequential(torch.nn.Linear(10, 5)),
     "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="mean"),
     "target_fn": lambda: classification_targets((3,), 5),
     "device": [torch.device("cpu")],
     "seed": 0,
-    "id_prefix": "prototype",
+    "id_prefix": "example",
 }
 BATCHGRAD_SETTINGS.append(example)
 
 ###############################################################################
-#                                   test setting                              #
+#                         test setting: Linear Layers                         #
 ###############################################################################
 
 BATCHGRAD_SETTINGS += [
+    # classification
+    {
+        "input_fn": lambda: torch.rand(3, 10),
+        "module_fn": lambda: torch.nn.Sequential(
+            torch.nn.Linear(10, 7), torch.nn.Linear(7, 5)
+        ),
+        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="mean"),
+        "target_fn": lambda: classification_targets((3,), 5),
+    },
+    {
+        "input_fn": lambda: torch.rand(3, 10),
+        "module_fn": lambda: torch.nn.Sequential(
+            torch.nn.Linear(10, 7), torch.nn.ReLU(), torch.nn.Linear(7, 5)
+        ),
+        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="mean"),
+        "target_fn": lambda: classification_targets((3,), 5),
+    },
+    # Regression
     {
         "input_fn": lambda: torch.rand(3, 10),
         "module_fn": lambda: torch.nn.Sequential(
             torch.nn.Linear(10, 7), torch.nn.Sigmoid(), torch.nn.Linear(7, 5)
         ),
-        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="mean"),
+        "loss_function_fn": lambda: torch.nn.MSELoss(reduction="mean"),
+        "target_fn": lambda: regression_targets((3, 5)),
+    },
+]
+
+###############################################################################
+#                         test setting: Convolutional Layers                  #
+###############################################################################
+
+BATCHGRAD_SETTINGS += [
+    {
+        "input_fn": lambda: torch.rand(3, 3, 7, 7),
+        "module_fn": lambda: torch.nn.Sequential(
+            torch.nn.Conv2d(3, 2, 2),
+            torch.nn.ReLU(),
+            torch.nn.Flatten(),
+            torch.nn.Linear(72, 5),
+        ),
+        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(),
         "target_fn": lambda: classification_targets((3,), 5),
-        "device": [torch.device("cpu")],
-        "seed": 0,
-        "id_prefix": "prototype",
-    }
+    },
 ]
