@@ -131,10 +131,10 @@ BATCHGRAD_SETTINGS += [
     {
         "input_fn": lambda: torch.rand(3, 3, 2, 7, 7),
         "module_fn": lambda: torch.nn.Sequential(
-            torch.nn.Conv3d(3, 2, 2),
+            torch.nn.ConvTranspose3d(3, 2, 2),
             torch.nn.ReLU(),
             torch.nn.Flatten(),
-            torch.nn.Linear(72, 5),
+            torch.nn.Linear(384, 5),
         ),
         "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(),
         "target_fn": lambda: classification_targets((3,), 5),
