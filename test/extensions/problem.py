@@ -115,3 +115,24 @@ class ExtensionsTestProblem:
     def extend(self):
         self.model = extend(self.model)
         self.loss_function = extend(self.loss_function)
+
+    def get_reduction_factor(self, loss, unreduced_loss):
+        """Return the factor used to reduce the individual losses."""
+        mean_loss = unreduced_loss.flatten().mean()
+        sum_loss = unreduced_loss.flatten().sum()
+        if torch.allclose(mean_loss, sum_loss):
+            raise RuntimeError(
+                "Cannot determine reduction factor. ",
+                "Results from 'mean' and 'sum' reduction are identical. ",
+                f"'mean': {mean_loss}, 'sum': {sum_loss}",
+            )
+        if torch.allclose(loss, mean_loss):
+            factor = 1.0 / unreduced_loss.numel()
+        elif torch.allclose(loss, sum_loss):
+            factor = 1.0
+        else:
+            raise RuntimeError(
+                "Reductions 'mean' or 'sum' do not match with loss. ",
+                f"'mean': {mean_loss}, 'sum': {sum_loss}, loss: {loss}",
+            )
+        return factor
