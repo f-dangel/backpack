@@ -27,7 +27,7 @@ BATCHGRAD_SETTINGS = []
 example = {
     "input_fn": lambda: torch.rand(3, 10),
     "module_fn": lambda: torch.nn.Sequential(torch.nn.Linear(10, 5)),
-    "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="mean"),
+    "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="sum"),
     "target_fn": lambda: classification_targets((3,), 5),
     "device": [torch.device("cpu")],
     "seed": 0,
@@ -54,7 +54,7 @@ BATCHGRAD_SETTINGS += [
         "module_fn": lambda: torch.nn.Sequential(
             torch.nn.Linear(10, 7), torch.nn.ReLU(), torch.nn.Linear(7, 5)
         ),
-        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="mean"),
+        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="sum"),
         "target_fn": lambda: classification_targets((3,), 5),
     },
     # Regression
@@ -81,7 +81,7 @@ BATCHGRAD_SETTINGS += [
             torch.nn.Flatten(),
             torch.nn.Linear(12, 5),
         ),
-        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(),
+        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="sum"),
         "target_fn": lambda: classification_targets((3,), 5),
     },
     {
@@ -92,7 +92,7 @@ BATCHGRAD_SETTINGS += [
             torch.nn.Flatten(),
             torch.nn.Linear(72, 5),
         ),
-        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(),
+        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="mean"),
         "target_fn": lambda: classification_targets((3,), 5),
     },
     {
@@ -103,7 +103,7 @@ BATCHGRAD_SETTINGS += [
             torch.nn.Flatten(),
             torch.nn.Linear(72, 5),
         ),
-        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(),
+        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="sum"),
         "target_fn": lambda: classification_targets((3,), 5),
     },
     {
@@ -114,7 +114,7 @@ BATCHGRAD_SETTINGS += [
             torch.nn.Flatten(),
             torch.nn.Linear(16, 5),
         ),
-        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(),
+        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="mean"),
         "target_fn": lambda: classification_targets((3,), 5),
     },
     {
@@ -125,7 +125,7 @@ BATCHGRAD_SETTINGS += [
             torch.nn.Flatten(),
             torch.nn.Linear(128, 5),
         ),
-        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(),
+        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="sum"),
         "target_fn": lambda: classification_targets((3,), 5),
     },
     {
@@ -136,7 +136,7 @@ BATCHGRAD_SETTINGS += [
             torch.nn.Flatten(),
             torch.nn.Linear(384, 5),
         ),
-        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(),
+        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="mean"),
         "target_fn": lambda: classification_targets((3,), 5),
     },
 ]
