@@ -5,7 +5,7 @@ This example illustrates the estimation the Hessian trace of a neural network us
 method, which is an algorithm to obtain such an an estimate from matrix-vector products:
 
 .. math::
-    \text{Let } A \in \mathbb{R}^{D \times D} \text{ be a square matrix and } v \in \mathbb{R}^D
+    \text{Let } A \in \mathbb{R}^{D \times D} \text{ and } v \in \mathbb{R}^D
     \text{ be a random vector such that } \mathbb{E}[vv^T] = I. \text{Then,}
 
 .. math::
