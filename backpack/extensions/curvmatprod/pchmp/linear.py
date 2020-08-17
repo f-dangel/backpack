@@ -9,9 +9,9 @@ class PCHMPLinear(PCHMPBase):
     def weight(self, ext, module, g_inp, g_out, backproped):
         h_out_mat_prod = backproped
 
-        def weight_pchmp(mat, modify):
+        def weight_pchmp(mat):
             result = self.derivatives.weight_jac_mat_prod(module, g_inp, g_out, mat)
-            result = h_out_mat_prod(result, modify)
+            result = h_out_mat_prod(result)
             result = self.derivatives.weight_jac_t_mat_prod(
                 module, g_inp, g_out, result
             )
@@ -23,9 +23,9 @@ class PCHMPLinear(PCHMPBase):
     def bias(self, ext, module, g_inp, g_out, backproped):
         h_out_mat_prod = backproped
 
-        def bias_pchmp(mat, modify):
+        def bias_pchmp(mat):
             result = self.derivatives.bias_jac_mat_prod(module, g_inp, g_out, mat)
-            result = h_out_mat_prod(result, modify)
+            result = h_out_mat_prod(result)
             result = self.derivatives.bias_jac_t_mat_prod(module, g_inp, g_out, result)
 
             return result

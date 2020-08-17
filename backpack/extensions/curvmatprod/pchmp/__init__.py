@@ -39,7 +39,7 @@ class PCHMP(BackpropExtension):
     by Sheng-Wei Chen, Chun-Nan Chou and Edward Y. Chang, 2018.
 
     There exist different concavity-eliminating modifications which can be selected
-    by the multiplication routine's `modify` argument (`"abs"` or `"clip"`).
+    by the `modify` argument (`"abs"` or `"clip"`).
 
     Note:
        The name positive-curvature Hessian may be misleading. While the PCH is
@@ -53,7 +53,7 @@ class PCHMP(BackpropExtension):
       by Felix Dangel, Stefan Harmeling, Philipp Hennig, 2020.
     """
 
-    def __init__(self, savefield="pchmp"):
+    def __init__(self, savefield="pchmp", modify="clip"):
         super().__init__(
             savefield=savefield,
             fail_mode="ERROR",
@@ -72,3 +72,7 @@ class PCHMP(BackpropExtension):
                 Tanh: activations.PCHMPTanh(),
             },
         )
+        self._modify = modify
+
+    def get_modification_mode(self):
+        return self._modify
