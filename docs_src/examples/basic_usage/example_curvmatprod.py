@@ -2,17 +2,18 @@
 Example using curvature-matrix products
 =======================================
 
-Basic example showing how compute the gradient,
-and to multiply with the block-diagonal of
+Basic example showing how to compute the gradient,
+and to multiply with the block diagonal of
 
-- the Hessian
-- the generalized Gauss-Newton
-- the positive-curvature Hessian
+- the Hessian (``HMP``)
+- the generalized Gauss-Newton (``GGNMP``)
+- the positive-curvature Hessian (``PCHMP``)
 
-on a 2-layer network for MNIST with sigmoid activation.
-For this network, all of the above curvatures are different.
+for a single-hidden layer sigmoid network on MNIST.
 """
 
+# %%
+# Let's start by loading some dummy data and extending the model
 
 from torch import rand
 from torch.nn import CrossEntropyLoss, Flatten, Linear, Sequential, Sigmoid
@@ -21,8 +22,6 @@ from backpack import backpack, extend
 from backpack.extensions import GGNMP, HMP, PCHMP
 from backpack.utils.examples import load_one_batch_mnist
 
-# %%
-# We first create a simple sequential model and load MNIST data
 X, y = load_one_batch_mnist(batch_size=512)
 
 model = Sequential(Flatten(), Linear(784, 20), Sigmoid(), Linear(20, 10))
@@ -33,71 +32,49 @@ lossfunc = extend(lossfunc)
 
 
 # %%
-# Hessian matrix product
+# Let's inspect the objects that are created during the backward pass with
+# BackPACK's curvature-matrix product (``*MP``) extensions:
+# Functions that multiply with the associated curvature matrix.
+
 loss = lossfunc(model(X), y)
 
-with backpack(HMP()):
+with backpack(HMP(), GGNMP(), PCHMP()):
     loss.backward()
 
 for name, param in model.named_parameters():
     print(name)
-    print(".grad.shape:             ", param.grad.shape)
-    print("type(.hmp):              ", type(param.hmp))
-
-# %%
-# Generalized Gauss Newton Matrix Product 
-loss = lossfunc(model(X), y)
-
-with backpack(GGNMP()):
-    loss.backward()
-
-for name, param in model.named_parameters():
-    print(name)
-    print(".grad.shape:             ", param.grad.shape)
+    print(".grad.shape:               ", param.grad.shape)
+    print("type(.hmp):                ", type(param.hmp))
     print("type(.ggnmp):              ", type(param.ggnmp))
-
-# %%
-# The Positive Curvature Hessian
-
-loss = lossfunc(model(X), y)
-
-with backpack(PCHMP()):
-    loss.backward()
-
-for name, param in model.named_parameters():
-    print(name)
-    print(".grad.shape:             ", param.grad.shape)
     print("type(.pchmp):              ", type(param.pchmp))
 
+# %%
+# Let's multiply a random vector with different curvature blocks.
 
-
-# %% 
-# Here we multiply the curvature methods with vectors and we first show it for a single vector. Its also possible to ask for multiple quantitites at once
-
-V = 1
+num_vecs = 1
 
 for name, param in model.named_parameters():
-    vec = rand(V, *param.shape)
+    vec = rand(num_vecs, *param.shape)
     print(name)
-    print(".grad.shape:             ", param.grad.shape)
-    print("vec.shape:               ", vec.shape)
-    print("hmp(vec).shape:          ", param.hmp(vec).shape)
-    print("ggnmp(vec).shape:        ", param.ggnmp(vec).shape)
-    print("pchmp(vec, 'abs').shape: ", param.pchmp(vec, modify="abs").shape)
-    print("pchmp(vec, 'clip').shape:", param.pchmp(vec, modify="clip").shape)
+    print(".grad.shape:              ", param.grad.shape)
+    print("vec.shape:                ", vec.shape)
+    print(".hmp(vec).shape:          ", param.hmp(vec).shape)
+    print(".ggnmp(vec).shape:        ", param.ggnmp(vec).shape)
+    print(".pchmp(vec, 'abs').shape: ", param.pchmp(vec, modify="abs").shape)
+    print(".pchmp(vec, 'clip').shape:", param.pchmp(vec, modify="clip").shape)
     print("*"*50)
 
 # %%
-# We can also multiply multiple vectors at once and still have a inexpensive computational cost.
-V = 3
+# We can also multiply a collection of vectors (a matrix) at once.
+num_vecs = 3
 
 for name, param in model.named_parameters():
-    vec = rand(V, *param.shape)
+    vec = rand(num_vecs, *param.shape)
     print(name)
     print(".grad.shape:             ", param.grad.shape)
     print("vec.shape:               ", vec.shape)
-    print("hmp(vec).shape:          ", param.hmp(vec).shape)
-    print("ggnmp(vec).shape:        ", param.ggnmp(vec).shape)
-    print("pchmp(vec, 'abs').shape: ", param.pchmp(vec, modify="abs").shape)
-    print("pchmp(vec, 'clip').shape:", param.pchmp(vec, modify="clip").shape)
+    print(".hmp(vec).shape:          ", param.hmp(vec).shape)
+    print(".ggnmp(vec).shape:        ", param.ggnmp(vec).shape)
+    print(".pchmp(vec, 'abs').shape: ", param.pchmp(vec, modify="abs").shape)
+    print(".pchmp(vec, 'clip').shape:", param.pchmp(vec, modify="clip").shape)
     print("*"*50)
