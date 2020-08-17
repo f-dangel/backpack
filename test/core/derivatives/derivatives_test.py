@@ -20,7 +20,6 @@ import torch
 PROBLEMS = make_test_problems(SETTINGS)
 IDS = [problem.make_id() for problem in PROBLEMS]
 
-
 NO_LOSS_PROBLEMS = [problem for problem in PROBLEMS if not problem.is_loss()]
 NO_LOSS_IDS = [problem.make_id() for problem in NO_LOSS_PROBLEMS]
 
@@ -79,7 +78,9 @@ for problem, problem_id in zip(PROBLEMS, IDS):
 @pytest.mark.parametrize(
     "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
 )
-@pytest.mark.parametrize("problem", PROBLEMS_WITH_WEIGHTS, ids=IDS_WITH_WEIGHTS)
+@pytest.mark.parametrize(
+    "problem", PROBLEMS_WITH_WEIGHTS, ids=IDS_WITH_WEIGHTS,
+)
 def test_weight_jac_t_mat_prod(problem, sum_batch, V=3):
     """Test the transposed Jacobian-matrix product w.r.t. to the weights.
 
@@ -98,7 +99,9 @@ def test_weight_jac_t_mat_prod(problem, sum_batch, V=3):
     problem.tear_down()
 
 
-@pytest.mark.parametrize("problem", PROBLEMS_WITH_WEIGHTS, ids=IDS_WITH_WEIGHTS)
+@pytest.mark.parametrize(
+    "problem", PROBLEMS_WITH_WEIGHTS, ids=IDS_WITH_WEIGHTS,
+)
 def test_weight_jac_mat_prod(problem, V=3):
     """Test the Jacobian-matrix product w.r.t. to the weights.
 
@@ -127,7 +130,9 @@ for problem, problem_id in zip(PROBLEMS, IDS):
 @pytest.mark.parametrize(
     "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
 )
-@pytest.mark.parametrize("problem", PROBLEMS_WITH_BIAS, ids=IDS_WITH_BIAS)
+@pytest.mark.parametrize(
+    "problem", PROBLEMS_WITH_BIAS, ids=IDS_WITH_BIAS,
+)
 def test_bias_jac_t_mat_prod(problem, sum_batch, V=3):
     """Test the transposed Jacobian-matrix product w.r.t. to the biass.
 
@@ -146,7 +151,9 @@ def test_bias_jac_t_mat_prod(problem, sum_batch, V=3):
     problem.tear_down()
 
 
-@pytest.mark.parametrize("problem", PROBLEMS_WITH_BIAS, ids=IDS_WITH_BIAS)
+@pytest.mark.parametrize(
+    "problem", PROBLEMS_WITH_BIAS, ids=IDS_WITH_BIAS,
+)
 def test_bias_jac_mat_prod(problem, V=3):
     """Test the Jacobian-matrix product w.r.t. to the biass.
 

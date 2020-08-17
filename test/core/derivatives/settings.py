@@ -1,7 +1,7 @@
 """Test configurations for `backpack.core.derivatives`.
 
 Required entries:
-    The tests for individual categories are 
+    The tests for individual categories are
     written in respective files and imported here.
     Tests:
         Activation layers
@@ -16,8 +16,8 @@ from test.core.derivatives.activation_settings import ACTIVATION_SETTINGS
 from test.core.derivatives.convolution_settings import CONVOLUTION_SETTINGS
 from test.core.derivatives.linear_settings import LINEAR_SETTINGS
 from test.core.derivatives.loss_settings import LOSS_SETTINGS
-from test.core.derivatives.pooling_settings import POOLING_SETTINGS
 from test.core.derivatives.padding_settings import PADDING_SETTINGS
+from test.core.derivatives.pooling_settings import POOLING_SETTINGS
 
 SETTINGS = []
 
