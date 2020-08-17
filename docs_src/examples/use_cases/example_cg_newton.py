@@ -1,5 +1,5 @@
-r"""Matrix-free conjugate gradient Newton optimizer
-===================================================
+r"""Matrix-free second-order optimization
+=========================================
 
 This example walks you through a second-order optimizer that uses the conjugate
 gradient (CG) method and matrix-free multiplication with the block diagonal of
@@ -9,8 +9,8 @@ The optimizer is tested on the `classic MNIST example from PyTorch
 <https://github.com/pytorch/examples/blob/master/mnist/main.py>`_.
 In particular, we will use a model that suffers from the vanishing gradient
 problem and is hence difficult to optimizer for gradient descent. Second-order
-methods are less affected by that issue and can train such models, as they rescale
-the gradient according to the local curvature.
+methods are less affected by that issue and can train these models, as they
+rescale the gradient according to the local curvature.
 
 A local quadratic model of the loss defined by a curvature matrix :math:`C(x_t)`
 (the Hessian, generalized Gauss-Newton, or other approximations)is minimized by
@@ -87,6 +87,7 @@ def get_accuracy(output, targets):
 # To compute the update, we need access to the curvature matrix in form of
 # matrix-vector products. We can then solve the linear system implied by the
 # Newton step with CG,
+#
 # .. math::
 #
 #    (C(x_t) + \lambda I) v = - g(x_t),
@@ -289,18 +290,16 @@ axes[1].plot(accuracies)
 axes[1].set_title("Accuracy")
 axes[1].set_xlabel("Iteration")
 
-plt.show()
-
 # %%
-# Vanishing gradients
-# -------------------
+# Vanishing gradients: comparison with SGD
+# ---------------------------------------
 # By intention, we chose a model that is different to optimize with gradient descent
 # due to the large number of sigmoids that reduce the gradient signal in backpropagation.
 #
 # To verify that, let's compare the Newton optimizer for different curvatures with SGD.
-# SGD is run for a large range of learning rates :code:`lr` ∈ [10, 1, 0.1, 0.01, 0.001].
+# SGD is run for a large range of learning rates :code:`lr ∈ [10, 1, 0.1, 0.01, 0.001]`.
 #
-# The performance of CG-Newton versus SGD is shown below (we use identical colors for
+# The performance of CG-Newton versus SGD is shown below (using identical colors for
 # different realizations of the same family to simplify the visualization).
 
 
@@ -380,7 +379,6 @@ def train(optim_fn):
     loss_function = torch.nn.CrossEntropyLoss().to(DEVICE)
 
     optimizer = optim_fn(model)
-    print(optimizer)
     need_backpack = isinstance(optimizer, CGNOptimizer)
 
     if need_backpack:
@@ -443,8 +441,6 @@ for optim_fn, label in zip(optimizers, labels):
         axes[1].plot(accuracies, "--", color="tab:blue", label=label)
 
 plt.legend()
-
-plt.show()
 
 # %%
 # While SGD is not capable to train this particular model, the second-order methods
