@@ -38,7 +38,13 @@ lossfunc = extend(lossfunc)
 
 loss = lossfunc(model(X), y)
 
-with backpack(HMP(), GGNMP(), PCHMP()):
+with backpack(
+    HMP(),
+    GGNMP(),
+    PCHMP(savefield="pchmp_clip", modify="clip"),
+    PCHMP(savefield="pchmp_abs", modify="abs"),
+):
+
     loss.backward()
 
 for name, param in model.named_parameters():
@@ -46,10 +52,11 @@ for name, param in model.named_parameters():
     print(".grad.shape:               ", param.grad.shape)
     print("type(.hmp):                ", type(param.hmp))
     print("type(.ggnmp):              ", type(param.ggnmp))
-    print("type(.pchmp):              ", type(param.pchmp))
+    print("type(.pchmp_clip):         ", type(param.pchmp_clip))
+    print("type(.pchmp_abs):          ", type(param.pchmp_abs))
 
 # %%
-# Let's multiply a random vector with different curvature blocks.
+# Multiply a random vector with different curvature blocks.
 
 num_vecs = 1
 
@@ -60,21 +67,22 @@ for name, param in model.named_parameters():
     print("vec.shape:                ", vec.shape)
     print(".hmp(vec).shape:          ", param.hmp(vec).shape)
     print(".ggnmp(vec).shape:        ", param.ggnmp(vec).shape)
-    print(".pchmp(vec, 'abs').shape: ", param.pchmp(vec, modify="abs").shape)
-    print(".pchmp(vec, 'clip').shape:", param.pchmp(vec, modify="clip").shape)
-    print("*"*50)
+    print(".pchmp_clip(vec).shape:   ", param.pchmp_clip(vec).shape)
+    print(".pchmp_abs(vec).shape:    ", param.pchmp_abs(vec).shape)
+    print("*" * 50)
 
 # %%
 # We can also multiply a collection of vectors (a matrix) at once.
+
 num_vecs = 3
 
 for name, param in model.named_parameters():
     vec = rand(num_vecs, *param.shape)
     print(name)
-    print(".grad.shape:             ", param.grad.shape)
-    print("vec.shape:               ", vec.shape)
+    print(".grad.shape:              ", param.grad.shape)
+    print("vec.shape:                ", vec.shape)
     print(".hmp(vec).shape:          ", param.hmp(vec).shape)
     print(".ggnmp(vec).shape:        ", param.ggnmp(vec).shape)
-    print(".pchmp(vec, 'abs').shape: ", param.pchmp(vec, modify="abs").shape)
-    print(".pchmp(vec, 'clip').shape:", param.pchmp(vec, modify="clip").shape)
-    print("*"*50)
+    print(".pchmp_clip(vec).shape:   ", param.pchmp_clip(vec).shape)
+    print(".pchmp_abs(vec).shape:    ", param.pchmp_abs(vec).shape)
+    print("*" * 50)
