@@ -1,16 +1,24 @@
 r"""Matrix-free conjugate gradient Newton optimizer
 ===================================================
 
-A simple second-order optimizer with BackPACK on the
-`classic MNIST example from PyTorch
+This example walks you through a second-order optimizer that uses the conjugate
+gradient (CG) method and matrix-free multiplication with the block diagonal of
+different curvature matrices to solve for the Newton step.
+
+The optimizer is tested on the `classic MNIST example from PyTorch
 <https://github.com/pytorch/examples/blob/master/mnist/main.py>`_.
-The optimizer we implement uses
-uses the diagonal of the GGN/Fisher matrix as a preconditioner,
-with a constant damping parameter;
+In particular, we will use a model that suffers from the vanishing gradient
+problem and is hence difficult to optimizer for gradient descent. Second-order
+methods are less affected by that issue and can train such models, as they rescale
+the gradient according to the local curvature.
+
+A local quadratic model of the loss defined by a curvature matrix :math:`C(x_t)`
+(the Hessian, generalized Gauss-Newton, or other approximations)is minimized by
+taking the Newton step
 
 .. math::
 
-    x_{t+1} = x_t - \gamma (G(x_t) + \lambda I)^{-1} g(x_t),
+    x_{t+1} = x_t - \gamma (C(x_t) + \lambda I)^{-1} g(x_t),
 
 where
 
@@ -19,7 +27,7 @@ where
     \begin{array}{ll}
         x_t:     & \text{parameters of the model}                             \\
         g(x_t):  & \text{gradient}                                            \\
-        G(x_t):  & \text{diagonal of the Gauss-Newton/Fisher matrix at `x_t`} \\
+        C(x_t):  & \text{curvature of the local quadratic model at `x_t`}     \\
         \lambda: & \text{damping parameter}                                   \\
         \gamma:  & \text{step-size}                                           \\
     \end{array}
@@ -28,6 +36,7 @@ where
 
 # %%
 # Let's get the imports, configuration and some helper functions out of the way first.
+# Notice that we are choosing a net with many sigmoids to make it hard to train for SGD.
 
 import math
 
@@ -75,28 +84,31 @@ def get_accuracy(output, targets):
 # %%
 # Writing the optimizer
 # ---------------------
-# To compute the update, we will need access to the diagonal of the Gauss-Newton,
-# which will be provided by Backpack in the ``diag_ggn_mc`` field,
-# in addition to the ``grad`` field created py PyTorch.
-# We can use it to compute the update direction
+# To compute the update, we need access to the curvature matrix in form of
+# matrix-vector products. We can then solve the linear system implied by the
+# Newton step with CG,
+# .. math::
+#
+#    (C(x_t) + \lambda I) v = - g(x_t),
+#
+# and perform the update
 #
 # .. math::
 #
-#    (G(x_t) + \lambda I)^{kkkkkkkkkkkk-1} g(x_t)
+#    x_{t+1} = x_t - \gamma v,
 #
-# for a parameter ``p`` as
+# for every parameter.
 #
-# .. math::
-#
-#     \texttt{p.grad / (p.diag_ggn_mc + damping)}
-#
+# Here is the optimizer. At its core is a simple implementation of CG that
+# will iterate until the residual norm decreases a certain threshold (determined
+# the ``atol`` and ``tol`` arguments), or exceeds a maximum budget (``maxiter``).
 
 
 class CGNOptimizer(torch.optim.Optimizer):
     def __init__(
         self,
         parameters,
-        bp_extensions,
+        bp_extension,
         lr=0.1,
         damping=1e-2,
         maxiter=100,
@@ -111,10 +123,10 @@ class CGNOptimizer(torch.optim.Optimizer):
                 maxiter=maxiter,
                 tol=tol,
                 atol=atol,
-                savefield=bp_extensions[0].savefield,
+                savefield=bp_extension.savefield,
             ),
         )
-        self.bp_extensions = bp_extensions
+        self.bp_extension = bp_extension
 
     def step(self):
         for group in self.param_groups:
@@ -217,17 +229,20 @@ class CGNOptimizer(torch.optim.Optimizer):
 # %%
 # Running and plotting
 # --------------------
+# Let's try the Newton-style CG optimizer with the generalized Gauss-Newton (GGN)
+# as curvature matrix.
+#
 # After ``extend``-ing the model and the loss function and creating the optimizer,
-# the only difference with a standard PyTorch training loop will be the activation
-# of the `DiagGGNMC`` extension using a ``with backpack(DiagGGNMC()):`` block,
-# so that BackPACK stores the diagonal of the GGN in the
-# ``diag_ggn_mc`` field during the backward pass.
+# we have to add the curvature-matrix product extension to the ``with backpack(...)``
+# context in a backward pass, such that the optimizer has access to the GGN product.
+# The rest is just a canonical training loop which logs and visualizes training
+# loss and accuracy.
 
 model = extend(model)
 loss_function = extend(loss_function)
 optimizer = CGNOptimizer(
     model.parameters(),
-    [extensions.GGNMP()],
+    extensions.GGNMP(),
     lr=LR,
     damping=DAMPING,
     maxiter=CG_MAX_ITER,
@@ -244,7 +259,7 @@ for batch_idx, (x, y) in enumerate(mnist_loader):
     outputs = model(x)
     loss = loss_function(outputs, y)
 
-    with backpack(*optimizer.bp_extensions):
+    with backpack(optimizer.bp_extension):
         loss.backward()
 
     optimizer.step()
@@ -277,17 +292,23 @@ axes[1].set_xlabel("Iteration")
 plt.show()
 
 # %%
-# Here is a comparison of different optimizers
+# Vanishing gradients
+# -------------------
+# By intention, we chose a model that is different to optimize with gradient descent
+# due to the large number of sigmoids that reduce the gradient signal in backpropagation.
+#
+# To verify that, let's compare the Newton optimizer for different curvatures with SGD.
+# SGD is run for a large range of learning rates :code:`lr` ∈ [10, 1, 0.1, 0.01, 0.001].
+#
+# The performance of CG-Newton versus SGD is shown below (we use identical colors for
+# different realizations of the same family to simplify the visualization).
 
-# As a fun exercise, try training with SGD. For me, it does not do anything for
-# :code:`lr` ∈ [10, 1, 0.1, 0.01, 0.001] because the sigmoids cause vanishing gradients.
 
-
-def make_cgn_optimizer_fn(extensions):
+def make_cgn_optimizer_fn(extension):
     def optimizer_fn(model):
         return CGNOptimizer(
             model.parameters(),
-            extensions,
+            extension,
             lr=LR,
             damping=DAMPING,
             maxiter=CG_MAX_ITER,
@@ -299,10 +320,10 @@ def make_cgn_optimizer_fn(extensions):
 
 
 curvatures = [
-    [extensions.GGNMP()],
-    [extensions.HMP()],
-    [extensions.PCHMP(modify="abs")],
-    [extensions.PCHMP(modify="clip")],
+    extensions.GGNMP(),
+    extensions.HMP(),
+    extensions.PCHMP(modify="abs"),
+    extensions.PCHMP(modify="clip"),
 ]
 
 labels = [
@@ -376,7 +397,7 @@ def train(optim_fn):
         loss = loss_function(outputs, y)
 
         if need_backpack:
-            with backpack(*optimizer.bp_extensions):
+            with backpack(optimizer.bp_extension):
                 loss.backward()
         else:
             loss.backward()
@@ -414,9 +435,18 @@ for optim_fn, label in zip(optimizers, labels):
     print(label)
     losses, accuracies = train(optim_fn)
 
-    axes[0].plot(losses, "--", label=label)
-    axes[1].plot(accuracies, "--", label=label)
+    if "SGD" in label:
+        axes[0].plot(losses, "-", color="tab:orange", label=label)
+        axes[1].plot(accuracies, "-", color="tab:orange", label=label)
+    else:
+        axes[0].plot(losses, "--", color="tab:blue", label=label)
+        axes[1].plot(accuracies, "--", color="tab:blue", label=label)
 
 plt.legend()
 
 plt.show()
+
+# %%
+# While SGD is not capable to train this particular model, the second-order methods
+# are still able to do so. Such methods may be interesting for optimization tasks
+# that first-order methods struggle with.
