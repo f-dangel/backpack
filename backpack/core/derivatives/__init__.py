@@ -1,30 +1,36 @@
 from torch.nn import (
+    ELU,
+    SELU,
     AvgPool2d,
     Conv1d,
     Conv2d,
     Conv3d,
+    ConvTranspose1d,
+    ConvTranspose2d,
+    ConvTranspose3d,
     CrossEntropyLoss,
     Dropout,
-    ELU,
-    Linear,
     LeakyReLU,
+    Linear,
     LogSigmoid,
     MaxPool2d,
     MSELoss,
     ReLU,
     Sigmoid,
-    SELU,
     Tanh,
     ZeroPad2d,
 )
 
 from .avgpool2d import AvgPool2DDerivatives
 from .conv1d import Conv1DDerivatives
+from .conv_transpose1d import ConvTranspose1DDerivatives
 from .conv2d import Conv2DDerivatives
+from .conv_transpose2d import ConvTranspose2DDerivatives
 from .conv3d import Conv3DDerivatives
+from .conv_transpose3d import ConvTranspose3DDerivatives
 from .crossentropyloss import CrossEntropyLossDerivatives
-from .elu import ELUDerivatives
 from .dropout import DropoutDerivatives
+from .elu import ELUDerivatives
 from .leakyrelu import LeakyReLUDerivatives
 from .linear import LinearDerivatives
 from .logsigmoid import LogSigmoidDerivatives
@@ -48,6 +54,9 @@ derivatives_for = {
     ReLU: ReLUDerivatives,
     Tanh: TanhDerivatives,
     Sigmoid: SigmoidDerivatives,
+    ConvTranspose1d: ConvTranspose1DDerivatives,
+    ConvTranspose2d: ConvTranspose2DDerivatives,
+    ConvTranspose3d: ConvTranspose3DDerivatives,
     LeakyReLU: LeakyReLUDerivatives,
     LogSigmoid: LogSigmoidDerivatives,
     ELU: ELUDerivatives,
