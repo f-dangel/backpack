@@ -154,11 +154,12 @@ for name, param in model.named_parameters():
 # ---------------------------------
 
 # %%
-# Curvature-matrix product (``*MP``) extensions provide functions
+# Curvature-matrix product (``MP``) extensions provide functions
 # that multiply with the block diagonal of different curvature matrices, such as
-# - the Hessian (``HMP``)
-# - the generalized Gauss-Newton (``GGNMP``)
-# - the positive-curvature Hessian (``PCHMP``)
+#
+# - the Hessian (:code:`HMP`)
+# - the generalized Gauss-Newton (:code:`GGNMP`)
+# - the positive-curvature Hessian (:code:`PCHMP`)
 
 loss = lossfunc(model(X), y)
 
@@ -171,7 +172,7 @@ with backpack(
     loss.backward()
 
 # %%
-# Multiply a random vector with different curvature blocks.
+# Multiply a random vector with curvature blocks.
 
 V = 1
 
@@ -186,7 +187,7 @@ for name, param in model.named_parameters():
     print(".pchmp_abs(vec).shape:   ", param.pchmp_abs(vec).shape)
 
 # %%
-# Multiply a collection of vectors (a matrix) with different curvature blocks
+# Multiply a collection of three vectors (a matrix) with curvature blocks.
 
 V = 3
 
