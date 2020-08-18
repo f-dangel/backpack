@@ -56,27 +56,32 @@ LR = 0.1
 DAMPING = 1e-2
 CG_TOL = 0.1
 CG_ATOL = 1e-6
-CG_MAX_ITER = 100
-MAX_ITER = 150
-PRINT_EVERY = 30
+CG_MAX_ITER = 20
+MAX_ITER = 50
+PRINT_EVERY = 10
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 torch.manual_seed(0)
 
 mnist_loader = get_mnist_dataloder(batch_size=BATCH_SIZE)
 
-model = torch.nn.Sequential(
-    torch.nn.Conv2d(1, 20, 5, 1),
-    torch.nn.Sigmoid(),
-    torch.nn.MaxPool2d(2, 2),
-    torch.nn.Conv2d(20, 30, 5, 1),
-    torch.nn.Sigmoid(),
-    torch.nn.MaxPool2d(2, 2),
-    torch.nn.Flatten(),
-    torch.nn.Linear(4 * 4 * 30, 100),
-    torch.nn.Sigmoid(),
-    torch.nn.Linear(100, 10),
-).to(DEVICE)
+
+def make_model():
+    return torch.nn.Sequential(
+        torch.nn.Conv2d(1, 10, 5, 1),
+        torch.nn.Sigmoid(),
+        torch.nn.MaxPool2d(2, 2),
+        torch.nn.Conv2d(10, 20, 5, 1),
+        torch.nn.Sigmoid(),
+        torch.nn.MaxPool2d(2, 2),
+        torch.nn.Flatten(),
+        torch.nn.Linear(4 * 4 * 20, 50),
+        torch.nn.Sigmoid(),
+        torch.nn.Linear(50, 10),
+    )
+
+
+model = make_model().to(DEVICE)
 
 loss_function = torch.nn.CrossEntropyLoss().to(DEVICE)
 
@@ -113,14 +118,14 @@ def get_accuracy(output, targets):
 
 class CGNOptimizer(torch.optim.Optimizer):
     def __init__(
-        self,
-        parameters,
-        bp_extension,
-        lr=0.1,
-        damping=1e-2,
-        maxiter=100,
-        tol=1e-1,
-        atol=1e-8,
+            self,
+            parameters,
+            bp_extension,
+            lr=0.1,
+            damping=1e-2,
+            maxiter=100,
+            tol=1e-1,
+            atol=1e-8,
     ):
         super().__init__(
             parameters,
@@ -138,7 +143,6 @@ class CGNOptimizer(torch.optim.Optimizer):
     def step(self):
         for group in self.param_groups:
             for p in group["params"]:
-
                 damped_curvature = self.damped_matvec(
                     p, group["damping"], group["savefield"]
                 )
@@ -296,8 +300,6 @@ axes[1].plot(accuracies)
 axes[1].set_title("Accuracy")
 axes[1].set_xlabel("Iteration")
 
-# manual clean up
-del model, mnist_loader, loss_function, optimizer
 
 # %%
 # Vanishing gradients: comparison with SGD
@@ -361,7 +363,6 @@ sgd_lrs = [
     0.001,
 ]
 
-
 for lr in sgd_lrs:
     optimizers.append(make_sgd_optimizer_fn(lr))
     labels.append("SGD, lr={}".format(lr))
@@ -371,20 +372,7 @@ def train(optim_fn):
     torch.manual_seed(0)
 
     mnist_loader = get_mnist_dataloder(batch_size=BATCH_SIZE)
-
-    model = torch.nn.Sequential(
-        torch.nn.Conv2d(1, 20, 5, 1),
-        torch.nn.Sigmoid(),
-        torch.nn.MaxPool2d(2, 2),
-        torch.nn.Conv2d(20, 30, 5, 1),
-        torch.nn.Sigmoid(),
-        torch.nn.MaxPool2d(2, 2),
-        torch.nn.Flatten(),
-        torch.nn.Linear(4 * 4 * 30, 100),
-        torch.nn.Sigmoid(),
-        torch.nn.Linear(100, 10),
-    ).to(DEVICE)
-
+    model = make_model().to(DEVICE)
     loss_function = torch.nn.CrossEntropyLoss().to(DEVICE)
 
     optimizer = optim_fn(model)
