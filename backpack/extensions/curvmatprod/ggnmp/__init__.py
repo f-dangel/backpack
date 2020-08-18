@@ -39,15 +39,9 @@ class GGNMP(BackpropExtension):
 
     Stores the multiplication function in :code:`ggnmp`.
 
-    The function receives a tensor with trailing size identical to the
-    parameter, and an additional leading dimension. Each slice across this leading
-    dimension will be multiplied with the block-diagonal GGN/Fisher.
-
-    Implements the procedures described by
-
-    - `Modular Block-diagonal Curvature Approximations for Feedforward Architectures
-      <https://arxiv.org/abs/1802.06502v2>`_
-      by Felix Dangel, Stefan Harmeling, Philipp Hennig, 2020.
+    For a parameter of shape ``[...]`` the function receives and returns a tensor of
+    shape ``[V, ...]``. Each vector slice across the leading dimension is multiplied
+    with the block-diagonal GGN/Fisher.
     """
 
     def __init__(self, savefield="ggnmp"):

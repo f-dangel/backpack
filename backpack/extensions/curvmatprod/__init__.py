@@ -1,9 +1,9 @@
-"""Block-diagonal curvature-matrix products (function backpropagation).
-=======================================================================
+"""Block-diagonal curvature products
+====================================
 
 These extensions do not compute information directly, but give access to
 functions to compute matrix-matrix products with block-diagonal approximations
-of the curvature, such as the block-diagonal generalized Gauss-Newton or Hessian.
+of the Hessian.
 
 Extensions propagate functions through the computation graph. In contrast to
 standard gradient computation, the graph is retained during backpropagation
@@ -11,22 +11,15 @@ standard gradient computation, the graph is retained during backpropagation
 multiplication is on the order of one backward pass.
 
 Implemented extensions are matrix-free curvature-matrix multiplication with
-
-- The block-diagonal generalized Gauss-Newton (GGN)/Fisher information
-  (:func:`GGNMP <backpack.extensions.GGNMP>`).
-- The block-diagonal Hessian (:func:`HMP <backpack.extensions.HMP>`).
-- The block-diagonal positive-curvature Hessian (PCH,
-  :func:`PCHMP <backpack.extensions.PCHMP>`) introduced in
-  - `BDA-PCH: Block-Diagonal Approximation of Positive-Curvature Hessian for
-    Training Neural Networks <https://arxiv.org/abs/1802.06502v2>`_
-    by Sheng-Wei Chen, Chun-Nan Chou and Edward Y. Chang, 2018.
-
-The following paper describes the details of Hessian backpropagation:
+the block-diagonal of the Hessian, generalized Gauss-Newton (GGN)/Fisher, and
+positive-curvature Hessian. They are formalized by the concept of Hessian
+backpropagation, described in:
 
 - `Modular Block-diagonal Curvature Approximations for Feedforward Architectures
-  <https://arxiv.org/abs/1802.06502v2>`_
+  <http://proceedings.mlr.press/v108/dangel20a/dangel20a.pdf>`_
   by Felix Dangel, Stefan Harmeling, Philipp Hennig, 2020.
 """
+
 
 from .ggnmp import GGNMP
 from .hmp import HMP

@@ -22,3 +22,14 @@ Available Extensions
 .. autofunction:: backpack.extensions.KFLR
 .. autofunction:: backpack.extensions.KFRA
 .. autofunction:: backpack.extensions.DiagHessian
+
+-----
+
+.. automodule:: backpack.extensions.curvmatprod
+
+-----
+
+.. autofunction:: backpack.extensions.HMP
+.. autofunction:: backpack.extensions.GGNMP
+.. autofunction:: backpack.extensions.PCHMP
+
