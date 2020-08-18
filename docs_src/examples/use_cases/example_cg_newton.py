@@ -37,6 +37,11 @@ where
 # %%
 # Let's get the imports, configuration and some helper functions out of the way first.
 # Notice that we are choosing a net with many sigmoids to make it hard to train for SGD.
+#
+# .. note::
+#    Larger batch sizes are usually recommended for second-order methods. However, the
+#    memory constraints imposed by the architecture used to build this example restrict
+#    us to rather small values.
 
 import math
 
@@ -440,6 +445,9 @@ for optim_fn, label in zip(optimizers, labels):
     if "SGD" in label:
         axes[0].plot(losses, "-", color="tab:orange", label=label)
         axes[1].plot(accuracies, "-", color="tab:orange", label=label)
+    elif "Hessian" in label:
+        axes[0].plot(losses, "-.", color="tab:green", label=label)
+        axes[1].plot(accuracies, "-.", color="tab:green", label=label)
     else:
         axes[0].plot(losses, "--", color="tab:blue", label=label)
         axes[1].plot(accuracies, "--", color="tab:blue", label=label)
@@ -450,3 +458,9 @@ plt.legend()
 # While SGD is not capable to train this particular model, the second-order methods
 # are still able to do so. Such methods may be interesting for optimization tasks
 # that first-order methods struggle with.
+#
+# Note that the Hessian of the net is not positive semi-definite.
+# In this case, the local quadratic model does not have a global minimum and that
+# complicates the usage of the Hessian in second-order optimization. This also
+# provides a motivation for the other positive semi-definite Hessian approximations
+# shown here.
