@@ -47,8 +47,8 @@ from backpack import backpack, extend, extensions
 from backpack.utils.examples import get_mnist_dataloder
 
 BATCH_SIZE = 128
-LR = 0.1
-DAMPING = 2e-2
+LR = 0.05
+DAMPING = 1e-2
 CG_TOL = 0.1
 CG_ATOL = 1e-6
 CG_MAX_ITER = 100
@@ -63,13 +63,13 @@ model = torch.nn.Sequential(
     torch.nn.Conv2d(1, 20, 5, 1),
     torch.nn.Sigmoid(),
     torch.nn.MaxPool2d(2, 2),
-    torch.nn.Conv2d(20, 50, 5, 1),
+    torch.nn.Conv2d(20, 30, 5, 1),
     torch.nn.Sigmoid(),
     torch.nn.MaxPool2d(2, 2),
     torch.nn.Flatten(),
-    torch.nn.Linear(4 * 4 * 50, 500),
+    torch.nn.Linear(4 * 4 * 30, 100),
     torch.nn.Sigmoid(),
-    torch.nn.Linear(500, 10),
+    torch.nn.Linear(100, 10),
 ).to(DEVICE)
 
 loss_function = torch.nn.CrossEntropyLoss().to(DEVICE)
@@ -290,6 +290,9 @@ axes[1].plot(accuracies)
 axes[1].set_title("Accuracy")
 axes[1].set_xlabel("Iteration")
 
+# manual clean up
+del model, mnist_loader, loss_function
+
 # %%
 # Vanishing gradients: comparison with SGD
 # ---------------------------------------
@@ -367,13 +370,13 @@ def train(optim_fn):
         torch.nn.Conv2d(1, 20, 5, 1),
         torch.nn.Sigmoid(),
         torch.nn.MaxPool2d(2, 2),
-        torch.nn.Conv2d(20, 50, 5, 1),
+        torch.nn.Conv2d(20, 30, 5, 1),
         torch.nn.Sigmoid(),
         torch.nn.MaxPool2d(2, 2),
         torch.nn.Flatten(),
-        torch.nn.Linear(4 * 4 * 50, 500),
+        torch.nn.Linear(4 * 4 * 30, 100),
         torch.nn.Sigmoid(),
-        torch.nn.Linear(500, 10),
+        torch.nn.Linear(100, 10),
     ).to(DEVICE)
 
     loss_function = torch.nn.CrossEntropyLoss().to(DEVICE)
