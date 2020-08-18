@@ -46,13 +46,13 @@ import torch
 from backpack import backpack, extend, extensions
 from backpack.utils.examples import get_mnist_dataloder
 
-BATCH_SIZE = 256
+BATCH_SIZE = 128
 LR = 0.1
-DAMPING = 1e-2
+DAMPING = 2e-2
 CG_TOL = 0.1
 CG_ATOL = 1e-6
 CG_MAX_ITER = 100
-MAX_ITER = 50
+MAX_ITER = 60
 PRINT_EVERY = 10
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 torch.manual_seed(0)
