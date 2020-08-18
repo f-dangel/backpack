@@ -18,8 +18,7 @@ def unfold_func(module):
 def get_conv1d_weight_gradient_factors(input, grad_out, module):
     # shape [N, C_in * K_x, L_out]
     X = unfold_by_conv(input, module)
-    dE_dY = eingroup("n,c,l->n,c,l", grad_out)
-    return X, dE_dY
+    return X, grad_out
 
 
 def get_weight_gradient_factors(input, grad_out, module):

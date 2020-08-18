@@ -33,6 +33,6 @@ class AutogradExtensions(ExtensionsImplementation):
     def batch_l2_grad(self):
         batch_grad = self.batch_grad()
         batch_l2_grads = [
-            (g ** 2).sum(list(range(1, len(g.shape)))) for g in batch_grad
+            (g ** 2).flatten(start_dim=1).sum(1) for g in batch_grad
         ]
         return batch_l2_grads
