@@ -46,15 +46,16 @@ import torch
 from backpack import backpack, extend, extensions
 from backpack.utils.examples import get_mnist_dataloder
 
-BATCH_SIZE = 128
-LR = 0.05
+BATCH_SIZE = 64
+LR = 0.1
 DAMPING = 1e-2
 CG_TOL = 0.1
 CG_ATOL = 1e-6
 CG_MAX_ITER = 100
-MAX_ITER = 60
-PRINT_EVERY = 10
+MAX_ITER = 150
+PRINT_EVERY = 30
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 torch.manual_seed(0)
 
 mnist_loader = get_mnist_dataloder(batch_size=BATCH_SIZE)
@@ -291,19 +292,19 @@ axes[1].set_title("Accuracy")
 axes[1].set_xlabel("Iteration")
 
 # manual clean up
-del model, mnist_loader, loss_function
+del model, mnist_loader, loss_function, optimizer
 
 # %%
 # Vanishing gradients: comparison with SGD
-# ---------------------------------------
+# ----------------------------------------
 # By intention, we chose a model that is different to optimize with gradient descent
 # due to the large number of sigmoids that reduce the gradient signal in backpropagation.
 #
 # To verify that, let's compare the Newton optimizer for different curvatures with SGD.
 # SGD is run for a large range of learning rates :code:`lr ∈ [10, 1, 0.1, 0.01, 0.001]`.
 #
-# The performance of CG-Newton versus SGD is shown below (using identical colors for
-# different realizations of the same family to simplify the visualization).
+# The performance of CG-Newton versus SGD is shown below (using a somewhat simplified
+# color scheme to simplify the visualization).
 
 
 def make_cgn_optimizer_fn(extension):
