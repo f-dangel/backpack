@@ -7,3 +7,7 @@ class ExtensionsImplementation:
     def batch_grad(self):
         """Individual gradients."""
         raise NotImplementedError
+
+    def batch_l2_grad(self):
+        """L2 norm of Individual gradients."""
+        raise NotImplementedError

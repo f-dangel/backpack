@@ -15,10 +15,23 @@ def unfold_func(module):
     )
 
 
+def get_conv1d_weight_gradient_factors(input, grad_out, module):
+    # shape [N, C_in * K_x, L_out]
+    X = unfold_by_conv(input, module)
+    return X, grad_out
+
+
 def get_weight_gradient_factors(input, grad_out, module):
     # shape [N, C_in * K_x * K_y, H_out * W_out]
     X = unfold_func(module)(input)
     dE_dY = eingroup("n,c,h,w->n,c,hw", grad_out)
+    return X, dE_dY
+
+
+def get_conv3d_weight_gradient_factors(input, grad_out, module):
+    # shape [N, C_in * K_x * K_y * K_z, D_out * H_out * W_out]
+    X = unfold_by_conv(input, module)
+    dE_dY = eingroup("n,c,d,h,w->n,c,dhw", grad_out)
     return X, dE_dY
 
 
