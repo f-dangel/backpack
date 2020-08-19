@@ -9,9 +9,7 @@ def get_convtranspose1d_weight_gradient_factors(input, grad_out, module):
     kernel_size = module.kernel_size
     kernel_size_numel = int(torch.prod(torch.Tensor(kernel_size)))
 
-    X = unfold_by_conv_transpose(input, module).reshape(
-        N, C_in * kernel_size_numel, -1
-    )
+    X = unfold_by_conv_transpose(input, module).reshape(N, C_in * kernel_size_numel, -1)
     return X, grad_out
 
 
@@ -20,9 +18,7 @@ def get_convtranspose2d_weight_gradient_factors(input, grad_out, module):
     kernel_size = module.kernel_size
     kernel_size_numel = int(torch.prod(torch.Tensor(kernel_size)))
 
-    X = unfold_by_conv_transpose(input, module).reshape(
-        N, C_in * kernel_size_numel, -1
-    )
+    X = unfold_by_conv_transpose(input, module).reshape(N, C_in * kernel_size_numel, -1)
     dE_dY = eingroup("n,c,h,w->n,c,hw", grad_out)
     return X, dE_dY
 
@@ -32,9 +28,7 @@ def get_convtranspose3d_weight_gradient_factors(input, grad_out, module):
     kernel_size = module.kernel_size
     kernel_size_numel = int(torch.prod(torch.Tensor(kernel_size)))
 
-    X = unfold_by_conv_transpose(input, module).reshape(
-        N, C_in * kernel_size_numel, -1
-    )
+    X = unfold_by_conv_transpose(input, module).reshape(N, C_in * kernel_size_numel, -1)
     dE_dY = eingroup("n,c,d,h,w->n,c,dhw", grad_out)
     return X, dE_dY
 
