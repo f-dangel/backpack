@@ -1,8 +1,24 @@
-from torch.nn import Conv2d, Linear
+from torch.nn import (
+    Conv1d,
+    Conv2d,
+    Conv3d,
+    ConvTranspose1d,
+    ConvTranspose2d,
+    ConvTranspose3d,
+    Linear,
+)
 
 from backpack.extensions.backprop_extension import BackpropExtension
 
-from . import conv2d, linear
+from . import (
+    conv1d,
+    conv2d,
+    conv3d,
+    convtranspose1d,
+    convtranspose2d,
+    convtranspose3d,
+    linear,
+)
 
 
 class Variance(BackpropExtension):
@@ -25,6 +41,11 @@ class Variance(BackpropExtension):
             fail_mode="WARNING",
             module_exts={
                 Linear: linear.VarianceLinear(),
+                Conv1d: conv1d.VarianceConv1d(),
                 Conv2d: conv2d.VarianceConv2d(),
+                Conv3d: conv3d.VarianceConv3d(),
+                ConvTranspose1d: convtranspose1d.VarianceConvTranspose1d(),
+                ConvTranspose2d: convtranspose2d.VarianceConvTranspose2d(),
+                ConvTranspose3d: convtranspose3d.VarianceConvTranspose3d(),
             },
         )
