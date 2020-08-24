@@ -9,7 +9,9 @@ from test.extensions.firstorder.firstorder_settings import FIRSTORDER_SETTINGS
 from test.core.derivatives.utils import classification_targets
 
 SUMGRADSQUARED_SETTINGS = []
-SUMGRADSQUARED_SETTINGS += [
+
+SHARED_SETTINGS = FIRSTORDER_SETTINGS
+LOCAL_SETTINGS = [
     {
         "input_fn": lambda: torch.rand(3, 3, 7),
         "module_fn": lambda: torch.nn.Sequential(
@@ -66,4 +68,5 @@ SUMGRADSQUARED_SETTINGS += [
         "target_fn": lambda: classification_targets((3,), 5),
     },
 ]
-SUMGRADSQUARED_SETTINGS += FIRSTORDER_SETTINGS
+
+SUMGRADSQUARED_SETTINGS = SHARED_SETTINGS + LOCAL_SETTINGS

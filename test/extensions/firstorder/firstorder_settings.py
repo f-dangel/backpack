@@ -1,4 +1,9 @@
-"""Test configurations for `backpack.core.extensions.firstorder` methods
+"""Test configurations for `backpack.core.extensions.firstorder`
+that is shared among the following firstorder methods:
+- batch_grad
+- batch_l2_grad
+- sum_grad_sqaured
+- variance
 
 
 Required entries:

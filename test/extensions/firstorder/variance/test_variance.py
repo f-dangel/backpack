@@ -1,7 +1,7 @@
 """Test class for module variance 
 from `backpack.core.extensions.firstorder`
 
-Test individual gradients for the following layers:
+Test variances for the following layers:
 - variance of linear layers
 - variance of convolutional layers
 

@@ -23,7 +23,9 @@ from . import (
 
 class SumGradSquared(BackpropExtension):
     """The sum of individual-gradients-squared, or second moment of the gradient.
+
     Stores the output in ``sum_grad_squared``. Same dimension as the gradient.
+
     Note: beware of scaling issue
         The second moment depends on the scaling of the overall function.
         Let ``fᵢ`` be the loss of the ``i`` th sample, with gradient ``gᵢ``.
