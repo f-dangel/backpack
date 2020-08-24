@@ -56,7 +56,6 @@ class AutogradExtensions(ExtensionsImplementation):
         for _, gradients in zip(range(N), gradients_list):
             for idx, g in enumerate(gradients):
                 sgs[idx] += (g.detach() * factor) ** 2
-        # import pdb; pdb.set_trace()
         return sgs
 
     def variance(self):

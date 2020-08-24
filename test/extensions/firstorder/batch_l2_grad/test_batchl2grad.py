@@ -1,9 +1,9 @@
-"""Test class for module Batch_grad (batch gradients) 
+"""Test class for module Batch_l2_grad (L2 norm of batch gradients) 
 from `backpack.core.extensions.firstorder`
 
 Test individual gradients for the following layers:
-- batch gradients of linear layers
-- batch gradients of convolutional layers
+- L2 norm of batch gradients of linear layers
+- L2 norm of batch gradients of convolutional layers
 
 """
 from test.automated_test import check_sizes_and_values

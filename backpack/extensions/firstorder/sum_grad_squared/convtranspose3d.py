@@ -9,15 +9,16 @@ class SGSConvTranspose3d(FirstOrderModuleExtension):
         super().__init__(params=["bias", "weight"])
 
     def bias(self, ext, module, g_inp, g_out, backproped):
-        N_axis = 0
-        return (einsum("ncdhw->nc", g_out[0]) ** 2).sum(N_axis)
+        C_axis = 0
+        return (einsum("ncdhw->nc", g_out[0]) ** 2).sum(C_axis)
 
     def weight(self, ext, module, g_inp, g_out, backproped):
-        N_axis = 0
+        C_axis = 0
+        C_out_axis = 1
         X, dE_dY = convUtils.get_convtranspose3d_weight_gradient_factors(
             module.input0, g_out[0], module
         )
         C_in, C_out, K_X, K_Y, K_Z = module.weight.shape
         d1 = einsum("nml,nkl->nmk", (dE_dY, X))
-        d2 = (d1 ** 2).sum(N_axis).reshape(C_out, C_in, K_X, K_Y, K_Z)
-        return transpose(d2, N_axis, 1)
+        d2 = (d1 ** 2).sum(C_axis).reshape(C_out, C_in, K_X, K_Y, K_Z)
+        return transpose(d2, C_axis, C_out_axis)

@@ -1,4 +1,4 @@
-"""Test configurations for `backpack.core.extensions.firstorder` for batch_grad
+"""Test configurations for `backpack.core.extensions.firstorder` methods
 
 
 Required entries:

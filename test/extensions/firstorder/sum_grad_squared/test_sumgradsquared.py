@@ -1,9 +1,9 @@
-"""Test class for module Batch_grad (batch gradients) 
+"""Test class for module sum_grad_square (sum of the square of batch gradients) 
 from `backpack.core.extensions.firstorder`
 
 Test individual gradients for the following layers:
-- batch gradients of linear layers
-- batch gradients of convolutional layers
+- sum of the square of batch gradients of linear layers
+- sum of the square of batch gradients of convolutional layers
 
 """
 from test.automated_test import check_sizes_and_values
@@ -23,7 +23,7 @@ IDS = [problem.make_id() for problem in PROBLEMS]
 
 @pytest.mark.parametrize("problem", PROBLEMS, ids=IDS)
 def test_sum_grad_squared(problem):
-    """Test sum of individual gradients and square them
+    """Test sum of square of individual gradients
 
     Args:
         problem (ExtensionsTestProblem): Problem for extension test.

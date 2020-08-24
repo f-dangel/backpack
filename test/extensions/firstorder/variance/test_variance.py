@@ -1,9 +1,9 @@
-"""Test class for module Batch_grad (batch gradients) 
+"""Test class for module variance 
 from `backpack.core.extensions.firstorder`
 
 Test individual gradients for the following layers:
-- batch gradients of linear layers
-- batch gradients of convolutional layers
+- variance of linear layers
+- variance of convolutional layers
 
 """
 from test.automated_test import check_sizes_and_values
@@ -21,7 +21,7 @@ IDS = [problem.make_id() for problem in PROBLEMS]
 
 @pytest.mark.parametrize("problem", PROBLEMS, ids=IDS)
 def test_variance(problem):
-    """Test l2 norm of individual gradients
+    """Test variance of individual gradients
 
     Args:
         problem (ExtensionsTestProblem): Problem for extension test.

@@ -9,13 +9,13 @@ class SGSConv3d(FirstOrderModuleExtension):
         super().__init__(params=["bias", "weight"])
 
     def bias(self, ext, module, g_inp, g_out, backproped):
-        N_axis = 0
-        return (einsum("ncdhw->nc", g_out[0]) ** 2).sum(N_axis)
+        C_axis = 0
+        return (einsum("ncdhw->nc", g_out[0]) ** 2).sum(C_axis)
 
     def weight(self, ext, module, g_inp, g_out, backproped):
-        N_axis = 0
+        C_axis = 0
         X, dE_dY = convUtils.get_conv3d_weight_gradient_factors(
             module.input0, g_out[0], module
         )
         d1 = einsum("nml,nkl->nmk", (dE_dY, X))
-        return (d1 ** 2).sum(N_axis).view_as(module.weight)
+        return (d1 ** 2).sum(C_axis).view_as(module.weight)
