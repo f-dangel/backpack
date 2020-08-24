@@ -1,4 +1,4 @@
-from torch import einsum
+from torch import einsum, transpose
 
 from backpack.extensions.firstorder.base import FirstOrderModuleExtension
 from backpack.utils import conv_transpose as convUtils
@@ -17,5 +17,7 @@ class SGSConvTranspose3d(FirstOrderModuleExtension):
         X, dE_dY = convUtils.get_convtranspose3d_weight_gradient_factors(
             module.input0, g_out[0], module
         )
+        C_in, C_out, K_X, K_Y, K_Z = module.weight.shape
         d1 = einsum("nml,nkl->nmk", (dE_dY, X))
-        return (d1 ** 2).sum(N_axis).view_as(module.weight)
+        d2 = (d1 ** 2).sum(N_axis).reshape(C_out, C_in, K_X, K_Y, K_Z)
+        return transpose(d2, N_axis, 1)

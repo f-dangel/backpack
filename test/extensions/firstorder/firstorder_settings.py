@@ -107,14 +107,25 @@ FIRSTORDER_SETTINGS += [
         "target_fn": lambda: classification_targets((3,), 5),
     },
     {
-        "input_fn": lambda: torch.rand(3, 2, 7),
+        "input_fn": lambda: torch.rand(3, 1, 7),
         "module_fn": lambda: torch.nn.Sequential(
-            torch.nn.ConvTranspose1d(2, 2, 2),
+            torch.nn.ConvTranspose1d(1, 2, 2),
             torch.nn.ReLU(),
             torch.nn.Flatten(),
             torch.nn.Linear(16, 5),
         ),
-        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="mean"),
+        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="sum"),
+        "target_fn": lambda: classification_targets((3,), 5),
+    },
+    {
+        "input_fn": lambda: torch.rand(3, 3, 7),
+        "module_fn": lambda: torch.nn.Sequential(
+            torch.nn.ConvTranspose1d(3, 2, 2),
+            torch.nn.ReLU(),
+            torch.nn.Flatten(),
+            torch.nn.Linear(16, 5),
+        ),
+        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="sum"),
         "target_fn": lambda: classification_targets((3,), 5),
     },
     {
@@ -125,11 +136,11 @@ FIRSTORDER_SETTINGS += [
             torch.nn.Flatten(),
             torch.nn.Linear(128, 5),
         ),
-        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="sum"),
+        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(),
         "target_fn": lambda: classification_targets((3,), 5),
     },
     {
-        "input_fn": lambda: torch.rand(3, 3, 2, 7, 7),
+        "input_fn": lambda: torch.rand(2, 3, 2, 7, 7),
         "module_fn": lambda: torch.nn.Sequential(
             torch.nn.ConvTranspose3d(3, 2, 2),
             torch.nn.ReLU(),
@@ -137,6 +148,6 @@ FIRSTORDER_SETTINGS += [
             torch.nn.Linear(384, 5),
         ),
         "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="mean"),
-        "target_fn": lambda: classification_targets((3,), 5),
+        "target_fn": lambda: classification_targets((2,), 5),
     },
 ]
