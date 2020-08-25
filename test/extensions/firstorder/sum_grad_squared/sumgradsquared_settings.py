@@ -8,8 +8,6 @@ import torch
 from test.extensions.firstorder.firstorder_settings import FIRSTORDER_SETTINGS
 from test.core.derivatives.utils import classification_targets
 
-SUMGRADSQUARED_SETTINGS = []
-
 SHARED_SETTINGS = FIRSTORDER_SETTINGS
 LOCAL_SETTINGS = [
     {
