@@ -24,3 +24,17 @@ class BackpackExtensions(ExtensionsImplementation):
             loss.backward()
             batch_l2_grad = [p.batch_l2 for p in self.problem.model.parameters()]
         return batch_l2_grad
+
+    def sgs(self):
+        with backpack(new_ext.SumGradSquared()):
+            _, _, loss = self.problem.forward_pass()
+            loss.backward()
+            sgs = [p.sum_grad_squared for p in self.problem.model.parameters()]
+        return sgs
+
+    def variance(self):
+        with backpack(new_ext.Variance()):
+            _, _, loss = self.problem.forward_pass()
+            loss.backward()
+            variances = [p.variance for p in self.problem.model.parameters()]
+        return variances
