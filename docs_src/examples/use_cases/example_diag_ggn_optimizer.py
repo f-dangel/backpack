@@ -37,7 +37,7 @@ from backpack.extensions import DiagGGNMC
 from backpack.utils.examples import get_mnist_dataloder
 
 BATCH_SIZE = 128
-STEP_SIZE = 0.01
+STEP_SIZE = 0.05
 DAMPING = 1.0
 MAX_ITER = 200
 PRINT_EVERY = 50
@@ -96,7 +96,7 @@ class DiagGGNOptimizer(torch.optim.Optimizer):
         for group in self.param_groups:
             for p in group["params"]:
                 step_direction = p.grad / (p.diag_ggn_mc + group["damping"])
-                p.data.add_(-group["step_size"], step_direction)
+                p.data.add_(step_direction, alpha=-group["step_size"])
 
 
 # %%
@@ -119,6 +119,9 @@ for batch_idx, (x, y) in enumerate(mnist_loader):
     optimizer.zero_grad()
 
     x, y = x.to(DEVICE), y.to(DEVICE)
+
+    model.zero_grad()
+
     outputs = model(x)
     loss = loss_function(outputs, y)
 

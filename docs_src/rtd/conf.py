@@ -21,7 +21,7 @@ copyright = ""
 author = ""
 
 # The full version, including alpha/beta/rc tags
-release = "1.1.0"
+release = "1.1.1"
 master_doc = "index"
 
 # -- General configuration ---------------------------------------------------

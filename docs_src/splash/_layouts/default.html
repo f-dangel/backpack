@@ -1,66 +1,70 @@
 <!DOCTYPE html>
 <html lang="{{ site.lang | default: 'en-US' }}">
-    <head>
-        <meta charset="utf-8"/>
-        <meta content="IE=edge" http-equiv="X-UA-Compatible"/>
-        <meta content="width=device-width, initial-scale=1" name="viewport"/>
-        <link href="{{ '/assets/css/style.css' | relative_url }}" rel="stylesheet">
-        </link>
-    </head>
+<head>
+    <meta charset="utf-8"/>
+    <meta content="IE=edge" http-equiv="X-UA-Compatible"/>
+    <meta content="width=device-width, initial-scale=1" name="viewport"/>
+    <link href="{{ '/assets/css/style.css' | relative_url }}" rel="stylesheet">
+    </link>
+</head>
 </html>
 <body>
-    <div class="wrapper">
-        <header>
-            <h1>
+<div class="wrapper">
+    <header>
+        <div style="display: flex; align-items: center; height: 100%; margin-bottom: 5px;">
+            <img src="{{ '/assets/img/backpack_logo_torch.svg' | relative_url }}"
+                 style="width: 48px; margin-right:10px">
+            <h1  style="margin-top:auto; margin-bottom:auto; display:block">
                 <a href="https://f-dangel.github.io/backpack/">
                     {{ site.title }}
                 </a>
             </h1>
-            <p>
-                {{ site.description }}
-            </p>
-            <p class="view">
-                <ul>
-                    <li>
-                        <a href="examples.html">
-                            BackPACK on a small example
-                        </a>
-                    </li>
-                </ul>
-            </p>
-            <p class="view">
-                <ul>
-                    <li>
-                        <a href="https://docs.backpack.pt">
-                            Documentation
-                        </a>
-                    </li>
-                </ul>
-            </p>
-            <p class="view">
-                <ul>
-                    <li>
-                        <a href="https://github.com/f-dangel/backpack">
-                            Github repo
-                        </a>
-                    </li>
-                </ul>
-            </p>
-		</header>
-        <section>
-            {{ content }}
-        </section>
-        <footer>
-            <p>
-                <small>
-                    Hosted on GitHub Pages — Theme by
-                    <a href="https://github.com/orderedlist">
-                        orderedlist
-                    </a>
-                </small>
-            </p>
-        </footer>
-    </div>
-    <script src="{{ '/assets/js/scale.fix.js' | relative_url }}">
-    </script>
+        </div>
+        <p>
+            {{ site.description }}
+        </p>
+        <p class="view">
+        <ul>
+            <li>
+                <a href="examples.html">
+                    BackPACK on a small example
+                </a>
+            </li>
+        </ul>
+        </p>
+        <p class="view">
+        <ul>
+            <li>
+                <a href="https://docs.backpack.pt">
+                    Documentation
+                </a>
+            </li>
+        </ul>
+        </p>
+        <p class="view">
+        <ul>
+            <li>
+                <a href="https://github.com/f-dangel/backpack">
+                    Github repo
+                </a>
+            </li>
+        </ul>
+        </p>
+    </header>
+    <section>
+        {{ content }}
+    </section>
+    <footer>
+        <p>
+            <small>
+                Hosted on GitHub Pages — Theme by
+                <a href="https://github.com/orderedlist">
+                    orderedlist
+                </a>
+            </small>
+        </p>
+    </footer>
+</div>
+<script src="{{ '/assets/js/scale.fix.js' | relative_url }}">
+</script>
 </body>
