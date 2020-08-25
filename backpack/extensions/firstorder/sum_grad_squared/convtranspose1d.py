@@ -21,4 +21,4 @@ class SGSConvTranspose1d(FirstOrderModuleExtension):
         C_in, C_out, K_X = module.weight.shape
         gradients = einsum("nml,nkl->nmk", (dE_dY, X))
         sgs = (gradients ** 2).sum(N_axis).reshape(C_out, C_in, K_X)
-        return transpose(sgs, N_axis, 1)
+        return transpose(sgs, 0, 1)
