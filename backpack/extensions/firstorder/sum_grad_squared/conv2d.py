@@ -17,5 +17,5 @@ class SGSConv2d(FirstOrderModuleExtension):
         X, dE_dY = convUtils.get_weight_gradient_factors(
             module.input0, g_out[0], module
         )
-        gradients = einsum("nml,nkl->nmk", (dE_dY, X))
-        return (gradients ** 2).sum(N_axis).view_as(module.weight)
+        grad_batch = einsum("nml,nkl->nmk", (dE_dY, X))
+        return (grad_batch ** 2).sum(N_axis).view_as(module.weight)
