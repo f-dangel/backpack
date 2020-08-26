@@ -20,7 +20,12 @@ class ZeroPad2dDerivatives(BaseDerivatives):
 
         (W_top, W_bottom), (H_bottom, H_top) = self.__unpad_indices(module)
         result = result[
-            :, W_top:W_bottom, H_bottom:H_top, :, W_top:W_bottom, H_bottom:H_top,
+            :,
+            W_top:W_bottom,
+            H_bottom:H_top,
+            :,
+            W_top:W_bottom,
+            H_bottom:H_top,
         ].contiguous()
 
         return result.view(in_features, in_features)

@@ -109,7 +109,9 @@ def test_batch_gradients(problem, device):
 
 
 @pytest.mark.parametrize(
-    "problem,device", ALL_CONFIGURATIONS, ids=ALL_CONFIGURATION_IDS,
+    "problem,device",
+    ALL_CONFIGURATIONS,
+    ids=ALL_CONFIGURATION_IDS,
 )
 def test_batch_gradients_sum_to_grad(problem, device):
     problem.to(device)
@@ -213,7 +215,9 @@ def test_diag_h(problem, device):
 
 
 @pytest.mark.parametrize(
-    "problem,device", ALL_CONFIGURATIONS, ids=ALL_CONFIGURATION_IDS,
+    "problem,device",
+    ALL_CONFIGURATIONS,
+    ids=ALL_CONFIGURATION_IDS,
 )
 def test_hmp(problem, device):
     problem.to(device)
@@ -234,7 +238,9 @@ def test_hmp(problem, device):
 
 
 @pytest.mark.parametrize(
-    "problem,device", ALL_CONFIGURATIONS, ids=ALL_CONFIGURATION_IDS,
+    "problem,device",
+    ALL_CONFIGURATIONS,
+    ids=ALL_CONFIGURATION_IDS,
 )
 def test_ggn_mp(problem, device):
     problem.to(device)
@@ -253,7 +259,9 @@ def test_ggn_mp(problem, device):
 
 
 @pytest.mark.parametrize(
-    "problem,device", ALL_CONFIGURATIONS, ids=ALL_CONFIGURATION_IDS,
+    "problem,device",
+    ALL_CONFIGURATIONS,
+    ids=ALL_CONFIGURATION_IDS,
 )
 def test_hvp(problem, device):
     problem.to(device)
@@ -268,7 +276,9 @@ def test_hvp(problem, device):
 
 
 @pytest.mark.parametrize(
-    "problem,device", ALL_CONFIGURATIONS, ids=ALL_CONFIGURATION_IDS,
+    "problem,device",
+    ALL_CONFIGURATIONS,
+    ids=ALL_CONFIGURATION_IDS,
 )
 def test_ggn_vp(problem, device):
     problem.to(device)

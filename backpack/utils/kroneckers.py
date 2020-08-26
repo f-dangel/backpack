@@ -59,7 +59,7 @@ def apply_kfac_mat_prod(factors, mat):
 
 
 def inv_kfac_mat_prod(factors, shift=None):
-    """ Return function M ↦ [(A + 𝜆₁I)⁻¹ ⊗ (A + 𝜆₂I)⁻¹⊗ ...] M
+    """Return function M ↦ [(A + 𝜆₁I)⁻¹ ⊗ (A + 𝜆₂I)⁻¹⊗ ...] M
     given [A, B, ...], [𝜆₁, 𝜆₂, ...].
     """
     inv_factors = inv_kfacs(factors, shift)

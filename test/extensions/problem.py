@@ -53,7 +53,14 @@ def add_missing_defaults(setting):
 
 class ExtensionsTestProblem:
     def __init__(
-        self, input_fn, module_fn, loss_function_fn, target_fn, device, seed, id_prefix,
+        self,
+        input_fn,
+        module_fn,
+        loss_function_fn,
+        target_fn,
+        device,
+        seed,
+        id_prefix,
     ):
         """Collection of information required to test extensions.
 
@@ -89,12 +96,15 @@ class ExtensionsTestProblem:
     def make_id(self):
         """Needs to function without call to `set_up`."""
         prefix = (self.id_prefix + "-") if self.id_prefix != "" else ""
-        return prefix + "dev={}-in={}-model={}-loss={}".format(
-            self.device,
-            tuple(self.input_fn().shape),
-            self.module_fn(),
-            self.loss_function_fn(),
-        ).replace(" ", "")
+        return (
+            prefix
+            + "dev={}-in={}-model={}-loss={}".format(
+                self.device,
+                tuple(self.input_fn().shape),
+                self.module_fn(),
+                self.loss_function_fn(),
+            ).replace(" ", "")
+        )
 
     def forward_pass(self, sample_idx=None):
         """Do a forward pass. Return input, output, and parameters."""
