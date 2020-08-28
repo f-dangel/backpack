@@ -30,6 +30,18 @@ example = {
 }
 LINEAR_SETTINGS.append(example)
 
+ALLOW_NEW_FORMAT = True
+if ALLOW_NEW_FORMAT:
+    new_format_example = {
+        "module_fn": lambda: torch.nn.Linear(in_features=5, out_features=3, bias=True),
+        "input_fn": lambda: torch.rand(size=(10, 5)),
+        "target_fn": lambda: None,  # optional
+        "device": [torch.device("cpu")],  # optional
+        "seed": 0,  # optional
+        "id_prefix": "layer-new-format-example",  # optional
+    }
+    LINEAR_SETTINGS.append(new_format_example)
+
 
 ###############################################################################
 #                                test settings                                #

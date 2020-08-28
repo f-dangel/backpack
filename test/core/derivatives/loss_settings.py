@@ -32,8 +32,19 @@ example = {
     "id_prefix": "loss",  # optional
     "seed": 0,  # optional
 }
-
 LOSS_SETTINGS.append(example)
+
+ALLOW_NEW_FORMAT = True
+if ALLOW_NEW_FORMAT:
+    new_format_example = {
+        "module_fn": lambda: torch.nn.CrossEntropyLoss(reduction="mean"),
+        "input_fn": lambda: torch.rand(size=(2, 4)),
+        "target_fn": lambda: classification_targets(size=(2,), num_classes=2),
+        "device": [torch.device("cpu")],  # optional
+        "seed": 0,  # optional
+        "id_prefix": "loss-new-format-example",  # optional
+    }
+    LOSS_SETTINGS.append(new_format_example)
 
 LOSS_SETTINGS += [
     {
