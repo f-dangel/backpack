@@ -1,5 +1,7 @@
 from torch import einsum
+from torch.nn.grad import _grad_input_padding
 from torch.nn import Conv1d, ConvTranspose1d
+from torch.nn.functional import conv_transpose1d
 from torch.nn.functional import conv1d
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
@@ -54,25 +56,29 @@ class Conv1DDerivatives(BaseParameterDerivatives):
         """Apply Conv1d backward operation."""
         _, C_in, L_in = module.input0.size()
         _, C_out, _ = module.output.size()
-        L_axis = 2
+        V_N = mat.size(0)
 
-        conv1d_t = ConvTranspose1d(
-            in_channels=C_out,
-            out_channels=C_in,
-            kernel_size=module.kernel_size,
+        input_size = (V_N, C_in, L_in)
+
+        grad_padding = _grad_input_padding(
+            grad_output=mat,
+            input_size=input_size,
             stride=module.stride,
             padding=module.padding,
-            bias=False,
+            kernel_size=module.kernel_size,
             dilation=module.dilation,
+        )
+
+        jac_t_mat = conv_transpose1d(
+            input=mat,
+            weight=module.weight,
+            bias=None,
+            stride=module.stride,
+            padding=module.padding,
+            output_padding=grad_padding,
             groups=module.groups,
-        ).to(module.input0.device)
-
-        conv1d_t.weight.data = module.weight
-
-        V_N = mat.size(0)
-        output_size = (V_N, C_in, L_in)
-
-        jac_t_mat = conv1d_t(mat, output_size=output_size).narrow(L_axis, 0, L_in)
+            dilation=module.dilation,
+        )
         return jac_t_mat
 
     def _bias_jac_mat_prod(self, module, g_inp, g_out, mat):
