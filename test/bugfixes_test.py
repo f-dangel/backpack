@@ -56,4 +56,4 @@ def test_convolutions_stride_issue_30(params):
         loss.backward()
 
         for p in mod.parameters():
-            assert torch.allclose(p.grad, p.grad_batch.sum(0))
+            assert torch.allclose(p.grad, p.grad_batch.sum(0), rtol=1e-04, atol=1e-04)
