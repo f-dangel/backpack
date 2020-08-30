@@ -1,8 +1,11 @@
 """Partial derivatives for `torch.nn.ConvTranspose1d`."""
 
 import torch
+from torch.nn.grad import _grad_input_padding
 from torch.nn import ConvTranspose1d
 from torch.nn.functional import conv1d
+from torch.nn.functional import conv1d, conv2d, conv3d
+from torch.nn.functional import conv_transpose1d, conv_transpose2d, conv_transpose3d
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 from backpack.utils.conv_transpose import unfold_by_conv_transpose
@@ -98,28 +101,55 @@ class ConvTranspose1DDerivatives(BaseParameterDerivatives):
         return self.reshape_like_output(jmp_as_conv, module)
 
     def __jac(self, module, mat):
-        C_in = module.input0.shape[1]
-        _, C_out, L_out = module.output.shape
-        L_axis = 2
 
-        conv1d_t = ConvTranspose1d(
-            in_channels=C_in,
-            out_channels=C_out,
-            kernel_size=module.kernel_size,
-            stride=module.stride,
-            padding=module.padding,
-            bias=False,
-            dilation=module.dilation,
-            groups=module.groups,
-        ).to(module.input0.device)
+        if True:
+            input_size = list(module.output.size())
+            input_size[0] = mat.size(0)
 
-        conv1d_t.weight.data = module.weight
+            grad_padding = _grad_input_padding(
+                grad_output=mat,
+                input_size=input_size,
+                stride=module.stride,
+                padding=module.padding,
+                kernel_size=module.kernel_size,
+                dilation=module.dilation,
+            )
 
-        V_N = mat.size(0)
-        output_size = (V_N, C_out, L_out)
+            jac_t_mat = conv_transpose1d(
+                input=mat,
+                weight=module.weight,
+                bias=None,
+                stride=module.stride,
+                padding=module.padding,
+                output_padding=grad_padding,
+                groups=module.groups,
+                dilation=module.dilation,
+            )
+            return jac_t_mat
 
-        jac_mat = conv1d_t(mat, output_size=output_size).narrow(L_axis, 0, L_out)
-        return jac_mat
+        else:
+            C_in = module.input0.shape[1]
+            _, C_out, L_out = module.output.shape
+            L_axis = 2
+
+            conv1d_t = ConvTranspose1d(
+                in_channels=C_in,
+                out_channels=C_out,
+                kernel_size=module.kernel_size,
+                stride=module.stride,
+                padding=module.padding,
+                bias=False,
+                dilation=module.dilation,
+                groups=module.groups,
+            ).to(module.input0.device)
+
+            conv1d_t.weight.data = module.weight
+
+            V_N = mat.size(0)
+            output_size = (V_N, C_out, L_out)
+
+            jac_mat = conv1d_t(mat, output_size=output_size).narrow(L_axis, 0, L_out)
+            return jac_mat
 
     def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
         mat_as_conv = eingroup("v,n,c,l->vn,c,l", mat)
