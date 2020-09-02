@@ -79,7 +79,9 @@ for problem, problem_id in zip(PROBLEMS, IDS):
     "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
 )
 @pytest.mark.parametrize(
-    "problem", PROBLEMS_WITH_WEIGHTS, ids=IDS_WITH_WEIGHTS,
+    "problem",
+    PROBLEMS_WITH_WEIGHTS,
+    ids=IDS_WITH_WEIGHTS,
 )
 def test_weight_jac_t_mat_prod(problem, sum_batch, V=3):
     """Test the transposed Jacobian-matrix product w.r.t. to the weights.
@@ -100,7 +102,9 @@ def test_weight_jac_t_mat_prod(problem, sum_batch, V=3):
 
 
 @pytest.mark.parametrize(
-    "problem", PROBLEMS_WITH_WEIGHTS, ids=IDS_WITH_WEIGHTS,
+    "problem",
+    PROBLEMS_WITH_WEIGHTS,
+    ids=IDS_WITH_WEIGHTS,
 )
 def test_weight_jac_mat_prod(problem, V=3):
     """Test the Jacobian-matrix product w.r.t. to the weights.
@@ -131,7 +135,9 @@ for problem, problem_id in zip(PROBLEMS, IDS):
     "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
 )
 @pytest.mark.parametrize(
-    "problem", PROBLEMS_WITH_BIAS, ids=IDS_WITH_BIAS,
+    "problem",
+    PROBLEMS_WITH_BIAS,
+    ids=IDS_WITH_BIAS,
 )
 def test_bias_jac_t_mat_prod(problem, sum_batch, V=3):
     """Test the transposed Jacobian-matrix product w.r.t. to the biass.
@@ -152,7 +158,9 @@ def test_bias_jac_t_mat_prod(problem, sum_batch, V=3):
 
 
 @pytest.mark.parametrize(
-    "problem", PROBLEMS_WITH_BIAS, ids=IDS_WITH_BIAS,
+    "problem",
+    PROBLEMS_WITH_BIAS,
+    ids=IDS_WITH_BIAS,
 )
 def test_bias_jac_mat_prod(problem, V=3):
     """Test the Jacobian-matrix product w.r.t. to the biass.

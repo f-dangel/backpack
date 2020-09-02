@@ -173,9 +173,14 @@ class DerivativesTestProblem:
     def make_id(self):
         """Needs to function without call to `set_up`."""
         prefix = (self.id_prefix + "-") if self.id_prefix != "" else ""
-        return prefix + "dev={}-in={}-{}".format(
-            self.device, tuple(self.make_input_shape()), self.make_module(),
-        ).replace(" ", "")
+        return (
+            prefix
+            + "dev={}-in={}-{}".format(
+                self.device,
+                tuple(self.make_input_shape()),
+                self.make_module(),
+            ).replace(" ", "")
+        )
 
     def extend(self):
         self.module = extend(self.module)

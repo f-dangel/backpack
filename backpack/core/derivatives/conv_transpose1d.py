@@ -30,7 +30,12 @@ class ConvTranspose1DDerivatives(BaseParameterDerivatives):
         jac_mat = mat.unsqueeze(N_axis).unsqueeze(L_axis)
 
         N, _, L_out = module.output_shape
-        return jac_mat.expand(-1, N, -1, L_out,)
+        return jac_mat.expand(
+            -1,
+            N,
+            -1,
+            L_out,
+        )
 
     def _weight_jac_mat_prod(self, module, g_inp, g_out, mat):
         V = mat.shape[0]

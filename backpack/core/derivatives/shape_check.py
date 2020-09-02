@@ -89,26 +89,32 @@ same_dim_as_bias = functools.partial(same_dim_as, name="bias")
 
 # decorators for handling vectors
 jac_t_mat_prod_accept_vectors = functools.partial(
-    mat_prod_accept_vectors, vec_criterion=same_dim_as_output,
+    mat_prod_accept_vectors,
+    vec_criterion=same_dim_as_output,
 )
 
 weight_jac_t_mat_prod_accept_vectors = functools.partial(
-    mat_prod_accept_vectors, vec_criterion=same_dim_as_output,
+    mat_prod_accept_vectors,
+    vec_criterion=same_dim_as_output,
 )
 bias_jac_t_mat_prod_accept_vectors = functools.partial(
-    mat_prod_accept_vectors, vec_criterion=same_dim_as_output,
+    mat_prod_accept_vectors,
+    vec_criterion=same_dim_as_output,
 )
 
 jac_mat_prod_accept_vectors = functools.partial(
-    mat_prod_accept_vectors, vec_criterion=same_dim_as_input,
+    mat_prod_accept_vectors,
+    vec_criterion=same_dim_as_input,
 )
 
 weight_jac_mat_prod_accept_vectors = functools.partial(
-    mat_prod_accept_vectors, vec_criterion=same_dim_as_weight,
+    mat_prod_accept_vectors,
+    vec_criterion=same_dim_as_weight,
 )
 
 bias_jac_mat_prod_accept_vectors = functools.partial(
-    mat_prod_accept_vectors, vec_criterion=same_dim_as_bias,
+    mat_prod_accept_vectors,
+    vec_criterion=same_dim_as_bias,
 )
 
 
@@ -179,7 +185,8 @@ residual_mat_prod_check_shapes = functools.partial(
 )
 
 residual_mat_prod_accept_vectors = functools.partial(
-    mat_prod_accept_vectors, vec_criterion=same_dim_as_input,
+    mat_prod_accept_vectors,
+    vec_criterion=same_dim_as_input,
 )
 
 

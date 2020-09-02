@@ -39,17 +39,29 @@ LINEAR_SETTINGS.append(example)
 LINEAR_SETTINGS += [
     {
         "module_fn": torch.nn.Linear,
-        "module_kwargs": {"in_features": 7, "out_features": 3, "bias": False,},
+        "module_kwargs": {
+            "in_features": 7,
+            "out_features": 3,
+            "bias": False,
+        },
         "input_kwargs": {"size": (12, 7)},
     },
     {
         "module_fn": torch.nn.Linear,
-        "module_kwargs": {"in_features": 11, "out_features": 10, "bias": True,},
+        "module_kwargs": {
+            "in_features": 11,
+            "out_features": 10,
+            "bias": True,
+        },
         "input_kwargs": {"size": (6, 11)},
     },
     {
         "module_fn": torch.nn.Linear,
-        "module_kwargs": {"in_features": 3, "out_features": 2, "bias": True,},
+        "module_kwargs": {
+            "in_features": 3,
+            "out_features": 2,
+            "bias": True,
+        },
         "input_fn": torch.Tensor,
         "input_kwargs": {"data": [(-1, 43, 1.3), (-2, -0.3, 2.3), (0, -4, 0.33)]},
     },

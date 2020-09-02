@@ -66,7 +66,10 @@ ACTIVATION_SETTINGS += [
     },
     {
         "module_fn": torch.nn.ELU,
-        "module_kwargs": {"alpha": 0.1, "inplace": False,},
+        "module_kwargs": {
+            "alpha": 0.1,
+            "inplace": False,
+        },
         "input_fn": torch.Tensor,
         "input_kwargs": {"data": [(-1, 43, 1.3), (-2, -0.3, 2.3), (0, -4, 0.33)]},
     },
