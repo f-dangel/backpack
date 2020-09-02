@@ -38,7 +38,16 @@ example = {
 }
 POOLING_SETTINGS.append(example)
 
-
+ALLOW_NEW_FORMAT = True
+if ALLOW_NEW_FORMAT:
+    new_format_example = {
+        "module_fn": lambda: torch.nn.MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, return_indices=False, ceil_mode=False),
+        "input_fn": lambda: torch.rand(size=(1, 3, 8, 8)),
+        "device": [torch.device("cpu")],  # optional
+        "seed": 0,  # optional
+        "id_prefix": "pooling-new-format-example",  # optional
+    }
+    POOLING_SETTINGS.append(new_format_example)
 ###############################################################################
 #                                test settings                                #
 ###############################################################################

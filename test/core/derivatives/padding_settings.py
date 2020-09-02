@@ -29,11 +29,30 @@ example = {
 }
 PADDING_SETTINGS.append(example)
 
-
+ALLOW_NEW_FORMAT = True
+if ALLOW_NEW_FORMAT:
+    new_format_example = {
+        "module_fn": lambda: torch.nn.ZeroPad2d(2),
+        "input_fn": lambda: torch.rand(size=(4, 3, 4, 5)),
+        "device": [torch.device("cpu")],  # optional
+        "seed": 0,  # optional
+        "id_prefix": "padding-new-format-example",  # optional
+    }
+    PADDING_SETTINGS.append(new_format_example)
 ###############################################################################
 #                                test settings                                #
 ###############################################################################
-
+if ALLOW_NEW_FORMAT:
+    PADDING_SETTINGS += [
+    {
+        "module_fn": lambda: torch.nn.ZeroPad2d(3),
+        "input_fn": lambda: torch.rand(size=(2, 3, 4, 5)),
+    },
+{
+        "module_fn": lambda: torch.nn.ZeroPad2d(5),
+        "input_fn": lambda: torch.rand(size=(4, 3, 4, 5)),
+    }
+    ]
 PADDING_SETTINGS += [
     {
         "module_fn": torch.nn.ZeroPad2d,
