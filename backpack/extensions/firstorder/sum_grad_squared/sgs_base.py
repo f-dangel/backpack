@@ -1,9 +1,9 @@
 from backpack.extensions.firstorder.base import FirstOrderModuleExtension
 
 
-class SumGradBase(FirstOrderModuleExtension):
+class SGSBase(FirstOrderModuleExtension):
     def __init__(self, derivatives, params=None):
-        self.derivatives = derivatives()
+        self.derivatives = derivatives
         self.N_axis = 0
         super().__init__(params=params)
 
@@ -17,4 +17,4 @@ class SumGradBase(FirstOrderModuleExtension):
         grad_batch = self.derivatives.weight_jac_t_mat_prod(
             module, g_inp, g_out, g_out[0], sum_batch=False
         )
-        return (grad_batch ** 2).sum(self.N_axis).view_as(module.weight)
+        return (grad_batch ** 2).sum(self.N_axis)
