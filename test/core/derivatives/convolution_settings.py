@@ -41,7 +41,15 @@ CONVOLUTION_SETTINGS.append(example)
 ALLOW_NEW_FORMAT = True
 if ALLOW_NEW_FORMAT:
     new_format_example = {
-        "module_fn": lambda: torch.nn.Conv2d(in_channels=2, out_channels=3, kernel_size=2, bias=False, padding=1, stride=2, dilation=2),
+        "module_fn": lambda: torch.nn.Conv2d(
+            in_channels=2,
+            out_channels=3,
+            kernel_size=2,
+            bias=False,
+            padding=1,
+            stride=2,
+            dilation=2,
+        ),
         "input_fn": lambda: torch.rand(size=(3, 2, 7, 7)),
         "device": [torch.device("cpu")],  # optional
         "seed": 0,  # optional
@@ -54,74 +62,160 @@ if ALLOW_NEW_FORMAT:
 ###############################################################################
 if ALLOW_NEW_FORMAT:
     CONVOLUTION_SETTINGS += [
-    {
-        "module_fn": lambda: torch.nn.Conv1d(in_channels=2, out_channels=3, kernel_size=2, padding=1, bias=False),
-        "input_fn": lambda: torch.rand(size=(3, 2, 7)),
-    },
-    {
-        "module_fn": lambda: torch.nn.Conv1d(in_channels=3, out_channels=6, kernel_size=2, padding=2, padding_mode="zeros", stride=4, dilation=3),
-        "input_fn": lambda: torch.rand(size=(1, 3, 8)),
-    },
-    {
-        "module_fn": lambda: torch.nn.Conv1d(in_channels=2, out_channels=3, kernel_size=2, padding=1, groups=1),
-        "input_fn": lambda: torch.rand(size=(3, 2, 11)),
-    },
-    {
-        "module_fn": lambda: torch.nn.Conv2d(in_channels=3, out_channels=6, kernel_size=2, padding=2, padding_mode="zeros", stride=4, dilation=3),
-        "input_fn": lambda: torch.rand(size=(1, 3, 8, 8)),
-    },
-    {
-        "module_fn": lambda: torch.nn.Conv2d(in_channels=2, out_channels=3, kernel_size=2, padding=1, groups=1),
-        "input_fn": lambda: torch.rand(size=(3, 2, 7, 7)),
-    },
-    {
-        "module_fn": lambda: torch.nn.Conv3d(in_channels=2, out_channels=3, kernel_size=2, padding=2, bias=False, dilation=2, stride=2),
-        "input_fn": lambda: torch.rand(size=(3, 2, 5, 7, 7)),
-    },
-    {
-        "module_fn": lambda: torch.nn.Conv3d(in_channels=3, out_channels=6, kernel_size=2, padding=2, padding_mode="zeros", stride=4),
-        "input_fn": lambda: torch.rand(size=(1, 3, 3, 4, 4)),
-    },
-    {
-        "module_fn": lambda: torch.nn.Conv3d(in_channels=2, out_channels=3, kernel_size=2, padding=1, groups=1),
-        "input_fn": lambda: torch.rand(size=(3, 2, 3, 7, 7)),
-    },
-    {
-        "module_fn": lambda: torch.nn.ConvTranspose1d(in_channels=2, out_channels=3, kernel_size=2, padding=1, bias=False),
-        "input_fn": lambda: torch.rand(size=(3, 2, 7)),
-    },
-    {
-        "module_fn": lambda: torch.nn.ConvTranspose1d(in_channels=3, out_channels=6, kernel_size=2, padding=2, padding_mode="zeros", stride=4, dilation=3),
-        "input_fn": lambda: torch.rand(size=(1, 3, 8)),
-    },
-    {
-        "module_fn": lambda: torch.nn.ConvTranspose1d(in_channels=2, out_channels=3, kernel_size=2, padding=1, groups=1),
-        "input_fn": lambda: torch.rand(size=(3, 2, 11)),
-    },
-    {
-        "module_fn": lambda: torch.nn.ConvTranspose2d(in_channels=2, out_channels=3, kernel_size=2, bias=False, padding=1, stride=2, dilation=2),
-        "input_fn": lambda: torch.rand(size=(3, 2, 7, 7)),
-    },
-    {
-        "module_fn": lambda: torch.nn.ConvTranspose2d(in_channels=3, out_channels=6, kernel_size=2, padding=2, padding_mode="zeros", stride=4, dilation=3),
-        "input_fn": lambda: torch.rand(size=(1, 3, 8, 8)),
-    },
-    {
-        "module_fn": lambda: torch.nn.ConvTranspose2d(in_channels=2, out_channels=3, kernel_size=2, padding=1, groups=1),
-        "input_fn": lambda: torch.rand(size=(3, 2, 7, 7)),
-    },
-    {
-        "module_fn": lambda: torch.nn.ConvTranspose3d(in_channels=2, out_channels=3, kernel_size=2, padding=2, bias=False, dilation=2, stride=2),
-        "input_fn": lambda: torch.rand(size=(3, 2, 5, 7, 7)),
-    },
-    {
-        "module_fn": lambda: torch.nn.ConvTranspose3d(in_channels=3, out_channels=6, kernel_size=2, padding=2, padding_mode="zeros", stride=4),
-        "input_fn": lambda: torch.rand(size=(1, 3, 3, 4, 4)),
-    },
-    {
-        "module_fn": lambda: torch.nn.ConvTranspose3d(in_channels=2, out_channels=3, kernel_size=2, padding=1, groups=1),
-        "input_fn": lambda: torch.rand(size=(3, 2, 3, 7, 7)),
-    },       
+        {
+            "module_fn": lambda: torch.nn.Conv1d(
+                in_channels=2, out_channels=3, kernel_size=2, padding=1, bias=False
+            ),
+            "input_fn": lambda: torch.rand(size=(3, 2, 7)),
+        },
+        {
+            "module_fn": lambda: torch.nn.Conv1d(
+                in_channels=3,
+                out_channels=6,
+                kernel_size=2,
+                padding=2,
+                padding_mode="zeros",
+                stride=4,
+                dilation=3,
+            ),
+            "input_fn": lambda: torch.rand(size=(1, 3, 8)),
+        },
+        {
+            "module_fn": lambda: torch.nn.Conv1d(
+                in_channels=2, out_channels=3, kernel_size=2, padding=1, groups=1
+            ),
+            "input_fn": lambda: torch.rand(size=(3, 2, 11)),
+        },
+        {
+            "module_fn": lambda: torch.nn.Conv2d(
+                in_channels=3,
+                out_channels=6,
+                kernel_size=2,
+                padding=2,
+                padding_mode="zeros",
+                stride=4,
+                dilation=3,
+            ),
+            "input_fn": lambda: torch.rand(size=(1, 3, 8, 8)),
+        },
+        {
+            "module_fn": lambda: torch.nn.Conv2d(
+                in_channels=2, out_channels=3, kernel_size=2, padding=1, groups=1
+            ),
+            "input_fn": lambda: torch.rand(size=(3, 2, 7, 7)),
+        },
+        {
+            "module_fn": lambda: torch.nn.Conv3d(
+                in_channels=2,
+                out_channels=3,
+                kernel_size=2,
+                padding=2,
+                bias=False,
+                dilation=2,
+                stride=2,
+            ),
+            "input_fn": lambda: torch.rand(size=(3, 2, 5, 7, 7)),
+        },
+        {
+            "module_fn": lambda: torch.nn.Conv3d(
+                in_channels=3,
+                out_channels=6,
+                kernel_size=2,
+                padding=2,
+                padding_mode="zeros",
+                stride=4,
+            ),
+            "input_fn": lambda: torch.rand(size=(1, 3, 3, 4, 4)),
+        },
+        {
+            "module_fn": lambda: torch.nn.Conv3d(
+                in_channels=2, out_channels=3, kernel_size=2, padding=1, groups=1
+            ),
+            "input_fn": lambda: torch.rand(size=(3, 2, 3, 7, 7)),
+        },
+        {
+            "module_fn": lambda: torch.nn.ConvTranspose1d(
+                in_channels=2, out_channels=3, kernel_size=2, padding=1, bias=False
+            ),
+            "input_fn": lambda: torch.rand(size=(3, 2, 7)),
+        },
+        {
+            "module_fn": lambda: torch.nn.ConvTranspose1d(
+                in_channels=3,
+                out_channels=6,
+                kernel_size=2,
+                padding=2,
+                padding_mode="zeros",
+                stride=4,
+                dilation=3,
+            ),
+            "input_fn": lambda: torch.rand(size=(1, 3, 8)),
+        },
+        {
+            "module_fn": lambda: torch.nn.ConvTranspose1d(
+                in_channels=2, out_channels=3, kernel_size=2, padding=1, groups=1
+            ),
+            "input_fn": lambda: torch.rand(size=(3, 2, 11)),
+        },
+        {
+            "module_fn": lambda: torch.nn.ConvTranspose2d(
+                in_channels=2,
+                out_channels=3,
+                kernel_size=2,
+                bias=False,
+                padding=1,
+                stride=2,
+                dilation=2,
+            ),
+            "input_fn": lambda: torch.rand(size=(3, 2, 7, 7)),
+        },
+        {
+            "module_fn": lambda: torch.nn.ConvTranspose2d(
+                in_channels=3,
+                out_channels=6,
+                kernel_size=2,
+                padding=2,
+                padding_mode="zeros",
+                stride=4,
+                dilation=3,
+            ),
+            "input_fn": lambda: torch.rand(size=(1, 3, 8, 8)),
+        },
+        {
+            "module_fn": lambda: torch.nn.ConvTranspose2d(
+                in_channels=2, out_channels=3, kernel_size=2, padding=1, groups=1
+            ),
+            "input_fn": lambda: torch.rand(size=(3, 2, 7, 7)),
+        },
+        {
+            "module_fn": lambda: torch.nn.ConvTranspose3d(
+                in_channels=2,
+                out_channels=3,
+                kernel_size=2,
+                padding=2,
+                bias=False,
+                dilation=2,
+                stride=2,
+            ),
+            "input_fn": lambda: torch.rand(size=(3, 2, 5, 7, 7)),
+        },
+        {
+            "module_fn": lambda: torch.nn.ConvTranspose3d(
+                in_channels=3,
+                out_channels=6,
+                kernel_size=2,
+                padding=2,
+                padding_mode="zeros",
+                stride=4,
+            ),
+            "input_fn": lambda: torch.rand(size=(1, 3, 3, 4, 4)),
+        },
+        {
+            "module_fn": lambda: torch.nn.ConvTranspose3d(
+                in_channels=2, out_channels=3, kernel_size=2, padding=1, groups=1
+            ),
+            "input_fn": lambda: torch.rand(size=(3, 2, 3, 7, 7)),
+        },
     ]
 CONVOLUTION_SETTINGS += [
     {

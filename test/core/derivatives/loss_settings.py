@@ -49,36 +49,36 @@ if ALLOW_NEW_FORMAT:
 if ALLOW_NEW_FORMAT:
     LOSS_SETTINGS += [
         {
-        "module_fn": lambda: torch.nn.CrossEntropyLoss(reduction="mean"),
-        "input_fn": lambda: torch.rand(size=(2, 4)),
-        "target_fn": lambda: classification_targets(size=(2,), num_classes=2),   
+            "module_fn": lambda: torch.nn.CrossEntropyLoss(reduction="mean"),
+            "input_fn": lambda: torch.rand(size=(2, 4)),
+            "target_fn": lambda: classification_targets(size=(2,), num_classes=2),
         },
         {
-        "module_fn": lambda: torch.nn.CrossEntropyLoss(reduction="sum"),
-        "input_fn": lambda: torch.rand(size=(8, 4)),
-        "target_fn": lambda: classification_targets(size=(8,), num_classes=2),   
+            "module_fn": lambda: torch.nn.CrossEntropyLoss(reduction="sum"),
+            "input_fn": lambda: torch.rand(size=(8, 4)),
+            "target_fn": lambda: classification_targets(size=(8,), num_classes=2),
         },
         {
-        "module_fn": lambda: torch.nn.CrossEntropyLoss(reduction="none"),
-        "input_fn": lambda: torch.rand(size=(1, 1)),
-        "target_fn": lambda: classification_targets(size=(1,), num_classes=1),   
+            "module_fn": lambda: torch.nn.CrossEntropyLoss(reduction="none"),
+            "input_fn": lambda: torch.rand(size=(1, 1)),
+            "target_fn": lambda: classification_targets(size=(1,), num_classes=1),
         },
         {
-        "module_fn": lambda: torch.nn.MSELoss(reduction="mean"),
-        "input_fn": lambda: torch.rand(size=(5, 1)),
-        "target_fn": lambda: regression_targets(size=(5,1)),   
+            "module_fn": lambda: torch.nn.MSELoss(reduction="mean"),
+            "input_fn": lambda: torch.rand(size=(5, 1)),
+            "target_fn": lambda: regression_targets(size=(5, 1)),
         },
         {
-        "module_fn": lambda: torch.nn.MSELoss(reduction="sum"),
-        "input_fn": lambda: torch.rand(size=(5, 3)),
-        "target_fn": lambda: regression_targets(size=(5,3)),   
+            "module_fn": lambda: torch.nn.MSELoss(reduction="sum"),
+            "input_fn": lambda: torch.rand(size=(5, 3)),
+            "target_fn": lambda: regression_targets(size=(5, 3)),
         },
         {
-        "module_fn": lambda: torch.nn.MSELoss(reduction="none"),
-        "input_fn": lambda: torch.rand(size=(1, 1)),
-        "target_fn": lambda: regression_targets(size=(1,1)),   
+            "module_fn": lambda: torch.nn.MSELoss(reduction="none"),
+            "input_fn": lambda: torch.rand(size=(1, 1)),
+            "target_fn": lambda: regression_targets(size=(1, 1)),
         },
-        ]
+    ]
 
 LOSS_SETTINGS += [
     {

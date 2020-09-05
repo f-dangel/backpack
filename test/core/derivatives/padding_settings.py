@@ -44,14 +44,14 @@ if ALLOW_NEW_FORMAT:
 ###############################################################################
 if ALLOW_NEW_FORMAT:
     PADDING_SETTINGS += [
-    {
-        "module_fn": lambda: torch.nn.ZeroPad2d(3),
-        "input_fn": lambda: torch.rand(size=(2, 3, 4, 5)),
-    },
-{
-        "module_fn": lambda: torch.nn.ZeroPad2d(5),
-        "input_fn": lambda: torch.rand(size=(4, 3, 4, 5)),
-    }
+        {
+            "module_fn": lambda: torch.nn.ZeroPad2d(3),
+            "input_fn": lambda: torch.rand(size=(2, 3, 4, 5)),
+        },
+        {
+            "module_fn": lambda: torch.nn.ZeroPad2d(5),
+            "input_fn": lambda: torch.rand(size=(4, 3, 4, 5)),
+        },
     ]
 PADDING_SETTINGS += [
     {
