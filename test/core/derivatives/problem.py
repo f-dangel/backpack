@@ -16,10 +16,7 @@ def make_test_problems(settings):
     problem_dicts = []
 
     for setting in settings:
-        if is_new_format(setting):
-            setting = add_missing_defaults_new_format(setting)
-        else:
-            setting = add_missing_defaults_old_format(setting)
+        setting = add_missing_defaults(setting)
         devices = setting["device"]
 
         for dev in devices:
@@ -30,24 +27,7 @@ def make_test_problems(settings):
     return [DerivativesTestProblem(**p) for p in problem_dicts]
 
 
-def is_new_format(setting):
-    """Figure out if a setting was specified in the new format."""
-
-    def is_lambda(f):
-        """Return if `f` is a `lambda` function."""
-        from types import LambdaType
-
-        return isinstance(f, LambdaType)
-
-    is_new = is_lambda(setting["module_fn"]) and is_lambda(setting["input_fn"])
-
-    if is_new:
-        print(f"Detected setting in new format.\n{setting}")
-
-    return is_new
-
-
-def add_missing_defaults_new_format(setting):
+def add_missing_defaults(setting):
     """Add missing entries in settings such that the new format works."""
     required = ["module_fn", "input_fn"]
     optional = {
@@ -77,40 +57,6 @@ def add_missing_defaults_new_format(setting):
         if s not in required and s not in list(optional.keys()) + list(
             overwrite.keys()
         ):
-            raise ValueError("Unknown config: {}".format(s))
-
-    return setting
-
-
-def add_missing_defaults_old_format(setting):
-    """Create derivative test problem from setting.
-
-    Args:
-        setting (dict): configuration dictionary
-
-    Returns:
-        DerivativesTestProblem: problem with specified settings.
-    """
-    required = ["module_fn", "module_kwargs", "input_kwargs"]
-    optional = {
-        "input_fn": torch.rand,
-        "id_prefix": "",
-        "seed": 0,
-        "target_fn": lambda: None,
-        "target_kwargs": {},
-        "device": get_available_devices(),
-    }
-
-    for req in required:
-        if req not in setting.keys():
-            raise ValueError("Missing configuration entry for {}".format(req))
-
-    for opt, default in optional.items():
-        if opt not in setting.keys():
-            setting[opt] = default
-
-    for s in setting.keys():
-        if s not in required and s not in optional.keys():
             raise ValueError("Unknown config: {}".format(s))
 
     return setting
