@@ -1,11 +1,12 @@
 from torch import einsum
 
+from backpack.core.derivatives.linear import LinearDerivatives
 from backpack.extensions.firstorder.sum_grad_squared.sgs_base import SGSBase
 
 
 class SGSLinear(SGSBase):
     def __init__(self):
-        super().__init__(params=["bias", "weight"])
+        super().__init__(derivatives=LinearDerivatives(), params=["bias", "weight"])
 
     def weight(self, ext, module, g_inp, g_out, backproped):
         """Compute second moments without expanding individual gradients.
