@@ -1,9 +1,9 @@
 from torch import einsum
 
-from backpack.extensions.firstorder.base import FirstOrderModuleExtension
+from backpack.extensions.firstorder.sum_grad_squared.sgs_base import SGSBase
 
 
-class SGSLinear(FirstOrderModuleExtension):
+class SGSLinear(SGSBase):
     def __init__(self):
         super().__init__(params=["bias", "weight"])
 
