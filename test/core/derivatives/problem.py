@@ -36,11 +36,6 @@ def add_missing_defaults(setting):
         "device": get_available_devices(),
         "seed": 0,
     }
-    overwrite = {
-        "module_kwargs": {},
-        "input_kwargs": {},
-        "target_kwargs": {},
-    }
 
     for req in required:
         if req not in setting.keys():
@@ -50,13 +45,8 @@ def add_missing_defaults(setting):
         if opt not in setting.keys():
             setting[opt] = default
 
-    for opt, over in overwrite.items():
-        setting[opt] = over
-
     for s in setting.keys():
-        if s not in required and s not in list(optional.keys()) + list(
-            overwrite.keys()
-        ):
+        if s not in required and s not in optional.keys():
             raise ValueError("Unknown config: {}".format(s))
 
     return setting
@@ -66,11 +56,8 @@ class DerivativesTestProblem:
     def __init__(
         self,
         module_fn,
-        module_kwargs,
         input_fn,
-        input_kwargs,
         target_fn,
-        target_kwargs,
         device,
         seed,
         id_prefix,
@@ -92,11 +79,8 @@ class DerivativesTestProblem:
             [N, C_in, H_in, W_in, ...] → [N, C_out, H_out, W_out, ...]
         """
         self.module_fn = module_fn
-        self.module_kwargs = module_kwargs
         self.input_fn = input_fn
-        self.input_kwargs = input_kwargs
         self.target_fn = target_fn
-        self.target_kwargs = target_kwargs
         self.device = device
         self.seed = seed
         self.id_prefix = id_prefix
@@ -120,13 +104,13 @@ class DerivativesTestProblem:
         del self.output_shape
 
     def make_module(self):
-        return self.module_fn(**self.module_kwargs).to(self.device)
+        return self.module_fn().to(self.device)
 
     def make_input(self):
-        return self.input_fn(**self.input_kwargs).to(self.device)
+        return self.input_fn().to(self.device)
 
     def make_target(self):
-        target = self.target_fn(**self.target_kwargs)
+        target = self.target_fn()
         if target is not None:
             target = target.to(self.device)
         return target
