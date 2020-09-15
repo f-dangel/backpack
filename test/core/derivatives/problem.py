@@ -28,22 +28,13 @@ def make_test_problems(settings):
 
 
 def add_missing_defaults(setting):
-    """Create derivative test problem from setting.
-
-    Args:
-        setting (dict): configuration dictionary
-
-    Returns:
-        DerivativesTestProblem: problem with specified settings.
-    """
-    required = ["module_fn", "module_kwargs", "input_kwargs"]
+    """Add missing entries in settings such that the new format works."""
+    required = ["module_fn", "input_fn"]
     optional = {
-        "input_fn": torch.rand,
-        "id_prefix": "",
-        "seed": 0,
         "target_fn": lambda: None,
-        "target_kwargs": {},
+        "id_prefix": "",
         "device": get_available_devices(),
+        "seed": 0,
     }
 
     for req in required:
@@ -65,11 +56,8 @@ class DerivativesTestProblem:
     def __init__(
         self,
         module_fn,
-        module_kwargs,
         input_fn,
-        input_kwargs,
         target_fn,
-        target_kwargs,
         device,
         seed,
         id_prefix,
@@ -91,11 +79,8 @@ class DerivativesTestProblem:
             [N, C_in, H_in, W_in, ...] → [N, C_out, H_out, W_out, ...]
         """
         self.module_fn = module_fn
-        self.module_kwargs = module_kwargs
         self.input_fn = input_fn
-        self.input_kwargs = input_kwargs
         self.target_fn = target_fn
-        self.target_kwargs = target_kwargs
         self.device = device
         self.seed = seed
         self.id_prefix = id_prefix
@@ -119,13 +104,13 @@ class DerivativesTestProblem:
         del self.output_shape
 
     def make_module(self):
-        return self.module_fn(**self.module_kwargs).to(self.device)
+        return self.module_fn().to(self.device)
 
     def make_input(self):
-        return self.input_fn(**self.input_kwargs).to(self.device)
+        return self.input_fn().to(self.device)
 
     def make_target(self):
-        target = self.target_fn(**self.target_kwargs)
+        target = self.target_fn()
         if target is not None:
             target = target.to(self.device)
         return target
