@@ -74,6 +74,34 @@ class backpack:
         CTX.set_debug(self.old_debug)
 
 
+class no_io:
+    """Disable input and output storing hooks of extended modules.
+
+    This saves memory if BackPACK is not used in a backward pass, but the model
+    used in the forward pass has been extended.
+
+    Note:
+        - The ``backpack`` context will not work inside a ``no_io`` context,
+          even if the forward pass is carried out inside it.
+    """
+
+    store_io = True
+
+    def __enter__(self):
+        """Disable input/output storing."""
+        self.old_store_io = no_io.store_io
+        no_io.store_io = False
+
+    def __exit__(self, type, value, traceback):
+        """Set input/output storing to old value."""
+        no_io.store_io = self.old_store_io
+
+    @staticmethod
+    def should_store_io():
+        """Return whether input and output should be stored."""
+        return no_io.store_io
+
+
 def hook_store_io(module, input, output):
     """Saves the input and output as attributes of the module.
 
@@ -82,9 +110,10 @@ def hook_store_io(module, input, output):
         input: List of input tensors
         output: output tensor
     """
-    for i in range(len(input)):
-        setattr(module, "input{}".format(i), input[i])
-    module.output = output
+    if no_io.should_store_io():
+        for i in range(len(input)):
+            setattr(module, "input{}".format(i), input[i])
+        module.output = output
 
 
 def hook_store_shapes(module, input, output):
