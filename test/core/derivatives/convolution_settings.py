@@ -277,7 +277,7 @@ CONVOLUTION_SETTINGS += [
     },
 ]
 
-CONVOLUTION_GROUPS_SETTINGS = [
+CONVOLUTION_FAIL_SETTINGS = [
     # groups - 2
     {
         "module_fn": lambda: torch.nn.Conv1d(
