@@ -276,3 +276,156 @@ CONVOLUTION_SETTINGS += [
         "id_prefix": "non-default-conv",
     },
 ]
+
+CONVOLUTION_GROUPS_SETTINGS = [
+    # groups - 2
+    {
+        "module_fn": lambda: torch.nn.Conv1d(
+            in_channels=4,
+            out_channels=6,
+            kernel_size=2,
+            padding=0,
+            dilation=2,
+            groups=2,
+        ),
+        "input_fn": lambda: torch.rand(size=(3, 4, 7)),
+        "id_prefix": "groups-2",
+    },
+
+    {
+        "module_fn": lambda: torch.nn.Conv2d(
+            in_channels=4,
+            out_channels=6,
+            kernel_size=2,
+            padding=0,
+            dilation=2,
+            groups=2,
+        ),
+        "input_fn": lambda: torch.rand(size=(3, 4, 7, 7)),
+        "id_prefix": "groups-2",
+    },
+    {
+        "module_fn": lambda: torch.nn.Conv3d(
+            in_channels=4,
+            out_channels=6,
+            kernel_size=2,
+            padding=0,
+            dilation=2,
+            groups=2,
+        ),
+        "input_fn": lambda: torch.rand(size=(3, 4, 3, 7, 7)),
+        "id_prefix": "groups-2",
+    },
+    {
+        "module_fn": lambda: torch.nn.ConvTranspose1d(
+            in_channels=4,
+            out_channels=6,
+            kernel_size=2,
+            padding=0,
+            dilation=2,
+            groups=2,
+        ),
+        "input_fn": lambda: torch.rand(size=(3, 4, 7)),
+        "id_prefix": "groups-2",
+    },
+
+    {
+        "module_fn": lambda: torch.nn.ConvTranspose2d(
+            in_channels=4,
+            out_channels=6,
+            kernel_size=2,
+            padding=0,
+            dilation=2,
+            groups=2,
+        ),
+        "input_fn": lambda: torch.rand(size=(3, 4, 7, 7)),
+        "id_prefix": "groups-2",
+    },
+    {
+        "module_fn": lambda: torch.nn.ConvTranspose3d(
+            in_channels=4,
+            out_channels=6,
+            kernel_size=2,
+            padding=0,
+            dilation=2,
+            groups=2,
+        ),
+        "input_fn": lambda: torch.rand(size=(3, 4, 3, 7, 7)),
+        "id_prefix": "groups-2",
+    },
+    # groups - 3
+    {
+        "module_fn": lambda: torch.nn.Conv1d(
+            in_channels=6,
+            out_channels=9,
+            kernel_size=2,
+            padding=0,
+            dilation=2,
+            groups=3,
+        ),
+        "input_fn": lambda: torch.rand(size=(3, 6, 7)),
+        "id_prefix": "groups-3",
+    },
+
+    {
+        "module_fn": lambda: torch.nn.Conv2d(
+            in_channels=6,
+            out_channels=9,
+            kernel_size=2,
+            padding=0,
+            dilation=2,
+            groups=3,
+        ),
+        "input_fn": lambda: torch.rand(size=(3, 6, 7, 7)),
+        "id_prefix": "groups-3",
+    },
+    {
+        "module_fn": lambda: torch.nn.Conv3d(
+            in_channels=6,
+            out_channels=9,
+            kernel_size=2,
+            padding=0,
+            dilation=2,
+            groups=3,
+        ),
+        "input_fn": lambda: torch.rand(size=(3, 6, 3, 7, 7)),
+        "id_prefix": "groups-3",
+    },
+    {
+        "module_fn": lambda: torch.nn.ConvTranspose1d(
+            in_channels=6,
+            out_channels=9,
+            kernel_size=2,
+            padding=0,
+            dilation=2,
+            groups=3,
+        ),
+        "input_fn": lambda: torch.rand(size=(3, 6, 7)),
+        "id_prefix": "groups-3",
+    },
+
+    {
+        "module_fn": lambda: torch.nn.ConvTranspose2d(
+            in_channels=6,
+            out_channels=9,
+            kernel_size=2,
+            padding=0,
+            dilation=2,
+            groups=3,
+        ),
+        "input_fn": lambda: torch.rand(size=(3, 6, 7, 7)),
+        "id_prefix": "groups-3",
+    },
+    {
+        "module_fn": lambda: torch.nn.ConvTranspose3d(
+            in_channels=6,
+            out_channels=9,
+            kernel_size=2,
+            padding=0,
+            dilation=2,
+            groups=3,
+        ),
+        "input_fn": lambda: torch.rand(size=(3, 6, 3, 7, 7)),
+        "id_prefix": "groups-3",
+    },
+]
