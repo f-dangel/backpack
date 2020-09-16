@@ -76,7 +76,7 @@ class ConvTransposeNDDerivatives(BaseParameterDerivatives):
     def _weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
         if module.groups != 1:
             raise NotImplementedError
-        
+
         V = mat.shape[0]
         G = module.groups
         C_in = module.input0.shape[1]

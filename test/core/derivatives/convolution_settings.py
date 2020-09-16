@@ -291,7 +291,6 @@ CONVOLUTION_GROUPS_SETTINGS = [
         "input_fn": lambda: torch.rand(size=(3, 4, 7)),
         "id_prefix": "groups-2",
     },
-
     {
         "module_fn": lambda: torch.nn.Conv2d(
             in_channels=4,
@@ -328,7 +327,6 @@ CONVOLUTION_GROUPS_SETTINGS = [
         "input_fn": lambda: torch.rand(size=(3, 4, 7)),
         "id_prefix": "groups-2",
     },
-
     {
         "module_fn": lambda: torch.nn.ConvTranspose2d(
             in_channels=4,
@@ -366,7 +364,6 @@ CONVOLUTION_GROUPS_SETTINGS = [
         "input_fn": lambda: torch.rand(size=(3, 6, 7)),
         "id_prefix": "groups-3",
     },
-
     {
         "module_fn": lambda: torch.nn.Conv2d(
             in_channels=6,
@@ -403,7 +400,6 @@ CONVOLUTION_GROUPS_SETTINGS = [
         "input_fn": lambda: torch.rand(size=(3, 6, 7)),
         "id_prefix": "groups-3",
     },
-
     {
         "module_fn": lambda: torch.nn.ConvTranspose2d(
             in_channels=6,
