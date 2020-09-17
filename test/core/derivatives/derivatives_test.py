@@ -206,7 +206,7 @@ def test_sqrt_hessian_squared_equals_hessian(problem):
 
 @pytest.mark.parametrize("problem", CONVOLUTION_FAIL_PROBLEMS, ids=CONVOLUTION_FAIL_IDS)
 def test_weight_jac_mat_prod_should_fail(problem):
-    with pytest.raises(ValueError):
+    with pytest.raises(NotImplementedError):
         test_weight_jac_mat_prod(problem)
 
 
@@ -214,8 +214,8 @@ def test_weight_jac_mat_prod_should_fail(problem):
     "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
 )
 @pytest.mark.parametrize("problem", CONVOLUTION_FAIL_PROBLEMS, ids=CONVOLUTION_FAIL_IDS)
-def test_weight_jac_t__mat_prod_should_fail(problem, sum_batch):
-    with pytest.raises(ValueError):
+def test_weight_jac_t_mat_prod_should_fail(problem, sum_batch):
+    with pytest.raises(NotImplementedError):
         test_weight_jac_t_mat_prod(problem, sum_batch)
 
 
