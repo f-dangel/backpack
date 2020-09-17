@@ -100,60 +100,60 @@ class ConvNDDerivatives(BaseParameterDerivatives):
         return mat.sum(axes)
 
     def _weight_jac_mat_prod(self, module, g_inp, g_out, mat):
-        if module.groups != 1:
-            raise NotImplementedError
+        if module.groups == 1:
+            dims = self.dim_text
+            dims_joined = dims.replace(",", "")
 
-        dims = self.dim_text
-        dims_joined = dims.replace(",", "")
-
-        jac_mat = eingroup("v,o,i,{}->v,o,i{}".format(dims, dims_joined), mat)
-        X = self.get_unfolded_input(module)
-        jac_mat = einsum("nij,vki->vnkj", X, jac_mat)
-        return self.reshape_like_output(jac_mat, module)
+            jac_mat = eingroup("v,o,i,{}->v,o,i{}".format(dims, dims_joined), mat)
+            X = self.get_unfolded_input(module)
+            jac_mat = einsum("nij,vki->vnkj", X, jac_mat)
+            return self.reshape_like_output(jac_mat, module)
+        else:
+            raise NotImplementedError("Groups greater than 1 are not supported yet")
 
     def _weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
-        if module.groups != 1:
-            raise NotImplementedError
+        if module.groups == 1:
+            V = mat.shape[0]
+            N, C_out = module.output_shape[0], module.output_shape[1]
+            C_in = module.input0_shape[1]
+            C_in_axis = 1
+            N_axis = 0
+            dims = self.dim_text
 
-        V = mat.shape[0]
-        N, C_out = module.output_shape[0], module.output_shape[1]
-        C_in = module.input0_shape[1]
-        C_in_axis = 1
-        N_axis = 0
-        dims = self.dim_text
+            repeat_pattern = [1, C_in] + [1 for _ in range(self.conv_dims)]
+            mat = eingroup("v,n,c,{}->vn,c,{}".format(dims, dims), mat)
+            mat = mat.repeat(*repeat_pattern)
+            mat = eingroup("a,b,{}->ab,{}".format(dims, dims), mat)
+            mat = mat.unsqueeze(C_in_axis)
 
-        repeat_pattern = [1, C_in] + [1 for _ in range(self.conv_dims)]
-        mat = eingroup("v,n,c,{}->vn,c,{}".format(dims, dims), mat)
-        mat = mat.repeat(*repeat_pattern)
-        mat = eingroup("a,b,{}->ab,{}".format(dims, dims), mat)
-        mat = mat.unsqueeze(C_in_axis)
+            repeat_pattern = [1, V] + [1 for _ in range(self.conv_dims)]
+            input = eingroup("n,c,{}->nc,{}".format(dims, dims), module.input0)
+            input = input.unsqueeze(N_axis)
+            input = input.repeat(*repeat_pattern)
 
-        repeat_pattern = [1, V] + [1 for _ in range(self.conv_dims)]
-        input = eingroup("n,c,{}->nc,{}".format(dims, dims), module.input0)
-        input = input.unsqueeze(N_axis)
-        input = input.repeat(*repeat_pattern)
+            grad_weight = self.conv_func(
+                input,
+                mat,
+                bias=None,
+                stride=module.dilation,
+                padding=module.padding,
+                dilation=module.stride,
+                groups=C_in * N * V,
+            ).squeeze(0)
 
-        grad_weight = self.conv_func(
-            input,
-            mat,
-            bias=None,
-            stride=module.dilation,
-            padding=module.padding,
-            dilation=module.stride,
-            groups=C_in * N * V,
-        ).squeeze(0)
+            for dim in range(self.conv_dims):
+                axis = dim + 1
+                size = module.weight.shape[2 + dim]
+                grad_weight = grad_weight.narrow(axis, 0, size)
 
-        for dim in range(self.conv_dims):
-            axis = dim + 1
-            size = module.weight.shape[2 + dim]
-            grad_weight = grad_weight.narrow(axis, 0, size)
+            sum_dim = "" if sum_batch else "n,"
+            eingroup_eq = "vnio,{}->v,{}o,i,{}".format(dims, sum_dim, dims)
 
-        sum_dim = "" if sum_batch else "n,"
-        eingroup_eq = "vnio,{}->v,{}o,i,{}".format(dims, sum_dim, dims)
-
-        return eingroup(
-            eingroup_eq, grad_weight, dim={"v": V, "n": N, "i": C_in, "o": C_out}
-        )
+            return eingroup(
+                eingroup_eq, grad_weight, dim={"v": V, "n": N, "i": C_in, "o": C_out}
+            )
+        else:
+            raise NotImplementedError("Groups greater than 1 are not supported yet")
 
     def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
         in_features = int(prod(module.input0.size()[1:]))

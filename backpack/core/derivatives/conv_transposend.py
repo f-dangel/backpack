@@ -52,53 +52,53 @@ class ConvTransposeNDDerivatives(BaseParameterDerivatives):
         return jac_mat.expand(*expand_shape)
 
     def _weight_jac_mat_prod(self, module, g_inp, g_out, mat):
-        if module.groups != 1:
-            raise NotImplementedError
+        if module.groups == 1:
+            V = mat.shape[0]
+            G = module.groups
+            C_in = module.input0.shape[1]
+            N = module.output.shape[0]
+            C_out = module.output.shape[1]
 
-        V = mat.shape[0]
-        G = module.groups
-        C_in = module.input0.shape[1]
-        N = module.output.shape[0]
-        C_out = module.output.shape[1]
+            mat_reshape = mat.reshape(V, C_in, G, C_out // G, *module.weight.shape[2:])
+            u = unfold_by_conv_transpose(module.input0, module).reshape(
+                N, C_in // G, G, *module.weight.shape[2:], *module.output.shape[2:]
+            )
 
-        mat_reshape = mat.reshape(V, C_in, G, C_out // G, *module.weight.shape[2:])
-        u = unfold_by_conv_transpose(module.input0, module).reshape(
-            N, C_in // G, G, *module.weight.shape[2:], *module.output.shape[2:]
-        )
+            dims_kern = "xyz"[: self.conv_dims]
+            dims_data = "abc"[: self.conv_dims]
+            einstr = "nig{0}{1},vigo{0}->vngo{1}".format(dims_kern, dims_data)
+            jac_mat = einsum(einstr, u, mat_reshape)
 
-        dims_kern = "xyz"[: self.conv_dims]
-        dims_data = "abc"[: self.conv_dims]
-        einstr = "nig{0}{1},vigo{0}->vngo{1}".format(dims_kern, dims_data)
-        jac_mat = einsum(einstr, u, mat_reshape)
-
-        return self.reshape_like_output(jac_mat, module)
+            return self.reshape_like_output(jac_mat, module)
+        else:
+            raise NotImplementedError("Groups greater than 1 are not supported yet")
 
     def _weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
-        if module.groups != 1:
-            raise NotImplementedError
+        if module.groups == 1:
+            V = mat.shape[0]
+            G = module.groups
+            C_in = module.input0.shape[1]
+            N = module.output.shape[0]
+            C_out = module.output.shape[1]
 
-        V = mat.shape[0]
-        G = module.groups
-        C_in = module.input0.shape[1]
-        N = module.output.shape[0]
-        C_out = module.output.shape[1]
+            mat_reshape = mat.reshape(V, N, G, C_out // G, *module.output.shape[2:])
 
-        mat_reshape = mat.reshape(V, N, G, C_out // G, *module.output.shape[2:])
+            u = unfold_by_conv_transpose(module.input0, module).reshape(
+                N, C_in // G, G, *module.weight.shape[2:], *module.output.shape[2:]
+            )
 
-        u = unfold_by_conv_transpose(module.input0, module).reshape(
-            N, C_in // G, G, *module.weight.shape[2:], *module.output.shape[2:]
-        )
+            dims_kern = "xyz"[: self.conv_dims]
+            dims_data = "abc"[: self.conv_dims]
+            result_str = ("vigo" if sum_batch else "vnigo") + dims_kern
+            equation = "nig{0}{1},vngo{1}->{2}".format(dims_kern, dims_data, result_str)
 
-        dims_kern = "xyz"[: self.conv_dims]
-        dims_data = "abc"[: self.conv_dims]
-        result_str = ("vigo" if sum_batch else "vnigo") + dims_kern
-        equation = "nig{0}{1},vngo{1}->{2}".format(dims_kern, dims_data, result_str)
+            final_shape = (
+                (V, *module.weight.shape) if sum_batch else (V, N, *module.weight.shape)
+            )
 
-        final_shape = (
-            (V, *module.weight.shape) if sum_batch else (V, N, *module.weight.shape)
-        )
-
-        return einsum(equation, u, mat_reshape).reshape(final_shape)
+            return einsum(equation, u, mat_reshape).reshape(final_shape)
+        else:
+            raise NotImplementedError("Groups greater than 1 are not supported yet")
 
     def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
         in_features = int(prod(module.input0.size()[1:]))
