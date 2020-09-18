@@ -78,6 +78,17 @@ FIRSTORDER_SETTINGS += [
 ###############################################################################
 
 FIRSTORDER_SETTINGS += [
+       {
+        "input_fn": lambda: torch.rand(3, 3, 7),
+        "module_fn": lambda: torch.nn.Sequential(
+            torch.nn.Conv1d(3, 2, 2),
+            torch.nn.ReLU(),
+            torch.nn.Flatten(),
+            torch.nn.Linear(12, 5),
+        ),
+        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="sum"),
+        "target_fn": lambda: classification_targets((3,), 5),
+    },
     {
         "input_fn": lambda: torch.rand(3, 3, 7),
         "module_fn": lambda: torch.nn.Sequential(
