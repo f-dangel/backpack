@@ -78,7 +78,7 @@ FIRSTORDER_SETTINGS += [
 ###############################################################################
 
 FIRSTORDER_SETTINGS += [
-       {
+    {
         "input_fn": lambda: torch.rand(3, 3, 7),
         "module_fn": lambda: torch.nn.Sequential(
             torch.nn.Conv1d(3, 2, 2),
@@ -146,7 +146,7 @@ FIRSTORDER_SETTINGS += [
         "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="mean"),
         "target_fn": lambda: classification_targets((3,), 5),
     },
-        {
+    {
         "input_fn": lambda: torch.rand(3, 3, 7, 7),
         "module_fn": lambda: torch.nn.Sequential(
             torch.nn.Conv2d(3, 2, 2, bias=False),
@@ -203,7 +203,7 @@ FIRSTORDER_SETTINGS += [
         "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="sum"),
         "target_fn": lambda: classification_targets((3,), 5),
     },
-        {
+    {
         "input_fn": lambda: torch.rand(3, 3, 2, 7, 7),
         "module_fn": lambda: torch.nn.Sequential(
             torch.nn.Conv3d(3, 2, 2, bias=False),
@@ -260,7 +260,7 @@ FIRSTORDER_SETTINGS += [
         "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="sum"),
         "target_fn": lambda: classification_targets((3,), 5),
     },
-        {
+    {
         "input_fn": lambda: torch.rand(3, 3, 7),
         "module_fn": lambda: torch.nn.Sequential(
             torch.nn.ConvTranspose1d(3, 2, 2, bias=False),
@@ -304,7 +304,7 @@ FIRSTORDER_SETTINGS += [
         "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(),
         "target_fn": lambda: classification_targets((3,), 5),
     },
-        {
+    {
         "input_fn": lambda: torch.rand(3, 3, 7, 7),
         "module_fn": lambda: torch.nn.Sequential(
             torch.nn.ConvTranspose2d(3, 2, 2, bias=False),
@@ -337,7 +337,7 @@ FIRSTORDER_SETTINGS += [
         "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="mean"),
         "target_fn": lambda: classification_targets((2,), 5),
     },
-        {
+    {
         "input_fn": lambda: torch.rand(2, 3, 2, 7, 7),
         "module_fn": lambda: torch.nn.Sequential(
             torch.nn.ConvTranspose3d(3, 2, 2, bias=False),
