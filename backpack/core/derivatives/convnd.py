@@ -100,6 +100,9 @@ class ConvNDDerivatives(BaseParameterDerivatives):
         return mat.sum(axes)
 
     def _weight_jac_mat_prod(self, module, g_inp, g_out, mat):
+        if module.groups != 1:
+            raise NotImplementedError("Groups greater than 1 are not supported yet")
+
         dims = self.dim_text
         dims_joined = dims.replace(",", "")
 
@@ -109,6 +112,9 @@ class ConvNDDerivatives(BaseParameterDerivatives):
         return self.reshape_like_output(jac_mat, module)
 
     def _weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
+        if module.groups != 1:
+            raise NotImplementedError("Groups greater than 1 are not supported yet")
+
         V = mat.shape[0]
         N, C_out = module.output_shape[0], module.output_shape[1]
         C_in = module.input0_shape[1]
