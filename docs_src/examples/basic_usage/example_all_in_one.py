@@ -10,7 +10,7 @@ on a linear model for MNIST.
 # %%
 # Let's start by loading some dummy data and extending the model
 
-from torch import rand
+from torch import allclose, rand
 from torch.nn import CrossEntropyLoss, Flatten, Linear, Sequential
 
 from backpack import backpack, extend
@@ -33,7 +33,7 @@ from backpack.utils.examples import load_one_batch_mnist
 
 X, y = load_one_batch_mnist(batch_size=512)
 
-model = Sequential(Flatten(), Linear(784, 10),)
+model = Sequential(Flatten(), Linear(784, 10))
 lossfunc = CrossEntropyLoss()
 
 model = extend(model)
@@ -200,3 +200,55 @@ for name, param in model.named_parameters():
     print(".ggnmp(vec).shape:       ", param.ggnmp(vec).shape)
     print(".pchmp_clip(vec).shape:  ", param.pchmp_clip(vec).shape)
     print(".pchmp_abs(vec).shape:   ", param.pchmp_abs(vec).shape)
+
+# %%
+# Extension hook
+# --------------
+
+# %%
+# You can specify a function that will be performed right after all BackPACK extensions
+# have been executed on a module. To do so, write a function that accepts a
+# ``torch.nn.Module`` and performs a side effect. Then, hand it to the ``backpack``
+# context manager via the ``extension_hook`` argument.
+#
+# As an example, let's compute the Hessian trace during backpropagation.
+
+
+class TraceHook:
+    def __init__(self):
+        """BackPACK extension hook that sums up the Hessian diagonal on the fly."""
+        self.value = 0.0
+        self.params_visited = set()
+
+    def sum_diag_h(self, module):
+        """Add the sum of diagonal Hessian elements to the `trace` attribute."""
+        for param in module.parameters():
+            # we might iterate multiple times over parameters, use their id to filter
+            if id(param) not in self.params_visited:
+                self.value += param.diag_h.sum()
+                self.params_visited.add(id(param))
+
+
+loss = lossfunc(model(X), y)
+
+tr_hook = TraceHook()
+
+with backpack(DiagHessian(), extension_hook=tr_hook.sum_diag_h):
+    loss.backward()
+
+tr_after_backward = sum(param.diag_h.sum() for param in model.parameters())
+tr_while_backward = tr_hook.value
+
+print(f"Tr(H) while backward: {tr_while_backward:.3f}")
+print(f"Tr(H) after backward: {tr_after_backward:.3f} ")
+print(f"Same Tr(H)?           {allclose(tr_after_backward, tr_while_backward)}")
+
+# %%
+# Note that we could have decided to delete the parameter's ``.diag_h`` attribute in the
+# hook during backpropagation and therefore saved the required memory in later stages
+# of backpropagation.
+#
+# For the diagonal Hessian, those savings seem rather small, as its storage is as
+# costly as storing the model gradient. For other quantities, like individual gradients
+# that scale with the batch and the model size, using an extension hook might make a
+# difference to fit the computation on a device.

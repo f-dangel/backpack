@@ -4,6 +4,7 @@ import inspect
 import torch
 
 from backpack.extensions.backprop_extension import BackpropExtension
+from backpack.utils.hooks import no_op
 
 from . import extensions
 from .context import CTX
@@ -16,7 +17,7 @@ class backpack:
     :code:`backward` calls in the current :code:`with` block.
     """
 
-    def __init__(self, *exts: BackpropExtension, debug=False):
+    def __init__(self, *exts: BackpropExtension, extension_hook=None, debug=False):
         """Activate the Backpack extensions.
 
         Example usage:
@@ -43,6 +44,15 @@ class backpack:
         Attributes:
             args: [BackpropExtension]
                 The extensions to activate for the backward pass.
+            extension_hook: Callable, optional (default: None)
+                Function with signature ``torch.nn.Module → None``, that will be called
+                on each module after all BackPACK extensions have been computed. It
+                can be used to reduce memory overhead if the goal is to compute
+                transformations of BackPACK quantities. Information can be compacted
+                during a backward pass and obsolete tensors be freed manually.
+
+                If the callable iterates over the module parameters, it may iterate
+                multiple times over some since the hook acts on the modular level.
             debug: Bool, optional (default: False)
                 If true, will print debug messages during the backward pass.
         """
@@ -62,16 +72,20 @@ class backpack:
 
         self.exts = exts
         self.debug = debug
+        self.extension_hook = no_op if extension_hook is None else extension_hook
 
     def __enter__(self):
         self.old_CTX = CTX.get_active_exts()
         self.old_debug = CTX.get_debug()
+        self.old_extension_hook = CTX.get_extension_hook()
         CTX.set_active_exts(self.exts)
         CTX.set_debug(self.debug)
+        CTX.set_extension_hook(self.extension_hook)
 
     def __exit__(self, type, value, traceback):
         CTX.set_active_exts(self.old_CTX)
         CTX.set_debug(self.old_debug)
+        CTX.set_extension_hook(self.old_extension_hook)
 
 
 def hook_store_io(module, input, output):
@@ -127,6 +141,8 @@ def hook_run_extensions(module, g_inp, g_out):
             print("[DEBUG] Running extension", backpack_extension, "on", module)
         backpack_extension.apply(module, g_inp, g_out)
 
+    run_extension_hook(module)
+
     if not (
         CTX.is_extension_active(
             extensions.curvmatprod.HMP,
@@ -135,6 +151,18 @@ def hook_run_extensions(module, g_inp, g_out):
         )
     ):
         memory_cleanup(module)
+
+
+def run_extension_hook(module):
+    """Execute the post extensions hook on a module after all BackPACK extensions.
+
+    See the `post_backward_hook` argument of the `backpack` context manager for details.
+    """
+    try:
+        CTX.get_extension_hook()(module)
+    except Exception as e:
+        message = getattr(e, "message", repr(e))
+        raise RuntimeError(f"Post extensions hook failed: {message}")
 
 
 def extend(module: torch.nn.Module, debug=False):
