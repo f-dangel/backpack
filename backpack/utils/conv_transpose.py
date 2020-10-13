@@ -1,4 +1,5 @@
 import torch
+from torch import einsum
 from torch.nn.functional import conv_transpose1d, conv_transpose2d, conv_transpose3d
 
 from backpack.utils.ein import eingroup
@@ -31,6 +32,25 @@ def get_convtranspose3d_weight_gradient_factors(input, grad_out, module):
     X = unfold_by_conv_transpose(input, module).reshape(N, C_in * kernel_size_numel, -1)
     dE_dY = eingroup("n,c,d,h,w->n,c,dhw", grad_out)
     return X, dE_dY
+
+
+def extract_weight_diagonal(module, input, grad_output):
+    """
+    input must be the unfolded input to the convolution (see unfold_func)
+    and grad_output the backpropagated gradient
+    """
+
+    N, C_in = input.shape[0], input.shape[1]
+    kernel_size = module.kernel_size
+    kernel_size_numel = int(torch.prod(torch.Tensor(kernel_size)))
+    import pdb
+
+    pdb.set_trace()
+    input_reshaped = input.reshape(N, C_in * kernel_size_numel, -1)
+    grad_output_viewed = eingroup("v,n,c,h,w->v,n,c,hw", grad_output)
+    AX = einsum("nkl,vnml->vnkm", (input_reshaped, grad_output_viewed))
+    weight_diagonal = (AX ** 2).sum([0, 1]).transpose(0, 1)
+    return weight_diagonal.reshape(module.weight)
 
 
 def unfold_by_conv_transpose(input, module):

@@ -22,3 +22,6 @@ class ExtensionsImplementation:
 
     def diag_ggn(self):
         raise NotImplementedError
+
+    def diag_h(self):
+        raise NotImplementedError

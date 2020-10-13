@@ -1,6 +1,9 @@
 from torch.nn import (
     AvgPool2d,
+    Conv1d,
     Conv2d,
+    Conv3d,
+    ConvTranspose2d,
     CrossEntropyLoss,
     Dropout,
     Flatten,
@@ -16,7 +19,19 @@ from torch.nn import (
 from backpack.extensions.backprop_extension import BackpropExtension
 from backpack.extensions.secondorder.hbp import LossHessianStrategy
 
-from . import activations, conv2d, dropout, flatten, linear, losses, padding, pooling
+from . import (
+    activations,
+    conv1d,
+    conv2d,
+    conv3d,
+    convtranspose2d,
+    dropout,
+    flatten,
+    linear,
+    losses,
+    padding,
+    pooling,
+)
 
 
 class DiagGGN(BackpropExtension):
@@ -45,7 +60,10 @@ class DiagGGN(BackpropExtension):
                 MaxPool2d: pooling.DiagGGNMaxPool2d(),
                 AvgPool2d: pooling.DiagGGNAvgPool2d(),
                 ZeroPad2d: padding.DiagGGNZeroPad2d(),
+                Conv1d: conv1d.DiagGGNConv1d(),
                 Conv2d: conv2d.DiagGGNConv2d(),
+                Conv3d: conv3d.DiagGGNConv3d(),
+                ConvTranspose2d: convtranspose2d.DiagGGNConvTranspose2d(),
                 Dropout: dropout.DiagGGNDropout(),
                 Flatten: flatten.DiagGGNFlatten(),
                 ReLU: activations.DiagGGNReLU(),
