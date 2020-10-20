@@ -86,7 +86,6 @@ class AutogradExtensions(ExtensionsImplementation):
                 diag_ggn_p[parameter_index] = diag_value
 
             diag_ggns.append(diag_ggn_p.view(p.size()))
-
         return diag_ggns
 
     def diag_h(self):
