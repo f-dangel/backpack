@@ -7,7 +7,7 @@ class DiagGGNConvBase(DiagGGNBaseModule):
     def __init__(self, derivatives, N, params=None, convtranspose=False):
         super().__init__(derivatives=derivatives, params=params)
         self.N = N
-        if convtranspose == True:
+        if convtranspose:
             self.convUtils = convTransposeUtils
             self.unfold = convTransposeUtils.unfold_by_conv_transpose
         else:
