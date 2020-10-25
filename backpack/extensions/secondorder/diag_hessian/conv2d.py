@@ -16,7 +16,7 @@ class DiagHConv2d(DiagHBaseModule):
         h_diag = torch.zeros_like(module.bias)
 
         for h_sqrt, sign in zip(sqrt_h_outs, sqrt_h_outs_signs):
-            h_diag_curr = convUtils.extract_bias_diagonal(module, h_sqrt)
+            h_diag_curr = convUtils.extract_bias_diagonal(module, h_sqrt, N=2)
             h_diag.add_(sign * h_diag_curr)
         return h_diag
 
@@ -27,6 +27,6 @@ class DiagHConv2d(DiagHBaseModule):
         h_diag = torch.zeros_like(module.weight)
 
         for h_sqrt, sign in zip(sqrt_h_outs, sqrt_h_outs_signs):
-            h_diag_curr = convUtils.extract_weight_diagonal(module, X, h_sqrt)
+            h_diag_curr = convUtils.extract_weight_diagonal(module, X, h_sqrt, N=2)
             h_diag.add_(sign * h_diag_curr)
         return h_diag
