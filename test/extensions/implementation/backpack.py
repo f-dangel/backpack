@@ -38,3 +38,17 @@ class BackpackExtensions(ExtensionsImplementation):
             loss.backward()
             variances = [p.variance for p in self.problem.model.parameters()]
         return variances
+
+    def diag_ggn(self):
+        with backpack(new_ext.DiagGGNExact()):
+            _, _, loss = self.problem.forward_pass()
+            loss.backward()
+            diag_ggn = [p.diag_ggn_exact for p in self.problem.model.parameters()]
+        return diag_ggn
+
+    def diag_ggn_mc(self):
+        with backpack(new_ext.DiagGGNMC()):
+            _, _, loss = self.problem.forward_pass()
+            loss.backward()
+            diag_ggn_mc = [p.diag_ggn_mc for p in self.problem.model.parameters()]
+        return diag_ggn_mc
