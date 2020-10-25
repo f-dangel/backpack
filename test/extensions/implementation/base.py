@@ -21,7 +21,9 @@ class ExtensionsImplementation:
         raise NotImplementedError
 
     def diag_ggn(self):
+        """Diagonal of Gauss Newton"""
         raise NotImplementedError
 
     def diag_ggn_mc(self):
+        """MC approximation of Diagonal of Gauss Newton"""
         raise NotImplementedError

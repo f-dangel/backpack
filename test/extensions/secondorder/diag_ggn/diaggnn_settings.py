@@ -1,6 +1,6 @@
-"""Test configurations to test batch_grad
+"""Test configurations to test diag_ggn
 
-The tests are taken from `test.extensions.firstorder.firstorder_settings`, 
+The tests are taken from `test.extensions.secondorder.secondorder_settings`, 
 but additional custom tests can be defined here by appending it to the list.
 """
 

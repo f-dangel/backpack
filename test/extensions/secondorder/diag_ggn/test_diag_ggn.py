@@ -31,7 +31,7 @@ def test_diag_ggn(problem):
 @pytest.mark.montecarlo
 @pytest.mark.parametrize("problem", PROBLEMS, ids=IDS)
 def test_diag_ggn_mc(problem):
-    """Test the diagonal of Gauss-Newton
+    """Test the MC approximation of diagonal of Gauss-Newton
 
     Args:
         problem (ExtensionsTestProblem): Problem for extension test.
