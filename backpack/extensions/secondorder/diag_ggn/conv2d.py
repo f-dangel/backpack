@@ -9,9 +9,9 @@ class DiagGGNConv2d(DiagGGNBaseModule):
 
     def bias(self, ext, module, grad_inp, grad_out, backproped):
         sqrt_ggn = backproped
-        return convUtils.extract_bias_diagonal(module, sqrt_ggn)
+        return convUtils.extract_bias_diagonal(module, sqrt_ggn, N=2)
 
     def weight(self, ext, module, grad_inp, grad_out, backproped):
         X = convUtils.unfold_func(module)(module.input0)
-        weight_diag = convUtils.extract_weight_diagonal(module, X, backproped)
+        weight_diag = convUtils.extract_weight_diagonal(module, X, backproped, N=2)
         return weight_diag
