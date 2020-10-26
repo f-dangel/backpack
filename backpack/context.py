@@ -29,9 +29,9 @@ class CTX:
         CTX.hook_handles = []
 
     @staticmethod
-    def is_extension_active(extension_class):
+    def is_extension_active(*extension_classes):
         for backpack_ext in CTX.get_active_exts():
-            if isinstance(backpack_ext, extension_class):
+            if isinstance(backpack_ext, extension_classes):
                 return True
         return False
 

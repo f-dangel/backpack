@@ -44,13 +44,14 @@ which gives access to individual gradients.
 # %%
 # Let's get the imports, configuration and some helper functions out of the way first.
 
+import matplotlib.pyplot as plt
 import torch
-from torch.optim import Optimizer
 import torch.nn as nn
+from torch.optim import Optimizer
+
 from backpack import backpack, extend
 from backpack.extensions import BatchGrad, BatchL2Grad
 from backpack.utils.examples import get_mnist_dataloder
-import matplotlib.pyplot as plt
 
 NUM_EPOCHS = 1
 PRINT_EVERY = 50
@@ -248,7 +249,7 @@ for epoch in range(NUM_EPOCHS):
     for batch_idx, (x, y) in enumerate(mnist_dataloader):
         x, y = x.to(DEVICE), y.to(DEVICE)
 
-        model.zero_grad()
+        optimizer.zero_grad()
 
         outputs = model(x)
         loss = loss_function(outputs, y)

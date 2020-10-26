@@ -10,9 +10,6 @@ class TanhDerivatives(ElementwiseDerivatives):
     def hessian_is_zero(self):
         return False
 
-    def hessian_is_diagonal(self):
-        return True
-
     def df(self, module, g_inp, g_out):
         return 1.0 - module.output ** 2
 

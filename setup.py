@@ -19,7 +19,7 @@ LONG_DESCR = """
     Bug reports & feature requests: https://github.com/f-dangel/backpack/issues
     """
 
-VERSION = "1.1.1"
+VERSION = "1.2.0"
 URL = "https://github.com/f-dangel/backpack"
 LICENSE = "MIT"
 
@@ -43,5 +43,5 @@ setup(
     license=LICENSE,
     packages=PACKAGES,
     zip_safe=False,
-    python_requires=">=3.5",
+    python_requires=">=3.6",
 )

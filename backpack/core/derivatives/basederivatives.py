@@ -1,5 +1,4 @@
 """Base classes for more flexible Jacobians and second-order information."""
-
 import warnings
 
 from backpack.core.derivatives import shape_check
@@ -24,12 +23,12 @@ class BaseDerivatives:
         For simplicity, consider the vector case, i.e. a function which maps an
         `[N, D_in]` `input` into an `[N, D_out]` `output`.
 
-        The Jacobian `J` of  is tensor of shape `[N, D_out, N_in, D_in]`.
+        The input-output Jacobian `J` of  is tensor of shape `[N, D_out, N_in, D_in]`.
         Partial derivatives are ordered as
 
             `J[i, j, k, l] = 𝜕output[i, j] / 𝜕input[k, l].
 
-        The transposed Jacobian `Jᵀ` has shape `[N, D_in, N, D_out]`.
+        The transposed input-output Jacobian `Jᵀ` has shape `[N, D_in, N, D_out]`.
         Partial derivatives are ordered as
 
             `Jᵀ[i, j, k, l] = 𝜕output[k, l] / 𝜕input[i, j]`.
@@ -67,13 +66,13 @@ class BaseDerivatives:
         return self._jac_mat_prod(module, g_inp, g_out, mat)
 
     def _jac_mat_prod(self, module, g_inp, g_out, mat):
-        """Internal implementation of the Jacobian."""
+        """Internal implementation of the input-output Jacobian."""
         raise NotImplementedError
 
     @shape_check.jac_t_mat_prod_accept_vectors
     @shape_check.jac_t_mat_prod_check_shapes
     def jac_t_mat_prod(self, module, g_inp, g_out, mat):
-        """Apply transposed Jacobian of module output w.r.t. input to a matrix.
+        """Apply transposed input-ouput Jacobian of module output to a matrix.
 
         Implicit application of Jᵀ:
             result[v, ̃n, ̃c, ̃w, ...]
@@ -100,45 +99,65 @@ class BaseDerivatives:
     # TODO Add shape check
     # TODO Use new convention
     def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
+        """Expectation approximation of outer product with input-output Jacobian.
+
+        Used for backpropagation in KFRA.
+
+        For `yₙ = f(xₙ) n=1,...,n`, compute `E(Jₙᵀ mat Jₙ) = 1/n ∑ₙ Jₙᵀ mat Jₙ`.
+        In index notation, let `output[n]=f(input[n]) n = 1,...,n`. Then,
+        `result[i,j]
+        = 1/n ∑ₙₖₗ (𝜕output[n,k] / 𝜕input[n,i]) mat[k,l] (𝜕output[n,j] / 𝜕input[n,l])
+
+        Args:
+            module (torch.nn.Module): Extended module.
+            g_inp ([torch.Tensor]): Gradients of the module w.r.t. its inputs.
+            g_out ([torch.Tensor]): Gradients of the module w.r.t. its outputs.
+            mat (torch.Tensor): Matrix of shape `[D_out, D_out]`.
+
+        Returns:
+            torch.Tensor: Matrix of shape `[D_in, D_in]`.
+
+        Note:
+            - This operation can be applied without knowledge about backpropagated
+              derivatives. Both `g_inp` and `g_out` are usually not required and
+              can be set to `None`.
+        """
         raise NotImplementedError
 
     def hessian_is_zero(self):
         raise NotImplementedError
 
     def hessian_is_diagonal(self):
+        """Is `∂²output[i] / ∂input[j] ∂input[k]` nonzero only if `i = j = k`."""
         raise NotImplementedError
 
     def hessian_diagonal(self):
+        """Return `∂²output[i] / ∂input[i]²`.
+
+        Only required if `hessian_is_diagonal` returns `True`.
+        """
         raise NotImplementedError
 
     def hessian_is_psd(self):
+        """Is `∂²output[i] / ∂input[j] ∂input[k]` positive semidefinite (PSD)."""
         raise NotImplementedError
 
-    # TODO make accept vectors
-    # TODO add shape check
-    def make_residual_mat_prod(self, module, g_inp, g_out):
-        """Return multiplication routine with the residual term.
+    @shape_check.residual_mat_prod_accept_vectors
+    @shape_check.residual_mat_prod_check_shapes
+    def residual_mat_prod(self, module, g_inp, g_out, mat):
+        """Multiply with the residual term.
 
-        The function performs the mapping: mat → [∑_{k} Hz_k(x) 𝛿z_k] mat.
-        (required for extension `curvmatprod`)
+        Performs mat → [∑_{k} Hz_k(x) 𝛿z_k] mat.
 
         Note:
         -----
             This function only has to be implemented if the residual is not
             zero and not diagonal (for instance, `BatchNorm`).
         """
+        return self._residual_mat_prod(module, g_inp, g_out, mat)
+
+    def _residual_mat_prod(self, module, g_inp, g_out, mat):
         raise NotImplementedError
-
-    # TODO Refactor and remove
-    def batch_flat(self, tensor):
-        batch = tensor.size(0)
-        # TODO Removing the clone().detach() will destroy the computation graph
-        # Tests will fail
-        return batch, tensor.clone().detach().view(batch, -1)
-
-    # TODO Refactor and remove
-    def get_batch(self, module):
-        return module.input0.size(0)
 
     @staticmethod
     def _reshape_like(mat, like):

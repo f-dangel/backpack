@@ -29,7 +29,15 @@ For first-order extensions
 --------------------------------------
 
 BackPACK can extract more information about the gradient with respect to the
-parameters of :py:class:`torch.nn.Linear` and :py:class:`torch.nn.Conv2d` layers.
+parameters of the following layers;
+
+- :py:class:`torch.nn.Linear`
+- :py:class:`torch.nn.Conv1d`,
+  :py:class:`torch.nn.Conv2d`,
+  :py:class:`torch.nn.Conv3d`
+- :py:class:`torch.nn.ConvTranspose1d`,
+  :py:class:`torch.nn.ConvTranspose2d`,
+  :py:class:`torch.nn.ConvTranspose3d`
 
 First-order extensions should support any module as long as they do not have parameters,
 but some layers lead to the concept of "individual gradient for a sample in a minibatch"
@@ -62,3 +70,6 @@ This is implemented for:
 |                               | :py:class:`torch.nn.Sigmoid`          |
 |                               | :py:class:`torch.nn.Tanh`             |
 +-------------------------------+---------------------------------------+
+
+The other convolution layers (``Conv1d``, ``Conv3d``, and ``ConvTransposeNd``)
+are not yet supported.

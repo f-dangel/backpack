@@ -10,12 +10,26 @@ on a linear model for MNIST.
 # %%
 # Let's start by loading some dummy data and extending the model
 
-from backpack.utils.examples import load_one_batch_mnist
+from torch import rand
 from torch.nn import CrossEntropyLoss, Flatten, Linear, Sequential
+
 from backpack import backpack, extend
-from backpack.extensions import KFAC, KFLR, KFRA
-from backpack.extensions import DiagGGNExact, DiagGGNMC, DiagHessian
-from backpack.extensions import BatchGrad, SumGradSquared, Variance, BatchL2Grad
+from backpack.extensions import (
+    GGNMP,
+    HMP,
+    KFAC,
+    KFLR,
+    KFRA,
+    PCHMP,
+    BatchGrad,
+    BatchL2Grad,
+    DiagGGNExact,
+    DiagGGNMC,
+    DiagHessian,
+    SumGradSquared,
+    Variance,
+)
+from backpack.utils.examples import load_one_batch_mnist
 
 X, y = load_one_batch_mnist(batch_size=512)
 
@@ -134,3 +148,55 @@ for name, param in model.named_parameters():
     print(name)
     print(".grad.shape:             ", param.grad.shape)
     print(".diag_h.shape:           ", param.diag_h.shape)
+
+# %%
+# Block-diagonal curvature products
+# ---------------------------------
+
+# %%
+# Curvature-matrix product (``MP``) extensions provide functions
+# that multiply with the block diagonal of different curvature matrices, such as
+#
+# - the Hessian (:code:`HMP`)
+# - the generalized Gauss-Newton (:code:`GGNMP`)
+# - the positive-curvature Hessian (:code:`PCHMP`)
+
+loss = lossfunc(model(X), y)
+
+with backpack(
+    HMP(),
+    GGNMP(),
+    PCHMP(savefield="pchmp_clip", modify="clip"),
+    PCHMP(savefield="pchmp_abs", modify="abs"),
+):
+    loss.backward()
+
+# %%
+# Multiply a random vector with curvature blocks.
+
+V = 1
+
+for name, param in model.named_parameters():
+    vec = rand(V, *param.shape)
+    print(name)
+    print(".grad.shape:             ", param.grad.shape)
+    print("vec.shape:               ", vec.shape)
+    print(".hmp(vec).shape:         ", param.hmp(vec).shape)
+    print(".ggnmp(vec).shape:       ", param.ggnmp(vec).shape)
+    print(".pchmp_clip(vec).shape:  ", param.pchmp_clip(vec).shape)
+    print(".pchmp_abs(vec).shape:   ", param.pchmp_abs(vec).shape)
+
+# %%
+# Multiply a collection of three vectors (a matrix) with curvature blocks.
+
+V = 3
+
+for name, param in model.named_parameters():
+    vec = rand(V, *param.shape)
+    print(name)
+    print(".grad.shape:             ", param.grad.shape)
+    print("vec.shape:               ", vec.shape)
+    print(".hmp(vec).shape:         ", param.hmp(vec).shape)
+    print(".ggnmp(vec).shape:       ", param.ggnmp(vec).shape)
+    print(".pchmp_clip(vec).shape:  ", param.pchmp_clip(vec).shape)
+    print(".pchmp_abs(vec).shape:   ", param.pchmp_abs(vec).shape)
