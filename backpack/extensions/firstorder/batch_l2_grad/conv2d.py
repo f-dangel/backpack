@@ -16,4 +16,4 @@ class BatchL2Conv2d(FirstOrderModuleExtension):
         X, dE_dY = convUtils.get_weight_gradient_factors(
             module.input0, g_out[0], module
         )
-        return einsum("nml,nkl,nmi,nki->n", (dE_dY, X, dE_dY, X))
+        return einsum("nmi,nki,nmj,nkj->n", (dE_dY, X, dE_dY, X))

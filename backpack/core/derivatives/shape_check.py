@@ -89,26 +89,32 @@ same_dim_as_bias = functools.partial(same_dim_as, name="bias")
 
 # decorators for handling vectors
 jac_t_mat_prod_accept_vectors = functools.partial(
-    mat_prod_accept_vectors, vec_criterion=same_dim_as_output,
+    mat_prod_accept_vectors,
+    vec_criterion=same_dim_as_output,
 )
 
 weight_jac_t_mat_prod_accept_vectors = functools.partial(
-    mat_prod_accept_vectors, vec_criterion=same_dim_as_output,
+    mat_prod_accept_vectors,
+    vec_criterion=same_dim_as_output,
 )
 bias_jac_t_mat_prod_accept_vectors = functools.partial(
-    mat_prod_accept_vectors, vec_criterion=same_dim_as_output,
+    mat_prod_accept_vectors,
+    vec_criterion=same_dim_as_output,
 )
 
 jac_mat_prod_accept_vectors = functools.partial(
-    mat_prod_accept_vectors, vec_criterion=same_dim_as_input,
+    mat_prod_accept_vectors,
+    vec_criterion=same_dim_as_input,
 )
 
 weight_jac_mat_prod_accept_vectors = functools.partial(
-    mat_prod_accept_vectors, vec_criterion=same_dim_as_weight,
+    mat_prod_accept_vectors,
+    vec_criterion=same_dim_as_weight,
 )
 
 bias_jac_mat_prod_accept_vectors = functools.partial(
-    mat_prod_accept_vectors, vec_criterion=same_dim_as_bias,
+    mat_prod_accept_vectors,
+    vec_criterion=same_dim_as_bias,
 )
 
 
@@ -174,46 +180,17 @@ bias_jac_t_mat_prod_check_shapes = functools.partial(
 ###############################################################################
 #                     Wrapper for second-order extensions                     #
 ###############################################################################
+residual_mat_prod_check_shapes = functools.partial(
+    mat_prod_check_shapes, in_check=shape_like_output, out_check=shape_like_output
+)
+
+residual_mat_prod_accept_vectors = functools.partial(
+    mat_prod_accept_vectors,
+    vec_criterion=same_dim_as_input,
+)
+
 
 # TODO Refactor using partials
-
-
-def R_mat_prod_check_shapes(make_R_mat_prod):
-    """Check that input and output have correct shapes."""
-
-    @functools.wraps(make_R_mat_prod)
-    def wrapped_make_R_mat_prod(self, module, g_inp, g_out):
-        def checked_R_mat_prod(mat):
-            check_like(mat, module, "input0")
-            mat_out = make_R_mat_prod(self, module, g_inp, g_out)(mat)
-            check_like(mat_out, module, "input0")
-            check_same_V_dim(mat, mat_out)
-
-            return mat_out
-
-        return checked_R_mat_prod
-
-    return wrapped_make_R_mat_prod
-
-
-def R_mat_prod_accept_vectors(make_R_mat_prod):
-    """Add support for vectors to Residual-matrix products."""
-
-    @functools.wraps(make_R_mat_prod)
-    def wrapped_make_R_mat_prod(self, module, g_inp, g_out):
-        def new_R_mat_prod(mat):
-            is_vec = same_dim_as(mat, module, "input0")
-            mat_in = mat if not is_vec else add_V_dim(mat)
-            mat_out = make_R_mat_prod(self, module, g_inp, g_out)(mat_in)
-            mat_out = mat_out if not is_vec else remove_V_dim(mat_out)
-
-            return mat_out
-
-        return new_R_mat_prod
-
-    return wrapped_make_R_mat_prod
-
-
 def make_hessian_mat_prod_accept_vectors(make_hessian_mat_prod):
     @functools.wraps(make_hessian_mat_prod)
     def wrapped_make_hessian_mat_prod(self, module, g_inp, g_out):

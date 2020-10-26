@@ -13,3 +13,12 @@ Some of the things you can compute:
 ```
 pip install backpack-for-pytorch 
 ``` 
+
+---
+
+If you use BackPACK in your research, please cite <float style="float:right"><a href="{{ '/assets/dangel2020backpack.bib' | relative_url }}">download bibtex</a></float>
+
+```
+{% include dangel2020backpack.bib %}
+```
+

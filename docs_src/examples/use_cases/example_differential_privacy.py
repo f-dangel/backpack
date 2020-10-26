@@ -44,18 +44,19 @@ which gives access to individual gradients.
 # %%
 # Let's get the imports, configuration and some helper functions out of the way first.
 
+import matplotlib.pyplot as plt
 import torch
-from torch.optim import Optimizer
 import torch.nn as nn
+from torch.optim import Optimizer
+
 from backpack import backpack, extend
 from backpack.extensions import BatchGrad, BatchL2Grad
 from backpack.utils.examples import get_mnist_dataloder
-import matplotlib.pyplot as plt
 
 NUM_EPOCHS = 1
 PRINT_EVERY = 50
 MAX_ITER = 200
-BATCH_SIZE = 512
+BATCH_SIZE = 64
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 torch.manual_seed(0)
 
@@ -108,7 +109,7 @@ def make_small_cnn(outputs=10, channels=(16, 32), fc_dim=32, kernels=(8, 4)):
     )
 
 
-mnist_dataloader = get_mnist_dataloder()
+mnist_dataloader = get_mnist_dataloder(batch_size=BATCH_SIZE)
 
 model = make_small_cnn().to(DEVICE)
 loss_function = nn.CrossEntropyLoss().to(DEVICE)
@@ -248,7 +249,7 @@ for epoch in range(NUM_EPOCHS):
     for batch_idx, (x, y) in enumerate(mnist_dataloader):
         x, y = x.to(DEVICE), y.to(DEVICE)
 
-        model.zero_grad()
+        optimizer.zero_grad()
 
         outputs = model(x)
         loss = loss_function(outputs, y)

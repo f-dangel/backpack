@@ -8,9 +8,10 @@ Failure cases include
 import pytest
 import torch
 from torch.nn import CrossEntropyLoss, MSELoss
-from backpack import extend
-from backpack import backpack as bp
+
 import backpack.extensions as bpext
+from backpack import backpack as bp
+from backpack import extend
 
 ext_2nd_order = [
     bpext.KFAC,

@@ -2,7 +2,7 @@
 
 [![Travis](https://travis-ci.org/f-dangel/backpack.svg?branch=master)](https://travis-ci.org/f-dangel/backpack)
 [![Coveralls](https://coveralls.io/repos/github/f-dangel/backpack/badge.svg?branch=master)](https://coveralls.io/github/f-dangel/backpack)
-[![Python 3.5+](https://img.shields.io/badge/python-3.5+-blue.svg)](https://www.python.org/downloads/release/python-350/)
+[![Python 3.6+](https://img.shields.io/badge/python-3.6+-blue.svg)](https://www.python.org/downloads/release/python-360/)
 
 BackPACK is built on top of [PyTorch](https://github.com/pytorch/pytorch). It efficiently computes quantities other than the gradient.
 
@@ -24,8 +24,8 @@ pip install backpack-for-pytorch
 ```
 
 ## Examples
-- [Basic usage](https://docs.backpack.pt/en/use-cases/examples/example_all_in_one.html)
-- [Some use cases](https://docs.backpack.pt/en/use-cases/use_cases/index.html)
+- [Basic usage](https://docs.backpack.pt/en/master/basic_usage/example_all_in_one.html)
+- [Some use cases](https://docs.backpack.pt/en/master/use_cases/index.html)
 
 #
 ## Contributing
