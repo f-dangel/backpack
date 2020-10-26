@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 
-## [1.2.0] - 2020-08-26
+## [1.2.0] - 2020-10-26
 
 Thanks to [@sbharadwajj](https://github.com/sbharadwajj) for
 co-authoring many PRs shipped in this release.
@@ -23,6 +23,9 @@ co-authoring many PRs shipped in this release.
     [[PR](https://github.com/f-dangel/backpack/pull/100)]
   - `extensions.SumGradSquared` and `extensions.Variance`
     [[PR](https://github.com/f-dangel/backpack/pull/105)]
+  - Raise exceptions for unsupported exotic hyperparameters
+    [[PR1](https://github.com/f-dangel/backpack/pull/108),
+    [PR2](https://github.com/f-dangel/backpack/pull/109)]
 - New example: Backpropagating through BackPACK quantities
   [[commit](https://github.com/f-dangel/backpack/commit/8ef33a42badded9a1d9b5013f8686bfa7feec6e7)]
 - New extensions in API: Block-diagonal curvature products
@@ -53,6 +56,9 @@ co-authoring many PRs shipped in this release.
     [[PR](https://github.com/f-dangel/backpack/pull/79)]
   - `ConvTranspose1d`, `ConvTranspose2d`, `ConvTranspose3d`
     [[PR](https://github.com/f-dangel/backpack/pull/84)]
+- Refactor `firstorder` extensions to share more code
+  [[PR1](https://github.com/f-dangel/backpack/pull/105),
+  [PR2](https://github.com/f-dangel/backpack/pull/105)]
 - Removed `detach`s to support differentiating through
   quantities
   [[PR](https://github.com/f-dangel/backpack/pull/70)]
