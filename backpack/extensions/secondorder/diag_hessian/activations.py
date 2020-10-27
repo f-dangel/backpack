@@ -6,7 +6,7 @@ from backpack.core.derivatives.elu import ELUDerivatives
 from backpack.core.derivatives.selu import SELUDerivatives
 from backpack.core.derivatives.leakyrelu import LeakyReLUDerivatives
 from backpack.core.derivatives.logsigmoid import LogSigmoidDerivatives
-from backpack.extensions.secondorder.diag_ggn.diag_ggn_base import DiagGGNBaseModule
+from backpack.extensions.secondorder.diag_hessian.diag_h_base import DiagHBaseModule
 
 
 class DiagHReLU(DiagHBaseModule):
@@ -24,21 +24,21 @@ class DiagHTanh(DiagHBaseModule):
         super().__init__(derivatives=TanhDerivatives())
 
 
-class DiagGGNELU(DiagGGNBaseModule):
+class DiagGGNELU(DiagHBaseModule):
     def __init__(self):
         super().__init__(derivatives=ELUDerivatives())
 
 
-class DiagGGNSELU(DiagGGNBaseModule):
+class DiagGGNSELU(DiagHBaseModule):
     def __init__(self):
         super().__init__(derivatives=SELUDerivatives())
 
 
-class DiagGGNLeakyReLU(DiagGGNBaseModule):
+class DiagGGNLeakyReLU(DiagHBaseModule):
     def __init__(self):
         super().__init__(derivatives=LeakyReLUDerivatives())
 
 
-class DiagGGNLogSigmoid(DiagGGNBaseModule):
+class DiagGGNLogSigmoid(DiagHBaseModule):
     def __init__(self):
         super().__init__(derivatives=LogSigmoidDerivatives())

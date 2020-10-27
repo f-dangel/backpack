@@ -39,16 +39,12 @@ def extract_weight_diagonal(module, input, grad_output, N):
     input must be the unfolded input to the convolution (see unfold_func)
     and grad_output the backpropagated gradient
     """
-
-    def get_output_shape(input, module):
-        return module(input).shape
-
     out_channels = module.weight.shape[0]
     in_channels = module.weight.shape[1]
     k = module.weight.shape[2:]
 
     M = input.shape[0]
-    output_shape = get_output_shape(module.input0, module)
+    output_shape = module(input).shape
     spatial_out_size = output_shape[2:]
     spatial_out_numel = spatial_out_size.numel()
 

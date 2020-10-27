@@ -6,7 +6,7 @@ from backpack.utils import conv_transpose as convUtils
 
 
 class DiagHConvTransposeND(DiagHBaseModule):
-    def __init__(self, derivatives, N, params=None, convtranspose=False):
+    def __init__(self, derivatives, N, params=None):
         super().__init__(derivatives=derivatives, params=["bias", "weight"])
         self.N = N
 
