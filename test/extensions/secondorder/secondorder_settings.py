@@ -71,6 +71,63 @@ SECONDORDER_SETTNGS += [
 
 SECONDORDER_SETTNGS += [
     {
+        "input_fn": lambda: torch.rand(3, 3, 7),
+        "module_fn": lambda: torch.nn.Sequential(
+            torch.nn.Conv1d(3, 2, 2),
+            torch.nn.ReLU(),
+            torch.nn.Flatten(),
+            torch.nn.Linear(12, 5),
+        ),
+        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="sum"),
+        "target_fn": lambda: classification_targets((3,), 5),
+    },
+    {
+        "input_fn": lambda: torch.rand(3, 3, 7),
+        "module_fn": lambda: torch.nn.Sequential(
+            torch.nn.Conv1d(3, 2, 2, bias=False),
+            torch.nn.ReLU(),
+            torch.nn.Flatten(),
+            torch.nn.Linear(12, 5),
+        ),
+        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="sum"),
+        "target_fn": lambda: classification_targets((3,), 5),
+    },
+    {
+        "input_fn": lambda: torch.rand(3, 3, 8),
+        "module_fn": lambda: torch.nn.Sequential(
+            torch.nn.Conv1d(
+                3, 6, 2, stride=4, padding=2, padding_mode="zeros", dilation=3
+            ),
+            torch.nn.ReLU(),
+            torch.nn.Flatten(),
+            torch.nn.Linear(18, 5),
+        ),
+        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="sum"),
+        "target_fn": lambda: classification_targets((3,), 5),
+    },
+    {
+        "input_fn": lambda: torch.rand(3, 3, 7),
+        "module_fn": lambda: torch.nn.Sequential(
+            torch.nn.Conv1d(3, 2, 2, padding=2, dilation=1, stride=2),
+            torch.nn.ReLU(),
+            torch.nn.Flatten(),
+            torch.nn.Linear(10, 5),
+        ),
+        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="sum"),
+        "target_fn": lambda: classification_targets((3,), 5),
+    },
+    {
+        "input_fn": lambda: torch.rand(3, 2, 7),
+        "module_fn": lambda: torch.nn.Sequential(
+            torch.nn.Conv1d(2, 3, 2, padding=0, dilation=2, groups=1),
+            torch.nn.ReLU(),
+            torch.nn.Flatten(),
+            torch.nn.Linear(15, 5),
+        ),
+        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="sum"),
+        "target_fn": lambda: classification_targets((3,), 5),
+    },
+    {
         "input_fn": lambda: torch.rand(3, 3, 7, 7),
         "module_fn": lambda: torch.nn.Sequential(
             torch.nn.Conv2d(3, 2, 2),

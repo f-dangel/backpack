@@ -44,7 +44,7 @@ def extract_weight_diagonal(module, input, grad_output, N):
     k = module.weight.shape[2:]
 
     M = input.shape[0]
-    output_shape = module(input).shape
+    output_shape = module(module.input0).shape
     spatial_out_size = output_shape[2:]
     spatial_out_numel = spatial_out_size.numel()
 
