@@ -1,1 +1,1 @@
-  """Tests for `backpack.extensions.secondorder.diag_hessian`."""
+"""Tests for `backpack.extensions.secondorder.diag_hessian`."""
