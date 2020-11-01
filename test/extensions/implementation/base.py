@@ -19,3 +19,7 @@ class ExtensionsImplementation:
     def variance(self):
         """Variance of Individual gradients"""
         raise NotImplementedError
+
+    def diag_h(self):
+        """Diagonal of Hessian"""
+        raise NotImplementedError

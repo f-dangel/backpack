@@ -1,4 +1,6 @@
 from test.extensions.implementation.base import ExtensionsImplementation
+from backpack.utils.convert_parameters import vector_to_parameter_list
+from backpack.hessianfree.rop import R_op
 
 import torch
 
@@ -62,3 +64,33 @@ class AutogradExtensions(ExtensionsImplementation):
         batch_grad = self.batch_grad()
         variances = [torch.var(g, dim=0, unbiased=False) for g in batch_grad]
         return variances
+
+    def diag_h(self):
+        _, _, loss = self.problem.forward_pass()
+
+        def hvp(df_dx, x, v):
+            Hv = R_op(df_dx, x, v)
+            return [j.detach() for j in Hv]
+
+        def extract_ith_element_of_diag_h(i, p, df_dx):
+            v = torch.zeros(p.numel()).to(self.problem.device)
+            v[i] = 1.0
+            vs = vector_to_parameter_list(v, [p])
+
+            Hvs = hvp(df_dx, [p], vs)
+            Hv = torch.cat([g.detach().view(-1) for g in Hvs])
+
+            return Hv[i]
+
+        diag_hs = []
+        for p in list(self.problem.model.parameters()):
+            diag_h_p = torch.zeros_like(p).view(-1)
+
+            df_dx = torch.autograd.grad(loss, [p], create_graph=True, retain_graph=True)
+            for parameter_index in range(p.numel()):
+                diag_value = extract_ith_element_of_diag_h(parameter_index, p, df_dx)
+                diag_h_p[parameter_index] = diag_value
+
+            diag_hs.append(diag_h_p.view(p.size()))
+
+        return diag_hs
