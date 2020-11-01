@@ -18,8 +18,9 @@ Optional entries:
 
 import torch
 from test.core.derivatives.utils import classification_targets, regression_targets
+from test.automated_test import make_simple_cnn_setting
 
-SECONDORDER_SETTNGS = []
+SECONDORDER_SETTINGS = []
 
 ###############################################################################
 #                                   examples                                  #
@@ -34,9 +35,10 @@ example = {
     "seed": 0,
     "id_prefix": "example",
 }
-SECONDORDER_SETTNGS.append(example)
+SECONDORDER_SETTINGS.append(example)
 
-SECONDORDER_SETTNGS += [
+
+SECONDORDER_SETTINGS += [
     # classification
     {
         "input_fn": lambda: torch.rand(3, 10),
@@ -66,10 +68,27 @@ SECONDORDER_SETTNGS += [
 ]
 
 ###############################################################################
+#                         test setting: Activation Layers                     #
+###############################################################################
+SECONDORDER_SETTINGS += [
+    make_simple_cnn_setting(torch.nn.ReLU, bias=True),
+    make_simple_cnn_setting(torch.nn.ReLU, bias=False),
+    make_simple_cnn_setting(torch.nn.Sigmoid, bias=True),
+    make_simple_cnn_setting(torch.nn.Sigmoid, bias=False),
+    make_simple_cnn_setting(torch.nn.Tanh, bias=True),
+    make_simple_cnn_setting(torch.nn.Tanh, bias=False),
+    make_simple_cnn_setting(torch.nn.LeakyReLU, bias=True),
+    make_simple_cnn_setting(torch.nn.LeakyReLU, bias=False),
+    make_simple_cnn_setting(torch.nn.LogSigmoid, bias=True),
+    make_simple_cnn_setting(torch.nn.LogSigmoid, bias=False),
+]
+
+
+###############################################################################
 #                         test setting: Convolutional Layers                  #
 ###############################################################################
 
-SECONDORDER_SETTNGS += [
+SECONDORDER_SETTINGS += [
     {
         "input_fn": lambda: torch.rand(3, 3, 7),
         "module_fn": lambda: torch.nn.Sequential(

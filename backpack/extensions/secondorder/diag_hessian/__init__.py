@@ -15,6 +15,8 @@ from torch.nn import (
     ReLU,
     Sigmoid,
     Tanh,
+    LeakyReLU,
+    LogSigmoid,
     ZeroPad2d,
 )
 
@@ -71,5 +73,7 @@ class DiagHessian(BackpropExtension):
                 ReLU: activations.DiagHReLU(),
                 Sigmoid: activations.DiagHSigmoid(),
                 Tanh: activations.DiagHTanh(),
+                LeakyReLU: activations.DiagHLeakyReLU(),
+                LogSigmoid: activations.DiagHLogSigmoid(),
             },
         )

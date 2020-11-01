@@ -10,6 +10,7 @@ from .test_problems_convolutions import TEST_PROBLEMS as CONV_TEST_PROBLEMS
 from .test_problems_linear import TEST_PROBLEMS as LIN_TEST_PROBLEMS
 from .test_problems_padding import TEST_PROBLEMS as PAD_TEST_PROBLEMS
 from .test_problems_pooling import TEST_PROBLEMS as POOL_TEST_PROBLEMS
+from .core.derivatives.utils import classification_targets
 
 if torch.cuda.is_available():
     DEVICES = {
@@ -89,6 +90,30 @@ def check_values(list1, list2, atol=atol, rtol=rtol):
         print(g1.size())
         report_nonclose_values(g1, g2)
         assert torch.allclose(g1, g2, atol=atol, rtol=rtol)
+
+
+def make_simple_cnn_setting(act_cls, bias):
+    """
+    input: activation function & bias setting
+    return: CNN network with torch.nn.Conv2d and torch.nn.Linear
+    """
+
+    def make_simple_cnn(act_cls, bias):
+        return torch.nn.Sequential(
+            torch.nn.Conv2d(3, 2, 2, bias=bias),
+            act_cls(),
+            torch.nn.Flatten(),
+            torch.nn.Linear(72, 5),
+        )
+
+    dict_setting = {
+        "input_fn": lambda: torch.rand(3, 3, 7, 7),
+        "module_fn": lambda: make_simple_cnn(act_cls, bias),
+        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(),
+        "target_fn": lambda: classification_targets((3,), 5),
+    }
+
+    return dict_setting
 
 
 ###
