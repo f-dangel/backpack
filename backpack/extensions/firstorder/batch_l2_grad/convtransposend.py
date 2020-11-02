@@ -5,7 +5,7 @@ from backpack.utils import conv as convUtils
 from backpack.utils import conv_transpose as convTransposeUtils
 
 
-class BatchL2ConvTransposend(FirstOrderModuleExtension):
+class BatchL2ConvTransposeND(FirstOrderModuleExtension):
     def __init__(self, N, params=None):
         super().__init__(params=params)
         self.N = N

@@ -4,7 +4,7 @@ from backpack.extensions.firstorder.base import FirstOrderModuleExtension
 from backpack.utils import conv as convUtils
 
 
-class BatchL2Convnd(FirstOrderModuleExtension):
+class BatchL2ConvND(FirstOrderModuleExtension):
     def __init__(self, N, params=None):
         super().__init__(params=params)
         self.N = N
