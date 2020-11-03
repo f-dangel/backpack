@@ -45,7 +45,7 @@ def test_diag_ggn_mc(problem):
 
     mc_samples = 500
     for _ in range(mc_samples):
-        backpack_diagggn_mc = BackpackExtensions(problem).diag_ggn_mc()
+        backpack_diagggn_mc = BackpackExtensions(problem).diag_ggn_mc(mc_samples)
         for i, param_res in enumerate(backpack_diagggn_mc):
             backpack_res_mc_avg[i] += param_res
 
