@@ -17,8 +17,9 @@ Optional entries:
 
 
 import torch
+from torch.nn import ReLU, Sigmoid, Tanh, LogSigmoid, LeakyReLU
 from test.core.derivatives.utils import classification_targets, regression_targets
-from test.automated_test import make_simple_cnn_setting
+from test.extensions.automated_settings import make_simple_cnn_setting
 
 SECONDORDER_SETTINGS = []
 
@@ -70,18 +71,11 @@ SECONDORDER_SETTINGS += [
 ###############################################################################
 #                         test setting: Activation Layers                     #
 ###############################################################################
-SECONDORDER_SETTINGS += [
-    make_simple_cnn_setting(torch.nn.ReLU, bias=True),
-    make_simple_cnn_setting(torch.nn.ReLU, bias=False),
-    make_simple_cnn_setting(torch.nn.Sigmoid, bias=True),
-    make_simple_cnn_setting(torch.nn.Sigmoid, bias=False),
-    make_simple_cnn_setting(torch.nn.Tanh, bias=True),
-    make_simple_cnn_setting(torch.nn.Tanh, bias=False),
-    make_simple_cnn_setting(torch.nn.LeakyReLU, bias=True),
-    make_simple_cnn_setting(torch.nn.LeakyReLU, bias=False),
-    make_simple_cnn_setting(torch.nn.LogSigmoid, bias=True),
-    make_simple_cnn_setting(torch.nn.LogSigmoid, bias=False),
-]
+activations = [ReLU, Sigmoid, Tanh, LeakyReLU, LogSigmoid]
+
+for act in activations:
+    SECONDORDER_SETTINGS.append(make_simple_cnn_setting(act, bias=True))
+    SECONDORDER_SETTINGS.append(make_simple_cnn_setting(act, bias=False))
 
 
 ###############################################################################
