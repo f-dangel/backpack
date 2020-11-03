@@ -17,13 +17,14 @@ def unfold_func(module):
 
 def get_weight_gradient_factors(input, grad_out, module, N):
     # shape [N, C_in * K_x * K_y, H_out * W_out]
-    X = unfold_by_conv(module.input0, module)
-
     if N == 1:
+        X = unfold_by_conv(module.input0, module)
         dE_dY = grad_out
     elif N == 2:
+        X = unfold_func(module)(input)
         dE_dY = eingroup("n,c,h,w->n,c,hw", grad_out)
     elif N == 3:
+        X = unfold_by_conv(module.input0, module)
         dE_dY = eingroup("n,c,d,h,w->n,c,dhw", grad_out)
     else:
         raise ValueError("{}-dimensional Conv. is not implemented.".format(N))
