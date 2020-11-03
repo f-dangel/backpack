@@ -15,24 +15,33 @@ def unfold_func(module):
     )
 
 
-def get_conv1d_weight_gradient_factors(input, grad_out, module):
-    # shape [N, C_in * K_x, L_out]
-    X = unfold_by_conv(input, module)
-    return X, grad_out
-
-
-def get_weight_gradient_factors(input, grad_out, module):
+def get_weight_gradient_factors(input, grad_out, module, N):
     # shape [N, C_in * K_x * K_y, H_out * W_out]
-    X = unfold_func(module)(input)
-    dE_dY = eingroup("n,c,h,w->n,c,hw", grad_out)
+    if N == 1:
+        X = unfold_by_conv(module.input0, module)
+        dE_dY = grad_out
+    elif N == 2:
+        X = unfold_func(module)(input)
+        dE_dY = eingroup("n,c,h,w->n,c,hw", grad_out)
+    elif N == 3:
+        X = unfold_by_conv(module.input0, module)
+        dE_dY = eingroup("n,c,d,h,w->n,c,dhw", grad_out)
+    else:
+        raise ValueError("{}-dimensional Conv. is not implemented.".format(N))
+
     return X, dE_dY
 
 
-def get_conv3d_weight_gradient_factors(input, grad_out, module):
-    # shape [N, C_in * K_x * K_y * K_z, D_out * H_out * W_out]
-    X = unfold_by_conv(input, module)
-    dE_dY = eingroup("n,c,d,h,w->n,c,dhw", grad_out)
-    return X, dE_dY
+def get_bias_gradient_factors(gradient, C_axis, N):
+    if N == 1:
+        bias_gradient = (einsum("ncl->nc", gradient) ** 2).sum(C_axis)
+    elif N == 2:
+        bias_gradient = (einsum("nchw->nc", gradient) ** 2).sum(C_axis)
+    elif N == 3:
+        bias_gradient = (einsum("ncdhw->nc", gradient) ** 2).sum(C_axis)
+    else:
+        raise ValueError("{}-dimensional Conv. is not implemented.".format(N))
+    return bias_gradient
 
 
 def separate_channels_and_pixels(module, tensor):
