@@ -26,6 +26,7 @@ class ExtensionsImplementation:
 
     def diag_ggn_mc(self):
         """MC approximation of Diagonal of Gauss Newton"""
+        raise NotImplementedError
 
     def diag_h(self):
         """Diagonal of Hessian"""
