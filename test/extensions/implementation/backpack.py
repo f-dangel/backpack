@@ -52,3 +52,10 @@ class BackpackExtensions(ExtensionsImplementation):
             loss.backward()
             diag_ggn_mc = [p.diag_ggn_mc for p in self.problem.model.parameters()]
         return diag_ggn_mc
+
+    def diag_h(self):
+        with backpack(new_ext.DiagHessian()):
+            _, _, loss = self.problem.forward_pass()
+            loss.backward()
+            diag_h = [p.diag_h for p in self.problem.model.parameters()]
+        return diag_h

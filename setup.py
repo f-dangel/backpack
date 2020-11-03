@@ -19,7 +19,7 @@ LONG_DESCR = """
     Bug reports & feature requests: https://github.com/f-dangel/backpack/issues
     """
 
-VERSION = "1.1.1"
+VERSION = "1.2.0"
 URL = "https://github.com/f-dangel/backpack"
 LICENSE = "MIT"
 
