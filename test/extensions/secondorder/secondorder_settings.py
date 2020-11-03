@@ -74,9 +74,8 @@ SECONDORDER_SETTINGS += [
 activations = [ReLU, Sigmoid, Tanh, LeakyReLU, LogSigmoid]
 
 for act in activations:
-    SECONDORDER_SETTINGS.append(make_simple_cnn_setting(act, bias=True))
-    SECONDORDER_SETTINGS.append(make_simple_cnn_setting(act, bias=False))
-
+    for bias in [True, False]:
+        SECONDORDER_SETTINGS.append(make_simple_cnn_setting(act, bias=bias))
 
 ###############################################################################
 #                         test setting: Convolutional Layers                  #
