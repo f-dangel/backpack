@@ -44,7 +44,7 @@ help:
 ###
 # Test coverage
 test:
-	@pytest -vx --runslow --cov=backpack .
+	@pytest -vx --run-optional-tests=montecarlo --cov=backpack .
 
 test-light:
 	@pytest -vx --cov=backpack .

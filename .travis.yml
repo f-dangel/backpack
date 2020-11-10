@@ -10,7 +10,7 @@ install:
 cache:
 - pip
 script:
-- if [ ("$TRAVIS_BRANCH" = "master") || ("$TRAVIS_BRANCH" = "development") ||  ("$TRAVIS_BRANCH" = "release") ]; then pytest -vx --runslow --cov=backpack/ .; else pytest -vx --cov=backpack/ .; fi
+- if [ $TRAVIS_BRANCH = "master" || $TRAVIS_BRANCH = "development" ||  $TRAVIS_BRANCH" = "release" ]; then pytest -vx --runslow --cov=backpack/ .; else pytest -vx --cov=backpack/ .; fi
 after_success:
 - coveralls
 notifications:
