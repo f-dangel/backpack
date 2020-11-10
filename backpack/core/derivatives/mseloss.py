@@ -3,7 +3,6 @@
 from math import sqrt
 
 from torch import einsum, eye, normal
-from torch.nn import MSELoss
 
 from backpack.core.derivatives.basederivatives import BaseLossDerivatives
 
@@ -15,12 +14,7 @@ class MSELossDerivatives(BaseLossDerivatives):
 
     For `X : [n, d]` and `Y : [n, d]`, if `reduce=sum`, the MSE computes
     `∑ᵢ₌₁ⁿ ‖X[i,∶] − Y[i,∶]‖²`. If `reduce=mean`, the result is divided by `nd`.
-
-
     """
-
-    def get_module(self):
-        return MSELoss
 
     def _sqrt_hessian(self, module, g_inp, g_out):
         """Square-root of the hessian of the MSE for each minibatch elements.

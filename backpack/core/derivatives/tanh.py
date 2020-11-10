@@ -1,12 +1,7 @@
-from torch.nn import Tanh
-
 from backpack.core.derivatives.elementwise import ElementwiseDerivatives
 
 
 class TanhDerivatives(ElementwiseDerivatives):
-    def get_module(self):
-        return Tanh
-
     def hessian_is_zero(self):
         return False
 

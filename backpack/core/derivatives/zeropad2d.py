@@ -1,13 +1,10 @@
-from torch.nn import ZeroPad2d, functional
+from torch.nn import functional
 
 from backpack.core.derivatives.basederivatives import BaseDerivatives
 from backpack.utils.ein import eingroup
 
 
 class ZeroPad2dDerivatives(BaseDerivatives):
-    def get_module(self):
-        return ZeroPad2d
-
     def hessian_is_zero(self):
         return True
 
