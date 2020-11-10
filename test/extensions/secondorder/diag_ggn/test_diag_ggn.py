@@ -28,6 +28,7 @@ def test_diag_ggn(problem):
     problem.tear_down()
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("problem", PROBLEMS, ids=IDS)
 def test_diag_ggn_mc(problem):
     """Test the MC approximation of Diagonal of Gauss-Newton
