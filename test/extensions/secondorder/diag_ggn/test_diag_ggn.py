@@ -28,6 +28,34 @@ def test_diag_ggn(problem):
     problem.tear_down()
 
 
+@pytest.mark.parametrize("problem", PROBLEMS, ids=IDS)
+def test_diag_ggn_mc_light(problem):
+    """Test the MC approximation of Diagonal of Gauss-Newton
+
+    Args:
+        problem (ExtensionsTestProblem): Problem for extension test.
+    """
+    problem.set_up()
+    torch.manual_seed(0)
+
+    backpack_res = BackpackExtensions(problem).diag_ggn()
+    backpack_res_mc_avg = []
+    for param_res in backpack_res:
+        backpack_res_mc_avg.append(torch.zeros_like(param_res))
+
+    mc_samples = 10
+    for _ in range(mc_samples):
+        backpack_diagggn_mc = BackpackExtensions(problem).diag_ggn_mc(mc_samples)
+        for i, param_res in enumerate(backpack_diagggn_mc):
+            backpack_res_mc_avg[i] += param_res
+
+    for i in range(len(backpack_res_mc_avg)):
+        backpack_res_mc_avg[i] /= mc_samples
+
+    check_sizes_and_values(backpack_res, backpack_res_mc_avg, atol=1e-1, rtol=1e-1)
+    problem.tear_down()
+
+
 @pytest.mark.slow
 @pytest.mark.parametrize("problem", PROBLEMS, ids=IDS)
 def test_diag_ggn_mc(problem):
