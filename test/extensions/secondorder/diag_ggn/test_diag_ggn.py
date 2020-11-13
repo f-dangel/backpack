@@ -62,8 +62,8 @@ def test_diag_ggn_mc(problem):
 
     backpack_res = BackpackExtensions(problem).diag_ggn()
 
-    mc_samples = 10000
+    mc_samples = 100000
     backpack_res_mc_avg = BackpackExtensions(problem).diag_ggn_mc(mc_samples)
 
-    check_sizes_and_values(backpack_res, backpack_res_mc_avg, atol=1e-2, rtol=1e-2)
+    check_sizes_and_values(backpack_res, backpack_res_mc_avg, atol=1e-3, rtol=1e-3)
     problem.tear_down()
