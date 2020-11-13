@@ -44,7 +44,7 @@ def test_diag_ggn_mc_light(problem):
     mc_samples = 1000
     backpack_res_mc_avg = BackpackExtensions(problem).diag_ggn_mc(mc_samples)
 
-    check_sizes_and_values(backpack_res, backpack_res_mc_avg, atol=1e-2, rtol=1e-2)
+    check_sizes_and_values(backpack_res, backpack_res_mc_avg, atol=1e-4, rtol=1e-1)
     problem.tear_down()
 
 
@@ -53,6 +53,9 @@ def test_diag_ggn_mc_light(problem):
 def test_diag_ggn_mc(problem):
     """Test the MC approximation of Diagonal of Gauss-Newton
        with more samples (slow version)
+
+    Note: This function runs for 100,000 mc_samples. In case this function crashes,
+    alternate approach is to loop 10 times over 10,000 samples & then average them.
 
     Args:
         problem (ExtensionsTestProblem): Problem for extension test.
@@ -65,5 +68,5 @@ def test_diag_ggn_mc(problem):
     mc_samples = 100000
     backpack_res_mc_avg = BackpackExtensions(problem).diag_ggn_mc(mc_samples)
 
-    check_sizes_and_values(backpack_res, backpack_res_mc_avg, atol=1e-3, rtol=1e-3)
+    check_sizes_and_values(backpack_res, backpack_res_mc_avg, atol=1e-5, rtol=1e-2)
     problem.tear_down()
