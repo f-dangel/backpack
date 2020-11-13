@@ -37,7 +37,6 @@ def test_diag_ggn_mc_light(problem):
         problem (ExtensionsTestProblem): Problem for extension test.
     """
     problem.set_up()
-    torch.manual_seed(0)
 
     backpack_res = BackpackExtensions(problem).diag_ggn()
 
@@ -61,7 +60,6 @@ def test_diag_ggn_mc(problem):
         problem (ExtensionsTestProblem): Problem for extension test.
     """
     problem.set_up()
-    torch.manual_seed(0)
 
     backpack_res = BackpackExtensions(problem).diag_ggn()
 
