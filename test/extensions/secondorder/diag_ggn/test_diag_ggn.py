@@ -5,7 +5,6 @@ from test.extensions.implementation.backpack import BackpackExtensions
 from test.extensions.secondorder.diag_ggn.diaggnn_settings import DiagGGN_SETTINGS
 
 import pytest
-import torch
 
 
 PROBLEMS = make_test_problems(DiagGGN_SETTINGS)
