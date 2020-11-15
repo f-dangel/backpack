@@ -1,5 +1,4 @@
 from torch import einsum
-from torch.nn import Linear
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 
@@ -14,9 +13,6 @@ class LinearDerivatives(BaseParameterDerivatives):
     * o: Output dimension
     * i: Input dimension
     """
-
-    def get_module(self):
-        return Linear
 
     def hessian_is_zero(self):
         return True

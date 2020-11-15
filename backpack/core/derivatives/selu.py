@@ -1,5 +1,4 @@
-from torch import gt, exp
-from torch.nn import SELU
+from torch import exp, gt
 
 from backpack.core.derivatives.elementwise import ElementwiseDerivatives
 
@@ -9,9 +8,6 @@ class SELUDerivatives(ElementwiseDerivatives):
 
     alpha = 1.6732632423543772848170429916717
     scale = 1.0507009873554804934193349852946
-
-    def get_module(self):
-        return SELU
 
     def hessian_is_zero(self):
         """`SELU''(x) != 0`."""

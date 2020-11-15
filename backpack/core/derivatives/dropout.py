@@ -1,13 +1,9 @@
 from torch import eq
-from torch.nn import Dropout
 
 from backpack.core.derivatives.elementwise import ElementwiseDerivatives
 
 
 class DropoutDerivatives(ElementwiseDerivatives):
-    def get_module(self):
-        return Dropout
-
     def hessian_is_zero(self):
         return True
 

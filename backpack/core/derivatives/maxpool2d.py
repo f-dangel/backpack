@@ -1,5 +1,4 @@
 from torch import zeros
-from torch.nn import MaxPool2d
 from torch.nn.functional import max_pool2d
 
 from backpack.core.derivatives.basederivatives import BaseDerivatives
@@ -7,8 +6,6 @@ from backpack.utils.ein import eingroup
 
 
 class MaxPool2DDerivatives(BaseDerivatives):
-    def get_module(self):
-        return MaxPool2d
 
     # TODO: Do not recompute but get from forward pass of module
     def get_pooling_idx(self, module):

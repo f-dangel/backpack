@@ -1,9 +1,8 @@
-"""Test configurations for `backpack.core.extensions.firstorder`
-that is shared among the following firstorder methods:
-- batch_grad
-- batch_l2_grad
-- sum_grad_sqaured
-- variance
+"""Test configurations for `backpack.core.extensions.secondorder`
+that is shared among the following secondorder methods:
+- Diagonal of Gauss Newton
+- Diagonal of Hessian
+- MC Approximation of Diagonal of Gauss Newton
 
 
 Required entries:

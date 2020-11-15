@@ -1,13 +1,9 @@
 from torch import gt
-from torch.nn import ReLU
 
 from backpack.core.derivatives.elementwise import ElementwiseDerivatives
 
 
 class ReLUDerivatives(ElementwiseDerivatives):
-    def get_module(self):
-        return ReLU
-
     def hessian_is_zero(self):
         """`ReLU''(x) = 0`."""
         return True

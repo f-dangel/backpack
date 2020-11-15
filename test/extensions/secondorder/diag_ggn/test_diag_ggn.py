@@ -5,7 +5,6 @@ from test.extensions.implementation.backpack import BackpackExtensions
 from test.extensions.secondorder.diag_ggn.diaggnn_settings import DiagGGN_SETTINGS
 
 import pytest
-import torch
 
 
 PROBLEMS = make_test_problems(DiagGGN_SETTINGS)
@@ -28,30 +27,40 @@ def test_diag_ggn(problem):
     problem.tear_down()
 
 
-@pytest.mark.montecarlo
 @pytest.mark.parametrize("problem", PROBLEMS, ids=IDS)
-def test_diag_ggn_mc(problem):
-    """Test the MC approximation of diagonal of Gauss-Newton
+def test_diag_ggn_mc_light(problem):
+    """Test the MC approximation of Diagonal of Gauss-Newton
+        with few mc_samples (light version)
 
     Args:
         problem (ExtensionsTestProblem): Problem for extension test.
     """
     problem.set_up()
-    torch.manual_seed(0)
 
     backpack_res = BackpackExtensions(problem).diag_ggn()
-    backpack_res_mc_avg = []
-    for param_res in backpack_res:
-        backpack_res_mc_avg.append(torch.zeros_like(param_res))
+    mc_samples = 1000
+    backpack_res_mc_avg = BackpackExtensions(problem).diag_ggn_mc(mc_samples)
 
-    mc_samples = 500
-    for _ in range(mc_samples):
-        backpack_diagggn_mc = BackpackExtensions(problem).diag_ggn_mc()
-        for i, param_res in enumerate(backpack_diagggn_mc):
-            backpack_res_mc_avg[i] += param_res
+    check_sizes_and_values(backpack_res, backpack_res_mc_avg, atol=1e-4, rtol=1e-1)
+    problem.tear_down()
 
-    for i in range(len(backpack_res_mc_avg)):
-        backpack_res_mc_avg[i] /= mc_samples
 
-    check_sizes_and_values(backpack_res, backpack_res_mc_avg, atol=1e-1, rtol=1e-1)
+@pytest.mark.montecarlo
+@pytest.mark.parametrize("problem", PROBLEMS, ids=IDS)
+def test_diag_ggn_mc(problem):
+    """Test the MC approximation of Diagonal of Gauss-Newton
+       with more samples (slow version)
+
+    Args:
+        problem (ExtensionsTestProblem): Problem for extension test.
+    """
+    problem.set_up()
+
+    backpack_res = BackpackExtensions(problem).diag_ggn()
+    # NOTE May crash for large networks because of large number of samples.
+    # If necessary, resolve by chunking samples into smaller batches + averaging
+    mc_samples = 100000
+    backpack_res_mc_avg = BackpackExtensions(problem).diag_ggn_mc(mc_samples)
+
+    check_sizes_and_values(backpack_res, backpack_res_mc_avg, atol=1e-5, rtol=1e-2)
     problem.tear_down()

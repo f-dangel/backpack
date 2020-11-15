@@ -6,6 +6,64 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+
+## [1.2.0] - 2020-10-26
+
+Thanks to [@sbharadwajj](https://github.com/sbharadwajj) for
+co-authoring many PRs shipped in this release.
+
+### Added
+- Deprecated `python3.5`, tested compatibility with PyTorch 1.6.0
+  [[PR](https://github.com/f-dangel/backpack/pull/88)]
+- Support first-order extensions for `Conv1d`, `Conv3d`,
+  `ConvTranspose1d`, `ConvTranspose2d`, `ConvTranspose3d`
+  - `extensions.BatchGrad`
+    [[PR](https://github.com/f-dangel/backpack/pull/92)]
+  - `extensions.BatchL2Grad`
+    [[PR](https://github.com/f-dangel/backpack/pull/100)]
+  - `extensions.SumGradSquared` and `extensions.Variance`
+    [[PR](https://github.com/f-dangel/backpack/pull/105)]
+  - Raise exceptions for unsupported exotic hyperparameters
+    [[PR1](https://github.com/f-dangel/backpack/pull/108),
+    [PR2](https://github.com/f-dangel/backpack/pull/109)]
+- New example: Backpropagating through BackPACK quantities
+  [[commit](https://github.com/f-dangel/backpack/commit/8ef33a42badded9a1d9b5013f8686bfa7feec6e7)]
+- New extensions in API: Block-diagonal curvature products
+  - Exposed via `extensions.HMP`, `extensions.GGNMP`,
+    `extensions.PCHMP`
+    [[PR](https://github.com/f-dangel/backpack/pull/73)]
+  - Examples: Hutchinson trace estimation
+    [[PR](https://github.com/f-dangel/backpack/pull/98)]
+    and  Hessian-free optimization with CG
+    [[PR](https://github.com/f-dangel/backpack/pull/99)]
+### Fixed
+
+- Add missing `zero_grad` in the diagonal GGN second-order
+  optimization example
+  [[PR](https://github.com/f-dangel/backpack/pull/101)]
+
+### Internal
+- Increased test coverage
+  - New test suite for `backpack.extensions`
+    [[PR](https://github.com/f-dangel/backpack/pull/90)]
+  - New test suite for `backpack.core`
+    [[PR](https://github.com/f-dangel/backpack/pull/75)]
+- Implemented derivatives of the following operations in
+  `backpack.core`
+  - More activation functions
+    [[PR](https://github.com/f-dangel/backpack/pull/76)]
+  - `Conv1d`, `Conv3d`
+    [[PR](https://github.com/f-dangel/backpack/pull/79)]
+  - `ConvTranspose1d`, `ConvTranspose2d`, `ConvTranspose3d`
+    [[PR](https://github.com/f-dangel/backpack/pull/84)]
+- Refactor `firstorder` extensions to share more code
+  [[PR1](https://github.com/f-dangel/backpack/pull/105),
+  [PR2](https://github.com/f-dangel/backpack/pull/105)]
+- Removed `detach`s to support differentiating through
+  quantities
+  [[PR](https://github.com/f-dangel/backpack/pull/70)]
+
+
 ## [1.1.1] - 2020-04-29
 
 ### Added
@@ -76,6 +134,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Initial release
 
 [Unreleased]: https://github.com/f-dangel/backpack/compare/v1.1.0...HEAD
+[1.2.0]: https://github.com/f-dangel/backpack/compare/1.2.0...1.1.1
 [1.1.1]: https://github.com/f-dangel/backpack/compare/1.1.0...1.1.1
 [1.1.0]: https://github.com/f-dangel/backpack/compare/1.0.1...1.1.0
 [1.0.1]: https://github.com/f-dangel/backpack/compare/1.0.0...1.0.1
