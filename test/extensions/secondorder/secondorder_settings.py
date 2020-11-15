@@ -3,12 +3,15 @@ that is shared among the following secondorder methods:
 - Diagonal of Gauss Newton
 - Diagonal of Hessian
 - MC Approximation of Diagonal of Gauss Newton
+
+
 Required entries:
     "module_fn" (callable): Contains a model constructed from `torch.nn` layers
     "input_fn" (callable): Used for specifying input function
     "target_fn" (callable): Fetches the groundtruth/target classes 
                             of regression/classification task
     "loss_function_fn" (callable): Loss function used in the model
+
 Optional entries:
     "device" [list(torch.device)]: List of devices to run the test on.
     "id_prefix" (str): Prefix to be included in the test name.

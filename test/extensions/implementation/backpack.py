@@ -39,6 +39,20 @@ class BackpackExtensions(ExtensionsImplementation):
             variances = [p.variance for p in self.problem.model.parameters()]
         return variances
 
+    def diag_ggn(self):
+        with backpack(new_ext.DiagGGNExact()):
+            _, _, loss = self.problem.forward_pass()
+            loss.backward()
+            diag_ggn = [p.diag_ggn_exact for p in self.problem.model.parameters()]
+        return diag_ggn
+
+    def diag_ggn_mc(self, mc_samples):
+        with backpack(new_ext.DiagGGNMC(mc_samples=mc_samples)):
+            _, _, loss = self.problem.forward_pass()
+            loss.backward()
+            diag_ggn_mc = [p.diag_ggn_mc for p in self.problem.model.parameters()]
+        return diag_ggn_mc
+
     def diag_h(self):
         with backpack(new_ext.DiagHessian()):
             _, _, loss = self.problem.forward_pass()
