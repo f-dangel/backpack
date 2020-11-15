@@ -51,9 +51,6 @@ def test_diag_ggn_mc(problem):
     """Test the MC approximation of Diagonal of Gauss-Newton
        with more samples (slow version)
 
-    Note: This function runs for 100,000 mc_samples. In case this function crashes,
-    alternate approach is to loop 10 times over 10,000 samples & then average them.
-
     Args:
         problem (ExtensionsTestProblem): Problem for extension test.
     """
