@@ -1,13 +1,9 @@
-from torch import gt, exp
-from torch.nn import ELU
+from torch import exp, gt
 
 from backpack.core.derivatives.elementwise import ElementwiseDerivatives
 
 
 class ELUDerivatives(ElementwiseDerivatives):
-    def get_module(self):
-        return ELU
-
     def hessian_is_zero(self):
         """`ELU''(x) ≠ 0`."""
         return False

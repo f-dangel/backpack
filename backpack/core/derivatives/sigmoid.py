@@ -1,13 +1,7 @@
-from torch.nn import Sigmoid
-
 from backpack.core.derivatives.elementwise import ElementwiseDerivatives
 
 
 class SigmoidDerivatives(ElementwiseDerivatives):
-    def get_module(self):
-        """Return `torch.nn.Sigmoid` module class."""
-        return Sigmoid
-
     def hessian_is_zero(self):
         """`σ''(x) ≠ 0`."""
         return False

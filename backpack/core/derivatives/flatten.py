@@ -1,12 +1,7 @@
-from torch.nn import Flatten
-
 from backpack.core.derivatives.basederivatives import BaseDerivatives
 
 
 class FlattenDerivatives(BaseDerivatives):
-    def get_module(self):
-        return Flatten
-
     def hessian_is_zero(self):
         return True
 
