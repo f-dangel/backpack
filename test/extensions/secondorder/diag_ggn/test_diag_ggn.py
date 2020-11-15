@@ -55,7 +55,7 @@ def test_diag_ggn_mc(problem):
         problem (ExtensionsTestProblem): Problem for extension test.
     """
     problem.set_up()
-    
+
     backpack_res = BackpackExtensions(problem).diag_ggn()
     # NOTE May crash for large networks because of large number of samples.
     # If necessary, resolve by chunking samples into smaller batches + averaging
