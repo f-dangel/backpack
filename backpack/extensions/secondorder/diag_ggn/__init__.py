@@ -15,6 +15,10 @@ from torch.nn import (
     ReLU,
     Sigmoid,
     Tanh,
+    LeakyReLU,
+    LogSigmoid,
+    ELU,
+    SELU,
     ZeroPad2d,
 )
 
@@ -75,6 +79,10 @@ class DiagGGN(BackpropExtension):
                 ReLU: activations.DiagGGNReLU(),
                 Sigmoid: activations.DiagGGNSigmoid(),
                 Tanh: activations.DiagGGNTanh(),
+                LeakyReLU: activations.DiagGGNLeakyReLU(),
+                LogSigmoid: activations.DiagGGNLogSigmoid(),
+                ELU: activations.DiagGGNELU(),
+                SELU: activations.DiagGGNSELU(),
             },
         )
 
