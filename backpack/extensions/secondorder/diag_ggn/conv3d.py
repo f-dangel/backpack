@@ -1,11 +1,11 @@
-from backpack.core.derivatives.conv2d import Conv2DDerivatives
+from backpack.core.derivatives.conv3d import Conv3DDerivatives
 from backpack.extensions.secondorder.diag_ggn.convnd import DiagGGNConvND
 
 
-class DiagGGNConv2d(DiagGGNConvND):
+class DiagGGNConv3d(DiagGGNConvND):
     def __init__(self):
         super().__init__(
-            derivatives=Conv2DDerivatives(),
-            N=2,
+            derivatives=Conv3DDerivatives(),
+            N=3,
             params=["bias", "weight"],
         )

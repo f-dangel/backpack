@@ -19,7 +19,7 @@ def get_weight_gradient_factors(input, grad_out, module, N):
     elif N == 3:
         dE_dY = eingroup("n,c,d,h,w->n,c,dhw", grad_out)
     else:
-        raise ValueError("{}-dimensional Conv. is not implemented.".format(N))
+        raise ValueError("{}-dimensional ConvTranspose is not implemented.".format(N))
 
     return X, dE_dY
 
@@ -47,7 +47,7 @@ def extract_weight_diagonal(module, input, grad_output, N):
     elif N == 3:
         grad_output_viewed = eingroup("v,n,c,d,h,w->v,n,c,dhw", grad_output)
     else:
-        raise ValueError("{}-dimensional Conv. is not implemented.".format(N))
+        raise ValueError("{}-dimensional ConvTranspose is not implemented.".format(N))
 
     AX = einsum("nkl,vnml->vnkm", (input_reshaped, grad_output_viewed))
     weight_diagonal = (AX ** 2).sum([0, 1]).transpose(0, 1)
@@ -62,12 +62,14 @@ def extract_bias_diagonal(module, sqrt, N):
     V_axis, N_axis = 0, 1
 
     if N == 1:
-        bias_diagonal = (einsum("vncl->vnc", sqrt) ** 2).sum([V_axis, N_axis])
+        einsum_eq = "vncl->vnc"
     elif N == 2:
-        bias_diagonal = (einsum("vnchw->vnc", sqrt) ** 2).sum([V_axis, N_axis])
+        einsum_eq = "vnchw->vnc"
     elif N == 3:
-        bias_diagonal = (einsum("vncdhw->vnc", sqrt) ** 2).sum([V_axis, N_axis])
-    return bias_diagonal
+        einsum_eq = "vncdhw->vnc"
+    else:
+        ValueError("{}-dimensional ConvTranspose is not implemented.".format(N))
+    return (einsum(einsum_eq, sqrt) ** 2).sum([V_axis, N_axis])
 
 
 def unfold_by_conv_transpose(input, module):
