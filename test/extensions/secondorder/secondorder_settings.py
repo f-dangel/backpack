@@ -22,7 +22,7 @@ Optional entries:
 import torch
 from test.core.derivatives.utils import classification_targets, regression_targets
 
-SECONDORDER_SETTNGS = []
+SECONDORDER_SETTINGS = []
 
 ###############################################################################
 #                                   examples                                  #
@@ -37,9 +37,9 @@ example = {
     "seed": 0,
     "id_prefix": "example",
 }
-SECONDORDER_SETTNGS.append(example)
+SECONDORDER_SETTINGS.append(example)
 
-SECONDORDER_SETTNGS += [
+SECONDORDER_SETTINGS += [
     # classification
     {
         "input_fn": lambda: torch.rand(3, 10),
@@ -72,7 +72,7 @@ SECONDORDER_SETTNGS += [
 #                         test setting: Convolutional Layers                  #
 ###############################################################################
 
-SECONDORDER_SETTNGS += [
+SECONDORDER_SETTINGS += [
     {
         "input_fn": lambda: torch.rand(3, 3, 7, 7),
         "module_fn": lambda: torch.nn.Sequential(
