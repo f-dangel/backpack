@@ -75,12 +75,14 @@ def extract_bias_diagonal(module, sqrt, N):
     V_axis, N_axis = 0, 1
 
     if N == 1:
-        bias_diagonal = (einsum("vncl->vnc", sqrt) ** 2).sum([V_axis, N_axis])
+        einsum_eq = "vncl->vnc"
     elif N == 2:
-        bias_diagonal = (einsum("vnchw->vnc", sqrt) ** 2).sum([V_axis, N_axis])
+        einsum_eq = "vnchw->vnc"
     elif N == 3:
-        bias_diagonal = (einsum("vncdhw->vnc", sqrt) ** 2).sum([V_axis, N_axis])
-    return bias_diagonal
+        einsum_eq = "vncdhw->vnc"
+    else:
+        ValueError("{}-dimensional Conv. is not implemented.".format(N))
+    return (einsum(einsum_eq, sqrt) ** 2).sum([V_axis, N_axis])
 
 
 def unfold_by_conv(input, module):
