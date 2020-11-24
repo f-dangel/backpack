@@ -34,34 +34,54 @@ def make_simple_cnn_setting(act_cls, bias):
     return dict_setting
 
 def calculate_output_shape(module, input_size):
+    """
+    
+    input: convolutional module and input shape
+    output: shape of the output
+    Function to calculate the output size for a convolutional layer
 
-    def output_formula(W, K, P, S, D):
-        try:
-            size = (float(W - D * (K - 1) - 1 + 2 * P) // float(S) ) + 1.0
-        except ZeroDivisionError:
-            size = ((W - K + 2 * P) // S ) + 1
-        return size
+    Formula for output shape:
+    Note: A very basic version of the forumla is used.
 
+    1. Convolutional layer:
+        `L_out = [(L_in - Dilation * (Kernel - 1) -1 + 2 * Padding) / Stride ] + 1`
+    2. Convolutional Transposed layer:
+        `L_out = (L_in - 1) * Stride - 2 * Padding + Dilation * (Kernel - 1) + output_padding + 1
+    
+    """
     K = module.kernel_size[0]
     P = module.padding[0]
     S = module.stride[0]
     out_channels = module.out_channels
     D = module.dilation[0]
-    # import pdb; pdb.set_trace()
+
+    # def output_formula_conv(W, K, P, S, D):
+    #     if D == 1:
+    #         U = K
+    #     else:
+    #         U = D * (K - 1) - 1
+    #     return (float(W - U + 2 * P) // float(S) ) + 1.0
+
+    def output_formula_conv(W, K, P, S, D):
+        # Note: backPack does not support `output_padding` yet
+        return (W - 1) * S - 2 * P + D * (K - 1) + 1
+
+
+
     if len(input_size[2:]) == 1:
         # Conv1d
-        L = input_size[2]
-        output_size = output_formula(L, K, P, S, D) * out_channels
+        L_in = input_size[2]
+        output_size = output_formula_conv(L_in, K, P, S, D) * out_channels
 
     elif len(input_size[2:]) == 2:
         # Conv2d
-        H, W = input_size[2], input_size[3]
-        output_size = output_formula(H, K, P, S, D) * output_formula(W, K, P, S, D) * out_channels
+        H_in, W_in = input_size[2], input_size[3]
+        output_size = output_formula_conv(H_in, K, P, S, D) * output_formula_conv(W_in, K, P, S, D) * out_channels
 
     elif len(input_size[2:]) == 3:
         # Conv3d
-        D, H, W = input_size[2], input_size[3], input_size[4]
-        output_size = output_formula(D, K, P, S, D) * output_formula(H, K, P, S, D) * output_formula(W, K, P, S, D) * out_channels
+        D_in, H_in, W_in = input_size[2], input_size[3], input_size[4]
+        output_size = output_formula_conv(D_in, K, P, S, D) * output_formula_conv(H_in, K, P, S, D) * output_formula_conv(W_in, K, P, S, D) * out_channels
     else:
         ValueError("{}-dimensional Conv. is not implemented.".format(len(input_size[2:])))
     
@@ -70,8 +90,9 @@ def calculate_output_shape(module, input_size):
 def make_setting(input_size, conv_class):
     """
     input_size: tuple of input size of (N*C*Image Size)
-    input: Activation function & Bias setting
+    conv_class: convolutional class
     return: simple CNN Network
+
     This function is used to automatically create a
     simple CNN Network consisting of CNN & Linear layer
     for different activation functions.
@@ -87,6 +108,7 @@ def make_setting(input_size, conv_class):
         )
     
     output_size = calculate_output_shape(conv_class, input_size)
+
     dict_setting = {
         "input_fn": lambda: torch.rand(input_size),
         "module_fn": lambda: make_cnn(conv_class, output_size),
