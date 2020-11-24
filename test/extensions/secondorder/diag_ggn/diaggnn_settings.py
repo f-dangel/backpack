@@ -5,9 +5,8 @@ but additional custom tests can be defined here by appending it to the list.
 """
 
 from test.extensions.secondorder.secondorder_settings import SECONDORDER_SETTINGS
-import torch
 from torch.nn import ELU, SELU
-from test.core.derivatives.utils import classification_targets
+
 from test.extensions.automated_settings import make_simple_cnn_setting
 
 DiagGGN_SETTINGS = []
