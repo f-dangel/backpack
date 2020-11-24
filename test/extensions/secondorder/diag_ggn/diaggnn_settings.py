@@ -5,15 +5,22 @@ but additional custom tests can be defined here by appending it to the list.
 """
 
 from test.extensions.secondorder.secondorder_settings import SECONDORDER_SETTINGS
+<<<<<<< HEAD
 import torch
 from torch.nn import ReLU, Sigmoid, Tanh, LogSigmoid, LeakyReLU, ELU, SELU, Conv1d, Conv2d, Conv3d, ConvTranspose1d, ConvTranspose2d, ConvTranspose3d
 
 from test.extensions.automated_settings import make_simple_cnn_setting, make_setting
 from test.core.derivatives.utils import classification_targets
+=======
+from torch.nn import ELU, SELU
+
+from test.extensions.automated_settings import make_simple_cnn_setting
+>>>>>>> 382777b83da7eeb5df15e5ab3d14edf29f2fd0ba
 
 DiagGGN_SETTINGS = []
 
 SHARED_SETTINGS = SECONDORDER_SETTINGS
+<<<<<<< HEAD
 
 
 LOCAL_SETTINGS = [
@@ -158,6 +165,9 @@ LOCAL_SETTINGS += [
     make_setting((3, 3, 2, 7, 7), Conv3d(3, 2, 2, dilation=1, padding=2, stride=3)),
     make_setting((3, 2, 3, 7, 7), Conv3d(2, 3, 2, dilation=2, padding=0))
 ]
+=======
+LOCAL_SETTINGS = []
+>>>>>>> 382777b83da7eeb5df15e5ab3d14edf29f2fd0ba
 
 
 ##############
@@ -166,7 +176,7 @@ LOCAL_SETTINGS += [
 ###############################################################################
 #                         test setting: Activation Layers                     #
 ###############################################################################
-activations = [ReLU, Sigmoid, Tanh, LeakyReLU, LogSigmoid, ELU, SELU]
+activations = [ELU, SELU]
 
 for act in activations:
     for bias in [True, False]:
