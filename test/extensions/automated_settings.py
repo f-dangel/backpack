@@ -6,7 +6,7 @@ from test.core.derivatives.utils import classification_targets
 ###
 
 
-def make_simple_cnn_setting(act_cls, bias):
+def make_simple_act_setting(act_cls, bias):
     """
     input: Activation function & Bias setting
     return: simple CNN Network
@@ -29,13 +29,13 @@ def make_simple_cnn_setting(act_cls, bias):
         "module_fn": lambda: make_simple_cnn(act_cls, bias),
         "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(),
         "target_fn": lambda: classification_targets((3,), 5),
-        "id_prefix": "automated-simple-cnn",
+        "id_prefix": "automated-simple-cnn-act",
     }
 
     return dict_setting
 
 
-def make_setting(input_size, conv_class):
+def make_simple_cnn_setting(input_size, conv_class):
     """
     input_size: tuple of input size of (N*C*Image Size)
     conv_class: convolutional class
@@ -43,7 +43,7 @@ def make_setting(input_size, conv_class):
 
     This function is used to automatically create a
     simple CNN Network consisting of CNN & Linear layer
-    for different activation functions.
+    for different convolutional layers.
     It is used to test `test.extensions`.
     """
 
