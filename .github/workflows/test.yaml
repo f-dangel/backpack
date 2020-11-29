@@ -31,6 +31,6 @@ jobs:
       run: |
         pytest -vx --run-optional-tests=montecarlo --cov=backpack/ .
     - name: Run test-light
-      if: contains('refs/heads/master refs/heads/development refs/heads/release', github.ref) != True
+      if: contains('refs/heads/master refs/heads/development refs/heads/release', github.ref) != 1
       run: |
         pytest -vx --cov=backpack/ .
