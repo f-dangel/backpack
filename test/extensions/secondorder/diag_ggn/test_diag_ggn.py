@@ -27,6 +27,11 @@ def test_diag_ggn(problem):
     problem.tear_down()
 
 
+MC_ATOL = 1e-4
+MC_LIGHT_RTOL = 1e-1
+MC_RTOL = 1e-2
+
+
 @pytest.mark.parametrize("problem", PROBLEMS, ids=IDS)
 def test_diag_ggn_mc_light(problem):
     """Test the MC approximation of Diagonal of Gauss-Newton
@@ -41,7 +46,9 @@ def test_diag_ggn_mc_light(problem):
     mc_samples = 1000
     backpack_res_mc_avg = BackpackExtensions(problem).diag_ggn_mc(mc_samples)
 
-    check_sizes_and_values(backpack_res, backpack_res_mc_avg, atol=1e-4, rtol=1e-1)
+    check_sizes_and_values(
+        backpack_res, backpack_res_mc_avg, atol=MC_ATOL, rtol=MC_LIGHT_RTOL
+    )
     problem.tear_down()
 
 
@@ -62,5 +69,7 @@ def test_diag_ggn_mc(problem):
     mc_samples = 100000
     backpack_res_mc_avg = BackpackExtensions(problem).diag_ggn_mc(mc_samples)
 
-    check_sizes_and_values(backpack_res, backpack_res_mc_avg, atol=1e-5, rtol=1e-2)
+    check_sizes_and_values(
+        backpack_res, backpack_res_mc_avg, atol=MC_ATOL, rtol=MC_RTOL
+    )
     problem.tear_down()
