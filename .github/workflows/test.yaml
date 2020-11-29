@@ -27,6 +27,6 @@ jobs:
         pip install -r requirements/test.txt
         pip install .
     - name: Run test
-        if: contains('refs/heads/master refs/heads/development refs/heads/release', github.ref)
+        if: contains('refs/heads/master', github.ref)
         run: |
           pytest -vx --run-optional-tests=montecarlo --cov=backpack/ .
