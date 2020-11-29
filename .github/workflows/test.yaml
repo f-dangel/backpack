@@ -1,0 +1,32 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - development
+      - master
+  pull_request:
+    branches:
+      - development
+      - master
+    
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python 3.7
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.7
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+      run: |
+        pip install -r requirements.txt
+        pip install -r requirements/test.txt
+        pip install .
+    - name: Run test
+      run: |
+        if [[ $TRAVIS_BRANCH = "master" || $TRAVIS_BRANCH = "development" ||  $TRAVIS_BRANCH = "release" ]]; then pytest -vx --run-optional-tests=montecarlo --cov=backpack/ .; else pytest -vx --cov=backpack/ .; fi
