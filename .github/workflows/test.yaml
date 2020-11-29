@@ -27,5 +27,9 @@ jobs:
         pip install -r requirements/test.txt
         pip install .
     - name: Run test
-      run: |
-        if [[ $TRAVIS_BRANCH = "master" || $TRAVIS_BRANCH = "development" ||  $TRAVIS_BRANCH = "release" ]]; then pytest -vx --run-optional-tests=montecarlo --cov=backpack/ .; else pytest -vx --cov=backpack/ .; fi
+        if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/development' || github.ref == 'refs/heads/release' 
+        run: |
+          pytest -vx --run-optional-tests=montecarlo --cov=backpack/ .
+        else:  
+        run: |
+          pytest -vx --cov=backpack/ .
