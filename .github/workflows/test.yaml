@@ -12,14 +12,20 @@ on:
     
 
 jobs:
-  test:
+  tests:
+    name: "Python ${{ matrix.python-version }}"
     runs-on: ubuntu-latest
+    env:
+      USING_COVERAGE: '3.6,3.8'
+
+    strategy:
+      matrix:
+        python-version: ["3.6", "3.7", "3.8", "pypy3"]      
     steps:
     - uses: actions/checkout@v1
-    - name: Set up Python 3.7
       uses: actions/setup-python@v1
       with:
-        python-version: 3.7
+        python-version: "${{ matrix.python-version }}"
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
