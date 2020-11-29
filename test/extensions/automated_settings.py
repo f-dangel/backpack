@@ -63,11 +63,11 @@ def make_simple_cnn_setting(input_size, conv_class):
     output_size = get_output_shape(conv_class, input)
 
     dict_setting = {
-        "input_fn": lambda: input,
+        "input_fn": lambda: torch.rand(input_size),
         "module_fn": lambda: make_cnn(conv_class, output_size),
         "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="sum"),
         "target_fn": lambda: classification_targets((3,), 5),
         "id_prefix": "automated-simple-cnn",
     }
-
+        
     return dict_setting
