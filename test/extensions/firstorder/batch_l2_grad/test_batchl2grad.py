@@ -35,3 +35,19 @@ def test_batch_l2_grad(problem):
 
     check_sizes_and_values(autograd_res, backpack_res)
     problem.tear_down()
+
+
+@pytest.mark.parametrize("problem", PROBLEMS, ids=IDS)
+def test_batch_l2_grad_hook(problem):
+    """Test squared ℓ₂ norm of individual gradients computed via extension hook.
+
+    Args:
+        problem (ExtensionsTestProblem): Problem for extension test.
+    """
+    problem.set_up()
+
+    backpack_res = BackpackExtensions(problem).batch_l2_grad_extension_hook()
+    autograd_res = AutogradExtensions(problem).batch_l2_grad()
+
+    check_sizes_and_values(autograd_res, backpack_res)
+    problem.tear_down()

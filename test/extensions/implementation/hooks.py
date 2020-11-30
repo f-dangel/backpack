@@ -1,4 +1,4 @@
-"""BackPACK extension hooks to transform individual gradients."""
+"""Post extension hooks to compact BackPACK quantities during backpropagation."""
 
 
 class ExtensionHookManager:
