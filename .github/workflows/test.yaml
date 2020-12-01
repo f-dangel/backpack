@@ -43,7 +43,7 @@ jobs:
 
     - name: Test coveralls - python ${{ matrix.python-version }}
       run: coveralls
-      with:
+      env:
         github-token: ${{ secrets.github_token }}
         flag-name: run-${{ matrix.python-version }}
         parallel: true
