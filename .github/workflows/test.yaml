@@ -47,14 +47,3 @@ jobs:
         github-token: ${{ secrets.github_token }}
         flag-name: run-${{ matrix.python-version }}
         parallel: true
-  coveralls:
-    name: Finish Coveralls
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-    - name: Finished
-      run: |
-        pip3 install --upgrade coveralls
-        coveralls --finish
-      env:
-        github-token: ${{ secrets.github_token }}
