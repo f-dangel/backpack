@@ -105,90 +105,90 @@ activations = [ReLU, Sigmoid, Tanh, LeakyReLU, LogSigmoid]
 SECONDORDER_SETTINGS += [
 #     # Conv1d
     make_simple_cnn_setting((3, 3, 7), Conv1d(3, 2, 2)),
-#     make_simple_cnn_setting((3, 3, 7), Conv1d(3, 2, 2, bias=False)),
-#     make_simple_cnn_setting(
-#         (3, 3, 8),
-#         Conv1d(3, 6, 2, stride=4, padding=2, padding_mode="zeros", dilation=3),
-#     ),
-#     make_simple_cnn_setting(
-#         (3, 3, 7), Conv1d(3, 2, 2, padding=2, dilation=1, stride=2)
-#     ),
-#     make_simple_cnn_setting(
-#         (3, 2, 7), Conv1d(2, 3, 2, padding=0, dilation=2, groups=1)
-#     ),
-#     # Conv2d
-#     make_simple_cnn_setting((3, 3, 7, 7), Conv2d(3, 2, 2)),
-#     make_simple_cnn_setting((3, 3, 7, 7), Conv2d(3, 2, 2, bias=False)),
-#     make_simple_cnn_setting(
-#         (3, 3, 8, 8),
-#         Conv2d(3, 6, 2, stride=4, padding=2, padding_mode="zeros", dilation=3),
-#     ),
-#     make_simple_cnn_setting(
-#         (3, 3, 7, 7), Conv2d(3, 2, 2, padding=2, dilation=1, stride=2)
-#     ),
-#     make_simple_cnn_setting(
-#         (3, 2, 7, 7), Conv2d(2, 3, 2, padding=0, dilation=2, groups=1)
-#     ),
-#     # Conv3d
-#     make_simple_cnn_setting((3, 3, 2, 7, 7), Conv3d(3, 2, 2)),
-#     make_simple_cnn_setting((3, 3, 2, 7, 7), Conv3d(3, 2, 2, bias=False)),
-#     make_simple_cnn_setting(
-#         (3, 3, 4, 8, 8),
-#         Conv3d(3, 6, 2, stride=4, padding=2, padding_mode="zeros", dilation=3),
-#     ),
-#     make_simple_cnn_setting(
-#         (3, 3, 2, 7, 7), Conv3d(3, 2, 2, dilation=1, padding=2, stride=3)
-#     ),
-#     make_simple_cnn_setting((3, 2, 3, 7, 7), Conv3d(2, 3, 2, dilation=2, padding=0)),
-#     # Conv1d
-#     make_simple_cnn_setting((3, 3, 7), ConvTranspose1d(3, 2, 2)),
-#     make_simple_cnn_setting((3, 3, 7), ConvTranspose1d(3, 2, 2, bias=False)),
-#     make_simple_cnn_setting(
-#         (3, 3, 8),
-#         ConvTranspose1d(3, 6, 2, stride=4, padding=2, padding_mode="zeros", dilation=3),
-#     ),
-#     make_simple_cnn_setting(
-#         (3, 3, 7), ConvTranspose1d(3, 2, 2, padding=2, dilation=1, stride=2)
-#     ),
-#     make_simple_cnn_setting(
-#         (3, 2, 7), ConvTranspose1d(2, 3, 2, padding=0, dilation=2, groups=1)
-#     ),
-#     # Conv2d
-#     make_simple_cnn_setting((3, 3, 7, 7), ConvTranspose2d(3, 2, 2)),
-#     make_simple_cnn_setting((3, 3, 7, 7), ConvTranspose2d(3, 2, 2, bias=False)),
-#     make_simple_cnn_setting(
-#         (3, 3, 8, 8),
-#         ConvTranspose2d(3, 6, 2, stride=4, padding=2, padding_mode="zeros", dilation=3),
-#     ),
-#     make_simple_cnn_setting(
-#         (3, 3, 7, 7), ConvTranspose2d(3, 2, 2, padding=2, dilation=1, stride=2)
-#     ),
-#     make_simple_cnn_setting(
-#         (3, 2, 7, 7), ConvTranspose2d(2, 3, 2, padding=0, dilation=2, groups=1)
-#     ),
-#     # Conv3d
-#     make_simple_cnn_setting((3, 3, 2, 7, 7), ConvTranspose3d(3, 2, 2)),
-#     make_simple_cnn_setting((3, 3, 2, 7, 7), ConvTranspose3d(3, 2, 2, bias=False)),
-#     make_simple_cnn_setting(
-#         (3, 3, 2, 5, 5), ConvTranspose3d(3, 2, 2, dilation=1, padding=2, stride=3)
-#     ),
-#     make_simple_cnn_setting(
-#         (3, 2, 3, 7, 7), ConvTranspose3d(2, 3, 2, dilation=2, padding=0)
-#     ),
+    make_simple_cnn_setting((3, 3, 7), Conv1d(3, 2, 2, bias=False)),
+    make_simple_cnn_setting(
+        (3, 3, 8),
+        Conv1d(3, 6, 2, stride=4, padding=2, padding_mode="zeros", dilation=3),
+    ),
+    make_simple_cnn_setting(
+        (3, 3, 7), Conv1d(3, 2, 2, padding=2, dilation=1, stride=2)
+    ),
+    make_simple_cnn_setting(
+        (3, 2, 7), Conv1d(2, 3, 2, padding=0, dilation=2, groups=1)
+    ),
+    # Conv2d
+    make_simple_cnn_setting((3, 3, 7, 7), Conv2d(3, 2, 2)),
+    make_simple_cnn_setting((3, 3, 7, 7), Conv2d(3, 2, 2, bias=False)),
+    make_simple_cnn_setting(
+        (3, 3, 8, 8),
+        Conv2d(3, 6, 2, stride=4, padding=2, padding_mode="zeros", dilation=3),
+    ),
+    make_simple_cnn_setting(
+        (3, 3, 7, 7), Conv2d(3, 2, 2, padding=2, dilation=1, stride=2)
+    ),
+    make_simple_cnn_setting(
+        (3, 2, 7, 7), Conv2d(2, 3, 2, padding=0, dilation=2, groups=1)
+    ),
+    # Conv3d
+    make_simple_cnn_setting((3, 3, 2, 7, 7), Conv3d(3, 2, 2)),
+    make_simple_cnn_setting((3, 3, 2, 7, 7), Conv3d(3, 2, 2, bias=False)),
+    make_simple_cnn_setting(
+        (3, 3, 4, 8, 8),
+        Conv3d(3, 6, 2, stride=4, padding=2, padding_mode="zeros", dilation=3),
+    ),
+    make_simple_cnn_setting(
+        (3, 3, 2, 7, 7), Conv3d(3, 2, 2, dilation=1, padding=2, stride=3)
+    ),
+    make_simple_cnn_setting((3, 2, 3, 7, 7), Conv3d(2, 3, 2, dilation=2, padding=0)),
+    # Conv1d
+    make_simple_cnn_setting((3, 3, 7), ConvTranspose1d(3, 2, 2)),
+    make_simple_cnn_setting((3, 3, 7), ConvTranspose1d(3, 2, 2, bias=False)),
+    make_simple_cnn_setting(
+        (3, 3, 8),
+        ConvTranspose1d(3, 6, 2, stride=4, padding=2, padding_mode="zeros", dilation=3),
+    ),
+    make_simple_cnn_setting(
+        (3, 3, 7), ConvTranspose1d(3, 2, 2, padding=2, dilation=1, stride=2)
+    ),
+    make_simple_cnn_setting(
+        (3, 2, 7), ConvTranspose1d(2, 3, 2, padding=0, dilation=2, groups=1)
+    ),
+    # Conv2d
+    make_simple_cnn_setting((3, 3, 7, 7), ConvTranspose2d(3, 2, 2)),
+    make_simple_cnn_setting((3, 3, 7, 7), ConvTranspose2d(3, 2, 2, bias=False)),
+    make_simple_cnn_setting(
+        (3, 3, 8, 8),
+        ConvTranspose2d(3, 6, 2, stride=4, padding=2, padding_mode="zeros", dilation=3),
+    ),
+    make_simple_cnn_setting(
+        (3, 3, 7, 7), ConvTranspose2d(3, 2, 2, padding=2, dilation=1, stride=2)
+    ),
+    make_simple_cnn_setting(
+        (3, 2, 7, 7), ConvTranspose2d(2, 3, 2, padding=0, dilation=2, groups=1)
+    ),
+    # Conv3d
+    make_simple_cnn_setting((3, 3, 2, 7, 7), ConvTranspose3d(3, 2, 2)),
+    make_simple_cnn_setting((3, 3, 2, 7, 7), ConvTranspose3d(3, 2, 2, bias=False)),
+    make_simple_cnn_setting(
+        (3, 3, 2, 5, 5), ConvTranspose3d(3, 2, 2, dilation=1, padding=2, stride=3)
+    ),
+    make_simple_cnn_setting(
+        (3, 2, 3, 7, 7), ConvTranspose3d(2, 3, 2, dilation=2, padding=0)
+    ),
 ]
 # import pdb; pdb.set_trace()
 SECONDORDER_SETTINGS += [
-    {
-            "input_fn": lambda: torch.rand(3, 3, 7),
-            "module_fn": lambda: torch.nn.Sequential(
-                torch.nn.Conv1d(3, 2, 2),
-                torch.nn.ReLU(),
-                torch.nn.Flatten(),
-                torch.nn.Linear(12, 5),
-            ),
-            "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="sum"),
-            "target_fn": lambda: classification_targets((3,), 5),
-        },
+    # {
+    #         "input_fn": lambda: torch.rand(3, 3, 7),
+    #         "module_fn": lambda: torch.nn.Sequential(
+    #             torch.nn.Conv1d(3, 2, 2),
+    #             torch.nn.ReLU(),
+    #             torch.nn.Flatten(),
+    #             torch.nn.Linear(12, 5),
+    #         ),
+    #         "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="sum"),
+    #         "target_fn": lambda: classification_targets((3,), 5),
+    #     },
         # {
         #     "input_fn": lambda: torch.rand(3, 3, 7),
         #     "module_fn": lambda: torch.nn.Sequential(
@@ -460,4 +460,3 @@ SECONDORDER_SETTINGS += [
         #     "target_fn": lambda: classification_targets((2,), 5),
         # },
 ]
-import pdb; pdb.set_trace()
