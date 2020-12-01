@@ -1,5 +1,9 @@
 from test.extensions.implementation.base import ExtensionsImplementation
-from test.extensions.implementation.hooks import BatchL2GradHook, ExtensionHookManager
+from test.extensions.implementation.hooks import (
+    BatchL2GradHook,
+    ExtensionHookManager,
+    SumGradSquaredHook,
+)
 
 import backpack.extensions as new_ext
 from backpack import backpack
@@ -40,6 +44,15 @@ class BackpackExtensions(ExtensionsImplementation):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
             sgs = [p.sum_grad_squared for p in self.problem.model.parameters()]
+        return sgs
+
+    def sgs_extension_hook(self):
+        """Individual gradient second moment via extension hook."""
+        hook = ExtensionHookManager(SumGradSquaredHook())
+        with backpack(new_ext.BatchGrad(), extension_hook=hook):
+            _, _, loss = self.problem.forward_pass()
+            loss.backward()
+            sgs = [p.sum_grad_squared_hook for p in self.problem.model.parameters()]
         return sgs
 
     def variance(self):
