@@ -41,10 +41,8 @@ jobs:
       run: |
         pytest -vx --cov=backpack/ .
 
-    - name: Test ${{ matrix.python-version }}
-      run: make test-coverage
-    - name: Coveralls Parallel
-      uses: coverallsapp/github-action@master
+    - name: Test coveralls - python ${{ matrix.python-version }}
+      uses: f-dangel/backpack@github.ref
       with:
         github-token: ${{ secrets.github_token }}
         flag-name: run-${{ matrix.python-version }}
