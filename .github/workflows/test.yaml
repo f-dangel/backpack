@@ -47,13 +47,3 @@ jobs:
         github-token: ${{ secrets.github_token }}
         flag-name: run-${{ matrix.python-version }}
         parallel: true
-
-  finish:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-    - name: Coveralls Finished
-      uses: f-dangel/backpack@v1
-      with:
-        github-token: ${{ secrets.github_token }}
-        parallel-finished: true
