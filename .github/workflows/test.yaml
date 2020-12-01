@@ -42,8 +42,18 @@ jobs:
         pytest -vx --cov=backpack/ .
 
     - name: Test coveralls - python ${{ matrix.python-version }}
-      uses: f-dangel/backpack@development
+      uses: coverallsapp/github-action@master
       with:
         github-token: ${{ secrets.github_token }}
         flag-name: run-${{ matrix.python-version }}
         parallel: true
+
+    finish:
+      needs: test
+      runs-on: ubuntu-latest
+      steps:
+      - name: Coveralls Finished
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.github_token }}
+          parallel-finished: true
