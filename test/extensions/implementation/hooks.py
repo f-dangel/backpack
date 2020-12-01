@@ -90,7 +90,7 @@ class ParameterHook:
 class BatchL2GradHook(ParameterHook):
     """Computes individual gradient squared ℓ₂ norms from individual gradients.
 
-    Requires access to a parameter's ``.batch_grad`` field which is set by the
+    Requires access to a parameter's ``.grad_batch`` field which is set by the
     ``BatchGrad`` extension.
     """
 
@@ -101,3 +101,19 @@ class BatchL2GradHook(ParameterHook):
         """Extract individual gradient squared ℓ₂ norms from individual gradients."""
         feature_dims = [i + 1 for i in range(param.dim())]
         return (param.grad_batch ** 2).sum(feature_dims)
+
+
+class SumGradSquaredHook(ParameterHook):
+    """Computes individual gradient second moment from individual gradients.
+
+    Requires access to a parameter's ``.grad_batch`` field which is set by the
+    ``BatchGrad`` extension.
+    """
+
+    def __init__(self, savefield="sum_grad_squared_hook"):
+        super().__init__(savefield=savefield)
+
+    def hook(self, param):
+        """Extract individual gradient squared ℓ₂ norms from individual gradients."""
+        N_axis = 0
+        return (param.grad_batch ** 2).sum(N_axis)
