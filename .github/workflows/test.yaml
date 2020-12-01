@@ -42,7 +42,7 @@ jobs:
         pytest -vx --cov=backpack/ .
 
     - name: Test coveralls - python ${{ matrix.python-version }}
-      uses: coverallsapp/github-action@master
+      uses: f-dangel/backpack@master
       with:
         github-token: ${{ secrets.github_token }}
         flag-name: run-${{ matrix.python-version }}
