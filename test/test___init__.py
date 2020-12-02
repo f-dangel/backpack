@@ -46,7 +46,7 @@ def test_no_io_should_store_io():
     assert no_io.should_store_io()
 
 
-def memory_leak(use_no_io, device):
+def memory_leak(device, context=None):
     """Reproduce memory leak due to forward pass through a model with non-freed IO.
 
     Raises:
@@ -73,7 +73,8 @@ def memory_leak(use_no_io, device):
     memory_leak_threshold_mb = 1
     memory_leak_threshold = memory_leak_threshold_mb * 2 ** 20
 
-    context = no_io if use_no_io else contextlib.nullcontext
+    if context is None:
+        context = contextlib.nullcontext
 
     for _ in range(steps):
         lossfunc = torch.nn.CrossEntropyLoss().to(device)
@@ -88,22 +89,27 @@ def memory_leak(use_no_io, device):
         memory = pytorch_current_memory_usage()
         if memory - memory_init > memory_leak_threshold:
             raise RuntimeError(
-                f"Memory leak detected: use_no_io={use_no_io}, device={device}"
+                f"Memory leak detected: context={context}, device={device}"
             )
 
 
 @pytest.mark.parametrize("device", DEVICES, ids=DEVICES_ID)
 def test_memory_leak(device):
     with pytest.raises(RuntimeError):
-        memory_leak(use_no_io=False, device=device)
+        memory_leak(device=device, context=None)
+
+
+@pytest.mark.parametrize("device", DEVICES, ids=DEVICES_ID)
+def test_no_grad_resolves_memory_leak(device):
+    memory_leak(device=device, context=torch.no_grad)
 
 
 @pytest.mark.parametrize("device", DEVICES, ids=DEVICES_ID)
 def test_no_io_resolves_memory_leak(device):
-    memory_leak(use_no_io=True, device=device)
+    memory_leak(device=device, context=no_io)
 
 
-def memory_after_forward(use_no_io, device):
+def memory_after_forward(device, context=None):
     """Return memory consumed by the forward pass of an extended model."""
     memory_init = pytorch_current_memory_usage()
 
@@ -123,7 +129,8 @@ def memory_after_forward(use_no_io, device):
     lossfunc = torch.nn.CrossEntropyLoss().to(device)
     lossfunc = extend(lossfunc)
 
-    context = no_io if use_no_io else contextlib.nullcontext
+    if context is None:
+        context = contextlib.nullcontext
 
     with context():
         lossfunc(model(X), y)
@@ -134,7 +141,16 @@ def memory_after_forward(use_no_io, device):
 @pytest.mark.parametrize("device", DEVICES, ids=DEVICES_ID)
 def test_no_io_save_memory(device):
     """Verify that ``no_io`` requires less memory."""
-    with_io = memory_after_forward(use_no_io=False, device=device)
-    without_io = memory_after_forward(use_no_io=True, device=device)
+    with_io = memory_after_forward(device=device, context=None)
+    without_io = memory_after_forward(device=device, context=no_io)
 
     assert with_io > without_io, f"With IO: {with_io}, without_io: {without_io}"
+
+
+@pytest.mark.parametrize("device", DEVICES, ids=DEVICES_ID)
+def test_no_grad_save_memory(device):
+    """Verify that ``no_io`` requires less memory."""
+    with_grad = memory_after_forward(device=device, context=None)
+    without_grad = memory_after_forward(device=device, context=torch.no_grad)
+
+    assert with_grad > without_grad, f"With IO: {with_grad}, without_io: {without_grad}"

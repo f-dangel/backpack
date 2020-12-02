@@ -110,25 +110,14 @@ def hook_store_io(module, input, output):
         input: List of input tensors
         output: output tensor
     """
-    if no_io.should_store_io():
+    if no_io.should_store_io() and torch.is_grad_enabled():
         for i in range(len(input)):
             setattr(module, "input{}".format(i), input[i])
-        module.output = output
-
-
-def hook_store_shapes(module, input, output):
-    """Store dimensionality of output as buffer.
-
-    Args:
-        module: module
-        input: List of input tensors shapes
-        output: output tensor shape
-    """
-    for i in range(len(input)):
-        module.register_buffer(
-            "input{}_shape".format(i), torch.IntTensor([*input[i].size()])
-        )
-    module.register_buffer("output_shape", torch.IntTensor([*output.size()]))
+            setattr(
+                module, "input{}_shape".format(i), torch.IntTensor([*input[i].size()])
+            )
+        setattr(module, "output", output)
+        setattr(module, "output_shape", torch.IntTensor([*output.size()]))
 
 
 def memory_cleanup(module):
@@ -187,7 +176,6 @@ def extend(module: torch.nn.Module, debug=False):
     module_was_already_extended = getattr(module, "_backpack_extend", False)
     if not module_was_already_extended:
         CTX.add_hook_handle(module.register_forward_hook(hook_store_io))
-        CTX.add_hook_handle(module.register_forward_hook(hook_store_shapes))
         CTX.add_hook_handle(module.register_backward_hook(hook_run_extensions))
         module._backpack_extend = True
 
