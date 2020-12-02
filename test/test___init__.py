@@ -7,7 +7,7 @@ from test.core.derivatives.utils import classification_targets, get_available_de
 import pytest
 import torch
 
-from backpack import extend, no_io
+from backpack import extend, disable
 
 DEVICES = get_available_devices()
 DEVICES_ID = [str(dev) for dev in DEVICES]
@@ -21,7 +21,7 @@ def test_no_io():
     module = torch.nn.Linear(5, 2)
     extend(module)
 
-    with no_io():
+    with disable():
         module(input)
         assert not hasattr(module, "input0")
         assert not hasattr(module, "output")
@@ -33,17 +33,17 @@ def test_no_io():
 
 def test_no_io_should_store_io():
     """Check IO tracking is disabled by ``no_io`` and nesting ``no_io``."""
-    assert no_io.should_store_io()
+    assert disable.should_store_io()
 
-    with no_io():
-        assert not no_io.should_store_io()
+    with disable():
+        assert not disable.should_store_io()
 
-        with no_io():
-            assert not no_io.should_store_io()
+        with disable():
+            assert not disable.should_store_io()
 
-        assert not no_io.should_store_io()
+        assert not disable.should_store_io()
 
-    assert no_io.should_store_io()
+    assert disable.should_store_io()
 
 
 def memory_leak(device, context=None):
@@ -106,7 +106,7 @@ def test_no_grad_resolves_memory_leak(device):
 
 @pytest.mark.parametrize("device", DEVICES, ids=DEVICES_ID)
 def test_no_io_resolves_memory_leak(device):
-    memory_leak(device=device, context=no_io)
+    memory_leak(device=device, context=disable)
 
 
 def memory_after_forward(device, context=None):
@@ -142,7 +142,7 @@ def memory_after_forward(device, context=None):
 def test_no_io_save_memory(device):
     """Verify that ``no_io`` requires less memory."""
     with_io = memory_after_forward(device=device, context=None)
-    without_io = memory_after_forward(device=device, context=no_io)
+    without_io = memory_after_forward(device=device, context=disable)
 
     assert with_io > without_io, f"With IO: {with_io}, without_io: {without_io}"
 
