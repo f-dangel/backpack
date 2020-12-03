@@ -49,6 +49,7 @@ def make_simple_cnn_setting(input_size, conv_class, conv_params):
     """
 
     def make_cnn(conv_class, output_size, conv_params):
+        """Note: output class size is assumed to be 5"""
         return torch.nn.Sequential(
             conv_class(*conv_params),
             torch.nn.ReLU(),
@@ -57,6 +58,7 @@ def make_simple_cnn_setting(input_size, conv_class, conv_params):
         )
 
     def get_output_shape(module, module_params, input):
+        """ returns the output shape for a given layer"""
         output = module(*module_params)(input)
         return output.numel() // output.shape[0]
 
