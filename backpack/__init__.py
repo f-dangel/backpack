@@ -45,14 +45,14 @@ class backpack:
             args: [BackpropExtension]
                 The extensions to activate for the backward pass.
             extension_hook: Callable, optional (default: None)
-                Function called on each module after all BackPACK extensions have run. 
-                Takes a ``torch.nn.Module`` and returns ``None``. 
-                
+                Function called on each module after all BackPACK extensions have run.
+                Takes a ``torch.nn.Module`` and returns ``None``.
+
                 Can be used to reduce memory overhead if the goal is to compute
                 transformations of BackPACK quantities. Information can be compacted
                 during a backward pass and obsolete tensors be freed manually (``del``).
 
-                Note: 
+                Note:
                     If the callable iterates over the module parameters, it may iterate
                     multiple times over some since the hook acts on the modular level.
             debug: Bool, optional (default: False)
