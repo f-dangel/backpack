@@ -34,22 +34,12 @@ def make_simple_act_setting(act_cls, bias):
 
     return dict_setting
 
-def make_cnn_factory(conv_class, output_size):
 
-    def make_cnn():
-        return torch.nn.Sequential(
-            conv_class,
-            torch.nn.ReLU(),
-            torch.nn.Flatten(),
-            torch.nn.Linear(output_size, 5),
-        )
-
-    return make_cnn
-
-def make_simple_cnn_setting(input_size, conv_class):
+def make_simple_cnn_setting(input_size, conv_class, conv_params):
     """
     input_size: tuple of input size of (N*C*Image Size)
     conv_class: convolutional class
+    conv_params: configurations for convolutional class
     return: simple CNN Network
 
     This function is used to automatically create a
@@ -58,20 +48,27 @@ def make_simple_cnn_setting(input_size, conv_class):
     It is used to test `test.extensions`.
     """
 
-    def get_output_shape(module, input):
-        output = module(input)
+    def make_cnn(conv_class, output_size, conv_params):
+        return torch.nn.Sequential(
+            conv_class(*conv_params),
+            torch.nn.ReLU(),
+            torch.nn.Flatten(),
+            torch.nn.Linear(output_size, 5),
+        )
+
+    def get_output_shape(module, module_params, input):
+        output = module(*module_params)(input)
         return output.numel() // output.shape[0]
 
     input = torch.rand(input_size)
-    output_size = get_output_shape(conv_class, input)
+    output_size = get_output_shape(conv_class, conv_params, input)
 
-    
     dict_setting = {
         "input_fn": lambda: torch.rand(input_size),
-        "module_fn": make_cnn_factory(conv_class, output_size),
+        "module_fn": lambda: make_cnn(conv_class, output_size, conv_params),
         "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="sum"),
         "target_fn": lambda: classification_targets((3,), 5),
         "id_prefix": "automated-simple-cnn",
     }
-        
+
     return dict_setting
