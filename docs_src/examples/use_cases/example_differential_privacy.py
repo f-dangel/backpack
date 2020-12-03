@@ -51,7 +51,7 @@ from torch.optim import Optimizer
 
 from backpack import backpack, extend
 from backpack.extensions import BatchGrad, BatchL2Grad
-from backpack.utils.examples import get_mnist_dataloder
+from backpack.utils.examples import get_mnist_dataloader
 
 NUM_EPOCHS = 1
 PRINT_EVERY = 50
@@ -109,7 +109,7 @@ def make_small_cnn(outputs=10, channels=(16, 32), fc_dim=32, kernels=(8, 4)):
     )
 
 
-mnist_dataloader = get_mnist_dataloder(batch_size=BATCH_SIZE)
+mnist_dataloader = get_mnist_dataloader(batch_size=BATCH_SIZE)
 
 model = make_small_cnn().to(DEVICE)
 loss_function = nn.CrossEntropyLoss().to(DEVICE)
