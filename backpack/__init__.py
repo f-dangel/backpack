@@ -53,12 +53,12 @@ class backpack:
                 during a backward pass and obsolete tensors be freed manually (``del``).
 
                 Note:
-                    If the callable iterates over the ``module.parameters()``, the same 
-                    parameter may be seen multiple times across calls. This happens 
+                    If the callable iterates over the ``module.parameters()``, the same
+                    parameter may be seen multiple times across calls. This happens
                     if the parameters are part of multiple modules.
-                    For example, the parameters of a `torch.nn.Linear` module in 
-                    ``model = torch.nn.Sequential(torch.nn.Linear(...))`` are part of both 
-                    the ``Linear`` and the ``Sequential``.
+                    For example, the parameters of a `torch.nn.Linear` module in
+                    ``model = torch.nn.Sequential(torch.nn.Linear(...))`` are part of
+                    both the ``Linear`` and the ``Sequential``.
             debug: Bool, optional (default: False)
                 If true, will print debug messages during the backward pass.
         """
