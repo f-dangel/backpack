@@ -13,9 +13,7 @@ DiagGGN_SETTINGS = []
 
 SHARED_SETTINGS = SECONDORDER_SETTINGS
 
-
 LOCAL_SETTINGS = []
-
 
 ###############################################################################
 #                         test setting: Activation Layers                     #
