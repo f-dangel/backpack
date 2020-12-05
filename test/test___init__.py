@@ -1,16 +1,30 @@
 """Tests for `backpack.__init__.py`."""
 
-import contextlib
 from test import pytorch_current_memory_usage
 from test.core.derivatives.utils import classification_targets, get_available_devices
 
 import pytest
 import torch
 
-from backpack import extend, disable
+from backpack import disable, extend
 
 DEVICES = get_available_devices()
 DEVICES_ID = [str(dev) for dev in DEVICES]
+
+
+# TODO Use contextlib.nullcontext after dropping Python 3.6 support
+class nullcontext:
+    """Empty context.
+
+    ``contextlib.nullcontext`` is available from Python 3.7 onwards.
+    The tests are also executed on Python 3.6.
+    """
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, type, value, traceback):
+        pass
 
 
 def test_no_io():
@@ -74,7 +88,7 @@ def memory_leak(device, context=None):
     memory_leak_threshold = memory_leak_threshold_mb * 2 ** 20
 
     if context is None:
-        context = contextlib.nullcontext
+        context = nullcontext
 
     for _ in range(steps):
         lossfunc = torch.nn.CrossEntropyLoss().to(device)
@@ -130,7 +144,7 @@ def memory_after_forward(device, context=None):
     lossfunc = extend(lossfunc)
 
     if context is None:
-        context = contextlib.nullcontext
+        context = nullcontext
 
     with context():
         lossfunc(model(X), y)
