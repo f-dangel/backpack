@@ -125,8 +125,8 @@ def hook_store_io(module, input, output):
             setattr(
                 module, "input{}_shape".format(i), torch.IntTensor([*input[i].size()])
             )
-        setattr(module, "output", output)
-        setattr(module, "output_shape", torch.IntTensor([*output.size()]))
+        module.output = output
+        module.output_shape = torch.IntTensor([*output.size()])
 
 
 def memory_cleanup(module):
