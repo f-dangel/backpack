@@ -106,7 +106,7 @@ class MaxPool2DDerivatives(BaseDerivatives):
         return result
 
     def __zero_for_jac_t(self, module, V, device):
-        N, C_out, _, _ = module.output_shape
+        N, C_out, _, _ = module.output.shape
         _, _, H_in, W_in = module.input0.size()
 
         shape = (V, N, C_out, H_in * W_in)

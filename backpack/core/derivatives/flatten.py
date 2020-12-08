@@ -27,4 +27,4 @@ class FlattenDerivatives(BaseDerivatives):
         hook execution, see the discussion at https://discuss.pytorch.org/t/
         backward-hooks-changing-order-of-execution-in-nn-sequential/12447/4 .
         """
-        return tuple(module.input0_shape) == tuple(module.output_shape)
+        return tuple(module.input0.shape) == tuple(module.output.shape)
