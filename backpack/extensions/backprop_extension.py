@@ -2,6 +2,8 @@ import warnings
 
 from torch.nn import Sequential
 
+from backpack.utils.hooks import no_op
+
 FAIL_ERROR = "ERROR"
 FAIL_WARN = "WARN"
 FAIL_SILENT = "SILENT"
@@ -56,9 +58,6 @@ class BackpropExtension:
 
     def __get_module_extension(self, module):
         module_extension = self.__module_extensions.get(module.__class__)
-
-        def no_op(*args):
-            return None
 
         if module_extension is None:
 
