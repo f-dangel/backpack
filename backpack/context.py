@@ -1,3 +1,6 @@
+from backpack.utils.hooks import no_op
+
+
 class CTX:
     """
     Global Class holding the configuration of the backward pass
@@ -5,6 +8,7 @@ class CTX:
 
     active_exts = tuple()
     debug = False
+    extension_hook = no_op
 
     @staticmethod
     def set_active_exts(active_exts):
@@ -42,3 +46,11 @@ class CTX:
     @staticmethod
     def set_debug(debug):
         CTX.debug = debug
+
+    @staticmethod
+    def get_extension_hook():
+        return CTX.extension_hook
+
+    @staticmethod
+    def set_extension_hook(extension_hook):
+        CTX.extension_hook = extension_hook

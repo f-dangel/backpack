@@ -19,7 +19,7 @@ def load_mnist_dataset():
     return mnist_dataset
 
 
-def get_mnist_dataloder(batch_size=64, shuffle=True):
+def get_mnist_dataloader(batch_size=64, shuffle=True):
     """Returns a dataloader for MNIST"""
     return torch.utils.data.dataloader.DataLoader(
         load_mnist_dataset(),
@@ -30,6 +30,6 @@ def get_mnist_dataloder(batch_size=64, shuffle=True):
 
 def load_one_batch_mnist(batch_size=64, shuffle=True):
     """Return a single batch (inputs, labels) of MNIST data."""
-    dataloader = get_mnist_dataloder(batch_size, shuffle)
+    dataloader = get_mnist_dataloader(batch_size, shuffle)
     X, y = next(iter(dataloader))
     return X, y

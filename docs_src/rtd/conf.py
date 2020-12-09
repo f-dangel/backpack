@@ -17,8 +17,8 @@
 # -- Project information -----------------------------------------------------
 
 project = "BackPACK"
-copyright = ""
-author = ""
+copyright = "2019, F. Dangel, F. Kunstner"
+author = "F. Dangel, F. Kunstner"
 
 # The full version, including alpha/beta/rc tags
 release = "1.2.0"

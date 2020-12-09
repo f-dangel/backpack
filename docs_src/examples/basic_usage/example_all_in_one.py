@@ -10,7 +10,7 @@ on a linear model for MNIST.
 # %%
 # Let's start by loading some dummy data and extending the model
 
-from torch import rand
+from torch import allclose, rand
 from torch.nn import CrossEntropyLoss, Flatten, Linear, Sequential
 
 from backpack import backpack, extend
@@ -33,7 +33,7 @@ from backpack.utils.examples import load_one_batch_mnist
 
 X, y = load_one_batch_mnist(batch_size=512)
 
-model = Sequential(Flatten(), Linear(784, 10),)
+model = Sequential(Flatten(), Linear(784, 10))
 lossfunc = CrossEntropyLoss()
 
 model = extend(model)
