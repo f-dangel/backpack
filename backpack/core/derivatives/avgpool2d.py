@@ -70,7 +70,7 @@ class AvgPool2DDerivatives(BaseDerivatives):
 
     def __check_jmp_out_as_pool(self, mat, jmp_as_pool, module):
         V = mat.size(0)
-        N, C_out, H_out, W_out = module.output_shape
+        N, C_out, H_out, W_out = module.output.shape
         assert jmp_as_pool.shape == (V * N * C_out, 1, H_out, W_out)
 
     def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
@@ -106,5 +106,5 @@ class AvgPool2DDerivatives(BaseDerivatives):
 
     def __check_jmp_in_as_pool(self, mat, jmp_as_pool, module):
         V = mat.size(0)
-        N, C_in, H_in, W_in = module.input0_shape
+        N, C_in, H_in, W_in = module.input0.shape
         assert jmp_as_pool.shape == (V * N * C_in, 1, H_in, W_in)
