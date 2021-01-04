@@ -13,6 +13,7 @@ from torch.nn import (
     LeakyReLU,
     Linear,
     LogSigmoid,
+    MaxPool1d,
     MaxPool2d,
     MSELoss,
     ReLU,
@@ -34,6 +35,7 @@ from .elu import ELUDerivatives
 from .leakyrelu import LeakyReLUDerivatives
 from .linear import LinearDerivatives
 from .logsigmoid import LogSigmoidDerivatives
+from .maxpool1d import MaxPool1DDerivatives
 from .maxpool2d import MaxPool2DDerivatives
 from .mseloss import MSELossDerivatives
 from .relu import ReLUDerivatives
@@ -48,6 +50,7 @@ derivatives_for = {
     Conv2d: Conv2DDerivatives,
     Conv3d: Conv3DDerivatives,
     AvgPool2d: AvgPool2DDerivatives,
+    MaxPool1d: MaxPool1DDerivatives,
     MaxPool2d: MaxPool2DDerivatives,
     ZeroPad2d: ZeroPad2dDerivatives,
     Dropout: DropoutDerivatives,

@@ -42,6 +42,18 @@ POOLING_SETTINGS.append(example)
 
 POOLING_SETTINGS += [
     {
+        "module_fn": lambda: torch.nn.MaxPool1d(kernel_size=2, stride=2, padding=1),
+        "input_fn": lambda: torch.rand(size=(1, 3, 8)),
+    },
+    {
+        "module_fn": lambda: torch.nn.MaxPool1d(kernel_size=2, ceil_mode=True),
+        "input_fn": lambda: torch.rand(size=(1, 3, 8)),
+    },
+    {
+        "module_fn": lambda: torch.nn.MaxPool1d(kernel_size=3, stride=2, dilation=3),
+        "input_fn": lambda: torch.rand(size=(1, 3, 9)),
+    },
+    {
         "module_fn": lambda: torch.nn.MaxPool2d(kernel_size=2, stride=2, padding=1),
         "input_fn": lambda: torch.rand(size=(1, 3, 8, 8)),
     },
