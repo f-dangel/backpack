@@ -1,6 +1,6 @@
 from backpack.core.derivatives.maxpoolnd import MaxPoolNDDerivatives
-from backpack.utils.ein import eingroup
 from torch import zeros
+
 
 class MaxPool2DDerivatives(MaxPoolNDDerivatives):
     def __init__(self):

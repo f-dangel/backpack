@@ -15,7 +15,9 @@ class MaxPoolNDDerivatives(BaseDerivatives):
         elif self.N == 3:
             self.maxpool = max_pool3d
         else:
-            raise ValueError("{}-dimensional Maxpool. is not implemented.".format(self.N))
+            raise ValueError(
+                "{}-dimensional Maxpool. is not implemented.".format(self.N)
+            )
 
     # TODO: Do not recompute but get from forward pass of module
     def get_pooling_idx(self, module):
@@ -41,7 +43,9 @@ class MaxPoolNDDerivatives(BaseDerivatives):
         elif self.N == 3:
             mat_as_pool = eingroup("v,n,c,d,h,w->v,n,c,dhw", mat)
         else:
-            raise ValueError("{}-dimensional Maxpool. is not implemented.".format(self.N))
+            raise ValueError(
+                "{}-dimensional Maxpool. is not implemented.".format(self.N)
+            )
         jmp_as_pool = self.__apply_jacobian_of(module, mat_as_pool)
         return self.reshape_like_output(jmp_as_pool, module)
 
@@ -56,11 +60,7 @@ class MaxPoolNDDerivatives(BaseDerivatives):
         pool_idx = self.get_pooling_idx(module)
         V_axis = 0
         if self.N == 1:
-            return (
-                pool_idx
-                .unsqueeze(V_axis)
-                .expand(V, -1, -1, -1)
-            )
+            return pool_idx.unsqueeze(V_axis).expand(V, -1, -1, -1)
         elif self.N == 2:
             return (
                 eingroup("n,c,h,w->n,c,hw", pool_idx)
@@ -74,7 +74,9 @@ class MaxPoolNDDerivatives(BaseDerivatives):
                 .expand(V, -1, -1, -1)
             )
         else:
-            raise ValueError("{}-dimensional Maxpool. is not implemented.".format(self.N))
+            raise ValueError(
+                "{}-dimensional Maxpool. is not implemented.".format(self.N)
+            )
 
     def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
         if self.N == 1:
@@ -84,7 +86,9 @@ class MaxPoolNDDerivatives(BaseDerivatives):
         elif self.N == 3:
             mat_as_pool = eingroup("v,n,c,d,h,w->v,n,c,dhw", mat)
         else:
-            raise ValueError("{}-dimensional Maxpool. is not implemented.".format(self.N))
+            raise ValueError(
+                "{}-dimensional Maxpool. is not implemented.".format(self.N)
+            )
         jmp_as_pool = self.__apply_jacobian_t_of(module, mat_as_pool)
         return self.reshape_like_input(jmp_as_pool, module)
 
@@ -119,4 +123,6 @@ class MaxPoolNDDerivatives(BaseDerivatives):
             shape = (V, N, C_out, D_in * H_in * W_in)
             return zeros(shape, device=device)
         else:
-            raise ValueError("{}-dimensional Maxpool. is not implemented.".format(self.N))
+            raise ValueError(
+                "{}-dimensional Maxpool. is not implemented.".format(self.N)
+            )
