@@ -118,7 +118,7 @@ def make_simple_pooling_setting(input_size, conv_class, pool_cls, pool_params):
         ),
         "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="sum"),
         "target_fn": lambda: classification_targets((3,), 5),
-        "id_prefix": "automated-simple-cnn",
+        "id_prefix": "automated-simple-cnn-pooling",
     }
 
     return dict_setting
