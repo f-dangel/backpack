@@ -2,7 +2,14 @@
 convolution over single channels with a constant kernel."""
 
 import torch.nn
-from torch.nn import Conv1d, Conv2d, Conv3d, ConvTranspose1d, ConvTranspose2d, ConvTranspose3d
+from torch.nn import (
+    Conv1d,
+    Conv2d,
+    Conv3d,
+    ConvTranspose1d,
+    ConvTranspose2d,
+    ConvTranspose3d,
+)
 
 from backpack.core.derivatives.basederivatives import BaseDerivatives
 from backpack.utils.ein import eingroup
@@ -24,9 +31,7 @@ class AvgPoolNDDerivatives(BaseDerivatives):
             self.convt = ConvTranspose3d
             self.equation = "v,n,c,d,w,h->vnc,d,w,h"
         else:
-            raise ValueError(
-                "{}-dimensional Conv. is not implemented.".format(self.N)
-            )
+            raise ValueError("{}-dimensional Conv. is not implemented.".format(self.N))
 
     def hessian_is_zero(self):
         return True
@@ -99,9 +104,7 @@ class AvgPoolNDDerivatives(BaseDerivatives):
             N, C_out, D_out, H_out, W_out = module.output.shape
             assert jmp_as_pool.shape == (V * N * C_out, 1, D_out, H_out, W_out)
         else:
-            raise ValueError(
-                "{}-dimensional Conv. is not implemented.".format(self.N)
-            )
+            raise ValueError("{}-dimensional Conv. is not implemented.".format(self.N))
 
     def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
         self.check_exotic_parameters(module)
@@ -115,7 +118,7 @@ class AvgPoolNDDerivatives(BaseDerivatives):
     def __apply_jacobian_t_of(self, module, mat):
         C_for_conv_t = 1
 
-        convnd_t = self.convt (
+        convnd_t = self.convt(
             in_channels=C_for_conv_t,
             out_channels=C_for_conv_t,
             kernel_size=module.kernel_size,
@@ -139,17 +142,15 @@ class AvgPoolNDDerivatives(BaseDerivatives):
             _, _, D_in, H_in, W_in = module.input0.size()
             output_size = (V_N_C_in, C_for_conv_t, D_in, H_in, W_in)
         else:
-            raise ValueError(
-                "{}-dimensional Conv. is not implemented.".format(self.N)
-            )        
+            raise ValueError("{}-dimensional Conv. is not implemented.".format(self.N))
 
         return convnd_t(mat, output_size=output_size)
 
     def __check_jmp_in_as_pool(self, mat, jmp_as_pool, module):
         V = mat.size(0)
         if self.N == 1:
-           N, C_in, L_in = module.input0.size()
-           assert jmp_as_pool.shape == (V * N * C_in, 1, L_in)
+            N, C_in, L_in = module.input0.size()
+            assert jmp_as_pool.shape == (V * N * C_in, 1, L_in)
         elif self.N == 2:
             N, C_in, H_in, W_in = module.input0.size()
             assert jmp_as_pool.shape == (V * N * C_in, 1, H_in, W_in)
@@ -157,6 +158,4 @@ class AvgPoolNDDerivatives(BaseDerivatives):
             N, C_in, D_in, H_in, W_in = module.input0.size()
             assert jmp_as_pool.shape == (V * N * C_in, 1, D_in, H_in, W_in)
         else:
-            raise ValueError(
-                "{}-dimensional Conv. is not implemented.".format(self.N)
-            ) 
+            raise ValueError("{}-dimensional Conv. is not implemented.".format(self.N))
