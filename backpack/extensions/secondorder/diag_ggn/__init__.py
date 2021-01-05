@@ -1,5 +1,7 @@
 from torch.nn import (
+    AvgPool1d,
     AvgPool2d,
+    AvgPool3d,
     Conv1d,
     Conv2d,
     Conv3d,
@@ -66,7 +68,9 @@ class DiagGGN(BackpropExtension):
                 CrossEntropyLoss: losses.DiagGGNCrossEntropyLoss(),
                 Linear: linear.DiagGGNLinear(),
                 MaxPool2d: pooling.DiagGGNMaxPool2d(),
+                AvgPool1d: pooling.DiagGGNAvgPool1d(),
                 AvgPool2d: pooling.DiagGGNAvgPool2d(),
+                AvgPool3d: pooling.DiagGGNAvgPool3d(),
                 ZeroPad2d: padding.DiagGGNZeroPad2d(),
                 Conv1d: conv1d.DiagGGNConv1d(),
                 Conv2d: conv2d.DiagGGNConv2d(),

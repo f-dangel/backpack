@@ -34,11 +34,15 @@ from torch.nn import (
     ConvTranspose1d,
     ConvTranspose2d,
     ConvTranspose3d,
+    AvgPool1d,
+    AvgPool2d,
+    AvgPool3d,
 )
 
 from test.extensions.automated_settings import (
     make_simple_act_setting,
     make_simple_cnn_setting,
+    make_simple_pooling_setting,
 )
 
 
@@ -97,6 +101,21 @@ activations = [ReLU, Sigmoid, Tanh, LeakyReLU, LogSigmoid]
 for act in activations:
     for bias in [True, False]:
         SECONDORDER_SETTINGS.append(make_simple_act_setting(act, bias=bias))
+
+###############################################################################
+#                         test setting: Pooling Layers                       #
+###############################################################################
+SECONDORDER_SETTINGS += [
+    make_simple_pooling_setting((3, 3, 7), Conv1d, AvgPool1d, (2, 1)),
+    make_simple_pooling_setting((3, 3, 7), Conv1d, AvgPool1d, (2, 1, 0, True)),
+    make_simple_pooling_setting((3, 3, 7), Conv1d, AvgPool1d, (2, 1, 0, False)),
+    make_simple_pooling_setting((3, 3, 11, 11), Conv2d, AvgPool2d, (2, 1)),
+    make_simple_pooling_setting((3, 3, 7, 7), Conv2d, AvgPool2d, (2, 1, 0, True)),
+    make_simple_pooling_setting((3, 3, 7, 7), Conv2d, AvgPool2d, (2, 1, 0, False)),
+    make_simple_pooling_setting((3, 3, 7, 7, 7), Conv3d, AvgPool3d, (2, 1)),
+    make_simple_pooling_setting((3, 3, 7, 7, 7), Conv3d, AvgPool3d, (2, 1, 0, True)),
+    make_simple_pooling_setting((3, 3, 7, 7, 7), Conv3d, AvgPool3d, (2, 1, 0, False)),
+]
 
 ###############################################################################
 #                         test setting: Convolutional Layers                  #
