@@ -2,10 +2,9 @@
 convolution over single channels with a constant kernel."""
 
 import torch.nn
-from torch.nn import Conv2d, ConvTranspose2d
+from torch.nn import ConvTranspose2d
 
 from backpack.core.derivatives.avgpoolnd import AvgPoolNDDerivatives
-from backpack.utils.ein import eingroup
 
 
 class AvgPool2DDerivatives(AvgPoolNDDerivatives):

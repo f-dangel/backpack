@@ -1,5 +1,7 @@
 from torch.nn import (
+    AvgPool1d,
     AvgPool2d,
+    AvgPool3d,
     Conv1d,
     Conv2d,
     Conv3d,
@@ -60,7 +62,9 @@ class DiagHessian(BackpropExtension):
                 CrossEntropyLoss: losses.DiagHCrossEntropyLoss(),
                 Linear: linear.DiagHLinear(),
                 MaxPool2d: pooling.DiagHMaxPool2d(),
+                AvgPool1d: pooling.DiagHAvgPool1d(),
                 AvgPool2d: pooling.DiagHAvgPool2d(),
+                AvgPool3d: pooling.DiagHAvgPool3d(),
                 ZeroPad2d: padding.DiagHZeroPad2d(),
                 Conv1d: conv1d.DiagHConv1d(),
                 Conv2d: conv2d.DiagHConv2d(),

@@ -56,9 +56,7 @@ POOLING_SETTINGS += [
         "input_fn": lambda: torch.rand(size=(3, 2, 9, 9)),
     },
     {
-        "module_fn": lambda: torch.nn.AvgPool1d(
-            kernel_size=3, stride=2, padding=1
-        ),
+        "module_fn": lambda: torch.nn.AvgPool1d(kernel_size=3, stride=2, padding=1),
         "input_fn": lambda: torch.rand(size=(3, 2, 9)),
     },
     {
