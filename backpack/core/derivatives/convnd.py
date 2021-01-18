@@ -86,15 +86,15 @@ class ConvNDDerivatives(BaseParameterDerivatives):
         # Expand batch dimension
         jac_mat = mat.unsqueeze(1)
         # Expand data dimensions
-        for i in range(3, len(module.output_shape) + 1):
+        for i in range(3, len(module.output.shape) + 1):
             jac_mat = jac_mat.unsqueeze(i)
 
-        expand_shape = [-1, module.output_shape[0], -1, *module.output_shape[2:]]
+        expand_shape = [-1, module.output.shape[0], -1, *module.output.shape[2:]]
 
         return jac_mat.expand(*expand_shape)
 
     def _bias_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
-        axes = list(range(3, len(module.output_shape) + 1))
+        axes = list(range(3, len(module.output.shape) + 1))
         if sum_batch:
             axes = [1] + axes
         return mat.sum(axes)
@@ -116,8 +116,8 @@ class ConvNDDerivatives(BaseParameterDerivatives):
             raise NotImplementedError("Groups greater than 1 are not supported yet")
 
         V = mat.shape[0]
-        N, C_out = module.output_shape[0], module.output_shape[1]
-        C_in = module.input0_shape[1]
+        N, C_out = module.output.shape[0], module.output.shape[1]
+        C_in = module.input0.shape[1]
         C_in_axis = 1
         N_axis = 0
         dims = self.dim_text

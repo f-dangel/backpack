@@ -49,7 +49,7 @@ import matplotlib.pyplot as plt
 import torch
 
 from backpack import backpack, extend, extensions
-from backpack.utils.examples import get_mnist_dataloder
+from backpack.utils.examples import get_mnist_dataloader
 
 BATCH_SIZE = 64
 LR = 0.1
@@ -63,7 +63,7 @@ DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 torch.manual_seed(0)
 
-mnist_loader = get_mnist_dataloder(batch_size=BATCH_SIZE)
+mnist_loader = get_mnist_dataloader(batch_size=BATCH_SIZE)
 
 
 def make_model():
@@ -371,7 +371,7 @@ for lr in sgd_lrs:
 def train(optim_fn):
     torch.manual_seed(0)
 
-    mnist_loader = get_mnist_dataloder(batch_size=BATCH_SIZE)
+    mnist_loader = get_mnist_dataloader(batch_size=BATCH_SIZE)
     model = make_model().to(DEVICE)
     loss_function = torch.nn.CrossEntropyLoss().to(DEVICE)
 

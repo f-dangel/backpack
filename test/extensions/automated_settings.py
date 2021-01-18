@@ -6,7 +6,7 @@ from test.core.derivatives.utils import classification_targets
 ###
 
 
-def make_simple_cnn_setting(act_cls, bias):
+def make_simple_act_setting(act_cls, bias):
     """
     input: Activation function & Bias setting
     return: simple CNN Network
@@ -28,6 +28,47 @@ def make_simple_cnn_setting(act_cls, bias):
         "input_fn": lambda: torch.rand(3, 3, 7, 7),
         "module_fn": lambda: make_simple_cnn(act_cls, bias),
         "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(),
+        "target_fn": lambda: classification_targets((3,), 5),
+        "id_prefix": "automated-simple-cnn-act",
+    }
+
+    return dict_setting
+
+
+def make_simple_cnn_setting(input_size, conv_class, conv_params):
+    """
+    input_size: tuple of input size of (N*C*Image Size)
+    conv_class: convolutional class
+    conv_params: configurations for convolutional class
+    return: simple CNN Network
+
+    This function is used to automatically create a
+    simple CNN Network consisting of CNN & Linear layer
+    for different convolutional layers.
+    It is used to test `test.extensions`.
+    """
+
+    def make_cnn(conv_class, output_size, conv_params):
+        """Note: output class size is assumed to be 5"""
+        return torch.nn.Sequential(
+            conv_class(*conv_params),
+            torch.nn.ReLU(),
+            torch.nn.Flatten(),
+            torch.nn.Linear(output_size, 5),
+        )
+
+    def get_output_shape(module, module_params, input):
+        """ returns the output shape for a given layer"""
+        output = module(*module_params)(input)
+        return output.numel() // output.shape[0]
+
+    input = torch.rand(input_size)
+    output_size = get_output_shape(conv_class, conv_params, input)
+
+    dict_setting = {
+        "input_fn": lambda: torch.rand(input_size),
+        "module_fn": lambda: make_cnn(conv_class, output_size, conv_params),
+        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="sum"),
         "target_fn": lambda: classification_targets((3,), 5),
         "id_prefix": "automated-simple-cnn",
     }
