@@ -42,7 +42,7 @@ jobs:
         make test-light
 
     - name: Test coveralls - python ${{ matrix.python-version }}
-      run: coveralls
+      run: coveralls --service=github
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         flag-name: run-${{ matrix.python-version }}
