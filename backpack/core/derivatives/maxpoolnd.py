@@ -35,6 +35,67 @@ class MaxPoolNDDerivatives(BaseDerivatives):
     def hessian_is_zero(self):
         return True
 
+    def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
+        """
+
+        Note: It is highly questionable whether this makes sense both
+              in terms of the approximation and memory costs.
+
+        Note:
+            Need to loop over the samples, as dealing with all at once
+            requires memory for `N * C² * H_in * W_in * H_out * W_out`
+            elements
+        """
+        device = mat.device
+
+        if self.N == 1:
+            N, C, L_in = module.input0.size()
+            _, _, L_out = module.output.size()
+            in_pixels = L_in
+            out_pixels = L_out
+        elif self.N == 2:
+            N, C, H_in, W_in = module.input0.size()
+            _, _, H_out, W_out = module.output.size()
+            in_pixels = H_in * W_in
+            out_pixels = H_out * W_out
+        elif self.N == 3:
+            N, C, D_in, H_in, W_in = module.input0.size()
+            _, _, D_out, H_out, W_out = module.output.size()
+            in_pixels = D_in * H_in * W_in
+            out_pixels = D_out * H_out * W_out
+        else:
+            raise ValueError(
+                "{}-dimensional Maxpool. is not implemented.".format(self.N)
+            )
+
+        in_features = C * in_pixels
+
+        pool_idx = self.get_pooling_idx(module).view(N, C, out_pixels)
+
+        def sample_ea_jac_t_mat_jac_prod(n, mat):
+            jac_t_mat = sample_jac_t_mat_prod(n, mat)
+            mat_t_jac = jac_t_mat.t()
+            jac_t_mat_t_jac = sample_jac_t_mat_prod(n, mat_t_jac)
+            return jac_t_mat_t_jac.t()
+
+        def sample_jac_t_mat_prod(n, mat):
+            num_cols = mat.size(1)
+            idx = pool_idx[n, :, :].unsqueeze(-1).expand(-1, -1, num_cols)
+
+            jac_t_mat = zeros(C, in_pixels, num_cols, device=device)
+            mat = mat.reshape(C, out_pixels, num_cols)
+
+            jac_t_mat.scatter_add_(1, idx, mat)
+
+            return jac_t_mat.reshape(in_features, num_cols)
+
+        result = zeros(in_features, in_features, device=device)
+
+        for n in range(N):
+            result += sample_ea_jac_t_mat_jac_prod(n, mat)
+
+        return result / N
+
     def _jac_mat_prod(self, module, g_inp, g_out, mat):
         if self.N == 1:
             mat_as_pool = mat
