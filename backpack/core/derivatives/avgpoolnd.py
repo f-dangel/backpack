@@ -36,23 +36,41 @@ class AvgPoolNDDerivatives(BaseDerivatives):
     def hessian_is_zero(self):
         return True
 
-    # def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
-    #     """Use fact that average pooling can be implemented as conv."""
-    #     _, C, H_in, W_in = module.input0.size()
-    #     in_features = C * H_in * W_in
-    #     _, _, H_out, W_out = module.output.size()
-    #     out_features = C * H_out * W_out
+    def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
+        """Use fact that average pooling can be implemented as conv."""
+        if self.N == 1:
+            _, C, L_in = module.input0.size()
+            _, _, L_out = module.output.size()
+            in_features = C * L_in
+            out_features = C * L_out
+            shape_out = (1, L_out)
+        elif self.N == 2:
+            _, C, H_in, W_in = module.input0.size()
+            _, _, H_out, W_out = module.output.size()
+            in_features = C * H_in * W_in
+            out_features = C * H_out * W_out
+            shape_out = (1, H_out, W_out)
+        elif self.N == 3:
+            _, C, D_in, H_in, W_in = module.input0.size()
+            _, _, D_out, H_out, W_out = module.output.size()
+            in_features = C * D_in * H_in * W_in
+            out_features = C * D_out * H_out * W_out
+            shape_out = (1, D_out, H_out, W_out)
+        else:
+            raise ValueError(
+                "{}-dimensional Maxpool. is not implemented.".format(self.N)
+            )
 
-    #     mat = mat.reshape(out_features * C, 1, H_out, W_out)
-    #     jac_t_mat = self.__apply_jacobian_t_of(module, mat).reshape(
-    #         out_features, in_features
-    #     )
-    #     mat_t_jac = jac_t_mat.t().reshape(in_features * C, 1, H_out, W_out)
-    #     jac_t_mat_t_jac = self.__apply_jacobian_t_of(module, mat_t_jac).reshape(
-    #         in_features, in_features
-    #     )
+        mat = mat.reshape(out_features * C, *shape_out)
+        jac_t_mat = self.__apply_jacobian_t_of(module, mat).reshape(
+            out_features, in_features
+        )
+        mat_t_jac = jac_t_mat.t().reshape(in_features * C, *shape_out)
+        jac_t_mat_t_jac = self.__apply_jacobian_t_of(module, mat_t_jac).reshape(
+            in_features, in_features
+        )
 
-    #     return jac_t_mat_t_jac.t()
+        return jac_t_mat_t_jac.t()
 
     def check_exotic_parameters(self, module):
         assert module.count_include_pad, (
