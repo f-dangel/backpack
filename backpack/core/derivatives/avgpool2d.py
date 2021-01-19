@@ -32,7 +32,7 @@ class AvgPool2DDerivatives(BaseDerivatives):
 
     def check_exotic_parameters(self, module):
         assert module.count_include_pad, (
-            "Might not work for exotic hyperparameters of AvgPool2d, "
+            "Might not work for exotic hyperparameters of AvgPoolNd, "
             + "like count_include_pad=False"
         )
 
