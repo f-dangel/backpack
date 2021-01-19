@@ -63,10 +63,6 @@ class MaxPoolNDDerivatives(BaseDerivatives):
             _, _, D_out, H_out, W_out = module.output.size()
             in_pixels = D_in * H_in * W_in
             out_pixels = D_out * H_out * W_out
-        else:
-            raise ValueError(
-                "{}-dimensional Maxpool. is not implemented.".format(self.N)
-            )
 
         in_features = C * in_pixels
 
@@ -103,10 +99,7 @@ class MaxPoolNDDerivatives(BaseDerivatives):
             mat_as_pool = eingroup("v,n,c,h,w->v,n,c,hw", mat)
         elif self.N == 3:
             mat_as_pool = eingroup("v,n,c,d,h,w->v,n,c,dhw", mat)
-        else:
-            raise ValueError(
-                "{}-dimensional Maxpool. is not implemented.".format(self.N)
-            )
+
         jmp_as_pool = self.__apply_jacobian_of(module, mat_as_pool)
         return self.reshape_like_output(jmp_as_pool, module)
 
@@ -134,10 +127,6 @@ class MaxPoolNDDerivatives(BaseDerivatives):
                 .unsqueeze(V_axis)
                 .expand(V, -1, -1, -1)
             )
-        else:
-            raise ValueError(
-                "{}-dimensional Maxpool. is not implemented.".format(self.N)
-            )
 
     def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
         if self.N == 1:
@@ -146,10 +135,7 @@ class MaxPoolNDDerivatives(BaseDerivatives):
             mat_as_pool = eingroup("v,n,c,h,w->v,n,c,hw", mat)
         elif self.N == 3:
             mat_as_pool = eingroup("v,n,c,d,h,w->v,n,c,dhw", mat)
-        else:
-            raise ValueError(
-                "{}-dimensional Maxpool. is not implemented.".format(self.N)
-            )
+
         jmp_as_pool = self.__apply_jacobian_t_of(module, mat_as_pool)
         return self.reshape_like_input(jmp_as_pool, module)
 
@@ -183,7 +169,3 @@ class MaxPoolNDDerivatives(BaseDerivatives):
 
             shape = (V, N, C_out, D_in * H_in * W_in)
             return zeros(shape, device=device)
-        else:
-            raise ValueError(
-                "{}-dimensional Maxpool. is not implemented.".format(self.N)
-            )
