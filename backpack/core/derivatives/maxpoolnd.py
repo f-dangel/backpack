@@ -149,18 +149,17 @@ class MaxPoolNDDerivatives(BaseDerivatives):
             _, _, L_in = module.input0.size()
 
             shape = (V, N, C_out, L_in)
-            return zeros(shape, device=device)
 
         elif self.N == 2:
             N, C_out, _, _ = module.output.shape
             _, _, H_in, W_in = module.input0.size()
 
             shape = (V, N, C_out, H_in * W_in)
-            return zeros(shape, device=device)
 
         elif self.N == 3:
             N, C_out, _, _, _ = module.output.shape
             _, _, D_in, H_in, W_in = module.input0.size()
 
             shape = (V, N, C_out, D_in * H_in * W_in)
-            return zeros(shape, device=device)
+
+        return zeros(shape, device=device)
