@@ -110,23 +110,18 @@ class MaxPoolNDDerivatives(BaseDerivatives):
 
     def __pool_idx_for_jac(self, module, V):
         """Manipulated pooling indices ready-to-use in jac(t)."""
-
         pool_idx = self.get_pooling_idx(module)
-        V_axis = 0
+
         if self.N == 1:
-            return pool_idx.unsqueeze(V_axis).expand(V, -1, -1, -1)
+            pass
         elif self.N == 2:
-            return (
-                eingroup("n,c,h,w->n,c,hw", pool_idx)
-                .unsqueeze(V_axis)
-                .expand(V, -1, -1, -1)
-            )
+            pool_idx = eingroup("n,c,h,w->n,c,hw", pool_idx)
         elif self.N == 3:
-            return (
-                eingroup("n,c,d,h,w->n,c,dhw", pool_idx)
-                .unsqueeze(V_axis)
-                .expand(V, -1, -1, -1)
-            )
+            pool_idx = eingroup("n,c,d,h,w->n,c,dhw", pool_idx)
+
+        V_axis = 0
+
+        return pool_idx.unsqueeze(V_axis).expand(V, -1, -1, -1)
 
     def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
         if self.N == 1:
