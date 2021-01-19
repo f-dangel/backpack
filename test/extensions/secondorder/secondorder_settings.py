@@ -98,6 +98,7 @@ for act in activations:
     for bias in [True, False]:
         SECONDORDER_SETTINGS.append(make_simple_act_setting(act, bias=bias))
 
+
 ###############################################################################
 #                         test setting: Convolutional Layers                  #
 """

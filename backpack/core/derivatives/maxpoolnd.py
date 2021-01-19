@@ -99,7 +99,6 @@ class MaxPoolNDDerivatives(BaseDerivatives):
             mat_as_pool = eingroup("v,n,c,h,w->v,n,c,hw", mat)
         elif self.N == 3:
             mat_as_pool = eingroup("v,n,c,d,h,w->v,n,c,dhw", mat)
-
         jmp_as_pool = self.__apply_jacobian_of(module, mat_as_pool)
         return self.reshape_like_output(jmp_as_pool, module)
 
@@ -130,7 +129,6 @@ class MaxPoolNDDerivatives(BaseDerivatives):
             mat_as_pool = eingroup("v,n,c,h,w->v,n,c,hw", mat)
         elif self.N == 3:
             mat_as_pool = eingroup("v,n,c,d,h,w->v,n,c,dhw", mat)
-
         jmp_as_pool = self.__apply_jacobian_t_of(module, mat_as_pool)
         return self.reshape_like_input(jmp_as_pool, module)
 
