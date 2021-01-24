@@ -37,6 +37,9 @@ from torch.nn import (
     AvgPool1d,
     AvgPool2d,
     AvgPool3d,
+    MaxPool1d,
+    MaxPool2d,
+    MaxPool3d,
 )
 
 from test.extensions.automated_settings import (
@@ -101,6 +104,33 @@ activations = [ReLU, Sigmoid, Tanh, LeakyReLU, LogSigmoid]
 for act in activations:
     for bias in [True, False]:
         SECONDORDER_SETTINGS.append(make_simple_act_setting(act, bias=bias))
+
+
+###############################################################################
+#                         test setting: Pooling Layers                       #
+"""
+Syntax with default parameters: 
+ - `torch.nn.MaxPoolNd(kernel_size, stride, padding, dilation, 
+    return_indices, ceil_mode)`
+"""
+###############################################################################
+SECONDORDER_SETTINGS += [
+    make_simple_pooling_setting((3, 3, 7), Conv1d, MaxPool1d, (2, 1)),
+    make_simple_pooling_setting((3, 3, 7), Conv1d, MaxPool1d, (2, 1, 0, 2)),
+    make_simple_pooling_setting(
+        (3, 3, 7), Conv1d, MaxPool1d, (2, 1, 0, 2, False, True)
+    ),
+    make_simple_pooling_setting((3, 3, 11, 11), Conv2d, MaxPool2d, (2, 1)),
+    make_simple_pooling_setting((3, 3, 7, 7), Conv2d, MaxPool2d, (2, 1, 0, 2)),
+    make_simple_pooling_setting(
+        (3, 3, 7, 7), Conv2d, MaxPool2d, (2, 1, 0, 2, False, True)
+    ),
+    make_simple_pooling_setting((3, 3, 7, 7, 7), Conv3d, MaxPool3d, (2, 1)),
+    make_simple_pooling_setting((3, 3, 7, 7, 7), Conv3d, MaxPool3d, (2, 1, 0, 2)),
+    make_simple_pooling_setting(
+        (3, 3, 7, 7, 7), Conv3d, MaxPool3d, (2, 1, 0, 2, False, True)
+    ),
+]
 
 ###############################################################################
 #                         test setting: Pooling Layers                       #

@@ -16,5 +16,4 @@ SHARED_SETTINGS = SECONDORDER_SETTINGS
 LOCAL_SETTINGS = []
 LOCAL_SETTINGS.append(make_simple_act_setting(LogSigmoid, bias=True))
 LOCAL_SETTINGS.append(make_simple_act_setting(LogSigmoid, bias=False))
-
 DiagHESSIAN_SETTINGS = SHARED_SETTINGS + LOCAL_SETTINGS

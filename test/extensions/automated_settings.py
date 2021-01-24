@@ -82,6 +82,7 @@ def make_simple_pooling_setting(input_size, conv_class, pool_cls, pool_params):
     conv_class: convolutional class
     conv_params: configurations for convolutional class
     return: simple CNN Network
+
     This function is used to automatically create a
     simple CNN Network consisting of CNN & Linear layer
     for different convolutional layers.
@@ -117,7 +118,7 @@ def make_simple_pooling_setting(input_size, conv_class, pool_cls, pool_params):
         ),
         "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="sum"),
         "target_fn": lambda: classification_targets((3,), 5),
-        "id_prefix": "automated-simple-cnn-pooling",
+        "id_prefix": "automated-simple-cnn",
     }
 
     return dict_setting
