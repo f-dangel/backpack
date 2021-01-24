@@ -21,17 +21,15 @@ class AvgPoolNDDerivatives(BaseDerivatives):
         if self.N == 1:
             self.conv = Conv1d
             self.convt = ConvTranspose1d
-            self.equation = "v,n,c,l->vnc,l"
+            self.group_channel_equation = "v,n,c,l->vnc,l"
         elif self.N == 2:
             self.conv = Conv2d
             self.convt = ConvTranspose2d
-            self.equation = "v,n,c,w,h->vnc,w,h"
+            self.group_channel_equation = "v,n,c,w,h->vnc,w,h"
         elif self.N == 3:
             self.conv = Conv3d
             self.convt = ConvTranspose3d
-            self.equation = "v,n,c,d,w,h->vnc,d,w,h"
-        else:
-            raise ValueError("{}-dimensional Conv. is not implemented.".format(self.N))
+            self.group_channel_equation = "v,n,c,d,w,h->vnc,d,w,h"
 
     def hessian_is_zero(self):
         return True
@@ -56,10 +54,6 @@ class AvgPoolNDDerivatives(BaseDerivatives):
             in_features = C * D_in * H_in * W_in
             out_features = C * D_out * H_out * W_out
             shape_out = (1, D_out, H_out, W_out)
-        else:
-            raise ValueError(
-                "{}-dimensional Maxpool. is not implemented.".format(self.N)
-            )
 
         mat = mat.reshape(out_features * C, *shape_out)
         jac_t_mat = self.__apply_jacobian_t_of(module, mat).reshape(
@@ -90,7 +84,7 @@ class AvgPoolNDDerivatives(BaseDerivatives):
     def __make_single_channel(self, mat, module):
         """Create fake single-channel images, grouping batch,
         class and channel dimension."""
-        result = eingroup(self.equation, mat)
+        result = eingroup(self.group_channel_equation, mat)
         C_axis = 1
         return result.unsqueeze(C_axis)
 
@@ -121,8 +115,6 @@ class AvgPoolNDDerivatives(BaseDerivatives):
         elif self.N == 3:
             N, C_out, D_out, H_out, W_out = module.output.shape
             assert jmp_as_pool.shape == (V * N * C_out, 1, D_out, H_out, W_out)
-        else:
-            raise ValueError("{}-dimensional Conv. is not implemented.".format(self.N))
 
     def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
         self.check_exotic_parameters(module)
@@ -159,8 +151,6 @@ class AvgPoolNDDerivatives(BaseDerivatives):
         elif self.N == 3:
             _, _, D_in, H_in, W_in = module.input0.size()
             output_size = (V_N_C_in, C_for_conv_t, D_in, H_in, W_in)
-        else:
-            raise ValueError("{}-dimensional Conv. is not implemented.".format(self.N))
 
         return convnd_t(mat, output_size=output_size)
 
@@ -175,5 +165,3 @@ class AvgPoolNDDerivatives(BaseDerivatives):
         elif self.N == 3:
             N, C_in, D_in, H_in, W_in = module.input0.size()
             assert jmp_as_pool.shape == (V * N * C_in, 1, D_in, H_in, W_in)
-        else:
-            raise ValueError("{}-dimensional Conv. is not implemented.".format(self.N))
