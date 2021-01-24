@@ -35,6 +35,7 @@ class AutogradDerivatives(DerivativesImplementation):
         return torch.stack(jac_t_vec_prods)
 
     def weight_jac_t_mat_prod(self, mat, sum_batch):
+        # import pdb;pdb.set_trace()
         return self.param_jac_t_mat_prod("weight", mat, sum_batch)
 
     def bias_jac_t_mat_prod(self, mat, sum_batch):
