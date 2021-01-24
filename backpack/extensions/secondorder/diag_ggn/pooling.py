@@ -20,6 +20,8 @@ class DiagGGNMaxPool2d(DiagGGNBaseModule):
 class DiagGGNAvgPool1d(DiagGGNBaseModule):
     def __init__(self):
         super().__init__(derivatives=AvgPool1DDerivatives())
+
+
 class DiagGGNMaxPool3d(DiagGGNBaseModule):
     def __init__(self):
         super().__init__(derivatives=MaxPool3DDerivatives())
