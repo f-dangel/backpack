@@ -21,15 +21,15 @@ class AvgPoolNDDerivatives(BaseDerivatives):
         if self.N == 1:
             self.conv = Conv1d
             self.convt = ConvTranspose1d
-            self.dim_vnc = "v,n,c,l->vnc,l"
+            self.group_channel_equation = "v,n,c,l->vnc,l"
         elif self.N == 2:
             self.conv = Conv2d
             self.convt = ConvTranspose2d
-            self.dim_vnc = "v,n,c,w,h->vnc,w,h"
+            self.group_channel_equation = "v,n,c,w,h->vnc,w,h"
         elif self.N == 3:
             self.conv = Conv3d
             self.convt = ConvTranspose3d
-            self.dim_vnc = "v,n,c,d,w,h->vnc,d,w,h"
+            self.group_channel_equation = "v,n,c,d,w,h->vnc,d,w,h"
 
     def hessian_is_zero(self):
         return True
@@ -84,7 +84,7 @@ class AvgPoolNDDerivatives(BaseDerivatives):
     def __make_single_channel(self, mat, module):
         """Create fake single-channel images, grouping batch,
         class and channel dimension."""
-        result = eingroup(self.dim_vnc, mat)
+        result = eingroup(self.group_channel_equation, mat)
         C_axis = 1
         return result.unsqueeze(C_axis)
 
