@@ -68,12 +68,6 @@ POOLING_SETTINGS += [
         "input_fn": lambda: torch.rand(size=(3, 2, 9, 9)),
     },
     {
-        "module_fn": lambda: torch.nn.AvgPool1d(kernel_size=3, stride=2, padding=1),
-        "input_fn": lambda: torch.rand(size=(3, 2, 9)),
-    },
-    {
-        "module_fn": lambda: torch.nn.AvgPool1d(kernel_size=4, padding=2),
-        "input_fn": lambda: torch.rand(size=(3, 2, 9)),
         "module_fn": lambda: torch.nn.MaxPool3d(kernel_size=2, stride=2, padding=1),
         "input_fn": lambda: torch.rand(size=(1, 3, 4, 8, 8)),
     },
@@ -84,6 +78,14 @@ POOLING_SETTINGS += [
     {
         "module_fn": lambda: torch.nn.MaxPool3d(kernel_size=3, stride=2, dilation=3),
         "input_fn": lambda: torch.rand(size=(1, 3, 9, 9, 9)),
+    },
+    {
+        "module_fn": lambda: torch.nn.AvgPool1d(kernel_size=3, stride=2, padding=1),
+        "input_fn": lambda: torch.rand(size=(3, 2, 9)),
+    },
+    {
+        "module_fn": lambda: torch.nn.AvgPool1d(kernel_size=4, padding=2),
+        "input_fn": lambda: torch.rand(size=(3, 2, 9)),
     },
     {
         "module_fn": lambda: torch.nn.AvgPool2d(
