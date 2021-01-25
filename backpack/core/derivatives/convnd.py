@@ -112,9 +112,6 @@ class ConvNDDerivatives(BaseParameterDerivatives):
         return self.reshape_like_output(jac_mat, module)
 
     def _weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
-        # if module.groups != 1:
-        #     raise NotImplementedError("Groups greater than 1 are not supported yet")
-
         V = mat.shape[0]
         N, C_out = module.output.shape[0], module.output.shape[1]
         C_in = module.input0.shape[1]
@@ -150,29 +147,50 @@ class ConvNDDerivatives(BaseParameterDerivatives):
         sum_dim = "" if sum_batch else "n,"
         eingroup_eq = "vnio,{}->v,{}o,i,{}".format(dims, sum_dim, dims)
 
-        xx = eingroup(
+        grad_weight_prod = eingroup(
             eingroup_eq, grad_weight, dim={"v": V, "n": N, "i": C_in, "o": C_out}
         )
 
-        i1 = int(C_in/module.groups)
-        i2 = int(C_out/module.groups)
-        '''
-        for groups greater than 1. This is the pattern observed: for shape [3, 9, 2, 2] i.e groups = 3, we need to take 2 grads from each of 9 like this 
-        cat : [:, :3, :2, :] + [:, 3:6, 2:4, :] + [:, 6:, 4:, :] C_in = 6, C_out = 9, groups = 3, i1 = 2, i2 = 3
-        cat: [:,:3, :2, :] + [:, 3:, 2:, :] C_in = 3, C_out = 6, groups = 2, i1 = 2, i2 = 3
-        cat: [:,:3,:1,:] + [:,3:6,1:2,:] + [:, 6:, 2:,:]  C_in = 3, C_out = 9, groups = 3, i1 = 1, i2 = 3
-        
-        have to still determine if 
-        '''
+        i1 = int(C_in / module.groups)
+        i2 = int(C_out / module.groups)
+        """
+        for groups greater than 1. This is the pattern observed: for shape [3, 9, 2, 2] 
+        i.e groups = 3, we need to take 2 grads from each of 9 like this 
+        cat: [:, :3, :2, :] + [:, 3:6, 2:4, :] + [:, 6:, 4:, :] 
+        C_in = 6, C_out = 9, groups = 3, i1 = 2, i2 = 3
+        cat: [:,:3, :2, :] + [:, 3:, 2:, :] 
+        C_in = 3, C_out = 6, groups = 2, i1 = 2, i2 = 3
+        cat: [:,:3,:1,:] + [:,3:6,1:2,:] + [:, 6:, 2:,:]  
+        C_in = 3, C_out = 9, groups = 3, i1 = 1, i2 = 3       
+        """
         grad_weight_list = []
         c_out_count = 0
         i1_count = 0
-        for n in range(module.groups):
-            grad_weight_list.append(xx[:,c_out_count:c_out_count+i2,i1_count:i1_count+i1,:,:]) # change [:,:,:] accord to conv
-            c_out_count+=i2
-            i1_count+=i1
-        # import pdb;pdb.set_trace()
-        return cat(grad_weight_list, 1)
+        cat_dim = 1 if sum_batch else 2
+        if sum_batch:
+            for _ in range(module.groups):
+                grad_weight_list.append(
+                    grad_weight_prod[
+                        :, c_out_count : c_out_count + i2, i1_count : i1_count + i1, :
+                    ]
+                )
+                c_out_count += i2
+                i1_count += i1
+        else:
+            for _ in range(module.groups):
+                grad_weight_list.append(
+                    grad_weight_prod[
+                        :,
+                        :,
+                        c_out_count : c_out_count + i2,
+                        i1_count : i1_count + i1,
+                        :,
+                    ]
+                )
+                c_out_count += i2
+                i1_count += i1
+
+        return cat(grad_weight_list, cat_dim)
 
     def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
         in_features = int(prod(module.input0.size()[1:]))

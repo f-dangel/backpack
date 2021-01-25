@@ -52,19 +52,34 @@ CONVOLUTION_SETTINGS.append(example)
 CONVOLUTION_SETTINGS += [
     {
         "module_fn": lambda: torch.nn.Conv1d(
-            in_channels=3, out_channels=9, kernel_size=2, padding=1, bias=False, groups=3
+            in_channels=3,
+            out_channels=9,
+            kernel_size=2,
+            padding=1,
+            bias=False,
+            groups=3,
         ),
         "input_fn": lambda: torch.rand(size=(3, 3, 7)),
     },
     {
         "module_fn": lambda: torch.nn.Conv1d(
-            in_channels=6, out_channels=9, kernel_size=2, padding=1, bias=False, groups=3
+            in_channels=6,
+            out_channels=9,
+            kernel_size=2,
+            padding=1,
+            bias=False,
+            groups=3,
         ),
         "input_fn": lambda: torch.rand(size=(3, 6, 7)),
     },
     {
         "module_fn": lambda: torch.nn.Conv1d(
-            in_channels=4, out_channels=8, kernel_size=2, padding=1, bias=False, groups=4
+            in_channels=4,
+            out_channels=8,
+            kernel_size=2,
+            padding=1,
+            bias=False,
+            groups=4,
         ),
         "input_fn": lambda: torch.rand(size=(3, 4, 7)),
     },
@@ -166,7 +181,7 @@ CONVOLUTION_SETTINGS += [
             in_channels=2,
             out_channels=4,
             kernel_size=2,
-            groups = 2,
+            groups=2,
         ),
         "input_fn": lambda: torch.rand(size=(3, 2, 5, 7, 7)),
     },
@@ -175,7 +190,7 @@ CONVOLUTION_SETTINGS += [
             in_channels=3,
             out_channels=6,
             kernel_size=2,
-            groups = 3,
+            groups=3,
         ),
         "input_fn": lambda: torch.rand(size=(3, 3, 5, 7, 7)),
     },
