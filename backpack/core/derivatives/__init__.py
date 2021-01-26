@@ -1,7 +1,9 @@
 from torch.nn import (
     ELU,
     SELU,
+    AvgPool1d,
     AvgPool2d,
+    AvgPool3d,
     Conv1d,
     Conv2d,
     Conv3d,
@@ -23,7 +25,9 @@ from torch.nn import (
     ZeroPad2d,
 )
 
+from .avgpool1d import AvgPool1DDerivatives
 from .avgpool2d import AvgPool2DDerivatives
+from .avgpool3d import AvgPool3DDerivatives
 from .conv1d import Conv1DDerivatives
 from .conv_transpose1d import ConvTranspose1DDerivatives
 from .conv2d import Conv2DDerivatives
@@ -51,7 +55,9 @@ derivatives_for = {
     Conv1d: Conv1DDerivatives,
     Conv2d: Conv2DDerivatives,
     Conv3d: Conv3DDerivatives,
+    AvgPool1d: AvgPool1DDerivatives,
     AvgPool2d: AvgPool2DDerivatives,
+    AvgPool3d: AvgPool3DDerivatives,
     MaxPool1d: MaxPool1DDerivatives,
     MaxPool2d: MaxPool2DDerivatives,
     MaxPool3d: MaxPool3DDerivatives,
