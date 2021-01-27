@@ -94,6 +94,43 @@ class backpack:
         CTX.set_extension_hook(self.old_extension_hook)
 
 
+class disable:
+    """Entirely disables BackPACK, including storage of input and output.
+
+    To compute the additional quantities, BackPACK needs to know the input and
+    output of the modules in the computation graph. It saves those by default.
+    ``disable`` tells BackPACK to _not_ save this information during the forward.
+
+    This can be useful if you only want a gradient with pytorch on a module
+    that is ``extended`` with BackPACK and need to avoid memory overhead.
+    If you do not need any gradient, use the ``torch.no_grad`` context instead.
+
+    This context is not the exact opposite of the ``backpack`` context.
+    The ``backpack`` context enables specific extensions during a backward.
+    This context disables storing input/output information during a forward.
+
+    Note:
+        ``with backpack(...)`` in a ``with disable()`` context will fail
+        even if the forward pass is carried out in ``with backpack(...)``.
+    """
+
+    store_io = True
+
+    def __enter__(self):
+        """Disable input/output storing."""
+        self.old_store_io = disable.store_io
+        disable.store_io = False
+
+    def __exit__(self, type, value, traceback):
+        """Set input/output storing to old value."""
+        disable.store_io = self.old_store_io
+
+    @staticmethod
+    def should_store_io():
+        """Return whether input and output should be stored."""
+        return disable.store_io
+
+
 def hook_store_io(module, input, output):
     """Saves the input and output as attributes of the module.
 
@@ -102,9 +139,10 @@ def hook_store_io(module, input, output):
         input: List of input tensors
         output: output tensor
     """
-    for i in range(len(input)):
-        setattr(module, "input{}".format(i), input[i])
-    module.output = output
+    if disable.should_store_io() and torch.is_grad_enabled():
+        for i in range(len(input)):
+            setattr(module, "input{}".format(i), input[i])
+        module.output = output
 
 
 def memory_cleanup(module):
