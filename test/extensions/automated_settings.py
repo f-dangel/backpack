@@ -83,7 +83,7 @@ def make_simple_pooling_setting(input_size, conv_class, pool_cls, pool_params):
     conv_class: convolutional class
     conv_params: configurations for convolutional class
     return: simple CNN Network
-    
+
     This function is used to automatically create a
     simple CNN Network consisting of CNN & Linear layer
     for different convolutional layers.
