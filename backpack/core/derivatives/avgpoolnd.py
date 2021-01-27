@@ -1,5 +1,9 @@
-"""The code relies on the insight that average pooling can be understood as
-convolution over single channels with a constant kernel."""
+"""N-dimensional average pooling derivatives.
+
+Average pooling can be expressed as convolution over grouped channels with a constant
+kernel.
+"""
+
 
 import torch.nn
 from torch.nn import (
