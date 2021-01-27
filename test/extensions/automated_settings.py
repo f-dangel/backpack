@@ -10,6 +10,7 @@ def make_simple_act_setting(act_cls, bias):
     """
     input: Activation function & Bias setting
     return: simple CNN Network
+
     This function is used to automatically create a
     simple CNN Network consisting of CNN & Linear layer
     for different activation functions.

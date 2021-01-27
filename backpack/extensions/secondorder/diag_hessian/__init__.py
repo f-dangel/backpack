@@ -1,5 +1,7 @@
 from torch.nn import (
+    AvgPool1d,
     AvgPool2d,
+    AvgPool3d,
     Conv1d,
     Conv2d,
     Conv3d,
@@ -63,8 +65,10 @@ class DiagHessian(BackpropExtension):
                 Linear: linear.DiagHLinear(),
                 MaxPool1d: pooling.DiagHMaxPool1d(),
                 MaxPool2d: pooling.DiagHMaxPool2d(),
+                AvgPool1d: pooling.DiagHAvgPool1d(),
                 MaxPool3d: pooling.DiagHMaxPool3d(),
                 AvgPool2d: pooling.DiagHAvgPool2d(),
+                AvgPool3d: pooling.DiagHAvgPool3d(),
                 ZeroPad2d: padding.DiagHZeroPad2d(),
                 Conv1d: conv1d.DiagHConv1d(),
                 Conv2d: conv2d.DiagHConv2d(),
