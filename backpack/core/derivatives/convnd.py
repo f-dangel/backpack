@@ -1,9 +1,15 @@
 from numpy import prod
-from torch import einsum, cat
+from torch import cat, einsum
 from torch.nn import Conv1d, Conv2d, Conv3d
+from torch.nn.functional import (
+    conv1d,
+    conv2d,
+    conv3d,
+    conv_transpose1d,
+    conv_transpose2d,
+    conv_transpose3d,
+)
 from torch.nn.grad import _grad_input_padding
-from torch.nn.functional import conv1d, conv2d, conv3d
-from torch.nn.functional import conv_transpose1d, conv_transpose2d, conv_transpose3d
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 from backpack.utils import conv as convUtils
