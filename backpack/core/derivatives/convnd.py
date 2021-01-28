@@ -112,21 +112,26 @@ class ConvNDDerivatives(BaseParameterDerivatives):
         return self.reshape_like_output(jac_mat, module)
 
     def _weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
+        G = module.groups
         V = mat.shape[0]
         N, C_out = module.output.shape[0], module.output.shape[1]
         C_in = module.input0.shape[1]
         C_in_axis = 1
         N_axis = 0
         dims = self.dim_text
-        repeat_pattern = [1, C_in] + [1 for _ in range(self.conv_dims)]
-        mat = eingroup("v,n,c,{}->vn,c,{}".format(dims, dims), mat)
+
+        # treat channel groups like vectorization (v) and batch (n) axes
+        mat = eingroup(
+            "v,n,gc,{}->vng,c,{}".format(dims, dims), mat, dim={"g": G, "c": C_out // G}
+        )
+        repeat_pattern = [1, C_in // G] + [1 for _ in range(self.conv_dims)]
         mat = mat.repeat(*repeat_pattern)
         mat = eingroup("a,b,{}->ab,{}".format(dims, dims), mat)
         mat = mat.unsqueeze(C_in_axis)
 
-        repeat_pattern = [1, V] + [1 for _ in range(self.conv_dims)]
         input = eingroup("n,c,{}->nc,{}".format(dims, dims), module.input0)
         input = input.unsqueeze(N_axis)
+        repeat_pattern = [1, V] + [1 for _ in range(self.conv_dims)]
         input = input.repeat(*repeat_pattern)
 
         grad_weight = self.conv_func(
@@ -145,52 +150,14 @@ class ConvNDDerivatives(BaseParameterDerivatives):
             grad_weight = grad_weight.narrow(axis, 0, size)
 
         sum_dim = "" if sum_batch else "n,"
-        eingroup_eq = "vnio,{}->v,{}o,i,{}".format(dims, sum_dim, dims)
+        # separate group axes from vectorization axes
+        eingroup_eq = "vngio,{}->v,{}go,i,{}".format(dims, sum_dim, dims)
 
-        grad_weight_prod = eingroup(
-            eingroup_eq, grad_weight, dim={"v": V, "n": N, "i": C_in, "o": C_out}
+        return eingroup(
+            eingroup_eq,
+            grad_weight,
+            dim={"g": G, "v": V, "n": N, "i": C_in // G, "o": C_out // G},
         )
-
-        i1 = int(C_in / module.groups)
-        i2 = int(C_out / module.groups)
-        """
-        for groups greater than 1. This is the pattern observed: for shape [3, 9, 2, 2] 
-        i.e groups = 3, we need to take 2 grads from each of 9 like this 
-        cat: [:, :3, :2, :] + [:, 3:6, 2:4, :] + [:, 6:, 4:, :] 
-        C_in = 6, C_out = 9, groups = 3, i1 = 2, i2 = 3
-        cat: [:,:3, :2, :] + [:, 3:, 2:, :] 
-        C_in = 3, C_out = 6, groups = 2, i1 = 2, i2 = 3
-        cat: [:,:3,:1,:] + [:,3:6,1:2,:] + [:, 6:, 2:,:]  
-        C_in = 3, C_out = 9, groups = 3, i1 = 1, i2 = 3       
-        """
-        grad_weight_list = []
-        c_out_count = 0
-        i1_count = 0
-        cat_dim = 1 if sum_batch else 2
-        if sum_batch:
-            for _ in range(module.groups):
-                grad_weight_list.append(
-                    grad_weight_prod[
-                        :, c_out_count : c_out_count + i2, i1_count : i1_count + i1, :
-                    ]
-                )
-                c_out_count += i2
-                i1_count += i1
-        else:
-            for _ in range(module.groups):
-                grad_weight_list.append(
-                    grad_weight_prod[
-                        :,
-                        :,
-                        c_out_count : c_out_count + i2,
-                        i1_count : i1_count + i1,
-                        :,
-                    ]
-                )
-                c_out_count += i2
-                i1_count += i1
-
-        return cat(grad_weight_list, cat_dim)
 
     def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
         in_features = int(prod(module.input0.size()[1:]))
