@@ -4,4 +4,4 @@ pytest-benchmark >= 3.2.2, < 4.0.0
 pytest-optional-tests >= 0.1.1
 pytest-cov
 coveralls
-
+pytorch-memlab
