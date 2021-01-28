@@ -24,28 +24,17 @@ CONVOLUTION_SETTINGS = []
 ###############################################################################
 
 example = {
-    "module_fn": lambda: torch.nn.Conv1d(
+    "module_fn": lambda: torch.nn.Conv2d(
         in_channels=4,
         out_channels=6,
         kernel_size=2,
-        groups=2,
     ),
-    "input_fn": lambda: torch.rand(size=(3, 4, 7)),
-    "id_prefix": "groups-2",
+    "input_fn": lambda: torch.rand(size=(3, 4, 7, 7)),
+    "device": [torch.device("cpu")],  # optional
+    "seed": 0,  # optional
+    "id_prefix": "conv-example",  # optional
 }
 CONVOLUTION_SETTINGS.append(example)
-# example = {
-#     "module_fn": lambda: torch.nn.Conv2d(
-#         in_channels=4,
-#         out_channels=6,
-#         kernel_size=2,
-#     ),
-#     "input_fn": lambda: torch.rand(size=(3, 4, 7, 7)),
-#     "device": [torch.device("cpu")],  # optional
-#     "seed": 0,  # optional
-#     "id_prefix": "conv-example",  # optional
-# }
-# CONVOLUTION_SETTINGS.append(example)
 ###############################################################################
 #                                test settings                                #
 ###############################################################################
