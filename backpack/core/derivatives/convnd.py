@@ -1,5 +1,5 @@
 from numpy import prod
-from torch import cat, einsum
+from torch import einsum
 from torch.nn import Conv1d, Conv2d, Conv3d
 from torch.nn.functional import (
     conv1d,
