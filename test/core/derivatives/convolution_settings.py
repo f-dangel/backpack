@@ -412,42 +412,6 @@ CONVOLUTION_FAIL_SETTINGS = [
         "input_fn": lambda: torch.rand(size=(3, 4, 3, 7, 7)),
         "id_prefix": "groups-2",
     },
-    {
-        "module_fn": lambda: torch.nn.ConvTranspose1d(
-            in_channels=4,
-            out_channels=6,
-            kernel_size=2,
-            padding=0,
-            dilation=2,
-            groups=2,
-        ),
-        "input_fn": lambda: torch.rand(size=(3, 4, 7)),
-        "id_prefix": "groups-2",
-    },
-    {
-        "module_fn": lambda: torch.nn.ConvTranspose2d(
-            in_channels=4,
-            out_channels=6,
-            kernel_size=2,
-            padding=0,
-            dilation=2,
-            groups=2,
-        ),
-        "input_fn": lambda: torch.rand(size=(3, 4, 7, 7)),
-        "id_prefix": "groups-2",
-    },
-    {
-        "module_fn": lambda: torch.nn.ConvTranspose3d(
-            in_channels=4,
-            out_channels=6,
-            kernel_size=2,
-            padding=0,
-            dilation=2,
-            groups=2,
-        ),
-        "input_fn": lambda: torch.rand(size=(3, 4, 3, 7, 7)),
-        "id_prefix": "groups-2",
-    },
     # groups - 3
     {
         "module_fn": lambda: torch.nn.Conv1d(
@@ -485,6 +449,9 @@ CONVOLUTION_FAIL_SETTINGS = [
         "input_fn": lambda: torch.rand(size=(3, 6, 3, 7, 7)),
         "id_prefix": "groups-3",
     },
+]
+
+CONVOLUTION_TRANSPOSED_FAIL_SETTINGS = [
     {
         "module_fn": lambda: torch.nn.ConvTranspose1d(
             in_channels=6,
@@ -520,5 +487,41 @@ CONVOLUTION_FAIL_SETTINGS = [
         ),
         "input_fn": lambda: torch.rand(size=(3, 6, 3, 7, 7)),
         "id_prefix": "groups-3",
+    },
+    {
+        "module_fn": lambda: torch.nn.ConvTranspose1d(
+            in_channels=4,
+            out_channels=6,
+            kernel_size=2,
+            padding=0,
+            dilation=2,
+            groups=2,
+        ),
+        "input_fn": lambda: torch.rand(size=(3, 4, 7)),
+        "id_prefix": "groups-2",
+    },
+    {
+        "module_fn": lambda: torch.nn.ConvTranspose2d(
+            in_channels=4,
+            out_channels=6,
+            kernel_size=2,
+            padding=0,
+            dilation=2,
+            groups=2,
+        ),
+        "input_fn": lambda: torch.rand(size=(3, 4, 7, 7)),
+        "id_prefix": "groups-2",
+    },
+    {
+        "module_fn": lambda: torch.nn.ConvTranspose3d(
+            in_channels=4,
+            out_channels=6,
+            kernel_size=2,
+            padding=0,
+            dilation=2,
+            groups=2,
+        ),
+        "input_fn": lambda: torch.rand(size=(3, 4, 3, 7, 7)),
+        "id_prefix": "groups-2",
     },
 ]
