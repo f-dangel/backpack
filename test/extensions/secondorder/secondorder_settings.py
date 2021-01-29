@@ -34,6 +34,9 @@ from torch.nn import (
     ConvTranspose1d,
     ConvTranspose2d,
     ConvTranspose3d,
+    AvgPool1d,
+    AvgPool2d,
+    AvgPool3d,
     MaxPool1d,
     MaxPool2d,
     MaxPool3d,
@@ -127,6 +130,21 @@ SECONDORDER_SETTINGS += [
     make_simple_pooling_setting(
         (3, 3, 7, 7, 7), Conv3d, MaxPool3d, (2, 1, 0, 2, False, True)
     ),
+]
+
+###############################################################################
+#                         test setting: Pooling Layers                       #
+###############################################################################
+SECONDORDER_SETTINGS += [
+    make_simple_pooling_setting((3, 3, 7), Conv1d, AvgPool1d, (2, 1)),
+    make_simple_pooling_setting((3, 3, 7), Conv1d, AvgPool1d, (2, 1, 0, True)),
+    make_simple_pooling_setting((3, 3, 7), Conv1d, AvgPool1d, (2, 1, 0, False)),
+    make_simple_pooling_setting((3, 3, 11, 11), Conv2d, AvgPool2d, (2, 1)),
+    make_simple_pooling_setting((3, 3, 7, 7), Conv2d, AvgPool2d, (2, 1, 0, True)),
+    make_simple_pooling_setting((3, 3, 7, 7), Conv2d, AvgPool2d, (2, 1, 0, False)),
+    make_simple_pooling_setting((3, 3, 7, 7, 7), Conv3d, AvgPool3d, (2, 1)),
+    make_simple_pooling_setting((3, 3, 7, 7, 7), Conv3d, AvgPool3d, (2, 1, 0, True)),
+    make_simple_pooling_setting((3, 3, 7, 7, 7), Conv3d, AvgPool3d, (2, 1, 0, False)),
 ]
 
 ###############################################################################
