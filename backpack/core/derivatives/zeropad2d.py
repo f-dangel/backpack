@@ -1,7 +1,7 @@
 from torch.nn import functional
 
 from backpack.core.derivatives.basederivatives import BaseDerivatives
-from backpack.utils.ein import eingroup
+from einops import rearrange
 
 
 class ZeroPad2dDerivatives(BaseDerivatives):
@@ -41,6 +41,6 @@ class ZeroPad2dDerivatives(BaseDerivatives):
         return (W_top, W_bottom), (H_bottom, H_top)
 
     def _jac_mat_prod(self, module, g_inp, g_out, mat):
-        mat = eingroup("v,n,c,h,w->vn,c,h,w", mat)
+        mat = rearrange(mat, "v n c h w -> (v n) c h w")
         pad_mat = functional.pad(mat, module.padding, "constant", module.value)
         return self.reshape_like_output(pad_mat, module)

@@ -9,6 +9,8 @@ from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 from backpack.utils import conv as convUtils
 from backpack.utils.ein import eingroup
 
+from einops import rearrange
+
 
 class ConvNDDerivatives(BaseParameterDerivatives):
     def __init__(self, N):
@@ -38,8 +40,9 @@ class ConvNDDerivatives(BaseParameterDerivatives):
         return convUtils.unfold_by_conv(module.input0, module)
 
     def _jac_mat_prod(self, module, g_inp, g_out, mat):
-        dims = self.dim_text
-        mat_as_conv = eingroup("v,n,c,{}->vn,c,{}".format(dims, dims), mat)
+        # dims = self.dim_text
+        mat_as_conv = rearrange(mat, "v n c ... -> (v n) c ...")
+        # mat_as_conv = eingroup("v,n,c,{}->vn,c,{}".format(dims, dims), mat)
         jmp_as_conv = self.conv_func(
             mat_as_conv,
             module.weight.data,
@@ -51,8 +54,9 @@ class ConvNDDerivatives(BaseParameterDerivatives):
         return self.reshape_like_output(jmp_as_conv, module)
 
     def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
-        dims = self.dim_text
-        mat_as_conv = eingroup("v,n,c,{}->vn,c,{}".format(dims, dims), mat)
+        # dims = self.dim_text
+        mat_as_conv = rearrange(mat, "v n c ... -> (v n) c ...")
+        # mat_as_conv = eingroup("v,n,c,{}->vn,c,{}".format(dims, dims), mat)
         jmp_as_conv = self.__jac_t(module, mat_as_conv)
         return self.reshape_like_input(jmp_as_conv, module)
 
@@ -103,10 +107,10 @@ class ConvNDDerivatives(BaseParameterDerivatives):
         if module.groups != 1:
             raise NotImplementedError("Groups greater than 1 are not supported yet")
 
-        dims = self.dim_text
-        dims_joined = dims.replace(",", "")
-
-        jac_mat = eingroup("v,o,i,{}->v,o,i{}".format(dims, dims_joined), mat)
+        # dims = self.dim_text
+        # dims_joined = dims.replace(",", "")
+        jac_mat = rearrange(mat, "v o i ... -> v o (i ...)")
+        # jac_mat = eingroup("v,o,i,{}->v,o,i{}".format(dims, dims_joined), mat)
         X = self.get_unfolded_input(module)
         jac_mat = einsum("nij,vki->vnkj", X, jac_mat)
         return self.reshape_like_output(jac_mat, module)
@@ -123,13 +127,16 @@ class ConvNDDerivatives(BaseParameterDerivatives):
         dims = self.dim_text
 
         repeat_pattern = [1, C_in] + [1 for _ in range(self.conv_dims)]
-        mat = eingroup("v,n,c,{}->vn,c,{}".format(dims, dims), mat)
+        mat = rearrange(mat, "v n c ... -> (v n) c ...")
+        # mat = eingroup("v,n,c,{}->vn,c,{}".format(dims, dims), mat)
         mat = mat.repeat(*repeat_pattern)
-        mat = eingroup("a,b,{}->ab,{}".format(dims, dims), mat)
+        mat = rearrange(mat, "a b ... -> (a b) ...")
+        # mat = eingroup("a,b,{}->ab,{}".format(dims, dims), mat)
         mat = mat.unsqueeze(C_in_axis)
 
         repeat_pattern = [1, V] + [1 for _ in range(self.conv_dims)]
-        input = eingroup("n,c,{}->nc,{}".format(dims, dims), module.input0)
+        input = rearrange(module.input0, "n c ... -> (n c) ...")
+        # input = eingroup("n,c,{}->nc,{}".format(dims, dims), module.input0)
         input = input.unsqueeze(N_axis)
         input = input.repeat(*repeat_pattern)
 

@@ -3,7 +3,7 @@ from torch import einsum
 from torch.nn import Unfold
 from torch.nn.functional import conv1d, conv2d, conv3d
 
-from backpack.utils.ein import eingroup
+from einops import rearrange
 
 
 def unfold_func(module):
@@ -19,16 +19,13 @@ def get_weight_gradient_factors(input, grad_out, module, N):
     # shape [N, C_in * K_x * K_y, H_out * W_out]
     if N == 1:
         X = unfold_by_conv(module.input0, module)
-        dE_dY = grad_out
     elif N == 2:
         X = unfold_func(module)(input)
-        dE_dY = eingroup("n,c,h,w->n,c,hw", grad_out)
     elif N == 3:
         X = unfold_by_conv(module.input0, module)
-        dE_dY = eingroup("n,c,d,h,w->n,c,dhw", grad_out)
     else:
         raise ValueError("{}-dimensional Conv. is not implemented.".format(N))
-
+    dE_dY = rearrange(grad_out, "n c ... -> n c (...)")
     return X, dE_dY
 
 
@@ -46,7 +43,7 @@ def get_bias_gradient_factors(gradient, C_axis, N):
 
 def separate_channels_and_pixels(module, tensor):
     """Reshape (V, N, C, H, W) into (V, N, C, H * W)."""
-    return eingroup("v,n,c,h,w->v,n,c,hw", tensor)
+    return rearrange(tensor, "v n c ... -> v n c (...)")
 
 
 def extract_weight_diagonal(module, input, grad_output, N):
@@ -54,15 +51,7 @@ def extract_weight_diagonal(module, input, grad_output, N):
     input must be the unfolded input to the convolution (see unfold_func)
     and grad_output the backpropagated gradient
     """
-    if N == 1:
-        grad_output_viewed = grad_output
-    elif N == 2:
-        grad_output_viewed = eingroup("v,n,c,h,w->v,n,c,hw", grad_output)
-    elif N == 3:
-        grad_output_viewed = eingroup("v,n,c,d,h,w->v,n,c,dhw", grad_output)
-    else:
-        raise ValueError("{}-dimensional Conv. is not implemented.".format(N))
-
+    grad_output_viewed = separate_channels_and_pixels(module, grad_output)
     AX = einsum("nkl,vnml->vnkm", (input, grad_output_viewed))
     weight_diagonal = (AX ** 2).sum([0, 1]).transpose(0, 1)
     return weight_diagonal.view_as(module.weight)
