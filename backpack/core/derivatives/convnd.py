@@ -235,7 +235,7 @@ class ConvNDDerivatives(BaseParameterDerivatives):
         return weight_grad
 
     def _weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
-        optimize_for_memory = sum_batch  # for testing purpose
+        optimize_for_memory = module.optimize_for_memory  # for testing purpose
         if optimize_for_memory and self.N == 3:
             warnings.warn(
                 UserWarning(
