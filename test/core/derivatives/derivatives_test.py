@@ -92,9 +92,10 @@ for problem, problem_id in zip(PROBLEMS, IDS):
 @pytest.mark.parametrize(
     "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
 )
-
 @pytest.mark.parametrize(
-    "optimize_for_memory", [True, False], ids=["optimize_for_memory=True", "optimize_for_memory=False"]
+    "optimize_for_memory",
+    [True, False],
+    ids=["optimize_for_memory=True", "optimize_for_memory=False"],
 )
 @pytest.mark.parametrize(
     "problem",
@@ -241,7 +242,9 @@ def test_weight_jac_mat_prod_should_fail(problem):
     "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
 )
 @pytest.mark.parametrize(
-    "optimize_for_memory", [True, False], ids=["optimize_for_memory=True", "optimize_for_memory=False"]
+    "optimize_for_memory",
+    [True, False],
+    ids=["optimize_for_memory=True", "optimize_for_memory=False"],
 )
 @pytest.mark.parametrize(
     "problem", CONVOLUTION_TRANSPOSED_FAIL_PROBLEMS, ids=CONVOLUTION_TRANSPOSED_FAIL_IDS
