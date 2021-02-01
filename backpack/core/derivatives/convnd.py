@@ -15,6 +15,7 @@ from torch.nn.grad import _grad_input_padding
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 from backpack.utils import conv as convUtils
 from backpack.utils.ein import eingroup
+from einops import rearrange
 
 
 class ConvNDDerivatives(BaseParameterDerivatives):
@@ -113,7 +114,6 @@ class ConvNDDerivatives(BaseParameterDerivatives):
 
         dims = self.dim_text
         dims_joined = dims.replace(",", "")
-
         jac_mat = eingroup("v,o,i,{}->v,o,i{}".format(dims, dims_joined), mat)
         X = self.get_unfolded_input(module)
         jac_mat = einsum("nij,vki->vnkj", X, jac_mat)
@@ -182,21 +182,19 @@ class ConvNDDerivatives(BaseParameterDerivatives):
 
         if self.N == 1:
             _, _, L_in = module.input0.size()
-            conv_func = conv2d
+            higher_conv_func = conv2d
             K_L_axis = 2
             K_L = module.kernel_size[0]
             spatial_dim = (C_in // G, L_in)
             spatial_dim_axis = (1, V, 1, 1)
-            flatten_vnc_equation = "v,n,c,l->vnc,l"
             spatial_dim_new = (C_in // G, K_L)
         else:
             _, _, H_in, W_in = module.input0.size()
-            conv_func = conv3d
+            higher_conv_func = conv3d
             K_H_axis, K_W_axis = 2, 3
             K_H, K_W = module.kernel_size
             spatial_dim = (C_in // G, H_in, W_in)
             spatial_dim_axis = (1, V, 1, 1, 1)
-            flatten_vnc_equation = "v,n,c,h,w->vnc,h,w"
             spatial_dim_new = (C_in // G, K_H, K_W)
 
         # Reshape to extract groups from the convolutional layer
@@ -206,13 +204,13 @@ class ConvNDDerivatives(BaseParameterDerivatives):
         )
         # Compute convolution between input and output; the batchsize is seen
         # as channels, taking advantage of the `groups` argument
-        mat_conv = eingroup(flatten_vnc_equation, mat).unsqueeze(1).unsqueeze(2)
+        mat_conv = rearrange(mat, "v n c ... -> (v n c) ...").unsqueeze(1).unsqueeze(2)
 
         stride = (1, *module.stride)
         dilation = (1, *module.dilation)
         padding = (0, *module.padding)
 
-        conv = conv_func(
+        conv = higher_conv_func(
             input_conv,
             mat_conv,
             groups=V * N * G,
@@ -237,7 +235,7 @@ class ConvNDDerivatives(BaseParameterDerivatives):
         return weight_grad
 
     def _weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
-        optimize_for_memory = True
+        optimize_for_memory = sum_batch  # for testing purpose
         if optimize_for_memory and self.N == 3:
             warnings.warn(
                 UserWarning(
