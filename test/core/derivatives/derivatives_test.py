@@ -107,8 +107,10 @@ def test_weight_jac_t_mat_prod(problem, sum_batch, V=3):
     """
     problem.set_up()
     mat = torch.rand(V, *problem.output_shape).to(problem.device)
+
     backpack_res = BackpackDerivatives(problem).weight_jac_t_mat_prod(mat, sum_batch)
     autograd_res = AutogradDerivatives(problem).weight_jac_t_mat_prod(mat, sum_batch)
+
     check_sizes_and_values(autograd_res, backpack_res)
     problem.tear_down()
 
@@ -221,6 +223,16 @@ def test_sqrt_hessian_squared_equals_hessian(problem):
 
 
 @pytest.mark.parametrize(
+    "problem",
+    CONVOLUTION_TRANSPOSED_FAIL_PROBLEMS + CONVOLUTION_FAIL_PROBLEMS,
+    ids=CONVOLUTION_TRANSPOSED_FAIL_IDS + CONVOLUTION_FAIL_IDS,
+)
+def test_weight_jac_mat_prod_should_fail(problem):
+    with pytest.raises(NotImplementedError):
+        test_weight_jac_mat_prod(problem)
+
+
+@pytest.mark.parametrize(
     "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
 )
 @pytest.mark.parametrize(
@@ -229,15 +241,6 @@ def test_sqrt_hessian_squared_equals_hessian(problem):
 def test_weight_jac_t_mat_prod_should_fail(problem, sum_batch):
     with pytest.raises(NotImplementedError):
         test_weight_jac_t_mat_prod(problem, sum_batch)
-
-
-@pytest.mark.parametrize(
-    "problem", CONVOLUTION_TRANSPOSED_FAIL_PROBLEMS+CONVOLUTION_FAIL_PROBLEMS,
-    ids=CONVOLUTION_TRANSPOSED_FAIL_IDS+CONVOLUTION_FAIL_IDS,
-)
-def test_weight_jac_mat_prod_should_fail(problem):
-    with pytest.raises(NotImplementedError):
-        test_weight_jac_mat_prod(problem)
 
 
 @pytest.mark.parametrize("problem", LOSS_FAIL_PROBLEMS, ids=LOSS_FAIL_IDS)
