@@ -7,7 +7,7 @@ Required entries:
 
 
 Optional entries:
-    "target_fn" (callable): Fetches the groundtruth/target classes 
+    "target_fn" (callable): Fetches the groundtruth/target classes
                             of regression/classification task
     "loss_function_fn" (callable): Loss function used in the model
     "device" [list(torch.device)]: List of devices to run the test on.
@@ -25,11 +25,15 @@ CONVOLUTION_SETTINGS = []
 
 example = {
     "module_fn": lambda: torch.nn.Conv2d(
-        in_channels=4,
-        out_channels=6,
+        in_channels=2,
+        out_channels=3,
         kernel_size=2,
+        bias=False,
+        padding=1,
+        stride=2,
+        dilation=2,
     ),
-    "input_fn": lambda: torch.rand(size=(3, 4, 7, 7)),
+    "input_fn": lambda: torch.rand(size=(3, 2, 7, 7)),
     "device": [torch.device("cpu")],  # optional
     "seed": 0,  # optional
     "id_prefix": "conv-example",  # optional
