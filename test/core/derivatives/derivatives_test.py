@@ -93,16 +93,16 @@ for problem, problem_id in zip(PROBLEMS, IDS):
     "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
 )
 @pytest.mark.parametrize(
-    "optimize_for_memory",
+    "save_memory",
     [True, False],
-    ids=["optimize_for_memory=True", "optimize_for_memory=False"],
+    ids=["save_memory=True", "save_memory=False"],
 )
 @pytest.mark.parametrize(
     "problem",
     PROBLEMS_WITH_WEIGHTS,
     ids=IDS_WITH_WEIGHTS,
 )
-def test_weight_jac_t_mat_prod(problem, sum_batch, optimize_for_memory, V=3):
+def test_weight_jac_t_mat_prod(problem, sum_batch, save_memory, V=3):
     """Test the transposed Jacobian-matrix product w.r.t. to the weights.
 
     Args:
@@ -112,7 +112,8 @@ def test_weight_jac_t_mat_prod(problem, sum_batch, optimize_for_memory, V=3):
     """
     problem.set_up()
     mat = torch.rand(V, *problem.output_shape).to(problem.device)
-    problem.module.optimize_for_memory = optimize_for_memory
+    if hasattr(problem.derivative, "_weight_jac_t_save_memory"):
+        problem.derivative._weight_jac_t_save_memory(save_memory)
 
     backpack_res = BackpackDerivatives(problem).weight_jac_t_mat_prod(mat, sum_batch)
     autograd_res = AutogradDerivatives(problem).weight_jac_t_mat_prod(mat, sum_batch)
@@ -242,16 +243,16 @@ def test_weight_jac_mat_prod_should_fail(problem):
     "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
 )
 @pytest.mark.parametrize(
-    "optimize_for_memory",
+    "save_memory",
     [True, False],
-    ids=["optimize_for_memory=True", "optimize_for_memory=False"],
+    ids=["save_memory=True", "save_memory=False"],
 )
 @pytest.mark.parametrize(
     "problem", CONVOLUTION_TRANSPOSED_FAIL_PROBLEMS, ids=CONVOLUTION_TRANSPOSED_FAIL_IDS
 )
-def test_weight_jac_t_mat_prod_should_fail(problem, sum_batch, optimize_for_memory):
+def test_weight_jac_t_mat_prod_should_fail(problem, sum_batch, save_memory):
     with pytest.raises(NotImplementedError):
-        test_weight_jac_t_mat_prod(problem, sum_batch, optimize_for_memory)
+        test_weight_jac_t_mat_prod(problem, sum_batch, save_memory)
 
 
 @pytest.mark.parametrize("problem", LOSS_FAIL_PROBLEMS, ids=LOSS_FAIL_IDS)

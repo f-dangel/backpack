@@ -39,6 +39,7 @@ class ConvNDDerivatives(BaseParameterDerivatives):
         else:
             raise ValueError("{}-dimensional Conv. is not implemented.".format(N))
         self.conv_dims = N
+        self.optimize_for_memory = False
 
     def hessian_is_zero(self):
         return True
@@ -118,6 +119,9 @@ class ConvNDDerivatives(BaseParameterDerivatives):
         X = self.get_unfolded_input(module)
         jac_mat = einsum("nij,vki->vnkj", X, jac_mat)
         return self.reshape_like_output(jac_mat, module)
+
+    def _weight_jac_t_save_memory(self, save_memory=False):
+        self.optimize_for_memory = save_memory
 
     def same_conv_weight_jac_t(self, module, mat, sum_batch):
         G = module.groups
@@ -235,10 +239,7 @@ class ConvNDDerivatives(BaseParameterDerivatives):
         return weight_grad
 
     def _weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
-        try:
-            optimize_for_memory = module.optimize_for_memory  # for testing purpose
-        except:
-            optimize_for_memory = True
+        optimize_for_memory = self.optimize_for_memory
         if optimize_for_memory and self.N == 3:
             warnings.warn(
                 UserWarning(
