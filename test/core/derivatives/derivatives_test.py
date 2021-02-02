@@ -118,7 +118,7 @@ def test_weight_jac_t_mat_prod(problem, sum_batch, V=3):
 PROBLEMS_WITH_WEIGHTS_NO_GROUPS = []
 IDS_WITH_WEIGHTS_NO_GROUPS = []
 for problem, problem_id in zip(PROBLEMS, IDS):
-    if problem.has_weight() and not problem.is_conv_has_group():
+    if problem.has_weight() and not problem.is_group_conv():
         PROBLEMS_WITH_WEIGHTS_NO_GROUPS.append(problem)
         IDS_WITH_WEIGHTS_NO_GROUPS.append(problem_id)
 
