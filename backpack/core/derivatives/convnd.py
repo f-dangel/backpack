@@ -15,7 +15,6 @@ from torch.nn.grad import _grad_input_padding
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 from backpack.utils import conv as convUtils
 from backpack.utils.ein import eingroup
-from einops import rearrange
 
 
 class ConvNDDerivatives(BaseParameterDerivatives):
@@ -192,6 +191,7 @@ class ConvNDDerivatives(BaseParameterDerivatives):
             spatial_dim = (C_in // G, L_in)
             spatial_dim_axis = (1, V, 1, 1)
             spatial_dim_new = (C_in // G, K_L)
+            flatten_vnc_equation = "v,n,c,l->vnc,l"
         else:
             _, _, H_in, W_in = module.input0.size()
             higher_conv_func = conv3d
@@ -200,6 +200,7 @@ class ConvNDDerivatives(BaseParameterDerivatives):
             spatial_dim = (C_in // G, H_in, W_in)
             spatial_dim_axis = (1, V, 1, 1, 1)
             spatial_dim_new = (C_in // G, K_H, K_W)
+            flatten_vnc_equation = "v,n,c,h,w->vnc,h,w"
 
         # Reshape to extract groups from the convolutional layer
         # Channels are seen as an extra spatial dimension with kernel size 1
@@ -208,7 +209,7 @@ class ConvNDDerivatives(BaseParameterDerivatives):
         )
         # Compute convolution between input and output; the batchsize is seen
         # as channels, taking advantage of the `groups` argument
-        mat_conv = rearrange(mat, "v n c ... -> (v n c) ...").unsqueeze(1).unsqueeze(2)
+        mat_conv = eingroup(flatten_vnc_equation, mat).unsqueeze(1).unsqueeze(2)
 
         stride = (1, *module.stride)
         dilation = (1, *module.dilation)
