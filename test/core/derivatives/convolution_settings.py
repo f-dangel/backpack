@@ -159,7 +159,6 @@ CONVOLUTION_SETTINGS += [
             padding_mode="zeros",
             stride=4,
             dilation=3,
-            groups=3,
         ),
         "input_fn": lambda: torch.rand(size=(1, 3, 8, 8)),
     },
