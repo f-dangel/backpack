@@ -28,6 +28,10 @@ example = {
         in_channels=2,
         out_channels=3,
         kernel_size=2,
+        bias=False,
+        padding=1,
+        stride=2,
+        dilation=2,
     ),
     "input_fn": lambda: torch.rand(size=(3, 2, 7, 7)),
     "device": [torch.device("cpu")],  # optional
