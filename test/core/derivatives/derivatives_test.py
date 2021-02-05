@@ -6,7 +6,7 @@
 - Jacobian-matrix products with respect to layer parameters
 - Transposed Jacobian-matrix products with respect to layer parameters
 """
-
+from backpack.core.derivatives.convnd import _weight_jac_t_save_memory
 from test.automated_test import check_sizes_and_values
 from test.core.derivatives.implementation.autograd import AutogradDerivatives
 from test.core.derivatives.implementation.backpack import BackpackDerivatives
@@ -112,10 +112,9 @@ def test_weight_jac_t_mat_prod(problem, sum_batch, save_memory, V=3):
     """
     problem.set_up()
     mat = torch.rand(V, *problem.output_shape).to(problem.device)
-    if hasattr(problem.derivative, "_weight_jac_t_save_memory"):
-        problem.derivative._weight_jac_t_save_memory(save_memory)
 
-    backpack_res = BackpackDerivatives(problem).weight_jac_t_mat_prod(mat, sum_batch)
+    with _weight_jac_t_save_memory(save_memory):
+        backpack_res = BackpackDerivatives(problem).weight_jac_t_mat_prod(mat, sum_batch)
     autograd_res = AutogradDerivatives(problem).weight_jac_t_mat_prod(mat, sum_batch)
 
     check_sizes_and_values(autograd_res, backpack_res)
