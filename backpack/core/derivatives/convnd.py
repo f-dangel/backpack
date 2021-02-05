@@ -121,7 +121,7 @@ class ConvNDDerivatives(BaseParameterDerivatives):
 
         dims = self.dim_text
         dims_joined = dims.replace(",", "")
-        
+
         jac_mat = eingroup("v,o,i,{}->v,o,i{}".format(dims, dims_joined), mat)
         X = self.get_unfolded_input(module)
         jac_mat = einsum("nij,vki->vnkj", X, jac_mat)
