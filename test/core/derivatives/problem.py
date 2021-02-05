@@ -178,13 +178,12 @@ class DerivativesTestProblem:
         module = self.make_module()
         return hasattr(module, "bias") and module.bias is not None
 
-    def is_conv_has_group(self):
-        """
-        Group > 1 is not supported for `weight_jac_mat_prod` yet.
-        """
+    def is_group_conv(self):
+        """Return whether module represents grouped convolution."""
         module = self.make_module()
+        group_conv = False
+
         if isinstance(module, (torch.nn.Conv1d, torch.nn.Conv2d, torch.nn.Conv3d)):
-            attr = True if module.groups > 1 else False
-        else:
-            attr = False
-        return attr
+            group_conv = module.groups > 1
+
+        return group_conv

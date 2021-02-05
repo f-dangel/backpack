@@ -138,9 +138,7 @@ class ConvNDDerivatives(BaseParameterDerivatives):
 
         # treat channel groups like vectorization (v) and batch (n) axes
         mat = eingroup(
-            "v,n,gc,{}->vng,c,{}".format(dims, dims),
-            mat,
-            dim={"g": G, "c": C_out // G},
+            "v,n,gc,{}->vng,c,{}".format(dims, dims), mat, dim={"g": G, "c": C_out // G}
         )
         repeat_pattern = [1, C_in // G] + [1 for _ in range(self.conv_dims)]
         mat = mat.repeat(*repeat_pattern)
