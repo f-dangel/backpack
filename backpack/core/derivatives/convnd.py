@@ -15,7 +15,6 @@ from torch.nn.grad import _grad_input_padding
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 from backpack.utils import conv as convUtils
-
 from einops import rearrange, reduce
 
 

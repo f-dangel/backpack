@@ -25,6 +25,7 @@ def get_weight_gradient_factors(input, grad_out, module, N):
         X = unfold_by_conv(module.input0, module)
     else:
         raise ValueError("{}-dimensional Conv. is not implemented.".format(N))
+
     dE_dY = rearrange(grad_out, "n c ... -> n c (...)")
     return X, dE_dY
 
@@ -51,6 +52,7 @@ def extract_weight_diagonal(module, input, grad_output, N):
     input must be the unfolded input to the convolution (see unfold_func)
     and grad_output the backpropagated gradient
     """
+
     grad_output_viewed = separate_channels_and_pixels(module, grad_output)
     AX = einsum("nkl,vnml->vnkm", (input, grad_output_viewed))
     weight_diagonal = (AX ** 2).sum([0, 1]).transpose(0, 1)
