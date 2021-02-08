@@ -21,7 +21,7 @@ from backpack.utils.ein import eingroup
 class weight_jac_t_save_memory:
     """Choose algorithm to apply transposed convolution weight Jacobian."""
 
-    _SAVE_MEMORY = False
+    _SAVE_MEMORY = True
 
     def __init__(self, save_memory=True):
         self._new_save_memory = save_memory
