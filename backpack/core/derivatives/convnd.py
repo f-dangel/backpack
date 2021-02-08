@@ -238,7 +238,7 @@ class ConvNDDerivatives(BaseParameterDerivatives):
 
         # Reshape to extract groups from the convolutional layer
         # Channels are seen as an extra spatial dimension with kernel size 1
-        input_conv = module.input0.view(1, N * G, *spatial_dim).repeat(
+        input_conv = module.input0.reshape(1, N * G, *spatial_dim).repeat(
             *spatial_dim_axis
         )
         # Compute convolution between input and output; the batchsize is seen
@@ -266,7 +266,7 @@ class ConvNDDerivatives(BaseParameterDerivatives):
             conv = conv.narrow(K_H_axis, 0, K_H).narrow(K_W_axis, 0, K_W)
 
         new_shape = [V, N, C_out, *spatial_dim_new]
-        weight_grad = conv.view(*new_shape)
+        weight_grad = conv.reshape(*new_shape)
 
         if sum_batch:
             weight_grad = weight_grad.sum(1)
