@@ -17,23 +17,23 @@ from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 from backpack.utils import conv as convUtils
 from backpack.utils.ein import eingroup
 
-_WEIGHT_JAC_T_SAVE_MEMORY = False
-
 
 class weight_jac_t_save_memory:
     """Choose algorithm to apply transposed convolution weight Jacobian."""
 
+    _SAVE_MEMORY = False
+
     def __init__(self, save_memory=True):
-        self._save_memory = save_memory
+        self._new_save_memory = save_memory
 
     def __enter__(self):
         """Store current value, set new value."""
-        self._old_save_memory = _WEIGHT_JAC_T_SAVE_MEMORY
-        _WEIGHT_JAC_T_SAVE_MEMORY = self._save_memory
+        self._old_save_memory = weight_jac_t_save_memory._SAVE_MEMORY
+        weight_jac_t_save_memory._SAVE_MEMORY = self._new_save_memory
 
     def __exit__(self, type, value, traceback):
         """Restore original value."""
-        _WEIGHT_JAC_T_SAVE_MEMORY = self._old_save_memory
+        weight_jac_t_save_memory._SAVE_MEMORY = self._old_save_memory
 
 
 class ConvNDDerivatives(BaseParameterDerivatives):
@@ -138,7 +138,7 @@ class ConvNDDerivatives(BaseParameterDerivatives):
         return self.reshape_like_output(jac_mat, module)
 
     def _weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
-        save_memory = _WEIGHT_JAC_T_SAVE_MEMORY
+        save_memory = weight_jac_t_save_memory._SAVE_MEMORY
 
         if save_memory and self.conv_dims in [1, 2]:
             return self.__higher_conv_weight_jac_t(module, mat, sum_batch)
