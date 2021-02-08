@@ -1,6 +1,7 @@
+import warnings
+
 from numpy import prod
 from torch import einsum
-import warnings
 from torch.nn import Conv1d, Conv2d, Conv3d
 from torch.nn.functional import (
     conv1d,
@@ -15,19 +16,28 @@ from torch.nn.grad import _grad_input_padding
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 from backpack.utils import conv as convUtils
 from backpack.utils.ein import eingroup
-from contextlib import contextmanager
 
-save_memory = False
+_WEIGHT_JAC_T_SAVE_MEMORY = False
 
 
-@contextmanager
-def _weight_jac_t_save_memory(save_memory_param):
-    yield save_memory_param
+class weight_jac_t_save_memory:
+    """Choose algorithm to apply transposed convolution weight Jacobian."""
+
+    def __init__(self, save_memory=True):
+        self._save_memory = save_memory
+
+    def __enter__(self):
+        """Store current value, set new value."""
+        self._old_save_memory = _WEIGHT_JAC_T_SAVE_MEMORY
+        _WEIGHT_JAC_T_SAVE_MEMORY = self._save_memory
+
+    def __exit__(self, type, value, traceback):
+        """Restore original value."""
+        _WEIGHT_JAC_T_SAVE_MEMORY = self._old_save_memory
 
 
 class ConvNDDerivatives(BaseParameterDerivatives):
     def __init__(self, N):
-        self.N = N
         if N == 1:
             self.module = Conv1d
             self.dim_text = "x"
@@ -127,7 +137,26 @@ class ConvNDDerivatives(BaseParameterDerivatives):
         jac_mat = einsum("nij,vki->vnkj", X, jac_mat)
         return self.reshape_like_output(jac_mat, module)
 
-    def same_conv_weight_jac_t(self, module, mat, sum_batch):
+    def _weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
+        save_memory = _WEIGHT_JAC_T_SAVE_MEMORY
+
+        if save_memory and self.conv_dims in [1, 2]:
+            return self.__higher_conv_weight_jac_t(module, mat, sum_batch)
+
+        else:
+
+            if save_memory and self.conv_dims == 3:
+                warnings.warn(
+                    UserWarning(
+                        "Conv3d: Cannot save memory as there is no Conv4d."
+                        + " Fallback to more memory-intense method."
+                    )
+                )
+
+            return self.__same_conv_weight_jac_t(module, mat, sum_batch)
+
+    def __same_conv_weight_jac_t(self, module, mat, sum_batch):
+        """Uses convolution of same order."""
         G = module.groups
         V = mat.shape[0]
         N, C_out = module.output.shape[0], module.output.shape[1]
@@ -175,18 +204,20 @@ class ConvNDDerivatives(BaseParameterDerivatives):
             dim={"g": G, "v": V, "n": N, "i": C_in // G, "o": C_out // G},
         )
 
-    def higher_conv_weight_jac_t(self, module, mat, sum_batch):
+    def __higher_conv_weight_jac_t(self, module, mat, sum_batch):
         """Requires higher-order convolution.
+
         The algorithm is proposed in:
-        - Rochette, G., Manoel, A., & Tramel, E. W., Efficient per-example
-        gradient computations in convolutional neural networks (2019).
+
+            - Rochette, G., Manoel, A., & Tramel, E. W., Efficient per-example
+              gradient computations in convolutional neural networks (2019).
         """
         G = module.groups
         V = mat.shape[0]
         N, C_out = module.output.shape[0], module.output.shape[1]
         C_in = module.input0.shape[1]
 
-        if self.N == 1:
+        if self.conv_dims == 1:
             _, _, L_in = module.input0.size()
             higher_conv_func = conv2d
             K_L_axis = 2
@@ -229,7 +260,7 @@ class ConvNDDerivatives(BaseParameterDerivatives):
 
         # Because of rounding shapes when using non-default stride or dilation,
         # convolution result must be truncated to convolution kernel size
-        if self.N == 1:
+        if self.conv_dims == 1:
             conv = conv.narrow(K_L_axis, 0, K_L)
         else:
             conv = conv.narrow(K_H_axis, 0, K_H).narrow(K_W_axis, 0, K_W)
@@ -241,20 +272,6 @@ class ConvNDDerivatives(BaseParameterDerivatives):
             weight_grad = weight_grad.sum(1)
 
         return weight_grad
-
-    def _weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
-        optimize_for_memory = save_memory
-        if optimize_for_memory and self.N == 3:
-            warnings.warn(
-                UserWarning(
-                    "Conv3d: It's not possible to optimize \
-                    for memory as there is no Conv4d"
-                )
-            )
-        if optimize_for_memory and self.N in [1, 2]:
-            return self.higher_conv_weight_jac_t(module, mat, sum_batch)
-        else:
-            return self.same_conv_weight_jac_t(module, mat, sum_batch)
 
     def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
         in_features = int(prod(module.input0.size()[1:]))

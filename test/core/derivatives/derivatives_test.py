@@ -6,20 +6,22 @@
 - Jacobian-matrix products with respect to layer parameters
 - Transposed Jacobian-matrix products with respect to layer parameters
 """
-from backpack.core.derivatives.convnd import _weight_jac_t_save_memory
+
 from test.automated_test import check_sizes_and_values
-from test.core.derivatives.implementation.autograd import AutogradDerivatives
-from test.core.derivatives.implementation.backpack import BackpackDerivatives
-from test.core.derivatives.problem import make_test_problems
-from test.core.derivatives.settings import SETTINGS
-from test.core.derivatives.loss_settings import LOSS_FAIL_SETTINGS
 from test.core.derivatives.convolution_settings import (
     CONVOLUTION_FAIL_SETTINGS,
     CONVOLUTION_TRANSPOSED_FAIL_SETTINGS,
 )
+from test.core.derivatives.implementation.autograd import AutogradDerivatives
+from test.core.derivatives.implementation.backpack import BackpackDerivatives
+from test.core.derivatives.loss_settings import LOSS_FAIL_SETTINGS
+from test.core.derivatives.problem import make_test_problems
+from test.core.derivatives.settings import SETTINGS
 
 import pytest
 import torch
+
+from backpack.core.derivatives.convnd import weight_jac_t_save_memory
 
 PROBLEMS = make_test_problems(SETTINGS)
 IDS = [problem.make_id() for problem in PROBLEMS]
@@ -108,12 +110,13 @@ def test_weight_jac_t_mat_prod(problem, sum_batch, save_memory, V=3):
     Args:
         problem (DerivativesProblem): Problem for derivative test.
         sum_batch (bool): Sum results over the batch dimension.
+        save_memory (bool): Use Owkin implementation to save memory.
         V (int): Number of vectorized transposed Jacobian-vector products.
     """
     problem.set_up()
     mat = torch.rand(V, *problem.output_shape).to(problem.device)
 
-    with _weight_jac_t_save_memory(save_memory):
+    with weight_jac_t_save_memory(save_memory):
         backpack_res = BackpackDerivatives(problem).weight_jac_t_mat_prod(
             mat, sum_batch
         )
