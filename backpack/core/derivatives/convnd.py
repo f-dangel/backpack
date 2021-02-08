@@ -1,15 +1,41 @@
+import warnings
+
 from numpy import prod
 from torch import einsum
 from torch.nn import Conv1d, Conv2d, Conv3d
+from torch.nn.functional import (
+    conv1d,
+    conv2d,
+    conv3d,
+    conv_transpose1d,
+    conv_transpose2d,
+    conv_transpose3d,
+)
 from torch.nn.grad import _grad_input_padding
-from torch.nn.functional import conv1d, conv2d, conv3d
-from torch.nn.functional import conv_transpose1d, conv_transpose2d, conv_transpose3d
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 from backpack.utils import conv as convUtils
 from backpack.utils.ein import eingroup
 
 from einops import rearrange
+
+
+class weight_jac_t_save_memory:
+    """Choose algorithm to apply transposed convolution weight Jacobian."""
+
+    _SAVE_MEMORY = True
+
+    def __init__(self, save_memory=True):
+        self._new_save_memory = save_memory
+
+    def __enter__(self):
+        """Store current value, set new value."""
+        self._old_save_memory = weight_jac_t_save_memory._SAVE_MEMORY
+        weight_jac_t_save_memory._SAVE_MEMORY = self._new_save_memory
+
+    def __exit__(self, type, value, traceback):
+        """Restore original value."""
+        weight_jac_t_save_memory._SAVE_MEMORY = self._old_save_memory
 
 
 class ConvNDDerivatives(BaseParameterDerivatives):
@@ -116,9 +142,26 @@ class ConvNDDerivatives(BaseParameterDerivatives):
         return self.reshape_like_output(jac_mat, module)
 
     def _weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
-        if module.groups != 1:
-            raise NotImplementedError("Groups greater than 1 are not supported yet")
+        save_memory = weight_jac_t_save_memory._SAVE_MEMORY
 
+        if save_memory and self.conv_dims in [1, 2]:
+            return self.__higher_conv_weight_jac_t(module, mat, sum_batch)
+
+        else:
+
+            if save_memory and self.conv_dims == 3:
+                warnings.warn(
+                    UserWarning(
+                        "Conv3d: Cannot save memory as there is no Conv4d."
+                        + " Fallback to more memory-intense method."
+                    )
+                )
+
+            return self.__same_conv_weight_jac_t(module, mat, sum_batch)
+
+    def __same_conv_weight_jac_t(self, module, mat, sum_batch):
+        """Uses convolution of same order."""
+        G = module.groups
         V = mat.shape[0]
         N, C_out = module.output.shape[0], module.output.shape[1]
         C_in = module.input0.shape[1]
@@ -126,18 +169,17 @@ class ConvNDDerivatives(BaseParameterDerivatives):
         N_axis = 0
         dims = self.dim_text
 
-        repeat_pattern = [1, C_in] + [1 for _ in range(self.conv_dims)]
+        # treat channel groups like vectorization (v) and batch (n) axes
         mat = rearrange(mat, "v n c ... -> (v n) c ...")
-        # mat = eingroup("v,n,c,{}->vn,c,{}".format(dims, dims), mat)
+        repeat_pattern = [1, C_in // G] + [1 for _ in range(self.conv_dims)]
         mat = mat.repeat(*repeat_pattern)
         mat = rearrange(mat, "a b ... -> (a b) ...")
         # mat = eingroup("a,b,{}->ab,{}".format(dims, dims), mat)
         mat = mat.unsqueeze(C_in_axis)
 
-        repeat_pattern = [1, V] + [1 for _ in range(self.conv_dims)]
         input = rearrange(module.input0, "n c ... -> (n c) ...")
-        # input = eingroup("n,c,{}->nc,{}".format(dims, dims), module.input0)
         input = input.unsqueeze(N_axis)
+        repeat_pattern = [1, V] + [1 for _ in range(self.conv_dims)]
         input = input.repeat(*repeat_pattern)
 
         grad_weight = self.conv_func(
@@ -156,11 +198,83 @@ class ConvNDDerivatives(BaseParameterDerivatives):
             grad_weight = grad_weight.narrow(axis, 0, size)
 
         sum_dim = "" if sum_batch else "n,"
-        eingroup_eq = "vnio,{}->v,{}o,i,{}".format(dims, sum_dim, dims)
+        # separate group axes from vectorization axes
+        eingroup_eq = "vngio,{}->v,{}go,i,{}".format(dims, sum_dim, dims)
 
         return eingroup(
-            eingroup_eq, grad_weight, dim={"v": V, "n": N, "i": C_in, "o": C_out}
+            eingroup_eq,
+            grad_weight,
+            dim={"g": G, "v": V, "n": N, "i": C_in // G, "o": C_out // G},
         )
+
+    def __higher_conv_weight_jac_t(self, module, mat, sum_batch):
+        """Requires higher-order convolution.
+
+        The algorithm is proposed in:
+
+            - Rochette, G., Manoel, A., & Tramel, E. W., Efficient per-example
+              gradient computations in convolutional neural networks (2019).
+        """
+        G = module.groups
+        V = mat.shape[0]
+        N, C_out = module.output.shape[0], module.output.shape[1]
+        C_in = module.input0.shape[1]
+
+        if self.conv_dims == 1:
+            _, _, L_in = module.input0.size()
+            higher_conv_func = conv2d
+            K_L_axis = 2
+            K_L = module.kernel_size[0]
+            spatial_dim = (C_in // G, L_in)
+            spatial_dim_axis = (1, V, 1, 1)
+            spatial_dim_new = (C_in // G, K_L)
+            flatten_vnc_equation = "v,n,c,l->vnc,l"
+        else:
+            _, _, H_in, W_in = module.input0.size()
+            higher_conv_func = conv3d
+            K_H_axis, K_W_axis = 2, 3
+            K_H, K_W = module.kernel_size
+            spatial_dim = (C_in // G, H_in, W_in)
+            spatial_dim_axis = (1, V, 1, 1, 1)
+            spatial_dim_new = (C_in // G, K_H, K_W)
+            flatten_vnc_equation = "v,n,c,h,w->vnc,h,w"
+
+        # Reshape to extract groups from the convolutional layer
+        # Channels are seen as an extra spatial dimension with kernel size 1
+        input_conv = module.input0.reshape(1, N * G, *spatial_dim).repeat(
+            *spatial_dim_axis
+        )
+        # Compute convolution between input and output; the batchsize is seen
+        # as channels, taking advantage of the `groups` argument
+        mat_conv = eingroup(flatten_vnc_equation, mat).unsqueeze(1).unsqueeze(2)
+
+        stride = (1, *module.stride)
+        dilation = (1, *module.dilation)
+        padding = (0, *module.padding)
+
+        conv = higher_conv_func(
+            input_conv,
+            mat_conv,
+            groups=V * N * G,
+            stride=dilation,
+            dilation=stride,
+            padding=padding,
+        ).squeeze(0)
+
+        # Because of rounding shapes when using non-default stride or dilation,
+        # convolution result must be truncated to convolution kernel size
+        if self.conv_dims == 1:
+            conv = conv.narrow(K_L_axis, 0, K_L)
+        else:
+            conv = conv.narrow(K_H_axis, 0, K_H).narrow(K_W_axis, 0, K_W)
+
+        new_shape = [V, N, C_out, *spatial_dim_new]
+        weight_grad = conv.reshape(*new_shape)
+
+        if sum_batch:
+            weight_grad = weight_grad.sum(1)
+
+        return weight_grad
 
     def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
         in_features = int(prod(module.input0.size()[1:]))
