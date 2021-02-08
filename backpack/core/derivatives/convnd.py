@@ -68,7 +68,6 @@ class ConvNDDerivatives(BaseParameterDerivatives):
     def _jac_mat_prod(self, module, g_inp, g_out, mat):
         # dims = self.dim_text
         mat_as_conv = rearrange(mat, "v n c ... -> (v n) c ...")
-        # mat_as_conv = eingroup("v,n,c,{}->vn,c,{}".format(dims, dims), mat)
         jmp_as_conv = self.conv_func(
             mat_as_conv,
             module.weight.data,
@@ -82,7 +81,6 @@ class ConvNDDerivatives(BaseParameterDerivatives):
     def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
         # dims = self.dim_text
         mat_as_conv = rearrange(mat, "v n c ... -> (v n) c ...")
-        # mat_as_conv = eingroup("v,n,c,{}->vn,c,{}".format(dims, dims), mat)
         jmp_as_conv = self.__jac_t(module, mat_as_conv)
         return self.reshape_like_input(jmp_as_conv, module)
 
@@ -133,10 +131,7 @@ class ConvNDDerivatives(BaseParameterDerivatives):
         if module.groups != 1:
             raise NotImplementedError("Groups greater than 1 are not supported yet")
 
-        # dims = self.dim_text
-        # dims_joined = dims.replace(",", "")
         jac_mat = rearrange(mat, "v o i ... -> v o (i ...)")
-        # jac_mat = eingroup("v,o,i,{}->v,o,i{}".format(dims, dims_joined), mat)
         X = self.get_unfolded_input(module)
         jac_mat = einsum("nij,vki->vnkj", X, jac_mat)
         return self.reshape_like_output(jac_mat, module)
@@ -170,11 +165,10 @@ class ConvNDDerivatives(BaseParameterDerivatives):
         dims = self.dim_text
 
         # treat channel groups like vectorization (v) and batch (n) axes
-        mat = rearrange(mat, "v n c ... -> (v n) c ...")
+        mat = rearrange(mat, "v n (g c) ... -> (v n g) c ...", g=G, c=C_out//G)
         repeat_pattern = [1, C_in // G] + [1 for _ in range(self.conv_dims)]
         mat = mat.repeat(*repeat_pattern)
         mat = rearrange(mat, "a b ... -> (a b) ...")
-        # mat = eingroup("a,b,{}->ab,{}".format(dims, dims), mat)
         mat = mat.unsqueeze(C_in_axis)
 
         input = rearrange(module.input0, "n c ... -> (n c) ...")
@@ -228,7 +222,6 @@ class ConvNDDerivatives(BaseParameterDerivatives):
             spatial_dim = (C_in // G, L_in)
             spatial_dim_axis = (1, V, 1, 1)
             spatial_dim_new = (C_in // G, K_L)
-            flatten_vnc_equation = "v,n,c,l->vnc,l"
         else:
             _, _, H_in, W_in = module.input0.size()
             higher_conv_func = conv3d
@@ -237,7 +230,6 @@ class ConvNDDerivatives(BaseParameterDerivatives):
             spatial_dim = (C_in // G, H_in, W_in)
             spatial_dim_axis = (1, V, 1, 1, 1)
             spatial_dim_new = (C_in // G, K_H, K_W)
-            flatten_vnc_equation = "v,n,c,h,w->vnc,h,w"
 
         # Reshape to extract groups from the convolutional layer
         # Channels are seen as an extra spatial dimension with kernel size 1
@@ -246,7 +238,7 @@ class ConvNDDerivatives(BaseParameterDerivatives):
         )
         # Compute convolution between input and output; the batchsize is seen
         # as channels, taking advantage of the `groups` argument
-        mat_conv = eingroup(flatten_vnc_equation, mat).unsqueeze(1).unsqueeze(2)
+        mat_conv = rearrange(mat, "v n c ... -> (v n c) ...").unsqueeze(1).unsqueeze(2)
 
         stride = (1, *module.stride)
         dilation = (1, *module.dilation)
