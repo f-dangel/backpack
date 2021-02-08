@@ -8,18 +8,20 @@
 """
 
 from test.automated_test import check_sizes_and_values
-from test.core.derivatives.implementation.autograd import AutogradDerivatives
-from test.core.derivatives.implementation.backpack import BackpackDerivatives
-from test.core.derivatives.problem import make_test_problems
-from test.core.derivatives.settings import SETTINGS
-from test.core.derivatives.loss_settings import LOSS_FAIL_SETTINGS
 from test.core.derivatives.convolution_settings import (
     CONVOLUTION_FAIL_SETTINGS,
     CONVOLUTION_TRANSPOSED_FAIL_SETTINGS,
 )
+from test.core.derivatives.implementation.autograd import AutogradDerivatives
+from test.core.derivatives.implementation.backpack import BackpackDerivatives
+from test.core.derivatives.loss_settings import LOSS_FAIL_SETTINGS
+from test.core.derivatives.problem import make_test_problems
+from test.core.derivatives.settings import SETTINGS
 
 import pytest
 import torch
+
+from backpack.core.derivatives.convnd import weight_jac_t_save_memory
 
 PROBLEMS = make_test_problems(SETTINGS)
 IDS = [problem.make_id() for problem in PROBLEMS]
@@ -93,22 +95,31 @@ for problem, problem_id in zip(PROBLEMS, IDS):
     "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
 )
 @pytest.mark.parametrize(
+    "save_memory",
+    [True, False],
+    ids=["save_memory=True", "save_memory=False"],
+)
+@pytest.mark.parametrize(
     "problem",
     PROBLEMS_WITH_WEIGHTS,
     ids=IDS_WITH_WEIGHTS,
 )
-def test_weight_jac_t_mat_prod(problem, sum_batch, V=3):
+def test_weight_jac_t_mat_prod(problem, sum_batch, save_memory, V=3):
     """Test the transposed Jacobian-matrix product w.r.t. to the weights.
 
     Args:
         problem (DerivativesProblem): Problem for derivative test.
         sum_batch (bool): Sum results over the batch dimension.
+        save_memory (bool): Use Owkin implementation to save memory.
         V (int): Number of vectorized transposed Jacobian-vector products.
     """
     problem.set_up()
     mat = torch.rand(V, *problem.output_shape).to(problem.device)
 
-    backpack_res = BackpackDerivatives(problem).weight_jac_t_mat_prod(mat, sum_batch)
+    with weight_jac_t_save_memory(save_memory):
+        backpack_res = BackpackDerivatives(problem).weight_jac_t_mat_prod(
+            mat, sum_batch
+        )
     autograd_res = AutogradDerivatives(problem).weight_jac_t_mat_prod(mat, sum_batch)
 
     check_sizes_and_values(autograd_res, backpack_res)
@@ -236,11 +247,16 @@ def test_weight_jac_mat_prod_should_fail(problem):
     "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
 )
 @pytest.mark.parametrize(
+    "save_memory",
+    [True, False],
+    ids=["save_memory=True", "save_memory=False"],
+)
+@pytest.mark.parametrize(
     "problem", CONVOLUTION_TRANSPOSED_FAIL_PROBLEMS, ids=CONVOLUTION_TRANSPOSED_FAIL_IDS
 )
-def test_weight_jac_t_mat_prod_should_fail(problem, sum_batch):
+def test_weight_jac_t_mat_prod_should_fail(problem, sum_batch, save_memory):
     with pytest.raises(NotImplementedError):
-        test_weight_jac_t_mat_prod(problem, sum_batch)
+        test_weight_jac_t_mat_prod(problem, sum_batch, save_memory)
 
 
 @pytest.mark.parametrize("problem", LOSS_FAIL_PROBLEMS, ids=LOSS_FAIL_IDS)
