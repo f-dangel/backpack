@@ -15,9 +15,8 @@ from torch.nn.grad import _grad_input_padding
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 from backpack.utils import conv as convUtils
-from backpack.utils.ein import eingroup
 
-from einops import rearrange
+from einops import rearrange, reduce
 
 
 class weight_jac_t_save_memory:
@@ -42,17 +41,14 @@ class ConvNDDerivatives(BaseParameterDerivatives):
     def __init__(self, N):
         if N == 1:
             self.module = Conv1d
-            self.dim_text = "x"
             self.conv_func = conv1d
             self.conv_transpose_func = conv_transpose1d
         elif N == 2:
             self.module = Conv2d
-            self.dim_text = "x,y"
             self.conv_func = conv2d
             self.conv_transpose_func = conv_transpose2d
         elif N == 3:
             self.module = Conv3d
-            self.dim_text = "x,y,z"
             self.conv_func = conv3d
             self.conv_transpose_func = conv_transpose3d
         else:
@@ -66,7 +62,6 @@ class ConvNDDerivatives(BaseParameterDerivatives):
         return convUtils.unfold_by_conv(module.input0, module)
 
     def _jac_mat_prod(self, module, g_inp, g_out, mat):
-        # dims = self.dim_text
         mat_as_conv = rearrange(mat, "v n c ... -> (v n) c ...")
         jmp_as_conv = self.conv_func(
             mat_as_conv,
@@ -79,7 +74,6 @@ class ConvNDDerivatives(BaseParameterDerivatives):
         return self.reshape_like_output(jmp_as_conv, module)
 
     def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
-        # dims = self.dim_text
         mat_as_conv = rearrange(mat, "v n c ... -> (v n) c ...")
         jmp_as_conv = self.__jac_t(module, mat_as_conv)
         return self.reshape_like_input(jmp_as_conv, module)
@@ -162,10 +156,9 @@ class ConvNDDerivatives(BaseParameterDerivatives):
         C_in = module.input0.shape[1]
         C_in_axis = 1
         N_axis = 0
-        dims = self.dim_text
 
         # treat channel groups like vectorization (v) and batch (n) axes
-        mat = rearrange(mat, "v n (g c) ... -> (v n g) c ...", g=G, c=C_out//G)
+        mat = rearrange(mat, "v n (g c) ... -> (v n g) c ...", g=G, c=C_out // G)
         repeat_pattern = [1, C_in // G] + [1 for _ in range(self.conv_dims)]
         mat = mat.repeat(*repeat_pattern)
         mat = rearrange(mat, "a b ... -> (a b) ...")
@@ -191,15 +184,27 @@ class ConvNDDerivatives(BaseParameterDerivatives):
             size = module.weight.shape[2 + dim]
             grad_weight = grad_weight.narrow(axis, 0, size)
 
-        sum_dim = "" if sum_batch else "n,"
-        # separate group axes from vectorization axes
-        eingroup_eq = "vngio,{}->v,{}go,i,{}".format(dims, sum_dim, dims)
-
-        return eingroup(
-            eingroup_eq,
-            grad_weight,
-            dim={"g": G, "v": V, "n": N, "i": C_in // G, "o": C_out // G},
-        )
+        if sum_batch:
+            return reduce(
+                grad_weight,
+                "(v n g i o) ... -> v (g o) i ...",
+                "sum",
+                g=G,
+                v=V,
+                n=N,
+                i=C_in // G,
+                o=C_out // G,
+            )
+        else:
+            return rearrange(
+                grad_weight,
+                "(v n g i o) ... -> v n (g o) i ...",
+                g=G,
+                v=V,
+                n=N,
+                i=C_in // G,
+                o=C_out // G,
+            )
 
     def __higher_conv_weight_jac_t(self, module, mat, sum_batch):
         """Requires higher-order convolution.
