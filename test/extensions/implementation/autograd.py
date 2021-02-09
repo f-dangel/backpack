@@ -66,10 +66,10 @@ class AutogradExtensions(ExtensionsImplementation):
         variances = [torch.var(g, dim=0, unbiased=False) for g in batch_grad]
         return variances
 
-    def diag_ggn(self):
-        _, output, loss = self.problem.forward_pass()
+    def diag_ggn(self, sum_batch):
+        batch_size = self.problem.input.shape[0]
 
-        def extract_ith_element_of_diag_ggn(i, p):
+        def extract_ith_element_of_diag_ggn(i, p, loss, output):
             v = torch.zeros(p.numel()).to(self.problem.device)
             v[i] = 1.0
             vs = vector_to_parameter_list(v, [p])
@@ -77,16 +77,33 @@ class AutogradExtensions(ExtensionsImplementation):
             GGN_v = torch.cat([g.detach().view(-1) for g in GGN_vs])
             return GGN_v[i]
 
-        diag_ggns = []
-        for p in list(self.problem.model.parameters()):
-            diag_ggn_p = torch.zeros_like(p).view(-1)
+        def get_diag_ggn(loss, output):
+            diag_ggns = []
+            for p in list(self.problem.model.parameters()):
+                diag_ggn_p = torch.zeros_like(p).view(-1)
 
-            for parameter_index in range(p.numel()):
-                diag_value = extract_ith_element_of_diag_ggn(parameter_index, p)
-                diag_ggn_p[parameter_index] = diag_value
+                for parameter_index in range(p.numel()):
+                    diag_value = extract_ith_element_of_diag_ggn(parameter_index, p, loss, output)
+                    diag_ggn_p[parameter_index] = diag_value
+                        
+                diag_ggns.append(diag_ggn_p.view(p.size()))
+            return diag_ggns
 
-            diag_ggns.append(diag_ggn_p.view(p.size()))
-        return diag_ggns
+        _, batch_output, batch_loss = self.problem.forward_pass()
+        loss_list = torch.zeros((batch_size))
+        
+        if sum_batch:
+            return get_diag_ggn(batch_loss, batch_output)
+        else:
+            batch_diag_ggn = []
+            for b in range(batch_size):
+                _, output, loss = self.problem.forward_pass(sample_idx=b)
+                diag_ggn = get_diag_ggn(loss, output)
+                batch_diag_ggn.append(diag_ggn)
+                loss_list[b] = loss
+            factor = self.problem.get_reduction_factor(batch_loss, loss_list)
+            import pdb;pdb.set_trace()
+            return torch.stack(batch_diag_ggn) * factor
 
     def diag_h(self):
         _, _, loss = self.problem.forward_pass()

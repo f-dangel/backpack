@@ -21,9 +21,8 @@ def test_diag_ggn(problem):
     problem.set_up()
 
     backpack_res = BackpackExtensions(problem).diag_ggn()
-    autograd_res = AutogradExtensions(problem).diag_ggn()
-
-    check_sizes_and_values(autograd_res, backpack_res)
+    autograd_res = AutogradExtensions(problem).diag_ggn(sum_batch=False)
+    check_sizes_and_values(autograd_res, backpack_res[0]) #change 
     problem.tear_down()
 
 
