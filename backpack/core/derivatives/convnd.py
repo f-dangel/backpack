@@ -183,27 +183,11 @@ class ConvNDDerivatives(BaseParameterDerivatives):
             size = module.weight.shape[2 + dim]
             grad_weight = grad_weight.narrow(axis, 0, size)
 
+        dim = {"g": G, "v": V, "n": N, "i": C_in // G, "o": C_out // G}
         if sum_batch:
-            return reduce(
-                grad_weight,
-                "(v n g i o) ... -> v (g o) i ...",
-                "sum",
-                g=G,
-                v=V,
-                n=N,
-                i=C_in // G,
-                o=C_out // G,
-            )
+            return reduce(grad_weight, "(v n g i o) ... -> v (g o) i ...", "sum", **dim)
         else:
-            return rearrange(
-                grad_weight,
-                "(v n g i o) ... -> v n (g o) i ...",
-                g=G,
-                v=V,
-                n=N,
-                i=C_in // G,
-                o=C_out // G,
-            )
+            return rearrange(grad_weight, "(v n g i o) ... -> v n (g o) i ...", **dim)
 
     def __higher_conv_weight_jac_t(self, module, mat, sum_batch):
         """Requires higher-order convolution.
