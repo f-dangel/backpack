@@ -95,6 +95,9 @@ class AutogradExtensions(ExtensionsImplementation):
         if sum_batch:
             return get_diag_ggn(batch_loss, batch_output)
         else:
+            '''
+            multiplied by factor parameter for compatiblity with batch_loss
+            '''
             batch_diag_ggn = []
             for b in range(batch_size):
                 _, output, loss = self.problem.forward_pass(sample_idx=b)
@@ -102,8 +105,8 @@ class AutogradExtensions(ExtensionsImplementation):
                 batch_diag_ggn.append(diag_ggn)
                 loss_list[b] = loss
             factor = self.problem.get_reduction_factor(batch_loss, loss_list)
-            import pdb;pdb.set_trace()
-            return torch.stack(batch_diag_ggn) * factor
+            params_batch_diag_ggn = list(zip(*batch_diag_ggn))
+            return [torch.stack(param) * factor for param in params_batch_diag_ggn]
 
     def diag_h(self):
         _, _, loss = self.problem.forward_pass()

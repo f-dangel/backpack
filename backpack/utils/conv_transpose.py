@@ -16,7 +16,7 @@ def get_weight_gradient_factors(input, grad_out, module, N):
     return X, dE_dY
 
 
-def extract_weight_diagonal(module, input, grad_output, N):
+def extract_weight_diagonal(module, input, grad_output, N, sum_batch=True):
     """
     input must be the unfolded input to the convolution (see unfold_func)
     and grad_output the backpropagated gradient
@@ -34,12 +34,17 @@ def extract_weight_diagonal(module, input, grad_output, N):
 
     grad_output_viewed = rearrange(grad_output, "v n c ... -> v n c (...)")
     AX = einsum("nkl,vnml->vnkm", (input_reshaped, grad_output_viewed))
-    weight_diagonal = (AX ** 2).sum([0, 1]).transpose(0, 1)
-    weight_diagonal = weight_diagonal.reshape(in_channels, out_channels, *k)
-    return weight_diagonal.transpose(0, 1)
+    sum_dims = [0,1] if sum_batch else [0]
+    transpose_dims = (0,1) if sum_batch else (1,2)
+    weight_diagonal = (AX ** 2).sum(sum_dims).transpose(*transpose_dims)
+    if sum_batch:
+        weight_diagonal = weight_diagonal.reshape(in_channels, out_channels, *k)
+    else:
+        weight_diagonal = weight_diagonal.reshape(-1, in_channels, out_channels, *k)
+    return weight_diagonal.transpose(*transpose_dims)
 
 
-def extract_bias_diagonal(module, sqrt, N):
+def extract_bias_diagonal(module, sqrt, N, sum_batch=True):
     """
     `sqrt` must be the backpropagated quantity for DiagH or DiagGGN(MC)
     """
@@ -53,7 +58,8 @@ def extract_bias_diagonal(module, sqrt, N):
         einsum_eq = "vncdhw->vnc"
     else:
         ValueError("{}-dimensional ConvTranspose is not implemented.".format(N))
-    return (einsum(einsum_eq, sqrt) ** 2).sum([V_axis, N_axis])
+    sum_dims = [V_axis, N_axis] if sum_batch else [V_axis]
+    return (einsum(einsum_eq, sqrt) ** 2).sum(sum_dims)
 
 
 def unfold_by_conv_transpose(input, module):

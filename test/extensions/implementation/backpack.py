@@ -62,7 +62,7 @@ class BackpackExtensions(ExtensionsImplementation):
             variances = [p.variance for p in self.problem.model.parameters()]
         return variances
 
-    def diag_ggn(self):
+    def diag_ggn(self, sum_batch=True):
         with backpack(new_ext.DiagGGNExact()):
             _, _, loss = self.problem.forward_pass()
             loss.backward()

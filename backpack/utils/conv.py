@@ -47,12 +47,11 @@ def separate_channels_and_pixels(module, tensor):
     return rearrange(tensor, "v n c ... -> v n c (...)")
 
 
-def extract_weight_diagonal(module, input, grad_output, N):
+def extract_weight_diagonal(module, input, grad_output, N, sum_batch=True):
     """
     input must be the unfolded input to the convolution (see unfold_func)
     and grad_output the backpropagated gradient
     """
-    sum_batch=False
     grad_output_viewed = separate_channels_and_pixels(module, grad_output)
     AX = einsum("nkl,vnml->vnkm", (input, grad_output_viewed))
     sum_dims = [0,1] if sum_batch else [0]
@@ -64,7 +63,7 @@ def extract_weight_diagonal(module, input, grad_output, N):
         return weight_diagonal.reshape(-1, *module.weight.numpy().shape)
 
 
-def extract_bias_diagonal(module, sqrt, N):
+def extract_bias_diagonal(module, sqrt, N, sum_batch=True):
     """
     `sqrt` must be the backpropagated quantity for DiagH or DiagGGN(MC)
     """
@@ -78,7 +77,8 @@ def extract_bias_diagonal(module, sqrt, N):
         einsum_eq = "vncdhw->vnc"
     else:
         ValueError("{}-dimensional Conv. is not implemented.".format(N))
-    return (einsum(einsum_eq, sqrt) ** 2).sum([V_axis, N_axis])
+    sum_dims = [V_axis, N_axis] if sum_batch else [V_axis]
+    return (einsum(einsum_eq, sqrt) ** 2).sum(sum_dims)
 
 
 def unfold_by_conv(input, module):
