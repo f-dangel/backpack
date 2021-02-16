@@ -25,7 +25,7 @@ class ExtensionsImplementation:
         raise NotImplementedError
 
     def diag_ggn_batch(self):
-        """MC approximation of Diagonal of Gauss Newton with individual gradients"""
+        """Individual Diagonal of Gauss Newton with individual gradients"""
         raise NotImplementedError
 
     def diag_ggn_mc(self, mc_samples):

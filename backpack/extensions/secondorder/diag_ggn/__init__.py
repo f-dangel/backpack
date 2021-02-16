@@ -116,14 +116,14 @@ class DiagGGNExact(DiagGGN):
 
 class BatchDiagGGNExact(BackpropExtension):
     """
-    Diagonal of the Generalized Gauss-Newton/Fisher.
+    Individual Diagonal of the Generalized Gauss-Newton/Fisher.
     Uses the exact Hessian of the loss w.r.t. the model output.
 
     Stores the output in :code:`diag_ggn_batch`,
     has the same dimensions as the gradient.
 
     For a faster but less precise alternative,
-    see :py:meth:`backpack.extensions.BatchDiagGGNMC`.
+    see :py:meth:`backpack.extensions.DiagGGNMC`.
 
     """
 
