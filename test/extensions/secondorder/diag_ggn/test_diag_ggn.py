@@ -21,7 +21,7 @@ def test_diag_ggn(problem):
     problem.set_up()
 
     backpack_res = BackpackExtensions(problem).diag_ggn()
-    autograd_res = AutogradExtensions(problem).diag_ggn(sum_batch=True)
+    autograd_res = AutogradExtensions(problem).diag_ggn()
 
     check_sizes_and_values(autograd_res, backpack_res)
     problem.tear_down()
@@ -29,15 +29,15 @@ def test_diag_ggn(problem):
 
 @pytest.mark.parametrize("problem", PROBLEMS, ids=IDS)
 def test_diag_ggn_batch(problem):
-    """Test the diagonal of Gauss-Newton
+    """Test the individual diagonal of Gauss-Newton
 
     Args:
         problem (ExtensionsTestProblem): Problem for extension test.
     """
     problem.set_up()
 
-    backpack_res = BackpackExtensions(problem).diag_ggn_batch()
-    autograd_res = AutogradExtensions(problem).diag_ggn(sum_batch=False)
+    backpack_res = BackpackExtensions(problem).diag_ggn_exact_batch()
+    autograd_res = AutogradExtensions(problem).diag_ggn_batch()
 
     check_sizes_and_values(autograd_res, backpack_res)
     problem.tear_down()
