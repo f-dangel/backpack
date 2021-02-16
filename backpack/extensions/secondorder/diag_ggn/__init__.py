@@ -114,6 +114,57 @@ class DiagGGNExact(DiagGGN):
         )
 
 
+class BatchDiagGGNExact(BackpropExtension):
+    """
+    Diagonal of the Generalized Gauss-Newton/Fisher.
+    Uses the exact Hessian of the loss w.r.t. the model output.
+
+    Stores the output in :code:`diag_ggn_batch`,
+    has the same dimensions as the gradient.
+
+    For a faster but less precise alternative,
+    see :py:meth:`backpack.extensions.BatchDiagGGNMC`.
+
+    """
+
+    def __init__(
+        self,
+        loss_hessian_strategy=LossHessianStrategy.EXACT,
+        savefield="diag_ggn_batch",
+    ):
+        self.loss_hessian_strategy = loss_hessian_strategy
+        super().__init__(
+            savefield=savefield,
+            module_exts={
+                MSELoss: losses.DiagGGNMSELoss(),
+                CrossEntropyLoss: losses.DiagGGNCrossEntropyLoss(),
+                Linear: linear.BatchDiagGGNLinear(),
+                MaxPool1d: pooling.DiagGGNMaxPool1d(),
+                MaxPool2d: pooling.DiagGGNMaxPool2d(),
+                AvgPool1d: pooling.DiagGGNAvgPool1d(),
+                MaxPool3d: pooling.DiagGGNMaxPool3d(),
+                AvgPool2d: pooling.DiagGGNAvgPool2d(),
+                AvgPool3d: pooling.DiagGGNAvgPool3d(),
+                ZeroPad2d: padding.DiagGGNZeroPad2d(),
+                Conv1d: conv1d.BatchDiagGGNConv1d(),
+                Conv2d: conv2d.BatchDiagGGNConv2d(),
+                Conv3d: conv3d.BatchDiagGGNConv3d(),
+                ConvTranspose1d: convtranspose1d.BatchDiagGGNConvTranspose1d(),
+                ConvTranspose2d: convtranspose2d.BatchDiagGGNConvTranspose2d(),
+                ConvTranspose3d: convtranspose3d.BatchDiagGGNConvTranspose3d(),
+                Dropout: dropout.DiagGGNDropout(),
+                Flatten: flatten.DiagGGNFlatten(),
+                ReLU: activations.DiagGGNReLU(),
+                Sigmoid: activations.DiagGGNSigmoid(),
+                Tanh: activations.DiagGGNTanh(),
+                LeakyReLU: activations.DiagGGNLeakyReLU(),
+                LogSigmoid: activations.DiagGGNLogSigmoid(),
+                ELU: activations.DiagGGNELU(),
+                SELU: activations.DiagGGNSELU(),
+            },
+        )
+
+
 class DiagGGNMC(DiagGGN):
     """
     Diagonal of the Generalized Gauss-Newton/Fisher.

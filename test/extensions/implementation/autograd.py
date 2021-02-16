@@ -83,21 +83,23 @@ class AutogradExtensions(ExtensionsImplementation):
                 diag_ggn_p = torch.zeros_like(p).view(-1)
 
                 for parameter_index in range(p.numel()):
-                    diag_value = extract_ith_element_of_diag_ggn(parameter_index, p, loss, output)
+                    diag_value = extract_ith_element_of_diag_ggn(
+                        parameter_index, p, loss, output
+                    )
                     diag_ggn_p[parameter_index] = diag_value
-                        
+
                 diag_ggns.append(diag_ggn_p.view(p.size()))
             return diag_ggns
 
         _, batch_output, batch_loss = self.problem.forward_pass()
         loss_list = torch.zeros((batch_size))
-        
+
         if sum_batch:
             return get_diag_ggn(batch_loss, batch_output)
         else:
-            '''
+            """
             multiplied by factor parameter for compatiblity with batch_loss
-            '''
+            """
             batch_diag_ggn = []
             for b in range(batch_size):
                 _, output, loss = self.problem.forward_pass(sample_idx=b)

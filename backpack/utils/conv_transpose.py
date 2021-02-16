@@ -35,8 +35,8 @@ def extract_weight_diagonal(module, input, grad_output, N, sum_batch=True):
 
     grad_output_viewed = separate_channels_and_pixels(module, grad_output)
     AX = einsum("nkl,vnml->vnkm", (input_reshaped, grad_output_viewed))
-    sum_dims = [0,1] if sum_batch else [0]
-    transpose_dims = (0,1) if sum_batch else (1,2)
+    sum_dims = [0, 1] if sum_batch else [0]
+    transpose_dims = (0, 1) if sum_batch else (1, 2)
     weight_diagonal = (AX ** 2).sum(sum_dims).transpose(*transpose_dims)
     if sum_batch:
         weight_diagonal = weight_diagonal.reshape(in_channels, out_channels, *k)
