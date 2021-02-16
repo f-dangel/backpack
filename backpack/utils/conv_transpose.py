@@ -3,6 +3,7 @@ from torch import einsum
 from torch.nn.functional import conv_transpose1d, conv_transpose2d, conv_transpose3d
 
 from einops import rearrange
+from backpack.utils.conv import separate_channels_and_pixels
 
 
 def get_weight_gradient_factors(input, grad_out, module, N):
@@ -32,7 +33,7 @@ def extract_weight_diagonal(module, input, grad_output, N, sum_batch=True):
 
     input_reshaped = input.reshape(M, -1, spatial_out_numel)
 
-    grad_output_viewed = rearrange(grad_output, "v n c ... -> v n c (...)")
+    grad_output_viewed = separate_channels_and_pixels(module, grad_output)
     AX = einsum("nkl,vnml->vnkm", (input_reshaped, grad_output_viewed))
     sum_dims = [0,1] if sum_batch else [0]
     transpose_dims = (0,1) if sum_batch else (1,2)
