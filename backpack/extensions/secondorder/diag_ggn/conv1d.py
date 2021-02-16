@@ -1,5 +1,8 @@
 from backpack.core.derivatives.conv1d import Conv1DDerivatives
-from backpack.extensions.secondorder.diag_ggn.convnd import DiagGGNConvND, BatchDiagGGNConvND
+from backpack.extensions.secondorder.diag_ggn.convnd import (
+    DiagGGNConvND,
+    BatchDiagGGNConvND,
+)
 
 
 class DiagGGNConv1d(DiagGGNConvND):

@@ -11,20 +11,20 @@ PROBLEMS = make_test_problems(DiagGGN_SETTINGS)
 IDS = [problem.make_id() for problem in PROBLEMS]
 
 
-# @pytest.mark.parametrize("problem", PROBLEMS, ids=IDS)
-# def test_diag_ggn(problem):
-#     """Test the diagonal of Gauss-Newton
+@pytest.mark.parametrize("problem", PROBLEMS, ids=IDS)
+def test_diag_ggn(problem):
+    """Test the diagonal of Gauss-Newton
 
-#     Args:
-#         problem (ExtensionsTestProblem): Problem for extension test.
-#     """
-#     problem.set_up()
+    Args:
+        problem (ExtensionsTestProblem): Problem for extension test.
+    """
+    problem.set_up()
 
-#     backpack_res = BackpackExtensions(problem).diag_ggn()
-#     autograd_res = AutogradExtensions(problem).diag_ggn(sum_batch=True)
+    backpack_res = BackpackExtensions(problem).diag_ggn()
+    autograd_res = AutogradExtensions(problem).diag_ggn(sum_batch=True)
 
-#     check_sizes_and_values(autograd_res, backpack_res)
-#     problem.tear_down()
+    check_sizes_and_values(autograd_res, backpack_res)
+    problem.tear_down()
 
 
 @pytest.mark.parametrize("problem", PROBLEMS, ids=IDS)
@@ -38,7 +38,7 @@ def test_diag_ggn_batch(problem):
 
     backpack_res = BackpackExtensions(problem).diag_ggn_batch()
     autograd_res = AutogradExtensions(problem).diag_ggn(sum_batch=False)
-    import pdb; pdb.set_trace()
+
     check_sizes_and_values(autograd_res, backpack_res)
     problem.tear_down()
 

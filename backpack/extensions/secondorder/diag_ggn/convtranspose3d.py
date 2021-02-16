@@ -1,6 +1,7 @@
 from backpack.core.derivatives.conv_transpose3d import ConvTranspose3DDerivatives
 from backpack.extensions.secondorder.diag_ggn.convtransposend import (
-    DiagGGNConvTransposeND, BatchDiagGGNConvTransposeND
+    DiagGGNConvTransposeND,
+    BatchDiagGGNConvTransposeND,
 )
 
 
