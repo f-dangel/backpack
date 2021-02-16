@@ -2,7 +2,7 @@ from torch import zeros
 from torch.nn.functional import max_pool1d, max_pool2d, max_pool3d
 
 from backpack.core.derivatives.basederivatives import BaseDerivatives
-from backpack.utils.ein import eingroup
+from einops import rearrange
 
 
 class MaxPoolNDDerivatives(BaseDerivatives):
@@ -93,12 +93,7 @@ class MaxPoolNDDerivatives(BaseDerivatives):
         return result / N
 
     def _jac_mat_prod(self, module, g_inp, g_out, mat):
-        if self.N == 1:
-            mat_as_pool = mat
-        elif self.N == 2:
-            mat_as_pool = eingroup("v,n,c,h,w->v,n,c,hw", mat)
-        elif self.N == 3:
-            mat_as_pool = eingroup("v,n,c,d,h,w->v,n,c,dhw", mat)
+        mat_as_pool = rearrange(mat, "v n c ... -> v n c (...)")
         jmp_as_pool = self.__apply_jacobian_of(module, mat_as_pool)
         return self.reshape_like_output(jmp_as_pool, module)
 
@@ -110,25 +105,14 @@ class MaxPoolNDDerivatives(BaseDerivatives):
     def __pool_idx_for_jac(self, module, V):
         """Manipulated pooling indices ready-to-use in jac(t)."""
         pool_idx = self.get_pooling_idx(module)
-
-        if self.N == 1:
-            pass
-        elif self.N == 2:
-            pool_idx = eingroup("n,c,h,w->n,c,hw", pool_idx)
-        elif self.N == 3:
-            pool_idx = eingroup("n,c,d,h,w->n,c,dhw", pool_idx)
+        pool_idx = rearrange(pool_idx, "n c ... -> n c (...)")
 
         V_axis = 0
 
         return pool_idx.unsqueeze(V_axis).expand(V, -1, -1, -1)
 
     def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
-        if self.N == 1:
-            mat_as_pool = mat
-        elif self.N == 2:
-            mat_as_pool = eingroup("v,n,c,h,w->v,n,c,hw", mat)
-        elif self.N == 3:
-            mat_as_pool = eingroup("v,n,c,d,h,w->v,n,c,dhw", mat)
+        mat_as_pool = rearrange(mat, "v n c ... -> v n c (...)")
         jmp_as_pool = self.__apply_jacobian_t_of(module, mat_as_pool)
         return self.reshape_like_input(jmp_as_pool, module)
 

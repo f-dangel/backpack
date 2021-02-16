@@ -7,24 +7,21 @@ from torch.nn.functional import conv_transpose1d, conv_transpose2d, conv_transpo
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 from backpack.utils.conv_transpose import unfold_by_conv_transpose
-from backpack.utils.ein import eingroup
+from einops import rearrange
 
 
 class ConvTransposeNDDerivatives(BaseParameterDerivatives):
     def __init__(self, N):
         if N == 1:
             self.module = ConvTranspose1d
-            self.dim_text = "x"
             self.conv_func = conv1d
             self.conv_transpose_func = conv_transpose1d
         elif N == 2:
             self.module = ConvTranspose2d
-            self.dim_text = "x,y"
             self.conv_func = conv2d
             self.conv_transpose_func = conv_transpose2d
         elif N == 3:
             self.module = ConvTranspose3d
-            self.dim_text = "x,y,z"
             self.conv_func = conv3d
             self.conv_transpose_func = conv_transpose3d
         else:
@@ -114,7 +111,7 @@ class ConvTransposeNDDerivatives(BaseParameterDerivatives):
         return jac_t_mat_t_jac.t()
 
     def _jac_mat_prod(self, module, g_inp, g_out, mat):
-        mat_as_conv = eingroup("v,n,c,{0}->vn,c,{0}".format(self.dim_text), mat)
+        mat_as_conv = rearrange(mat, "v n c ... -> (v n) c ...")
         jmp_as_conv = self.__jac(module, mat_as_conv)
         return self.reshape_like_output(jmp_as_conv, module)
 
@@ -144,7 +141,7 @@ class ConvTransposeNDDerivatives(BaseParameterDerivatives):
         return jac_t_mat
 
     def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
-        mat_as_conv = eingroup("v,n,c,{0}->vn,c,{0}".format(self.dim_text), mat)
+        mat_as_conv = rearrange(mat, "v n c ... -> (v n) c ...")
         jmp_as_conv = self.__jac_t(module, mat_as_conv)
         return self.reshape_like_input(jmp_as_conv, module)
 

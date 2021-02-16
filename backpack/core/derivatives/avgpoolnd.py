@@ -15,7 +15,7 @@ from torch.nn import (
 )
 
 from backpack.core.derivatives.basederivatives import BaseDerivatives
-from backpack.utils.ein import eingroup
+from einops import rearrange
 
 
 class AvgPoolNDDerivatives(BaseDerivatives):
@@ -24,15 +24,12 @@ class AvgPoolNDDerivatives(BaseDerivatives):
         if self.N == 1:
             self.conv = Conv1d
             self.convt = ConvTranspose1d
-            self.group_channel_equation = "v,n,c,l->vnc,l"
         elif self.N == 2:
             self.conv = Conv2d
             self.convt = ConvTranspose2d
-            self.group_channel_equation = "v,n,c,w,h->vnc,w,h"
         elif self.N == 3:
             self.conv = Conv3d
             self.convt = ConvTranspose3d
-            self.group_channel_equation = "v,n,c,d,w,h->vnc,d,w,h"
 
     def hessian_is_zero(self):
         return True
@@ -87,7 +84,7 @@ class AvgPoolNDDerivatives(BaseDerivatives):
     def __make_single_channel(self, mat, module):
         """Create fake single-channel images, grouping batch,
         class and channel dimension."""
-        result = eingroup(self.group_channel_equation, mat)
+        result = rearrange(mat, "v n c ... -> (v n c) ...")
         C_axis = 1
         return result.unsqueeze(C_axis)
 

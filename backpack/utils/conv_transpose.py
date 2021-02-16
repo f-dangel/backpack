@@ -2,7 +2,8 @@ import torch
 from torch import einsum
 from torch.nn.functional import conv_transpose1d, conv_transpose2d, conv_transpose3d
 
-from backpack.utils.ein import eingroup
+from einops import rearrange
+from backpack.utils.conv import separate_channels_and_pixels
 
 
 def get_weight_gradient_factors(input, grad_out, module, N):
@@ -11,15 +12,7 @@ def get_weight_gradient_factors(input, grad_out, module, N):
     kernel_size_numel = int(torch.prod(torch.Tensor(kernel_size)))
 
     X = unfold_by_conv_transpose(input, module).reshape(M, C_in * kernel_size_numel, -1)
-
-    if N == 1:
-        dE_dY = grad_out
-    elif N == 2:
-        dE_dY = eingroup("n,c,h,w->n,c,hw", grad_out)
-    elif N == 3:
-        dE_dY = eingroup("n,c,d,h,w->n,c,dhw", grad_out)
-    else:
-        raise ValueError("{}-dimensional ConvTranspose is not implemented.".format(N))
+    dE_dY = rearrange(grad_out, "n c ... -> n c (...)")
 
     return X, dE_dY
 
@@ -40,15 +33,7 @@ def extract_weight_diagonal(module, input, grad_output, N):
 
     input_reshaped = input.reshape(M, -1, spatial_out_numel)
 
-    if N == 1:
-        grad_output_viewed = grad_output
-    elif N == 2:
-        grad_output_viewed = eingroup("v,n,c,h,w->v,n,c,hw", grad_output)
-    elif N == 3:
-        grad_output_viewed = eingroup("v,n,c,d,h,w->v,n,c,dhw", grad_output)
-    else:
-        raise ValueError("{}-dimensional ConvTranspose is not implemented.".format(N))
-
+    grad_output_viewed = separate_channels_and_pixels(module, grad_output)
     AX = einsum("nkl,vnml->vnkm", (input_reshaped, grad_output_viewed))
     weight_diagonal = (AX ** 2).sum([0, 1]).transpose(0, 1)
     weight_diagonal = weight_diagonal.reshape(in_channels, out_channels, *k)
