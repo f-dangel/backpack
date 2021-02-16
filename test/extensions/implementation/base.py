@@ -35,3 +35,7 @@ class ExtensionsImplementation:
     def diag_h(self):
         """Diagonal of Hessian"""
         raise NotImplementedError
+
+    def diag_h_batch(self):
+        """Individual Diagonal of Hessian"""
+        raise NotImplementedError

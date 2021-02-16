@@ -85,3 +85,47 @@ class DiagHessian(BackpropExtension):
                 LogSigmoid: activations.DiagHLogSigmoid(),
             },
         )
+
+
+class BatchDiagHessian(BackpropExtension):
+    """
+    Individual Diagonal of the Hessian.
+
+    Stores the output in :code:`diag_h_batch`, has the same dimensions as the gradient.
+
+    .. warning::
+
+        Very expensive on networks with non-piecewise linear activations.
+
+    """
+
+    def __init__(self):
+        super().__init__(
+            savefield="diag_h_batch",
+            fail_mode="ERROR",
+            module_exts={
+                MSELoss: losses.DiagHMSELoss(),
+                CrossEntropyLoss: losses.DiagHCrossEntropyLoss(),
+                Linear: linear.BatchDiagHLinear(),
+                MaxPool1d: pooling.DiagHMaxPool1d(),
+                MaxPool2d: pooling.DiagHMaxPool2d(),
+                AvgPool1d: pooling.DiagHAvgPool1d(),
+                MaxPool3d: pooling.DiagHMaxPool3d(),
+                AvgPool2d: pooling.DiagHAvgPool2d(),
+                AvgPool3d: pooling.DiagHAvgPool3d(),
+                ZeroPad2d: padding.DiagHZeroPad2d(),
+                Conv1d: conv1d.BatchDiagHConv1d(),
+                Conv2d: conv2d.BatchDiagHConv2d(),
+                Conv3d: conv3d.BatchDiagHConv3d(),
+                ConvTranspose1d: convtranspose1d.BatchDiagHConvTranspose1d(),
+                ConvTranspose2d: convtranspose2d.BatchDiagHConvTranspose2d(),
+                ConvTranspose3d: convtranspose3d.BatchDiagHConvTranspose3d(),
+                Dropout: dropout.DiagHDropout(),
+                Flatten: flatten.DiagHFlatten(),
+                ReLU: activations.DiagHReLU(),
+                Sigmoid: activations.DiagHSigmoid(),
+                Tanh: activations.DiagHTanh(),
+                LeakyReLU: activations.DiagHLeakyReLU(),
+                LogSigmoid: activations.DiagHLogSigmoid(),
+            },
+        )

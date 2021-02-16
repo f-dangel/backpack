@@ -15,7 +15,7 @@ class DiagHLinear(DiagHBaseModule):
         h_diag = torch.zeros_like(module.bias)
 
         for h_sqrt, sign in zip(sqrt_h_outs, sqrt_h_outs_signs):
-            h_diag_curr = LinUtils.extract_bias_diagonal(module, h_sqrt)
+            h_diag_curr = LinUtils.extract_bias_diagonal(module, h_sqrt, sum_batch=True)
             h_diag.add_(sign * h_diag_curr)
         return h_diag
 
@@ -25,6 +25,39 @@ class DiagHLinear(DiagHBaseModule):
         h_diag = torch.zeros_like(module.weight)
 
         for h_sqrt, sign in zip(sqrt_h_outs, sqrt_h_outs_signs):
-            h_diag_curr = LinUtils.extract_weight_diagonal(module, h_sqrt)
+            h_diag_curr = LinUtils.extract_weight_diagonal(
+                module, h_sqrt, sum_batch=True
+            )
+            h_diag.add_(sign * h_diag_curr)
+        return h_diag
+
+
+class BatchDiagHLinear(DiagHBaseModule):
+    def __init__(self):
+        super().__init__(derivatives=LinearDerivatives(), params=["bias", "weight"])
+
+    def bias(self, ext, module, g_inp, g_out, backproped):
+        N = module.input0.shape[0]
+        sqrt_h_outs = backproped["matrices"]
+        sqrt_h_outs_signs = backproped["signs"]
+        h_diag = torch.zeros(N, *module.bias.shape)
+
+        for h_sqrt, sign in zip(sqrt_h_outs, sqrt_h_outs_signs):
+            h_diag_curr = LinUtils.extract_bias_diagonal(
+                module, h_sqrt, sum_batch=False
+            )
+            h_diag.add_(sign * h_diag_curr)
+        return h_diag
+
+    def weight(self, ext, module, g_inp, g_out, backproped):
+        N = module.input0.shape[0]
+        sqrt_h_outs = backproped["matrices"]
+        sqrt_h_outs_signs = backproped["signs"]
+        h_diag = torch.zeros(N, *module.weight.shape)
+
+        for h_sqrt, sign in zip(sqrt_h_outs, sqrt_h_outs_signs):
+            h_diag_curr = LinUtils.extract_weight_diagonal(
+                module, h_sqrt, sum_batch=False
+            )
             h_diag.add_(sign * h_diag_curr)
         return h_diag

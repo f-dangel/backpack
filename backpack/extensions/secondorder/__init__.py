@@ -19,7 +19,7 @@ The implemented extensions are
 """
 
 from .diag_ggn import DiagGGN, DiagGGNExact, BatchDiagGGNExact, DiagGGNMC
-from .diag_hessian import DiagHessian
+from .diag_hessian import DiagHessian, BatchDiagHessian
 from .hbp import HBP, KFAC, KFLR, KFRA
 
 __all__ = [
@@ -28,6 +28,7 @@ __all__ = [
     "DiagGGNMC",
     "DiagGGN",
     "DiagHessian",
+    "BatchDiagHessian",
     "KFAC",
     "KFLR",
     "KFRA",
