@@ -139,18 +139,6 @@ class DiagGGNMC(DiagGGN):
 
 
 class BatchDiagGGN(BackpropExtension):
-    """
-    Individual Diagonal of the Generalized Gauss-Newton/Fisher.
-    Uses the exact Hessian of the loss w.r.t. the model output.
-
-    Stores the output in :code:`diag_ggn_exact_batch`,
-    has the same dimensions as the gradient.
-
-    For a faster but less precise alternative,
-    see :py:meth:`backpack.extensions.DiagGGNMC`.
-
-    """
-
     VALID_LOSS_HESSIAN_STRATEGIES = [
         LossHessianStrategy.EXACT,
         LossHessianStrategy.SAMPLING,
@@ -200,15 +188,11 @@ class BatchDiagGGN(BackpropExtension):
 
 class BatchDiagGGNExact(BatchDiagGGN):
     """
-    Diagonal of the Generalized Gauss-Newton/Fisher.
+    Individual diagonal of the Generalized Gauss-Newton/Fisher.
     Uses the exact Hessian of the loss w.r.t. the model output.
 
-    Stores the output in :code:`diag_ggn_exact`,
-    has the same dimensions as the gradient.
-
-    For a faster but less precise alternative,
-    see :py:meth:`backpack.extensions.DiagGGNMC`.
-
+    Stores the output in ``diag_ggn_exact_batch`` as a ``[N x ...]`` tensor,
+    where ``N`` batch size and ``...`` is the shape of the gradient.
     """
 
     def __init__(self):

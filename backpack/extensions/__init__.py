@@ -11,7 +11,6 @@ from .secondorder import (
     KFRA,
     DiagGGN,
     DiagGGNExact,
-    BatchDiagGGN,
     BatchDiagGGNExact,
     DiagGGNMC,
     DiagHessian,
@@ -33,6 +32,5 @@ __all__ = [
     "BatchDiagGGNExact",
     "DiagGGNMC",
     "DiagGGN",
-    "BatchDiagGGN",
     "DiagHessian",
 ]

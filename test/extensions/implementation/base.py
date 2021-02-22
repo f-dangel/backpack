@@ -25,7 +25,7 @@ class ExtensionsImplementation:
         raise NotImplementedError
 
     def diag_ggn_batch(self):
-        """Individual Diagonal of Gauss Newton"""
+        """Individual diagonal of Generalized Gauss-Newton/Fisher"""
         raise NotImplementedError
 
     def diag_ggn_mc(self, mc_samples):

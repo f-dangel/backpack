@@ -67,8 +67,6 @@ class AutogradExtensions(ExtensionsImplementation):
         return variances
 
     def _get_diag_ggn(self, loss, output):
-        diag_ggns = []
-
         def extract_ith_element_of_diag_ggn(i, p, loss, output):
             v = torch.zeros(p.numel()).to(self.problem.device)
             v[i] = 1.0
@@ -77,6 +75,7 @@ class AutogradExtensions(ExtensionsImplementation):
             GGN_v = torch.cat([g.detach().view(-1) for g in GGN_vs])
             return GGN_v[i]
 
+        diag_ggns = []
         for p in list(self.problem.model.parameters()):
             diag_ggn_p = torch.zeros_like(p).view(-1)
 
@@ -96,8 +95,7 @@ class AutogradExtensions(ExtensionsImplementation):
     def diag_ggn_batch(self):
         batch_size = self.problem.input.shape[0]
         _, _, batch_loss = self.problem.forward_pass()
-        batch_loss_device = batch_loss.device
-        loss_list = torch.zeros((batch_size), device=batch_loss_device)
+        loss_list = torch.zeros(batch_size, device=self.problem.device)
 
         batch_diag_ggn = []
         for b in range(batch_size):

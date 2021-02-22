@@ -29,7 +29,7 @@ def test_diag_ggn(problem):
 
 @pytest.mark.parametrize("problem", PROBLEMS, ids=IDS)
 def test_diag_ggn_batch(problem):
-    """Test the individual diagonal of Gauss-Newton
+    """Test the individual diagonal of Generalized Gauss-Newton/Fisher
 
     Args:
         problem (ExtensionsTestProblem): Problem for extension test.
