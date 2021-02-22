@@ -13,6 +13,7 @@ from .secondorder import (
     DiagGGNExact,
     BatchDiagGGNExact,
     DiagGGNMC,
+    BatchDiagGGNMC,
     DiagHessian,
 )
 
@@ -31,6 +32,7 @@ __all__ = [
     "DiagGGNExact",
     "BatchDiagGGNExact",
     "DiagGGNMC",
+    "BatchDiagGGNMC"
     "DiagGGN",
     "DiagHessian",
 ]

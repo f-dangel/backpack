@@ -85,6 +85,15 @@ class BackpackExtensions(ExtensionsImplementation):
             diag_ggn_mc = [p.diag_ggn_mc for p in self.problem.model.parameters()]
         return diag_ggn_mc
 
+    def diag_ggn_mc_batch(self, mc_samples):
+        with backpack(new_ext.BatchDiagGGNMC(mc_samples=mc_samples)):
+            _, _, loss = self.problem.forward_pass()
+            loss.backward()
+            diag_ggn_mc_batch = [
+                p.diag_ggn_mc_batch for p in self.problem.model.parameters()
+            ]
+        return diag_ggn_mc_batch
+
     def diag_h(self):
         with backpack(new_ext.DiagHessian()):
             _, _, loss = self.problem.forward_pass()

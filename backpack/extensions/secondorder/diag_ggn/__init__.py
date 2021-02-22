@@ -200,3 +200,28 @@ class BatchDiagGGNExact(BatchDiagGGN):
             loss_hessian_strategy=LossHessianStrategy.EXACT,
             savefield="diag_ggn_exact_batch",
         )
+
+
+class BatchDiagGGNMC(BatchDiagGGN):
+    """
+    Diagonal of the Generalized Gauss-Newton/Fisher.
+    Uses a Monte-Carlo approximation of
+    the Hessian of the loss w.r.t. the model output.
+
+    Stores the output in :code:`diag_ggn_mc_batch` as a ``[N x ...]`` tensor,
+    where ``N`` batch size and ``...`` is the shape of the gradient.
+
+    For a more precise but slower alternative,
+    see :py:meth:`backpack.extensions.BatchDiagGGNExact`.
+
+    """
+
+    def __init__(self, mc_samples=1):
+        self._mc_samples = mc_samples
+        super().__init__(
+            loss_hessian_strategy=LossHessianStrategy.SAMPLING,
+            savefield="diag_ggn_mc_batch",
+        )
+
+    def get_num_mc_samples(self):
+        return self._mc_samples
