@@ -37,7 +37,7 @@ def test_diag_h_batch(problem):
     problem.set_up()
 
     backpack_res = BackpackExtensions(problem).diag_h_batch()
-    # autograd_res = AutogradExtensions(problem).diag_h()
+    autograd_res = AutogradExtensions(problem).diag_h_batch()
 
-    # check_sizes_and_values(autograd_res, backpack_res)
+    check_sizes_and_values(autograd_res, backpack_res)
     problem.tear_down()

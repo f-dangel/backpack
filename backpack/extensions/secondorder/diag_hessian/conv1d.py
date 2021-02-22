@@ -5,6 +5,15 @@ from backpack.extensions.secondorder.diag_hessian.convnd import (
 )
 
 
+class DiagHConv1d(DiagHConvND):
+    def __init__(self):
+        super().__init__(
+            derivatives=Conv1DDerivatives(),
+            N=1,
+            params=["bias", "weight"],
+        )
+
+
 class BatchDiagHConv1d(BatchDiagHConvND):
     def __init__(self):
         super().__init__(
