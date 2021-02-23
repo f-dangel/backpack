@@ -18,7 +18,13 @@ The implemented extensions are
 - The diagonal of the Hessian :func:`DiagHessian <backpack.extensions.DiagHessian>`
 """
 
-from .diag_ggn import DiagGGNExact, BatchDiagGGN, BatchDiagGGNExact, DiagGGNMC, BatchDiagGGNMC
+from .diag_ggn import (
+    DiagGGNExact,
+    BatchDiagGGN,
+    BatchDiagGGNExact,
+    DiagGGNMC,
+    BatchDiagGGNMC,
+)
 from .diag_hessian import DiagHessian
 from .hbp import HBP, KFAC, KFLR, KFRA
 
