@@ -104,6 +104,10 @@ class AutogradExtensions(ExtensionsImplementation):
             batch_diag_ggn.append(diag_ggn)
             loss_list[b] = loss
         factor = self.problem.get_reduction_factor(batch_loss, loss_list)
+        '''
+        batch_diag_ggn has entries [sample_idx][param_idx]
+        params_batch_diag_ggn has entries [param_idx][sample_idx]
+        '''
         params_batch_diag_ggn = list(zip(*batch_diag_ggn))
         return [torch.stack(param) * factor for param in params_batch_diag_ggn]
 
