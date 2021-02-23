@@ -78,7 +78,7 @@ def test_interface_sum_grad_squared():
 
 
 def test_interface_diag_ggn():
-    interface_test(new_ext.DiagGGN())
+    interface_test(new_ext.DiagGGNExact())
 
 
 def test_interface_diag_h():
@@ -123,7 +123,7 @@ def test_interface_sum_grad_squared_conv():
 
 
 def test_interface_diag_ggn_conv():
-    interface_test(new_ext.DiagGGN(), use_conv=True)
+    interface_test(new_ext.DiagGGNExact(), use_conv=True)
 
 
 def test_interface_kflr_conv():
