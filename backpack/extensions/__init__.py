@@ -31,6 +31,5 @@ __all__ = [
     "DiagGGNExact",
     "BatchDiagGGNExact",
     "DiagGGNMC",
-    "DiagGGN",
     "DiagHessian",
 ]

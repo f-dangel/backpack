@@ -47,14 +47,14 @@ from . import (
 
 
 class DiagGGN(BackpropExtension):
+    """Base class for diagonal generalized Gauss-Newton/Fisher matrix."""
+
     VALID_LOSS_HESSIAN_STRATEGIES = [
         LossHessianStrategy.EXACT,
         LossHessianStrategy.SAMPLING,
     ]
 
-    def __init__(self, loss_hessian_strategy=LossHessianStrategy.EXACT, savefield=None):
-        if savefield is None:
-            savefield = "diag_ggn"
+    def __init__(self, loss_hessian_strategy, savefield):
         if loss_hessian_strategy not in self.VALID_LOSS_HESSIAN_STRATEGIES:
             raise ValueError(
                 "Unknown hessian strategy: {}".format(loss_hessian_strategy)
@@ -109,9 +109,7 @@ class DiagGGNExact(DiagGGN):
     """
 
     def __init__(self):
-        super().__init__(
-            loss_hessian_strategy=LossHessianStrategy.EXACT, savefield="diag_ggn_exact"
-        )
+        super().__init__(LossHessianStrategy.EXACT, "diag_ggn_exact")
 
 
 class DiagGGNMC(DiagGGN):
@@ -130,9 +128,7 @@ class DiagGGNMC(DiagGGN):
 
     def __init__(self, mc_samples=1):
         self._mc_samples = mc_samples
-        super().__init__(
-            loss_hessian_strategy=LossHessianStrategy.SAMPLING, savefield="diag_ggn_mc"
-        )
+        super().__init__(LossHessianStrategy.SAMPLING, "diag_ggn_mc")
 
     def get_num_mc_samples(self):
         return self._mc_samples
