@@ -144,15 +144,7 @@ class BatchDiagGGN(BackpropExtension):
         LossHessianStrategy.SAMPLING,
     ]
 
-    def __init__(self, loss_hessian_strategy=LossHessianStrategy.EXACT, savefield=None):
-        if savefield is None:
-            savefield = "diag_ggn_batch"
-        if loss_hessian_strategy not in self.VALID_LOSS_HESSIAN_STRATEGIES:
-            raise ValueError(
-                "Unknown hessian strategy: {}".format(loss_hessian_strategy)
-                + "Valid strategies: [{}]".format(self.VALID_LOSS_HESSIAN_STRATEGIES)
-            )
-
+    def __init__(self, loss_hessian_strategy, savefield):
         self.loss_hessian_strategy = loss_hessian_strategy
         super().__init__(
             savefield=savefield,
@@ -192,7 +184,7 @@ class BatchDiagGGNExact(BatchDiagGGN):
     Uses the exact Hessian of the loss w.r.t. the model output.
 
     Stores the output in ``diag_ggn_exact_batch`` as a ``[N x ...]`` tensor,
-    where ``N`` batch size and ``...`` is the shape of the gradient.
+    where ``N`` is the batch size and ``...`` is the shape of the gradient.
     """
 
     def __init__(self):
