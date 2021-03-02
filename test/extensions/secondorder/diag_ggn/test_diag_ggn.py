@@ -28,8 +28,8 @@ def test_diag_ggn(problem):
 
 
 MC_ATOL = 1e-4
-MC_LIGHT_RTOL = 2e-1
-MC_RTOL = 2e-2
+MC_LIGHT_RTOL = 1e-1
+MC_RTOL = 1e-2
 
 
 @pytest.mark.parametrize("problem", PROBLEMS, ids=IDS)
@@ -43,7 +43,7 @@ def test_diag_ggn_mc_light(problem):
     problem.set_up()
 
     backpack_res = BackpackExtensions(problem).diag_ggn()
-    mc_samples = 1000
+    mc_samples = 3000
     backpack_res_mc_avg = BackpackExtensions(problem).diag_ggn_mc(mc_samples)
 
     check_sizes_and_values(
@@ -64,8 +64,8 @@ def test_diag_ggn_mc(problem):
     problem.set_up()
 
     backpack_res = BackpackExtensions(problem).diag_ggn()
-    mc_samples = 100000
-    chunks = 10
+    mc_samples = 300000
+    chunks = 30
     backpack_res_mc_avg = BackpackExtensions(problem).diag_ggn_mc_chunk(
         mc_samples, chunks=chunks
     )
