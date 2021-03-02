@@ -76,6 +76,29 @@ class BackpackExtensions(ExtensionsImplementation):
             diag_ggn_mc = [p.diag_ggn_mc for p in self.problem.model.parameters()]
         return diag_ggn_mc
 
+    def diag_ggn_mc_chunk(self, mc_samples, chunks=10):
+        """Like ``diag_ggn_mc``, but handles larger number of samples by chunking."""
+        chunk_samples = (chunks - 1) * [mc_samples // chunks]
+        last_samples = mc_samples - sum(chunk_samples)
+        if last_samples != 0:
+            chunk_samples.append(last_samples)
+
+        chunk_weights = [samples / mc_samples for samples in chunk_samples]
+
+        diag_ggn_mc = None
+
+        for weight, samples in zip(chunk_weights, chunk_samples):
+            chunk_diag_ggn_mc = self.diag_ggn_mc(samples)
+            chunk_diag_ggn_mc = [diag_mc * weight for diag_mc in chunk_diag_ggn_mc]
+
+            if diag_ggn_mc is None:
+                diag_ggn_mc = chunk_diag_ggn_mc
+            else:
+                for idx in range(len(diag_ggn_mc)):
+                    diag_ggn_mc[idx] += chunk_diag_ggn_mc[idx]
+
+        return diag_ggn_mc
+
     def diag_h(self):
         with backpack(new_ext.DiagHessian()):
             _, _, loss = self.problem.forward_pass()
