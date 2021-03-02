@@ -28,8 +28,8 @@ def test_diag_ggn(problem):
 
 
 MC_ATOL = 1e-4
-MC_LIGHT_RTOL = 1e-1
-MC_RTOL = 1e-2
+MC_LIGHT_RTOL = 2e-1
+MC_RTOL = 2e-2
 
 
 @pytest.mark.parametrize("problem", PROBLEMS, ids=IDS)
