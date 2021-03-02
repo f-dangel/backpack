@@ -64,10 +64,11 @@ def test_diag_ggn_mc(problem):
     problem.set_up()
 
     backpack_res = BackpackExtensions(problem).diag_ggn()
-    # NOTE May crash for large networks because of large number of samples.
-    # If necessary, resolve by chunking samples into smaller batches + averaging
     mc_samples = 100000
-    backpack_res_mc_avg = BackpackExtensions(problem).diag_ggn_mc(mc_samples)
+    chunks = 10
+    backpack_res_mc_avg = BackpackExtensions(problem).diag_ggn_mc_chunk(
+        mc_samples, chunks=chunks
+    )
 
     check_sizes_and_values(
         backpack_res, backpack_res_mc_avg, atol=MC_ATOL, rtol=MC_RTOL
