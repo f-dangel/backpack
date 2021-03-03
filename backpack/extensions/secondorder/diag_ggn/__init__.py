@@ -135,6 +135,8 @@ class DiagGGNMC(DiagGGN):
 
 
 class BatchDiagGGN(BackpropExtension):
+    """Base class for batched diagonal generalized Gauss-Newton/Fisher matrix."""
+
     VALID_LOSS_HESSIAN_STRATEGIES = [
         LossHessianStrategy.EXACT,
         LossHessianStrategy.SAMPLING,
