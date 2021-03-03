@@ -141,6 +141,12 @@ class BatchDiagGGN(BackpropExtension):
     ]
 
     def __init__(self, loss_hessian_strategy, savefield):
+        if loss_hessian_strategy not in self.VALID_LOSS_HESSIAN_STRATEGIES:
+            raise ValueError(
+                "Unknown hessian strategy: {}".format(loss_hessian_strategy)
+                + "Valid strategies: [{}]".format(self.VALID_LOSS_HESSIAN_STRATEGIES)
+            )
+
         self.loss_hessian_strategy = loss_hessian_strategy
         super().__init__(
             savefield=savefield,
