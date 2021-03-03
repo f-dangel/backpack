@@ -1,8 +1,8 @@
 .PHONY: help
 .PHONY: black black-check flake8
 .PHONY: install install-dev install-devtools install-test install-lint install-docs
-.PHONY: test
-.PHONY: test-light
+.PHONY: test test-no-gpu
+.PHONY: test-light test-light-no-gpu
 .PHONY: conda-env
 .PHONY: black isort format
 .PHONY: black-check isort-check format-check
@@ -15,8 +15,12 @@
 help:
 	@echo "test"
 	@echo "        Run pytest on the project and report coverage"
+	@echo "test-no-gpu"
+	@echo "        Exclude GPU tests, run pytest on the project and report coverage."
 	@echo "test-light"
 	@echo "        Run pytest on the light part of project and report coverage"
+	@echo "test-light-no-gpu"
+	@echo "        Exclude GPU tests, run pytest on the light part of project and report coverage"
 	@echo "black"
 	@echo "        Run black on the project"
 	@echo "black-check"
@@ -48,6 +52,12 @@ test:
 
 test-light:
 	@pytest -vx --cov=backpack .
+
+test-no-gpu:
+	@pytest -k "not cuda" -vx --run-optional-tests=montecarlo --cov=backpack .
+
+test-light-no-gpu:
+	@pytest -k "not cuda" -vx --cov=backpack .
 
 ###
 # Linter and autoformatter
