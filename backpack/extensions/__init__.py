@@ -4,7 +4,16 @@ BackPACK Extensions
 
 from .curvmatprod import GGNMP, HMP, PCHMP
 from .firstorder import BatchGrad, BatchL2Grad, SumGradSquared, Variance
-from .secondorder import HBP, KFAC, KFLR, KFRA, DiagGGNExact, DiagGGNMC, DiagHessian
+from .secondorder import (
+    HBP,
+    KFAC,
+    KFLR,
+    KFRA,
+    DiagGGNExact,
+    BatchDiagGGNExact,
+    DiagGGNMC,
+    DiagHessian,
+)
 
 __all__ = [
     "PCHMP",
@@ -19,6 +28,7 @@ __all__ = [
     "KFRA",
     "HBP",
     "DiagGGNExact",
+    "BatchDiagGGNExact",
     "DiagGGNMC",
     "DiagHessian",
 ]

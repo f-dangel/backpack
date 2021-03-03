@@ -27,6 +27,22 @@ def test_diag_ggn(problem):
     problem.tear_down()
 
 
+@pytest.mark.parametrize("problem", PROBLEMS, ids=IDS)
+def test_diag_ggn_batch(problem):
+    """Test the individual diagonal of Generalized Gauss-Newton/Fisher
+
+    Args:
+        problem (ExtensionsTestProblem): Problem for extension test.
+    """
+    problem.set_up()
+
+    backpack_res = BackpackExtensions(problem).diag_ggn_exact_batch()
+    autograd_res = AutogradExtensions(problem).diag_ggn_batch()
+
+    check_sizes_and_values(autograd_res, backpack_res)
+    problem.tear_down()
+
+
 MC_ATOL = 1e-4
 MC_LIGHT_RTOL = 1e-1
 MC_RTOL = 1e-2
