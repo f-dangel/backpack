@@ -1,16 +1,16 @@
-"""Save memory in convolutions
-==============================
+"""Saving memory in convolutions
+================================
 
-There exist different approaches to apply the Jacobian with respect to the kernel
+There are different approaches to apply the Jacobian with respect to the kernel
 of a convolution. They exhibit a non-trivial trade-off between run time and memory
 consumption (see more details below). The default choice in BackPACK is a memory-
-intensive implementation. This can lead to an out-of-memory error.
+intensive implementation. This can lead to out-of-memory errors.
 
 Here, we show how to switch BackPACK's vector-Jacobian product algorithm for the kernel
 (``weight``) of :py:class:`torch.nn.Conv2d` modules to a memory-saving variant
 presented in `[Rochette, 2019] <https://arxiv.org/abs/1912.06015>`_.
 
-This can be helpful if you are experiencing memory overflows in CNNs.
+This can be helpful if you are experiencing memory overflows with CNNs.
 
 .. note ::
     This feature is experimental and may change in future releases.
@@ -43,8 +43,8 @@ from backpack.core.derivatives.convnd import weight_jac_t_save_memory
 from backpack.utils.examples import load_one_batch_mnist
 
 # %%
-# We start with some utilities for setting up an extended CNN, loss function, and
-# input data from the MNIST data set.
+# We start with the utility function for setting up an extended CNN, loss function, and
+# input data from MNIST.
 
 
 def setup(device):
@@ -84,9 +84,9 @@ def setup(device):
 
 
 # %%
-# Let's demonstrate the differences between the vector-Jacobian methods, we benchmark
-# a function that computes individual gradients on the specified setup using BackPACK's
-# :py:class:`BatchGrad <backpack.extensions.BatchGrad>` extensions.
+# Let's demonstrate the differences between the vector-Jacobian methods. we benchmark
+# the following function that computes individual gradients on the specified setup
+# using BackPACK's :py:class:`BatchGrad <backpack.extensions.BatchGrad>` extensions.
 
 
 def compute_individual_gradients(device, seed=0):
@@ -96,8 +96,8 @@ def compute_individual_gradients(device, seed=0):
         device (torch.device): Device that the computation should be performed on.
         seed (int): Random seed to set before setting up the problem.
 
-    Return a dictionary with parameter name and individual gradients as key value
-    pairs.
+    Returns:
+        Dictionary with parameter name and individual gradients as key value pairs.
     """
     torch.manual_seed(seed)
 
@@ -112,10 +112,10 @@ def compute_individual_gradients(device, seed=0):
 
 
 # %%
-# The memory-saving strategy for application of the transposed Jacobian can be chosen
-# by wrapping the backward pass with BackPACK into a
+# The memory-saving strategy is enabled by wrapping the backward pass with BackPACK
+# inside
 # choice :py:class:`weight_jac_t_save_memory<backpack.core.derivatives.convnd.weight_jac_t_save_memory>`
-# context, which accepts the self-explanatory argument ``save_memory``.
+# which accepts the self-explanatory argument ``save_memory``.
 
 # %%
 # Peak memory comparison
@@ -148,13 +148,13 @@ def compare_peakmem(device):
 compare_peakmem(torch.device("cpu"))
 
 # %%
-# As expected, the backpropagation with ``save_memory=True`` requires less memory.
+# As expected, the backpropagation with ``save_memory=True`` requires less RAM.
 
 
 # %%
 # Run time comparison
 # -------------------
-# Next, we inspect the run time of both save-memory strategies.
+# Next, we inspect the run time of both strategies.
 
 
 def compare_runtime(device):
@@ -182,9 +182,8 @@ compare_runtime(torch.device("cpu"))
 
 # %%
 # In this case, saving memory comes at the cost of reduced run time performance.
-
-# %%
-# If you have a GPU, you can also see the differences there, too:
+#
+# If you have a GPU you will see a similar behavior, too:
 
 if torch.cuda.is_available():
     compare_runtime(torch.device("cuda"))
@@ -201,7 +200,6 @@ with weight_jac_t_save_memory(save_memory=False):
 
 print(f"{'Parameter':<10}| Same individual gradients?")
 for param_name in individual_gradients.keys():
-
     same = torch.allclose(
         individual_gradients[param_name],
         save_memory_individual_gradients[param_name],
@@ -215,7 +213,22 @@ for param_name in individual_gradients.keys():
         raise ValueError(msg)
 
 # %%
-# Some heuristics
-# ---------------
-# So, when should you make use of ``save_memory``?
-# TODO
+# When to enable save memory?
+# ---------------------------
+# If your program crashes because BackPACK tries to allocate too much memory, you
+# should give it a try. Other than that, it is difficult to identify tendencies.
+# The trend observed in this example (saving memory means slower run time) does not
+# hold true in general, and you may want to compare both approaches for your specific
+# setting, like we did here.
+#
+# You can also take a look at
+# `backpack-benchmark <https://f-dangel.github.io/backpack-benchmark/>`_,
+# where BackPACK's run time and peak memory are continuously monitored for some neural
+# nets from `DeepOBS <https://github.com/fsschneider/DeepOBS>`_.
+#
+# This benchmark can be inspected over the commit history. Commits between
+# `567f079b <https://github.com/f-dangel/backpack/commit/567f079b9611364e16c20d76294a4cb410332a90>`_
+# and
+# `f72f666 <https://github.com/f-dangel/backpack/commit/f72f66667843bc7f42ad63496038dc5b6c81c211>`_
+# were performed with ``save_memory=True``. Compare them with any other commit
+# benchmarked with ``save_memory=False`` to get an intuition how both algorithms differ.
