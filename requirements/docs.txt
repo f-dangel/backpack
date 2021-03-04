@@ -1,2 +1,3 @@
 matplotlib
 sphinx-gallery
+memory_profiler
