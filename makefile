@@ -33,6 +33,10 @@ help:
 	@echo "        Run darglint on the project"
 	@echo "install"
 	@echo "        Install backpack and dependencies"
+	@echo "isort"
+	@echo "        Run isort (sort imports) on the project"
+	@echo "isort-check"
+	@echo "        Check if isort (sort imports) would change files"
 	@echo "install-dev"
 	@echo "        Install all development tools"
 	@echo "install-lint"
@@ -82,10 +86,10 @@ darglint-check:
 	@darglint --verbosity 2 .
 
 isort:
-	@isort --apply
+	@isort .
 
 isort-check:
-	@isort --check
+	@isort . --check --diff
 
 format:
 	@make black
