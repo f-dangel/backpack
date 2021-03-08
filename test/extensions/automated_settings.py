@@ -1,5 +1,6 @@
-import torch
 from test.core.derivatives.utils import classification_targets
+
+import torch
 
 ###
 # Helpers

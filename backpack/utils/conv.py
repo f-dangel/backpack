@@ -1,9 +1,8 @@
 import torch
+from einops import rearrange
 from torch import einsum
 from torch.nn import Unfold
 from torch.nn.functional import conv1d, conv2d, conv3d
-
-from einops import rearrange
 
 
 def unfold_func(module):

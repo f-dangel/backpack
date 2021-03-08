@@ -1,8 +1,8 @@
+from einops import rearrange
 from torch import zeros
 from torch.nn.functional import max_pool1d, max_pool2d, max_pool3d
 
 from backpack.core.derivatives.basederivatives import BaseDerivatives
-from einops import rearrange
 
 
 class MaxPoolNDDerivatives(BaseDerivatives):

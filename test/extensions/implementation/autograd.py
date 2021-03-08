@@ -1,9 +1,10 @@
 from test.extensions.implementation.base import ExtensionsImplementation
-from backpack.hessianfree.ggnvp import ggn_vector_product_from_plist
-from backpack.utils.convert_parameters import vector_to_parameter_list
-from backpack.hessianfree.rop import R_op
 
 import torch
+
+from backpack.hessianfree.ggnvp import ggn_vector_product_from_plist
+from backpack.hessianfree.rop import R_op
+from backpack.utils.convert_parameters import vector_to_parameter_list
 
 
 class AutogradExtensions(ExtensionsImplementation):

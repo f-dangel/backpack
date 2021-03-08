@@ -1,10 +1,11 @@
 """Convert problem settings."""
 
-import torch
 import copy
+from test.core.derivatives.utils import get_available_devices
+
+import torch
 
 from backpack import extend
-from test.core.derivatives.utils import get_available_devices
 
 
 def make_test_problems(settings):

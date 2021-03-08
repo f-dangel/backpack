@@ -1,8 +1,8 @@
 import torch
+from einops import rearrange
 from torch import einsum
 from torch.nn.functional import conv_transpose1d, conv_transpose2d, conv_transpose3d
 
-from einops import rearrange
 from backpack.utils.conv import separate_channels_and_pixels
 
 
