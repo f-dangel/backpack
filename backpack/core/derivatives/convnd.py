@@ -1,5 +1,6 @@
 import warnings
 
+from einops import rearrange, reduce
 from numpy import prod
 from torch import einsum
 from torch.nn import Conv1d, Conv2d, Conv3d
@@ -15,7 +16,6 @@ from torch.nn.grad import _grad_input_padding
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 from backpack.utils import conv as convUtils
-from einops import rearrange, reduce
 
 
 class weight_jac_t_save_memory:

@@ -1,4 +1,6 @@
 from torch.nn import (
+    ELU,
+    SELU,
     AvgPool1d,
     AvgPool2d,
     AvgPool3d,
@@ -11,7 +13,9 @@ from torch.nn import (
     CrossEntropyLoss,
     Dropout,
     Flatten,
+    LeakyReLU,
     Linear,
+    LogSigmoid,
     MaxPool1d,
     MaxPool2d,
     MaxPool3d,
@@ -19,10 +23,6 @@ from torch.nn import (
     ReLU,
     Sigmoid,
     Tanh,
-    LeakyReLU,
-    LogSigmoid,
-    ELU,
-    SELU,
     ZeroPad2d,
 )
 

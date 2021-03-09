@@ -9,8 +9,8 @@ from .secondorder import (
     KFAC,
     KFLR,
     KFRA,
-    DiagGGNExact,
     BatchDiagGGNExact,
+    DiagGGNExact,
     DiagGGNMC,
     DiagHessian,
 )

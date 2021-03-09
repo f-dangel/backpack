@@ -19,35 +19,33 @@ Optional entries:
 """
 
 
-import torch
 from test.core.derivatives.utils import classification_targets, regression_targets
-
-from torch.nn import (
-    ReLU,
-    Sigmoid,
-    Tanh,
-    LogSigmoid,
-    LeakyReLU,
-    Conv1d,
-    Conv2d,
-    Conv3d,
-    ConvTranspose1d,
-    ConvTranspose2d,
-    ConvTranspose3d,
-    AvgPool1d,
-    AvgPool2d,
-    AvgPool3d,
-    MaxPool1d,
-    MaxPool2d,
-    MaxPool3d,
-)
-
 from test.extensions.automated_settings import (
     make_simple_act_setting,
     make_simple_cnn_setting,
     make_simple_pooling_setting,
 )
 
+import torch
+from torch.nn import (
+    AvgPool1d,
+    AvgPool2d,
+    AvgPool3d,
+    Conv1d,
+    Conv2d,
+    Conv3d,
+    ConvTranspose1d,
+    ConvTranspose2d,
+    ConvTranspose3d,
+    LeakyReLU,
+    LogSigmoid,
+    MaxPool1d,
+    MaxPool2d,
+    MaxPool3d,
+    ReLU,
+    Sigmoid,
+    Tanh,
+)
 
 SECONDORDER_SETTINGS = []
 

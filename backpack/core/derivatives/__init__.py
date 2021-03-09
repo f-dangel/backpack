@@ -29,10 +29,10 @@ from .avgpool1d import AvgPool1DDerivatives
 from .avgpool2d import AvgPool2DDerivatives
 from .avgpool3d import AvgPool3DDerivatives
 from .conv1d import Conv1DDerivatives
-from .conv_transpose1d import ConvTranspose1DDerivatives
 from .conv2d import Conv2DDerivatives
-from .conv_transpose2d import ConvTranspose2DDerivatives
 from .conv3d import Conv3DDerivatives
+from .conv_transpose1d import ConvTranspose1DDerivatives
+from .conv_transpose2d import ConvTranspose2DDerivatives
 from .conv_transpose3d import ConvTranspose3DDerivatives
 from .crossentropyloss import CrossEntropyLossDerivatives
 from .dropout import DropoutDerivatives

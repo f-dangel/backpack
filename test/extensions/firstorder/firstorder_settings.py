@@ -20,9 +20,10 @@ Optional entries:
 """
 
 
-import torch
 from test.core.derivatives.utils import classification_targets, regression_targets
+from test.extensions.automated_settings import make_simple_cnn_setting
 
+import torch
 from torch.nn import (
     Conv1d,
     Conv2d,
@@ -30,10 +31,6 @@ from torch.nn import (
     ConvTranspose1d,
     ConvTranspose2d,
     ConvTranspose3d,
-)
-
-from test.extensions.automated_settings import (
-    make_simple_cnn_setting,
 )
 
 FIRSTORDER_SETTINGS = []

@@ -1,10 +1,10 @@
-from backpack.core.derivatives.relu import ReLUDerivatives
-from backpack.core.derivatives.sigmoid import SigmoidDerivatives
-from backpack.core.derivatives.tanh import TanhDerivatives
 from backpack.core.derivatives.elu import ELUDerivatives
-from backpack.core.derivatives.selu import SELUDerivatives
 from backpack.core.derivatives.leakyrelu import LeakyReLUDerivatives
 from backpack.core.derivatives.logsigmoid import LogSigmoidDerivatives
+from backpack.core.derivatives.relu import ReLUDerivatives
+from backpack.core.derivatives.selu import SELUDerivatives
+from backpack.core.derivatives.sigmoid import SigmoidDerivatives
+from backpack.core.derivatives.tanh import TanhDerivatives
 from backpack.extensions.secondorder.diag_ggn.diag_ggn_base import DiagGGNBaseModule
 
 
