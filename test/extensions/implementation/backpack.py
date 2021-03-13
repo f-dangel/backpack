@@ -85,7 +85,6 @@ class BackpackExtensions(ExtensionsImplementation):
             diag_ggn_mc = [p.diag_ggn_mc for p in self.problem.model.parameters()]
         return diag_ggn_mc
 
-<<<<<<< HEAD
     def diag_ggn_mc_batch(self, mc_samples):
         with backpack(new_ext.BatchDiagGGNMC(mc_samples=mc_samples)):
             _, _, loss = self.problem.forward_pass()
@@ -94,7 +93,7 @@ class BackpackExtensions(ExtensionsImplementation):
                 p.diag_ggn_mc_batch for p in self.problem.model.parameters()
             ]
         return diag_ggn_mc_batch
-=======
+
     def diag_ggn_mc_chunk(self, mc_samples, chunks=10):
         """Like ``diag_ggn_mc``, but handles larger number of samples by chunking."""
         chunk_samples = (chunks - 1) * [mc_samples // chunks]
@@ -117,7 +116,6 @@ class BackpackExtensions(ExtensionsImplementation):
                     diag_ggn_mc[idx] += chunk_diag_ggn_mc[idx]
 
         return diag_ggn_mc
->>>>>>> 6e2f6ace71d1aac118f878f968753ac9e83f742d
 
     def diag_h(self):
         with backpack(new_ext.DiagHessian()):

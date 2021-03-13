@@ -2,7 +2,6 @@ from backpack.core.derivatives.conv_transpose2d import ConvTranspose2DDerivative
 from backpack.extensions.secondorder.diag_ggn.convtransposend import (
     BatchDiagGGNConvTransposeND,
     DiagGGNConvTransposeND,
-    BatchDiagGGNConvTransposeND,
 )
 
 

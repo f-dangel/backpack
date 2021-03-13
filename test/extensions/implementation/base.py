@@ -24,11 +24,7 @@ class ExtensionsImplementation:
         """Diagonal of Gauss Newton"""
         raise NotImplementedError
 
-<<<<<<< HEAD
-    def diag_ggn_exact_batch(self):
-=======
     def diag_ggn_batch(self):
->>>>>>> 6e2f6ace71d1aac118f878f968753ac9e83f742d
         """Individual diagonal of Generalized Gauss-Newton/Fisher"""
         raise NotImplementedError
 
