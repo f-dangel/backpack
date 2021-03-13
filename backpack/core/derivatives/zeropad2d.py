@@ -1,7 +1,7 @@
+from einops import rearrange
 from torch.nn import functional
 
 from backpack.core.derivatives.basederivatives import BaseDerivatives
-from einops import rearrange
 
 
 class ZeroPad2dDerivatives(BaseDerivatives):

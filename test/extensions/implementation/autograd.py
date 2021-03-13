@@ -1,9 +1,10 @@
 from test.extensions.implementation.base import ExtensionsImplementation
-from backpack.hessianfree.ggnvp import ggn_vector_product_from_plist
-from backpack.utils.convert_parameters import vector_to_parameter_list
-from backpack.hessianfree.rop import R_op
 
 import torch
+
+from backpack.hessianfree.ggnvp import ggn_vector_product_from_plist
+from backpack.hessianfree.rop import R_op
+from backpack.utils.convert_parameters import vector_to_parameter_list
 
 
 class AutogradExtensions(ExtensionsImplementation):
@@ -97,6 +98,10 @@ class AutogradExtensions(ExtensionsImplementation):
         _, _, batch_loss = self.problem.forward_pass()
         loss_list = torch.zeros(batch_size, device=self.problem.device)
 
+<<<<<<< HEAD
+=======
+        # batch_diag_ggn has entries [sample_idx][param_idx]
+>>>>>>> 6e2f6ace71d1aac118f878f968753ac9e83f742d
         batch_diag_ggn = []
         for b in range(batch_size):
             _, output, loss = self.problem.forward_pass(sample_idx=b)
@@ -104,10 +109,14 @@ class AutogradExtensions(ExtensionsImplementation):
             batch_diag_ggn.append(diag_ggn)
             loss_list[b] = loss
         factor = self.problem.get_reduction_factor(batch_loss, loss_list)
+<<<<<<< HEAD
         """
         batch_diag_ggn has entries [sample_idx][param_idx]
         params_batch_diag_ggn has entries [param_idx][sample_idx]
         """
+=======
+        # params_batch_diag_ggn has entries [param_idx][sample_idx]
+>>>>>>> 6e2f6ace71d1aac118f878f968753ac9e83f742d
         params_batch_diag_ggn = list(zip(*batch_diag_ggn))
         return [torch.stack(param) * factor for param in params_batch_diag_ggn]
 

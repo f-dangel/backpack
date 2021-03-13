@@ -1,4 +1,6 @@
 from torch.nn import (
+    ELU,
+    SELU,
     AvgPool1d,
     AvgPool2d,
     AvgPool3d,
@@ -11,7 +13,9 @@ from torch.nn import (
     CrossEntropyLoss,
     Dropout,
     Flatten,
+    LeakyReLU,
     Linear,
+    LogSigmoid,
     MaxPool1d,
     MaxPool2d,
     MaxPool3d,
@@ -19,10 +23,6 @@ from torch.nn import (
     ReLU,
     Sigmoid,
     Tanh,
-    LeakyReLU,
-    LogSigmoid,
-    ELU,
-    SELU,
     ZeroPad2d,
 )
 
@@ -135,12 +135,20 @@ class DiagGGNMC(DiagGGN):
 
 
 class BatchDiagGGN(BackpropExtension):
+    """Base class for batched diagonal generalized Gauss-Newton/Fisher matrix."""
+
     VALID_LOSS_HESSIAN_STRATEGIES = [
         LossHessianStrategy.EXACT,
         LossHessianStrategy.SAMPLING,
     ]
 
     def __init__(self, loss_hessian_strategy, savefield):
+        if loss_hessian_strategy not in self.VALID_LOSS_HESSIAN_STRATEGIES:
+            raise ValueError(
+                "Unknown hessian strategy: {}".format(loss_hessian_strategy)
+                + "Valid strategies: [{}]".format(self.VALID_LOSS_HESSIAN_STRATEGIES)
+            )
+
         self.loss_hessian_strategy = loss_hessian_strategy
         super().__init__(
             savefield=savefield,

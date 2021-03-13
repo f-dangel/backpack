@@ -5,6 +5,7 @@ kernel.
 """
 
 import torch.nn
+from einops import rearrange
 from torch.nn import (
     Conv1d,
     Conv2d,
@@ -15,7 +16,6 @@ from torch.nn import (
 )
 
 from backpack.core.derivatives.basederivatives import BaseDerivatives
-from einops import rearrange
 
 
 class AvgPoolNDDerivatives(BaseDerivatives):

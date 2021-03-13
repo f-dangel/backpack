@@ -7,13 +7,12 @@ Test variances for the following layers:
 
 """
 from test.automated_test import check_sizes_and_values
-from test.extensions.problem import make_test_problems
+from test.extensions.firstorder.variance.variance_settings import VARIANCE_SETTINGS
 from test.extensions.implementation.autograd import AutogradExtensions
 from test.extensions.implementation.backpack import BackpackExtensions
-from test.extensions.firstorder.variance.variance_settings import VARIANCE_SETTINGS
+from test.extensions.problem import make_test_problems
 
 import pytest
-
 
 PROBLEMS = make_test_problems(VARIANCE_SETTINGS)
 IDS = [problem.make_id() for problem in PROBLEMS]
