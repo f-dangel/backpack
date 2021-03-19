@@ -33,7 +33,7 @@ class ExtensionsImplementation:
         raise NotImplementedError
 
     def diag_ggn_mc_batch(self, mc_samples):
-        """MC approximation of Individual diagonal of Generalized Gauss-Newton/Fisher"""
+        """MC approximation of individual diagonal of Generalized Gauss-Newton/Fisher"""
         raise NotImplementedError
 
     def diag_h(self):

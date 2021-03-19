@@ -200,12 +200,12 @@ class BatchDiagGGNExact(BatchDiagGGN):
 
 class BatchDiagGGNMC(BatchDiagGGN):
     """
-    Diagonal of the Generalized Gauss-Newton/Fisher.
+    Individual diagonal of the Generalized Gauss-Newton/Fisher.
     Uses a Monte-Carlo approximation of
     the Hessian of the loss w.r.t. the model output.
 
     Stores the output in :code:`diag_ggn_mc_batch` as a ``[N x ...]`` tensor,
-    where ``N`` batch size and ``...`` is the shape of the gradient.
+    where ``N`` is the batch size and ``...`` is the shape of the gradient.
 
     For a more precise but slower alternative,
     see :py:meth:`backpack.extensions.BatchDiagGGNExact`.
