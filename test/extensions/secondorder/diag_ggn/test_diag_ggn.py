@@ -43,7 +43,7 @@ def test_diag_ggn_batch(problem):
 
 
 MC_ATOL = 1e-4
-MC_BATCH_ATOL = 1e-3
+MC_BATCH_ATOL = 1e-4
 MC_LIGHT_RTOL = 1e-1
 MC_RTOL = 1e-2
 
