@@ -135,26 +135,20 @@ class DiagGGNMC(DiagGGN):
 
 
 class BatchDiagGGN(BackpropExtension):
-<<<<<<< HEAD
-=======
     """Base class for batched diagonal generalized Gauss-Newton/Fisher matrix."""
 
->>>>>>> 6e2f6ace71d1aac118f878f968753ac9e83f742d
     VALID_LOSS_HESSIAN_STRATEGIES = [
         LossHessianStrategy.EXACT,
         LossHessianStrategy.SAMPLING,
     ]
 
     def __init__(self, loss_hessian_strategy, savefield):
-<<<<<<< HEAD
-=======
         if loss_hessian_strategy not in self.VALID_LOSS_HESSIAN_STRATEGIES:
             raise ValueError(
                 "Unknown hessian strategy: {}".format(loss_hessian_strategy)
                 + "Valid strategies: [{}]".format(self.VALID_LOSS_HESSIAN_STRATEGIES)
             )
 
->>>>>>> 6e2f6ace71d1aac118f878f968753ac9e83f742d
         self.loss_hessian_strategy = loss_hessian_strategy
         super().__init__(
             savefield=savefield,
