@@ -23,6 +23,9 @@ from backpack.extensions import (
     PCHMP,
     BatchGrad,
     BatchL2Grad,
+    BatchDiagGGNExact,
+    BatchDiagGGNMC,
+    BatchDiagHessian,
     DiagGGNExact,
     DiagGGNMC,
     DiagHessian,
@@ -124,6 +127,18 @@ for name, param in model.named_parameters():
     print(".diag_ggn_exact.shape:   ", param.diag_ggn_exact.shape)
 
 # %%
+# Batch diagonal of the Gauss-Newton and its Monte-Carlo approximation
+
+loss = lossfunc(model(X), y)
+with backpack(BatchDiagGGNExact(), BatchDiagGGNMC(mc_samples=1)):
+    loss.backward()
+
+for name, param in model.named_parameters():
+    print(name)
+    print(".diag_ggn_mc_batch.shape:      ", param.diag_ggn_mc_batch.shape)
+    print(".diag_ggn_exact_batch.shape:   ", param.diag_ggn_exact_batch.shape)
+
+# %%
 # KFAC, KFRA and KFLR
 
 loss = lossfunc(model(X), y)
@@ -141,13 +156,14 @@ for name, param in model.named_parameters():
 # Diagonal Hessian
 
 loss = lossfunc(model(X), y)
-with backpack(DiagHessian()):
+with backpack(DiagHessian(), BatchDiagHessian()):
     loss.backward()
 
 for name, param in model.named_parameters():
     print(name)
     print(".grad.shape:             ", param.grad.shape)
     print(".diag_h.shape:           ", param.diag_h.shape)
+    print(".diag_h_batch.shape:     ", param.diag_h_batch.shape)
 
 # %%
 # Block-diagonal curvature products
