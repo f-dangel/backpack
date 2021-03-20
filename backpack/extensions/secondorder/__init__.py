@@ -20,7 +20,6 @@ The implemented extensions are
 
 from .diag_ggn import BatchDiagGGNExact, DiagGGNExact, DiagGGNMC
 from .diag_hessian import BatchDiagHessian, DiagHessian
-
 from .hbp import HBP, KFAC, KFLR, KFRA
 
 __all__ = [
