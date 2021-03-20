@@ -1,5 +1,6 @@
 import warnings
 
+from einops import rearrange, reduce
 from numpy import prod
 from torch import einsum
 from torch.nn import Conv1d, Conv2d, Conv3d
@@ -15,13 +16,12 @@ from torch.nn.grad import _grad_input_padding
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 from backpack.utils import conv as convUtils
-from einops import rearrange, reduce
 
 
 class weight_jac_t_save_memory:
     """Choose algorithm to apply transposed convolution weight Jacobian."""
 
-    _SAVE_MEMORY = True
+    _SAVE_MEMORY = False
 
     def __init__(self, save_memory=True):
         self._new_save_memory = save_memory

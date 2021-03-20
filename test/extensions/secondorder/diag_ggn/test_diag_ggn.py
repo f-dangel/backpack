@@ -1,11 +1,10 @@
 from test.automated_test import check_sizes_and_values
-from test.extensions.problem import make_test_problems
 from test.extensions.implementation.autograd import AutogradExtensions
 from test.extensions.implementation.backpack import BackpackExtensions
+from test.extensions.problem import make_test_problems
 from test.extensions.secondorder.diag_ggn.diaggnn_settings import DiagGGN_SETTINGS
 
 import pytest
-
 
 PROBLEMS = make_test_problems(DiagGGN_SETTINGS)
 IDS = [problem.make_id() for problem in PROBLEMS]
@@ -59,7 +58,7 @@ def test_diag_ggn_mc_light(problem):
     problem.set_up()
 
     backpack_res = BackpackExtensions(problem).diag_ggn()
-    mc_samples = 1000
+    mc_samples = 3000
     backpack_res_mc_avg = BackpackExtensions(problem).diag_ggn_mc(mc_samples)
 
     check_sizes_and_values(
@@ -80,10 +79,11 @@ def test_diag_ggn_mc(problem):
     problem.set_up()
 
     backpack_res = BackpackExtensions(problem).diag_ggn()
-    # NOTE May crash for large networks because of large number of samples.
-    # If necessary, resolve by chunking samples into smaller batches + averaging
-    mc_samples = 100000
-    backpack_res_mc_avg = BackpackExtensions(problem).diag_ggn_mc(mc_samples)
+    mc_samples = 300000
+    chunks = 30
+    backpack_res_mc_avg = BackpackExtensions(problem).diag_ggn_mc_chunk(
+        mc_samples, chunks=chunks
+    )
 
     check_sizes_and_values(
         backpack_res, backpack_res_mc_avg, atol=MC_ATOL, rtol=MC_RTOL

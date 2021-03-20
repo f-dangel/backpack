@@ -7,13 +7,12 @@ Test individual gradients for the following layers:
 
 """
 from test.automated_test import check_sizes_and_values
-from test.extensions.problem import make_test_problems
+from test.extensions.firstorder.batch_grad.batchgrad_settings import BATCHGRAD_SETTINGS
 from test.extensions.implementation.autograd import AutogradExtensions
 from test.extensions.implementation.backpack import BackpackExtensions
-from test.extensions.firstorder.batch_grad.batchgrad_settings import BATCHGRAD_SETTINGS
+from test.extensions.problem import make_test_problems
 
 import pytest
-
 
 PROBLEMS = make_test_problems(BATCHGRAD_SETTINGS)
 IDS = [problem.make_id() for problem in PROBLEMS]

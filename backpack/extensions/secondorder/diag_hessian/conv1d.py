@@ -1,7 +1,7 @@
 from backpack.core.derivatives.conv1d import Conv1DDerivatives
 from backpack.extensions.secondorder.diag_hessian.convnd import (
-    DiagHConvND,
     BatchDiagHConvND,
+    DiagHConvND,
 )
 
 

@@ -1,7 +1,7 @@
 from backpack.core.derivatives.conv_transpose2d import ConvTranspose2DDerivatives
 from backpack.extensions.secondorder.diag_hessian.convtransposend import (
-    DiagHConvTransposeND,
     BatchDiagHConvTransposeND,
+    DiagHConvTransposeND,
 )
 
 
