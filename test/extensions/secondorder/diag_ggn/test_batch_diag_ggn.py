@@ -26,7 +26,7 @@ def test_diag_ggn_batch(problem):
     problem.tear_down()
 
 
-MC_BATCH_ATOL = 1e-4
+MC_ATOL = 1e-4
 MC_LIGHT_RTOL = 1e-1
 MC_RTOL = 1e-2
 
@@ -44,9 +44,9 @@ def test_diag_ggn_mc_batch_light(problem):
     backpack_res = BackpackExtensions(problem).diag_ggn_exact_batch()
     mc_samples = 3000
     backpack_res_mc_avg = BackpackExtensions(problem).diag_ggn_mc_batch(mc_samples)
-    # sum the batch, and compare with exact mc
+
     check_sizes_and_values(
-        backpack_res, backpack_res_mc_avg, atol=MC_BATCH_ATOL, rtol=MC_LIGHT_RTOL
+        backpack_res, backpack_res_mc_avg, atol=MC_ATOL, rtol=MC_LIGHT_RTOL
     )
     problem.tear_down()
 
@@ -70,6 +70,6 @@ def test_diag_ggn_mc_batch(problem):
     )
 
     check_sizes_and_values(
-        backpack_res, backpack_res_mc_avg, atol=MC_BATCH_ATOL, rtol=MC_RTOL
+        backpack_res, backpack_res_mc_avg, atol=MC_ATOL, rtol=MC_RTOL
     )
     problem.tear_down()
