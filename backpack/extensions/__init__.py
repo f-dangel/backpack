@@ -10,6 +10,7 @@ from .secondorder import (
     KFLR,
     KFRA,
     BatchDiagGGNExact,
+    BatchDiagGGNMC,
     DiagGGNExact,
     DiagGGNMC,
     DiagHessian,
@@ -30,5 +31,6 @@ __all__ = [
     "DiagGGNExact",
     "BatchDiagGGNExact",
     "DiagGGNMC",
+    "BatchDiagGGNMC",
     "DiagHessian",
 ]
