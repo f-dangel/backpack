@@ -124,6 +124,9 @@ class DiagGGNMC(DiagGGN):
     For a more precise but slower alternative,
     see :py:meth:`backpack.extensions.DiagGGNExact`.
 
+    Args:
+        mc_samples (int, optional): Number of Monte-Carlo samples. Default: ``1``.
+
     """
 
     def __init__(self, mc_samples=1):
@@ -209,6 +212,9 @@ class BatchDiagGGNMC(BatchDiagGGN):
 
     For a more precise but slower alternative,
     see :py:meth:`backpack.extensions.BatchDiagGGNExact`.
+
+    Args:
+        mc_samples (int, optional): Number of Monte-Carlo samples. Default: ``1``.
 
     """
 
