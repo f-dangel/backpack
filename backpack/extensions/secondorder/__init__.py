@@ -26,6 +26,7 @@ __all__ = [
     "DiagGGNExact",
     "BatchDiagGGNExact",
     "DiagGGNMC",
+    "BatchDiagGGNMC",
     "DiagHessian",
     "BatchDiagHessian",
     "KFAC",
