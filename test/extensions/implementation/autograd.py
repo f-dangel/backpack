@@ -110,25 +110,6 @@ class AutogradExtensions(ExtensionsImplementation):
         params_batch_diag_ggn = list(zip(*batch_diag_ggn))
         return [torch.stack(param) * factor for param in params_batch_diag_ggn]
 
-    # def diag_h(self):
-    #     batch_size = self.problem.input.shape[0]
-    #     _, _, batch_loss = self.problem.forward_pass()
-    #     loss_list = torch.zeros(batch_size, device=self.problem.device)
-
-    #     batch_diag_ggn = []
-    #     for b in range(batch_size):
-    #         _, output, loss = self.problem.forward_pass(sample_idx=b)
-    #         diag_ggn = self._get_diag_ggn(loss, output)
-    #         batch_diag_ggn.append(diag_ggn)
-    #         loss_list[b] = loss
-    #     factor = self.problem.get_reduction_factor(batch_loss, loss_list)
-    #     """
-    #     batch_diag_ggn has entries [sample_idx][param_idx]
-    #     params_batch_diag_ggn has entries [param_idx][sample_idx]
-    #     """
-    #     params_batch_diag_ggn = list(zip(*batch_diag_ggn))
-    #     return [torch.stack(param) * factor for param in params_batch_diag_ggn]
-
     def _get_diag_h(self, loss):
         def hvp(df_dx, x, v):
             Hv = R_op(df_dx, x, v)

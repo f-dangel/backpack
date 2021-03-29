@@ -91,8 +91,8 @@ class BatchDiagHessian(BackpropExtension):
     """
     Individual Diagonal of the Hessian.
 
-    Stores the output in ``diag_h_exact_batch`` as a ``[N x ...]`` tensor,
-    where ``N`` batch size and ``...`` is the shape of the gradient.
+    Stores the output in ``diag_h_batch`` as a ``[N x ...]`` tensor,
+    where ``N`` is the batch size and ``...`` is the shape of the gradient.
 
     """
 
