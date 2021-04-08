@@ -1,13 +1,14 @@
 """Test generalization of unfold to transpose convolutions."""
 
-import torch
+from test.core.derivatives.problem import make_test_problems
+from test.utils.test_conv_transpose_settings import SETTINGS
+
 import pytest
+import torch
 
 from backpack.utils.conv_transpose import unfold_by_conv_transpose
-from test.utils.test_conv_transpose_settings import SETTINGS
-from ..automated_test import check_sizes_and_values
-from test.core.derivatives.problem import make_test_problems
 
+from ..automated_test import check_sizes_and_values
 
 PROBLEMS = make_test_problems(SETTINGS)
 IDS = [problem.make_id() for problem in PROBLEMS]

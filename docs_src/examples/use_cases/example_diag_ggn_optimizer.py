@@ -34,7 +34,7 @@ import torch
 
 from backpack import backpack, extend
 from backpack.extensions import DiagGGNMC
-from backpack.utils.examples import get_mnist_dataloder
+from backpack.utils.examples import get_mnist_dataloader
 
 BATCH_SIZE = 128
 STEP_SIZE = 0.05
@@ -44,7 +44,7 @@ PRINT_EVERY = 50
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 torch.manual_seed(0)
 
-mnist_loader = get_mnist_dataloder(batch_size=BATCH_SIZE)
+mnist_loader = get_mnist_dataloader(batch_size=BATCH_SIZE)
 
 model = torch.nn.Sequential(
     torch.nn.Conv2d(1, 20, 5, 1),

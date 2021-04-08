@@ -1,15 +1,11 @@
 from warnings import warn
 
 from torch import einsum
-from torch.nn import BatchNorm1d
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 
 
 class BatchNorm1dDerivatives(BaseParameterDerivatives):
-    def get_module(self):
-        return BatchNorm1d
-
     def hessian_is_zero(self):
         return False
 

@@ -9,7 +9,7 @@ from .secondorder import (
     KFAC,
     KFLR,
     KFRA,
-    DiagGGN,
+    BatchDiagGGNExact,
     DiagGGNExact,
     DiagGGNMC,
     DiagHessian,
@@ -28,7 +28,7 @@ __all__ = [
     "KFRA",
     "HBP",
     "DiagGGNExact",
+    "BatchDiagGGNExact",
     "DiagGGNMC",
-    "DiagGGN",
     "DiagHessian",
 ]

@@ -1,14 +1,9 @@
 from torch import exp
-from torch.nn import LogSigmoid
 
 from backpack.core.derivatives.elementwise import ElementwiseDerivatives
 
 
 class LogSigmoidDerivatives(ElementwiseDerivatives):
-    def get_module(self):
-        """Return `torch.nn.LogSigmoid` module class."""
-        return LogSigmoid
-
     def hessian_is_zero(self):
         """`logsigmoid''(x) ≠ 0`."""
         return False
