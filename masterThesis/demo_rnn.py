@@ -1,5 +1,6 @@
-import torch
 import time
+import torch
+
 from backpack import extend
 
 torch.manual_seed(0)
@@ -16,7 +17,8 @@ print("inputs.shape", inputs.shape)
 '''
 backpropagation with torch.autograd 
 '''
-layer = torch.nn.RNN(input_size=input_size, hidden_size=hidden_size, num_layers=1)
+layer = torch.nn.RNN(input_size=input_size, hidden_size=hidden_size,
+                     num_layers=1)
 outputs, _ = layer(inputs)
 print("outputs.shape", outputs.shape)
 grad_outputs = torch.rand_like(outputs)
@@ -71,7 +73,6 @@ outputs, h_n = layer(inputs)
 input0 = layer.input0
 print("input0", layer.input0.shape)
 print("output0", layer.output[0].shape)
-# print("Is outputs identical to output0?", torch.allclose(outputs, layer.output[0]))
 
 # compute jacobian based on output0, input0
 jac_torch = [
@@ -96,7 +97,8 @@ for n in range(N):
             grad_outputs_artificial = torch.zeros(*grad_outputs.shape)
             grad_outputs_artificial[j, n, i] = 1
             gradients_artificial = torch.autograd.grad(
-                [outputs[:, n, :]], layer.parameters(), grad_outputs=[grad_outputs_artificial[:, n, :]],
+                [outputs[:, n, :]], layer.parameters(),
+                grad_outputs=[grad_outputs_artificial[:, n, :]],
                 retain_graph=True
             )
             for n_param in range(4):
@@ -111,38 +113,52 @@ for n in range(N):
                 fac2 = k == i
                 if t > 0:
                     for o in range(hidden_size):
-                        fac2 += layer.weight_hh_l0[k, o] * jac_for[2][t - 1, n, i, o]
+                        fac2 += layer.weight_hh_l0[k, o] * jac_for[2][
+                            t - 1, n, i, o]
                 jac_for[2][t, n, i, k] = fac1 * fac2
 end = time.time()
 print(f'time for for-loop: {end - start}')
 # compute jacobian b_ih and b_hh with einsum
 start = time.time()
 for t in range(seq_len):
-    jac_einsum[2][t, ...] = torch.diag_embed(1 - outputs[t, ...] ** 2, dim1=1, dim2=2)
+    jac_einsum[2][t, ...] = torch.diag_embed(1 - outputs[t, ...] ** 2,
+                                             dim1=1, dim2=2)
     if t > 0:
         jac_einsum[2][t, ...] += torch.einsum("nh, hl, nkl -> nkh",
-                                              1 - outputs[t, ...] ** 2, layer.weight_hh_l0, jac_einsum[2][t - 1, ...])
+                                              1 - outputs[t, ...] ** 2,
+                                              layer.weight_hh_l0,
+                                              jac_einsum[2][t - 1, ...])
 end = time.time()
 print(f'time for einsum J_h_b: {end - start}')
 jac_einsum[3] = jac_einsum[2]
 # compute jacobian W_ih with einsum
 start = time.time()
 for t in range(seq_len):
-    jac_einsum[0][t, ...] = torch.einsum("nk, kh, nj -> nkhj",
-                                         1 - outputs[t, ...] ** 2, torch.eye(hidden_size), input0[t])
+    jac_einsum[0][t, ...] = \
+        torch.einsum("nk, kh, nj -> nkhj",
+                     1 - outputs[t, ...] ** 2,
+                     torch.eye(hidden_size),
+                     input0[t])
     if t > 0:
         jac_einsum[0][t, ...] += torch.einsum("nh, hl, nklj -> nkhj",
-                                              1 - outputs[t, ...] ** 2, layer.weight_hh_l0, jac_einsum[0][t - 1, ...])
+                                              1 - outputs[t, ...] ** 2,
+                                              layer.weight_hh_l0,
+                                              jac_einsum[0][t - 1, ...])
 end = time.time()
 print(f'time for einsum J_h_ih: {end - start}')
 # compute jacobian W_hh with einsum
 start = time.time()
 for t in range(seq_len):
     if t > 0:
-        jac_einsum[1][t, ...] = torch.einsum("nk, kh, nj -> nkhj",
-                                             1 - outputs[t, ...] ** 2, torch.eye(hidden_size), outputs[t-1])
+        jac_einsum[1][t, ...] = \
+            torch.einsum("nk, kh, nj -> nkhj",
+                         1 - outputs[t, ...] ** 2,
+                         torch.eye(hidden_size),
+                         outputs[t - 1])
         jac_einsum[1][t, ...] += torch.einsum("nh, hl, nklj -> nkhj",
-                                              1 - outputs[t, ...] ** 2, layer.weight_hh_l0, jac_einsum[1][t-1, ...])
+                                              1 - outputs[t, ...] ** 2,
+                                              layer.weight_hh_l0,
+                                              jac_einsum[1][t - 1, ...])
 end = time.time()
 print(f'time for einsum J_h_hh: {end - start}')
 
@@ -155,9 +171,12 @@ print("Jacobian J_h_hh match?",
       torch.allclose(jac_torch[1], jac_einsum[1]))
 
 # compute gradient wrt to bias: multiply jacobian with grad_outputs
-igrad_bias_ih_pytorch = torch.einsum("tnhk, tnk -> nh", jac_torch[2], grad_outputs)
-igrad_bias_ih_backpack = torch.einsum("tnhk,tnk -> nh", jac_for[2], grad_outputs)
-igrad_bias_ih_einsum = torch.einsum("tnhk,tnk -> nh", jac_einsum[2], grad_outputs)
+igrad_bias_ih_pytorch = torch.einsum("tnhk, tnk -> nh", jac_torch[2],
+                                     grad_outputs)
+igrad_bias_ih_backpack = torch.einsum("tnhk,tnk -> nh", jac_for[2],
+                                      grad_outputs)
+igrad_bias_ih_einsum = torch.einsum("tnhk,tnk -> nh", jac_einsum[2],
+                                    grad_outputs)
 print("Are all bias_ih gradients the same?",
       torch.allclose(*igrad_autograd[2:4]) and
       torch.allclose(igrad_bias_ih_einsum, igrad_autograd[2]) and
@@ -170,6 +189,7 @@ for n_param in range(4):
         eq_string = "tnhkj, tnk -> nhj"
     else:
         eq_string = "tnhk, tnk -> nh"
-    igrad_backpack.append(torch.einsum(eq_string, jac_einsum[n_param], grad_outputs))
+    igrad_backpack.append(
+        torch.einsum(eq_string, jac_einsum[n_param], grad_outputs))
     print(f'Is igrad same for param {n_param}?',
           torch.allclose(igrad_autograd[n_param], igrad_backpack[n_param]))
