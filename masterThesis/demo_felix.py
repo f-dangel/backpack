@@ -1,8 +1,11 @@
 """Introduction for Tim."""
 import time
+
 import torch
+
 from backpack import extend
 from backpack.core.derivatives.linear import LinearDerivatives
+
 torch.manual_seed(0)
 # create fake data
 N = 128
