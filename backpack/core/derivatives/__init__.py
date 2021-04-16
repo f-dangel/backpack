@@ -1,5 +1,6 @@
 from torch.nn import (
     ELU,
+    RNN,
     SELU,
     AvgPool1d,
     AvgPool2d,
@@ -23,7 +24,6 @@ from torch.nn import (
     Sigmoid,
     Tanh,
     ZeroPad2d,
-    RNN,
 )
 
 from .avgpool1d import AvgPool1DDerivatives
@@ -46,11 +46,11 @@ from .maxpool2d import MaxPool2DDerivatives
 from .maxpool3d import MaxPool3DDerivatives
 from .mseloss import MSELossDerivatives
 from .relu import ReLUDerivatives
+from .rnn import RNNDerivatives
 from .selu import SELUDerivatives
 from .sigmoid import SigmoidDerivatives
 from .tanh import TanhDerivatives
 from .zeropad2d import ZeroPad2dDerivatives
-from .rnn import RNNDerivatives
 
 derivatives_for = {
     Linear: LinearDerivatives,

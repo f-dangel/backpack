@@ -57,6 +57,7 @@ def check_like_with_sum_batch(mat, module, name, sum_batch=True, *args, **kwargs
 def same_dim_as(mat, module, name, *args, **kwargs):
     return len(mat.shape) == len(getattr(module, name).shape)
 
+
 ###############################################################################
 #            Decorators for handling vectors as matrix special case           #
 ###############################################################################

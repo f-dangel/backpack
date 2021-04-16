@@ -1,6 +1,4 @@
-from torch import diag_embed
-from torch import einsum
-from torch import zeros
+from torch import diag_embed, einsum, zeros
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 
@@ -19,7 +17,7 @@ class RNNDerivatives(BaseParameterDerivatives):
 
     def _bias_ih_l0_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
         """Apply transposed Jacobian of the output w.r.t. bias_ih_l0."""
-        V = mat.shape[0]
+        # V = mat.shape[0]
         N = mat.shape[2]
         T = mat.shape[1]
         H = mat.shape[3]
