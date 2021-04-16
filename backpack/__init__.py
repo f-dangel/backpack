@@ -143,6 +143,7 @@ def hook_store_io(module, input, output):
         for i in range(len(input)):
             setattr(module, "input{}".format(i), input[i])
         if isinstance(output, tuple):
+            # is true for RNN,GRU,LSTM which return tuple (output, ...)
             module.output = output[0]
         else:
             module.output = output

@@ -133,7 +133,7 @@ class DerivativesTestProblem:
             output = module(input, target)
 
         if isinstance(output, tuple):
-            # is true for RNN which returns (output, h_n)
+            # is true for RNN,GRU,LSTM which return tuple (output, ...)
             output = output[0]
 
         return output.shape
@@ -158,7 +158,7 @@ class DerivativesTestProblem:
             output = self.module(input)
 
         if isinstance(output, tuple):
-            # is true for RNN which returns (output, h_n)
+            # is true for RNN,GRU,LSTM which return tuple (output, ...)
             output = output[0]
 
         return input, output, dict(self.module.named_parameters())
