@@ -23,6 +23,7 @@ from torch.nn import (
     Sigmoid,
     Tanh,
     ZeroPad2d,
+    RNN
 )
 
 from .avgpool1d import AvgPool1DDerivatives
@@ -49,6 +50,7 @@ from .selu import SELUDerivatives
 from .sigmoid import SigmoidDerivatives
 from .tanh import TanhDerivatives
 from .zeropad2d import ZeroPad2dDerivatives
+from .rnn import RNNDerivatives
 
 derivatives_for = {
     Linear: LinearDerivatives,
@@ -75,4 +77,5 @@ derivatives_for = {
     SELU: SELUDerivatives,
     CrossEntropyLoss: CrossEntropyLossDerivatives,
     MSELoss: MSELossDerivatives,
+    RNN: RNNDerivatives
 }

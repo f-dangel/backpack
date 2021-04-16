@@ -21,3 +21,6 @@ class DerivativesImplementation:
 
     def bias_jac_mat_prod(self, mat):
         raise NotImplementedError
+
+    def bias_ih_l0_jac_t_mat_prod(self, mat, sum_batch):
+        raise NotImplementedError

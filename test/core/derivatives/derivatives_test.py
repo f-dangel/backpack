@@ -16,6 +16,7 @@ from test.core.derivatives.implementation.autograd import AutogradDerivatives
 from test.core.derivatives.implementation.backpack import BackpackDerivatives
 from test.core.derivatives.loss_settings import LOSS_FAIL_SETTINGS
 from test.core.derivatives.problem import make_test_problems
+from test.core.derivatives.rnn_settings import RNN_SETTINGS as RNN_SETTINGS
 from test.core.derivatives.settings import SETTINGS
 
 import pytest
@@ -45,6 +46,9 @@ CONVOLUTION_TRANSPOSED_FAIL_PROBLEMS = make_test_problems(
 CONVOLUTION_TRANSPOSED_FAIL_IDS = [
     problem.make_id() for problem in CONVOLUTION_TRANSPOSED_FAIL_PROBLEMS
 ]
+
+RNN_PROBLEMS = make_test_problems(RNN_SETTINGS)
+RNN_IDS = [problem.make_id() for problem in RNN_PROBLEMS]
 
 
 @pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
@@ -89,6 +93,33 @@ for problem, problem_id in zip(PROBLEMS, IDS):
     if problem.has_weight():
         PROBLEMS_WITH_WEIGHTS.append(problem)
         IDS_WITH_WEIGHTS.append(problem_id)
+
+
+@pytest.mark.parametrize(
+    "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
+)
+@pytest.mark.parametrize("problem", RNN_PROBLEMS, ids=RNN_IDS)
+def test_bias_ih_l0_jac_t_mat_prod(problem, sum_batch, V=3):
+    """Test the transposed Jacobian-matrix product w.r.t. to bias_ih_l0.
+
+    Args:
+        problem (DerivativesProblem): Problem for derivative test.
+        sum_batch (bool): Sum results over the batch dimension.
+        save_memory (bool): Use Owkin implementation to save memory.
+        V (int): Number of vectorized transposed Jacobian-vector products.
+    """
+    problem.set_up()
+    mat = torch.rand(V, *problem.output_shape).to(problem.device)
+
+    autograd_res = AutogradDerivatives(problem).bias_ih_l0_jac_t_mat_prod(
+        mat, sum_batch
+    )
+    backpack_res = BackpackDerivatives(problem).bias_ih_l0_jac_t_mat_prod(
+        mat, sum_batch
+    )
+
+    check_sizes_and_values(autograd_res, backpack_res)
+    problem.tear_down()
 
 
 @pytest.mark.parametrize(

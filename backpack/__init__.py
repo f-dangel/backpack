@@ -142,7 +142,10 @@ def hook_store_io(module, input, output):
     if disable.should_store_io() and torch.is_grad_enabled():
         for i in range(len(input)):
             setattr(module, "input{}".format(i), input[i])
-        module.output = output
+        if isinstance(output, tuple):
+            module.output = output[0]
+        else:
+            module.output = output
 
 
 def memory_cleanup(module):

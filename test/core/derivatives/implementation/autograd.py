@@ -40,6 +40,9 @@ class AutogradDerivatives(DerivativesImplementation):
     def bias_jac_t_mat_prod(self, mat, sum_batch):
         return self.param_jac_t_mat_prod("bias", mat, sum_batch)
 
+    def bias_ih_l0_jac_t_mat_prod(self, mat, sum_batch):
+        return self.param_jac_t_mat_prod("bias_ih_l0", mat, sum_batch)
+
     def param_jac_t_vec_prod(self, name, vec, sum_batch):
         input, output, named_params = self.problem.forward_pass()
         param = named_params[name]

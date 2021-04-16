@@ -293,6 +293,35 @@ class BaseParameterDerivatives(BaseDerivatives):
         """Internal implementation of transposed weight Jacobian."""
         raise NotImplementedError
 
+    # TODO activate these lines later
+    # @shape_check.bias_jac_t_mat_prod_accept_vectors
+    # @shape_check.bias_jac_t_mat_prod_check_shapes
+    def bias_ih_l0_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
+        """Apply transposed Jacobian of the output w.r.t. bias_ih_l0 to a matrix.
+
+        Parameters:
+        -----------
+        mat: torch.Tensor
+            Matrix the transposed Jacobian will be applied to.
+            Must have shape [V, N, C_out, H_out, ...].
+        sum_batch: bool
+            Whether to sum over the batch dimension on the fly.
+
+        Returns:
+        --------
+        result: torch.Tensor
+            Jacobian-matrix product.
+            Has shape [V, N, C_b, ...] if `sum_batch == False`.
+            Has shape [V, C_b, ...] if `sum_batch == True`.
+        """
+        return self._bias_ih_l0_jac_t_mat_prod(
+            module, g_inp, g_out, mat, sum_batch=sum_batch
+        )
+
+    def _bias_ih_l0_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
+        """Internal implementation of the transposed bias Jacobian."""
+        raise NotImplementedError
+
 
 class BaseLossDerivatives(BaseDerivatives):
     """Second- order partial derivatives of loss functions."""

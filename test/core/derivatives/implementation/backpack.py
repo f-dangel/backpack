@@ -49,6 +49,12 @@ class BackpackDerivatives(DerivativesImplementation):
             self.problem.module, None, None, mat
         )
 
+    def bias_ih_l0_jac_t_mat_prod(self, mat, sum_batch):
+        self.store_forward_io()
+        return self.problem.derivative.bias_ih_l0_jac_t_mat_prod(
+            self.problem.module, None, None, mat, sum_batch=sum_batch
+        )
+
     def ea_jac_t_mat_jac_prod(self, mat):
         self.store_forward_io()
         return self.problem.derivative.ea_jac_t_mat_jac_prod(
