@@ -46,25 +46,16 @@ def check_same_V_dim(mat1, mat2):
 
 
 def check_like(mat, module, name, diff=1, *args, **kwargs):
-    try:
-        return check_shape(mat, getattr(module, name), diff=diff)
-    except AttributeError:
-        return check_shape(mat, getattr(module, name)[0], diff=diff)
+    return check_shape(mat, getattr(module, name), diff=diff)
 
 
 def check_like_with_sum_batch(mat, module, name, sum_batch=True, *args, **kwargs):
     diff = 1 if sum_batch else 2
-    try:
-        return check_shape(mat, getattr(module, name), diff=diff)
-    except AttributeError:
-        return check_shape(mat, getattr(module, name)[0], diff=diff)
+    return check_shape(mat, getattr(module, name), diff=diff)
 
 
 def same_dim_as(mat, module, name, *args, **kwargs):
-    try:
-        return len(mat.shape) == len(getattr(module, name).shape)
-    except AttributeError:
-        return len(mat.shape) == len(getattr(module, name)[0].shape)
+    return len(mat.shape) == len(getattr(module, name).shape)
 
 ###############################################################################
 #            Decorators for handling vectors as matrix special case           #
