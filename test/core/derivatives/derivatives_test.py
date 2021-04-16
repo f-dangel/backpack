@@ -105,7 +105,6 @@ def test_bias_ih_l0_jac_t_mat_prod(problem, sum_batch, V=3):
     Args:
         problem (DerivativesProblem): Problem for derivative test.
         sum_batch (bool): Sum results over the batch dimension.
-        save_memory (bool): Use Owkin implementation to save memory.
         V (int): Number of vectorized transposed Jacobian-vector products.
     """
     problem.set_up()

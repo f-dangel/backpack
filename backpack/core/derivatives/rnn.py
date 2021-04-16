@@ -1,4 +1,6 @@
-from torch import rand
+from torch import diag_embed
+from torch import einsum
+from torch import zeros
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 
@@ -11,7 +13,7 @@ class RNNDerivatives(BaseParameterDerivatives):
     * t: Sequence dimension
     * v: Free dimension
     * n: Batch dimension
-    * o: Output dimension
+    * h: Output dimension
     * i: Input dimension
     """
 
@@ -19,7 +21,22 @@ class RNNDerivatives(BaseParameterDerivatives):
         """Apply transposed Jacobian of the output w.r.t. bias_ih_l0."""
         V = mat.shape[0]
         N = mat.shape[2]
+        T = mat.shape[1]
+        H = mat.shape[3]
+        output = module.output
+        jac = zeros(T, N, H, H)
+        for t in range(T):
+            jac[t, ...] = diag_embed(1 - output[t, ...] ** 2, dim1=1, dim2=2)
+            if t > 0:
+                jac[t, ...] += einsum(
+                    "nh, hl, nkl -> nkh",
+                    1 - output[t, ...] ** 2,
+                    module.weight_hh_l0,
+                    jac[t - 1, ...],
+                )
         if sum_batch:
-            return rand(V, *module.bias_ih_l0.shape)
+            eq = "tnhk, vtnk -> vh"
         else:
-            return rand(V, N, *module.bias_ih_l0.shape)
+            eq = "tnhk, vtnk -> vnh"
+        grad = einsum(eq, jac, mat)
+        return grad
