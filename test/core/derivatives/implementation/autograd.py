@@ -41,16 +41,16 @@ class AutogradDerivatives(DerivativesImplementation):
         return self.param_jac_t_mat_prod("bias", mat, sum_batch)
 
     def bias_ih_l0_jac_t_mat_prod(self, mat, sum_batch):
-        return self.param_jac_t_mat_prod("bias_ih_l0", mat, sum_batch, pos_batch=1)
+        return self.param_jac_t_mat_prod("bias_ih_l0", mat, sum_batch, axis_batch=1)
 
-    def param_jac_t_vec_prod(self, name, vec, sum_batch, pos_batch=0):
+    def param_jac_t_vec_prod(self, name, vec, sum_batch, axis_batch=0):
         """
         Compute the product of jac_t and the given vector.
         Args:
             name: name of parameter for derivative
             vec: vector which to multiply
             sum_batch: whether to sum along batch axis
-            pos_batch: index of batch axis
+            axis_batch: index of batch axis
         """
         input, output, named_params = self.problem.forward_pass()
         param = named_params[name]
@@ -59,12 +59,12 @@ class AutogradDerivatives(DerivativesImplementation):
             return transposed_jacobian_vector_product(output, param, vec)[0]
         else:
             sample_outputs = [
-                tensor.squeeze(dim=pos_batch)
-                for tensor in list(torch.split(output, 1, dim=pos_batch))
+                tensor.squeeze(dim=axis_batch)
+                for tensor in list(torch.split(output, 1, dim=axis_batch))
             ]
             sample_vecs = [
-                tensor.squeeze(dim=pos_batch)
-                for tensor in list(torch.split(vec, 1, dim=pos_batch))
+                tensor.squeeze(dim=axis_batch)
+                for tensor in list(torch.split(vec, 1, dim=axis_batch))
             ]
 
             jac_t_sample_prods = [
@@ -74,20 +74,20 @@ class AutogradDerivatives(DerivativesImplementation):
 
             return torch.stack(jac_t_sample_prods)
 
-    def param_jac_t_mat_prod(self, name, mat, sum_batch, pos_batch=0):
+    def param_jac_t_mat_prod(self, name, mat, sum_batch, axis_batch=0):
         """
         Compute the product of jac_t and the given matrix.
         Args:
             name: name of parameter for derivative
             mat: matrix which to multiply
             sum_batch: whether to sum along batch axis
-            pos_batch: index of batch axis
+            axis_batch: index of batch axis
         """
         V = mat.shape[0]
 
         vecs = [mat[v] for v in range(V)]
         jac_t_vec_prods = [
-            self.param_jac_t_vec_prod(name, vec, sum_batch, pos_batch=pos_batch)
+            self.param_jac_t_vec_prod(name, vec, sum_batch, axis_batch=axis_batch)
             for vec in vecs
         ]
 
