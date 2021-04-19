@@ -133,11 +133,13 @@ class disable:
 
 def hook_store_io(module, input, output):
     """Saves the input and output as attributes of the module.
-
     Args:
-        module: module
+        module: the module on which to save the params
         input: List of input tensors
-        output: output tensor
+        output: output tensor, result of module(input)
+    Result:
+        list of inputs with index i is saved as module.input[i]
+        output is reduced to single output and saved as module.output
     """
     if disable.should_store_io() and torch.is_grad_enabled():
         for i in range(len(input)):
