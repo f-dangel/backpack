@@ -85,13 +85,18 @@ class BackpackExtensions(ExtensionsImplementation):
             diag_ggn_mc = [p.diag_ggn_mc for p in self.problem.model.parameters()]
         return diag_ggn_mc
 
+    def diag_ggn_mc_batch(self, mc_samples):
+        with backpack(new_ext.BatchDiagGGNMC(mc_samples=mc_samples)):
+            _, _, loss = self.problem.forward_pass()
+            loss.backward()
+            diag_ggn_mc_batch = [
+                p.diag_ggn_mc_batch for p in self.problem.model.parameters()
+            ]
+        return diag_ggn_mc_batch
+
     def diag_ggn_mc_chunk(self, mc_samples, chunks=10):
         """Like ``diag_ggn_mc``, but handles larger number of samples by chunking."""
-        chunk_samples = (chunks - 1) * [mc_samples // chunks]
-        last_samples = mc_samples - sum(chunk_samples)
-        if last_samples != 0:
-            chunk_samples.append(last_samples)
-
+        chunk_samples = self.chunk_sizes(mc_samples, chunks)
         chunk_weights = [samples / mc_samples for samples in chunk_samples]
 
         diag_ggn_mc = None
@@ -107,6 +112,45 @@ class BackpackExtensions(ExtensionsImplementation):
                     diag_ggn_mc[idx] += chunk_diag_ggn_mc[idx]
 
         return diag_ggn_mc
+
+    def diag_ggn_mc_batch_chunk(self, mc_samples, chunks=10):
+        """
+        Like ``diag_ggn_mc_batch``, but handles larger number of samples by chunking.
+        """
+        chunk_samples = self.chunk_sizes(mc_samples, chunks)
+        chunk_weights = [samples / mc_samples for samples in chunk_samples]
+
+        diag_ggn_mc_batch = None
+
+        for weight, samples in zip(chunk_weights, chunk_samples):
+            chunk_diag_ggn_mc_batch = self.diag_ggn_mc_batch(samples)
+            chunk_diag_ggn_mc_batch = [
+                diag_mc * weight for diag_mc in chunk_diag_ggn_mc_batch
+            ]
+
+            if diag_ggn_mc_batch is None:
+                diag_ggn_mc_batch = chunk_diag_ggn_mc_batch
+            else:
+                for idx in range(len(diag_ggn_mc_batch)):
+                    diag_ggn_mc_batch[idx] += chunk_diag_ggn_mc_batch[idx]
+
+        return diag_ggn_mc_batch
+
+    @staticmethod
+    def chunk_sizes(total_size, num_chunks):
+        """Return list containing the sizes of chunks."""
+        chunk_size = max(total_size // num_chunks, 1)
+
+        if chunk_size == 1:
+            sizes = total_size * [chunk_size]
+        else:
+            equal, rest = divmod(total_size, chunk_size)
+            sizes = equal * [chunk_size]
+
+            if rest != 0:
+                sizes.append(rest)
+
+        return sizes
 
     def diag_h(self):
         with backpack(new_ext.DiagHessian()):
