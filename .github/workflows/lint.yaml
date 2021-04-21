@@ -9,6 +9,7 @@ on:
       - development
       - master
       - release
+      - rnn
 
 jobs:
   flake8:
