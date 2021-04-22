@@ -52,10 +52,9 @@ class RNNDerivatives(BaseParameterDerivatives):
         N = mat.shape[2]
         T = mat.shape[1]
         H = mat.shape[3]
-        I = module.input_size
         output = module.output
         input0 = module.input0
-        jac = zeros(T, N, H, H, I)
+        jac = zeros(T, N, H, H, module.input_size)
         for t in range(T):
             jac[t, ...] = einsum(
                 "nk, kh, nj -> nkhj",
