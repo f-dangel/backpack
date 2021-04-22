@@ -43,7 +43,7 @@ class RNNDerivatives(BaseParameterDerivatives):
 
     def _bias_ih_l0_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
         """Apply transposed Jacobian of the output w.r.t. bias_ih_l0."""
-        self._check_hyperparameters(module)
+        self._check_parameters(module)
         # V = mat.shape[0]
         N = mat.shape[2]
         T = mat.shape[1]
@@ -68,7 +68,7 @@ class RNNDerivatives(BaseParameterDerivatives):
 
     def _bias_hh_l0_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
         """Apply transposed Jacobian of the output w.r.t. bias_hh_l0."""
-        self._check_hyperparameters(module)
+        self._check_parameters(module)
         # identical to bias_ih_l0
         return self._bias_ih_l0_jac_t_mat_prod(
             module, g_inp, g_out, mat, sum_batch=sum_batch
@@ -76,7 +76,7 @@ class RNNDerivatives(BaseParameterDerivatives):
 
     def _weight_ih_l0_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
         """Apply transposed Jacobian of the output w.r.t. weight_ih_l0."""
-        self._check_hyperparameters(module)
+        self._check_parameters(module)
         # V = mat.shape[0]
         N = mat.shape[2]
         T = mat.shape[1]
@@ -107,7 +107,7 @@ class RNNDerivatives(BaseParameterDerivatives):
 
     def _weight_hh_l0_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
         """Apply transposed Jacobian of the output w.r.t. weight_hh_l0."""
-        self._check_hyperparameters(module)
+        self._check_parameters(module)
         # V = mat.shape[0]
         N = mat.shape[2]
         T = mat.shape[1]
