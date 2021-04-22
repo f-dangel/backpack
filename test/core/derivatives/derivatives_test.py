@@ -124,6 +124,84 @@ def test_bias_ih_l0_jac_t_mat_prod(problem, sum_batch, V=3):
 @pytest.mark.parametrize(
     "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
 )
+@pytest.mark.parametrize("problem", RNN_PROBLEMS, ids=RNN_IDS)
+def test_bias_hh_l0_jac_t_mat_prod(problem, sum_batch, V=3):
+    """Test the transposed Jacobian-matrix product w.r.t. to bias_hh_l0.
+
+    Args:
+        problem (DerivativesProblem): Problem for derivative test.
+        sum_batch (bool): Sum results over the batch dimension.
+        V (int): Number of vectorized transposed Jacobian-vector products.
+    """
+    problem.set_up()
+    mat = torch.rand(V, *problem.output_shape).to(problem.device)
+
+    autograd_res = AutogradDerivatives(problem).bias_hh_l0_jac_t_mat_prod(
+        mat, sum_batch
+    )
+    backpack_res = BackpackDerivatives(problem).bias_hh_l0_jac_t_mat_prod(
+        mat, sum_batch
+    )
+
+    check_sizes_and_values(autograd_res, backpack_res)
+    problem.tear_down()
+
+
+@pytest.mark.parametrize(
+    "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
+)
+@pytest.mark.parametrize("problem", RNN_PROBLEMS, ids=RNN_IDS)
+def test_weight_ih_l0_jac_t_mat_prod(problem, sum_batch, V=3):
+    """Test the transposed Jacobian-matrix product w.r.t. to weight_ih_l0.
+
+    Args:
+        problem (DerivativesProblem): Problem for derivative test.
+        sum_batch (bool): Sum results over the batch dimension.
+        V (int): Number of vectorized transposed Jacobian-vector products.
+    """
+    problem.set_up()
+    mat = torch.rand(V, *problem.output_shape).to(problem.device)
+
+    autograd_res = AutogradDerivatives(problem).weight_ih_l0_jac_t_mat_prod(
+        mat, sum_batch
+    )
+    backpack_res = BackpackDerivatives(problem).weight_ih_l0_jac_t_mat_prod(
+        mat, sum_batch
+    )
+
+    check_sizes_and_values(autograd_res, backpack_res)
+    problem.tear_down()
+
+
+@pytest.mark.parametrize(
+    "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
+)
+@pytest.mark.parametrize("problem", RNN_PROBLEMS, ids=RNN_IDS)
+def test_weight_hh_l0_jac_t_mat_prod(problem, sum_batch, V=4):
+    """Test the transposed Jacobian-matrix product w.r.t. to weight_hh_l0.
+
+    Args:
+        problem (DerivativesProblem): Problem for derivative test.
+        sum_batch (bool): Sum results over the batch dimension.
+        V (int): Number of vectorized transposed Jacobian-vector products.
+    """
+    problem.set_up()
+    mat = torch.rand(V, *problem.output_shape).to(problem.device)
+
+    autograd_res = AutogradDerivatives(problem).weight_hh_l0_jac_t_mat_prod(
+        mat, sum_batch
+    )
+    backpack_res = BackpackDerivatives(problem).weight_hh_l0_jac_t_mat_prod(
+        mat, sum_batch
+    )
+
+    check_sizes_and_values(autograd_res, backpack_res)
+    problem.tear_down()
+
+
+@pytest.mark.parametrize(
+    "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
+)
 @pytest.mark.parametrize(
     "save_memory",
     [True, False],

@@ -55,6 +55,24 @@ class BackpackDerivatives(DerivativesImplementation):
             self.problem.module, None, None, mat, sum_batch=sum_batch
         )
 
+    def bias_hh_l0_jac_t_mat_prod(self, mat, sum_batch):
+        self.store_forward_io()
+        return self.problem.derivative.bias_hh_l0_jac_t_mat_prod(
+            self.problem.module, None, None, mat, sum_batch=sum_batch
+        )
+
+    def weight_ih_l0_jac_t_mat_prod(self, mat, sum_batch):
+        self.store_forward_io()
+        return self.problem.derivative.weight_ih_l0_jac_t_mat_prod(
+            self.problem.module, None, None, mat, sum_batch=sum_batch
+        )
+
+    def weight_hh_l0_jac_t_mat_prod(self, mat, sum_batch):
+        self.store_forward_io()
+        return self.problem.derivative.weight_hh_l0_jac_t_mat_prod(
+            self.problem.module, None, None, mat, sum_batch=sum_batch
+        )
+
     def ea_jac_t_mat_jac_prod(self, mat):
         self.store_forward_io()
         return self.problem.derivative.ea_jac_t_mat_jac_prod(

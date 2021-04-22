@@ -43,6 +43,15 @@ class AutogradDerivatives(DerivativesImplementation):
     def bias_ih_l0_jac_t_mat_prod(self, mat, sum_batch):
         return self.param_jac_t_mat_prod("bias_ih_l0", mat, sum_batch, axis_batch=1)
 
+    def bias_hh_l0_jac_t_mat_prod(self, mat, sum_batch):
+        return self.param_jac_t_mat_prod("bias_ih_l0", mat, sum_batch, axis_batch=1)
+
+    def weight_ih_l0_jac_t_mat_prod(self, mat, sum_batch):
+        return self.param_jac_t_mat_prod("weight_ih_l0", mat, sum_batch, axis_batch=1)
+
+    def weight_hh_l0_jac_t_mat_prod(self, mat, sum_batch):
+        return self.param_jac_t_mat_prod("weight_hh_l0", mat, sum_batch, axis_batch=1)
+
     def param_jac_t_vec_prod(self, name, vec, sum_batch, axis_batch=0):
         """
         Compute the product of jac_t and the given vector.
