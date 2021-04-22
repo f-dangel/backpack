@@ -15,8 +15,35 @@ class RNNDerivatives(BaseParameterDerivatives):
     * i: Input dimension
     """
 
+    def _check_parameters(self, module):
+        """
+        Check the parameters of module.
+
+        Args:
+            module (torch.nn.RNN): module which to check
+
+        Returns:
+            None
+
+        Raises:
+            ValueError: If any parameter of module does not match expectation
+        """
+        if module.num_layers > 1:
+            raise ValueError("only num_layers = 1 is supported")
+        if not module.nonlinearity == "tanh":
+            raise ValueError("only nonlinearity = tanh is supported")
+        if module.bias is not True:
+            raise ValueError("only bias = True is supported")
+        if module.batch_first is not False:
+            raise ValueError("only batch_first = False is supported")
+        if not module.dropout == 0:
+            raise ValueError("only dropout = 0 is supported")
+        if module.bidirectional is not False:
+            raise ValueError("only bidirectional = False is supported")
+
     def _bias_ih_l0_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
         """Apply transposed Jacobian of the output w.r.t. bias_ih_l0."""
+        self._check_hyperparameters(module)
         # V = mat.shape[0]
         N = mat.shape[2]
         T = mat.shape[1]
@@ -41,6 +68,7 @@ class RNNDerivatives(BaseParameterDerivatives):
 
     def _bias_hh_l0_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
         """Apply transposed Jacobian of the output w.r.t. bias_hh_l0."""
+        self._check_hyperparameters(module)
         # identical to bias_ih_l0
         return self._bias_ih_l0_jac_t_mat_prod(
             module, g_inp, g_out, mat, sum_batch=sum_batch
@@ -48,6 +76,7 @@ class RNNDerivatives(BaseParameterDerivatives):
 
     def _weight_ih_l0_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
         """Apply transposed Jacobian of the output w.r.t. weight_ih_l0."""
+        self._check_hyperparameters(module)
         # V = mat.shape[0]
         N = mat.shape[2]
         T = mat.shape[1]
@@ -78,6 +107,7 @@ class RNNDerivatives(BaseParameterDerivatives):
 
     def _weight_hh_l0_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
         """Apply transposed Jacobian of the output w.r.t. weight_hh_l0."""
+        self._check_hyperparameters(module)
         # V = mat.shape[0]
         N = mat.shape[2]
         T = mat.shape[1]
