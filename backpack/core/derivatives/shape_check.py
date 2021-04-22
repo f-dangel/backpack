@@ -147,6 +147,15 @@ shape_like_weight_with_sum_batch = functools.partial(
 shape_like_bias_with_sum_batch = functools.partial(
     check_like_with_sum_batch, name="bias"
 )
+shape_like_bias_rnn_with_sum_batch = functools.partial(
+    check_like_with_sum_batch, name="bias_ih_l0"
+)
+shape_like_weight_ih_with_sum_batch = functools.partial(
+    check_like_with_sum_batch, name="weight_ih_l0"
+)
+shape_like_weight_hh_with_sum_batch = functools.partial(
+    check_like_with_sum_batch, name="weight_hh_l0"
+)
 
 # decorators for shape checking
 jac_mat_prod_check_shapes = functools.partial(
@@ -175,6 +184,21 @@ bias_jac_t_mat_prod_check_shapes = functools.partial(
     mat_prod_check_shapes,
     in_check=shape_like_output,
     out_check=shape_like_bias_with_sum_batch,
+)
+bias_rnn_jac_t_mat_prod_check_shapes = functools.partial(
+    mat_prod_check_shapes,
+    in_check=shape_like_output,
+    out_check=shape_like_bias_rnn_with_sum_batch,
+)
+weight_ih_jac_t_mat_prod_check_shapes = functools.partial(
+    mat_prod_check_shapes,
+    in_check=shape_like_output,
+    out_check=shape_like_weight_ih_with_sum_batch,
+)
+weight_hh_jac_t_mat_prod_check_shapes = functools.partial(
+    mat_prod_check_shapes,
+    in_check=shape_like_output,
+    out_check=shape_like_weight_hh_with_sum_batch,
 )
 
 ###############################################################################
