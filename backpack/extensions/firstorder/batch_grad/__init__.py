@@ -1,4 +1,5 @@
 from torch.nn import (
+    RNN,
     BatchNorm1d,
     Conv1d,
     Conv2d,
@@ -20,6 +21,7 @@ from . import (
     conv_transpose2d,
     conv_transpose3d,
     linear,
+    rnn,
 )
 
 
@@ -55,5 +57,6 @@ class BatchGrad(BackpropExtension):
                 ConvTranspose2d: conv_transpose2d.BatchGradConvTranspose2d(),
                 ConvTranspose3d: conv_transpose3d.BatchGradConvTranspose3d(),
                 BatchNorm1d: batchnorm1d.BatchGradBatchNorm1d(),
+                RNN: rnn.BatchGradRNN(),
             },
         )

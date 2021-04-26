@@ -15,3 +15,23 @@ class GradBaseModule(FirstOrderModuleExtension):
         return self.derivatives.weight_jac_t_mat_prod(
             module, g_inp, g_out, g_out[0], sum_batch=True
         )
+
+    def bias_ih_l0(self, ext, module, g_inp, g_out, bpQuantities):
+        return self.derivatives.bias_ih_l0_jac_t_mat_prod(
+            module, g_inp, g_out, g_out[0], sum_batch=True
+        )
+
+    def bias_hh_l0(self, ext, module, g_inp, g_out, bpQuantities):
+        return self.derivatives.bias_hh_l0_jac_t_mat_prod(
+            module, g_inp, g_out, g_out[0], sum_batch=True
+        )
+
+    def weight_ih_l0(self, ext, module, g_inp, g_out, bpQuantities):
+        return self.derivatives.weight_ih_l0_jac_t_mat_prod(
+            module, g_inp, g_out, g_out[0], sum_batch=True
+        )
+
+    def weight_hh_l0(self, ext, module, g_inp, g_out, bpQuantities):
+        return self.derivatives.weight_hh_l0_jac_t_mat_prod(
+            module, g_inp, g_out, g_out[0], sum_batch=True
+        )

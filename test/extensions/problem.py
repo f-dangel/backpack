@@ -35,6 +35,7 @@ def add_missing_defaults(setting):
         "id_prefix": "",
         "seed": 0,
         "device": get_available_devices(),
+        "axis_batch": 0,
     }
 
     for req in required:
@@ -62,6 +63,7 @@ class ExtensionsTestProblem:
         device,
         seed,
         id_prefix,
+        axis_batch,
     ):
         """Collection of information required to test extensions.
 
@@ -73,6 +75,7 @@ class ExtensionsTestProblem:
             device (torch.device): Device to run on.
             seed (int): Random seed.
             id_prefix (str): Extra string added to test id.
+            axis_batch (int): index of batch axis. Defaults to 0.
         """
         self.module_fn = module_fn
         self.input_fn = input_fn
@@ -82,6 +85,7 @@ class ExtensionsTestProblem:
         self.device = device
         self.seed = seed
         self.id_prefix = id_prefix
+        self.axis_batch = axis_batch
 
     def set_up(self):
         torch.manual_seed(self.seed)
@@ -113,12 +117,19 @@ class ExtensionsTestProblem:
             input = self.input.clone().detach()
             target = self.target.clone().detach()
         else:
-            input = self.input.clone()[sample_idx, :].unsqueeze(0).detach()
             target = self.target.clone()[sample_idx].unsqueeze(0).detach()
+            input = torch.split(
+                self.input, split_size_or_sections=1, dim=self.axis_batch
+            )[sample_idx].detach()
 
-        print(self.target.shape)
-        print(target.shape)
-        output = self.model(input)
+        # TODO double check this structure,
+        # maybe forward() and then self.output is more appropriate
+        if isinstance(self.model, torch.nn.RNN):
+            output, _ = self.model(input)
+        else:
+            output = self.model(input)
+        output = output.swapaxes(0, self.axis_batch)
+
         loss = self.loss_function(output, target)
 
         return input, output, loss

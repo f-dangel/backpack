@@ -17,6 +17,7 @@ Optional entries:
     "device" [list(torch.device)]: List of devices to run the test on.
     "id_prefix" (str): Prefix to be included in the test name.
     "seed" (int): seed for the random number for torch.rand
+    "axis_batch (int): specifies the batch axis. Defaults to zero
 """
 
 
@@ -25,6 +26,7 @@ from test.extensions.automated_settings import make_simple_cnn_setting
 
 import torch
 from torch.nn import (
+    RNN,
     Conv1d,
     Conv2d,
     Conv3d,
@@ -151,4 +153,18 @@ FIRSTORDER_SETTINGS += [
     make_simple_cnn_setting(
         (3, 3, 2, 7, 7), ConvTranspose3d, (3, 2, 2, 4, 2, 0, 1, False)
     ),
+]
+
+###############################################################################
+#                         test setting: RNN Layers                            #
+###############################################################################
+
+FIRSTORDER_SETTINGS += [
+    {
+        "input_fn": lambda: torch.rand(5, 8, 6),
+        "module_fn": lambda: RNN(input_size=6, hidden_size=3),
+        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="mean"),
+        "target_fn": lambda: classification_targets((8, 3), 2),
+        "axis_batch": 1,
+    },
 ]

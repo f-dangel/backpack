@@ -111,7 +111,7 @@ class BackpackDerivatives(DerivativesImplementation):
         return self.problem.derivative.hessian_is_zero()
 
     def _sample_hessians_from_sqrt(self, sqrt):
-        """Convert individual matrix square root into individual full matrix. """
+        """Convert individual matrix square root into individual full matrix."""
         equation = None
         num_axes = len(sqrt.shape)
 
