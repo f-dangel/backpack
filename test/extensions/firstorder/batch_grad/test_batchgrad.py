@@ -13,7 +13,6 @@ from test.extensions.implementation.backpack import BackpackExtensions
 from test.extensions.problem import make_test_problems
 
 import pytest
-import torch
 
 PROBLEMS = make_test_problems(BATCHGRAD_SETTINGS)
 IDS = [problem.make_id() for problem in PROBLEMS]
@@ -29,22 +28,7 @@ def test_batch_grad(problem):
     problem.set_up()
 
     backpack_res = BackpackExtensions(problem).batch_grad()
-    # TODO delete and find appropriate alternative
-    for result in backpack_res:
-        print("backpack_res", result.shape)
-        print("backpack_res", result.device)
     autograd_res = AutogradExtensions(problem).batch_grad()
-    autograd_res_cuda = []
-    for result in autograd_res:
-        autograd_res_cuda.append(result.to(torch.device("cuda:0")))
-        print("autograd_res", result.shape)
-        print("autograd_res", result.device)
-    for result in autograd_res_cuda:
-        print("autograd_res_cuda", result.shape)
-        print("autograd_res_cuda", result.device)
 
-    try:
-        check_sizes_and_values(autograd_res, backpack_res)
-    except RuntimeError:
-        check_sizes_and_values(autograd_res_cuda, backpack_res)
+    check_sizes_and_values(autograd_res, backpack_res)
     problem.tear_down()

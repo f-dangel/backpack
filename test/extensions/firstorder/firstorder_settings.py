@@ -26,7 +26,6 @@ from test.extensions.automated_settings import make_simple_cnn_setting
 
 import torch
 from torch.nn import (
-    RNN,
     Conv1d,
     Conv2d,
     Conv3d,
@@ -159,12 +158,4 @@ FIRSTORDER_SETTINGS += [
 #                         test setting: RNN Layers                            #
 ###############################################################################
 
-FIRSTORDER_SETTINGS += [
-    {
-        "input_fn": lambda: torch.rand(5, 8, 6),
-        "module_fn": lambda: RNN(input_size=6, hidden_size=3),
-        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="mean"),
-        "target_fn": lambda: classification_targets((8, 3), 2),
-        "axis_batch": 1,
-    },
-]
+FIRSTORDER_SETTINGS += []
