@@ -11,7 +11,6 @@ import matplotlib.pyplot as plt
 import torch
 from memory_profiler import memory_usage
 
-
 num_layers = 1
 input_size = 2
 hidden_size = 100
