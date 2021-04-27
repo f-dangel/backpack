@@ -1,14 +1,16 @@
+"""This script test RNNs.
+
+Whether the results of all layers are saved
+during forward pass of an multilayer RNN.
+To this the memory usage of RNN(num_layers) is compared with num_layers*RNN.
+"""
+
 import time
 
 import matplotlib.pyplot as plt
 import torch
 from memory_profiler import memory_usage
 
-"""
-This script test whether the results of all layers are saved 
-during forward pass of an multilayer RNN.
-To this the memory usage of RNN(num_layers) is compared with num_layers*RNN.
-"""
 
 num_layers = 1
 input_size = 2
@@ -16,38 +18,50 @@ hidden_size = 100
 seq_len = 10
 batch_size = 400000
 
-input_rand = torch.randn(seq_len, batch_size, input_size)
-input_rand.requires_grad = True
 
-
-def sleep():
+def _sleep():
     time.sleep(0.02)
 
 
 def rnn_stacked():
     """Create a stacked rnn."""
+    input_rand = torch.randn(seq_len, batch_size, input_size)
+    input_rand.requires_grad = True
     RNN_stacked = torch.nn.RNN(input_size, hidden_size, num_layers)
-    sleep()
+    _sleep()
     output, _ = RNN_stacked.forward(input_rand)
-    sleep()
-    del RNN_stacked, output, _
+    output.sum().backward()
+    _sleep()
+    del RNN_stacked, output, _, input_rand
 
 
 def rnn_list():
+    """Create a list of rnns."""
+    input_rand = torch.randn(seq_len, batch_size, input_size)
+    input_rand.requires_grad = True
     RNN_list = torch.nn.ModuleList()
     for i in range(num_layers):
         input_size_temp = input_size if i == 0 else hidden_size
         RNN_list.append(torch.nn.RNN(input_size_temp, hidden_size, 1))
-    sleep()
+    _sleep()
     output = input_rand
     for layer in RNN_list:
         output, _ = layer.forward(output)
-    sleep()
-    del RNN_list, output, _
+    output.sum().backward()
+    _sleep()
+    del RNN_list, output, _, input_rand
 
 
-def report_memory(f, interval=0.001):
-    """Print memory statistics of a function execution."""
+def _report_memory(f, interval=0.001):
+    """Print memory statistics of a function execution.
+
+    Args:
+        f (function): Function to evaluate.
+        interval (float): Defaults to 0.001.
+
+    Returns:
+        torch.Tensor
+    """
     start = time.time()
     mem_usage = torch.tensor(memory_usage(f, interval=interval))
     end = time.time()
@@ -61,7 +75,13 @@ def report_memory(f, interval=0.001):
     return mem_usage
 
 
-def plot_memory(mem_usage_list, labels):
+def _plot_memory(mem_usage_list, labels):
+    """Create plot from list of memory consumption.
+
+    Args:
+        mem_usage_list (list): memory usage data
+        labels (list): labels of data
+    """
     fig, ax = plt.subplots()
     for i, mem_usage in enumerate(mem_usage_list):
         ax.plot(range(len(mem_usage)), mem_usage, label=labels[i])
@@ -76,6 +96,6 @@ if __name__ == "__main__":
         f"RNN list {i}" for i in range(n_repeat)
     ]
     for _ in range(n_repeat):
-        mem_usage_list.append(report_memory(rnn_stacked))
-        mem_usage_list.append(report_memory(rnn_list))
-    plot_memory(mem_usage_list, labels=labels)
+        mem_usage_list.append(_report_memory(rnn_stacked))
+        mem_usage_list.append(_report_memory(rnn_list))
+    _plot_memory(mem_usage_list, labels=labels)
