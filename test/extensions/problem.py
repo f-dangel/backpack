@@ -9,6 +9,14 @@ from backpack import extend
 
 
 def make_test_problems(settings):
+    """Creates test problems from settings.
+
+    Args:
+        settings (list): raw settings of the problems
+
+    Returns:
+        list
+    """
     problem_dicts = []
 
     for setting in settings:
@@ -25,10 +33,15 @@ def make_test_problems(settings):
 
 def add_missing_defaults(setting):
     """Create extensions test problem from setting.
+
     Args:
         setting (dict): configuration dictionary
+
     Returns:
         ExtensionsTestProblem: problem with specified settings.
+
+    Raises:
+        ValueError: if no proper settings
     """
     required = ["module_fn", "input_fn", "loss_function_fn", "target_fn"]
     optional = {
@@ -54,6 +67,8 @@ def add_missing_defaults(setting):
 
 
 class ExtensionsTestProblem:
+    """Class providing functions and parameters."""
+
     def __init__(
         self,
         input_fn,
@@ -88,6 +103,7 @@ class ExtensionsTestProblem:
         self.axis_batch = axis_batch
 
     def set_up(self):
+        """Set up problem from settings."""
         torch.manual_seed(self.seed)
 
         self.model = self.module_fn().to(self.device)
@@ -96,10 +112,15 @@ class ExtensionsTestProblem:
         self.loss_function = self.loss_function_fn().to(self.device)
 
     def tear_down(self):
+        """Delete all variables after problem."""
         del self.model, self.input, self.target, self.loss_function
 
     def make_id(self):
-        """Needs to function without call to `set_up`."""
+        """Needs to function without call to `set_up`.
+
+        Returns:
+            str: id of problem
+        """
         prefix = (self.id_prefix + "-") if self.id_prefix != "" else ""
         return (
             prefix
@@ -112,7 +133,15 @@ class ExtensionsTestProblem:
         )
 
     def forward_pass(self, sample_idx=None):
-        """Do a forward pass. Return input, output, and parameters."""
+        """Do a forward pass. Return input, output, and parameters.
+
+        Args:
+            sample_idx (int): index of the sample to select
+
+        Returns:
+            tuple[torch.nn.Tensor, torch.nn.Tensor, torch.nn.Tensor]:
+                input, output, loss
+        """
         if sample_idx is None:
             input = self.input.clone().detach()
             target = self.target.clone().detach()
@@ -128,18 +157,31 @@ class ExtensionsTestProblem:
             output, _ = self.model(input)
         else:
             output = self.model(input)
-        output = output.swapaxes(0, self.axis_batch)
+        if self.axis_batch != 0:
+            output = output.swapaxes(0, self.axis_batch)
 
         loss = self.loss_function(output, target)
 
         return input, output, loss
 
     def extend(self):
+        """Extend module of problem."""
         self.model = extend(self.model)
         self.loss_function = extend(self.loss_function)
 
     def get_reduction_factor(self, loss, unreduced_loss):
-        """Return the factor used to reduce the individual losses."""
+        """Return the factor used to reduce the individual losses.
+
+        Args:
+            loss: the loss after reduction
+            unreduced_loss: the raw loss before reduction
+
+        Returns:
+            long: factor
+
+        Raises:
+            RuntimeError: if either mean or sum cannot be determined
+        """
         mean_loss = unreduced_loss.flatten().mean()
         sum_loss = unreduced_loss.flatten().sum()
         if torch.allclose(mean_loss, sum_loss):
