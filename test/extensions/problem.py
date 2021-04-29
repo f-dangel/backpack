@@ -140,7 +140,7 @@ class ExtensionsTestProblem:
 
         Returns:
             tuple[torch.nn.Tensor, torch.nn.Tensor, torch.nn.Tensor]:
-                input, output, loss
+                input, output, loss, each with batch axis first
         """
         if sample_idx is None:
             input = self.input.clone().detach()
@@ -151,14 +151,15 @@ class ExtensionsTestProblem:
                 self.input, split_size_or_sections=1, dim=self.axis_batch
             )[sample_idx].detach()
 
-        # TODO double check this structure,
-        # maybe forward() and then self.output is more appropriate
-        if isinstance(self.model, torch.nn.RNN):
-            output, _ = self.model(input)
-        else:
-            output = self.model(input)
+        output = self.model(input)
+        if isinstance(output, tuple):
+            output = output[0]
+
         if self.axis_batch != 0:
-            output = output.swapaxes(0, self.axis_batch)
+            # Note: This inserts a new operation into the computation graph.
+            # In second order extensions, breaks backpropagation of additional
+            # information.
+            output = output.transpose(0, self.axis_batch)
 
         loss = self.loss_function(output, target)
 
