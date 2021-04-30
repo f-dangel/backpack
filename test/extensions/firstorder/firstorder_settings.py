@@ -1,5 +1,6 @@
-"""Test configurations for `backpack.core.extensions.firstorder`
-that is shared among the following firstorder methods:
+"""Test configurations for `backpack.core.extensions.firstorder`.
+
+It is shared among the following firstorder methods:
 - batch_grad
 - batch_l2_grad
 - sum_grad_sqaured
@@ -17,6 +18,7 @@ Optional entries:
     "device" [list(torch.device)]: List of devices to run the test on.
     "id_prefix" (str): Prefix to be included in the test name.
     "seed" (int): seed for the random number for torch.rand
+    "axis_batch (int): specifies the batch axis. Defaults to zero
 """
 
 
