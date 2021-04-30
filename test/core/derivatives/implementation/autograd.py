@@ -61,14 +61,8 @@ class AutogradDerivatives(DerivativesImplementation):
         if sum_batch:
             return transposed_jacobian_vector_product(output, param, vec)[0]
         else:
-            sample_outputs = [
-                tensor.squeeze(dim=axis_batch)
-                for tensor in output.split(1, dim=axis_batch)
-            ]
-            sample_vecs = [
-                tensor.squeeze(dim=axis_batch)
-                for tensor in vec.split(1, dim=axis_batch)
-            ]
+            sample_outputs = output.split(1, dim=axis_batch)
+            sample_vecs = vec.split(1, dim=axis_batch)
 
             jac_t_sample_prods = [
                 transposed_jacobian_vector_product(n_out, param, n_vec)[0]
