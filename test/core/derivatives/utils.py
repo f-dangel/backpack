@@ -1,8 +1,8 @@
 """Utility functions to test `backpack.core.derivatives`"""
 
-import torch
+from test.core.derivatives import derivatives_for
 
-from backpack.core.derivatives import derivatives_for
+import torch
 
 
 def get_available_devices():
