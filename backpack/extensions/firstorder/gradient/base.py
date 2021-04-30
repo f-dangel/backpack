@@ -21,7 +21,7 @@ class GradBaseModule(FirstOrderModuleExtension):
         If the param method has already been defined, it is left unchanged.
 
         Args:
-            derivatives(backpack.core.derivatives.basederivatives.BaseParameterDerivatives):
+            derivatives(backpack.core.derivatives.basederivatives.BaseParameterDerivatives):# noqa
                 Derivatives object assigned to self.derivatives.
             params (list[str]): list of strings with parameter names. Defaults to None.
         """
