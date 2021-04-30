@@ -11,10 +11,10 @@ class AutogradExtensions(ExtensionsImplementation):
     """Extension implementations with autograd."""
 
     def batch_grad(self):
-        """Calculates the individual gradients.
+        """Scaled individual gradients computed by BackPACK's BatchGrad extension.
 
         Returns:
-            list[torch.nn.Tensor]: batch_grads
+            list[torch.Tensor]: batch_grads
         """
         N = self.problem.input.shape[self.problem.axis_batch]
         batch_grads = [

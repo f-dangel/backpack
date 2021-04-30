@@ -44,14 +44,14 @@ class AutogradDerivatives(DerivativesImplementation):
         return self.param_jac_t_mat_prod("bias_ih_l0", mat, sum_batch, axis_batch=1)
 
     def param_jac_t_vec_prod(self, name, vec, sum_batch, axis_batch=0):
-        """
-        Compute the product of jac_t and the given vector.
+        """Compute the product of jac_t and the given vector.
 
         Args:
             name (str): name of parameter for derivative
             vec (torch.Tensor): vectors which to multiply
             sum_batch (boolean): whether to sum along batch axis
             axis_batch (int, optional): index of batch axis. Defaults to 0.
+
         Returns:
             torch.Tensor: product of jac_t and vec
         """
@@ -63,11 +63,11 @@ class AutogradDerivatives(DerivativesImplementation):
         else:
             sample_outputs = [
                 tensor.squeeze(dim=axis_batch)
-                for tensor in torch.split(output, 1, dim=axis_batch)
+                for tensor in output.split(1, dim=axis_batch)
             ]
             sample_vecs = [
                 tensor.squeeze(dim=axis_batch)
-                for tensor in torch.split(vec, 1, dim=axis_batch)
+                for tensor in vec.split(1, dim=axis_batch)
             ]
 
             jac_t_sample_prods = [
@@ -78,8 +78,7 @@ class AutogradDerivatives(DerivativesImplementation):
             return torch.stack(jac_t_sample_prods)
 
     def param_jac_t_mat_prod(self, name, mat, sum_batch, axis_batch=0):
-        """
-        Compute the product of jac_t and the given matrix.
+        """Compute the product of jac_t and the given matrix.
 
         Args:
             name (str): name of parameter for derivative
@@ -87,6 +86,7 @@ class AutogradDerivatives(DerivativesImplementation):
             sum_batch (boolean): whether to sum along batch axis
             axis_batch (int, optional): index of batch axis. This is counted
                 without the first axis. Defaults to 0.
+
         Returns:
             torch.Tensor: product of jac_t and mat
         """
