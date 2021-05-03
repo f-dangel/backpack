@@ -95,6 +95,7 @@ class ConvTransposeNDDerivatives(BaseParameterDerivatives):
         final_shape = (
             (V, *module.weight.shape) if sum_batch else (V, N, *module.weight.shape)
         )
+        
         return einsum(equation, u, mat_reshape).reshape(final_shape)
 
     def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
