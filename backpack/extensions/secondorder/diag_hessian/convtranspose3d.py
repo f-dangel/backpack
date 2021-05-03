@@ -15,9 +15,10 @@ class DiagHConvTranspose3d(DiagHConvTransposeND):
 
 
 class BatchDiagHConvTranspose3d(BatchDiagHConvTransposeND):
-    '''
+    """
     Individual Diagonal of the Hessian for torch.nn.ConvTranspose3d
-    '''
+    """
+
     def __init__(self):
         super().__init__(
             derivatives=ConvTranspose3DDerivatives(),
