@@ -32,6 +32,10 @@ class ExtensionsImplementation:
         """MC approximation of Diagonal of Gauss Newton"""
         raise NotImplementedError
 
+    def diag_ggn_mc_batch(self, mc_samples):
+        """MC approximation of individual Generalized Gauss-Newton/Fisher diagonal."""
+        raise NotImplementedError
+
     def diag_h(self):
         """Diagonal of Hessian"""
         raise NotImplementedError
