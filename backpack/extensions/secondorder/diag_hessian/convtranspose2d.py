@@ -15,6 +15,9 @@ class DiagHConvTranspose2d(DiagHConvTransposeND):
 
 
 class BatchDiagHConvTranspose2d(BatchDiagHConvTransposeND):
+    '''
+    Individual Diagonal of the Hessian for torch.nn.ConvTranspose2d
+    '''
     def __init__(self):
         super().__init__(
             derivatives=ConvTranspose2DDerivatives(),

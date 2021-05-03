@@ -15,6 +15,9 @@ class DiagHConv3d(DiagHConvND):
 
 
 class BatchDiagHConv3d(BatchDiagHConvND):
+    '''
+    Individual Diagonal of the Hessian for torch.nn.Conv3d
+    '''
     def __init__(self):
         super().__init__(
             derivatives=Conv3DDerivatives(),
