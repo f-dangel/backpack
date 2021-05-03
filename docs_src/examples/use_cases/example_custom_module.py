@@ -165,3 +165,23 @@ print(
     "Does batch gradient match with individual gradients?",
     torch.allclose(scaleModule.weight.grad, scaleModule.weight.grad_batch.sum(axis=0)),
 )
+
+# %%
+# compare with autograd
+grad_batch_backpack = scaleModule.weight.grad_batch
+grad_batch_autograd = torch.zeros(grad_batch_backpack.shape)
+scaleModule = ScaleModule(input_size=(input_size,))
+lossfunc = CrossEntropyLoss()
+for n in range(batch_size):
+    scaleModule.zero_grad()
+    loss = lossfunc(scaleModule(input[n].unsqueeze(0)), target[n].unsqueeze(0))
+    loss.backward()
+    grad_batch_autograd[n] = scaleModule.weight.grad
+
+print("grad_batch_autograd", grad_batch_autograd)
+
+print(
+    "Does autograd and backpack individual gradients match?",
+    torch.allclose(grad_batch_autograd, grad_batch_backpack),
+)
+# TODO fix: results are different by a factor of batch_size
