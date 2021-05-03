@@ -82,11 +82,13 @@ class ConvTransposeNDDerivatives(BaseParameterDerivatives):
         C_in = module.input0.shape[1]
         N = module.output.shape[0]
         C_out = module.output.shape[1]
+
         mat_reshape = mat.reshape(V, N, G, C_out // G, *module.output.shape[2:])
 
         u = unfold_by_conv_transpose(module.input0, module).reshape(
             N, G, C_in // G, *module.weight.shape[2:], *module.output.shape[2:]
         )
+
         dims_kern = "xyz"[: self.conv_dims]
         dims_data = "abc"[: self.conv_dims]
         result_str = ("vgio" if sum_batch else "vngio") + dims_kern
@@ -95,7 +97,7 @@ class ConvTransposeNDDerivatives(BaseParameterDerivatives):
         final_shape = (
             (V, *module.weight.shape) if sum_batch else (V, N, *module.weight.shape)
         )
-        
+
         return einsum(equation, u, mat_reshape).reshape(final_shape)
 
     def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
