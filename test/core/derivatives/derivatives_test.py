@@ -101,8 +101,8 @@ for problem, problem_id in zip(PROBLEMS, IDS):
 )
 @pytest.mark.parametrize(
     "problem",
-    PROBLEMS_WITH_WEIGHTS,
-    ids=IDS_WITH_WEIGHTS,
+    PROBLEMS_WITH_WEIGHTS + CONVOLUTION_TRANSPOSED_FAIL_PROBLEMS,
+    ids=IDS_WITH_WEIGHTS + CONVOLUTION_TRANSPOSED_FAIL_IDS,
 )
 def test_weight_jac_t_mat_prod(problem, sum_batch, save_memory, V=3):
     """Test the transposed Jacobian-matrix product w.r.t. to the weights.
@@ -241,22 +241,6 @@ def test_sqrt_hessian_squared_equals_hessian(problem):
 def test_weight_jac_mat_prod_should_fail(problem):
     with pytest.raises(NotImplementedError):
         test_weight_jac_mat_prod(problem)
-
-
-@pytest.mark.parametrize(
-    "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
-)
-@pytest.mark.parametrize(
-    "save_memory",
-    [True, False],
-    ids=["save_memory=True", "save_memory=False"],
-)
-@pytest.mark.parametrize(
-    "problem", CONVOLUTION_TRANSPOSED_FAIL_PROBLEMS, ids=CONVOLUTION_TRANSPOSED_FAIL_IDS
-)
-def test_weight_jac_t_mat_prod_should_fail(problem, sum_batch, save_memory):
-    with pytest.raises(NotImplementedError):
-        test_weight_jac_t_mat_prod(problem, sum_batch, save_memory)
 
 
 @pytest.mark.parametrize("problem", LOSS_FAIL_PROBLEMS, ids=LOSS_FAIL_IDS)
