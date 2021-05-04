@@ -102,8 +102,12 @@ target = torch.randint(0, 2, (batch_size,))
 
 # %%
 # Test custom module
+# Note that using "mean" instead of "sum", leads to a within-batch dependency.
+# This alters the individual gradients in autograd (see later) by a factor batch_size.
+reduction = ["mean", "sum"][1]
 scaleModule = ScaleModule(input_size=(input_size,))
 lossfunc = CrossEntropyLoss()
+lossfunc.reduction = reduction
 loss = lossfunc(scaleModule(input), target)
 
 loss.backward()
@@ -172,6 +176,7 @@ grad_batch_backpack = scaleModule.weight.grad_batch
 grad_batch_autograd = torch.zeros(grad_batch_backpack.shape)
 scaleModule = ScaleModule(input_size=(input_size,))
 lossfunc = CrossEntropyLoss()
+lossfunc.reduction = reduction
 for n in range(batch_size):
     scaleModule.zero_grad()
     loss = lossfunc(scaleModule(input[n].unsqueeze(0)), target[n].unsqueeze(0))
@@ -184,4 +189,3 @@ print(
     "Does autograd and backpack individual gradients match?",
     torch.allclose(grad_batch_autograd, grad_batch_backpack),
 )
-# TODO fix: results are different by a factor of batch_size

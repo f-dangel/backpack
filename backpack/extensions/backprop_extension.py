@@ -58,7 +58,7 @@ class BackpropExtension:
         """Adds an external module mapping.
 
         Args:
-            module(torch.nn.Module): The module that is supposed to be extended
+            module(Type[torch.nn.Module]): The module that is supposed to be extended
             extension(backpack.extensions.module_extension.ModuleExtension):
                 The custom extension of that module.
         """
