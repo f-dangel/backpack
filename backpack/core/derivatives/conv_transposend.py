@@ -77,6 +77,22 @@ class ConvTransposeNDDerivatives(BaseParameterDerivatives):
         return self.reshape_like_output(jac_mat, module)
 
     def _weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
+        '''Apply transposed Jacobian of the output w.r.t. weight of the torch.nn.ConvTransposeNd layer to a matrix.
+        
+        Parameters:
+        -----------
+        mat: torch.Tensor
+            Matrix the transposed Jacobian will be applied to.
+            Must have shape [V, N, C_out, H_out, ...].
+        sum_batch: bool
+            Whether to sum over the batch dimension on the fly.
+
+        Returns:
+        --------
+        result: torch.Tensor
+            Jacobian-matrix product.
+            Has shape [V, N, C_w, H_w, ...] if `sum_batch == False`.
+            Has shape [V, C_w, H_w, ...] if `sum_batch == True`.'''
         V = mat.shape[0]
         G = module.groups
         C_in = module.input0.shape[1]
@@ -92,7 +108,7 @@ class ConvTransposeNDDerivatives(BaseParameterDerivatives):
         dims_kern = "xyz"[: self.conv_dims]
         dims_data = "abc"[: self.conv_dims]
         result_str = ("vgio" if sum_batch else "vngio") + dims_kern
-        equation = "ngi{0}{1},vngo{1}->{2}".format(dims_kern, dims_data, result_str)
+        equation = f"ngi{dims_kern}{dims_data},vngo{dims_data}->{result_str}"
 
         final_shape = (
             (V, *module.weight.shape) if sum_batch else (V, N, *module.weight.shape)
