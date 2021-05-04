@@ -77,7 +77,7 @@ class ConvTransposeNDDerivatives(BaseParameterDerivatives):
         return self.reshape_like_output(jac_mat, module)
 
     def _weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
-        """Apply transposed Jacobian of the output w.r.t. 
+        """Apply transposed Jacobian of the output w.r.t.
         weight of the torch.nn.ConvTransposeNd layer to a matrix.
 
         Parameters:
