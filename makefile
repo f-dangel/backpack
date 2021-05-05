@@ -5,10 +5,10 @@
 .PHONY: test-light test-light-no-gpu
 .PHONY: conda-env
 .PHONY: black isort format
-.PHONY: black-check isort-check format-check
+.PHONY: black-check isort-check format-check format-check-partial
 .PHONY: flake8
-.PHONY: pydocstyle-check
-.PHONY: darglint-check
+.PHONY: pydocstyle-check pydocstyle-check-partial
+.PHONY: darglint-check darglint-check-partial
 .PHONY: build-docs
 
 .DEFAULT: help
@@ -29,8 +29,12 @@ help:
 	@echo "        Run flake8 on the project"
 	@echo "pydocstyle-check"
 	@echo "        Run pydocstyle on the project"
+	@echo "pydocstyle-check-partial"
+	@echo "        Run pydocstyle on documented part of the project"
 	@echo "darglint-check"
 	@echo "        Run darglint on the project"
+	@echo "darglint-check-partial"
+	@echo "        Run darglint on documented part of the project"
 	@echo "install"
 	@echo "        Install backpack and dependencies"
 	@echo "isort"
@@ -82,8 +86,14 @@ flake8:
 pydocstyle-check:
 	@pydocstyle --count .
 
+pydocstyle-check-partial:
+	@pydocstyle --count $(shell cat fully_documented.txt)
+
 darglint-check:
 	@darglint --verbosity 2 .
+
+darglint-check-partial:
+	@darglint --verbosity 2 $(shell cat fully_documented.txt)
 
 isort:
 	@isort .
@@ -98,6 +108,7 @@ format:
 
 format-check: black-check isort-check pydocstyle-check darglint-check
 
+format-check-partial: black-check isort-check pydocstyle-check-partial darglint-check-partial
 
 ###
 # Installation

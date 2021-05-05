@@ -1,0 +1,3 @@
+backpack/core/derivatives/rnn.py
+# backpack/core/extensions/firstorder/gradient/rnn.py
+# backpack/core/extensions/firstorder/batch_grad/rnn.py
