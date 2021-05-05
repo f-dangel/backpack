@@ -3,7 +3,7 @@ from backpack.extensions.firstorder.base import FirstOrderModuleExtension
 
 
 class GradBaseModule(FirstOrderModuleExtension):
-    """calculates the gradient.
+    """Calculates the gradient.
 
     This class implements functions with method names from params.
 
@@ -13,8 +13,10 @@ class GradBaseModule(FirstOrderModuleExtension):
     If child class wants to overwrite these methods
     - for example to support an additional external module -
     it can do so using the interface for parameter "param1"
+
     param1(ext, module, g_inp, g_out, bpQuantities):
         return batch_grads
+
     In this case, the method is not overwritten by this class.
     """
 
@@ -32,7 +34,7 @@ class GradBaseModule(FirstOrderModuleExtension):
         self.derivatives = derivatives
         for param_str in params:
             if not hasattr(self, param_str):
-                self.__setattr__(param_str, self._make_param_function(param_str))
+                setattr(self, param_str, self._make_param_function(param_str))
         super().__init__(params=params)
 
     def _make_param_function(self, param):
@@ -56,7 +58,7 @@ class GradBaseModule(FirstOrderModuleExtension):
                 bpQuantities(None): additional quantities for second order
 
             Returns:
-                torch.Tensor: gradient of the batch
+                torch.Tensor: gradient of the batch, similar to autograd
             """
             return getattr(self.derivatives, f"{param}_jac_t_mat_prod")(
                 module, g_inp, g_out, g_out[0], sum_batch=True
