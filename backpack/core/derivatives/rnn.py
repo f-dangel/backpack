@@ -1,3 +1,4 @@
+"""Partial derivatives for the torch.nn.RNN layer."""
 from torch import diag_embed, einsum, eye, zeros
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
@@ -16,14 +17,10 @@ class RNNDerivatives(BaseParameterDerivatives):
     """
 
     def _check_parameters(self, module):
-        """
-        Check the parameters of module.
+        """Check the parameters of module.
 
         Args:
             module (torch.nn.RNN): module which to check
-
-        Returns:
-            None
 
         Raises:
             ValueError: If any parameter of module does not match expectation
@@ -42,7 +39,18 @@ class RNNDerivatives(BaseParameterDerivatives):
             raise ValueError("only bidirectional = False is supported")
 
     def _bias_ih_l0_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
-        """Apply transposed Jacobian of the output w.r.t. bias_ih_l0."""
+        """Apply transposed Jacobian of the output w.r.t. bias_ih_l0.
+
+        Args:
+            module: extended module
+            g_inp: input gradient
+            g_out: output gradient
+            mat: matrix to multiply
+            sum_batch: Whether to sum along batch axis. Defaults to True.
+
+        Returns:
+            torch.nn.Tensor: product
+        """
         self._check_parameters(module)
         # V = mat.shape[0]
         N = mat.shape[2]
@@ -67,7 +75,18 @@ class RNNDerivatives(BaseParameterDerivatives):
         return grad
 
     def _bias_hh_l0_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
-        """Apply transposed Jacobian of the output w.r.t. bias_hh_l0."""
+        """Apply transposed Jacobian of the output w.r.t. bias_hh_l0.
+
+        Args:
+            module: extended module
+            g_inp: input gradient
+            g_out: output gradient
+            mat: matrix to multiply
+            sum_batch: Whether to sum along batch axis. Defaults to True.
+
+        Returns:
+            torch.nn.Tensor: product
+        """
         self._check_parameters(module)
         # identical to bias_ih_l0
         return self._bias_ih_l0_jac_t_mat_prod(
@@ -75,7 +94,18 @@ class RNNDerivatives(BaseParameterDerivatives):
         )
 
     def _weight_ih_l0_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
-        """Apply transposed Jacobian of the output w.r.t. weight_ih_l0."""
+        """Apply transposed Jacobian of the output w.r.t. weight_ih_l0.
+
+        Args:
+            module: extended module
+            g_inp: input gradient
+            g_out: output gradient
+            mat: matrix to multiply
+            sum_batch: Whether to sum along batch axis. Defaults to True.
+
+        Returns:
+            torch.nn.Tensor: product
+        """
         self._check_parameters(module)
         # V = mat.shape[0]
         N = mat.shape[2]
@@ -106,7 +136,18 @@ class RNNDerivatives(BaseParameterDerivatives):
         return grad
 
     def _weight_hh_l0_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
-        """Apply transposed Jacobian of the output w.r.t. weight_hh_l0."""
+        """Apply transposed Jacobian of the output w.r.t. weight_hh_l0.
+
+        Args:
+            module: extended module
+            g_inp: input gradient
+            g_out: output gradient
+            mat: matrix to multiply
+            sum_batch: Whether to sum along batch axis. Defaults to True.
+
+        Returns:
+            torch.nn.Tensor: product
+        """
         self._check_parameters(module)
         # V = mat.shape[0]
         N = mat.shape[2]
