@@ -24,7 +24,7 @@ class BatchGradBase(FirstOrderModuleExtension):
         If the param method has already been defined, it is left unchanged.
 
         Args:
-            derivatives(backpack.core.derivatives.basederivatives.BaseParameterDerivatives):# noqa
+            derivatives(backpack.core.derivatives.basederivatives.BaseParameterDerivatives): # noqa: B950
                 Derivatives object assigned to self.derivatives.
             params (list[str]): list of strings with parameter names.
                 For each, a method is assigned.
