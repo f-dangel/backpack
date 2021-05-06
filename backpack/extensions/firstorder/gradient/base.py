@@ -5,17 +5,15 @@ from backpack.extensions.firstorder.base import FirstOrderModuleExtension
 class GradBaseModule(FirstOrderModuleExtension):
     """Calculates the gradient.
 
-    This class implements functions with method names from params.
-
     Passes the calls for the parameters to the derivatives class.
     Implements functions with method names from params.
 
     If child class wants to overwrite these methods
     - for example to support an additional external module -
-    it can do so using the interface for parameter "param1"
+    it can do so using the interface for parameter "param1"::
 
-    param1(ext, module, g_inp, g_out, bpQuantities):
-        return batch_grads
+        param1(ext, module, g_inp, g_out, bpQuantities):
+            return batch_grads
 
     In this case, the method is not overwritten by this class.
     """

@@ -10,10 +10,10 @@ class BatchGradBase(FirstOrderModuleExtension):
 
     If child class wants to overwrite these methods
     - for example to support an additional external module -
-    it can do so using the interface for parameter "param1"
+    it can do so using the interface for parameter "param1"::
 
-    param1(ext, module, g_inp, g_out, bpQuantities):
-        return batch_grads
+        param1(ext, module, g_inp, g_out, bpQuantities):
+            return batch_grads
 
     In this case, the method is not overwritten by this class.
     """
