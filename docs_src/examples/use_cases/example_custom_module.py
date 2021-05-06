@@ -3,9 +3,8 @@
 
 This tutorial shows how to support a custom module in a simple fashion.
 """
+import copy
 
-# %%
-#
 import torch
 from torch.nn import CrossEntropyLoss
 
@@ -26,28 +25,26 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 #
 # This example scales the input by a factor named "weight".
 class ScaleModule(torch.nn.Module):
-    """Defines the module based on ScaleFunction."""
+    """Defines the module."""
 
-    def __init__(self, input_size=(1,), weight=2.0):
+    def __init__(self, weight=2.0):
         """Initializes scale module.
 
         Args:
-            input_size: size of input is equivalent to output size
-            weight(float): Initial value for weight. Defaults to 2.0.
+            weight(float, optional): Initial value for weight. Defaults to 2.0.
         """
         super(ScaleModule, self).__init__()
-        self.input_size = input_size
 
         self.weight = torch.nn.Parameter(torch.tensor(weight))
 
     def forward(self, input):
-        """Defines forward pass based on ScaleFunction.
+        """Defines forward pass.
 
         Args:
             input(torch.Tensor): input
 
         Returns:
-            torch.Tensor: Result from ScaleFunction
+            torch.Tensor: product of input and weight
         """
         return input * self.weight
 
@@ -86,81 +83,83 @@ class ScaleModuleBatchGrad(FirstOrderModuleExtension):
         # print("module.input0", module.input0)
         # gradient of output
         # print("g_out[0]", g_out[0])
-        return (g_out[0] * module.input0).sum(axis=1)
+        return (g_out[0] * module.input0).reshape((g_out[0].shape[0], -1)).sum(axis=1)
 
 
 # add the class to backpack
 BatchGrad.add_module_extension(ScaleModule, ScaleModuleBatchGrad())
-
 
 # %%
 # Testing custom module
 # -------------------------
 # Create some random data and define a function.
 #
-# Note that using "mean" instead of "sum", leads to a within-batch dependency.
-# This alters the individual gradients in autograd (see later) by a factor batch_size.
+# Note, that using "mean" instead of "sum", leads to a within-batch dependency.
+# This scales the vectors backpropagated by PyTorch by ``1 / batch_size``.
+# This scaling peculiarity is also documented here
+# (https://docs.backpack.pt/en/master/extensions.html#backpack.extensions.BatchGrad).
 batch_size = 10
 input_size = 4
 input = torch.randn(batch_size, input_size)
 target = torch.randint(0, 2, (batch_size,))
 
 reduction = ["mean", "sum"][1]
-scaleModule = ScaleModule(input_size=(input_size,))
+my_module = ScaleModule()
 lossfunc = CrossEntropyLoss()
 lossfunc.reduction = reduction
 
 # %%
 # The normal backward pass.
-loss = lossfunc(scaleModule(input), target)
+loss = lossfunc(my_module(input), target)
 
 loss.backward()
 
-for param in scaleModule.parameters():
-    print("batch gradient", param.grad)
-
+for name, param in my_module.named_parameters():
+    print(name)
+    print(".grad.shape:     ", param.grad.shape)
 
 # %%
 # Backward with backpack.
-scaleModule_ext = extend(scaleModule)
-lossfunc_ext = extend(lossfunc)
-scaleModule_ext.zero_grad()
-loss = lossfunc_ext(scaleModule_ext(input), target)
+my_module_ext = extend(copy.deepcopy(my_module))
+lossfunc_ext = extend(copy.deepcopy(lossfunc))
+my_module_ext.zero_grad()
+loss = lossfunc_ext(my_module_ext(input), target)
 print("loss", loss)
 
 with backpack(BatchGrad()):
     loss.backward()
 
-for param in scaleModule_ext.parameters():
-    print("batch gradient", param.grad)
-    print("individual gradients", param.grad_batch)
+for name, param in my_module_ext.named_parameters():
+    print(name)
+    print(".grad.shape:         ", param.grad.shape)
+    print(".grad_batch.shape:   ", param.grad_batch.shape)
 
 print(
     "Does batch gradient match with individual gradients?",
     torch.allclose(
-        scaleModule_ext.weight.grad, scaleModule_ext.weight.grad_batch.sum(axis=0)
+        my_module_ext.weight.grad, my_module_ext.weight.grad_batch.sum(axis=0)
     ),
 )
 
 # ensuring this test runs
 assert torch.allclose(
-    scaleModule_ext.weight.grad, scaleModule_ext.weight.grad_batch.sum(axis=0)
+    my_module_ext.weight.grad, my_module_ext.weight.grad_batch.sum(axis=0)
 )
 
 # %%
 # Calculate the individual gradients with autograd and compare to BackPACK.
-grad_batch_backpack = scaleModule_ext.weight.grad_batch
+grad_batch_backpack = my_module_ext.weight.grad_batch
 grad_batch_autograd = torch.zeros(grad_batch_backpack.shape)
 for n in range(batch_size):
-    scaleModule.zero_grad()
-    loss = lossfunc(scaleModule(input[n].unsqueeze(0)), target[n].unsqueeze(0))
+    my_module.zero_grad()
+    loss = lossfunc(my_module(input[n].unsqueeze(0)), target[n].unsqueeze(0))
     loss.backward()
-    grad_batch_autograd[n] = scaleModule.weight.grad
+    grad_batch_autograd[n] = my_module.weight.grad
 
-print("grad_batch_autograd", grad_batch_autograd)
+print("grad_batch_autograd.shape", grad_batch_autograd.shape)
 
 print(
-    "Does autograd and backpack individual gradients match?",
+    "Do autograd and backpack individual gradients match?",
     torch.allclose(grad_batch_autograd, grad_batch_backpack),
 )
 

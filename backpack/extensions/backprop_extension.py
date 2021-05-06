@@ -33,12 +33,9 @@ class BackpropExtension:
         """Initializes parameters.
 
         Args:
-            savefield(str):
-                Where to save results
-            module_exts(dict):
-                Dictionary mapping module classes to `ModuleExtension` instances
-            fail_mode(str, optional):
-                Behavior when encountering an unknown layer.
+            savefield(str): Where to save results
+            module_exts(dict): Maps module classes to `ModuleExtension` instances
+            fail_mode(str, optional): Behavior when encountering an unknown layer.
                 Can be
                 - "ERROR": raise a NotImplementedError
                 - "WARN": raise a UserWarning
