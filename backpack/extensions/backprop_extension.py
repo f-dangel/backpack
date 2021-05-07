@@ -51,20 +51,37 @@ class BackpropExtension:
         self.__fail_mode = fail_mode
 
     @classmethod
-    def add_module_extension(cls, module, extension):
+    def add_module_extension(cls, module, extension, overwrite=False):
         """Adds an external module mapping.
 
         Args:
             module(Type[torch.nn.Module]): The module that is supposed to be extended
             extension(backpack.extensions.module_extension.ModuleExtension):
                 The custom extension of that module.
+            overwrite(bool): Whether to allow overwriting of an existing key.
+                Defaults to False.
+
+        Raises:
+            PermissionError: If the method is called from BackpropExtension.
+                Should be called from subclass instead. Also raises an error
+                if the key already exists and overwrite is set to False.
         """
+        if cls == BackpropExtension:
+            raise PermissionError(
+                "A module extension must be added from a "
+                "subclass of BackpropExtension! "
+                "For example BatchGrad.add_module_extension()."
+            )
+        if overwrite is False and module in cls.__external_module_extensions:
+            raise PermissionError(
+                f"The mapping from {module} already exists! "
+                f"It maps to {cls.__external_module_extensions.get(module)}. "
+                "If you know what you are doing use overwrite = True."
+            )
         cls.__external_module_extensions[module] = extension
 
     def __get_module_extension(self, module):
         module_extension = self.__module_extensions.get(module.__class__)
-        if module_extension is None:
-            module_extension = self.__external_module_extensions.get(module.__class__)
 
         if module_extension is None:
 
