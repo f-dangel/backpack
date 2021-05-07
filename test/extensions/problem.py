@@ -12,10 +12,10 @@ def make_test_problems(settings):
     """Creates test problems from settings.
 
     Args:
-        settings (list): raw settings of the problems
+        settings (list[dict]): raw settings of the problems
 
     Returns:
-        list
+        list[ExtensionTestProblem]
     """
     problem_dicts = []
 
@@ -32,13 +32,13 @@ def make_test_problems(settings):
 
 
 def add_missing_defaults(setting):
-    """Create extensions test problem from setting.
+    """Create full settings from setting.
 
     Args:
         setting (dict): configuration dictionary
 
     Returns:
-        ExtensionsTestProblem: problem with specified settings.
+        dict: full settings.
 
     Raises:
         ValueError: if no proper settings
@@ -135,11 +135,15 @@ class ExtensionsTestProblem:
     def forward_pass(self, sample_idx=None):
         """Do a forward pass. Return input, output, and parameters.
 
+        The forward pass is performed on the selected index.
+        If the index is None, then the forward pass is calculated for the whole batch.
+
         Args:
-            sample_idx (int): index of the sample to select
+            sample_idx (int, optional): Index of the sample to select.
+                Defaults to None.
 
         Returns:
-            tuple[torch.nn.Tensor, torch.nn.Tensor, torch.nn.Tensor]:
+            tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
                 input, output, loss, each with batch axis first
         """
         if sample_idx is None:
@@ -147,9 +151,7 @@ class ExtensionsTestProblem:
             target = self.target.clone().detach()
         else:
             target = self.target.clone()[sample_idx].unsqueeze(0).detach()
-            input = torch.split(
-                self.input, split_size_or_sections=1, dim=self.axis_batch
-            )[sample_idx].detach()
+            input = self.input.split(1, dim=self.axis_batch)[sample_idx].detach()
 
         output = self.model(input)
         if isinstance(output, tuple):
@@ -174,11 +176,11 @@ class ExtensionsTestProblem:
         """Return the factor used to reduce the individual losses.
 
         Args:
-            loss: the loss after reduction
-            unreduced_loss: the raw loss before reduction
+            loss (torch.Tensor): the loss after reduction
+            unreduced_loss (torch.Tensor): the raw loss before reduction
 
         Returns:
-            long: factor
+            float: factor
 
         Raises:
             RuntimeError: if either mean or sum cannot be determined

@@ -1,37 +1,65 @@
+"""Calculates the batch_grad derivative."""
 from backpack.extensions.firstorder.base import FirstOrderModuleExtension
 
 
 class BatchGradBase(FirstOrderModuleExtension):
-    def __init__(self, derivatives, params=None):
+    """Calculates the batch_grad derivative.
+
+    Passes the calls for the parameters to the derivatives class.
+    Implements functions with method names from params.
+
+    If child class wants to overwrite these methods
+    - for example to support an additional external module -
+    it can do so using the interface for parameter "param1"::
+
+        param1(ext, module, g_inp, g_out, bpQuantities):
+            return batch_grads
+
+    In this case, the method is not overwritten by this class.
+    """
+
+    def __init__(self, derivatives, params):
+        """Initializes all methods.
+
+        If the param method has already been defined, it is left unchanged.
+
+        Args:
+            derivatives(backpack.core.derivatives.basederivatives.BaseParameterDerivatives): # noqa: B950
+                Derivatives object assigned to self.derivatives.
+            params (list[str]): list of strings with parameter names.
+                For each, a method is assigned.
+        """
         self.derivatives = derivatives
+        for param_str in params:
+            if not hasattr(self, param_str):
+                setattr(self, param_str, self._make_param_function(param_str))
         super().__init__(params=params)
 
-    def bias(self, ext, module, g_inp, g_out, bpQuantities):
-        return self.derivatives.bias_jac_t_mat_prod(
-            module, g_inp, g_out, g_out[0], sum_batch=False
-        )
+    def _make_param_function(self, param):
+        """Creates a function that calculates batch_grad wrt param.
 
-    def weight(self, ext, module, g_inp, g_out, bpQuantities):
-        return self.derivatives.weight_jac_t_mat_prod(
-            module, g_inp, g_out, g_out[0], sum_batch=False
-        )
+        Args:
+            param(str): name of parameter
 
-    def bias_ih_l0(self, ext, module, g_inp, g_out, bpQuantities):
-        return self.derivatives.bias_ih_l0_jac_t_mat_prod(
-            module, g_inp, g_out, g_out[0], sum_batch=False
-        )
+        Returns:
+            function: function that calculates batch_grad wrt param
+        """
 
-    def bias_hh_l0(self, ext, module, g_inp, g_out, bpQuantities):
-        return self.derivatives.bias_hh_l0_jac_t_mat_prod(
-            module, g_inp, g_out, g_out[0], sum_batch=False
-        )
+        def param_function(ext, module, g_inp, g_out, bpQuantities):
+            """Calculates batch_grad with the help of derivatives object.
 
-    def weight_ih_l0(self, ext, module, g_inp, g_out, bpQuantities):
-        return self.derivatives.weight_ih_l0_jac_t_mat_prod(
-            module, g_inp, g_out, g_out[0], sum_batch=False
-        )
+            Args:
+                ext(backpack.extensions.BatchGrad): extension that is used
+                module(torch.nn.Module): module that performed forward pass
+                g_inp(tuple[torch.Tensor]): input gradient tensors
+                g_out(tuple[torch.Tensor]): output gradient tensors
+                bpQuantities(None): additional quantities for second order
 
-    def weight_hh_l0(self, ext, module, g_inp, g_out, bpQuantities):
-        return self.derivatives.weight_hh_l0_jac_t_mat_prod(
-            module, g_inp, g_out, g_out[0], sum_batch=False
-        )
+            Returns:
+                torch.Tensor: scaled individual gradients
+            """
+            return getattr(self.derivatives, f"{param}_jac_t_mat_prod")(
+                module, g_inp, g_out, g_out[0], sum_batch=False
+            )
+
+        return param_function
