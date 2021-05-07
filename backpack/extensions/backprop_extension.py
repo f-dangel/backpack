@@ -1,8 +1,11 @@
 """Implements the backpropagation mechanism."""
 import warnings
+from typing import Type
 
+import torch.nn
 from torch.nn import Sequential
 
+from backpack.extensions.module_extension import ModuleExtension
 from backpack.utils.hooks import no_op
 
 FAIL_ERROR = "ERROR"
@@ -27,8 +30,6 @@ class BackpropExtension:
     ```
     """
 
-    __external_module_extensions = {}
-
     def __init__(self, savefield, module_exts, fail_mode=FAIL_ERROR):
         """Initializes parameters.
 
@@ -43,42 +44,37 @@ class BackpropExtension:
                 Defaults to FAIL_ERROR = "ERROR"
         """
         self.savefield = savefield
-        self.__module_extensions = {
-            **module_exts,
-            **self.__class__.__external_module_extensions,
-        }
+        self.__module_extensions = module_exts
 
         self.__fail_mode = fail_mode
 
-    @classmethod
-    def add_module_extension(cls, module, extension, overwrite=False):
-        """Adds an external module mapping.
+    def set_module_extension(
+        self,
+        module: Type[torch.nn.Module],
+        extension: ModuleExtension,
+        overwrite: bool = False,
+    ) -> None:
+        """Adds a module mapping to module_extensions.
+
+        This can be used to add a custom module.
 
         Args:
-            module(Type[torch.nn.Module]): The module that is supposed to be extended
-            extension(backpack.extensions.module_extension.ModuleExtension):
-                The custom extension of that module.
-            overwrite(bool): Whether to allow overwriting of an existing key.
+            module: The module that is supposed to be extended
+            extension: The custom extension of that module.
+            overwrite: Whether to allow overwriting of an existing key.
                 Defaults to False.
 
         Raises:
-            PermissionError: If the method is called from BackpropExtension.
-                Should be called from subclass instead. Also raises an error
+            ValueError: Raises an error
                 if the key already exists and overwrite is set to False.
         """
-        if cls == BackpropExtension:
-            raise PermissionError(
-                "A module extension must be added from a "
-                "subclass of BackpropExtension! "
-                "For example BatchGrad.add_module_extension()."
-            )
-        if overwrite is False and module in cls.__external_module_extensions:
-            raise PermissionError(
+        if overwrite is False and module in self.__module_extensions:
+            raise ValueError(
                 f"The mapping from {module} already exists! "
-                f"It maps to {cls.__external_module_extensions.get(module)}. "
+                f"It maps to {self.__module_extensions.get(module)}. "
                 "If you know what you are doing use overwrite = True."
             )
-        cls.__external_module_extensions[module] = extension
+        self.__module_extensions[module] = extension
 
     def __get_module_extension(self, module):
         module_extension = self.__module_extensions.get(module.__class__)

@@ -54,7 +54,7 @@ class ScaleModule(torch.nn.Module):
 # This extension should implement methods named after the parameters
 # that calculate the batch gradients.
 #
-# Finally, we add the class to BackPACK.
+# Finally, we add the class to a BatchGrad object.
 class ScaleModuleBatchGrad(FirstOrderModuleExtension):
     """Extract indiviual gradients for ``ScaleModule``."""
 
@@ -86,8 +86,9 @@ class ScaleModuleBatchGrad(FirstOrderModuleExtension):
         return (g_out[0] * module.input0).reshape((g_out[0].shape[0], -1)).sum(axis=1)
 
 
-# add the class to backpack
-BatchGrad.add_module_extension(ScaleModule, ScaleModuleBatchGrad())
+# add the class to batchGrad
+batchGrad = BatchGrad()
+batchGrad.set_module_extension(ScaleModule, ScaleModuleBatchGrad())
 
 # %%
 # Testing custom module
@@ -126,7 +127,7 @@ my_module_ext.zero_grad()
 loss = lossfunc_ext(my_module_ext(input), target)
 print("loss", loss)
 
-with backpack(BatchGrad()):
+with backpack(batchGrad):
     loss.backward()
 
 for name, param in my_module_ext.named_parameters():
