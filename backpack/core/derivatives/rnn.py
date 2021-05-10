@@ -1,5 +1,5 @@
 """Partial derivatives for the torch.nn.RNN layer."""
-from torch import diag_embed, einsum, eye, zeros
+from torch import Tensor, cat, einsum, zeros
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 
@@ -16,7 +16,8 @@ class RNNDerivatives(BaseParameterDerivatives):
     * i: Input dimension
     """
 
-    def _check_parameters(self, module):
+    @staticmethod
+    def _check_parameters(module):
         """Check the parameters of module.
 
         Args:
@@ -38,6 +39,42 @@ class RNNDerivatives(BaseParameterDerivatives):
         if module.bidirectional is not False:
             raise ValueError("only bidirectional = False is supported")
 
+    @staticmethod
+    def _a_jac_t_mat_prod(
+        output: Tensor,
+        weight_hh_l0: Tensor,
+        mat: Tensor,
+    ) -> Tensor:
+        """Calculates jacobian vector product wrt a.
+
+        Args:
+            output: the values of the hidden layer
+            weight_hh_l0: weight matrix hidden-to-hidden
+            mat: matrix to multiply
+
+        Returns:
+            jacobian vector product wrt a
+        """
+        V = mat.shape[0]
+        N = mat.shape[2]
+        T = mat.shape[1]
+        H = mat.shape[3]
+        a_jac_t_mat_prod = zeros(V, T, N, H, device=mat.device)
+        for t in range(T)[::-1]:
+            if t == (T - 1):
+                a_jac_t_mat_prod[:, t, ...] = einsum(
+                    "vnh, nh -> vnh",
+                    mat[:, t, ...],
+                    1 - output[t, ...] ** 2,
+                )
+            else:
+                a_jac_t_mat_prod[:, t, ...] = einsum(
+                    "vnh, nh -> vnh",
+                    mat[:, t, ...] + a_jac_t_mat_prod[:, t + 1, ...] @ weight_hh_l0,
+                    1 - output[t, ...] ** 2,
+                )
+        return a_jac_t_mat_prod
+
     def _bias_ih_l0_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
         """Apply transposed Jacobian of the output w.r.t. bias_ih_l0.
 
@@ -52,27 +89,13 @@ class RNNDerivatives(BaseParameterDerivatives):
             torch.nn.Tensor: product
         """
         self._check_parameters(module)
-        # V = mat.shape[0]
-        N = mat.shape[2]
-        T = mat.shape[1]
-        H = mat.shape[3]
-        output = module.output
-        jac = zeros(T, N, H, H, device=mat.device)
-        for t in range(T):
-            jac[t, ...] = diag_embed(1 - output[t, ...] ** 2, dim1=1, dim2=2)
-            if t > 0:
-                jac[t, ...] += einsum(
-                    "nh, hl, nkl -> nkh",
-                    1 - output[t, ...] ** 2,
-                    module.weight_hh_l0,
-                    jac[t - 1, ...],
-                )
         if sum_batch:
-            eq = "tnhk, vtnk -> vh"
+            dim = [1, 2]
         else:
-            eq = "tnhk, vtnk -> vnh"
-        grad = einsum(eq, jac, mat)
-        return grad
+            dim = 1
+        return self._a_jac_t_mat_prod(module.output, module.weight_hh_l0, mat).sum(
+            dim=dim
+        )
 
     def _bias_hh_l0_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
         """Apply transposed Jacobian of the output w.r.t. bias_hh_l0.
@@ -107,33 +130,15 @@ class RNNDerivatives(BaseParameterDerivatives):
             torch.nn.Tensor: product
         """
         self._check_parameters(module)
-        # V = mat.shape[0]
-        N = mat.shape[2]
-        T = mat.shape[1]
-        H = mat.shape[3]
-        output = module.output
-        input0 = module.input0
-        jac = zeros(T, N, H, H, module.input_size, device=mat.device)
-        for t in range(T):
-            jac[t, ...] = einsum(
-                "nk, kh, nj -> nkhj",
-                1 - output[t, ...] ** 2,
-                eye(H, device=mat.device),
-                input0[t],
-            )
-            if t > 0:
-                jac[t, ...] += einsum(
-                    "nh, hl, nklj -> nkhj",
-                    1 - output[t, ...] ** 2,
-                    module.weight_hh_l0,
-                    jac[t - 1, ...],
-                )
         if sum_batch:
-            eq = "tnhki, vtnk -> vhi"
+            eq = "vtnh, tnj -> vhj"
         else:
-            eq = "tnhki, vtnk -> vnhi"
-        grad = einsum(eq, jac, mat)
-        return grad
+            eq = "vtnh, tnj -> vnhj"
+        return einsum(
+            eq,
+            self._a_jac_t_mat_prod(module.output, module.weight_hh_l0, mat),
+            module.input0,
+        )
 
     def _weight_hh_l0_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
         """Apply transposed Jacobian of the output w.r.t. weight_hh_l0.
@@ -151,27 +156,14 @@ class RNNDerivatives(BaseParameterDerivatives):
         self._check_parameters(module)
         # V = mat.shape[0]
         N = mat.shape[2]
-        T = mat.shape[1]
+        # T = mat.shape[1]
         H = mat.shape[3]
-        output = module.output
-        jac = zeros(T, N, H, H, H, device=mat.device)
-        for t in range(T):
-            if t > 0:
-                jac[t, ...] = einsum(
-                    "nk, kh, nj -> nkhj",
-                    1 - output[t, ...] ** 2,
-                    eye(H, device=mat.device),
-                    output[t - 1],
-                )
-                jac[t, ...] += einsum(
-                    "nh, hl, nklj -> nkhj",
-                    1 - output[t, ...] ** 2,
-                    module.weight_hh_l0,
-                    jac[t - 1, ...],
-                )
         if sum_batch:
-            eq = "tnhkj, vtnk -> vhj"
+            eq = "vtnh, tnk -> vhk"
         else:
-            eq = "tnhkj, vtnk -> vnhj"
-        grad = einsum(eq, jac, mat)
-        return grad
+            eq = "vtnh, tnk -> vnhk"
+        return einsum(
+            eq,
+            self._a_jac_t_mat_prod(module.output, module.weight_hh_l0, mat),
+            cat([zeros(1, N, H), module.output[0:-1]], dim=0),
+        )
