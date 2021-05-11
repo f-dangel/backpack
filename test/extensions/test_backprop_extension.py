@@ -1,4 +1,5 @@
 """Test custom extensions for backprop_extension."""
+
 import pytest
 from torch.nn import Linear, Module
 
@@ -22,17 +23,23 @@ def test_set_custom_extension():
         pass
 
     grad_batch = BatchGrad()
+
     # Set module extension
     grad_batch.set_module_extension(_A, _ABatchGrad())
+
     # setting again should raise a ValueError
     with pytest.raises(ValueError):
         grad_batch.set_module_extension(_A, _ABatchGrad())
+
     # setting again with overwrite
     grad_batch.set_module_extension(_A, _ABatchGrad(), overwrite=True)
+
     # in a different extension, set another extension for the same module
     variance = Variance()
     variance.set_module_extension(_A, _AVariance())
+
     # set an extension for an already existing extension
     with pytest.raises(ValueError):
         grad_batch.set_module_extension(Linear, _MyLinearBatchGrad())
+
     grad_batch.set_module_extension(Linear, _MyLinearBatchGrad(), overwrite=True)
