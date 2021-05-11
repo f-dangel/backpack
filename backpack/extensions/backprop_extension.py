@@ -45,7 +45,6 @@ class BackpropExtension:
         """
         self.savefield = savefield
         self.__module_extensions = module_exts
-
         self.__fail_mode = fail_mode
 
     def set_module_extension(
@@ -65,14 +64,12 @@ class BackpropExtension:
                 Defaults to False.
 
         Raises:
-            ValueError: Raises an error
-                if the key already exists and overwrite is set to False.
+            ValueError: If the key already exists and overwrite is set to False.
         """
         if overwrite is False and module in self.__module_extensions:
             raise ValueError(
-                f"The mapping from {module} already exists! "
-                f"It maps to {self.__module_extensions.get(module)}. "
-                "If you know what you are doing use overwrite = True."
+                f"{module} maps to {self.__module_extensions.get(module)}! "
+                "Use overwrite = True to force replacement."
             )
         self.__module_extensions[module] = extension
 
