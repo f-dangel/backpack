@@ -2,11 +2,13 @@
 =========================================
 
 This tutorial shows how to support a custom module in a simple fashion.
+We focus on `BackPACK's first-order extensions <https://docs.backpack.pt/en/master/extensions.html#first-order-extensions>`_.
+They don't backpropagate additional information and thus require less functionality be implemented.
+
+Let's get the imports out of our way.
 """
-import copy
 
 import torch
-from torch.nn import CrossEntropyLoss
 
 from backpack import backpack, extend
 from backpack.extensions import BatchGrad
@@ -19,23 +21,25 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 # %%
-# Adding custom module to BackPACK
-# -------------------------
-# Define a custom module (https://pytorch.org/docs/stable/notes/extending.html).
-#
-# This example scales the input by a factor named "weight".
+# Custom PyTorch module
+# ---------------------
+# In this example, we consider extending our own, very simplistic, layer.
+# It scales the input by a scalar ``weight`` in a forward pass. Here is the
+# layer class (see https://pytorch.org/docs/stable/notes/extending.html).
+
+
 class ScaleModule(torch.nn.Module):
     """Defines the module."""
 
     def __init__(self, weight=2.0):
-        """Initializes scale module.
+        """Store scalar weight.
 
         Args:
             weight(float, optional): Initial value for weight. Defaults to 2.0.
         """
         super(ScaleModule, self).__init__()
 
-        self.weight = torch.nn.Parameter(torch.tensor(weight))
+        self.weight = torch.nn.Parameter(torch.tensor([weight]))
 
     def forward(self, input):
         """Defines forward pass.
@@ -50,119 +54,144 @@ class ScaleModule(torch.nn.Module):
 
 
 # %%
-# To support batch gradients of this module in BackPACK, we write an extension.
-# This extension should implement methods named after the parameters
-# that calculate the batch gradients.
+# You don't necessarily need to write a custom layer. Any PyTorch layer can be extended
+# as described (it should be a :py:class:`torch.nn.Module <torch.nn.Module>`'s because
+# BackPACK uses module hooks).
 #
-# Finally, we add the class to a BatchGrad object.
+# Custom module extension
+# -----------------------
+# Let's make BackPACK support computing individual gradients for ``ScaleModule``.
+# This is done by the :py:class:`BatchGrad <backpack.extensions.BatchGrad>` extension.
+# To support the new module, we need to create a module extension that implements
+# how individual gradients are extracted with respect to ``ScaleModule``'s parameter.
+#
+# The module extension must implement methods named after the parameters passed to the
+# constructor. Here it goes.
+
+
 class ScaleModuleBatchGrad(FirstOrderModuleExtension):
-    """Extract indiviual gradients for ``ScaleModule``."""
+    """Extract individual gradients for ``ScaleModule``."""
 
     def __init__(self):
-        """Initializes scale module batch extension."""
-        # specify the names of the parameters
+        """Store parameters for which individual gradients should be computed."""
+        # specify parameter names
         super().__init__(params=["weight"])
 
     def weight(self, ext, module, g_inp, g_out, bpQuantities):
-        """Extract individual gradients for ScaleModule's weight parameter.
+        """Extract individual gradients for ScaleModule's ``weight`` parameter.
 
         Args:
             ext(BatchGrad): extension that is used
             module(ScaleModule): module that performed forward pass
             g_inp(tuple[torch.Tensor]): input gradient tensors
             g_out(tuple[torch.Tensor]): output gradient tensors
-            bpQuantities(None): additional quantities for second order
+            bpQuantities(None): additional quantities for second-order
 
         Returns:
             torch.Tensor: individual gradients
         """
-        # useful available quantities are
-        # output is saved under field output
-        # print("module.output", module.output)
-        # input i is saved under field input[i]
-        # print("module.input0", module.input0)
-        # gradient of output
-        # print("g_out[0]", g_out[0])
-        return (g_out[0] * module.input0).reshape((g_out[0].shape[0], -1)).sum(axis=1)
+        show_useful = True
 
+        if show_useful:
+            print("Useful quantities:")
+            # output is saved under field output
+            print("\tmodule.output.shape:", module.output.shape)
+            # input i is saved under field input[i]
+            print("\tmodule.input0.shape:", module.input0.shape)
+            # gradient w.r.t output
+            print("\tg_out[0].shape:     ", g_out[0].shape)
 
-# add the class to batchGrad
-batchGrad = BatchGrad()
-batchGrad.set_module_extension(ScaleModule, ScaleModuleBatchGrad())
+        # actual computation
+        return (g_out[0] * module.input0).flatten(start_dim=1).sum(axis=1).unsqueeze(-1)
+
 
 # %%
-# Testing custom module
-# -------------------------
-# Create some random data and define a function.
-#
-# Note, that using "mean" instead of "sum", leads to a within-batch dependency.
-# This scales the vectors backpropagated by PyTorch by ``1 / batch_size``.
-# This scaling peculiarity is also documented here
-# (https://docs.backpack.pt/en/master/extensions.html#backpack.extensions.BatchGrad).
+# Lastly, we need to register the mapping between layer (``ScaleModule``) and layer
+# extension (``ScaleModuleBatchGrad``) in an instance of
+# :py:class:`BatchGrad <backpack.extensions.BatchGrad>`.
+
+# register module-computation mapping
+extension = BatchGrad()
+extension.set_module_extension(ScaleModule, ScaleModuleBatchGrad())
+
+# %%
+# That's it. We can now pass ``extension`` to a
+# :py:class:`with backpack(...) <backpack.backpack>` context and compute individual
+# gradients with respect to ``ScaleModule``'s ``weight`` parameter.
+
+# %%
+# Test custom module
+# ------------------
+# Here, we verify the custom module extension on a small net with random inputs.
+# Let's create these.
+
 batch_size = 10
+batch_axis = 0
 input_size = 4
-input = torch.randn(batch_size, input_size)
-target = torch.randint(0, 2, (batch_size,))
+
+inputs = torch.randn(batch_size, input_size, device=device)
+targets = torch.randint(0, 2, (batch_size,), device=device)
 
 reduction = ["mean", "sum"][1]
-my_module = ScaleModule()
-lossfunc = CrossEntropyLoss()
-lossfunc.reduction = reduction
+my_module = ScaleModule().to(device)
+lossfunc = torch.nn.CrossEntropyLoss(reduction=reduction).to(device)
 
 # %%
-# The normal backward pass.
-loss = lossfunc(my_module(input), target)
-
-loss.backward()
-
-for name, param in my_module.named_parameters():
-    print(name)
-    print(".grad.shape:     ", param.grad.shape)
+# .. note::
+#     Results of ``"mean"`` and ``"sum"`` reduction differ by a scaling factor,
+#     because the information backpropagated by PyTorch is scaled. This is documented at
+#     https://docs.backpack.pt/en/master/extensions.html#backpack.extensions.BatchGrad.
 
 # %%
-# Backward with backpack.
-my_module_ext = extend(copy.deepcopy(my_module))
-lossfunc_ext = extend(copy.deepcopy(lossfunc))
-my_module_ext.zero_grad()
-loss = lossfunc_ext(my_module_ext(input), target)
-print("loss", loss)
+# Individual gradients with PyTorch
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# The following computes individual gradients by looping over individual samples and
+# stacking their gradients.
 
-with backpack(batchGrad):
+grad_batch_autograd = []
+
+for input_n, target_n in zip(
+    inputs.split(1, dim=batch_axis), targets.split(1, dim=batch_axis)
+):
+    loss_n = lossfunc(my_module(input_n), target_n)
+    grad_n = torch.autograd.grad(loss_n, [my_module.weight])[0]
+    grad_batch_autograd.append(grad_n)
+
+grad_batch_autograd = torch.stack(grad_batch_autograd)
+
+print("weight.shape:             ", my_module.weight.shape)
+print("grad_batch_autograd.shape:", grad_batch_autograd.shape)
+
+# %%
+# Individual gradients with BackPACK
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# BackPACK can compute individual gradients in a single backward pass.
+# First, :py:func:`extend <backpack.extend>` model and loss function, then
+# perform the backpropagation inside a
+# :py:class:`with backpack(...) <backpack.backpack>` context.
+
+my_module = extend(my_module)
+lossfunc = extend(lossfunc)
+
+loss = lossfunc(my_module(inputs), targets)
+
+with backpack(extension):
     loss.backward()
 
-for name, param in my_module_ext.named_parameters():
-    print(name)
-    print(".grad.shape:         ", param.grad.shape)
-    print(".grad_batch.shape:   ", param.grad_batch.shape)
+grad_batch_backpack = my_module.weight.grad_batch
 
-print(
-    "Does batch gradient match with individual gradients?",
-    torch.allclose(
-        my_module_ext.weight.grad, my_module_ext.weight.grad_batch.sum(axis=0)
-    ),
-)
-
-# ensuring this test runs
-assert torch.allclose(
-    my_module_ext.weight.grad, my_module_ext.weight.grad_batch.sum(axis=0)
-)
+print("weight.shape:             ", my_module.weight.shape)
+print("grad_batch_backpack.shape:", grad_batch_backpack.shape)
 
 # %%
-# Calculate the individual gradients with autograd and compare to BackPACK.
-grad_batch_backpack = my_module_ext.weight.grad_batch
-grad_batch_autograd = torch.zeros(grad_batch_backpack.shape)
-for n in range(batch_size):
-    my_module.zero_grad()
-    loss = lossfunc(my_module(input[n].unsqueeze(0)), target[n].unsqueeze(0))
-    loss.backward()
-    grad_batch_autograd[n] = my_module.weight.grad
+# Do the computation results match?
 
-print("grad_batch_autograd.shape", grad_batch_autograd.shape)
+match = torch.allclose(grad_batch_autograd, grad_batch_backpack)
 
-print(
-    "Do autograd and backpack individual gradients match?",
-    torch.allclose(grad_batch_autograd, grad_batch_backpack),
-)
+print(f"autograd and BackPACK individual gradients match? {match}")
 
-# ensuring this test runs
-assert torch.allclose(grad_batch_autograd, grad_batch_backpack)
+if not match:
+    raise AssertionError(
+        "Individual gradients don't match:"
+        + f"\n{grad_batch_autograd}\nvs.\n{grad_batch_backpack}"
+    )
