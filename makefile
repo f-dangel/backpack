@@ -87,13 +87,13 @@ pydocstyle-check:
 	@pydocstyle --count .
 
 pydocstyle-check-partial:
-	@pydocstyle --count $(shell cat fully_documented.txt)
+	@pydocstyle --count $(shell grep -v '^#' fully_documented.txt )
 
 darglint-check:
 	@darglint --verbosity 2 .
 
 darglint-check-partial:
-	@darglint --verbosity 2 $(shell cat fully_documented.txt)
+	@darglint --verbosity 2 $(shell grep -v '^#' fully_documented.txt)
 
 isort:
 	@isort .
