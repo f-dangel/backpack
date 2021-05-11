@@ -7,6 +7,6 @@ backpack/extensions/firstorder/batch_grad/batch_grad_base.py
 # backpack/core/extensions/firstorder/batch_grad/rnn.py
 
 test/extensions/problem.py
-test/benchmark_rnn/test_rnn.py
+test/benchmark_rnn/
 
 # docs_src/examples/use_cases/example_custom_module
