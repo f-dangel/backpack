@@ -165,5 +165,5 @@ class RNNDerivatives(BaseParameterDerivatives):
         return einsum(
             eq,
             self._a_jac_t_mat_prod(module.output, module.weight_hh_l0, mat),
-            cat([zeros(1, N, H), module.output[0:-1]], dim=0),
+            cat([zeros(1, N, H, device=mat.device), module.output[0:-1]], dim=0),
         )
