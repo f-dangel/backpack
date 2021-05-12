@@ -30,7 +30,7 @@ def two_kfacs_to_mat(A, B):
 
 
 def kfac_mat_prod(factors):
-    """Return function v ↦ (A ⊗ B ⊗ ...)v for `factors = [A, B, ...]`"""
+    """Return function v ↦ (A ⊗ B ⊗ ...)v for `factors = [A, B, ...]`."""
     assert all_tensors_of_order(order=2, tensors=factors)
 
     shapes = [list(f.size()) for f in factors]

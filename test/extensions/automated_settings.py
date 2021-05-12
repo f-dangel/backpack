@@ -60,7 +60,7 @@ def make_simple_cnn_setting(input_size, conv_class, conv_params):
         )
 
     def get_output_shape(module, module_params, input):
-        """returns the output shape for a given layer"""
+        """Returns the output shape for a given layer."""
         output = module(*module_params)(input)
         return output.numel() // output.shape[0]
 
@@ -102,7 +102,7 @@ def make_simple_pooling_setting(input_size, conv_class, pool_cls, pool_params):
         )
 
     def get_output_shape(module, module_params, input, pool, pool_params):
-        """returns the output shape for a given layer"""
+        """Returns the output shape for a given layer."""
         output_1 = module(*module_params)(input)
         output = pool_cls(*pool_params)(output_1)
         return output.numel() // output.shape[0]
