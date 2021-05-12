@@ -45,6 +45,17 @@ make install-dev
     make format-check
     ```
 
+## Pull requests
+
+Code that is affected (has a `git diff`) by a pull request must satisfy the following docstring requirements:
+
+1.  A one-line summary what the function/class does
+2.  Argument description (`Args` section)
+    -   Argument name, type, and description
+    -   Optional arguments must be marked as such, the default value must be documented in the description
+3.  Output description (`Returns` section)
+    -   Type and description
+
 ## Documentation
 
 ### Build
