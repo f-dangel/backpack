@@ -2,11 +2,12 @@ backpack/core/derivatives/rnn.py
 backpack/extensions/firstorder/gradient/base.py
 backpack/extensions/firstorder/batch_grad/batch_grad_base.py
 # backpack/extensions/module_extension.py
-# backpack/extensions/backprop_extension.py
-# backpack/core/extensions/firstorder/gradient/rnn.py
-# backpack/core/extensions/firstorder/batch_grad/rnn.py
+backpack/extensions/backprop_extension.py
+# backpack/extensions/firstorder/gradient/rnn.py
+# backpack/extensions/firstorder/batch_grad/rnn.py
 
 test/extensions/problem.py
+test/extensions/test_backprop_extension.py
 test/extensions/firstorder/batch_grad/batchgrad_settings.py
 test/extensions/firstorder/firstorder_settings.py
 test/benchmark_rnn/
