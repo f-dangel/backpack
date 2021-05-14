@@ -1,4 +1,4 @@
-"""Test configurations to test batch_grad
+"""Test configurations to test batch_grad.
 
 The tests are taken from `test.extensions.firstorder.firstorder_settings`, 
 but additional custom tests can be defined here by appending it to the list.
@@ -17,8 +17,9 @@ LOCAL_SETTING = [
         "input_fn": lambda: torch.rand(5, 8, 6),
         "module_fn": lambda: RNN(input_size=6, hidden_size=3),
         "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="mean"),
-        "target_fn": lambda: classification_targets((8, 3), 2),
+        "target_fn": lambda: classification_targets((8, 5), 3),
         "axis_batch": 1,
+        "axis_category": 2,
     },
 ]
 

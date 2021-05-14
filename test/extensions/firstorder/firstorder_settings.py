@@ -18,7 +18,8 @@ Optional entries:
     "device" [list(torch.device)]: List of devices to run the test on.
     "id_prefix" (str): Prefix to be included in the test name.
     "seed" (int): seed for the random number for torch.rand
-    "axis_batch (int): specifies the batch axis. Defaults to zero
+    "axis_batch" (int): index of batch axis. Defaults to 0.
+    "axis_category" (int): index of category axis. Defaults to 1.
 """
 
 

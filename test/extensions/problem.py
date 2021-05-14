@@ -49,6 +49,7 @@ def add_missing_defaults(setting):
         "seed": 0,
         "device": get_available_devices(),
         "axis_batch": 0,
+        "axis_category": 1,
     }
 
     for req in required:
@@ -79,6 +80,7 @@ class ExtensionsTestProblem:
         seed,
         id_prefix,
         axis_batch,
+        axis_category,
     ):
         """Collection of information required to test extensions.
 
@@ -91,6 +93,7 @@ class ExtensionsTestProblem:
             seed (int): Random seed.
             id_prefix (str): Extra string added to test id.
             axis_batch (int): index of batch axis. Defaults to 0.
+            axis_category (int): index of category axis. Defaults to 1.
         """
         self.module_fn = module_fn
         self.input_fn = input_fn
@@ -101,6 +104,7 @@ class ExtensionsTestProblem:
         self.seed = seed
         self.id_prefix = id_prefix
         self.axis_batch = axis_batch
+        self.axis_category = axis_category
 
     def set_up(self):
         """Set up problem from settings."""
@@ -162,6 +166,9 @@ class ExtensionsTestProblem:
             # In second order extensions, breaks backpropagation of additional
             # information.
             output = output.transpose(0, self.axis_batch)
+
+        if self.axis_category != 1:
+            output = output.transpose(1, self.axis_category)
 
         loss = self.loss_function(output, target)
 
