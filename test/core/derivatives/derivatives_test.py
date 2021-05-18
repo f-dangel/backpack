@@ -54,9 +54,9 @@ RNN_IDS = [problem.make_id() for problem in RNN_PROBLEMS]
 # selecting only every second rnn problem (only cpu problems)
 # because torch is not able to calculate this function on CUDA
 @pytest.mark.parametrize(
-    "problem", NO_LOSS_PROBLEMS + RNN_PROBLEMS[::2], ids=NO_LOSS_IDS + RNN_IDS[::2]
+    "problem", NO_LOSS_PROBLEMS + RNN_PROBLEMS, ids=NO_LOSS_IDS + RNN_IDS
 )
-def test_jac_mat_prod(problem, V=3):
+def test_jac_mat_prod(problem, request, V=3):
     """Test the Jacobian-matrix product.
 
     Args:
@@ -67,7 +67,13 @@ def test_jac_mat_prod(problem, V=3):
     mat = torch.rand(V, *problem.input_shape).to(problem.device)
 
     backpack_res = BackpackDerivatives(problem).jac_mat_prod(mat)
-    autograd_res = AutogradDerivatives(problem).jac_mat_prod(mat)
+    if all(string in request.node.callspec.id for string in ["RNN", "cuda"]):
+        # torch does not implement cuda double-backwards pass on RNNs and
+        # recommends this workaround
+        with torch.backends.cudnn.flags(enabled=False):
+            autograd_res = AutogradDerivatives(problem).jac_mat_prod(mat)
+    else:
+        autograd_res = AutogradDerivatives(problem).jac_mat_prod(mat)
 
     check_sizes_and_values(autograd_res, backpack_res)
     problem.tear_down()
