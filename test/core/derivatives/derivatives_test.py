@@ -51,7 +51,11 @@ RNN_PROBLEMS = make_test_problems(RNN_SETTINGS)
 RNN_IDS = [problem.make_id() for problem in RNN_PROBLEMS]
 
 
-@pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
+# selecting only every second rnn problem (only cpu problems)
+# because torch is not able to calculate this function on CUDA
+@pytest.mark.parametrize(
+    "problem", NO_LOSS_PROBLEMS + RNN_PROBLEMS[::2], ids=NO_LOSS_IDS + RNN_IDS[::2]
+)
 def test_jac_mat_prod(problem, V=3):
     """Test the Jacobian-matrix product.
 
@@ -69,7 +73,9 @@ def test_jac_mat_prod(problem, V=3):
     problem.tear_down()
 
 
-@pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
+@pytest.mark.parametrize(
+    "problem", NO_LOSS_PROBLEMS + RNN_PROBLEMS, ids=NO_LOSS_IDS + RNN_IDS
+)
 def test_jac_t_mat_prod(problem, V=3):
     """Test the transposed Jacobian-matrix product.
 

@@ -1,5 +1,9 @@
 """Partial derivatives for the torch.nn.RNN layer."""
+from typing import Tuple
+
+import torch
 from torch import Tensor, cat, einsum, zeros
+from torch.nn import RNN
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 
@@ -74,6 +78,45 @@ class RNNDerivatives(BaseParameterDerivatives):
                     1 - output[t, ...] ** 2,
                 )
         return a_jac_t_mat_prod
+
+    def _jac_t_mat_prod(
+        self, module: RNN, g_inp: Tuple[Tensor], g_out: Tuple[Tensor], mat: Tensor
+    ) -> Tensor:
+        eq = "vtnh, hk -> vtnk"
+        return torch.einsum(
+            eq,
+            self._a_jac_t_mat_prod(module.output, module.weight_hh_l0, mat),
+            module.weight_ih_l0,
+        )
+
+    def _jac_mat_prod(
+        self, module: RNN, g_inp: Tuple[Tensor], g_out: Tuple[Tensor], mat: Tensor
+    ) -> Tensor:
+        V = mat.shape[0]
+        N = mat.shape[2]
+        T = mat.shape[1]
+        H = module.hidden_size
+        _jac_mat_prod = torch.zeros(V, T, N, H, device=mat.device)
+        for t in range(T):
+            if t == 0:
+                _jac_mat_prod[:, t, ...] = einsum(
+                    "nh, hi, vni -> vnh",
+                    1 - module.output[t, ...] ** 2,
+                    module.weight_ih_l0,
+                    mat[:, t, ...],
+                )
+            else:
+                _jac_mat_prod[:, t, ...] = einsum(
+                    "nh, vnh -> vnh",
+                    1 - module.output[t, ...] ** 2,
+                    einsum("hi, vni -> vnh", module.weight_ih_l0, mat[:, t, ...])
+                    + einsum(
+                        "hk, vnk -> vnh",
+                        module.weight_hh_l0,
+                        _jac_mat_prod[:, t - 1, ...],
+                    ),
+                )
+        return _jac_mat_prod
 
     def _bias_ih_l0_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
         """Apply transposed Jacobian of the output w.r.t. bias_ih_l0.
