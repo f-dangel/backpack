@@ -132,10 +132,6 @@ class DerivativesTestProblem:
         else:
             output = module(input, target)
 
-        if isinstance(output, tuple):
-            # is true for RNN,GRU,LSTM which return tuple (output, ...)
-            output = output[0]
-
         return output.shape
 
     def is_loss(self):
@@ -157,9 +153,9 @@ class DerivativesTestProblem:
         else:
             output = self.module(input)
 
-        if isinstance(output, tuple):
+        """if isinstance(output, tuple):
             # is true for RNN,GRU,LSTM which return tuple (output, ...)
-            output = output[0]
+            output = output[0]"""
 
         return input, output, dict(self.module.named_parameters())
 

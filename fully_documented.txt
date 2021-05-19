@@ -5,6 +5,7 @@ backpack/extensions/firstorder/batch_grad/batch_grad_base.py
 backpack/extensions/backprop_extension.py
 # backpack/extensions/firstorder/gradient/rnn.py
 # backpack/extensions/firstorder/batch_grad/rnn.py
+backpack/custom_module/
 
 test/extensions/problem.py
 test/extensions/test_backprop_extension.py

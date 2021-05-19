@@ -106,9 +106,9 @@ format:
 	@make isort
 	@make black-check
 
-format-check: black-check isort-check pydocstyle-check darglint-check
+format-check: black-check isort-check flake8 pydocstyle-check darglint-check
 
-format-check-partial: black-check isort-check pydocstyle-check-partial darglint-check-partial
+format-check-partial: black-check isort-check flake8 pydocstyle-check-partial darglint-check-partial
 
 ###
 # Installation
