@@ -1,5 +1,6 @@
 from torch.nn import (
     ELU,
+    RNN,
     SELU,
     AvgPool1d,
     AvgPool2d,
@@ -26,6 +27,7 @@ from torch.nn import (
     ZeroPad2d,
 )
 
+from backpack.custom_module.permute import Permute
 from backpack.extensions.backprop_extension import BackpropExtension
 from backpack.extensions.secondorder.hbp import LossHessianStrategy
 
@@ -42,7 +44,9 @@ from . import (
     linear,
     losses,
     padding,
+    permute,
     pooling,
+    rnn,
 )
 
 
@@ -91,6 +95,8 @@ class DiagGGN(BackpropExtension):
                 LogSigmoid: activations.DiagGGNLogSigmoid(),
                 ELU: activations.DiagGGNELU(),
                 SELU: activations.DiagGGNSELU(),
+                RNN: rnn.DiagGGNRNN(),
+                Permute: permute.DiagGGNPermute(),
             },
         )
 

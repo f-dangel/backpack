@@ -1,4 +1,5 @@
-"""Test configurations for `backpack.core.extensions.secondorder`
+"""Test configurations for `backpack.core.extensions.secondorder`.
+
 that is shared among the following secondorder methods:
 - Diagonal of Gauss Newton
 - Diagonal of Hessian
