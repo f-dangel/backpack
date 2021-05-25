@@ -1,3 +1,7 @@
+"""Contains the backpropagation extension for grad_batch: BatchGrad.
+
+It defines the module extension for each module.
+"""
 from torch.nn import (
     RNN,
     BatchNorm1d,
@@ -41,10 +45,13 @@ class BatchGrad(BackpropExtension):
 
     The concept of individual gradients is only meaningful if the
     objective is a sum of independent functions (no batchnorm).
-
     """
 
     def __init__(self):
+        """Initialization.
+
+        Defines extension for each module.
+        """
         super().__init__(
             savefield="grad_batch",
             fail_mode="WARNING",

@@ -1,4 +1,9 @@
+"""Contains backpropagation extension for sum_grad_squared: SumGradSquared.
+
+Defines module extension for each module.
+"""
 from torch.nn import (
+    RNN,
     Conv1d,
     Conv2d,
     Conv3d,
@@ -18,6 +23,7 @@ from . import (
     convtranspose2d,
     convtranspose3d,
     linear,
+    rnn,
 )
 
 
@@ -36,6 +42,10 @@ class SumGradSquared(BackpropExtension):
     """
 
     def __init__(self):
+        """Initialization.
+
+        Defines module extension for each module.
+        """
         super().__init__(
             savefield="sum_grad_squared",
             fail_mode="WARNING",
@@ -47,5 +57,6 @@ class SumGradSquared(BackpropExtension):
                 ConvTranspose1d: convtranspose1d.SGSConvTranspose1d(),
                 ConvTranspose2d: convtranspose2d.SGSConvTranspose2d(),
                 ConvTranspose3d: convtranspose3d.SGSConvTranspose3d(),
+                RNN: rnn.SGSRNN(),
             },
         )

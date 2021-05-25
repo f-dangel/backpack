@@ -19,20 +19,24 @@ Optional entries:
     "id_prefix" (str): Prefix to be included in the test name.
     "seed" (int): seed for the random number for torch.rand
 """
-
-
 from test.core.derivatives.utils import classification_targets, regression_targets
 from test.extensions.automated_settings import make_simple_cnn_setting
 
 import torch
 from torch.nn import (
+    RNN,
     Conv1d,
     Conv2d,
     Conv3d,
     ConvTranspose1d,
     ConvTranspose2d,
     ConvTranspose3d,
+    Flatten,
+    Sequential,
 )
+
+from backpack.custom_module.permute import Permute
+from backpack.custom_module.reduce_tuple import ReduceTuple
 
 FIRSTORDER_SETTINGS = []
 
@@ -158,4 +162,28 @@ FIRSTORDER_SETTINGS += [
 #                         test setting: RNN Layers                            #
 ###############################################################################
 
-FIRSTORDER_SETTINGS += []
+FIRSTORDER_SETTINGS += [
+    {
+        "input_fn": lambda: torch.rand(8, 5, 6),
+        "module_fn": lambda: Sequential(
+            Permute(dims=[1, 0, 2]),
+            RNN(input_size=6, hidden_size=3),
+            ReduceTuple(index=0),
+            Permute(dims=[1, 2, 0]),
+        ),
+        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="mean"),
+        "target_fn": lambda: classification_targets((8, 5), 3),
+    },
+    {
+        "input_fn": lambda: torch.rand(8, 5, 6),
+        "module_fn": lambda: Sequential(
+            Permute(dims=[1, 0, 2]),
+            RNN(input_size=6, hidden_size=3),
+            ReduceTuple(index=0),
+            Permute(dims=[1, 2, 0]),
+            Flatten(),
+        ),
+        "loss_function_fn": lambda: torch.nn.MSELoss(),
+        "target_fn": lambda: regression_targets((8, 3 * 5)),
+    },
+]
