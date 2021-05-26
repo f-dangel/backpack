@@ -2,6 +2,7 @@
 import inspect
 
 import torch
+from packaging import version
 
 from backpack.extensions.backprop_extension import BackpropExtension
 from backpack.utils.hooks import no_op
@@ -159,6 +160,9 @@ def memory_cleanup(module):
 
 
 def hook_run_extensions(module, g_inp, g_out):
+    print("backpack::hook_run_extensions on module", type(module))
+    #print("backpack::hook_run_extensions, g_inp", type(g_inp))
+    #print("backpack::hook_run_extensions, g_out", type(g_out))
     for backpack_extension in CTX.get_active_exts():
         if CTX.get_debug():
             print("[DEBUG] Running extension", backpack_extension, "on", module)
@@ -209,7 +213,10 @@ def extend(module: torch.nn.Module, debug=False):
     module_was_already_extended = getattr(module, "_backpack_extend", False)
     if not module_was_already_extended:
         CTX.add_hook_handle(module.register_forward_hook(hook_store_io))
-        CTX.add_hook_handle(module.register_backward_hook(hook_run_extensions))
+        if version.parse("1.8.0") <= version.parse(torch.__version__):
+            CTX.add_hook_handle(module.register_full_backward_hook(hook_run_extensions))
+        else:
+            CTX.add_hook_handle(module.register_backward_hook(hook_run_extensions))
         module._backpack_extend = True
 
     return module

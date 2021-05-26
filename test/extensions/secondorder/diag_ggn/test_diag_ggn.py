@@ -20,6 +20,7 @@ def test_diag_ggn(problem):
     problem.set_up()
 
     backpack_res = BackpackExtensions(problem).diag_ggn()
+    raise Exception("Everything fine!")
     autograd_res = AutogradExtensions(problem).diag_ggn()
 
     check_sizes_and_values(autograd_res, backpack_res)

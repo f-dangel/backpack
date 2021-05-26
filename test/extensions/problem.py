@@ -88,6 +88,7 @@ class ExtensionsTestProblem:
 
         self.model = self.module_fn().to(self.device)
         self.input = self.input_fn().to(self.device)
+        self.input.requires_grad = True
         self.target = self.target_fn().to(self.device)
         self.loss_function = self.loss_function_fn().to(self.device)
 
@@ -110,14 +111,14 @@ class ExtensionsTestProblem:
     def forward_pass(self, sample_idx=None):
         """Do a forward pass. Return input, output, and parameters."""
         if sample_idx is None:
-            input = self.input.clone().detach()
+            input = self.input.clone()#.detach()
+            #input.requires_grad = True
             target = self.target.clone().detach()
         else:
-            input = self.input.clone()[sample_idx, :].unsqueeze(0).detach()
+            input = self.input.clone()[sample_idx, :].unsqueeze(0)#.detach()
+            #input.requires_grad = True
             target = self.target.clone()[sample_idx].unsqueeze(0).detach()
 
-        print(self.target.shape)
-        print(target.shape)
         output = self.model(input)
         loss = self.loss_function(output, target)
 

@@ -62,8 +62,13 @@ class ModuleExtension:
     def apply(self, ext, module, g_inp, g_out):
         inp = module.input0
         out = module.output
+        print("ModuleExtension::apply, out              ", type(out))
+        print("ModuleExtension::apply, out              ", id(out))
+        #print("ModuleExtension::apply, ext.savefield    ", ext.savefield)
+        #print("ModuleExtension::apply, hasattr          ", hasattr(out, ext.savefield))
 
         bpQuantities = self.__backproped_quantities(ext, out)
+        #print("ModuleExtension::apply, bpQuantities     ", type(bpQuantities))
 
         for param in self.__params:
             if self.__param_exists_and_requires_grad(module, param):
@@ -74,6 +79,11 @@ class ModuleExtension:
         bpQuantities = self.backpropagate(ext, module, g_inp, g_out, bpQuantities)
 
         self.__backprop_quantities(ext, inp, out, bpQuantities)
+
+        print("ModuleExtension::apply, inp              ", type(inp))
+        print("ModuleExtension::apply, inp              ", id(inp))
+        #print("ModuleExtension::apply, ext.savefield    ", ext.savefield)
+        #print("ModuleExtension::apply, hasattr          ", hasattr(inp, ext.savefield))
 
     @staticmethod
     def __backproped_quantities(ext, out):
