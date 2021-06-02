@@ -22,9 +22,18 @@ RNN_SETTINGS = []
 ###############################################################################
 
 example = {
-    "module_fn": lambda: torch.nn.RNN(input_size=5, hidden_size=3, num_layers=1),
+    "module_fn": lambda: torch.nn.RNN(input_size=5, hidden_size=3),
     "input_fn": lambda: torch.rand(size=(10, 8, 5)),
 }
 RNN_SETTINGS.append(example)
 
-# TODO write rest of test similar to linear_settings
+RNN_SETTINGS += [
+    {
+        "module_fn": lambda: torch.nn.RNN(input_size=4, hidden_size=2),
+        "input_fn": lambda: torch.rand(size=(5, 7, 4)),
+    },
+    {
+        "module_fn": lambda: torch.nn.RNN(input_size=4, hidden_size=2),
+        "input_fn": lambda: torch.rand(size=(1, 1, 4)),
+    },
+]
