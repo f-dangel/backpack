@@ -1,65 +1,108 @@
+"""Contains derivative calculation with BackPACK."""
 from test.core.derivatives.implementation.base import DerivativesImplementation
 
 import torch
+from torch import Tensor
 
 
 class BackpackDerivatives(DerivativesImplementation):
     """Derivative implementations with BackPACK."""
 
     def __init__(self, problem):
+        """Initialization.
+
+        Args:
+            problem: test problem
+        """
         problem.extend()
         super().__init__(problem)
 
     def store_forward_io(self):
+        """Do one forward pass.
+
+        This implicitly saves relevant quantities for backward pass.
+        """
         self.problem.forward_pass()
 
-    def jac_mat_prod(self, mat):
+    def jac_mat_prod(self, mat):  # noqa: D102
         self.store_forward_io()
         return self.problem.derivative.jac_mat_prod(
             self.problem.module, None, None, mat
         )
 
-    def jac_t_mat_prod(self, mat):
+    def jac_t_mat_prod(self, mat):  # noqa: D102
         self.store_forward_io()
         return self.problem.derivative.jac_t_mat_prod(
             self.problem.module, None, None, mat
         )
 
-    def weight_jac_t_mat_prod(self, mat, sum_batch):
+    def weight_jac_t_mat_prod(self, mat, sum_batch):  # noqa: D102
         self.store_forward_io()
         return self.problem.derivative.weight_jac_t_mat_prod(
             self.problem.module, None, None, mat, sum_batch=sum_batch
         )
 
-    def bias_jac_t_mat_prod(self, mat, sum_batch):
+    def bias_jac_t_mat_prod(self, mat, sum_batch):  # noqa: D102
         self.store_forward_io()
         return self.problem.derivative.bias_jac_t_mat_prod(
             self.problem.module, None, None, mat, sum_batch=sum_batch
         )
 
-    def weight_jac_mat_prod(self, mat):
+    def weight_jac_mat_prod(self, mat):  # noqa: D102
         self.store_forward_io()
         return self.problem.derivative.weight_jac_mat_prod(
             self.problem.module, None, None, mat
         )
 
-    def bias_jac_mat_prod(self, mat):
+    def bias_jac_mat_prod(self, mat):  # noqa: D102
         self.store_forward_io()
         return self.problem.derivative.bias_jac_mat_prod(
             self.problem.module, None, None, mat
         )
 
-    def ea_jac_t_mat_jac_prod(self, mat):
+    def bias_ih_l0_jac_t_mat_prod(self, mat, sum_batch):  # noqa: D102
+        self.store_forward_io()
+        return self.problem.derivative.bias_ih_l0_jac_t_mat_prod(
+            self.problem.module, None, None, mat, sum_batch=sum_batch
+        )
+
+    def bias_hh_l0_jac_t_mat_prod(self, mat, sum_batch):  # noqa: D102
+        self.store_forward_io()
+        return self.problem.derivative.bias_hh_l0_jac_t_mat_prod(
+            self.problem.module, None, None, mat, sum_batch=sum_batch
+        )
+
+    def weight_ih_l0_jac_t_mat_prod(self, mat, sum_batch):  # noqa: D102
+        self.store_forward_io()
+        return self.problem.derivative.weight_ih_l0_jac_t_mat_prod(
+            self.problem.module, None, None, mat, sum_batch=sum_batch
+        )
+
+    def weight_hh_l0_jac_t_mat_prod(self, mat, sum_batch):  # noqa: D102
+        self.store_forward_io()
+        return self.problem.derivative.weight_hh_l0_jac_t_mat_prod(
+            self.problem.module, None, None, mat, sum_batch=sum_batch
+        )
+
+    def ea_jac_t_mat_jac_prod(self, mat):  # noqa: D102
         self.store_forward_io()
         return self.problem.derivative.ea_jac_t_mat_jac_prod(
             self.problem.module, None, None, mat
         )
 
-    def sum_hessian(self):
+    def sum_hessian(self):  # noqa: D102
         self.store_forward_io()
         return self.problem.derivative.sum_hessian(self.problem.module, None, None)
 
-    def input_hessian_via_sqrt_hessian(self, mc_samples=None):
+    def input_hessian_via_sqrt_hessian(self, mc_samples=None) -> Tensor:
+        """Computes the input hessian.
+
+        Args:
+            mc_samples: number of samples. Defaults to None.
+
+        Returns:
+            hessian
+        """
         # MC_SAMPLES = 100000
         self.store_forward_io()
 
@@ -86,8 +129,18 @@ class BackpackDerivatives(DerivativesImplementation):
         """
         return self.problem.derivative.hessian_is_zero()
 
-    def _sample_hessians_from_sqrt(self, sqrt):
-        """Convert individual matrix square root into individual full matrix."""
+    def _sample_hessians_from_sqrt(self, sqrt: Tensor) -> Tensor:
+        """Convert individual matrix square root into individual full matrix.
+
+        Args:
+            sqrt: individual square root of hessian
+
+        Returns:
+            individual full matrix
+
+        Raises:
+            ValueError: if input is not 2d
+        """
         equation = None
         num_axes = len(sqrt.shape)
 
