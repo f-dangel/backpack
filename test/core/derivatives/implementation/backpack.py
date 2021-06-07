@@ -98,12 +98,13 @@ class BackpackDerivatives(DerivativesImplementation):
         """Computes the input hessian.
 
         Args:
-            mc_samples: number of samples. Defaults to None.
+            mc_samples: If int, uses an MC approximation with the specified
+                number of samples.
+                If None, uses the exact hessian. Defaults to None.
 
         Returns:
             hessian
         """
-        # MC_SAMPLES = 100000
         self.store_forward_io()
 
         if mc_samples is not None:

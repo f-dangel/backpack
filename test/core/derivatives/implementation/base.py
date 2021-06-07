@@ -17,25 +17,27 @@ class DerivativesImplementation(ABC):
 
     @abstractmethod
     def jac_mat_prod(self, mat: Tensor) -> Tensor:
-        """Product of jacobian and matrix.
+        """Vectorized product of input-output-Jacobian and a matrix.
 
         Args:
-            mat: matrix
+            mat: matrix: the vectors along its leading dimension will be multiplied.
 
         Returns:
-            product
+            Tensor representing the result of Jacobian-vector product.
+                product[v] = J @ mat[v]
         """
         raise NotImplementedError
 
     @abstractmethod
     def jac_t_mat_prod(self, mat: Tensor) -> Tensor:
-        """Product of transposed jacobian and matrix.
+        """Vectorized product of transposed jacobian and matrix.
 
         Args:
-            mat: matrix
+            mat: matrix: the vectors along its leading dimension will be multiplied.
 
         Returns:
-            product
+            Tensor representing the result of Jacobian-vector product.
+                product[v] = mat[v] @ J
         """
         raise NotImplementedError
 

@@ -51,8 +51,6 @@ RNN_PROBLEMS = make_test_problems(RNN_SETTINGS)
 RNN_IDS = [problem.make_id() for problem in RNN_PROBLEMS]
 
 
-# selecting only every second rnn problem (only cpu problems)
-# because torch is not able to calculate this function on CUDA
 @pytest.mark.parametrize(
     "problem", NO_LOSS_PROBLEMS + RNN_PROBLEMS, ids=NO_LOSS_IDS + RNN_IDS
 )

@@ -13,7 +13,7 @@ class AutogradDerivatives(DerivativesImplementation):
     """Derivative implementations with autograd."""
 
     def jac_vec_prod(self, vec) -> Tensor:
-        """Jacobian vector product.
+        """Product of input-output-Jacobian and a vector.
 
         Args:
             vec: vector

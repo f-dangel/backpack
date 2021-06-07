@@ -15,19 +15,7 @@ Optional entries:
 
 import torch
 
-RNN_SETTINGS = []
-
-###############################################################################
-#                                   examples                                  #
-###############################################################################
-
-example = {
-    "module_fn": lambda: torch.nn.RNN(input_size=5, hidden_size=3),
-    "input_fn": lambda: torch.rand(size=(10, 8, 5)),
-}
-RNN_SETTINGS.append(example)
-
-RNN_SETTINGS += [
+RNN_SETTINGS = [
     {
         "module_fn": lambda: torch.nn.RNN(input_size=4, hidden_size=2),
         "input_fn": lambda: torch.rand(size=(5, 7, 4)),

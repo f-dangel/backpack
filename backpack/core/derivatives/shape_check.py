@@ -83,11 +83,17 @@ def _mat_prod_accept_vectors(
     vec_criterion(mat, module) returns if mat is a vector.
 
     Args:
-        mat_prod: .
-        vec_criterion: .
+        mat_prod: Function that processes multiple vectors in format of a matrix.
+        vec_criterion: Function that returns true if an input is a single vector
+            that must be formatted into a matrix first before processing.
 
     Returns:
-        .
+        Wrapped ``mat_prod`` function that processes multiple vectors in format of
+            a matrix, and supports vector-shaped inputs which are internally converted
+            to the correct format.
+            Preserves format of input:
+                If the input format is a vector, the output format is a vector.
+                If the input format is a matrix, the output format is a matrix.
     """
 
     @functools.wraps(mat_prod)
@@ -150,12 +156,13 @@ def mat_prod_check_shapes(
     """Check that input and output have correct shapes.
 
     Args:
-        mat_prod: .
-        in_check: .
-        out_check: .
+        mat_prod: Function that applies a derivative operator to multiple vectors
+            handed in as a matrix.
+        in_check: Function that checks the input to mat_prod
+        out_check: Function that checks the output to mat_prod
 
     Returns:
-        .
+        Wrapped mat_prod function with input and output checks
     """
 
     @functools.wraps(mat_prod)
@@ -255,10 +262,12 @@ def make_hessian_mat_prod_accept_vectors(
     """Accept vectors for hessian_mat_prod.
 
     Args:
-        make_hessian_mat_prod: .
+        make_hessian_mat_prod: Function that creates multiplication routine
+            of a matrix with the module Hessian
 
     Returns:
-        .
+        Wrapped hessian_mat_prod which converts vector-format inputs to a matrix
+            before processing. Preserves format of input.
     """
 
     @functools.wraps(make_hessian_mat_prod)
@@ -279,14 +288,17 @@ def make_hessian_mat_prod_accept_vectors(
     return _wrapped_make_hessian_mat_prod
 
 
-def make_hessian_mat_prod_check_shapes(make_hessian_mat_prod: Callable) -> Callable:
-    """Accept shapes for hessian_mat_prod.
+def make_hessian_mat_prod_check_shapes(
+    make_hessian_mat_prod: Callable[..., Callable[..., Tensor]],
+) -> Callable[..., Callable[..., Tensor]]:
+    """Wrap hessian_mat_prod with shape checks for input and output.
 
     Args:
-        make_hessian_mat_prod: .
+        make_hessian_mat_prod: function that creates multiplication routine of
+            a matrix with the module Hessian.
 
     Returns:
-        .
+        wrapped hessian_mat_prod with shape checks for input and output
     """
 
     @functools.wraps(make_hessian_mat_prod)
