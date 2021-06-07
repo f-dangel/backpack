@@ -28,7 +28,14 @@ class AutogradDerivatives(DerivativesImplementation):
         V = mat.shape[0]
 
         vecs = [mat[v] for v in range(V)]
-        jac_vec_prods = [self.jac_vec_prod(vec) for vec in vecs]
+        try:
+            jac_vec_prods = [self.jac_vec_prod(vec) for vec in vecs]
+        except RuntimeError:
+            # A RuntimeError is thrown for RNNs on CUDA,
+            # because PyTorch does not support double-backwards pass for them.
+            # This is the recommended workaround.
+            with torch.backends.cudnn.flags(enabled=False):
+                jac_vec_prods = [self.jac_vec_prod(vec) for vec in vecs]
 
         return torch.stack(jac_vec_prods)
 
