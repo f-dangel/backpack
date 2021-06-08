@@ -1,7 +1,7 @@
 """Base classes for more flexible Jacobians and second-order information."""
 import warnings
 from abc import ABC
-from typing import Tuple
+from typing import Tuple, Callable
 
 from torch import Tensor
 from torch.nn import Module
@@ -620,7 +620,7 @@ class BaseLossDerivatives(BaseDerivatives, ABC):
     @shape_check.make_hessian_mat_prod_check_shapes
     def make_hessian_mat_prod(
         self, module: Module, g_inp: Tuple[Tensor], g_out: Tuple[Tensor]
-    ) -> Tensor:
+    ) -> Callable[[Tensor], Tensor]:
         """Multiplication of the input Hessian with a matrix.
 
         Return a function that maps mat to H * mat.
@@ -631,14 +631,14 @@ class BaseLossDerivatives(BaseDerivatives, ABC):
             g_out: output gradients
 
         Returns:
-            hessian matrix product
+            function that maps mat to H * mat
         """
         self._check_2nd_order_make_sense(module, g_out)
         return self._make_hessian_mat_prod(module, g_inp, g_out)
 
     def _make_hessian_mat_prod(
         self, module: Module, g_inp: Tuple[Tensor], g_out: Tuple[Tensor]
-    ) -> Tensor:
+    ) -> Callable[[Tensor], Tensor]:
         raise NotImplementedError
 
     # TODO Add shape check
