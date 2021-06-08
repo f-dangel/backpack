@@ -51,12 +51,10 @@ RNN_PROBLEMS = make_test_problems(RNN_SETTINGS)
 RNN_IDS = [problem.make_id() for problem in RNN_PROBLEMS]
 
 
-# selecting only every second rnn problem (only cpu problems)
-# because torch is not able to calculate this function on CUDA
 @pytest.mark.parametrize(
     "problem", NO_LOSS_PROBLEMS + RNN_PROBLEMS, ids=NO_LOSS_IDS + RNN_IDS
 )
-def test_jac_mat_prod(problem, request, V=3):
+def test_jac_mat_prod(problem, V=3):
     """Test the Jacobian-matrix product.
 
     Args:
@@ -67,13 +65,7 @@ def test_jac_mat_prod(problem, request, V=3):
     mat = torch.rand(V, *problem.input_shape).to(problem.device)
 
     backpack_res = BackpackDerivatives(problem).jac_mat_prod(mat)
-    if all(string in request.node.callspec.id for string in ["RNN", "cuda"]):
-        # torch does not implement cuda double-backwards pass on RNNs and
-        # recommends this workaround
-        with torch.backends.cudnn.flags(enabled=False):
-            autograd_res = AutogradDerivatives(problem).jac_mat_prod(mat)
-    else:
-        autograd_res = AutogradDerivatives(problem).jac_mat_prod(mat)
+    autograd_res = AutogradDerivatives(problem).jac_mat_prod(mat)
 
     check_sizes_and_values(autograd_res, backpack_res)
     problem.tear_down()
@@ -359,6 +351,13 @@ def test_sqrt_hessian_squared_equals_hessian(problem):
     ids=CONVOLUTION_TRANSPOSED_FAIL_IDS + CONVOLUTION_FAIL_IDS,
 )
 def test_weight_jac_mat_prod_should_fail(problem):
+    """Tests weight_jac_mat_prod.
+
+    Should fail.
+
+    Args:
+        problem: test problem
+    """
     with pytest.raises(NotImplementedError):
         test_weight_jac_mat_prod(problem)
 
@@ -375,12 +374,26 @@ def test_weight_jac_mat_prod_should_fail(problem):
     "problem", CONVOLUTION_TRANSPOSED_FAIL_PROBLEMS, ids=CONVOLUTION_TRANSPOSED_FAIL_IDS
 )
 def test_weight_jac_t_mat_prod_should_fail(problem, sum_batch, save_memory):
+    """Test weight_jac_t_mat_prod.
+
+    Should fail.
+
+    Args:
+        problem: problem
+        sum_batch: whether to sum along batch axis
+        save_memory: whether to save memory
+    """
     with pytest.raises(NotImplementedError):
         test_weight_jac_t_mat_prod(problem, sum_batch, save_memory)
 
 
 @pytest.mark.parametrize("problem", LOSS_FAIL_PROBLEMS, ids=LOSS_FAIL_IDS)
 def test_sqrt_hessian_should_fail(problem):
+    """Test sqrt_hessian. Should fail.
+
+    Args:
+        problem: test problem
+    """
     with pytest.raises(ValueError):
         test_sqrt_hessian_squared_equals_hessian(problem)
 
@@ -391,6 +404,7 @@ def test_sqrt_hessian_sampled_squared_approximates_hessian(problem, mc_samples=1
 
     Args:
         problem (DerivativesProblem): Problem for derivative test.
+        mc_samples: number of samples. Defaults to 100000.
 
     Compares the Hessian to reconstruction from individual Hessian MC-sampled sqrt.
     """
@@ -408,6 +422,11 @@ def test_sqrt_hessian_sampled_squared_approximates_hessian(problem, mc_samples=1
 
 @pytest.mark.parametrize("problem", LOSS_FAIL_PROBLEMS, ids=LOSS_FAIL_IDS)
 def test_sqrt_hessian_sampled_should_fail(problem):
+    """Test sqrt_hessian. Should fail.
+
+    Args:
+        problem: test problem
+    """
     with pytest.raises(ValueError):
         test_sqrt_hessian_sampled_squared_approximates_hessian(problem)
 
@@ -430,13 +449,18 @@ def test_sum_hessian(problem):
 
 @pytest.mark.parametrize("problem", LOSS_FAIL_PROBLEMS, ids=LOSS_FAIL_IDS)
 def test_sum_hessian_should_fail(problem):
+    """Test sum_hessian, should fail.
+
+    Args:
+        problem: test problem
+    """
     with pytest.raises(ValueError):
         test_sum_hessian(problem)
 
 
 @pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
 def test_ea_jac_t_mat_jac_prod(problem):
-    """Test KFRA backpropagation
+    """Test KFRA backpropagation.
 
     H_in →  1/N ∑ₙ Jₙ^T H_out Jₙ
 
@@ -463,7 +487,11 @@ def test_ea_jac_t_mat_jac_prod(problem):
 @pytest.mark.skip("[WAITING] Autograd issue with Hessian-vector products")
 @pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
 def test_hessian_is_zero(problem):
-    """Check if the input-output Hessian is (non-)zero."""
+    """Check if the input-output Hessian is (non-)zero.
+
+    Args:
+        problem: test problem
+    """
     problem.set_up()
 
     backpack_res = BackpackDerivatives(problem).hessian_is_zero()
@@ -476,17 +504,14 @@ def test_hessian_is_zero(problem):
 @pytest.mark.skip
 @pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
 def test_hessian_is_diagonal(problem):
-    problem.set_up()
+    """Test whether hessian is diagonal.
 
-    # TODO
-    raise NotImplementedError
+    Args:
+        problem: test problem
 
-    problem.tear_down()
-
-
-@pytest.mark.skip
-@pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
-def test_hessian_diagonal(problem):
+    Raises:
+        NotImplementedError: .
+    """
     problem.set_up()
 
     # TODO
@@ -498,6 +523,14 @@ def test_hessian_diagonal(problem):
 @pytest.mark.skip
 @pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
 def test_hessian_is_psd(problem):
+    """Test whether hessian is semi positive definite.
+
+    Args:
+        problem: test problem
+
+    Raises:
+        NotImplementedError: .
+    """
     problem.set_up()
 
     # TODO

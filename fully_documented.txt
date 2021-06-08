@@ -1,4 +1,8 @@
+backpack/core/derivatives/basederivatives.py
 backpack/core/derivatives/rnn.py
+backpack/core/derivatives/shape_check.py
+backpack/core/derivatives/__init__.py
+
 backpack/extensions/firstorder/gradient/base.py
 backpack/extensions/firstorder/gradient/rnn.py
 backpack/extensions/firstorder/gradient/__init__.py
@@ -15,13 +19,19 @@ backpack/extensions/firstorder/batch_l2_grad/rnn.py
 backpack/extensions/firstorder/batch_l2_grad/__init__.py
 # backpack/extensions/module_extension.py
 backpack/extensions/backprop_extension.py
+
 backpack/custom_module/
+
+test/core/derivatives/derivatives_test.py
+test/core/derivatives/__init__.py
+test/core/derivatives/rnn_settings.py
+test/core/derivatives/utils.py
+test/core/derivatives/implementation/
 
 test/extensions/problem.py
 test/extensions/test_backprop_extension.py
-test/extensions/firstorder/batch_grad/batchgrad_settings.py
 test/extensions/firstorder/firstorder_settings.py
+test/extensions/firstorder/batch_grad/batchgrad_settings.py
 test/benchmark_rnn/
-# test/core/derivatives/derivatives_test.py
 
 # docs_src/examples/use_cases/example_custom_module
