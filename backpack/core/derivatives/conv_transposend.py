@@ -1,3 +1,4 @@
+"""Partial derivatives for ``torch.nn.ConvTranspose{1,2,3}d``."""
 from einops import rearrange
 from numpy import prod
 from torch import einsum
@@ -17,7 +18,17 @@ from backpack.utils.conv_transpose import unfold_by_conv_transpose
 
 
 class ConvTransposeNDDerivatives(BaseParameterDerivatives):
+    """Base class for partial derivatives of transpose convolution."""
+
     def __init__(self, N):
+        """Store convolution dimension and operations.
+
+        Args:
+            N (int): Convolution dimension. Must be ``1``, ``2``, or ``3``.
+
+        Raises:
+            ValueError: If convolution dimension is unsupported.
+        """
         if N == 1:
             self.module = ConvTranspose1d
             self.conv_func = conv1d
@@ -31,7 +42,7 @@ class ConvTransposeNDDerivatives(BaseParameterDerivatives):
             self.conv_func = conv3d
             self.conv_transpose_func = conv_transpose3d
         else:
-            raise ValueError("{}-dimensional Conv. is not implemented.".format(N))
+            raise ValueError(f"ConvTranspose{N}d not supported.")
         self.conv_dims = N
 
     def hessian_is_zero(self):
@@ -77,23 +88,6 @@ class ConvTransposeNDDerivatives(BaseParameterDerivatives):
         return self.reshape_like_output(jac_mat, module)
 
     def _weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
-        """Apply transposed Jacobian of the output w.r.t.
-        weight of the torch.nn.ConvTransposeNd layer to a matrix.
-
-        Parameters:
-        -----------
-        mat: torch.Tensor
-            Matrix the transposed Jacobian will be applied to.
-            Must have shape [V, N, C_out, H_out, ...].
-        sum_batch: bool
-            Whether to sum over the batch dimension on the fly.
-
-        Returns:
-        --------
-        result: torch.Tensor
-            Jacobian-matrix product.
-            Has shape [V, N, C_w, H_w, ...] if `sum_batch == False`.
-            Has shape [V, C_w, H_w, ...] if `sum_batch == True`."""
         V = mat.shape[0]
         G = module.groups
         C_in = module.input0.shape[1]
