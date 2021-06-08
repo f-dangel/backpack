@@ -48,7 +48,6 @@ def add_missing_defaults(setting):
         "id_prefix": "",
         "seed": 0,
         "device": get_available_devices(),
-        "axis_batch": 0,
     }
 
     for req in required:
@@ -78,7 +77,6 @@ class ExtensionsTestProblem:
         device,
         seed,
         id_prefix,
-        axis_batch,
     ):
         """Collection of information required to test extensions.
 
@@ -90,7 +88,6 @@ class ExtensionsTestProblem:
             device (torch.device): Device to run on.
             seed (int): Random seed.
             id_prefix (str): Extra string added to test id.
-            axis_batch (int): index of batch axis. Defaults to 0.
         """
         self.module_fn = module_fn
         self.input_fn = input_fn
@@ -100,7 +97,6 @@ class ExtensionsTestProblem:
         self.device = device
         self.seed = seed
         self.id_prefix = id_prefix
-        self.axis_batch = axis_batch
 
     def set_up(self):
         """Set up problem from settings."""
@@ -151,17 +147,9 @@ class ExtensionsTestProblem:
             target = self.target.clone().detach()
         else:
             target = self.target.clone()[sample_idx].unsqueeze(0).detach()
-            input = self.input.split(1, dim=self.axis_batch)[sample_idx].detach()
+            input = self.input.split(1, dim=0)[sample_idx].detach()
 
         output = self.model(input)
-        if isinstance(output, tuple):
-            output = output[0]
-
-        if self.axis_batch != 0:
-            # Note: This inserts a new operation into the computation graph.
-            # In second order extensions, breaks backpropagation of additional
-            # information.
-            output = output.transpose(0, self.axis_batch)
 
         loss = self.loss_function(output, target)
 

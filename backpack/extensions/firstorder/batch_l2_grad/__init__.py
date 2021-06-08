@@ -1,4 +1,10 @@
+"""Contains BatchL2Grad.
+
+Defines the backpropagation extension.
+Within it, define the extension for each module.
+"""
 from torch.nn import (
+    RNN,
     Conv1d,
     Conv2d,
     Conv3d,
@@ -18,6 +24,7 @@ from . import (
     convtranspose2d,
     convtranspose3d,
     linear,
+    rnn,
 )
 
 
@@ -37,7 +44,11 @@ class BatchL2Grad(BackpropExtension):
     """
 
     def __init__(self):
-        super().__init__(
+        """Initialization.
+
+        Define the extensions for each module.
+        """
+        super(BatchL2Grad, self).__init__(
             savefield="batch_l2",
             fail_mode="WARNING",
             module_exts={
@@ -48,5 +59,6 @@ class BatchL2Grad(BackpropExtension):
                 ConvTranspose1d: convtranspose1d.BatchL2ConvTranspose1d(),
                 ConvTranspose2d: convtranspose2d.BatchL2ConvTranspose2d(),
                 ConvTranspose3d: convtranspose3d.BatchL2ConvTranspose3d(),
+                RNN: rnn.BatchL2RNN(),
             },
         )

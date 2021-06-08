@@ -1,3 +1,4 @@
+"""Setup backpack."""
 from os import path
 
 from setuptools import find_packages, setup
@@ -43,5 +44,5 @@ setup(
     license=LICENSE,
     packages=PACKAGES,
     zip_safe=False,
-    python_requires=">=3.6",
+    python_requires=">=3.7",
 )

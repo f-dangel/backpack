@@ -16,7 +16,7 @@ class AutogradExtensions(ExtensionsImplementation):
         Returns:
             list[torch.Tensor]: batch_grads
         """
-        N = self.problem.input.shape[self.problem.axis_batch]
+        N = self.problem.input.shape[0]
         batch_grads = [
             torch.zeros(N, *p.size()).to(self.problem.device)
             for p in self.problem.model.parameters()
