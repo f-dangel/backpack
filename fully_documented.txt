@@ -1,3 +1,16 @@
+backpack/core/derivatives/basederivatives.py
+backpack/core/derivatives/rnn.py
+backpack/core/derivatives/shape_check.py
+backpack/core/derivatives/__init__.py
+
+test/core/derivatives/derivatives_test.py
+test/core/derivatives/__init__.py
+test/core/derivatives/rnn_settings.py
+test/core/derivatives/utils.py
+test/core/derivatives/implementation/
+
 test/extensions/problem.py
 test/extensions/test_backprop_extension.py
 test/extensions/firstorder/firstorder_settings.py
+
+# docs_src/examples/use_cases/example_custom_module
