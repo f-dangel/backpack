@@ -1,7 +1,7 @@
 """Base classes for more flexible Jacobians and second-order information."""
 import warnings
 from abc import ABC
-from typing import Tuple, Callable
+from typing import Callable, Tuple
 
 from torch import Tensor
 from torch.nn import Module
