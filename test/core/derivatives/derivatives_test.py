@@ -54,12 +54,11 @@ RNN_IDS = [problem.make_id() for problem in RNN_PROBLEMS]
 @pytest.mark.parametrize(
     "problem", NO_LOSS_PROBLEMS + RNN_PROBLEMS, ids=NO_LOSS_IDS + RNN_IDS
 )
-def test_jac_mat_prod(problem, request, V=3):
+def test_jac_mat_prod(problem, V=3):
     """Test the Jacobian-matrix product.
 
     Args:
         problem (DerivativesProblem): Problem for derivative test.
-        request: pytest request of problem
         V (int): Number of vectorized Jacobian-vector products.
     """
     problem.set_up()
