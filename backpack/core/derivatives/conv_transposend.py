@@ -1,3 +1,4 @@
+"""Partial derivatives for ``torch.nn.ConvTranspose{1,2,3}d``."""
 from einops import rearrange
 from numpy import prod
 from torch import einsum
@@ -17,7 +18,17 @@ from backpack.utils.conv_transpose import unfold_by_conv_transpose
 
 
 class ConvTransposeNDDerivatives(BaseParameterDerivatives):
+    """Base class for partial derivatives of transpose convolution."""
+
     def __init__(self, N):
+        """Store convolution dimension and operations.
+
+        Args:
+            N (int): Convolution dimension. Must be ``1``, ``2``, or ``3``.
+
+        Raises:
+            ValueError: If convolution dimension is unsupported.
+        """
         if N == 1:
             self.module = ConvTranspose1d
             self.conv_func = conv1d
@@ -31,7 +42,7 @@ class ConvTransposeNDDerivatives(BaseParameterDerivatives):
             self.conv_func = conv3d
             self.conv_transpose_func = conv_transpose3d
         else:
-            raise ValueError("{}-dimensional Conv. is not implemented.".format(N))
+            raise ValueError(f"ConvTranspose{N}d not supported.")
         self.conv_dims = N
 
     def hessian_is_zero(self):
@@ -77,9 +88,6 @@ class ConvTransposeNDDerivatives(BaseParameterDerivatives):
         return self.reshape_like_output(jac_mat, module)
 
     def _weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
-        if module.groups != 1:
-            raise NotImplementedError("Groups greater than 1 are not supported yet")
-
         V = mat.shape[0]
         G = module.groups
         C_in = module.input0.shape[1]
@@ -89,13 +97,13 @@ class ConvTransposeNDDerivatives(BaseParameterDerivatives):
         mat_reshape = mat.reshape(V, N, G, C_out // G, *module.output.shape[2:])
 
         u = unfold_by_conv_transpose(module.input0, module).reshape(
-            N, C_in // G, G, *module.weight.shape[2:], *module.output.shape[2:]
+            N, G, C_in // G, *module.weight.shape[2:], *module.output.shape[2:]
         )
 
         dims_kern = "xyz"[: self.conv_dims]
         dims_data = "abc"[: self.conv_dims]
-        result_str = ("vigo" if sum_batch else "vnigo") + dims_kern
-        equation = "nig{0}{1},vngo{1}->{2}".format(dims_kern, dims_data, result_str)
+        result_str = ("vgio" if sum_batch else "vngio") + dims_kern
+        equation = f"ngi{dims_kern}{dims_data},vngo{dims_data}->{result_str}"
 
         final_shape = (
             (V, *module.weight.shape) if sum_batch else (V, N, *module.weight.shape)

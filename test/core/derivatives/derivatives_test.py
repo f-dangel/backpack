@@ -10,7 +10,7 @@
 from test.automated_test import check_sizes_and_values
 from test.core.derivatives.convolution_settings import (
     CONVOLUTION_FAIL_SETTINGS,
-    CONVOLUTION_TRANSPOSED_FAIL_SETTINGS,
+    CONVOLUTION_TRANSPOSED_GROUP_SETTINGS,
 )
 from test.core.derivatives.implementation.autograd import AutogradDerivatives
 from test.core.derivatives.implementation.backpack import BackpackDerivatives
@@ -39,11 +39,11 @@ LOSS_FAIL_IDS = [problem.make_id() for problem in LOSS_FAIL_PROBLEMS]
 CONVOLUTION_FAIL_PROBLEMS = make_test_problems(CONVOLUTION_FAIL_SETTINGS)
 CONVOLUTION_FAIL_IDS = [problem.make_id() for problem in CONVOLUTION_FAIL_PROBLEMS]
 
-CONVOLUTION_TRANSPOSED_FAIL_PROBLEMS = make_test_problems(
-    CONVOLUTION_TRANSPOSED_FAIL_SETTINGS
+CONVOLUTION_TRANSPOSED_GROUP_PROBLEMS = make_test_problems(
+    CONVOLUTION_TRANSPOSED_GROUP_SETTINGS
 )
-CONVOLUTION_TRANSPOSED_FAIL_IDS = [
-    problem.make_id() for problem in CONVOLUTION_TRANSPOSED_FAIL_PROBLEMS
+CONVOLUTION_TRANSPOSED_GROUP_IDS = [
+    problem.make_id() for problem in CONVOLUTION_TRANSPOSED_GROUP_PROBLEMS
 ]
 
 
@@ -101,8 +101,8 @@ for problem, problem_id in zip(PROBLEMS, IDS):
 )
 @pytest.mark.parametrize(
     "problem",
-    PROBLEMS_WITH_WEIGHTS,
-    ids=IDS_WITH_WEIGHTS,
+    PROBLEMS_WITH_WEIGHTS + CONVOLUTION_TRANSPOSED_GROUP_PROBLEMS,
+    ids=IDS_WITH_WEIGHTS + CONVOLUTION_TRANSPOSED_GROUP_IDS,
 )
 def test_weight_jac_t_mat_prod(problem, sum_batch, save_memory, V=3):
     """Test the transposed Jacobian-matrix product w.r.t. to the weights.
@@ -235,28 +235,12 @@ def test_sqrt_hessian_squared_equals_hessian(problem):
 
 @pytest.mark.parametrize(
     "problem",
-    CONVOLUTION_TRANSPOSED_FAIL_PROBLEMS + CONVOLUTION_FAIL_PROBLEMS,
-    ids=CONVOLUTION_TRANSPOSED_FAIL_IDS + CONVOLUTION_FAIL_IDS,
+    CONVOLUTION_TRANSPOSED_GROUP_PROBLEMS + CONVOLUTION_FAIL_PROBLEMS,
+    ids=CONVOLUTION_TRANSPOSED_GROUP_IDS + CONVOLUTION_FAIL_IDS,
 )
 def test_weight_jac_mat_prod_should_fail(problem):
     with pytest.raises(NotImplementedError):
         test_weight_jac_mat_prod(problem)
-
-
-@pytest.mark.parametrize(
-    "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
-)
-@pytest.mark.parametrize(
-    "save_memory",
-    [True, False],
-    ids=["save_memory=True", "save_memory=False"],
-)
-@pytest.mark.parametrize(
-    "problem", CONVOLUTION_TRANSPOSED_FAIL_PROBLEMS, ids=CONVOLUTION_TRANSPOSED_FAIL_IDS
-)
-def test_weight_jac_t_mat_prod_should_fail(problem, sum_batch, save_memory):
-    with pytest.raises(NotImplementedError):
-        test_weight_jac_t_mat_prod(problem, sum_batch, save_memory)
 
 
 @pytest.mark.parametrize("problem", LOSS_FAIL_PROBLEMS, ids=LOSS_FAIL_IDS)

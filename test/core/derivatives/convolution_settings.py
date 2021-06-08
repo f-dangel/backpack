@@ -455,7 +455,7 @@ CONVOLUTION_FAIL_SETTINGS = [
     },
 ]
 
-CONVOLUTION_TRANSPOSED_FAIL_SETTINGS = [
+CONVOLUTION_TRANSPOSED_GROUP_SETTINGS = [
     {
         "module_fn": lambda: torch.nn.ConvTranspose1d(
             in_channels=6,
