@@ -278,6 +278,75 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
     For most layers, these shapes correspond to shapes of the module input or output.
     """
 
+    def param_mjp(
+        self,
+        param_str: str,
+        module: Module,
+        g_inp: Tuple[Tensor],
+        g_out: Tuple[Tensor],
+        mat: Tensor,
+        sum_batch: bool = True,
+    ) -> Tensor:
+        """Compute matrix-Jacobian products (MJPs) of the module w.r.t. a parameter.
+
+        Handles both vector and matrix inputs. Preserves input format in output.
+
+        Internally calls out to ``_{param_str}_jac_t_mat_prod`` function that must be
+        implemented by descendants. It follows the same signature, but does not have
+        the ``param_str`` argument.
+
+        Args:
+            param_str: Attribute name under which the parameter is stored in the module.
+            module: Module whose Jacobian will be applied. Must provide access to IO.
+            g_inp: Gradients w.r.t. module input.
+            g_out: Gradients w.r.t. module output.
+            mat: Matrix the Jacobian will be applied to. Has shape
+                ``[V, *module.output.shape]`` (matrix case) or same shape as
+                ``module.output`` (vector case).
+            sum_batch: Sum out the MJP's batch axis. Default: ``True``.
+
+        Returns:
+            Matrix-Jacobian products. Has shape ``[V, *param_shape]`` when batch
+            summation is enabled (same shape as parameter in the vector case). Without
+            batch summation, the result has shape ``[V, N, *param_shape]`` (vector case
+            has shape ``[N, *param_shape]``).
+        """
+        # handle vector inputs (TODO extract to _param_mjp_handle_vector_input)
+        is_vec = mat.dim() == module.output.dim()
+        if is_vec:
+            mat = mat.unsqueeze(0)
+
+        # check input shape (TODO extract to _param_mjp_check_input)
+        assert mat.dim() == module.output.dim() + 1
+        assert mat.shape[1:] == module.output.shape
+
+        # apply MJP
+        mjp = getattr(self, f"_{param_str}_jac_t_mat_prod")
+        mjp_out = mjp(module, g_inp, g_out, mat, sum_batch=sum_batch)
+
+        # check output shape (TODO extract to _param_mjp_check_output)
+        assert mjp_out.shape[0] == mat.shape[0]  # same V
+
+        param = getattr(module, param_str)
+        more_dims = 1 if sum_batch else 2
+        assert mjp_out.dim() == param.dim() + more_dims  # dimensions
+
+        if not sum_batch:
+            batch_axis = 0
+            print(mjp_out.shape[batch_axis + 1])
+            print(module.output.shape[batch_axis])
+            assert (
+                mjp_out.shape[batch_axis + 1] == module.output.shape[batch_axis]
+            )  # batch size
+
+        assert mjp_out.shape[more_dims:] == param.shape  # parameter shape
+
+        # preserve vector format (TODO extract to _param_mjp_accept_vectors)
+        if is_vec:
+            mjp_out = mjp_out.squeeze(0)
+
+        return mjp_out
+
     @shape_check.bias_jac_mat_prod_accept_vectors
     @shape_check.bias_jac_mat_prod_check_shapes
     def bias_jac_mat_prod(
@@ -327,7 +396,7 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
             Has shape [V, N, C_b, ...] if `sum_batch == False`.
             Has shape [V, C_b, ...] if `sum_batch == True`.
         """
-        return self._bias_jac_t_mat_prod(module, g_inp, g_out, mat, sum_batch=sum_batch)
+        return self.param_mjp("bias", module, g_inp, g_out, mat, sum_batch=sum_batch)
 
     def _bias_jac_t_mat_prod(
         self,
