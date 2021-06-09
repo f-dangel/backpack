@@ -31,20 +31,20 @@ class RNNDerivatives(BaseParameterDerivatives):
             module: module which to check
 
         Raises:
-            ValueError: If any parameter of module does not match expectation
+            NotImplementedError: If any parameter of module does not match expectation
         """
         if module.num_layers > 1:
-            raise ValueError("only num_layers = 1 is supported")
+            raise NotImplementedError("only num_layers = 1 is supported")
         if not module.nonlinearity == "tanh":
-            raise ValueError("only nonlinearity = tanh is supported")
+            raise NotImplementedError("only nonlinearity = tanh is supported")
         if module.bias is not True:
-            raise ValueError("only bias = True is supported")
+            raise NotImplementedError("only bias = True is supported")
         if module.batch_first is not False:
-            raise ValueError("only batch_first = False is supported")
+            raise NotImplementedError("only batch_first = False is supported")
         if not module.dropout == 0:
-            raise ValueError("only dropout = 0 is supported")
+            raise NotImplementedError("only dropout = 0 is supported")
         if module.bidirectional is not False:
-            raise ValueError("only bidirectional = False is supported")
+            raise NotImplementedError("only bidirectional = False is supported")
 
     @staticmethod
     def _a_jac_t_mat_prod(
