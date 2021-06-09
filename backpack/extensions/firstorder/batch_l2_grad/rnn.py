@@ -22,9 +22,7 @@ class BatchL2RNN(FirstOrderModuleExtension):
         for param_str in params:
             if not hasattr(self, param_str):
                 setattr(self, param_str, self._make_param_function(param_str))
-        super(BatchL2RNN, self).__init__(
-            params=params,
-        )
+        super(BatchL2RNN, self).__init__(params=params)
         self.derivatives: RNNDerivatives = RNNDerivatives()
 
     def _make_param_function(

@@ -8,7 +8,7 @@ from torch.nn import Module
 class Permute(Module):
     """Module to permute a tensor."""
 
-    def __init__(self, dims: Any):
+    def __init__(self, *dims: Any):
         """Initialization.
 
         Args:
