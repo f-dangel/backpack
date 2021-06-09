@@ -23,6 +23,9 @@ backpack/extensions/firstorder/sum_grad_squared/__init__.py
 backpack/extensions/firstorder/batch_l2_grad/rnn.py
 backpack/extensions/firstorder/batch_l2_grad/__init__.py
 
+backpack/extensions/mat_to_mat_jac_base.py
+backpack/extensions/secondorder/diag_ggn/__init__.py
+backpack/extensions/secondorder/diag_ggn/diag_ggn_base.py
 backpack/extensions/secondorder/diag_ggn/rnn.py
 backpack/extensions/secondorder/diag_ggn/permute.py
 

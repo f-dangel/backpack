@@ -1,3 +1,13 @@
+"""Module contains definitions of DiagGGN extensions.
+
+Contains:
+DiagGGN(BackpropExtension)
+DiagGGNExact(DiagGGN)
+DiagGGNMC(DiagGGN)
+BatchDiagGGN(BackpropExtension)
+BatchDiagGGNExact(BatchDiagGGN)
+BatchDiagGGNMC(BatchDiagGGN)
+"""
 from torch.nn import (
     ELU,
     RNN,
@@ -58,7 +68,16 @@ class DiagGGN(BackpropExtension):
         LossHessianStrategy.SAMPLING,
     ]
 
-    def __init__(self, loss_hessian_strategy, savefield):
+    def __init__(self, loss_hessian_strategy: str, savefield: str):
+        """Initialization.
+
+        Args:
+            loss_hessian_strategy: either LossHessianStrategy.EXACT or .SAMPLING
+            savefield: the field where to save the calculated property
+
+        Raises:
+            ValueError: if chosen loss strategy is not valid.
+        """
         if loss_hessian_strategy not in self.VALID_LOSS_HESSIAN_STRATEGIES:
             raise ValueError(
                 "Unknown hessian strategy: {}".format(loss_hessian_strategy)
@@ -102,8 +121,8 @@ class DiagGGN(BackpropExtension):
 
 
 class DiagGGNExact(DiagGGN):
-    """
-    Diagonal of the Generalized Gauss-Newton/Fisher.
+    """Diagonal of the Generalized Gauss-Newton/Fisher.
+
     Uses the exact Hessian of the loss w.r.t. the model output.
 
     Stores the output in :code:`diag_ggn_exact`,
@@ -111,16 +130,16 @@ class DiagGGNExact(DiagGGN):
 
     For a faster but less precise alternative,
     see :py:meth:`backpack.extensions.DiagGGNMC`.
-
     """
 
     def __init__(self):
+        """Initialization. Chooses exact loss strategy and savefield diag_ggn_exact."""
         super().__init__(LossHessianStrategy.EXACT, "diag_ggn_exact")
 
 
 class DiagGGNMC(DiagGGN):
-    """
-    Diagonal of the Generalized Gauss-Newton/Fisher.
+    """Diagonal of the Generalized Gauss-Newton/Fisher.
+
     Uses a Monte-Carlo approximation of
     the Hessian of the loss w.r.t. the model output.
 
@@ -129,17 +148,23 @@ class DiagGGNMC(DiagGGN):
 
     For a more precise but slower alternative,
     see :py:meth:`backpack.extensions.DiagGGNExact`.
-
-    Args:
-        mc_samples (int, optional): Number of Monte-Carlo samples. Default: ``1``.
-
     """
 
-    def __init__(self, mc_samples=1):
+    def __init__(self, mc_samples: int = 1):
+        """Initialization. Chooses sampling loss strategy and savefield diag_ggn_mc.
+
+        Args:
+            mc_samples: Number of Monte-Carlo samples. Default: ``1``.
+        """
         self._mc_samples = mc_samples
         super().__init__(LossHessianStrategy.SAMPLING, "diag_ggn_mc")
 
-    def get_num_mc_samples(self):
+    def get_num_mc_samples(self) -> int:
+        """Returns number of Monte-Carlo samples.
+
+        Returns:
+            number of Monte-Carlo samples
+        """
         return self._mc_samples
 
 
@@ -151,7 +176,16 @@ class BatchDiagGGN(BackpropExtension):
         LossHessianStrategy.SAMPLING,
     ]
 
-    def __init__(self, loss_hessian_strategy, savefield):
+    def __init__(self, loss_hessian_strategy: str, savefield: str):
+        """Initialization.
+
+        Args:
+            loss_hessian_strategy: either LossHessianStrategy.EXACT or .SAMPLING
+            savefield: name of variable where to save calculated quantity
+
+        Raises:
+            ValueError: if chosen loss strategy is not valid.
+        """
         if loss_hessian_strategy not in self.VALID_LOSS_HESSIAN_STRATEGIES:
             raise ValueError(
                 "Unknown hessian strategy: {}".format(loss_hessian_strategy)
@@ -194,8 +228,8 @@ class BatchDiagGGN(BackpropExtension):
 
 
 class BatchDiagGGNExact(BatchDiagGGN):
-    """
-    Individual diagonal of the Generalized Gauss-Newton/Fisher.
+    """Individual diagonal of the Generalized Gauss-Newton/Fisher.
+
     Uses the exact Hessian of the loss w.r.t. the model output.
 
     Stores the output in ``diag_ggn_exact_batch`` as a ``[N x ...]`` tensor,
@@ -203,6 +237,10 @@ class BatchDiagGGNExact(BatchDiagGGN):
     """
 
     def __init__(self):
+        """Initialization.
+
+        Chooses exact loss strategy and savefield diag_ggn_exact_batch.
+        """
         super().__init__(
             loss_hessian_strategy=LossHessianStrategy.EXACT,
             savefield="diag_ggn_exact_batch",
@@ -210,8 +248,8 @@ class BatchDiagGGNExact(BatchDiagGGN):
 
 
 class BatchDiagGGNMC(BatchDiagGGN):
-    """
-    Individual diagonal of the Generalized Gauss-Newton/Fisher.
+    """Individual diagonal of the Generalized Gauss-Newton/Fisher.
+
     Uses a Monte-Carlo approximation of
     the Hessian of the loss w.r.t. the model output.
 
@@ -220,18 +258,26 @@ class BatchDiagGGNMC(BatchDiagGGN):
 
     For a more precise but slower alternative,
     see :py:meth:`backpack.extensions.BatchDiagGGNExact`.
-
-    Args:
-        mc_samples (int, optional): Number of Monte-Carlo samples. Default: ``1``.
-
     """
 
-    def __init__(self, mc_samples=1):
+    def __init__(self, mc_samples: int = 1):
+        """Initialization.
+
+        Chooses sampling loss strategy and savefield diag_ggn_mc_batch.
+
+        Args:
+            mc_samples: Number of Monte-Carlo samples. Default: ``1``.
+        """
         self._mc_samples = mc_samples
         super().__init__(
             loss_hessian_strategy=LossHessianStrategy.SAMPLING,
             savefield="diag_ggn_mc_batch",
         )
 
-    def get_num_mc_samples(self):
+    def get_num_mc_samples(self) -> int:
+        """Returns number of Monte-Carlo samples.
+
+        Returns:
+            number of Monte-Carlo samples
+        """
         return self._mc_samples
