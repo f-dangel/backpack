@@ -1,11 +1,11 @@
 repos:
 - repo: https://github.com/psf/black
-  rev: 21.4b0
+  rev: stable
   hooks:
   - id: black
     args: [--config=black.toml]
 - repo: https://gitlab.com/pycqa/flake8
-  rev: '3.9.1'
+  rev: '3.7.9'
   hooks:
   - id: flake8
     additional_dependencies: [
@@ -17,13 +17,13 @@ repos:
       flake8-comprehensions,
     ]
 - repo: https://github.com/pycqa/pydocstyle
-  rev: 6.0.0
+  rev: 5.0.2
   hooks:
   - id: pydocstyle
     args:
     - --count
 - repo: https://github.com/terrencepreilly/darglint
-  rev: v1.8.0
+  rev: master
   hooks:
   - id: darglint
     args:

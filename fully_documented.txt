@@ -33,5 +33,3 @@ test/extensions/problem.py
 test/extensions/test_backprop_extension.py
 test/extensions/firstorder/firstorder_settings.py
 test/extensions/firstorder/batch_grad/batchgrad_settings.py
-
-test/benchmark_rnn/
