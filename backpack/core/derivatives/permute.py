@@ -1,5 +1,5 @@
 """Module containing derivatives of Permute."""
-from copy import deepcopy
+from typing import Tuple
 
 from torch import Tensor, argsort
 
@@ -10,12 +10,14 @@ from backpack.custom_module.permute import Permute
 class PermuteDerivatives(BaseDerivatives):
     """Derivatives of Permute."""
 
-    def _jac_t_mat_prod(self, module: Permute, g_inp, g_out, mat):
-        return deepcopy(
-            mat.permute([0] + [element + 1 for element in argsort(Tensor(module.dims))])
+    def _jac_t_mat_prod(
+        self, module: Permute, g_inp: Tuple[Tensor], g_out: Tuple[Tensor], mat: Tensor
+    ) -> Tensor:
+        return mat.permute(
+            [0] + [element + 1 for element in argsort(Tensor(module.dims))]
         )
 
-    def _jac_mat_prod(self, module: Permute, g_inp, g_out, mat):
-        return deepcopy(
-            mat.permute([0] + [element + 1 for element in module.dims]).detach()
-        )
+    def _jac_mat_prod(
+        self, module: Permute, g_inp: Tuple[Tensor], g_out: Tuple[Tensor], mat: Tensor
+    ) -> Tensor:
+        return mat.permute([0] + [element + 1 for element in module.dims])
