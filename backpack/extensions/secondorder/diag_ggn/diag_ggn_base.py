@@ -19,24 +19,30 @@ class DiagGGNBaseModule(MatToJacMat):
         self,
         derivatives: Union[BaseDerivatives, BaseParameterDerivatives],
         params: List[str] = None,
+        sum_batch: bool = None,
     ):
         """Initialization.
 
+        If params and sum_batch is provided:
         Creates a method named after parameter for each parameter. Checks if that
         method is implemented, so a child class can implement a more efficient version.
 
         Args:
             derivatives: class containing derivatives
-            params: list of parameter names
+            params: list of parameter names. Defaults to None.
+            sum_batch: Specifies whether the created method sums along batch axis.
+                For BatchDiagGGNModule should be False.
+                For DiagGGNModule should be True.
+                Defaults to None.
         """
-        if params is not None:
+        if params is not None and sum_batch is not None:
             for param in params:
                 if not hasattr(self, param):
-                    setattr(self, param, self._make_param_method(param))
+                    setattr(self, param, self._make_param_method(param, sum_batch))
         super().__init__(derivatives, params=params)
 
     def _make_param_method(
-        self, param: str
+        self, param: str, sum_batch: bool
     ) -> Callable[
         [ModuleExtension, Module, Tuple[Tensor], Tuple[Tensor], Tensor], Tensor
     ]:
@@ -62,6 +68,10 @@ class DiagGGNBaseModule(MatToJacMat):
             JS: Tensor = getattr(self.derivatives, f"{param}_jac_t_mat_prod")(
                 module, grad_inp, grad_out, backproped, sum_batch=False
             )
-            return (JS ** 2).sum(axis=0).sum(axis=0)
+            return (
+                (JS ** 2).sum(axis=0).sum(axis=0)
+                if sum_batch
+                else (JS ** 2).sum(axis=0)
+            )
 
         return _param

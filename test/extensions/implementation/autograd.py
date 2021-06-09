@@ -95,10 +95,26 @@ class AutogradExtensions(ExtensionsImplementation):
         return diag_ggns
 
     def diag_ggn(self):
-        _, output, loss = self.problem.forward_pass()
-        return self._get_diag_ggn(loss, output)
+        try:
+            _, output, loss = self.problem.forward_pass()
+            return self._get_diag_ggn(loss, output)
+        except RuntimeError:
+            # torch does not implement cuda double-backwards pass on RNNs and
+            # recommends this workaround
+            with torch.backends.cudnn.flags(enabled=False):
+                _, output, loss = self.problem.forward_pass()
+                return self._get_diag_ggn(loss, output)
 
     def diag_ggn_batch(self):
+        try:
+            return self._diag_ggn_batch()
+        except RuntimeError:
+            # torch does not implement cuda double-backwards pass on RNNs and
+            # recommends this workaround
+            with torch.backends.cudnn.flags(enabled=False):
+                return self._diag_ggn_batch()
+
+    def _diag_ggn_batch(self):
         batch_size = self.problem.input.shape[0]
         _, _, batch_loss = self.problem.forward_pass()
         loss_list = torch.zeros(batch_size, device=self.problem.device)

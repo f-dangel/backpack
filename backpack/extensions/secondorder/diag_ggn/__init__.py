@@ -187,6 +187,8 @@ class BatchDiagGGN(BackpropExtension):
                 LogSigmoid: activations.DiagGGNLogSigmoid(),
                 ELU: activations.DiagGGNELU(),
                 SELU: activations.DiagGGNSELU(),
+                RNN: rnn.BatchDiagGGNRNN(),
+                Permute: permute.DiagGGNPermute(),
             },
         )
 
