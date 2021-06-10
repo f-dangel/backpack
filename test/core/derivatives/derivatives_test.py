@@ -15,6 +15,7 @@ from test.core.derivatives.convolution_settings import (
 from test.core.derivatives.implementation.autograd import AutogradDerivatives
 from test.core.derivatives.implementation.backpack import BackpackDerivatives
 from test.core.derivatives.loss_settings import LOSS_FAIL_SETTINGS
+from test.core.derivatives.permute_settings import PERMUTE_SETTINGS
 from test.core.derivatives.problem import make_test_problems
 from test.core.derivatives.rnn_settings import RNN_SETTINGS as RNN_SETTINGS
 from test.core.derivatives.settings import SETTINGS
@@ -50,9 +51,14 @@ CONVOLUTION_TRANSPOSED_FAIL_IDS = [
 RNN_PROBLEMS = make_test_problems(RNN_SETTINGS)
 RNN_IDS = [problem.make_id() for problem in RNN_PROBLEMS]
 
+PERMUTE_PROBLEMS = make_test_problems(PERMUTE_SETTINGS)
+PERMUTE_IDS = [problem.make_id() for problem in PERMUTE_PROBLEMS]
+
 
 @pytest.mark.parametrize(
-    "problem", NO_LOSS_PROBLEMS + RNN_PROBLEMS, ids=NO_LOSS_IDS + RNN_IDS
+    "problem",
+    NO_LOSS_PROBLEMS + RNN_PROBLEMS + PERMUTE_PROBLEMS,
+    ids=NO_LOSS_IDS + RNN_IDS + PERMUTE_IDS,
 )
 def test_jac_mat_prod(problem, V=3):
     """Test the Jacobian-matrix product.
@@ -72,7 +78,9 @@ def test_jac_mat_prod(problem, V=3):
 
 
 @pytest.mark.parametrize(
-    "problem", NO_LOSS_PROBLEMS + RNN_PROBLEMS, ids=NO_LOSS_IDS + RNN_IDS
+    "problem",
+    NO_LOSS_PROBLEMS + RNN_PROBLEMS + PERMUTE_PROBLEMS,
+    ids=NO_LOSS_IDS + RNN_IDS + PERMUTE_IDS,
 )
 def test_jac_t_mat_prod(problem, V=3):
     """Test the transposed Jacobian-matrix product.
