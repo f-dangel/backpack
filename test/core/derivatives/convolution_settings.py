@@ -378,7 +378,7 @@ CONVOLUTION_SETTINGS += [
     },
 ]
 
-CONVOLUTION_GROUP_SETTINGS = [
+_CONVOLUTION_GROUP_SETTINGS = [
     # groups - 2
     {
         "module_fn": lambda: torch.nn.Conv1d(
@@ -454,8 +454,9 @@ CONVOLUTION_GROUP_SETTINGS = [
         "id_prefix": "groups-3",
     },
 ]
+CONVOLUTION_SETTINGS += _CONVOLUTION_GROUP_SETTINGS
 
-CONVOLUTION_TRANSPOSED_GROUP_SETTINGS = [
+_CONVOLUTION_TRANSPOSED_GROUP_SETTINGS = [
     {
         "module_fn": lambda: torch.nn.ConvTranspose1d(
             in_channels=6,
@@ -529,3 +530,4 @@ CONVOLUTION_TRANSPOSED_GROUP_SETTINGS = [
         "id_prefix": "groups-2",
     },
 ]
+CONVOLUTION_SETTINGS += _CONVOLUTION_TRANSPOSED_GROUP_SETTINGS

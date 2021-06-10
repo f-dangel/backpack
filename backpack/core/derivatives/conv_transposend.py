@@ -66,23 +66,20 @@ class ConvTransposeNDDerivatives(BaseParameterDerivatives):
         return jac_mat.expand(*expand_shape)
 
     def _weight_jac_mat_prod(self, module, g_inp, g_out, mat):
-        if module.groups != 1:
-            raise NotImplementedError("Groups greater than 1 are not supported yet")
-
         V = mat.shape[0]
         G = module.groups
         C_in = module.input0.shape[1]
         N = module.output.shape[0]
         C_out = module.output.shape[1]
 
-        mat_reshape = mat.reshape(V, C_in, G, C_out // G, *module.weight.shape[2:])
+        mat_reshape = mat.reshape(V, G, C_in // G, C_out // G, *module.weight.shape[2:])
         u = unfold_by_conv_transpose(module.input0, module).reshape(
-            N, C_in // G, G, *module.weight.shape[2:], *module.output.shape[2:]
+            N, G, C_in // G, *module.weight.shape[2:], *module.output.shape[2:]
         )
 
         dims_kern = "xyz"[: self.conv_dims]
         dims_data = "abc"[: self.conv_dims]
-        einstr = "nig{0}{1},vigo{0}->vngo{1}".format(dims_kern, dims_data)
+        einstr = "ngi{0}{1},vgio{0}->vngo{1}".format(dims_kern, dims_data)
         jac_mat = einsum(einstr, u, mat_reshape)
 
         return self.reshape_like_output(jac_mat, module)
