@@ -12,12 +12,11 @@ IDS = [problem.make_id() for problem in PROBLEMS]
 
 
 @pytest.mark.parametrize("problem", PROBLEMS, ids=IDS)
-def test_diag_ggn(problem, request):
-    """Test the diagonal of Gauss-Newton.
+def test_diag_ggn(problem):
+    """Test the diagonal of generalized Gauss-Newton.
 
     Args:
         problem (ExtensionsTestProblem): Problem for extension test.
-        request: contains information about test
     """
     problem.set_up()
 
@@ -35,7 +34,7 @@ MC_RTOL = 1e-2
 
 @pytest.mark.parametrize("problem", PROBLEMS, ids=IDS)
 def test_diag_ggn_mc_light(problem):
-    """Test the MC approximation of Diagonal of Gauss-Newton.
+    """Test the MC approximation of Diagonal of generalized Gauss-Newton.
 
     with few mc_samples (light version)
 
@@ -57,7 +56,7 @@ def test_diag_ggn_mc_light(problem):
 @pytest.mark.montecarlo
 @pytest.mark.parametrize("problem", PROBLEMS, ids=IDS)
 def test_diag_ggn_mc(problem):
-    """Test the MC approximation of Diagonal of Gauss-Newton.
+    """Test the MC approximation of Diagonal of generalized Gauss-Newton.
 
     with more samples (slow version)
 

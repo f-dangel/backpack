@@ -58,7 +58,7 @@ def test_diag_ggn_mc_batch_light(problem):
 def test_diag_ggn_mc_batch(problem):
     """Test the MC approximation of individual diagonal.
 
-    of Gauss-Newton with more samples (slow version)
+    of generalized Gauss-Newton with more samples (slow version)
 
     Args:
         problem (ExtensionsTestProblem): Problem for extension test.
