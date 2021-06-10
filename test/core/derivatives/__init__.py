@@ -46,12 +46,14 @@ from backpack.core.derivatives.maxpool1d import MaxPool1DDerivatives
 from backpack.core.derivatives.maxpool2d import MaxPool2DDerivatives
 from backpack.core.derivatives.maxpool3d import MaxPool3DDerivatives
 from backpack.core.derivatives.mseloss import MSELossDerivatives
+from backpack.core.derivatives.permute import PermuteDerivatives
 from backpack.core.derivatives.relu import ReLUDerivatives
 from backpack.core.derivatives.rnn import RNNDerivatives
 from backpack.core.derivatives.selu import SELUDerivatives
 from backpack.core.derivatives.sigmoid import SigmoidDerivatives
 from backpack.core.derivatives.tanh import TanhDerivatives
 from backpack.core.derivatives.zeropad2d import ZeroPad2dDerivatives
+from backpack.custom_module.permute import Permute
 
 derivatives_for = {
     Linear: LinearDerivatives,
@@ -79,4 +81,5 @@ derivatives_for = {
     CrossEntropyLoss: CrossEntropyLossDerivatives,
     MSELoss: MSELossDerivatives,
     RNN: RNNDerivatives,
+    Permute: PermuteDerivatives,
 }

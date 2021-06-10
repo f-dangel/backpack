@@ -36,6 +36,7 @@ test/core/derivatives/__init__.py
 test/core/derivatives/rnn_settings.py
 test/core/derivatives/utils.py
 test/core/derivatives/implementation/
+test/core/derivatives/permute_settings.py
 
 test/extensions/problem.py
 test/extensions/test_backprop_extension.py
