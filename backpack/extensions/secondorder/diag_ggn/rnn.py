@@ -1,10 +1,10 @@
-"""Module implementing GGN."""
+"""Module implementing GGN for RNN."""
 from backpack.core.derivatives.rnn import RNNDerivatives
 from backpack.extensions.secondorder.diag_ggn.diag_ggn_base import DiagGGNBaseModule
 
 
 class DiagGGNRNN(DiagGGNBaseModule):
-    """Calculating GGN derivative."""
+    """Calculating diagonal of GGN."""
 
     def __init__(self):
         """Initialize."""
@@ -16,7 +16,7 @@ class DiagGGNRNN(DiagGGNBaseModule):
 
 
 class BatchDiagGGNRNN(DiagGGNBaseModule):
-    """Calculating GGN derivative."""
+    """Calculating per-sample diagonal of GGN."""
 
     def __init__(self):
         """Initialize."""
