@@ -51,16 +51,19 @@ def extract_weight_diagonal(module, input, grad_output, N, sum_batch=True):
     input must be the unfolded input to the convolution (see unfold_func)
     and grad_output the backpropagated gradient
     """
-    V_axis, N_axis = 0, 1
-    grad_output_viewed = separate_channels_and_pixels(module, grad_output)
-    AX = einsum("nkl,vnml->vnkm", (input, grad_output_viewed))
-    N = AX.shape[N_axis]
-    sum_dims = [V_axis, N_axis] if sum_batch else [V_axis]
-    transpose_dims = (V_axis, N_axis) if sum_batch else (V_axis + 1, N_axis + 1)
-    weight_diagonal = (AX ** 2).sum(sum_dims).transpose(*transpose_dims)
+    grad_output = rearrange(
+        grad_output, "v n (g c) ... -> v n g c ...", g=module.groups
+    )
+    input = rearrange(input, "n (g c) k -> n g c k", g=module.groups)
+    AX = einsum("ngkl,vngml->vngmk", (input, grad_output))
+
+    sum_dims = [0, 1] if sum_batch else [0]
+    weight_diagonal = (AX ** 2).sum(sum_dims)
+
     if sum_batch:
-        return weight_diagonal.view_as(module.weight)
+        return weight_diagonal.reshape(module.weight.shape)
     else:
+        N = AX.shape[1]
         return weight_diagonal.reshape(N, *module.weight.shape)
 
 
