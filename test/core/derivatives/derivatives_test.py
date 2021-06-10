@@ -8,10 +8,6 @@
 """
 
 from test.automated_test import check_sizes_and_values
-from test.core.derivatives.convolution_settings import (
-    CONVOLUTION_GROUP_SETTINGS,
-    CONVOLUTION_TRANSPOSED_GROUP_SETTINGS,
-)
 from test.core.derivatives.implementation.autograd import AutogradDerivatives
 from test.core.derivatives.implementation.backpack import BackpackDerivatives
 from test.core.derivatives.loss_settings import LOSS_FAIL_SETTINGS
@@ -35,16 +31,6 @@ LOSS_IDS = [problem.make_id() for problem in LOSS_PROBLEMS]
 # second-order does not make sense
 LOSS_FAIL_PROBLEMS = make_test_problems(LOSS_FAIL_SETTINGS)
 LOSS_FAIL_IDS = [problem.make_id() for problem in LOSS_FAIL_PROBLEMS]
-
-CONVOLUTION_GROUP_PROBLEMS = make_test_problems(CONVOLUTION_GROUP_SETTINGS)
-CONVOLUTION_GROUP_IDS = [problem.make_id() for problem in CONVOLUTION_GROUP_PROBLEMS]
-
-CONVOLUTION_TRANSPOSED_GROUP_PROBLEMS = make_test_problems(
-    CONVOLUTION_TRANSPOSED_GROUP_SETTINGS
-)
-CONVOLUTION_TRANSPOSED_GROUP_IDS = [
-    problem.make_id() for problem in CONVOLUTION_TRANSPOSED_GROUP_PROBLEMS
-]
 
 
 @pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
@@ -99,11 +85,7 @@ for problem, problem_id in zip(PROBLEMS, IDS):
     [True, False],
     ids=["save_memory=True", "save_memory=False"],
 )
-@pytest.mark.parametrize(
-    "problem",
-    PROBLEMS_WITH_WEIGHTS + CONVOLUTION_TRANSPOSED_GROUP_PROBLEMS,
-    ids=IDS_WITH_WEIGHTS + CONVOLUTION_TRANSPOSED_GROUP_IDS,
-)
+@pytest.mark.parametrize("problem", PROBLEMS_WITH_WEIGHTS, ids=IDS_WITH_WEIGHTS)
 def test_weight_jac_t_mat_prod(problem, sum_batch, save_memory, V=3):
     """Test the transposed Jacobian-matrix product w.r.t. to the weights.
 
@@ -126,23 +108,7 @@ def test_weight_jac_t_mat_prod(problem, sum_batch, save_memory, V=3):
     problem.tear_down()
 
 
-PROBLEMS_WITH_WEIGHTS_NO_GROUPS = []
-IDS_WITH_WEIGHTS_NO_GROUPS = []
-for problem, problem_id in zip(PROBLEMS, IDS):
-    if problem.has_weight() and not problem.is_group_conv():
-        PROBLEMS_WITH_WEIGHTS_NO_GROUPS.append(problem)
-        IDS_WITH_WEIGHTS_NO_GROUPS.append(problem_id)
-
-
-@pytest.mark.parametrize(
-    "problem",
-    PROBLEMS_WITH_WEIGHTS_NO_GROUPS
-    + CONVOLUTION_GROUP_PROBLEMS
-    + CONVOLUTION_TRANSPOSED_GROUP_PROBLEMS,
-    ids=IDS_WITH_WEIGHTS_NO_GROUPS
-    + CONVOLUTION_GROUP_IDS
-    + CONVOLUTION_TRANSPOSED_GROUP_IDS,
-)
+@pytest.mark.parametrize("problem", PROBLEMS_WITH_WEIGHTS, ids=IDS_WITH_WEIGHTS)
 def test_weight_jac_mat_prod(problem, V=3):
     """Test the Jacobian-matrix product w.r.t. to the weights.
 
