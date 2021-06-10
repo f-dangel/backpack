@@ -214,3 +214,10 @@ SECONDORDER_SETTINGS += [
         (3, 3, 2, 7, 7), ConvTranspose3d, (3, 2, 2, 4, 2, 0, 1, False)
     ),
 ]
+
+_GROUP_CONV_SETTINGS = [
+    # last number is groups
+    make_simple_cnn_setting((3, 6, 7), Conv1d, (6, 4, 2, 1, 0, 1, 2)),
+]
+
+SECONDORDER_SETTINGS += _GROUP_CONV_SETTINGS
