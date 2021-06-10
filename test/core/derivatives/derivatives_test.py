@@ -9,7 +9,7 @@
 
 from test.automated_test import check_sizes_and_values
 from test.core.derivatives.convolution_settings import (
-    CONVOLUTION_FAIL_SETTINGS,
+    CONVOLUTION_GROUP_SETTINGS,
     CONVOLUTION_TRANSPOSED_GROUP_SETTINGS,
 )
 from test.core.derivatives.implementation.autograd import AutogradDerivatives
@@ -36,8 +36,8 @@ LOSS_IDS = [problem.make_id() for problem in LOSS_PROBLEMS]
 LOSS_FAIL_PROBLEMS = make_test_problems(LOSS_FAIL_SETTINGS)
 LOSS_FAIL_IDS = [problem.make_id() for problem in LOSS_FAIL_PROBLEMS]
 
-CONVOLUTION_FAIL_PROBLEMS = make_test_problems(CONVOLUTION_FAIL_SETTINGS)
-CONVOLUTION_FAIL_IDS = [problem.make_id() for problem in CONVOLUTION_FAIL_PROBLEMS]
+CONVOLUTION_GROUP_PROBLEMS = make_test_problems(CONVOLUTION_GROUP_SETTINGS)
+CONVOLUTION_GROUP_IDS = [problem.make_id() for problem in CONVOLUTION_GROUP_PROBLEMS]
 
 CONVOLUTION_TRANSPOSED_GROUP_PROBLEMS = make_test_problems(
     CONVOLUTION_TRANSPOSED_GROUP_SETTINGS
@@ -136,8 +136,8 @@ for problem, problem_id in zip(PROBLEMS, IDS):
 
 @pytest.mark.parametrize(
     "problem",
-    PROBLEMS_WITH_WEIGHTS_NO_GROUPS,
-    ids=IDS_WITH_WEIGHTS_NO_GROUPS,
+    PROBLEMS_WITH_WEIGHTS_NO_GROUPS + CONVOLUTION_GROUP_PROBLEMS,
+    ids=IDS_WITH_WEIGHTS_NO_GROUPS + CONVOLUTION_GROUP_IDS,
 )
 def test_weight_jac_mat_prod(problem, V=3):
     """Test the Jacobian-matrix product w.r.t. to the weights.
@@ -235,8 +235,8 @@ def test_sqrt_hessian_squared_equals_hessian(problem):
 
 @pytest.mark.parametrize(
     "problem",
-    CONVOLUTION_TRANSPOSED_GROUP_PROBLEMS + CONVOLUTION_FAIL_PROBLEMS,
-    ids=CONVOLUTION_TRANSPOSED_GROUP_IDS + CONVOLUTION_FAIL_IDS,
+    CONVOLUTION_TRANSPOSED_GROUP_PROBLEMS,
+    ids=CONVOLUTION_TRANSPOSED_GROUP_IDS,
 )
 def test_weight_jac_mat_prod_should_fail(problem):
     with pytest.raises(NotImplementedError):
