@@ -136,8 +136,12 @@ for problem, problem_id in zip(PROBLEMS, IDS):
 
 @pytest.mark.parametrize(
     "problem",
-    PROBLEMS_WITH_WEIGHTS_NO_GROUPS + CONVOLUTION_GROUP_PROBLEMS,
-    ids=IDS_WITH_WEIGHTS_NO_GROUPS + CONVOLUTION_GROUP_IDS,
+    PROBLEMS_WITH_WEIGHTS_NO_GROUPS
+    + CONVOLUTION_GROUP_PROBLEMS
+    + CONVOLUTION_TRANSPOSED_GROUP_PROBLEMS,
+    ids=IDS_WITH_WEIGHTS_NO_GROUPS
+    + CONVOLUTION_GROUP_IDS
+    + CONVOLUTION_TRANSPOSED_GROUP_IDS,
 )
 def test_weight_jac_mat_prod(problem, V=3):
     """Test the Jacobian-matrix product w.r.t. to the weights.
@@ -231,16 +235,6 @@ def test_sqrt_hessian_squared_equals_hessian(problem):
 
     check_sizes_and_values(autograd_res, backpack_res)
     problem.tear_down()
-
-
-@pytest.mark.parametrize(
-    "problem",
-    CONVOLUTION_TRANSPOSED_GROUP_PROBLEMS,
-    ids=CONVOLUTION_TRANSPOSED_GROUP_IDS,
-)
-def test_weight_jac_mat_prod_should_fail(problem):
-    with pytest.raises(NotImplementedError):
-        test_weight_jac_mat_prod(problem)
 
 
 @pytest.mark.parametrize("problem", LOSS_FAIL_PROBLEMS, ids=LOSS_FAIL_IDS)
