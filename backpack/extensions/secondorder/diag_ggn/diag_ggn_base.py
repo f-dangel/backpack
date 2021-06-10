@@ -68,10 +68,7 @@ class DiagGGNBaseModule(MatToJacMat):
             JS: Tensor = getattr(self.derivatives, f"{param}_jac_t_mat_prod")(
                 module, grad_inp, grad_out, backproped, sum_batch=False
             )
-            return (
-                (JS ** 2).sum(axis=0).sum(axis=0)
-                if sum_batch
-                else (JS ** 2).sum(axis=0)
-            )
+            axis: Tuple[int] = (0, 1) if sum_batch else (0,)
+            return (JS ** 2).sum(axis=axis)
 
         return _param
