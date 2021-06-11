@@ -1,9 +1,9 @@
-"""Test configurations for `backpack.core.extensions.secondorder`
-that is shared among the following secondorder methods:
-- Diagonal of Gauss Newton
-- Diagonal of Hessian
-- MC Approximation of Diagonal of Gauss Newton
+"""Shared test cases of BackPACK's second-order extensions.
 
+- Exact diagonal of the generalized Gauss-Newton
+- MC-approximated diagonal of the generalized Gauss-Newton
+- Diagonal of the Hessian
+- MC Approximation of Diagonal of Gauss Newton
 
 Required entries:
     "module_fn" (callable): Contains a model constructed from `torch.nn` layers
@@ -215,7 +215,7 @@ SECONDORDER_SETTINGS += [
     ),
 ]
 
-_GROUP_CONV_SETTINGS = [
+GROUP_CONV_SETTINGS = [
     # last number is groups
     make_simple_cnn_setting((3, 6, 7), Conv1d, (6, 4, 2, 1, 0, 1, 2)),
     make_simple_cnn_setting((3, 6, 7, 5), Conv2d, (6, 3, 2, 1, 0, 1, 3)),
@@ -230,4 +230,4 @@ _GROUP_CONV_SETTINGS = [
     ),
 ]
 
-SECONDORDER_SETTINGS += _GROUP_CONV_SETTINGS
+SECONDORDER_SETTINGS += GROUP_CONV_SETTINGS

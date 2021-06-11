@@ -14,6 +14,13 @@ class HBPConv2d(HBPBaseModule):
         super().__init__(derivatives=Conv2DDerivatives(), params=["weight", "bias"])
 
     def weight(self, ext, module, g_inp, g_out, backproped):
+
+        if module.groups != 1:
+            raise NotImplementedError(
+                f"groups ≠ 1 is not supported by {ext.__class__.__name__} "
+                + f"(got {module.groups})."
+            )
+
         bp_strategy = ext.get_backprop_strategy()
 
         if BackpropStrategy.is_batch_average(bp_strategy):

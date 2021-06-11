@@ -158,3 +158,11 @@ class BackpackExtensions(ExtensionsImplementation):
             loss.backward()
             diag_h = [p.diag_h for p in self.problem.model.parameters()]
         return diag_h
+
+    def kfac(self, mc_samples=1):
+        with backpack(new_ext.KFAC(mc_samples=mc_samples)):
+            _, _, loss = self.problem.forward_pass()
+            loss.backward()
+            kfac = [p.kfac for p in self.problem.model.parameters()]
+
+        return kfac
