@@ -220,6 +220,8 @@ _GROUP_CONV_SETTINGS = [
     make_simple_cnn_setting((3, 6, 7), Conv1d, (6, 4, 2, 1, 0, 1, 2)),
     make_simple_cnn_setting((3, 6, 7, 5), Conv2d, (6, 3, 2, 1, 0, 1, 3)),
     make_simple_cnn_setting((3, 4, 7, 5, 6), Conv3d, (4, 2, 2, 1, 0, 2, 2)),
+    # number before bool is groups
+    make_simple_cnn_setting((3, 3, 8), ConvTranspose1d, (3, 6, 2, 4, 2, 0, 3, True, 3)),
 ]
 
 SECONDORDER_SETTINGS += _GROUP_CONV_SETTINGS
