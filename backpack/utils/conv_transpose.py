@@ -15,38 +15,43 @@ def get_weight_gradient_factors(input, grad_out, module, N):
     return X, dE_dY
 
 
-def extract_weight_diagonal(module, input, grad_output, N, sum_batch=True):
-    """
-    input must be the unfolded input to the convolution (see unfold_func)
-    and grad_output the backpropagated gradient
-    """
-    out_channels = module.weight.shape[0]
-    in_channels = module.weight.shape[1]
-    k = module.weight.shape[2:]
+def extract_weight_diagonal(module, unfolded_input, S, N, sum_batch=True):
+    """Extract diagonal of ``(Jᵀ S) (Jᵀ S)ᵀ`` where ``J`` is the weight Jacobian.
 
-    M = input.shape[0]
-    output_shape = module.output.shape
-    spatial_out_size = output_shape[2:]
-    spatial_out_numel = spatial_out_size.numel()
+    Args:
+        module (torch.nn.ConvTranspose1d or torch.nn.ConvTranspose2d or
+            torch.nn.ConvTranspose3d ): Convolution layer for which the diagonal is
+            extracted w.r.t. the weight.
+        unfolded_input (torch.Tensor): Unfolded input to the transpose convolution.
+        S (torch.Tensor): Backpropagated (symmetric factorization) of the loss Hessian.
+            Has shape ``(V, *module.output.shape)``.
+        N (int): Transpose convolution dimension.
+        sum_batch (bool, optional): Sum out the batch dimension of the weight diagonals.
+            Default value: ``True``.
 
-    input_reshaped = input.reshape(M, module.groups, -1, spatial_out_numel)
-    V_axis, N_axis = 0, 1
-    grad_output_viewed = rearrange(
-        grad_output, "v n (g c) ... -> v n g c (...)", g=module.groups
+    Returns:
+        torch.Tensor: Per-sample weight diagonal if ``sum_batch=False`` (shape
+            ``(N, module.weight.shape)`` with batch size ``N``) or summed weight
+            diagonal if ``sum_batch=True`` (shape ``module.weight.shape``).
+    """
+    S = rearrange(S, "v n (g o) ... -> v n g o (...)", g=module.groups)
+    unfolded_input = rearrange(
+        unfolded_input,
+        "n (g c) (k x) -> n g c k x",
+        g=module.groups,
+        k=module.weight.shape[2:].numel(),
     )
 
-    AX = einsum("ngkl,vngml->vngkm", (input_reshaped, grad_output_viewed))
-    AX = rearrange(AX, "v n g k m -> v n (g k) m")
+    JS = einsum("ngckx,vngox->vngcok", (unfolded_input, S))
 
-    N = AX.shape[N_axis]
-    sum_dims = [V_axis, N_axis] if sum_batch else [V_axis]
-    transpose_dims = (V_axis, N_axis) if sum_batch else (V_axis + 1, N_axis + 1)
-    weight_diagonal = (AX ** 2).sum(sum_dims).transpose(*transpose_dims)
-    if sum_batch:
-        weight_diagonal = weight_diagonal.reshape(in_channels, out_channels, *k)
-    else:
-        weight_diagonal = weight_diagonal.reshape(N, in_channels, out_channels, *k)
-    return weight_diagonal.transpose(*transpose_dims)
+    sum_dims = [0, 1] if sum_batch else [0]
+    out_shape = (
+        module.weight.shape if sum_batch else (JS.shape[1], *module.weight.shape)
+    )
+
+    weight_diagonal = JS.pow_(2).sum(sum_dims).reshape(out_shape)
+
+    return weight_diagonal
 
 
 def extract_bias_diagonal(module, sqrt, N, sum_batch=True):
