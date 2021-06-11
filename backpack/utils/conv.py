@@ -52,7 +52,7 @@ def extract_weight_diagonal(module, input, grad_output, N, sum_batch=True):
     and grad_output the backpropagated gradient
     """
     grad_output = rearrange(
-        grad_output, "v n (g c) ... -> v n g c ...", g=module.groups
+        grad_output, "v n (g c) ... -> v n g c (...)", g=module.groups
     )
     input = rearrange(input, "n (g c) k -> n g c k", g=module.groups)
     AX = einsum("ngkl,vngml->vngmk", (input, grad_output))
