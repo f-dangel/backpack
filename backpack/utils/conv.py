@@ -55,13 +55,14 @@ def extract_weight_diagonal(module, unfolded_input, S, N, sum_batch=True):
         unfolded_input (torch.Tensor): Unfolded input to the convolution. Shape must
             follow the conventions of ``torch.nn.Unfold``.
         S (torch.Tensor): Backpropagated (symmetric factorization) of the loss Hessian.
-            Has shape ``[V, *module.output.shape]``.
-        N (int): Convolution dimension
+            Has shape ``(V, *module.output.shape)``.
+        N (int): Convolution dimension.
         sum_batch (bool, optional): Sum out the batch dimension of the weight diagonals.
+            Default value: ``True``.
 
     Returns:
         torch.Tensor: Per-sample weight diagonal if ``sum_batch=False`` (shape
-            ``[N, module.weight.shape]`` with batch size ``N``) or summed weight
+            ``(N, module.weight.shape)`` with batch size ``N``) or summed weight
             diagonal if ``sum_batch=True`` (shape ``module.weight.shape``).
     """
     S = rearrange(S, "v n (g c) ... -> v n g c (...)", g=module.groups)
