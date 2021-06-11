@@ -63,6 +63,7 @@ class BatchNorm1dDerivatives(BaseParameterDerivatives):
         print("input", input.shape)
         print("mean", mean)
         print("variance", var)
+        print("running mean", module.running_mean / module.momentum)
         mean_expanded = (
             mean[None, :, None]
             if BatchNorm1dDerivatives._has_l_axis(module) and input0 is None
@@ -86,33 +87,34 @@ class BatchNorm1dDerivatives(BaseParameterDerivatives):
         print("_has_l_axis", _has_l_axis)
         N: int = module.input0.shape[0]
         C: int = module.input0.shape[1]
-        L: int = module.input0.shape[2]
         V: int = mat.shape[0]
         _input: Tensor = module.input0
         if _has_l_axis:
-            _input = _input.reshape(N * L, C)
-            mat = mat.reshape(V, N * L, C)
-        x_hat, var = self.get_normalized_input_and_var(module, input0=_input)
+            L: int = module.input0.shape[2]
+            denominator: int = N * L
+        else:
+            denominator: int = N
+        x_hat, var = self.get_normalized_input_and_var(module, input0=None)
         ivar = 1.0 / (var + module.eps).sqrt()
+        print("variance", var.shape)
         print("ivar", ivar.shape)
 
         dx_hat: Tensor = einsum(
-            "vni,i->vni" if _has_l_axis else "vni,i->vni", mat, module.weight
+            "vnil,i->vnil" if _has_l_axis else "vni,i->vni", mat, module.weight
         )
 
-        jac_t_mat = N * dx_hat
-        jac_t_mat -= dx_hat.sum(1).unsqueeze(1).expand_as(jac_t_mat)
+        jac_t_mat = denominator * dx_hat
+        jac_t_mat -= dx_hat.sum((1, 3) if _has_l_axis else (1,), keepdim=True).expand_as(jac_t_mat)
         jac_t_mat -= einsum(
-            "ni,vsi,si->vni" if _has_l_axis else "ni,vsi,si->vni",
+            "nil,vsik,sik->vnil" if _has_l_axis else "ni,vsi,si->vni",
             x_hat,
             dx_hat,
             x_hat,
         )
+        print("ivar / N ", (ivar / denominator).shape)
         jac_t_mat = einsum(
-            "vni,i->vni" if _has_l_axis else "vni,i->vni", jac_t_mat, ivar / N
+            "vnil,i->vnil" if _has_l_axis else "vni,i->vni", jac_t_mat, ivar / denominator
         )
-        if _has_l_axis:
-            jac_t_mat = jac_t_mat.reshape(V, N, C, L)
         return jac_t_mat
 
     @staticmethod

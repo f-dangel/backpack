@@ -57,7 +57,6 @@ def test_jac_t_mat_prod_autograd():
     print("new jac_t_mat_prod", jac_t_mat_prod.shape)
     print("autograd", derivative_autograd.shape)
     assert allclose(jac_t_mat_prod, derivative_autograd, atol=1e-5)
-    raise NotImplementedError("!!!!!!!!!!!!!!!!! WORKED !!!!!!!!!!!!!!!!!!!")
 
 
 def test_jac_t_mat_prod_old_autograd():
@@ -87,20 +86,6 @@ def test_jac_t_mat_prod_old_autograd():
     print("old jac_t_mat_prod", jac_t_mat_prod.shape)
     print("autograd", derivative_autograd.shape)
     assert allclose(jac_t_mat_prod, derivative_autograd, atol=1e-5)
-
-
-def test_batch_norm_n_l_equivalence():
-    V: int = 1
-    N: int = 3
-    C: int = 2
-    L: int = 5
-    module: BatchNorm1d = BatchNorm1d(num_features=C)
-    _input0: Tensor = rand(N, C, L, requires_grad=True)
-    _out0 = module(_input0)
-    _input1: Tensor = _input0.reshape(N * L, C, 1)
-    _out1 = module(_input1)
-
-    assert allclose(_out0, _out1.reshape(N, C, L), atol=1e-5)
 
 
 def test_batch_norm_forward():
