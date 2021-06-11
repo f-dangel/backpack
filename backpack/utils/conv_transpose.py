@@ -3,8 +3,6 @@ from einops import rearrange
 from torch import einsum
 from torch.nn.functional import conv_transpose1d, conv_transpose2d, conv_transpose3d
 
-from backpack.utils.conv import separate_channels_and_pixels
-
 
 def get_weight_gradient_factors(input, grad_out, module, N):
     M, C_in = input.shape[0], input.shape[1]
@@ -70,7 +68,19 @@ def extract_bias_diagonal(module, sqrt, N, sum_batch=True):
 
 
 def unfold_by_conv_transpose(input, module):
-    """Return the unfolded input using transpose convolution."""
+    """Return the unfolded input using one-hot transpose convolution.
+
+    Args:
+        input (torch.Tensor): Input to a transpose convolution.
+        module (torch.nn.ConvTranspose1d or torch.nn.ConvTranspose2d or
+            torch.nn.ConvTranspose3d): Transpose convolution layer that specifies
+            the hyperparameters for unfolding.
+
+    Returns:
+        torch.Tensor: Unfolded input of shape ``(N, C, K * X)`` with
+            ``K = module.weight.shape[2:].numel()`` the number of kernel elements
+            and ``X = module.output.shape[2:].numel()`` the number of output pixels.
+    """
     N, C_in = input.shape[0], input.shape[1]
     kernel_size = module.kernel_size
     kernel_size_numel = int(torch.prod(torch.Tensor(kernel_size)))
@@ -106,4 +116,4 @@ def unfold_by_conv_transpose(input, module):
         groups=C_in,
     )
 
-    return unfold.reshape(N, -1, kernel_size_numel)
+    return unfold.reshape(N, C_in, -1)
