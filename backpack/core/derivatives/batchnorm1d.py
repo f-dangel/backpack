@@ -36,7 +36,7 @@ class BatchNorm1dDerivatives(BaseParameterDerivatives):
         assert module.affine is True
 
         N = module.input0.size(0)
-        x_hat, var = self.get_normalized_input_and_var(module)
+        x_hat, var = self._get_normalized_input_and_var(module)
         ivar = 1.0 / (var + module.eps).sqrt()
 
         dx_hat = einsum("vni,i->vni", (mat, module.weight))
@@ -48,30 +48,20 @@ class BatchNorm1dDerivatives(BaseParameterDerivatives):
 
         return jac_t_mat
 
-    @staticmethod
-    def get_normalized_input_and_var(module: BatchNorm1d, input0: Tensor = None):
-        if input0 is None:
-            dim: Tuple[int] = (
-                (0, 2) if BatchNorm1dDerivatives._has_l_axis(module) else (0,)
-            )
-            input: Tensor = module.input0
-        else:
-            dim: Tuple[int] = (0,)
-            input: Tensor = input0
+    @classmethod
+    def _get_normalized_input_and_var(cls, module: BatchNorm1d):
+        dim: Tuple[int] = (0, 2) if cls._has_l_axis(module) else (0,)
+        input: Tensor = module.input0
         mean: Tensor = input.mean(dim=dim)
         var: Tensor = input.var(dim=dim, unbiased=False)
-        print("input", input.shape)
-        print("mean", mean)
-        print("variance", var)
-        print("running mean", module.running_mean / module.momentum)
         mean_expanded = (
             mean[None, :, None]
-            if BatchNorm1dDerivatives._has_l_axis(module) and input0 is None
+            if cls._has_l_axis(module)
             else mean[None, :]
         )
         var_expanded = (
             var[None, :, None]
-            if BatchNorm1dDerivatives._has_l_axis(module) and input0 is None
+            if cls._has_l_axis(module)
             else var[None, :]
         )
         return (input - mean_expanded) / (var_expanded + module.eps).sqrt(), var
@@ -84,41 +74,28 @@ class BatchNorm1dDerivatives(BaseParameterDerivatives):
         mat: Tensor,
     ) -> Tensor:
         _has_l_axis = self._has_l_axis(module)
-        print("_has_l_axis", _has_l_axis)
-        N: int = module.input0.shape[0]
-        C: int = module.input0.shape[1]
-        V: int = mat.shape[0]
-        _input: Tensor = module.input0
         if _has_l_axis:
-            L: int = module.input0.shape[2]
-            denominator: int = N * L
+            denominator: int = mat.shape[1] * mat.shape[3]
         else:
-            denominator: int = N
-        x_hat, var = self.get_normalized_input_and_var(module, input0=None)
+            denominator: int = mat.shape[1]
+        x_hat, var = self._get_normalized_input_and_var(module)
         ivar = 1.0 / (var + module.eps).sqrt()
-        print("variance", var.shape)
-        print("ivar", ivar.shape)
 
-        dx_hat: Tensor = einsum(
-            "vnil,i->vnil" if _has_l_axis else "vni,i->vni", mat, module.weight
-        )
-
+        equation = "vnil,i->vnil" if _has_l_axis else "vni,i->vni"
+        dx_hat: Tensor = einsum(equation, mat, module.weight)
         jac_t_mat = denominator * dx_hat
-        jac_t_mat -= dx_hat.sum((1, 3) if _has_l_axis else (1,), keepdim=True).expand_as(jac_t_mat)
-        jac_t_mat -= einsum(
-            "nil,vsik,sik->vnil" if _has_l_axis else "ni,vsi,si->vni",
-            x_hat,
-            dx_hat,
-            x_hat,
-        )
-        print("ivar / N ", (ivar / denominator).shape)
-        jac_t_mat = einsum(
-            "vnil,i->vnil" if _has_l_axis else "vni,i->vni", jac_t_mat, ivar / denominator
-        )
+        jac_t_mat -= dx_hat.sum(
+            (1, 3) if _has_l_axis else (1,),
+            keepdim=True,
+        ).expand_as(jac_t_mat)
+        equation = "nil,vsik,sik->vnil" if _has_l_axis else "ni,vsi,si->vni"
+        jac_t_mat -= einsum(equation, x_hat, dx_hat, x_hat)
+        equation = "vnil,i->vnil" if _has_l_axis else "vni,i->vni"
+        jac_t_mat = einsum(equation, jac_t_mat, ivar / denominator)
         return jac_t_mat
 
-    @staticmethod
-    def _has_l_axis(module: BatchNorm1d) -> bool:
+    @classmethod
+    def _has_l_axis(cls, module: BatchNorm1d) -> bool:
         _dim = module.input0.dim()
         if _dim == 3:
             return True
@@ -128,10 +105,6 @@ class BatchNorm1dDerivatives(BaseParameterDerivatives):
             raise NotImplemented(
                 f"Can't handle input with {_dim} dimensions on module BatchNorm1d."
             )
-
-    @staticmethod
-    def _get_mean_and_variance(module: BatchNorm1d) -> Tuple[Tensor, Tensor]:
-        return module.input0.mean(dim=0), module.input0.var(dim=0, unbiased=False)
 
     def _residual_mat_prod(self, module, g_inp, g_out, mat):
         """Multiply with BatchNorm1d residual-matrix.
@@ -146,7 +119,7 @@ class BatchNorm1dDerivatives(BaseParameterDerivatives):
           by Paul Fischer, 2020.
         """
         N = module.input0.size(0)
-        x_hat, var = self.get_normalized_input_and_var(module)
+        x_hat, var = self._get_normalized_input_and_var(module)
         gamma = module.weight
         eps = module.eps
 
@@ -174,7 +147,7 @@ class BatchNorm1dDerivatives(BaseParameterDerivatives):
         return einsum("c,vnc->vnc", (factor, r_mat))
 
     def _weight_jac_mat_prod(self, module, g_inp, g_out, mat):
-        x_hat, _ = self.get_normalized_input_and_var(module)
+        x_hat, _ = self._get_normalized_input_and_var(module)
         return einsum("ni,vi->vni", (x_hat, mat))
 
     def _weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch):
@@ -183,7 +156,7 @@ class BatchNorm1dDerivatives(BaseParameterDerivatives):
                 "BatchNorm batch summation disabled."
                 "This may not compute meaningful quantities"
             )
-        x_hat, _ = self.get_normalized_input_and_var(module)
+        x_hat, _ = self._get_normalized_input_and_var(module)
         equation = "vni,ni->v{}i".format("" if sum_batch is True else "n")
         operands = [mat, x_hat]
         return einsum(equation, operands)

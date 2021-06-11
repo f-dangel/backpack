@@ -98,7 +98,7 @@ def test_batch_norm_forward():
     _out0 = module(_input0)
     mean = _input0.mean(dim=(0, 2))
     variance = _input0.var(dim=(0, 2), unbiased=False)
-    out1: Tensor = (_input0 - mean[None, :, None])
+    out1: Tensor = _input0 - mean[None, :, None]
     out1 = out1 / (variance[None, :, None] + module.eps).sqrt()
     out1 = out1 * module.weight[None, :, None]
     out1 = out1 + module.bias[None, :, None]
