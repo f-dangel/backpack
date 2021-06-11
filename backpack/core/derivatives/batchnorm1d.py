@@ -1,6 +1,9 @@
+from typing import Tuple
 from warnings import warn
 
-from torch import einsum
+import torch
+from torch import Tensor, diag_embed, diagonal, einsum, ones, sqrt, zeros
+from torch.nn import BatchNorm1d
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 
@@ -45,11 +48,88 @@ class BatchNorm1dDerivatives(BaseParameterDerivatives):
 
         return jac_t_mat
 
-    def get_normalized_input_and_var(self, module):
-        input = module.input0
-        mean = input.mean(dim=0)
-        var = input.var(dim=0, unbiased=False)
-        return (input - mean) / (var + module.eps).sqrt(), var
+    @staticmethod
+    def get_normalized_input_and_var(module: BatchNorm1d, input0: Tensor = None):
+        if input0 is None:
+            dim: Tuple[int] = (
+                (0, 2) if BatchNorm1dDerivatives._has_l_axis(module) else (0,)
+            )
+            input: Tensor = module.input0
+        else:
+            dim: Tuple[int] = (0,)
+            input: Tensor = input0
+        mean: Tensor = input.mean(dim=dim)
+        var: Tensor = input.var(dim=dim, unbiased=False)
+        print("input", input.shape)
+        print("mean", mean)
+        print("variance", var)
+        mean_expanded = (
+            mean[None, :, None]
+            if BatchNorm1dDerivatives._has_l_axis(module) and input0 is None
+            else mean[None, :]
+        )
+        var_expanded = (
+            var[None, :, None]
+            if BatchNorm1dDerivatives._has_l_axis(module) and input0 is None
+            else var[None, :]
+        )
+        return (input - mean_expanded) / (var_expanded + module.eps).sqrt(), var
+
+    def _jac_t_mat_prod_alternative(
+        self,
+        module: BatchNorm1d,
+        g_inp: Tuple[Tensor],
+        g_out: Tuple[Tensor],
+        mat: Tensor,
+    ) -> Tensor:
+        _has_l_axis = self._has_l_axis(module)
+        print("_has_l_axis", _has_l_axis)
+        N: int = module.input0.shape[0]
+        C: int = module.input0.shape[1]
+        L: int = module.input0.shape[2]
+        V: int = mat.shape[0]
+        _input: Tensor = module.input0
+        if _has_l_axis:
+            _input = _input.reshape(N * L, C)
+            mat = mat.reshape(V, N * L, C)
+        x_hat, var = self.get_normalized_input_and_var(module, input0=_input)
+        ivar = 1.0 / (var + module.eps).sqrt()
+        print("ivar", ivar.shape)
+
+        dx_hat: Tensor = einsum(
+            "vni,i->vni" if _has_l_axis else "vni,i->vni", mat, module.weight
+        )
+
+        jac_t_mat = N * dx_hat
+        jac_t_mat -= dx_hat.sum(1).unsqueeze(1).expand_as(jac_t_mat)
+        jac_t_mat -= einsum(
+            "ni,vsi,si->vni" if _has_l_axis else "ni,vsi,si->vni",
+            x_hat,
+            dx_hat,
+            x_hat,
+        )
+        jac_t_mat = einsum(
+            "vni,i->vni" if _has_l_axis else "vni,i->vni", jac_t_mat, ivar / N
+        )
+        if _has_l_axis:
+            jac_t_mat = jac_t_mat.reshape(V, N, C, L)
+        return jac_t_mat
+
+    @staticmethod
+    def _has_l_axis(module: BatchNorm1d) -> bool:
+        _dim = module.input0.dim()
+        if _dim == 3:
+            return True
+        elif _dim == 2:
+            return False
+        else:
+            raise NotImplemented(
+                f"Can't handle input with {_dim} dimensions on module BatchNorm1d."
+            )
+
+    @staticmethod
+    def _get_mean_and_variance(module: BatchNorm1d) -> Tuple[Tensor, Tensor]:
+        return module.input0.mean(dim=0), module.input0.var(dim=0, unbiased=False)
 
     def _residual_mat_prod(self, module, g_inp, g_out, mat):
         """Multiply with BatchNorm1d residual-matrix.
