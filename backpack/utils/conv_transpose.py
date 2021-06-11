@@ -1,3 +1,5 @@
+"""Utility functions for extracting transpose convolution BackPACK quantities."""
+
 import torch
 from einops import rearrange
 from torch import einsum
@@ -6,8 +8,7 @@ from torch.nn.functional import conv_transpose1d, conv_transpose2d, conv_transpo
 
 def get_weight_gradient_factors(input, grad_out, module, N):
     M, C_in = input.shape[0], input.shape[1]
-    kernel_size = module.kernel_size
-    kernel_size_numel = int(torch.prod(torch.Tensor(kernel_size)))
+    kernel_size_numel = module.weight.shape[2:].numel()
 
     X = unfold_by_conv_transpose(input, module).reshape(M, C_in * kernel_size_numel, -1)
     dE_dY = rearrange(grad_out, "n c ... -> n c (...)")
@@ -88,7 +89,7 @@ def unfold_by_conv_transpose(input, module):
     """
     N, C_in = input.shape[0], input.shape[1]
     kernel_size = module.kernel_size
-    kernel_size_numel = int(torch.prod(torch.Tensor(kernel_size)))
+    kernel_size_numel = module.weight.shape[2:].numel()
 
     def make_weight():
         weight = torch.zeros(1, kernel_size_numel, *kernel_size)

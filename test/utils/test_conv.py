@@ -34,9 +34,7 @@ def convolution_with_unfold(input, module):
     C_out = output_shape[1]
     spatial_out_size = output_shape[2:]
     spatial_out_numel = spatial_out_size.numel()
-
-    kernel_size = module.kernel_size
-    kernel_size_numel = int(torch.prod(torch.Tensor(kernel_size)))
+    kernel_size_numel = module.weight.shape[2:].numel()
 
     G = module.groups
 

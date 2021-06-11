@@ -102,7 +102,7 @@ def unfold_by_conv(input, module):
     """Return the unfolded input using convolution"""
     N, C_in = input.shape[0], input.shape[1]
     kernel_size = module.kernel_size
-    kernel_size_numel = int(torch.prod(torch.Tensor(kernel_size)))
+    kernel_size_numel = module.weight.shape[2:].numel()
 
     def make_weight():
         weight = torch.zeros(kernel_size_numel, 1, *kernel_size)
