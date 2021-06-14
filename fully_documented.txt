@@ -5,6 +5,7 @@ backpack/core/derivatives/rnn.py
 backpack/core/derivatives/shape_check.py
 backpack/core/derivatives/__init__.py
 backpack/core/derivatives/permute.py
+backpack/core/derivatives/adaptive_avg_pool_nd.py
 
 backpack/extensions/backprop_extension.py
 backpack/extensions/mat_to_mat_jac_base.py
@@ -46,3 +47,5 @@ test/extensions/firstorder/batch_grad/batchgrad_settings.py
 
 test/extensions/secondorder/secondorder_settings.py
 test/extensions/secondorder/diag_ggn/
+
+test/adaptive_avg_pool/
