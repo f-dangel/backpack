@@ -50,3 +50,11 @@ class ExtensionsImplementation:
             list(list(torch.Tensor)): Parameter-wise lists of Kronecker factors.
         """
         raise NotImplementedError
+
+    def kflr(self):
+        """Kronecker-factored low-rank approximation (KFLR).
+
+        Returns:
+            list(list(torch.Tensor)): Parameter-wise lists of Kronecker factors.
+        """
+        raise NotImplementedError
