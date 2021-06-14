@@ -1,6 +1,6 @@
 [flake8]
 select = B,C,E,F,P,W,B9
-max-line-length = 80
+max-line-length = 88
 max-complexity = 10
 ignore =
 	# replaced by B950 (max-line-length + 10%)
@@ -13,7 +13,7 @@ ignore =
 	W291, # trailing whitespace
 	W503, # line break before binary operator
 	W504, # line break after binary operator
-exclude = docs, docs_src, build, .git
+exclude = docs, build, .git, docs_src/rtd, docs_src/rtd_output
 
 
 # Differences with pytorch
