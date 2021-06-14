@@ -3,6 +3,7 @@
 Average pooling can be expressed as convolution over grouped channels with a constant
 kernel.
 """
+from typing import Any, Tuple
 
 import torch.nn
 from einops import rearrange
@@ -72,6 +73,17 @@ class AvgPoolNDDerivatives(BaseDerivatives):
             + "like count_include_pad=False"
         )
 
+    def get_parameters(self, module) -> Tuple[Any, Any, Any]:
+        """Return the parameters of the module.
+
+        Args:
+            module: module
+
+        Returns:
+            stride, kernel_size, padding
+        """
+        return module.stride, module.kernel_size, module.padding
+
     def _jac_mat_prod(self, module, g_inp, g_out, mat):
         self.check_exotic_parameters(module)
 
@@ -89,12 +101,13 @@ class AvgPoolNDDerivatives(BaseDerivatives):
         return result.unsqueeze(C_axis)
 
     def __apply_jacobian_of(self, module, mat):
+        stride, kernel_size, padding = self.get_parameters(module)
         convnd = self.conv(
             in_channels=1,
             out_channels=1,
-            kernel_size=module.kernel_size,
-            stride=module.stride,
-            padding=module.padding,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=padding,
             bias=False,
         ).to(module.input0.device)
 
@@ -126,14 +139,15 @@ class AvgPoolNDDerivatives(BaseDerivatives):
         return self.reshape_like_input(jmp_as_pool, module)
 
     def __apply_jacobian_t_of(self, module, mat):
+        stride, kernel_size, padding = self.get_parameters(module)
         C_for_conv_t = 1
 
         convnd_t = self.convt(
             in_channels=C_for_conv_t,
             out_channels=C_for_conv_t,
-            kernel_size=module.kernel_size,
-            stride=module.stride,
-            padding=module.padding,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=padding,
             bias=False,
         ).to(module.input0.device)
 

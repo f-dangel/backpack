@@ -1,5 +1,5 @@
 """Implements the derivatives for AdaptiveAvgPool."""
-from typing import List, Tuple, Union
+from typing import Any, List, Tuple, Union
 
 from torch import Size
 from torch.nn import AdaptiveAvgPool1d, AdaptiveAvgPool2d
@@ -91,3 +91,47 @@ class AdaptiveAvgPoolNDDerivatives(AvgPoolNDDerivatives):
                 f"output_size={module.output_size}"
             )
         return shape_target
+
+    def check_exotic_parameters(self, module):
+        """Overwrite and pass because no exotic parameters.
+
+        Args:
+            module: module
+        """
+        pass
+
+    def get_parameters(self, module) -> Tuple[Any, Any, Any]:
+        """Return the parameters of an equivalent AvgPoolNd.
+
+        Args:
+            module: module, not used
+
+        Returns:
+            stride, kernel_size, padding
+        """
+        stride, kernel_size = self.check_parameters(module)
+        return stride, kernel_size, 0
+
+
+class AdaptiveAvgPool1dDerivatives(AdaptiveAvgPoolNDDerivatives):
+    """Derivatives for AdaptiveAvgPool1d."""
+
+    def __init__(self):
+        """Initialization."""
+        super(AdaptiveAvgPool1dDerivatives, self).__init__(N=1)
+
+
+class AdaptiveAvgPool2dDerivatives(AdaptiveAvgPoolNDDerivatives):
+    """Derivatives for AdaptiveAvgPool2d."""
+
+    def __init__(self):
+        """Initialization."""
+        super(AdaptiveAvgPool2dDerivatives, self).__init__(N=2)
+
+
+class AdaptiveAvgPool3dDerivatives(AdaptiveAvgPoolNDDerivatives):
+    """Derivatives for AdaptiveAvgPool3d."""
+
+    def __init__(self):
+        """Initialization."""
+        super(AdaptiveAvgPool3dDerivatives, self).__init__(N=3)
