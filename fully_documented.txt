@@ -2,10 +2,4 @@ test/extensions/test_backprop_extension.py
 
 test/extensions/secondorder/secondorder_settings.py
 
-test/extensions/secondorder/hbp/__init__.py
-test/extensions/secondorder/hbp/test_kfac.py
-test/extensions/secondorder/hbp/kfac_settings.py
-test/extensions/secondorder/hbp/test_kflr.py
-test/extensions/secondorder/hbp/kflr_settings.py
-test/extensions/secondorder/hbp/test_kfra.py
-test/extensions/secondorder/hbp/kfra_settings.py
+test/extensions/secondorder/hbp
