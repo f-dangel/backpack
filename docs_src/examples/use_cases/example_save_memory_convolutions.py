@@ -113,9 +113,8 @@ def compute_individual_gradients(device, seed=0):
 
 # %%
 # The memory-saving strategy is enabled by wrapping the backward pass with BackPACK
-# inside
-# choice :py:class:`weight_jac_t_save_memory<backpack.core.derivatives.convnd.weight_jac_t_save_memory>`
-# which accepts the self-explanatory argument ``save_memory``.
+# inside :py:class:`weight_jac_t_save_memory<weight_jac_t_save_memory>` which accepts
+# a boolean flag ``save_memory``.
 
 # %%
 # Peak memory comparison
@@ -138,9 +137,12 @@ def compare_peakmem(device):
     for save_memory in True, False:
 
         with weight_jac_t_save_memory(save_memory=save_memory):
-            func = lambda: compute_individual_gradients(device)
+
+            def work():
+                return compute_individual_gradients(device)
+
             interval = 1e-3
-            peakmem = max(memory_usage(func, interval=interval))
+            peakmem = max(memory_usage(work, interval=interval))
 
         print(f"Save memory: {save_memory}\tPeak memory: {peakmem:.1f}")
 
@@ -227,8 +229,8 @@ for param_name in individual_gradients.keys():
 # nets from `DeepOBS <https://github.com/fsschneider/DeepOBS>`_.
 #
 # This benchmark can be inspected over the commit history. Commits between
-# `567f079b <https://github.com/f-dangel/backpack/commit/567f079b9611364e16c20d76294a4cb410332a90>`_
+# `567f079b <https://github.com/f-dangel/backpack/commit/567f079>`_
 # and
-# `f72f666 <https://github.com/f-dangel/backpack/commit/f72f66667843bc7f42ad63496038dc5b6c81c211>`_
+# `f72f666 <https://github.com/f-dangel/backpack/commit/f72f666>`_
 # were performed with ``save_memory=True``. Compare them with any other commit
 # benchmarked with ``save_memory=False`` to get an intuition how both algorithms differ.
