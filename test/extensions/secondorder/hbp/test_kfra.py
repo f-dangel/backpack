@@ -12,7 +12,7 @@ NOT_SUPPORTED_IDS = [problem.make_id() for problem in NOT_SUPPORTED_PROBLEMS]
 
 @pytest.mark.parametrize("problem", NOT_SUPPORTED_PROBLEMS, ids=NOT_SUPPORTED_IDS)
 def test_kfra_not_supported(problem):
-    """Check that the KFRA extension does not allow specific hyperparameters.
+    """Check that the KFRA extension does not allow specific hyperparameters/modules.
 
     Args:
         problem (ExtensionsTestProblem): Test case.
