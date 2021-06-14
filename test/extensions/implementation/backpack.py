@@ -174,3 +174,11 @@ class BackpackExtensions(ExtensionsImplementation):
             kflr = [p.kflr for p in self.problem.model.parameters()]
 
         return kflr
+
+    def kfra(self):
+        with backpack(new_ext.KFRA()):
+            _, _, loss = self.problem.forward_pass()
+            loss.backward()
+            kfra = [p.kfra for p in self.problem.model.parameters()]
+
+        return kfra

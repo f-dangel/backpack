@@ -58,3 +58,11 @@ class ExtensionsImplementation:
             list(list(torch.Tensor)): Parameter-wise lists of Kronecker factors.
         """
         raise NotImplementedError
+
+    def kfra(self):
+        """Kronecker-factored recursive approximation (KFRA).
+
+        Returns:
+            list(list(torch.Tensor)): Parameter-wise lists of Kronecker factors.
+        """
+        raise NotImplementedError
