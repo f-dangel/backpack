@@ -5,6 +5,7 @@ backpack/core/derivatives/rnn.py
 backpack/core/derivatives/shape_check.py
 backpack/core/derivatives/__init__.py
 backpack/core/derivatives/permute.py
+backpack/core/derivatives/lstm.py
 
 backpack/extensions/backprop_extension.py
 backpack/extensions/mat_to_mat_jac_base.py
@@ -37,6 +38,7 @@ test/core/derivatives/rnn_settings.py
 test/core/derivatives/utils.py
 test/core/derivatives/implementation/
 test/core/derivatives/permute_settings.py
+test/core/derivatives/lstm_settings.py
 
 test/extensions/problem.py
 test/extensions/test_backprop_extension.py
