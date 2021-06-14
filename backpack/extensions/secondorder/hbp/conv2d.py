@@ -79,6 +79,3 @@ class HBPConv2d(HBPBaseModule):
         # sum over spatial coordinates
         result = backproped.view(out_c, out_pixels, out_c, out_pixels).sum([1, 3])
         return result.contiguous()
-
-
-EXTENSIONS = [HBPConv2d()]
