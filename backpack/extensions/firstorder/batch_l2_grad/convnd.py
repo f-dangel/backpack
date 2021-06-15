@@ -13,9 +13,8 @@ class BatchL2ConvND(FirstOrderModuleExtension):
     def bias(self, ext, module, g_inp, g_out, backproped):
         spatial_dims = list(range(2, g_out[0].dim()))
         channel_dim = 1
-        bias_gradient = g_out[0].sum(spatial_dims).pow_(2).sum(channel_dim)
 
-        return bias_gradient.pow_(2).sum(0)
+        return g_out[0].sum(spatial_dims).pow_(2).sum(channel_dim)
 
     def weight(self, ext, module, g_inp, g_out, backproped):
         X, dE_dY = convUtils.get_weight_gradient_factors(
