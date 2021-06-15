@@ -11,10 +11,10 @@ from torch import Tensor, randn
 from torch.nn import (
     AdaptiveAvgPool1d,
     AdaptiveAvgPool2d,
+    AdaptiveAvgPool3d,
     AvgPool1d,
     AvgPool2d,
     AvgPool3d,
-    AdaptiveAvgPool3d,
 )
 
 from backpack import extend
