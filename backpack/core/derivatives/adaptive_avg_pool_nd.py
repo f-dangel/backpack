@@ -1,5 +1,5 @@
 """Implements the derivatives for AdaptiveAvgPool."""
-from typing import Any, List, Tuple, Union
+from typing import List, Tuple, Union
 
 from torch import Size
 from torch.nn import AdaptiveAvgPool1d, AdaptiveAvgPool2d, AdaptiveAvgPool3d
@@ -59,10 +59,10 @@ class AdaptiveAvgPoolNDDerivatives(AvgPoolNDDerivatives):
                     "an equivalent AvgPool module."
                 )
 
-    def get_equivalent_parameters(
+    def get_parameters(
         self, module: Union[AdaptiveAvgPool1d, AdaptiveAvgPool2d, AdaptiveAvgPool3d]
-    ) -> Tuple[List[int], List[int]]:
-        """Computes equivalent parameters for AvgPool.
+    ) -> Tuple[List[int], List[int], int]:
+        """Return parameters for an equivalent AvgPool.
 
         Assumes that check_parameters has been run before.
         Therefore, does not check parameters.
@@ -71,7 +71,7 @@ class AdaptiveAvgPoolNDDerivatives(AvgPoolNDDerivatives):
             module: module to compute on
 
         Returns:
-            stride, kernel_size as lists of length self.N
+            stride, kernel_size, padding as lists of length self.N
         """
         shape_input: Size = module.input0.shape
         shape_target: tuple = self._get_shape_target(module)
@@ -85,7 +85,7 @@ class AdaptiveAvgPoolNDDerivatives(AvgPoolNDDerivatives):
             stride.append(in_dim // out_dim)
             kernel_size.append(in_dim - (out_dim - 1) * stride[n])
 
-        return stride, kernel_size
+        return stride, kernel_size, 0
 
     def _get_shape_target(self, module) -> tuple:
         if isinstance(module.output_size, int):
@@ -105,18 +105,6 @@ class AdaptiveAvgPoolNDDerivatives(AvgPoolNDDerivatives):
                 f"output_size={module.output_size}"
             )
         return shape_target
-
-    def get_parameters(self, module) -> Tuple[Any, Any, Any]:
-        """Return the parameters of an equivalent AvgPoolNd.
-
-        Args:
-            module: module, not used
-
-        Returns:
-            stride, kernel_size, padding
-        """
-        stride, kernel_size = self.get_equivalent_parameters(module)
-        return stride, kernel_size, 0
 
 
 class AdaptiveAvgPool1dDerivatives(AdaptiveAvgPoolNDDerivatives):
