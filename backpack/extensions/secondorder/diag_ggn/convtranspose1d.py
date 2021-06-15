@@ -8,16 +8,12 @@ from backpack.extensions.secondorder.diag_ggn.convtransposend import (
 class DiagGGNConvTranspose1d(DiagGGNConvTransposeND):
     def __init__(self):
         super().__init__(
-            derivatives=ConvTranspose1DDerivatives(),
-            N=1,
-            params=["bias", "weight"],
+            derivatives=ConvTranspose1DDerivatives(), params=["bias", "weight"]
         )
 
 
 class BatchDiagGGNConvTranspose1d(BatchDiagGGNConvTransposeND):
     def __init__(self):
         super().__init__(
-            derivatives=ConvTranspose1DDerivatives(),
-            N=1,
-            params=["bias", "weight"],
+            derivatives=ConvTranspose1DDerivatives(), params=["bias", "weight"]
         )

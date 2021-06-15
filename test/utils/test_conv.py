@@ -6,7 +6,7 @@ from test.utils.test_conv_settings import SETTINGS
 import pytest
 import torch
 
-from backpack.utils.conv import unfold_by_conv, unfold_func
+from backpack.utils.conv import unfold_by_conv, unfold_input
 
 from ..automated_test import check_sizes_and_values
 
@@ -60,7 +60,7 @@ def test_unfold_by_conv(problem):
     problem.set_up()
     input = torch.rand(problem.input_shape).to(problem.device)
 
-    result_unfold = unfold_func(problem.module)(input)
+    result_unfold = unfold_input(problem.module, input)
     result_unfold_by_conv = unfold_by_conv(input, problem.module)
 
     check_sizes_and_values(result_unfold, result_unfold_by_conv)

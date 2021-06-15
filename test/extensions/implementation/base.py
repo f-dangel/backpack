@@ -65,4 +65,11 @@ class ExtensionsImplementation:
         Returns:
             list(list(torch.Tensor)): Parameter-wise lists of Kronecker factors.
         """
+
+    def diag_h_batch(self):
+        """Per-sample Hessian diagonal.
+
+        Returns:
+            list(torch.Tensor): Parameter-wise per-sample Hessian diagonal.
+        """
         raise NotImplementedError

@@ -182,3 +182,11 @@ class BackpackExtensions(ExtensionsImplementation):
             kfra = [p.kfra for p in self.problem.model.parameters()]
 
         return kfra
+
+    def diag_h_batch(self):
+        with backpack(new_ext.BatchDiagHessian()):
+            _, _, loss = self.problem.forward_pass()
+            loss.backward()
+            diag_h_batch = [p.diag_h_batch for p in self.problem.model.parameters()]
+
+        return diag_h_batch
