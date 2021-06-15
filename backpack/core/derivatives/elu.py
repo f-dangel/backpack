@@ -1,9 +1,12 @@
+"""Partial derivatives for the ELU activation function."""
 from torch import exp, le, ones_like, zeros_like
 
 from backpack.core.derivatives.elementwise import ElementwiseDerivatives
 
 
 class ELUDerivatives(ElementwiseDerivatives):
+    """Implement first- and second-order partial derivatives of ELU."""
+
     def hessian_is_zero(self):
         """`ELU''(x) ≠ 0`."""
         return False

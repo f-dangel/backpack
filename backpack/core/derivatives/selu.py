@@ -1,10 +1,11 @@
+"""Partial derivatives for the SELU activation function."""
 from torch import exp, le, ones_like, zeros_like
 
 from backpack.core.derivatives.elementwise import ElementwiseDerivatives
 
 
 class SELUDerivatives(ElementwiseDerivatives):
-    """Alpha and scale are not input_kwargs"""
+    """Implement first- and second-order partial derivatives of SELU."""
 
     alpha = 1.6732632423543772848170429916717
     scale = 1.0507009873554804934193349852946
