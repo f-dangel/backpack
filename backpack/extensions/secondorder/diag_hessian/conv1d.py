@@ -17,7 +17,7 @@ class DiagHConv1d(DiagHConvND):
 
 
 class BatchDiagHConv1d(BatchDiagHConvND):
-    """Module extension for the per-sample Hessian diagonal for ``torch.nn.Conv1d``."""
+    """Module extension for the per-sample Hessian diagonal of ``torch.nn.Conv1d``."""
 
     def __init__(self):
         """Store parameter names, convolution dimension, and derivatives object."""
