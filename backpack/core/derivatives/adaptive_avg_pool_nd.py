@@ -88,28 +88,17 @@ class AdaptiveAvgPoolNDDerivatives(AvgPoolNDDerivatives):
         return stride, kernel_size
 
     def _get_shape_target(self, module) -> Union[Size, Tuple]:
-        if isinstance(module.output_size, Size):
-            shape_target: Size = module.output_size
-        elif isinstance(module.output_size, int):
-            if self.N == 1:
-                shape_target: tuple = (module.output_size,)
-            elif self.N == 2:
-                shape_target: tuple = (module.output_size, module.output_size)
-            elif self.N == 3:
-                shape_target: tuple = (
-                    module.output_size,
-                    module.output_size,
-                    module.output_size,
-                )
+        if isinstance(module.output_size, int):
+            if self.N in [1, 2, 3]:
+                shape_target: tuple = (module.output_size,) * self.N
             else:
                 raise NotImplementedError("Number of dimensions should be 1, 2, or 3")
-        elif isinstance(module.output_size, tuple):
-            if not all([isinstance(element, int) for element in module.output_size]):
-                raise NotImplementedError(
-                    "All elements of output_size must be int. If BackPACK should "
-                    "support using None add it yourself or write an issue."
-                )
-            shape_target: tuple = module.output_size
+        elif isinstance(module.output_size, (tuple, Size)):
+            shape_target: List[Union[int, None]] = list(module.output_size)
+            for n, size_dim in enumerate(shape_target):
+                if size_dim is None:
+                    shape_target[n] = module.input0.shape[2 + n]
+            return tuple(shape_target)
         else:
             raise NotImplementedError(
                 f"AdaptiveAveragePoolingDerivatives does not support "

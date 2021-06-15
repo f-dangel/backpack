@@ -40,4 +40,10 @@ SETTINGS: List[Dict[str, Any]] = [
         "shape_input": (1, 64, 64, 10),
         "works": False,
     },
+    {
+        "N": 3,
+        "shape_target": (None, 2, None),
+        "shape_input": (1, 64, 7, 10, 5),
+        "works": True,
+    },
 ]
