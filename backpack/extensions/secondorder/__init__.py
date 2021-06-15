@@ -16,7 +16,7 @@ The implemented extensions are
   :func:`KFRA <backpack.extensions.KFRA>`,
   :func:`KFLR <backpack.extensions.KFLR>`.
 - The diagonal of the Hessian :func:`DiagHessian <backpack.extensions.DiagHessian>`
-"""
+"""  # noqa: D205
 
 from .diag_ggn import BatchDiagGGNExact, BatchDiagGGNMC, DiagGGNExact, DiagGGNMC
 from .diag_hessian import BatchDiagHessian, DiagHessian

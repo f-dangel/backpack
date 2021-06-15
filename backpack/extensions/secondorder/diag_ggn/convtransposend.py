@@ -3,10 +3,6 @@ from backpack.utils import conv_transpose as convUtils
 
 
 class DiagGGNConvTransposeND(DiagGGNBaseModule):
-    def __init__(self, derivatives, N, params=None):
-        super().__init__(derivatives=derivatives, params=params)
-        self.N = N
-
     def bias(self, ext, module, grad_inp, grad_out, backproped):
         sqrt_ggn = backproped
         return convUtils.extract_bias_diagonal(module, sqrt_ggn, sum_batch=True)
@@ -20,10 +16,6 @@ class DiagGGNConvTransposeND(DiagGGNBaseModule):
 
 
 class BatchDiagGGNConvTransposeND(DiagGGNBaseModule):
-    def __init__(self, derivatives, N, params=None):
-        super().__init__(derivatives=derivatives, params=params)
-        self.N = N
-
     def bias(self, ext, module, grad_inp, grad_out, backproped):
         sqrt_ggn = backproped
         return convUtils.extract_bias_diagonal(module, sqrt_ggn, sum_batch=False)
