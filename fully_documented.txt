@@ -4,6 +4,7 @@ test/extensions/secondorder/secondorder_settings.py
 
 test/extensions/secondorder/hbp
 
+backpack/extensions/secondorder/diag_hessian/__init__.py
 backpack/extensions/secondorder/diag_hessian/conv1d.py
 backpack/extensions/secondorder/diag_hessian/conv2d.py
 backpack/extensions/secondorder/diag_hessian/conv3d.py

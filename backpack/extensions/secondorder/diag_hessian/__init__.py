@@ -1,3 +1,8 @@
+"""Define BackPACK extensions based on the Hessian diagonal.
+
+- Hessian diagonal
+- Per-sample (individual) Hessian diagonal
+"""
 from torch.nn import (
     ELU,
     SELU,
@@ -46,8 +51,7 @@ from . import (
 
 
 class DiagHessian(BackpropExtension):
-    """
-    Diagonal of the Hessian.
+    """BackPACK extension that computes the Hessian diagonal.
 
     Stores the output in :code:`diag_h`, has the same dimensions as the gradient.
 
@@ -58,6 +62,7 @@ class DiagHessian(BackpropExtension):
     """
 
     def __init__(self):
+        """Store savefield and mappings between layers and module extensions."""
         super().__init__(
             savefield="diag_h",
             fail_mode="ERROR",
@@ -92,13 +97,19 @@ class DiagHessian(BackpropExtension):
 
 
 class BatchDiagHessian(BackpropExtension):
-    """Per-sample Hessian diagonal.
+    """BackPACK extensions that computes the per-sample (individual) Hessian diagonal.
 
     Stores the output in ``diag_h_batch`` as a ``[N x ...]`` tensor,
     where ``N`` is the batch size and ``...`` is the parameter shape.
+
+    .. warning::
+
+        Very expensive on networks with non-piecewise linear activations.
+
     """
 
     def __init__(self):
+        """Store savefield and mappings between layers and module extensions."""
         super().__init__(
             savefield="diag_h_batch",
             fail_mode="ERROR",
