@@ -92,12 +92,10 @@ class DiagHessian(BackpropExtension):
 
 
 class BatchDiagHessian(BackpropExtension):
-    """
-    Individual Diagonal of the Hessian.
+    """Per-sample Hessian diagonal.
 
     Stores the output in ``diag_h_batch`` as a ``[N x ...]`` tensor,
-    where ``N`` is the batch size and ``...`` is the shape of the gradient.
-
+    where ``N`` is the batch size and ``...`` is the parameter shape.
     """
 
     def __init__(self):
@@ -128,5 +126,7 @@ class BatchDiagHessian(BackpropExtension):
                 Tanh: activations.DiagHTanh(),
                 LeakyReLU: activations.DiagHLeakyReLU(),
                 LogSigmoid: activations.DiagHLogSigmoid(),
+                ELU: activations.DiagHELU(),
+                SELU: activations.DiagHSELU(),
             },
         )
