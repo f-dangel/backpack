@@ -2,6 +2,7 @@ from backpack.core.derivatives.elu import ELUDerivatives
 from backpack.core.derivatives.leakyrelu import LeakyReLUDerivatives
 from backpack.core.derivatives.logsigmoid import LogSigmoidDerivatives
 from backpack.core.derivatives.relu import ReLUDerivatives
+from backpack.core.derivatives.selu import SELUDerivatives
 from backpack.core.derivatives.sigmoid import SigmoidDerivatives
 from backpack.core.derivatives.tanh import TanhDerivatives
 from backpack.extensions.secondorder.diag_hessian.diag_h_base import DiagHBaseModule
@@ -37,3 +38,10 @@ class DiagHELU(DiagHBaseModule):
 
     def __init__(self):
         super().__init__(derivatives=ELUDerivatives())
+
+
+class DiagHSELU(DiagHBaseModule):
+    """Module extension that computes the Hessian diagonal for ``torch.nn.SELU``."""
+
+    def __init__(self):
+        super().__init__(derivatives=SELUDerivatives())
