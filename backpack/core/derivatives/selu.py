@@ -19,6 +19,7 @@ class SELUDerivatives(ElementwiseDerivatives):
 
         result = self.scale * ones_like(module.input0)
         result[non_pos] = self.scale * self.alpha * exp(module.input0[non_pos])
+
         return result
 
     def d2f(self, module, g_inp, g_out):
@@ -27,4 +28,5 @@ class SELUDerivatives(ElementwiseDerivatives):
 
         result = zeros_like(module.input0)
         result[non_pos] = self.scale * self.alpha * exp(module.input0[non_pos])
+
         return result
