@@ -15,8 +15,11 @@ class DiagHLinear(DiagHBaseModule):
         h_diag = torch.zeros_like(module.bias)
 
         for h_sqrt, sign in zip(sqrt_h_outs, sqrt_h_outs_signs):
-            h_diag_curr = LinUtils.extract_bias_diagonal(module, h_sqrt, sum_batch=True)
-            h_diag.add_(sign * h_diag_curr)
+            h_diag.add_(
+                LinUtils.extract_bias_diagonal(module, h_sqrt, sum_batch=True),
+                alpha=sign,
+            )
+
         return h_diag
 
     def weight(self, ext, module, g_inp, g_out, backproped):
@@ -25,10 +28,11 @@ class DiagHLinear(DiagHBaseModule):
         h_diag = torch.zeros_like(module.weight)
 
         for h_sqrt, sign in zip(sqrt_h_outs, sqrt_h_outs_signs):
-            h_diag_curr = LinUtils.extract_weight_diagonal(
-                module, h_sqrt, sum_batch=True
+            h_diag.add_(
+                LinUtils.extract_weight_diagonal(module, h_sqrt, sum_batch=True),
+                alpha=sign,
             )
-            h_diag.add_(sign * h_diag_curr)
+
         return h_diag
 
 
@@ -55,10 +59,11 @@ class BatchDiagHLinear(DiagHBaseModule):
         )
 
         for h_sqrt, sign in zip(sqrt_h_outs, sqrt_h_outs_signs):
-            h_diag_curr = LinUtils.extract_bias_diagonal(
-                module, h_sqrt, sum_batch=False
+            h_diag.add_(
+                LinUtils.extract_bias_diagonal(module, h_sqrt, sum_batch=False),
+                alpha=sign,
             )
-            h_diag.add_(sign * h_diag_curr)
+
         return h_diag
 
     def weight(self, ext, module, g_inp, g_out, backproped):
@@ -76,8 +81,8 @@ class BatchDiagHLinear(DiagHBaseModule):
         )
 
         for h_sqrt, sign in zip(sqrt_h_outs, sqrt_h_outs_signs):
-            h_diag_curr = LinUtils.extract_weight_diagonal(
-                module, h_sqrt, sum_batch=False
+            h_diag.add_(
+                LinUtils.extract_weight_diagonal(module, h_sqrt, sum_batch=False),
+                alpha=sign,
             )
-            h_diag.add_(sign * h_diag_curr)
         return h_diag
