@@ -35,7 +35,7 @@ class AdaptiveAvgPoolNDDerivatives(AvgPoolNDDerivatives):
             NotImplementedError: if the given shapes do not match
         """
         shape_input: Size = module.input0.shape
-        shape_target: tuple = self._get_shape_target(module)
+        shape_target: Size = module.output.shape
 
         # check length of input shape
         if not len(shape_input) == (self.N + 2):
@@ -43,7 +43,7 @@ class AdaptiveAvgPoolNDDerivatives(AvgPoolNDDerivatives):
                 f"input must be (batch_size, C, ...) with ... {self.N} dimensions"
             )
         # check length of target shape
-        if not len(shape_target) == self.N:
+        if not len(shape_target) == (self.N + 2):
             raise NotImplementedError(
                 f"shape of target should have {self.N} dimensions"
             )
@@ -51,7 +51,7 @@ class AdaptiveAvgPoolNDDerivatives(AvgPoolNDDerivatives):
         # check if input shape is multiple of output shape
         for n in range(self.N):
             in_dim: int = shape_input[2 + n]
-            out_dim: int = shape_target[n]
+            out_dim: int = shape_target[2 + n]
             if (in_dim % out_dim) != 0:
                 raise NotImplementedError(
                     "Not supported in BackPACK: Input shape of AdaptiveAvgPool "
@@ -61,7 +61,7 @@ class AdaptiveAvgPoolNDDerivatives(AvgPoolNDDerivatives):
 
     def get_parameters(
         self, module: Union[AdaptiveAvgPool1d, AdaptiveAvgPool2d, AdaptiveAvgPool3d]
-    ) -> Tuple[List[int], List[int], int]:
+    ) -> Tuple[List[int], List[int], List[int]]:
         """Return parameters for an equivalent AvgPool.
 
         Assumes that check_parameters has been run before.
@@ -74,37 +74,18 @@ class AdaptiveAvgPoolNDDerivatives(AvgPoolNDDerivatives):
             stride, kernel_size, padding as lists of length self.N
         """
         shape_input: Size = module.input0.shape
-        shape_target: tuple = self._get_shape_target(module)
+        shape_target: Size = module.output.shape
 
         # calculate equivalent AvgPoolND parameters
         stride: List[int] = []
         kernel_size: List[int] = []
         for n in range(self.N):
             in_dim: int = shape_input[2 + n]
-            out_dim: int = shape_target[n]
+            out_dim: int = shape_target[2 + n]
             stride.append(in_dim // out_dim)
             kernel_size.append(in_dim - (out_dim - 1) * stride[n])
 
-        return stride, kernel_size, 0
-
-    def _get_shape_target(self, module) -> tuple:
-        if isinstance(module.output_size, int):
-            if self.N in [1, 2, 3]:
-                shape_target: tuple = (module.output_size,) * self.N
-            else:
-                raise NotImplementedError("Number of dimensions should be 1, 2, or 3")
-        elif isinstance(module.output_size, (tuple, Size)):
-            shape_target: List[Union[int, None]] = list(module.output_size)
-            for n, size_dim in enumerate(shape_target):
-                if size_dim is None:
-                    shape_target[n] = module.input0.shape[2 + n]
-            return tuple(shape_target)
-        else:
-            raise NotImplementedError(
-                f"AdaptiveAveragePoolingDerivatives does not support "
-                f"output_size={module.output_size}"
-            )
-        return shape_target
+        return stride, kernel_size, list((0,) * self.N)
 
 
 class AdaptiveAvgPool1dDerivatives(AdaptiveAvgPoolNDDerivatives):
