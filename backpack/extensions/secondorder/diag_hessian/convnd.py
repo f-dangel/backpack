@@ -82,7 +82,7 @@ class BatchDiagHConvND(DiagHBaseModule):
             N,
             *module.weight.shape,
             device=module.weight.device,
-            dtype=module.weight.dtype
+            dtype=module.weight.dtype,
         )
 
         for h_sqrt, sign in zip(sqrt_h_outs, sqrt_h_outs_signs):
