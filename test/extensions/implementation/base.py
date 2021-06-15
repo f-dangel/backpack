@@ -40,6 +40,36 @@ class ExtensionsImplementation:
         """Diagonal of Hessian"""
         raise NotImplementedError
 
+    def kfac(self, mc_samples=1):
+        """Kronecker-factored approximate curvature (KFAC).
+
+        Args:
+            mc_samples (int, optional): Number of Monte-Carlo samples. Default: ``1``.
+
+        Returns:
+            list(list(torch.Tensor)): Parameter-wise lists of Kronecker factors.
+        """
+        raise NotImplementedError
+
+    def kflr(self):
+        """Kronecker-factored low-rank approximation (KFLR).
+
+        Returns:
+            list(list(torch.Tensor)): Parameter-wise lists of Kronecker factors.
+        """
+        raise NotImplementedError
+
+    def kfra(self):
+        """Kronecker-factored recursive approximation (KFRA).
+
+        Returns:
+            list(list(torch.Tensor)): Parameter-wise lists of Kronecker factors.
+        """
+
     def diag_h_batch(self):
-        """Individual Diagonal of Hessian"""
+        """Per-sample Hessian diagonal.
+
+        Returns:
+            list(torch.Tensor): Parameter-wise per-sample Hessian diagonal.
+        """
         raise NotImplementedError

@@ -9,7 +9,8 @@ exclude = '''
     | \.git
     | \.pytest_cache
     | \.benchmarks
-    | docs_src
+    | docs_src/rtd
+    | docs_src/rtd_output
     | docs
     | build
     | dist

@@ -1,4 +1,6 @@
 from torch.nn import (
+    ELU,
+    SELU,
     AvgPool1d,
     AvgPool2d,
     AvgPool3d,
@@ -83,6 +85,8 @@ class DiagHessian(BackpropExtension):
                 Tanh: activations.DiagHTanh(),
                 LeakyReLU: activations.DiagHLeakyReLU(),
                 LogSigmoid: activations.DiagHLogSigmoid(),
+                ELU: activations.DiagHELU(),
+                SELU: activations.DiagHSELU(),
             },
         )
 
