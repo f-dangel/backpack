@@ -37,20 +37,10 @@ class DiagHLinear(DiagHBaseModule):
 
 
 class BatchDiagHLinear(DiagHBaseModule):
-    """
-    Individual Diagonal of the Hessian for torch.nn.linear
-
-    Returns: Diagonal Hessian of weights
-             Diagonal Hessian of bias
-    """
-
     def __init__(self):
         super().__init__(derivatives=LinearDerivatives(), params=["bias", "weight"])
 
     def bias(self, ext, module, g_inp, g_out, backproped):
-        """
-        Individual Diagonal of the Hessian for bias of torch.nn.linear
-        """
         N = module.input0.shape[0]
         sqrt_h_outs = backproped["matrices"]
         sqrt_h_outs_signs = backproped["signs"]
@@ -67,9 +57,6 @@ class BatchDiagHLinear(DiagHBaseModule):
         return h_diag
 
     def weight(self, ext, module, g_inp, g_out, backproped):
-        """
-        Individual Diagonal of the Hessian for weights of torch.nn.linear
-        """
         N = module.input0.shape[0]
         sqrt_h_outs = backproped["matrices"]
         sqrt_h_outs_signs = backproped["signs"]
