@@ -50,7 +50,9 @@ class BatchDiagHLinear(DiagHBaseModule):
         N = module.input0.shape[0]
         sqrt_h_outs = backproped["matrices"]
         sqrt_h_outs_signs = backproped["signs"]
-        h_diag = torch.zeros(N, *module.bias.shape)
+        h_diag = torch.zeros(
+            N, *module.bias.shape, device=module.bias.device, dtype=module.bias.dtype
+        )
 
         for h_sqrt, sign in zip(sqrt_h_outs, sqrt_h_outs_signs):
             h_diag_curr = LinUtils.extract_bias_diagonal(
@@ -66,7 +68,12 @@ class BatchDiagHLinear(DiagHBaseModule):
         N = module.input0.shape[0]
         sqrt_h_outs = backproped["matrices"]
         sqrt_h_outs_signs = backproped["signs"]
-        h_diag = torch.zeros(N, *module.weight.shape)
+        h_diag = torch.zeros(
+            N,
+            *module.weight.shape,
+            device=module.weight.device,
+            dtype=module.weight.dtype
+        )
 
         for h_sqrt, sign in zip(sqrt_h_outs, sqrt_h_outs_signs):
             h_diag_curr = LinUtils.extract_weight_diagonal(
