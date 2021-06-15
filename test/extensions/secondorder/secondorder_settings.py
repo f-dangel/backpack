@@ -28,6 +28,7 @@ from test.extensions.automated_settings import (
 
 import torch
 from torch.nn import (
+    ELU,
     AvgPool1d,
     AvgPool2d,
     AvgPool3d,
@@ -97,7 +98,7 @@ SECONDORDER_SETTINGS += [
 ###############################################################################
 #                         test setting: Activation Layers                     #
 ###############################################################################
-activations = [ReLU, Sigmoid, Tanh, LeakyReLU, LogSigmoid]
+activations = [ReLU, Sigmoid, Tanh, LeakyReLU, LogSigmoid, ELU]
 
 for act in activations:
     for bias in [True, False]:
