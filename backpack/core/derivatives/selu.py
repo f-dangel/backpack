@@ -1,4 +1,4 @@
-from torch import exp, gt
+from torch import exp, le, ones_like, zeros_like
 
 from backpack.core.derivatives.elementwise import ElementwiseDerivatives
 
@@ -14,21 +14,17 @@ class SELUDerivatives(ElementwiseDerivatives):
         return False
 
     def df(self, module, g_inp, g_out):
-        """First SELU derivative: `SELU'(x) = scale if x < 0 else scale*alpha*e^x`."""
+        """First SELU derivative: `SELU'(x) = scale if x > 0 else scale*alpha*e^x`."""
+        non_pos = le(module.input0, 0)
 
-        df_SELU = gt(module.input0, 0).float()
-        df_SELU[df_SELU == 1] = self.scale
-        df_SELU[df_SELU == 0] = (
-            self.scale * self.alpha * exp(module.input0[df_SELU == 0])
-        )
-        return df_SELU
+        result = self.scale * ones_like(module.input0)
+        result[non_pos] = self.scale * self.alpha * exp(module.input0[non_pos])
+        return result
 
     def d2f(self, module, g_inp, g_out):
-        """Second SELU derivative: `SELU''(x) = 0 if x < 0 else scale*alpha*e^x`."""
+        """Second SELU derivative: `SELU''(x) = 0 if x > 0 else scale*alpha*e^x`."""
+        non_pos = le(module.input0, 0)
 
-        d2f_SELU = gt(module.input0, 0).float()
-        d2f_SELU[d2f_SELU == 1] = 0
-        d2f_SELU[d2f_SELU == 0] = (
-            self.scale * self.alpha * exp(module.input0[d2f_SELU == 0])
-        )
-        return d2f_SELU
+        result = zeros_like(module.input0)
+        result[non_pos] = self.scale * self.alpha * exp(module.input0[non_pos])
+        return result
