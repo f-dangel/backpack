@@ -35,7 +35,7 @@ class AdaptiveAvgPoolNDDerivatives(AvgPoolNDDerivatives):
             NotImplementedError: if the given shapes do not match
         """
         shape_input: Size = module.input0.shape
-        shape_target: Union[Size, tuple] = self._get_shape_target(module)
+        shape_target: tuple = self._get_shape_target(module)
 
         # check length of input shape
         if not len(shape_input) == (self.N + 2):
@@ -74,7 +74,7 @@ class AdaptiveAvgPoolNDDerivatives(AvgPoolNDDerivatives):
             stride, kernel_size as lists of length self.N
         """
         shape_input: Size = module.input0.shape
-        shape_target: Union[Size, tuple] = self._get_shape_target(module)
+        shape_target: tuple = self._get_shape_target(module)
 
         # calculate equivalent AvgPoolND parameters
         stride: List[int] = []
@@ -87,7 +87,7 @@ class AdaptiveAvgPoolNDDerivatives(AvgPoolNDDerivatives):
 
         return stride, kernel_size
 
-    def _get_shape_target(self, module) -> Union[Size, Tuple]:
+    def _get_shape_target(self, module) -> tuple:
         if isinstance(module.output_size, int):
             if self.N in [1, 2, 3]:
                 shape_target: tuple = (module.output_size,) * self.N
