@@ -56,7 +56,7 @@ def setup(device):
     Returns:
         inputs, labels, model, loss function
     """
-    X, y = load_one_batch_mnist(batch_size=128)
+    X, y = load_one_batch_mnist(batch_size=64)
     X, y = X.to(device), y.to(device)
 
     model = extend(
@@ -173,7 +173,9 @@ def compare_runtime(device):
             start = time.time()
 
             compute_individual_gradients(device)
-            torch.cuda.synchronize()
+
+            if str(device) == "cuda":
+                torch.cuda.synchronize()
 
             run_time = time.time() - start
 
