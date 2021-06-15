@@ -10,7 +10,7 @@ on a linear model for MNIST.
 # %%
 # Let's start by loading some dummy data and extending the model
 
-from torch import allclose, rand
+from torch import rand
 from torch.nn import CrossEntropyLoss, Flatten, Linear, Sequential
 
 from backpack import backpack, extend

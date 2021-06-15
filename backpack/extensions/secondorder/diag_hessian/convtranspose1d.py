@@ -8,9 +8,14 @@ from backpack.extensions.secondorder.diag_hessian.convtransposend import (
 class DiagHConvTranspose1d(DiagHConvTransposeND):
     def __init__(self):
         super().__init__(
-            derivatives=ConvTranspose1DDerivatives(),
-            N=1,
-            params=["bias", "weight"],
+            derivatives=ConvTranspose1DDerivatives(), params=["bias", "weight"]
+        )
+
+
+class BatchDiagHConvTranspose1d(BatchDiagHConvTransposeND):
+    def __init__(self):
+        super().__init__(
+            derivatives=ConvTranspose1DDerivatives(), params=["bias", "weight"]
         )
 
 

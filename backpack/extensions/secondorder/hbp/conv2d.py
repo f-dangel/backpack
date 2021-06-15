@@ -14,6 +14,13 @@ class HBPConv2d(HBPBaseModule):
         super().__init__(derivatives=Conv2DDerivatives(), params=["weight", "bias"])
 
     def weight(self, ext, module, g_inp, g_out, backproped):
+
+        if module.groups != 1:
+            raise NotImplementedError(
+                f"groups ≠ 1 is not supported by {ext.__class__.__name__} "
+                + f"(got {module.groups})."
+            )
+
         bp_strategy = ext.get_backprop_strategy()
 
         if BackpropStrategy.is_batch_average(bp_strategy):
@@ -34,7 +41,7 @@ class HBPConv2d(HBPBaseModule):
         return kron_factors
 
     def _factors_from_input(self, ext, module):
-        X = convUtils.unfold_func(module)(module.input0)
+        X = convUtils.unfold_input(module, module.input0)
         batch = X.size(0)
 
         ea_strategy = ext.get_ea_strategy()
@@ -72,6 +79,3 @@ class HBPConv2d(HBPBaseModule):
         # sum over spatial coordinates
         result = backproped.view(out_c, out_pixels, out_c, out_pixels).sum([1, 3])
         return result.contiguous()
-
-
-EXTENSIONS = [HBPConv2d()]

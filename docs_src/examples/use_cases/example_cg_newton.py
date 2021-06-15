@@ -118,14 +118,14 @@ def get_accuracy(output, targets):
 
 class CGNOptimizer(torch.optim.Optimizer):
     def __init__(
-            self,
-            parameters,
-            bp_extension,
-            lr=0.1,
-            damping=1e-2,
-            maxiter=100,
-            tol=1e-1,
-            atol=1e-8,
+        self,
+        parameters,
+        bp_extension,
+        lr=0.1,
+        damping=1e-2,
+        maxiter=100,
+        tol=1e-1,
+        atol=1e-8,
     ):
         super().__init__(
             parameters,

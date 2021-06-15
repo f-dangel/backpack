@@ -40,3 +40,19 @@ def test_diag_h_batch(problem):
 
     check_sizes_and_values(autograd_res, backpack_res)
     problem.tear_down()
+
+
+@pytest.mark.parametrize("problem", PROBLEMS, ids=IDS)
+def test_diag_h_batch(problem):
+    """Test Diagonal of Hessian
+
+    Args:
+        problem (ExtensionsTestProblem): Problem for extension test.
+    """
+    problem.set_up()
+
+    backpack_res = BackpackExtensions(problem).diag_h_batch()
+    autograd_res = AutogradExtensions(problem).diag_h_batch()
+
+    check_sizes_and_values(autograd_res, backpack_res)
+    problem.tear_down()

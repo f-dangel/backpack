@@ -7,17 +7,9 @@ from backpack.extensions.secondorder.diag_ggn.convnd import (
 
 class DiagGGNConv1d(DiagGGNConvND):
     def __init__(self):
-        super().__init__(
-            derivatives=Conv1DDerivatives(),
-            N=1,
-            params=["bias", "weight"],
-        )
+        super().__init__(derivatives=Conv1DDerivatives(), params=["bias", "weight"])
 
 
 class BatchDiagGGNConv1d(BatchDiagGGNConvND):
     def __init__(self):
-        super().__init__(
-            derivatives=Conv1DDerivatives(),
-            N=1,
-            params=["bias", "weight"],
-        )
+        super().__init__(derivatives=Conv1DDerivatives(), params=["bias", "weight"])
