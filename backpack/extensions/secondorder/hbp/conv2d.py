@@ -41,7 +41,7 @@ class HBPConv2d(HBPBaseModule):
         return kron_factors
 
     def _factors_from_input(self, ext, module):
-        X = convUtils.unfold_func(module)(module.input0)
+        X = convUtils.unfold_input(module, module.input0)
         batch = X.size(0)
 
         ea_strategy = ext.get_ea_strategy()

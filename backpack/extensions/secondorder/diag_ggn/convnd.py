@@ -8,10 +8,7 @@ class DiagGGNConvND(DiagGGNBaseModule):
         return convUtils.extract_bias_diagonal(module, sqrt_ggn, sum_batch=True)
 
     def weight(self, ext, module, grad_inp, grad_out, backproped):
-        if self.N == 2:
-            X = convUtils.unfold_func(module)(module.input0)
-        else:
-            X = convUtils.unfold_by_conv(module.input0, module)
+        X = convUtils.unfold_input(module, module.input0)
         weight_diag = convUtils.extract_weight_diagonal(
             module, X, backproped, sum_batch=True
         )
@@ -24,10 +21,7 @@ class BatchDiagGGNConvND(DiagGGNBaseModule):
         return convUtils.extract_bias_diagonal(module, sqrt_ggn, sum_batch=False)
 
     def weight(self, ext, module, grad_inp, grad_out, backproped):
-        if self.N == 2:
-            X = convUtils.unfold_func(module)(module.input0)
-        else:
-            X = convUtils.unfold_by_conv(module.input0, module)
+        X = convUtils.unfold_input(module, module.input0)
         weight_diag = convUtils.extract_weight_diagonal(
             module, X, backproped, sum_batch=False
         )

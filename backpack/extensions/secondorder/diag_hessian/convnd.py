@@ -22,7 +22,7 @@ class DiagHConvND(DiagHBaseModule):
     def weight(self, ext, module, g_inp, g_out, backproped):
         sqrt_h_outs = backproped["matrices"]
         sqrt_h_outs_signs = backproped["signs"]
-        X = convUtils.unfold_by_conv(module.input0, module)
+        X = convUtils.unfold_input(module, module.input0)
         h_diag = torch.zeros_like(module.weight)
 
         for h_sqrt, sign in zip(sqrt_h_outs, sqrt_h_outs_signs):
@@ -55,7 +55,7 @@ class BatchDiagHConvND(DiagHBaseModule):
         N = module.input0.shape[0]
         sqrt_h_outs = backproped["matrices"]
         sqrt_h_outs_signs = backproped["signs"]
-        X = convUtils.unfold_by_conv(module.input0, module)
+        X = convUtils.unfold_input(module, module.input0)
         h_diag = torch.zeros(
             N,
             *module.weight.shape,
