@@ -15,6 +15,7 @@ from torch.nn import (
     AvgPool1d,
     AvgPool2d,
     AvgPool3d,
+    Module,
 )
 
 from backpack import extend
@@ -110,10 +111,6 @@ class AdaptiveAvgPoolProblem:
         self.seed = seed
         self.id_prefix = id_prefix
 
-        self.module: Union[AdaptiveAvgPool1d, AdaptiveAvgPool2d, None] = None
-        self.input: Union[Tensor, None] = None
-        self.output: Union[Tensor, None] = None
-
     def make_id(self) -> str:
         """Create an id from problem parameters.
 
@@ -131,7 +128,6 @@ class AdaptiveAvgPoolProblem:
         torch.manual_seed(self.seed)
         self.module = self._make_module()
         self.input = randn(self.shape_input)
-        print(self.input.shape)
         self.output = self.module(self.input)
 
     def tear_down(self):
@@ -171,7 +167,7 @@ class AdaptiveAvgPoolProblem:
         Checks the sizes and values.
         """
         stride, kernel_size, _ = self._get_derivatives().get_parameters(self.module)
-        module_equivalent = self._make_module_equivalent(stride, kernel_size)
+        module_equivalent: Module = self._make_module_equivalent(stride, kernel_size)
         output_equivalent: Tensor = module_equivalent(self.input)
 
         check_sizes_and_values(self.output, output_equivalent)
