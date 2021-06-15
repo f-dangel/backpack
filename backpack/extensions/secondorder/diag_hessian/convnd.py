@@ -17,7 +17,7 @@ class DiagHConvND(DiagHBaseModule):
 
         for h_sqrt, sign in zip(sqrt_h_outs, sqrt_h_outs_signs):
             h_diag.add_(
-                convUtils.extract_bias_diagonal(module, h_sqrt, self.N, sum_batch=True),
+                convUtils.extract_bias_diagonal(module, h_sqrt, sum_batch=True),
                 alpha=sign,
             )
 
@@ -31,9 +31,7 @@ class DiagHConvND(DiagHBaseModule):
 
         for h_sqrt, sign in zip(sqrt_h_outs, sqrt_h_outs_signs):
             h_diag.add_(
-                convUtils.extract_weight_diagonal(
-                    module, X, h_sqrt, self.N, sum_batch=True
-                ),
+                convUtils.extract_weight_diagonal(module, X, h_sqrt, sum_batch=True),
                 alpha=sign,
             )
 
@@ -65,9 +63,7 @@ class BatchDiagHConvND(DiagHBaseModule):
 
         for h_sqrt, sign in zip(sqrt_h_outs, sqrt_h_outs_signs):
             h_diag.add_(
-                convUtils.extract_bias_diagonal(
-                    module, h_sqrt, self.N, sum_batch=False
-                ),
+                convUtils.extract_bias_diagonal(module, h_sqrt, sum_batch=False),
                 alpha=sign,
             )
 
@@ -90,9 +86,7 @@ class BatchDiagHConvND(DiagHBaseModule):
 
         for h_sqrt, sign in zip(sqrt_h_outs, sqrt_h_outs_signs):
             h_diag.add_(
-                convUtils.extract_weight_diagonal(
-                    module, X, h_sqrt, self.N, sum_batch=False
-                ),
+                convUtils.extract_weight_diagonal(module, X, h_sqrt, sum_batch=False),
                 alpha=sign,
             )
 

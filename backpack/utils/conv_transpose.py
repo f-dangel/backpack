@@ -5,6 +5,8 @@ from einops import rearrange
 from torch import einsum
 from torch.nn.functional import conv_transpose1d, conv_transpose2d, conv_transpose3d
 
+from backpack.utils.conv import extract_bias_diagonal as conv_extract_bias_diagonal
+
 
 def get_weight_gradient_factors(input, grad_out, module, N):
     M, C_in = input.shape[0], input.shape[1]
@@ -16,7 +18,7 @@ def get_weight_gradient_factors(input, grad_out, module, N):
     return X, dE_dY
 
 
-def extract_weight_diagonal(module, unfolded_input, S, N, sum_batch=True):
+def extract_weight_diagonal(module, unfolded_input, S, sum_batch=True):
     """Extract diagonal of ``(Jᵀ S) (Jᵀ S)ᵀ`` where ``J`` is the weight Jacobian.
 
     Args:
@@ -26,7 +28,6 @@ def extract_weight_diagonal(module, unfolded_input, S, N, sum_batch=True):
         unfolded_input (torch.Tensor): Unfolded input to the transpose convolution.
         S (torch.Tensor): Backpropagated (symmetric factorization) of the loss Hessian.
             Has shape ``(V, *module.output.shape)``.
-        N (int): Transpose convolution dimension.
         sum_batch (bool, optional): Sum out the batch dimension of the weight diagonals.
             Default value: ``True``.
 
@@ -55,22 +56,27 @@ def extract_weight_diagonal(module, unfolded_input, S, N, sum_batch=True):
     return weight_diagonal
 
 
-def extract_bias_diagonal(module, sqrt, N, sum_batch=True):
-    """
-    `sqrt` must be the backpropagated quantity for DiagH or DiagGGN(MC)
-    """
-    V_axis, N_axis = 0, 1
+# TODO This method applies the bias Jacobian, then squares and sums the result. Intro-
+# duce base class for {Batch}DiagHessian and DiagGGN{Exact,MC} and remove this method
+def extract_bias_diagonal(module, S, sum_batch=True):
+    """Extract diagonal of ``(Jᵀ S) (Jᵀ S)ᵀ`` where ``J`` is the weight Jacobian.
 
-    if N == 1:
-        einsum_eq = "vncl->vnc"
-    elif N == 2:
-        einsum_eq = "vnchw->vnc"
-    elif N == 3:
-        einsum_eq = "vncdhw->vnc"
-    else:
-        ValueError("{}-dimensional ConvTranspose is not implemented.".format(N))
-    sum_dims = [V_axis, N_axis] if sum_batch else [V_axis]
-    return (einsum(einsum_eq, sqrt) ** 2).sum(sum_dims)
+    Args:
+        module (torch.nn.ConvTranspose1d or torch.nn.ConvTranspose2d or
+            torch.nn.ConvTranspose3d ): Convolution layer for which the diagonal is
+            extracted w.r.t. the bias.
+        unfolded_input (torch.Tensor): Unfolded input to the transpose convolution.
+        S (torch.Tensor): Backpropagated (symmetric factorization) of the loss Hessian.
+            Has shape ``(V, *module.output.shape)``.
+        sum_batch (bool, optional): Sum out the batch dimension of the bias diagonals.
+            Default value: ``True``.
+
+    Returns:
+        torch.Tensor: Per-sample bias diagonal if ``sum_batch=False`` (shape
+            ``(N, module.bias.shape)`` with batch size ``N``) or summed bias
+            diagonal if ``sum_batch=True`` (shape ``module.bias.shape``).
+    """
+    return conv_extract_bias_diagonal(module, S, sum_batch=sum_batch)
 
 
 def unfold_by_conv_transpose(input, module):
