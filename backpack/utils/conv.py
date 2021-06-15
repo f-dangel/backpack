@@ -36,18 +36,6 @@ def get_weight_gradient_factors(input, grad_out, module, N):
     return X, dE_dY
 
 
-def get_bias_gradient_factors(gradient, C_axis, N):
-    if N == 1:
-        bias_gradient = (einsum("ncl->nc", gradient) ** 2).sum(C_axis)
-    elif N == 2:
-        bias_gradient = (einsum("nchw->nc", gradient) ** 2).sum(C_axis)
-    elif N == 3:
-        bias_gradient = (einsum("ncdhw->nc", gradient) ** 2).sum(C_axis)
-    else:
-        raise ValueError("{}-dimensional Conv. is not implemented.".format(N))
-    return bias_gradient
-
-
 def separate_channels_and_pixels(module, tensor):
     """Reshape (V, N, C, H, W) into (V, N, C, H * W)."""
     return rearrange(tensor, "v n c ... -> v n c (...)")
