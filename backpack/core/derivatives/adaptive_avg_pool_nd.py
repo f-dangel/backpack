@@ -2,7 +2,7 @@
 from typing import Any, List, Tuple, Union
 
 from torch import Size
-from torch.nn import AdaptiveAvgPool1d, AdaptiveAvgPool2d
+from torch.nn import AdaptiveAvgPool1d, AdaptiveAvgPool2d, AdaptiveAvgPool3d
 
 from backpack.core.derivatives.avgpoolnd import AvgPoolNDDerivatives
 
@@ -19,9 +19,9 @@ class AdaptiveAvgPoolNDDerivatives(AvgPoolNDDerivatives):
         super(AdaptiveAvgPoolNDDerivatives, self).__init__(N=N)
 
     def check_parameters(
-        self, module: Union[AdaptiveAvgPool1d, AdaptiveAvgPool2d]
-    ) -> Tuple[List[int], List[int]]:
-        """Checks if parameters are supported.
+        self, module: Union[AdaptiveAvgPool1d, AdaptiveAvgPool2d, AdaptiveAvgPool3d]
+    ) -> None:
+        """Checks if the parameters are supported.
 
         Specifically checks if input shape is multiple of output shape.
         In this case, there are parameters for AvgPoolND that are equivalent.
@@ -29,14 +29,10 @@ class AdaptiveAvgPoolNDDerivatives(AvgPoolNDDerivatives):
         https://stackoverflow.com/questions/53841509/how-does-adaptive-pooling-in-pytorch-work/63603993#63603993 # noqa: B950
 
         Args:
-            module: the module to check
-
-        Returns:
-            stride and kernel_size as lists of length self.N
+            module: module to check
 
         Raises:
-            NotImplementedError: if target shape is not supported or not compatible
-                with input shape.
+            NotImplementedError: if the given shapes do not match
         """
         shape_input: Size = module.input0.shape
         shape_target: Union[Size, tuple] = self._get_shape_target(module)
@@ -52,9 +48,7 @@ class AdaptiveAvgPoolNDDerivatives(AvgPoolNDDerivatives):
                 f"shape of target should have {self.N} dimensions"
             )
 
-        # check if shapes are multiples and calculate equivalent AvgPoolND parameters
-        stride: List[int] = []
-        kernel_size: List[int] = []
+        # check if input shape is multiple of output shape
         for n in range(self.N):
             in_dim: int = shape_input[2 + n]
             out_dim: int = shape_target[n]
@@ -64,6 +58,30 @@ class AdaptiveAvgPoolNDDerivatives(AvgPoolNDDerivatives):
                     "must be multiple of output shape. Only in this case, there is "
                     "an equivalent AvgPool module."
                 )
+
+    def get_equivalent_parameters(
+        self, module: Union[AdaptiveAvgPool1d, AdaptiveAvgPool2d, AdaptiveAvgPool3d]
+    ) -> Tuple[List[int], List[int]]:
+        """Computes equivalent parameters for AvgPool.
+
+        Assumes that check_parameters has been run before.
+        Therefore, does not check parameters.
+
+        Args:
+            module: module to compute on
+
+        Returns:
+            stride, kernel_size as lists of length self.N
+        """
+        shape_input: Size = module.input0.shape
+        shape_target: Union[Size, tuple] = self._get_shape_target(module)
+
+        # calculate equivalent AvgPoolND parameters
+        stride: List[int] = []
+        kernel_size: List[int] = []
+        for n in range(self.N):
+            in_dim: int = shape_input[2 + n]
+            out_dim: int = shape_target[n]
             stride.append(in_dim // out_dim)
             kernel_size.append(in_dim - (out_dim - 1) * stride[n])
 
@@ -77,28 +95,27 @@ class AdaptiveAvgPoolNDDerivatives(AvgPoolNDDerivatives):
                 shape_target: tuple = (module.output_size,)
             elif self.N == 2:
                 shape_target: tuple = (module.output_size, module.output_size)
+            elif self.N == 3:
+                shape_target: tuple = (
+                    module.output_size,
+                    module.output_size,
+                    module.output_size,
+                )
             else:
-                raise NotImplementedError("Number of dimensions should be 1 or 2")
+                raise NotImplementedError("Number of dimensions should be 1, 2, or 3")
         elif isinstance(module.output_size, tuple):
             if not all([isinstance(element, int) for element in module.output_size]):
                 raise NotImplementedError(
-                    "Not supported in BackPACK: all elements of output_size must be int"
+                    "All elements of output_size must be int. If BackPACK should "
+                    "support using None add it yourself or write an issue."
                 )
             shape_target: tuple = module.output_size
         else:
             raise NotImplementedError(
-                f"AdaptiveAveragePoolingDerivatives does not support target "
+                f"AdaptiveAveragePoolingDerivatives does not support "
                 f"output_size={module.output_size}"
             )
         return shape_target
-
-    def check_exotic_parameters(self, module):
-        """Overwrite and pass because no exotic parameters.
-
-        Args:
-            module: module
-        """
-        pass
 
     def get_parameters(self, module) -> Tuple[Any, Any, Any]:
         """Return the parameters of an equivalent AvgPoolNd.
@@ -109,7 +126,7 @@ class AdaptiveAvgPoolNDDerivatives(AvgPoolNDDerivatives):
         Returns:
             stride, kernel_size, padding
         """
-        stride, kernel_size = self.check_parameters(module)
+        stride, kernel_size = self.get_equivalent_parameters(module)
         return stride, kernel_size, 0
 
 

@@ -8,7 +8,14 @@ from typing import Any, Dict, List, Tuple, Union
 
 import torch
 from torch import Tensor, randn
-from torch.nn import AdaptiveAvgPool1d, AdaptiveAvgPool2d, AvgPool1d, AvgPool2d
+from torch.nn import (
+    AdaptiveAvgPool1d,
+    AdaptiveAvgPool2d,
+    AvgPool1d,
+    AvgPool2d,
+    AvgPool3d,
+    AdaptiveAvgPool3d,
+)
 
 from backpack import extend
 from backpack.core.derivatives.adaptive_avg_pool_nd import AdaptiveAvgPoolNDDerivatives
@@ -138,38 +145,34 @@ class AdaptiveAvgPoolProblem:
             module = AdaptiveAvgPool1d(output_size=self.shape_target)
         elif self.N == 2:
             module = AdaptiveAvgPool2d(output_size=self.shape_target)
+        elif self.N == 3:
+            module = AdaptiveAvgPool3d(output_size=self.shape_target)
         else:
             raise NotImplementedError(f"N={self.N} not implemented in test suite.")
         return extend(module.to(device=self.device))
 
-    def check_parameters(self) -> Tuple[List[int], List[int]]:
+    def check_parameters(self) -> None:
         """Key method for test.
 
         Run the AdaptiveAvgPoolNDDerivatives.check_parameters() method.
-
-        Returns:
-            stride, kernel_size
         """
-        return self._get_derivatives().check_parameters(module=self.module)
+        self._get_derivatives().check_parameters(module=self.module)
 
     def _get_derivatives(self) -> AdaptiveAvgPoolNDDerivatives:
-        if self.N == 1:
-            derivatives = AdaptiveAvgPoolNDDerivatives(N=1)
-        elif self.N == 2:
-            derivatives = AdaptiveAvgPoolNDDerivatives(N=2)
+        if self.N in [1, 2, 3]:
+            derivatives = AdaptiveAvgPoolNDDerivatives(N=self.N)
         else:
             raise NotImplementedError(f"N={self.N} not implemented in test suite.")
         return derivatives
 
-    def check_equivalence(self, stride: List[int], kernel_size: List[int]) -> None:
+    def check_equivalence(self) -> None:
         """Check if the given parameters lead to the same output.
 
         Checks the sizes and values.
-
-        Args:
-            stride: stride
-            kernel_size: kernel_size
         """
+        stride, kernel_size = self._get_derivatives().get_equivalent_parameters(
+            self.module
+        )
         module_equivalent = self._make_module_equivalent(stride, kernel_size)
         output_equivalent: Tensor = module_equivalent(self.input)
 
@@ -182,6 +185,8 @@ class AdaptiveAvgPoolProblem:
             module = AvgPool1d(kernel_size=kernel_size[0], stride=stride[0])
         elif self.N == 2:
             module = AvgPool2d(kernel_size=kernel_size, stride=stride)
+        elif self.N == 3:
+            module = AvgPool3d(kernel_size=kernel_size, stride=stride)
         else:
             raise NotImplementedError(f"N={self.N} not implemented in test suite.")
         return module.to(self.device)

@@ -14,6 +14,7 @@ from torch.nn import (
     ConvTranspose1d,
     ConvTranspose2d,
     ConvTranspose3d,
+    Module,
 )
 
 from backpack.core.derivatives.basederivatives import BaseDerivatives
@@ -32,11 +33,29 @@ class AvgPoolNDDerivatives(BaseDerivatives):
             self.conv = Conv3d
             self.convt = ConvTranspose3d
 
+    def check_parameters(self, module: Module) -> None:
+        assert module.count_include_pad, (
+            "Might not work for exotic hyperparameters of AvgPool2d, "
+            + "like count_include_pad=False"
+        )
+
+    def get_parameters(self, module) -> Tuple[Any, Any, Any]:
+        """Return the parameters of the module.
+
+        Args:
+            module: module
+
+        Returns:
+            stride, kernel_size, padding
+        """
+        return module.stride, module.kernel_size, module.padding
+
     def hessian_is_zero(self):
         return True
 
     def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
         """Use fact that average pooling can be implemented as conv."""
+        self.check_parameters(module)
         if self.N == 1:
             _, C, L_in = module.input0.size()
             _, _, L_out = module.output.size()
@@ -55,6 +74,8 @@ class AvgPoolNDDerivatives(BaseDerivatives):
             in_features = C * D_in * H_in * W_in
             out_features = C * D_out * H_out * W_out
             shape_out = (1, D_out, H_out, W_out)
+        else:
+            raise NotImplementedError(f"N={self.N} not supported.")
 
         mat = mat.reshape(out_features * C, *shape_out)
         jac_t_mat = self.__apply_jacobian_t_of(module, mat).reshape(
@@ -67,25 +88,8 @@ class AvgPoolNDDerivatives(BaseDerivatives):
 
         return jac_t_mat_t_jac.t()
 
-    def check_exotic_parameters(self, module):
-        assert module.count_include_pad, (
-            "Might not work for exotic hyperparameters of AvgPool2d, "
-            + "like count_include_pad=False"
-        )
-
-    def get_parameters(self, module) -> Tuple[Any, Any, Any]:
-        """Return the parameters of the module.
-
-        Args:
-            module: module
-
-        Returns:
-            stride, kernel_size, padding
-        """
-        return module.stride, module.kernel_size, module.padding
-
     def _jac_mat_prod(self, module, g_inp, g_out, mat):
-        self.check_exotic_parameters(module)
+        self.check_parameters(module)
 
         mat_as_pool = self.__make_single_channel(mat, module)
         jmp_as_pool = self.__apply_jacobian_of(module, mat_as_pool)
@@ -130,7 +134,7 @@ class AvgPoolNDDerivatives(BaseDerivatives):
             assert jmp_as_pool.shape == (V * N * C_out, 1, D_out, H_out, W_out)
 
     def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
-        self.check_exotic_parameters(module)
+        self.check_parameters(module)
 
         mat_as_pool = self.__make_single_channel(mat, module)
         jmp_as_pool = self.__apply_jacobian_t_of(module, mat_as_pool)
@@ -165,6 +169,8 @@ class AvgPoolNDDerivatives(BaseDerivatives):
         elif self.N == 3:
             _, _, D_in, H_in, W_in = module.input0.size()
             output_size = (V_N_C_in, C_for_conv_t, D_in, H_in, W_in)
+        else:
+            raise NotImplementedError(f"N={self.N} not supported.")
 
         return convnd_t(mat, output_size=output_size)
 
