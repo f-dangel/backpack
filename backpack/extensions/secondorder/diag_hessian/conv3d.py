@@ -20,6 +20,7 @@ class BatchDiagHConv3d(BatchDiagHConvND):
     """Module extension for the per-sample Hessian diagonal of ``torch.nn.Conv3d``."""
 
     def __init__(self):
+        """Store parameter names, convolution dimension, and derivatives object."""
         super().__init__(
             derivatives=Conv3DDerivatives(), N=3, params=["bias", "weight"]
         )
