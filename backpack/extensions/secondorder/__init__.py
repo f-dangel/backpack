@@ -1,5 +1,5 @@
 # noqa: D205
-"""Second order extensions.
+"""Second order extensions
 ====================================
 
 Second-order extensions propagate additional information through the graph
