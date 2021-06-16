@@ -17,7 +17,7 @@ class backpack:
     :code:`backward` calls inside the current :code:`with` block.
 
     Args:
-        exts ([BackpropExtension]) Extensions to activate in the backward pass.
+        exts ([BackpropExtension]): Extensions to activate in the backward pass.
         extension_hook (function, optional): Function called on each module after
             all BackPACK extensions have run. Takes a ``torch.nn.Module`` and returns
             ``None``. Default: ``None`` (no operation will be formed).
