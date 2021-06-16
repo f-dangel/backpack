@@ -6,6 +6,7 @@ dependencies:
   - pip=19.3.1
   - python=3.7.6
   - pip:
-    - -r requirements.txt
-    - -r requirements-dev.txt
     - -e .
+    - -e .[lint]
+    - -e .[test]
+    - -e .[docs]
