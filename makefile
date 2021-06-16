@@ -114,16 +114,17 @@ format-check-partial: black-check isort-check flake8 pydocstyle-check-partial da
 # Installation
 
 install:
+	@pip install torch torchvision
 	@pip install -e .
 
-install-lint:
+install-lint: install
 	@pip install -e .[lint]
 
-install-test:
+install-test: install
 	@pip install -e .[test]
 	@pip install git+https://git@github.com/Stonesjtu/pytorch_memlab.git@6ab5fab#egg=pytorch_memlab
 
-install-docs:
+install-docs: install
 	@pip install -e .[docs]
 
 install-dev: install-lint install-test install-docs
