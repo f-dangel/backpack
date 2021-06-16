@@ -27,7 +27,10 @@ class BatchL2Grad(BackpropExtension):
     Stores the output in ``batch_l2`` as a tensor of size ``[N]``,
     where ``N`` is the batch size.
 
-    Note: beware of scaling issue
+    .. note::
+
+        Beware of scaling issue
+
         The individual L2 norm depends on the scaling of the overall function.
         Let ``fᵢ`` be the loss of the ``i`` th sample, with gradient ``gᵢ``.
         ``BatchL2Grad`` will return the L2 norm of

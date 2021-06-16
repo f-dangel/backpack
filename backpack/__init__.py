@@ -11,57 +11,34 @@ from .context import CTX
 
 
 class backpack:
-    """Activates Backpack Extensions.
+    """Activate BackPACK extensions.
 
-    Activates the BackPACK extensions passed as arguments for the
-    :code:`backward` calls in the current :code:`with` block.
+    Enables the BackPACK extensions passed as arguments in the
+    :code:`backward` calls inside the current :code:`with` block.
+
+    Args:
+        exts ([BackpropExtension]): Extensions to activate in the backward pass.
+        extension_hook (function, optional): Function called on each module after
+            all BackPACK extensions have run. Takes a ``torch.nn.Module`` and returns
+            ``None``. Default: ``None`` (no operation will be formed).
+
+            Can be used to reduce memory overhead if the goal is to compute
+            transformations of BackPACK quantities. Information can be compacted
+            during a backward pass and obsolete tensors be freed manually (``del``).
+
+            .. note::
+
+                If the callable iterates over the ``module.parameters()``, the same
+                parameter may be seen multiple times across calls. This happens
+                if the parameters are part of multiple modules.
+                For example, the parameters of a `torch.nn.Linear` module in
+                ``model = torch.nn.Sequential(torch.nn.Linear(...))`` are part of
+                both the ``Linear`` and the ``Sequential``.
+        debug (bool, optional): Print debug messages during the backward pass.
+            Default: ``False``.
     """
 
     def __init__(self, *exts: BackpropExtension, extension_hook=None, debug=False):
-        """Activate the Backpack extensions.
-
-        Example usage:
-        ```
-        X, Y, model, lossfunc = get_problem()
-
-        backpack.extend(model)
-        backpack.extend(lossfunc)
-
-        with backpack.backpack(backpack.extensions.Variance()):
-            lossfunc(model(X), Y).backward()
-
-            for p in model.parameters():
-                print(p.grad)
-                print(p.variance)
-        ```
-
-        .. warning ::
-
-            The quantities computed by backPACK may be garbage collected when
-            exiting the `with` clause. Use them within the `with` clause or
-            assign them to another variable.
-
-        Attributes:
-            args: [BackpropExtension]
-                The extensions to activate for the backward pass.
-            extension_hook: Callable, optional (default: None)
-                Function called on each module after all BackPACK extensions have run.
-                Takes a ``torch.nn.Module`` and returns ``None``.
-
-                Can be used to reduce memory overhead if the goal is to compute
-                transformations of BackPACK quantities. Information can be compacted
-                during a backward pass and obsolete tensors be freed manually (``del``).
-
-                Note:
-                    If the callable iterates over the ``module.parameters()``, the same
-                    parameter may be seen multiple times across calls. This happens
-                    if the parameters are part of multiple modules.
-                    For example, the parameters of a `torch.nn.Linear` module in
-                    ``model = torch.nn.Sequential(torch.nn.Linear(...))`` are part of
-                    both the ``Linear`` and the ``Sequential``.
-            debug: Bool, optional (default: False)
-                If true, will print debug messages during the backward pass.
-        """
         for ext in exts:
             if not isinstance(ext, BackpropExtension):
                 if inspect.isclass(ext) and issubclass(ext, BackpropExtension):
@@ -95,7 +72,7 @@ class backpack:
 
 
 class disable:
-    """Entirely disables BackPACK, including storage of input and output.
+    """Entirely disable BackPACK, including storage of input and output.
 
     To compute the additional quantities, BackPACK needs to know the input and
     output of the modules in the computation graph. It saves those by default.
@@ -189,16 +166,18 @@ def run_extension_hook(module):
 
 
 def extend(module: torch.nn.Module, debug=False):
-    """Extends the ``module`` to make it backPACK-ready.
+    """Extends a ``module`` to make it BackPACK-ready.
 
     If the ``module`` has children, e.g. for a ``torch.nn.Sequential``,
     they will also be extended.
 
     Args:
-        module: torch.nn.Module
-            The module to extend
-        debug: Bool, optional (default: False)
-            If true, will print debug messages during the extension.
+        module (torch.nn.Module): The module to extend.
+        debug (bool, optional): Print debug messages during the extension.
+            Default: ``False``.
+
+    Returns:
+        torch.nn.Module: Extended module.
     """
     if debug:
         print("[DEBUG] Extending", module)
