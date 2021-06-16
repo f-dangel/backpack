@@ -17,11 +17,10 @@ class backpack:
     :code:`backward` calls inside the current :code:`with` block.
 
     Args:
-        exts: [BackpropExtension]
-            The extensions to activate for the backward pass.
-        extension_hook: Callable, optional (default: None)
-            Function called on each module after all BackPACK extensions have run.
-            Takes a ``torch.nn.Module`` and returns ``None``.
+        exts ([BackpropExtension]) Extensions to activate in the backward pass.
+        extension_hook (function, optional): Function called on each module after
+            all BackPACK extensions have run. Takes a ``torch.nn.Module`` and returns
+            ``None``. Default: ``None`` (no operation will be formed).
 
             Can be used to reduce memory overhead if the goal is to compute
             transformations of BackPACK quantities. Information can be compacted
@@ -35,8 +34,8 @@ class backpack:
                 For example, the parameters of a `torch.nn.Linear` module in
                 ``model = torch.nn.Sequential(torch.nn.Linear(...))`` are part of
                 both the ``Linear`` and the ``Sequential``.
-        debug: Bool, optional (default: False)
-            If true, will print debug messages during the backward pass.
+        debug (bool, optional): Print debug messages during the backward pass.
+            Default: ``False``.
     """
 
     def __init__(self, *exts: BackpropExtension, extension_hook=None, debug=False):
