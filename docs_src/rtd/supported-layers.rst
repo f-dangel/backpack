@@ -75,9 +75,7 @@ This is implemented for:
 |                               | :py:class:`torch.nn.AvgPool2d`,       |
 |                               | :py:class:`torch.nn.AvgPool3d`        |
 |                               +---------------------------------------+
-|                               | :py:class:`torch.nn.ZeroPad1d`,       |
 |                               | :py:class:`torch.nn.ZeroPad2d`,       |
-|                               | :py:class:`torch.nn.ZeroPad3d`        |
 |                               +---------------------------------------+
 |                               | :py:class:`torch.nn.Dropout`          |
 |                               +---------------------------------------+
