@@ -29,7 +29,10 @@ class BatchGrad(BackpropExtension):
     Stores the output in ``grad_batch`` as a ``[N x ...]`` tensor,
     where ``N`` batch size and ``...`` is the shape of the gradient.
 
-    Note: beware of scaling issue
+    .. note::
+
+        Beware of scaling issue
+
         The `individual gradients` depend on the scaling of the overall function.
         Let ``fᵢ`` be the loss of the ``i`` th sample, with gradient ``gᵢ``.
         ``BatchGrad`` will return
