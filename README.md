@@ -19,7 +19,6 @@ Provided quantities include:
 
 
 ## Installation
-Assuming you have `torch` (with `torchvision`) installed, run
 ```bash
 pip install backpack-for-pytorch
 ```

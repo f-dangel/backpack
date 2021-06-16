@@ -114,7 +114,6 @@ format-check-partial: black-check isort-check flake8 pydocstyle-check-partial da
 # Installation
 
 install:
-	@pip install torch torchvision
 	@pip install -e .
 
 install-lint: install
