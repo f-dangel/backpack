@@ -1,4 +1,4 @@
-# noqa: D205
+# noqa: D205, D415
 """Second order extensions
 ====================================
 
