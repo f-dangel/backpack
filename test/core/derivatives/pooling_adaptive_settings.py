@@ -29,3 +29,18 @@ example = {
     "id_prefix": "pooling-example",  # optional
 }
 POOLING_ADAPTIVE_SETTINGS.append(example)
+
+POOLING_ADAPTIVE_SETTINGS += [
+    {
+        "module_fn": lambda: torch.nn.AdaptiveAvgPool1d(output_size=(3,)),
+        "input_fn": lambda: torch.rand(size=(1, 4, 9)),
+    },
+    {
+        "module_fn": lambda: torch.nn.AdaptiveAvgPool2d(output_size=(3, 5)),
+        "input_fn": lambda: torch.rand(size=(1, 3, 9, 20)),
+    },
+    {
+        "module_fn": lambda: torch.nn.AdaptiveAvgPool3d(output_size=(2, 2, 2)),
+        "input_fn": lambda: torch.rand(size=(1, 3, 4, 8, 8)),
+    },
+]
