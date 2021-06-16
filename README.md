@@ -29,13 +29,13 @@ pip install backpack-for-pytorch
 
 #
 ## Contributing
-BackPACK is actively being developed.
+BackPACK is actively being developed. 
 We are appreciating any help.
 If you are considering to contribute, do not hesitate to contact us.
 An overview of the development procedure is provided in the [developer `README`](https://github.com/f-dangel/backpack/blob/master/README-dev.md).
 
 ## How to cite
-If you are using BackPACK, consider citing the [paper](https://openreview.net/forum?id=BJlrF24twB)
+If you are using BackPACK, consider citing the [paper](https://openreview.net/forum?id=BJlrF24twB) 
 ```
 @inproceedings{dangel2020backpack,
     title     = {Back{PACK}: Packing more into Backprop},
@@ -47,3 +47,4 @@ If you are using BackPACK, consider citing the [paper](https://openreview.net/fo
 ```
 
 ###### _BackPACK is not endorsed by or affiliated with Facebook, Inc. PyTorch, the PyTorch logo and any related marks are trademarks of Facebook, Inc._
+
