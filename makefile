@@ -137,8 +137,6 @@ install-dev: install-devtools
 	@pip uninstall backpack-for-pytorch
 	@echo "Install backpack in editable mode..."
 	@pip install -e .
-	@echo "Install pre-commit hooks..."
-	@pre-commit install
 
 ###
 # Conda environment
