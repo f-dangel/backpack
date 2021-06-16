@@ -121,6 +121,7 @@ install-lint:
 
 install-test:
 	@pip install -e .[test]
+	@pip install git+https://git@github.com/Stonesjtu/pytorch_memlab.git@6ab5fab#egg=pytorch_memlab
 
 install-docs:
 	@pip install -e .[docs]
