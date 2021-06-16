@@ -42,9 +42,9 @@ class BpextImpl(Implementation):
         return sgs
 
     def diag_ggn(self):
-        with backpack(new_ext.DiagGGN()):
+        with backpack(new_ext.DiagGGNExact()):
             self.loss().backward()
-            diag_ggn = [p.diag_ggn for p in self.model.parameters()]
+            diag_ggn = [p.diag_ggn_exact for p in self.model.parameters()]
         return diag_ggn
 
     def diag_ggn_mc(self):

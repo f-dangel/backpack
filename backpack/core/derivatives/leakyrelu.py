@@ -1,13 +1,9 @@
 from torch import gt
-from torch.nn import LeakyReLU
 
 from backpack.core.derivatives.elementwise import ElementwiseDerivatives
 
 
 class LeakyReLUDerivatives(ElementwiseDerivatives):
-    def get_module(self):
-        return LeakyReLU
-
     def hessian_is_zero(self):
         """`LeakyReLU''(x) = 0`."""
         return True

@@ -57,7 +57,7 @@ rtol = 1e-5
 ###
 
 
-def report_nonclose_values(x, y):
+def report_nonclose_values(x, y, atol=atol, rtol=rtol):
     x_numpy = x.data.cpu().numpy().flatten()
     y_numpy = y.data.cpu().numpy().flatten()
 
@@ -87,7 +87,7 @@ def check_values(list1, list2, atol=atol, rtol=rtol):
     for i, (g1, g2) in enumerate(zip(list1, list2)):
         print(i)
         print(g1.size())
-        report_nonclose_values(g1, g2)
+        report_nonclose_values(g1, g2, atol=atol, rtol=rtol)
         assert torch.allclose(g1, g2, atol=atol, rtol=rtol)
 
 
@@ -232,8 +232,7 @@ def test_hmp(problem, device):
     autograd_res = AutogradImpl(problem).hmp(matrices)
 
     check_sizes(autograd_res, backpack_res)
-    atol = 5e-4
-    rtol = 5e-4
+    atol, rtol = 5e-4, 5e-4
     check_values(autograd_res, backpack_res, atol=atol, rtol=rtol)
 
 
@@ -272,7 +271,8 @@ def test_hvp(problem, device):
     autograd_res = AutogradImpl(problem).hvp(vecs)
 
     check_sizes(autograd_res, backpack_res)
-    check_values(autograd_res, backpack_res)
+    atol, rtol = 5e-4, 5e-4
+    check_values(autograd_res, backpack_res, atol=atol, rtol=rtol)
 
 
 @pytest.mark.parametrize(

@@ -3,7 +3,6 @@ from math import sqrt
 
 from torch import diag, diag_embed, einsum, multinomial, ones_like, softmax
 from torch import sqrt as torchsqrt
-from torch.nn import CrossEntropyLoss
 from torch.nn.functional import one_hot
 
 from backpack.core.derivatives.basederivatives import BaseLossDerivatives
@@ -15,10 +14,6 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
     The `torch.nn.CrossEntropyLoss` operation is a composition of softmax
     and negative log-likelihood.
     """
-
-    def get_module(self):
-        """Return the `torch.nn` module for cross-entropy loss."""
-        return CrossEntropyLoss
 
     def _sqrt_hessian(self, module, g_inp, g_out):
         self._check_2nd_order_parameters(module)

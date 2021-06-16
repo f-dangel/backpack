@@ -21,6 +21,9 @@ from backpack.extensions import (
     KFLR,
     KFRA,
     PCHMP,
+    BatchDiagGGNExact,
+    BatchDiagGGNMC,
+    BatchDiagHessian,
     BatchGrad,
     BatchL2Grad,
     DiagGGNExact,
@@ -33,7 +36,7 @@ from backpack.utils.examples import load_one_batch_mnist
 
 X, y = load_one_batch_mnist(batch_size=512)
 
-model = Sequential(Flatten(), Linear(784, 10),)
+model = Sequential(Flatten(), Linear(784, 10))
 lossfunc = CrossEntropyLoss()
 
 model = extend(model)
@@ -111,7 +114,7 @@ for name, param in model.named_parameters():
 # --------------------------
 
 # %%
-# Diagonal of the Gauss-Newton and its Monte-Carlo approximation
+# Diagonal of the generalized Gauss-Newton and its Monte-Carlo approximation
 
 loss = lossfunc(model(X), y)
 with backpack(DiagGGNExact(), DiagGGNMC(mc_samples=1)):
@@ -122,6 +125,19 @@ for name, param in model.named_parameters():
     print(".grad.shape:             ", param.grad.shape)
     print(".diag_ggn_mc.shape:      ", param.diag_ggn_mc.shape)
     print(".diag_ggn_exact.shape:   ", param.diag_ggn_exact.shape)
+
+# %%
+# Per-sample diagonal of the generalized Gauss-Newton and its Monte-Carlo approximation
+
+loss = lossfunc(model(X), y)
+with backpack(BatchDiagGGNExact(), BatchDiagGGNMC(mc_samples=1)):
+    loss.backward()
+
+for name, param in model.named_parameters():
+    print(name)
+    print(".diag_ggn_mc_batch.shape:      ", param.diag_ggn_mc_batch.shape)
+    print(".diag_ggn_exact_batch.shape:   ", param.diag_ggn_exact_batch.shape)
+
 
 # %%
 # KFAC, KFRA and KFLR
@@ -138,16 +154,17 @@ for name, param in model.named_parameters():
     print(".kfra (shapes):          ", [kfra.shape for kfra in param.kfra])
 
 # %%
-# Diagonal Hessian
+# Diagonal Hessian and per-sample diagonal Hessian
 
 loss = lossfunc(model(X), y)
-with backpack(DiagHessian()):
+with backpack(DiagHessian(), BatchDiagHessian()):
     loss.backward()
 
 for name, param in model.named_parameters():
     print(name)
     print(".grad.shape:             ", param.grad.shape)
     print(".diag_h.shape:           ", param.diag_h.shape)
+    print(".diag_h_batch.shape:     ", param.diag_h_batch.shape)
 
 # %%
 # Block-diagonal curvature products

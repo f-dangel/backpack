@@ -1,4 +1,5 @@
-"""Second order extensions.
+# noqa: D205, D415
+"""Second order extensions
 ====================================
 
 Second-order extensions propagate additional information through the graph
@@ -18,15 +19,17 @@ The implemented extensions are
 - The diagonal of the Hessian :func:`DiagHessian <backpack.extensions.DiagHessian>`
 """
 
-from .diag_ggn import DiagGGN, DiagGGNExact, DiagGGNMC
-from .diag_hessian import DiagHessian
+from .diag_ggn import BatchDiagGGNExact, BatchDiagGGNMC, DiagGGNExact, DiagGGNMC
+from .diag_hessian import BatchDiagHessian, DiagHessian
 from .hbp import HBP, KFAC, KFLR, KFRA
 
 __all__ = [
     "DiagGGNExact",
+    "BatchDiagGGNExact",
     "DiagGGNMC",
-    "DiagGGN",
+    "BatchDiagGGNMC",
     "DiagHessian",
+    "BatchDiagHessian",
     "KFAC",
     "KFLR",
     "KFRA",

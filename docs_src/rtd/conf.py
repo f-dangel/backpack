@@ -17,8 +17,8 @@
 # -- Project information -----------------------------------------------------
 
 project = "BackPACK"
-copyright = ""
-author = ""
+copyright = "2019, F. Dangel, F. Kunstner"
+author = "F. Dangel, F. Kunstner"
 
 # The full version, including alpha/beta/rc tags
 release = "1.2.0"
@@ -30,6 +30,7 @@ master_doc = "index"
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    "sphinx.ext.napoleon",
     "sphinx.ext.autodoc",
     "sphinx.ext.coverage",
     "sphinx.ext.autosectionlabel",

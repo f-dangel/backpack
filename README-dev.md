@@ -27,7 +27,7 @@ git checkout development
 make conda-env
 conda activate backpack
 ```
-3. Install the development dependencies and `pre-commit` hooks
+3. Install the development dependencies
 ```bash
 make install-dev
 ```
@@ -44,6 +44,17 @@ make install-dev
     ```bash
     make format-check
     ```
+
+## Pull requests
+
+Code that is affected (has a `git diff`) by a pull request must satisfy the following docstring requirements:
+
+1.  A one-line summary what the function/class does
+2.  Argument description (`Args` section)
+    -   Argument name, type, and description
+    -   Optional arguments must be marked as such, the default value must be documented in the description
+3.  Output description (`Returns` section)
+    -   Type and description
 
 ## Documentation
 
@@ -73,6 +84,5 @@ make install-dev
     - Lint code: [`flake8`](http://flake8.pycqa.org/) ([`flake8` config](.flake8))
     - Check docstring style: [`pydocstyle`](https://github.com/PyCQA/pydocstyle) ([`pydocstyle` config](.pydocstyle))
     - Check docstring description matches definition: [`darglint`](https://github.com/terrencepreilly/darglint) ([`darglint` config](.darglint))
-- Optional [`pre-commit`](https://github.com/pre-commit/pre-commit) hooks [ `pre-commit` config ](.pre-commit-config.yaml)
 
 ###### _BackPACK is not endorsed by or affiliated with Facebook, Inc. PyTorch, the PyTorch logo and any related marks are trademarks of Facebook, Inc._

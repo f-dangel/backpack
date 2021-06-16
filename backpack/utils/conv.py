@@ -1,70 +1,109 @@
 import torch
+from einops import rearrange
 from torch import einsum
-from torch.nn import Unfold
-from torch.nn.functional import conv1d, conv2d, conv3d
-
-from backpack.utils.ein import eingroup
+from torch.nn.functional import conv1d, conv2d, conv3d, unfold
 
 
-def unfold_func(module):
-    return Unfold(
-        kernel_size=module.kernel_size,
-        dilation=module.dilation,
-        padding=module.padding,
-        stride=module.stride,
-    )
+def unfold_input(module, input):
+    """Return unfolded input to a convolution.
+
+    Use PyTorch's ``unfold`` operation for 2d convolutions (4d input tensors),
+    otherwise fall back to a custom implementation.
+
+    Args:
+        module (torch.nn.Conv1d or torch.nn.Conv2d or torch.nn.Conv3d): Convolution
+            module whose hyperparameters are used for the unfold.
+        input (torch.Tensor): Input to convolution that will be unfolded.
+
+    Returns:
+        torch.Tensor: Unfolded input.
+    """
+    if input.dim() == 4:
+        return unfold(
+            input,
+            kernel_size=module.kernel_size,
+            dilation=module.dilation,
+            padding=module.padding,
+            stride=module.stride,
+        )
+    else:
+        return unfold_by_conv(input, module)
 
 
-def get_conv1d_weight_gradient_factors(input, grad_out, module):
-    # shape [N, C_in * K_x, L_out]
-    X = unfold_by_conv(input, module)
-    return X, grad_out
-
-
-def get_weight_gradient_factors(input, grad_out, module):
-    # shape [N, C_in * K_x * K_y, H_out * W_out]
-    X = unfold_func(module)(input)
-    dE_dY = eingroup("n,c,h,w->n,c,hw", grad_out)
-    return X, dE_dY
-
-
-def get_conv3d_weight_gradient_factors(input, grad_out, module):
-    # shape [N, C_in * K_x * K_y * K_z, D_out * H_out * W_out]
-    X = unfold_by_conv(input, module)
-    dE_dY = eingroup("n,c,d,h,w->n,c,dhw", grad_out)
+def get_weight_gradient_factors(input, grad_out, module, N):
+    X = unfold_input(module, input)
+    dE_dY = rearrange(grad_out, "n c ... -> n c (...)")
     return X, dE_dY
 
 
 def separate_channels_and_pixels(module, tensor):
     """Reshape (V, N, C, H, W) into (V, N, C, H * W)."""
-    return eingroup("v,n,c,h,w->v,n,c,hw", tensor)
+    return rearrange(tensor, "v n c ... -> v n c (...)")
 
 
-def extract_weight_diagonal(module, input, grad_output):
+def extract_weight_diagonal(module, unfolded_input, S, sum_batch=True):
+    """Extract diagonal of ``(Jᵀ S) (Jᵀ S)ᵀ`` where ``J`` is the weight Jacobian.
+
+    Args:
+        module (torch.nn.Conv1d or torch.nn.Conv2d or torch.nn.Conv3d): Convolution
+            layer for which the diagonal is extracted w.r.t. the weight.
+        unfolded_input (torch.Tensor): Unfolded input to the convolution. Shape must
+            follow the conventions of ``torch.nn.Unfold``.
+        S (torch.Tensor): Backpropagated (symmetric factorization) of the loss Hessian.
+            Has shape ``(V, *module.output.shape)``.
+        sum_batch (bool, optional): Sum out the batch dimension of the weight diagonals.
+            Default value: ``True``.
+
+    Returns:
+        torch.Tensor: Per-sample weight diagonal if ``sum_batch=False`` (shape
+            ``(N, module.weight.shape)`` with batch size ``N``) or summed weight
+            diagonal if ``sum_batch=True`` (shape ``module.weight.shape``).
     """
-    input must be the unfolded input to the convolution (see unfold_func)
-    and grad_output the backpropagated gradient
-    """
-    grad_output_viewed = separate_channels_and_pixels(module, grad_output)
-    AX = einsum("nkl,vnml->vnkm", (input, grad_output_viewed))
-    weight_diagonal = (AX ** 2).sum([0, 1]).transpose(0, 1)
-    return weight_diagonal.view_as(module.weight)
+    S = rearrange(S, "v n (g c) ... -> v n g c (...)", g=module.groups)
+    unfolded_input = rearrange(unfolded_input, "n (g c) k -> n g c k", g=module.groups)
+
+    JS = einsum("ngkl,vngml->vngmk", (unfolded_input, S))
+
+    sum_dims = [0, 1] if sum_batch else [0]
+    out_shape = (
+        module.weight.shape if sum_batch else (JS.shape[1], *module.weight.shape)
+    )
+
+    weight_diagonal = JS.pow_(2).sum(sum_dims).reshape(out_shape)
+
+    return weight_diagonal
 
 
-def extract_bias_diagonal(module, sqrt):
+# TODO This method applies the bias Jacobian, then squares and sums the result. Intro-
+# duce base class for {Batch}DiagHessian and DiagGGN{Exact,MC} and remove this method
+def extract_bias_diagonal(module, S, sum_batch=True):
+    """Extract diagonal of ``(Jᵀ S) (Jᵀ S)ᵀ`` where ``J`` is the bias Jacobian.
+
+    Args:
+        module (torch.nn.Conv1d or torch.nn.Conv2d or torch.nn.Conv3d): Convolution
+            layer for which the diagonal is extracted w.r.t. the bias.
+        S (torch.Tensor): Backpropagated (symmetric factorization) of the loss Hessian.
+            Has shape ``(V, *module.output.shape)``.
+        sum_batch (bool, optional): Sum out the batch dimension of the bias diagonals.
+            Default value: ``True``.
+
+    Returns:
+        torch.Tensor: Per-sample bias diagonal if ``sum_batch=False`` (shape
+            ``(N, module.bias.shape)`` with batch size ``N``) or summed bias
+            diagonal if ``sum_batch=True`` (shape ``module.bias.shape``).
     """
-    `sqrt` must be the backpropagated quantity for DiagH or DiagGGN(MC)
-    """
-    V_axis, N_axis = 0, 1
-    bias_diagonal = (einsum("vnchw->vnc", sqrt) ** 2).sum([V_axis, N_axis])
-    return bias_diagonal
+    start_spatial = 3
+    sum_before = list(range(start_spatial, S.dim()))
+    sum_after = [0, 1] if sum_batch else [0]
+
+    return S.sum(sum_before).pow_(2).sum(sum_after)
 
 
 def unfold_by_conv(input, module):
     """Return the unfolded input using convolution"""
     N, C_in = input.shape[0], input.shape[1]
     kernel_size = module.kernel_size
-    kernel_size_numel = int(torch.prod(torch.Tensor(kernel_size)))
+    kernel_size_numel = module.weight.shape[2:].numel()
 
     def make_weight():
         weight = torch.zeros(kernel_size_numel, 1, *kernel_size)
