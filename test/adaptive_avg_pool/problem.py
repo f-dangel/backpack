@@ -66,7 +66,7 @@ def add_missing_defaults(setting: Dict[str, Any]) -> Dict[str, Any]:
 
     for req in required:
         if req not in setting.keys():
-            raise ValueError("Missing configuration entry for {}".format(req))
+            raise ValueError(f"Missing configuration entry for {req}")
 
     for opt, default in optional.items():
         if opt not in setting.keys():
@@ -74,7 +74,7 @@ def add_missing_defaults(setting: Dict[str, Any]) -> Dict[str, Any]:
 
     for s in setting.keys():
         if s not in required and s not in optional.keys():
-            raise ValueError("Unknown config: {}".format(s))
+            raise ValueError(f"Unknown config: {s}")
 
     return setting
 
@@ -102,7 +102,12 @@ class AdaptiveAvgPoolProblem:
             device: device
             seed: seed for torch
             id_prefix: prefix for problem id
+
+        Raises:
+            NotImplementedError: if N is not in [1, 2, 3]
         """
+        if N not in [1, 2, 3]:
+            raise NotImplementedError(f"N={N} not implemented in test suite.")
         self.N = N
         self.shape_input = shape_input
         self.shape_target = shape_target
@@ -144,7 +149,7 @@ class AdaptiveAvgPoolProblem:
         elif self.N == 3:
             module = AdaptiveAvgPool3d(output_size=self.shape_target)
         else:
-            raise NotImplementedError(f"N={self.N} not implemented in test suite.")
+            raise NotImplementedError
         return extend(module.to(device=self.device))
 
     def check_parameters(self) -> None:
@@ -155,11 +160,7 @@ class AdaptiveAvgPoolProblem:
         self._get_derivatives().check_parameters(module=self.module)
 
     def _get_derivatives(self) -> AdaptiveAvgPoolNDDerivatives:
-        if self.N in [1, 2, 3]:
-            derivatives = AdaptiveAvgPoolNDDerivatives(N=self.N)
-        else:
-            raise NotImplementedError(f"N={self.N} not implemented in test suite.")
-        return derivatives
+        return AdaptiveAvgPoolNDDerivatives(N=self.N)
 
     def check_equivalence(self) -> None:
         """Check if the given parameters lead to the same output.
@@ -182,5 +183,5 @@ class AdaptiveAvgPoolProblem:
         elif self.N == 3:
             module = AvgPool3d(kernel_size=kernel_size, stride=stride)
         else:
-            raise NotImplementedError(f"N={self.N} not implemented in test suite.")
+            raise NotImplementedError
         return module.to(self.device)
