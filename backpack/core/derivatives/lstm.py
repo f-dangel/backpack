@@ -121,7 +121,7 @@ class LSTMDerivatives(BaseParameterDerivatives):
         H_prod: Tensor = zeros(V, T, N, H, device=mat.device, dtype=mat.dtype)
         C_prod: Tensor = zeros(V, T, N, H, device=mat.device, dtype=mat.dtype)
         IFGO_prod: Tensor = zeros(V, T, N, 4 * H, device=mat.device, dtype=mat.dtype)
-        for t in range(T)[::-1]:
+        for t in reversed(range(T)):
             # jac_t_mat_prod until node h
             H_prod[:, t] = mat[:, t]
             if t != (T - 1):
