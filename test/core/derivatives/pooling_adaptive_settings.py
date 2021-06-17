@@ -18,18 +18,8 @@ import torch
 POOLING_ADAPTIVE_SETTINGS = []
 
 ###############################################################################
-#                                   examples                                  #
+#                               test settings                                 #
 ###############################################################################
-
-example = {
-    "module_fn": lambda: torch.nn.AdaptiveAvgPool2d(output_size=(2, 2)),
-    "input_fn": lambda: torch.rand(size=(1, 3, 8, 8)),
-    "device": [torch.device("cpu")],  # optional
-    "seed": 0,  # optional
-    "id_prefix": "pooling-example",  # optional
-}
-POOLING_ADAPTIVE_SETTINGS.append(example)
-
 POOLING_ADAPTIVE_SETTINGS += [
     {
         "module_fn": lambda: torch.nn.AdaptiveAvgPool1d(output_size=(3,)),
