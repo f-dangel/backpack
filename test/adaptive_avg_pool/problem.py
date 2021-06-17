@@ -141,15 +141,11 @@ class AdaptiveAvgPoolProblem:
         del self.input
         del self.output
 
-    def _make_module(self) -> Union[AdaptiveAvgPool1d, AdaptiveAvgPool2d]:
-        if self.N == 1:
-            module = AdaptiveAvgPool1d(output_size=self.shape_target)
-        elif self.N == 2:
-            module = AdaptiveAvgPool2d(output_size=self.shape_target)
-        elif self.N == 3:
-            module = AdaptiveAvgPool3d(output_size=self.shape_target)
-        else:
-            raise NotImplementedError
+    def _make_module(
+        self,
+    ) -> Union[AdaptiveAvgPool1d, AdaptiveAvgPool2d, AdaptiveAvgPool3d]:
+        map_class = {1: AdaptiveAvgPool1d, 2: AdaptiveAvgPool2d, 3: AdaptiveAvgPool3d}
+        module = map_class[self.N](output_size=self.shape_target)
         return extend(module.to(device=self.device))
 
     def check_parameters(self) -> None:
@@ -175,13 +171,7 @@ class AdaptiveAvgPoolProblem:
 
     def _make_module_equivalent(
         self, stride: List[int], kernel_size: List[int]
-    ) -> Union[AvgPool1d, AvgPool2d]:
-        if self.N == 1:
-            module = AvgPool1d(kernel_size=kernel_size[0], stride=stride[0])
-        elif self.N == 2:
-            module = AvgPool2d(kernel_size=kernel_size, stride=stride)
-        elif self.N == 3:
-            module = AvgPool3d(kernel_size=kernel_size, stride=stride)
-        else:
-            raise NotImplementedError
+    ) -> Union[AvgPool1d, AvgPool2d, AvgPool3d]:
+        map_class = {1: AvgPool1d, 2: AvgPool2d, 3: AvgPool3d}
+        module = map_class[self.N](kernel_size=kernel_size, stride=stride)
         return module.to(self.device)
