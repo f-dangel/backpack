@@ -121,12 +121,14 @@ class ConvNDDerivatives(BaseParameterDerivatives):
         return mat.sum(axes)
 
     def _weight_jac_mat_prod(self, module, g_inp, g_out, mat):
-        if module.groups != 1:
-            raise NotImplementedError("Groups greater than 1 are not supported yet")
+        # separate output channel groups
+        jac_mat = rearrange(mat, "v (g o) i ... -> v g o (i ...)", g=module.groups)
 
-        jac_mat = rearrange(mat, "v o i ... -> v o (i ...)")
         X = self.get_unfolded_input(module)
-        jac_mat = einsum("nij,vki->vnkj", X, jac_mat)
+        # separate input channel groups
+        X = rearrange(X, "n (g i) j -> n g i j", g=module.groups)
+        jac_mat = einsum("ngij,vgki->vngkj", X, jac_mat)
+
         return self.reshape_like_output(jac_mat, module)
 
     def _weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):

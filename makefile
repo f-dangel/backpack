@@ -42,13 +42,13 @@ help:
 	@echo "isort-check"
 	@echo "        Check if isort (sort imports) would change files"
 	@echo "install-dev"
-	@echo "        Install all development tools"
+	@echo "        Install backpack and all development tools"
 	@echo "install-lint"
-	@echo "        Install only the linter tools (included in install-dev)"
+	@echo "        Install backpack and linter tools (included in install-dev)"
 	@echo "install-test"
-	@echo "        Install only the testing tools (included in install-dev)"
+	@echo "        Install backpack and testing tools (included in install-dev)"
 	@echo "install-docs"
-	@echo "        Install only the tools to build/view the docs (included in install-dev)"
+	@echo "        Install backpack and tools to build/view the docs (included in install-dev)"
 	@echo "conda-env"
 	@echo "        Create conda environment 'backpack' with dev setup"
 	@echo "build-docs"
@@ -114,31 +114,19 @@ format-check-partial: black-check isort-check flake8 pydocstyle-check-partial da
 # Installation
 
 install:
-	@pip install -r requirements.txt
-	@pip install .
+	@pip install -e .
 
 install-lint:
-	@pip install -r requirements/lint.txt
+	@pip install -e .[lint]
 
 install-test:
-	@pip install -r requirements/test.txt
+	@pip install -e .[test]
+	@pip install git+https://git@github.com/Stonesjtu/pytorch_memlab.git@6ab5fab#egg=pytorch_memlab
 
 install-docs:
-	@pip install -r requirements/docs.txt
+	@pip install -e .[docs]
 
-install-devtools:
-	@echo "Install dev tools..."
-	@pip install -r requirements-dev.txt
-
-install-dev: install-devtools
-	@echo "Install dependencies..."
-	@pip install -r requirements.txt
-	@echo "Uninstall existing version of backpack..."
-	@pip uninstall backpack-for-pytorch
-	@echo "Install backpack in editable mode..."
-	@pip install -e .
-	@echo "Install pre-commit hooks..."
-	@pre-commit install
+install-dev: install-lint install-test install-docs
 
 ###
 # Conda environment

@@ -67,4 +67,4 @@ and the :ref:`Supported models`.
 
 .. autofunction:: backpack.extend
 .. autofunction:: backpack.backpack
-
+.. autofunction:: backpack.disable

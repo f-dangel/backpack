@@ -6,6 +6,7 @@ backpack/core/derivatives/shape_check.py
 backpack/core/derivatives/__init__.py
 backpack/core/derivatives/permute.py
 
+backpack/extensions/__init__.py
 backpack/extensions/backprop_extension.py
 backpack/extensions/mat_to_mat_jac_base.py
 
@@ -24,10 +25,15 @@ backpack/extensions/firstorder/sum_grad_squared/__init__.py
 backpack/extensions/firstorder/batch_l2_grad/rnn.py
 backpack/extensions/firstorder/batch_l2_grad/__init__.py
 
+backpack/extensions/secondorder/__init__.py
 backpack/extensions/secondorder/diag_ggn/__init__.py
 backpack/extensions/secondorder/diag_ggn/diag_ggn_base.py
 backpack/extensions/secondorder/diag_ggn/rnn.py
 backpack/extensions/secondorder/diag_ggn/permute.py
+backpack/extensions/secondorder/diag_hessian/__init__.py
+backpack/extensions/secondorder/diag_hessian/conv1d.py
+backpack/extensions/secondorder/diag_hessian/conv2d.py
+backpack/extensions/secondorder/diag_hessian/conv3d.py
 
 backpack/custom_module/
 
@@ -46,3 +52,4 @@ test/extensions/firstorder/batch_grad/batchgrad_settings.py
 
 test/extensions/secondorder/secondorder_settings.py
 test/extensions/secondorder/diag_ggn/
+test/extensions/secondorder/hbp

@@ -185,13 +185,3 @@ class DerivativesTestProblem:
     def has_bias(self):
         module = self.make_module()
         return hasattr(module, "bias") and module.bias is not None
-
-    def is_group_conv(self):
-        """Return whether module represents grouped convolution."""
-        module = self.make_module()
-        group_conv = False
-
-        if isinstance(module, (torch.nn.Conv1d, torch.nn.Conv2d, torch.nn.Conv3d)):
-            group_conv = module.groups > 1
-
-        return group_conv

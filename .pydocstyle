@@ -1,6 +1,0 @@
-[pydocstyle]
-convention = google
-match = .*\.py
-# ignore =
-#   A,
-#   B,

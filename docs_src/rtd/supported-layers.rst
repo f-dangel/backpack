@@ -1,10 +1,10 @@
 Supported models
 ====================================
 
-BackPACK expects models to be 
-`sequences <https://pytorch.org/docs/stable/nn.html#sequential>`_ 
+BackPACK expects models to be
+`sequences <https://pytorch.org/docs/stable/nn.html#sequential>`_
 of `PyTorch NN modules <https://pytorch.org/docs/stable/nn.html>`_.
-For example, 
+For example,
 
 .. code-block:: python
 
@@ -21,8 +21,8 @@ This page lists the layers currently supported by BackPACK.
 If the forward is not standard, the additional backward pass to compute second-order quantities will not match the actual function.
 First-order extensions that extract information might work outside of this framework, but it is not tested.
 
-.. raw:: html 
-	
+.. raw:: html
+
 	<hr/>
 
 For first-order extensions
@@ -53,7 +53,13 @@ BackPACK needs to know how to propagate second-order information.
 This is implemented for:
 
 +-------------------------------+---------------------------------------+
-| **Parametrized layers**       | :py:class:`torch.nn.Conv2d`           |
+| **Parametrized layers**       | :py:class:`torch.nn.Conv1d`,          |
+|                               | :py:class:`torch.nn.Conv2d`,          |
+|                               | :py:class:`torch.nn.Conv3d`           |
+|                               +---------------------------------------+
+|                               | :py:class:`torch.nn.ConvTranspose1d`, |
+|                               | :py:class:`torch.nn.ConvTranspose2d`, |
+|                               | :py:class:`torch.nn.ConvTranspose3d`  |
 |                               +---------------------------------------+
 |                               | :py:class:`torch.nn.Linear`           |
 +-------------------------------+---------------------------------------+
@@ -61,15 +67,26 @@ This is implemented for:
 |                               +---------------------------------------+
 |                               | :py:class:`torch.nn.CrossEntropyLoss` |
 +-------------------------------+---------------------------------------+
-| **Layers without parameters** | :py:class:`torch.nn.MaxPool2d`        |
-|                               | :py:class:`torch.nn.AvgPool2d`        |
+| **Layers without parameters** | :py:class:`torch.nn.MaxPool1d`,       |
+|                               | :py:class:`torch.nn.MaxPool2d`,       |
+|                               | :py:class:`torch.nn.MaxPool3d`        |
+|                               +---------------------------------------+
+|                               | :py:class:`torch.nn.AvgPool1d`,       |
+|                               | :py:class:`torch.nn.AvgPool2d`,       |
+|                               | :py:class:`torch.nn.AvgPool3d`        |
+|                               +---------------------------------------+
+|                               | :py:class:`torch.nn.ZeroPad2d`,       |
 |                               +---------------------------------------+
 |                               | :py:class:`torch.nn.Dropout`          |
 |                               +---------------------------------------+
-|                               | :py:class:`torch.nn.ReLU`             |
-|                               | :py:class:`torch.nn.Sigmoid`          |
-|                               | :py:class:`torch.nn.Tanh`             |
+|                               | :py:class:`torch.nn.ReLU`,            |
+|                               | :py:class:`torch.nn.Sigmoid`,         |
+|                               | :py:class:`torch.nn.Tanh`,            |
+|                               | :py:class:`torch.nn.LeakyReLU`,       |
+|                               | :py:class:`torch.nn.LogSigmoid`,      |
+|                               | :py:class:`torch.nn.ELU`,             |
+|                               | :py:class:`torch.nn.SELU`             |
 +-------------------------------+---------------------------------------+
 
-The other convolution layers (``Conv1d``, ``Conv3d``, and ``ConvTransposeNd``)
-are not yet supported.
+Some exotic hyperparameters are not fully supported, but feature requests
+on the repository are welcome.
