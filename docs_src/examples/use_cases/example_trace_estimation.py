@@ -1,8 +1,10 @@
 r"""Hutchinson Trace Estimation
 ===============================
 
-This example illustrates the estimation the Hessian trace of a neural network using Hutchinson's `[Hutchinson, 1990] <https://www.researchgate.net/publication/245083270_A_stochastic_estimator_of_the_trace_of_the_influence_matrix_for_Laplacian_smoothing_splines>`_
-method, which is an algorithm to obtain such an an estimate from matrix-vector products:
+This example illustrates the estimation the Hessian trace of a neural network using
+Hutchinson's method
+`[Hutchinson, 1990] <https://www.researchgate.net/publication/245083270_A_stochastic_estimator_of_the_trace_of_the_influence_matrix_for_Laplacian_smoothing_splines>`_,
+which is an algorithm to obtain such an an estimate from matrix-vector products:
 
 .. math::
     \text{Let } A \in \mathbb{R}^{D \times D} \text{ and } v \in \mathbb{R}^D
@@ -11,9 +13,12 @@ method, which is an algorithm to obtain such an an estimate from matrix-vector p
 .. math::
     \mathrm{Tr}(A) = \mathbb{E}[v^TAv] = \frac{1}{V}\sum_{i=1}^{V}v_i^TAv_i.
 
-We will draw v from a Rademacher Distribution and use Hessian-free multiplication. This can be done with plain autodiff, but
-note that there is no dependency between sampled vectors, and the Hessian-vector product (HVP) could in principle be performed in parallel. We can use BackPACK's :code:`HMP` (Hessian-matrix product) extension to do so, and investigate the potential speedup.
-"""
+We will draw v from a Rademacher Distribution and use Hessian-free multiplication. This
+can be done with plain autodiff, but note that there is no dependency between sampled
+vectors, and the Hessian-vector product (HVP) could in principle be performed in
+parallel. We can use BackPACK's :code:`HMP` (Hessian-matrix product) extension to do so,
+and investigate the potential speedup.
+"""  # noqa: B950
 
 # %%
 # Let's get the imports and define what a Rademacher distribution is
@@ -44,7 +49,8 @@ def rademacher(shape, dtype=torch.float32, device=DEVICE):
 # Creating the model and loss
 # ---------------------------
 #
-# We will use a small NN with 2 linear layers without bias (for a bias of size `d`, the exact trace can be obtained in `d` HVPs).
+# We will use a small NN with 2 linear layers without bias (for a bias of size `d`, the
+# exact trace can be obtained in `d` HVPs).
 
 model = torch.nn.Sequential(
     torch.nn.Flatten(),
@@ -58,7 +64,9 @@ loss_function = torch.nn.CrossEntropyLoss().to(DEVICE)
 loss_function = extend(loss_function)
 
 # %%
-# In the following, we load a batch from MNIST, compute the loss and trigger the backward pass ``with(backpack(..))`` such that we have access to the extensions that we are going to use (``DiagHessian`` and ``HMP)``).
+# In the following, we load a batch from MNIST, compute the loss and trigger the
+# backward pass ``with(backpack(..))`` such that we have access to the extensions that
+# we are going to use (``DiagHessian`` and ``HMP)``).
 
 x, y = load_one_batch_mnist(BATCH_SIZE)
 x, y = x.to(DEVICE), y.to(DEVICE)
@@ -80,7 +88,8 @@ loss = forward_backward_with_backpack()
 # %%
 # Exact trace computation
 # -----------------------
-# To make sure our implementation is fine, and to develop a feeling for the Hutchinson estimator quality, let's compute the exact trace by summing up the Hessian diagonal.
+# To make sure our implementation is fine, and to develop a feeling for the Hutchinson
+# estimator quality, let's compute the exact trace by summing up the Hessian diagonal.
 
 
 def exact_trace():
@@ -94,7 +103,11 @@ print("Exact trace: {:.3f}".format(exact_trace()))
 # %%
 # Trace estimation (BackPACK's :code:`HMP`)
 # -----------------------------------------
-# BackPACK's :code:`HMP` extension gives access to multiplication with the parameter Hessian, which is one diagonal block in the full Hessian whose trace we want to estimate. The multiplication can even handle multiple vectors at a time. Here is the implementation. The computation of :code:`V` HVPs, which might exceed our available memory, is chunked into batches of size :code:`V_batch`.
+# BackPACK's :code:`HMP` extension gives access to multiplication with the parameter
+# Hessian, which is one diagonal block in the full Hessian whose trace we want to
+# estimate. The multiplication can even handle multiple vectors at a time. Here is the
+# implementation. The computation of :code:`V` HVPs, which might exceed our available
+# memory, is chunked into batches of size :code:`V_batch`.
 
 
 def hutchinson_trace_hmp(V, V_batch=1):
@@ -129,7 +142,9 @@ print(
 # %%
 # Trace estimation (autodiff, full Hessian)
 # -----------------------------------------
-# We can also use autodiff tricks to compute a single HVP at a time, provided by utility function :code:`hessian_vector_product` in BackPACK. Here is the implementation, and a test:
+# We can also use autodiff tricks to compute a single HVP at a time, provided by utility
+# function :code:`hessian_vector_product` in BackPACK. Here is the implementation, and a
+# test:
 
 
 def hutchinson_trace_autodiff(V):
@@ -154,7 +169,9 @@ print(
 # %%
 # Trace estimation (autodiff, block-diagonal Hessian)
 # ---------------------------------------------------
-# Since :code:`HMP` uses only the Hessian block-diagonal and not the full Hessian, here is the corresponding autodiff implementation using the same matrix as :code:`HMP`. We are going to reinvestigate it for benchmarking.
+# Since :code:`HMP` uses only the Hessian block-diagonal and not the full Hessian, here
+# is the corresponding autodiff implementation using the same matrix as :code:`HMP`. We
+# are going to reinvestigate it for benchmarking.
 
 
 def hutchinson_trace_autodiff_blockwise(V):
@@ -184,7 +201,9 @@ loss = forward_backward_with_backpack()
 # %%
 # Trace approximation accuracy
 # ----------------------------
-# Next, let's observe how the approximation improves with the number of samples. Here, we plot multiple runs of the Hutchinson trace estimate, initialized at different random seeds.
+# Next, let's observe how the approximation improves with the number of samples. Here,
+# we plot multiple runs of the Hutchinson trace estimate, initialized at different
+# random seeds.
 
 V_steps = 30
 V_list = torch.logspace(1, 3, steps=V_steps).int()
@@ -215,10 +234,13 @@ for i in range(num_curves):
 _ = plt.legend()
 
 
-#%%
+# %%
 # Runtime comparison
 # ------------------
-# Finally, we investigate if the trace estimation is sped up by vectorizing the HVPs. In particular, let's compare the estimations using autodiff HVPs (no parallelization), autodiff block-diagonal HVPs (no parallelization) and block-diagonal vectorized HVPs (:code:`HMP`).
+# Finally, we investigate if the trace estimation is sped up by vectorizing the HVPs.
+# In particular, let's compare the estimations using autodiff HVPs (no parallelization),
+# autodiff block-diagonal HVPs (no parallelization) and block-diagonal vectorized HVPs
+# (:code:`HMP`).
 
 V = 1000
 
@@ -269,7 +291,10 @@ time_hutchinson_trace_hmp(V, V_batch=10)
 time_hutchinson_trace_hmp(V, V_batch=20)
 
 # %%
-# Looks like the parallelized Hessian-vector products are able to speed up the computation. Nice.
+# Looks like the parallel Hessian-vector products are able to speed up the
+# computation. Nice.
 
 # %%
-# Note that instead of the Hessian, we could have also used other interesting matrices, such as the generalized Gauss-Newton. BackPACK also offers a vectorized multiplication with the latter's block-diagonal (see the :code:`GGNMP` extension).
+# Note that instead of the Hessian, we could have also used other interesting matrices,
+# such as the generalized Gauss-Newton. BackPACK also offers a vectorized multiplication
+# with the latter's block-diagonal (see the :code:`GGNMP` extension).

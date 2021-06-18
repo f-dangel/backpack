@@ -1,10 +1,9 @@
-"""Test configurations for `backpack.core.extensions.secondorder`.
+"""Shared test cases of BackPACK's second-order extensions.
 
-that is shared among the following secondorder methods:
-- Diagonal of Gauss Newton
-- Diagonal of Hessian
+- Exact diagonal of the generalized Gauss-Newton
+- MC-approximated diagonal of the generalized Gauss-Newton
+- Diagonal of the Hessian
 - MC Approximation of Diagonal of Gauss Newton
-
 
 Required entries:
     "module_fn" (callable): Contains a model constructed from `torch.nn` layers
@@ -29,6 +28,8 @@ from test.extensions.automated_settings import (
 
 import torch
 from torch.nn import (
+    ELU,
+    SELU,
     AvgPool1d,
     AvgPool2d,
     AvgPool3d,
@@ -98,7 +99,7 @@ SECONDORDER_SETTINGS += [
 ###############################################################################
 #                         test setting: Activation Layers                     #
 ###############################################################################
-activations = [ReLU, Sigmoid, Tanh, LeakyReLU, LogSigmoid]
+activations = [ReLU, Sigmoid, Tanh, LeakyReLU, LogSigmoid, ELU, SELU]
 
 for act in activations:
     for bias in [True, False]:
@@ -215,3 +216,20 @@ SECONDORDER_SETTINGS += [
         (3, 3, 2, 7, 7), ConvTranspose3d, (3, 2, 2, 4, 2, 0, 1, False)
     ),
 ]
+
+GROUP_CONV_SETTINGS = [
+    # last number is groups
+    make_simple_cnn_setting((3, 6, 7), Conv1d, (6, 4, 2, 1, 0, 1, 2)),
+    make_simple_cnn_setting((3, 6, 7, 5), Conv2d, (6, 3, 2, 1, 0, 1, 3)),
+    make_simple_cnn_setting((3, 4, 7, 5, 6), Conv3d, (4, 2, 2, 1, 0, 2, 2)),
+    # number before bool is groups
+    make_simple_cnn_setting((3, 6, 8), ConvTranspose1d, (6, 3, 2, 4, 2, 0, 3, True, 3)),
+    make_simple_cnn_setting(
+        (3, 4, 9, 9), ConvTranspose2d, (4, 2, 2, 1, 0, 0, 2, True, 2)
+    ),
+    make_simple_cnn_setting(
+        (3, 4, 3, 5, 5), ConvTranspose3d, (4, 2, (2, 2, 1), 2, 2, 0, 2, True, 2)
+    ),
+]
+
+SECONDORDER_SETTINGS += GROUP_CONV_SETTINGS
