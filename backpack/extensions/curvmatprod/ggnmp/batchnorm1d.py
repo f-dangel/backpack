@@ -1,4 +1,4 @@
-from backpack.core.derivatives.batchnorm1d import BatchNorm1dDerivatives
+from backpack.core.derivatives.batchnorm_nd import BatchNorm1dDerivatives
 from backpack.extensions.curvmatprod.ggnmp.ggnmpbase import GGNMPBase
 
 
