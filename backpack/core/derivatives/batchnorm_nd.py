@@ -204,6 +204,52 @@ class BatchNorm1dDerivatives(BatchNormNdDerivatives):
         """Initialization."""
         super().__init__(n_dim=1)
 
+    def _residual_mat_prod(
+        self,
+        module: BatchNorm1d,
+        g_inp: Tuple[Tensor],
+        g_out: Tuple[Tensor],
+        mat: Tensor,
+    ) -> Tensor:
+        """Multiply with BatchNorm1d residual-matrix.
+
+        Paul Fischer (GitHub: @paulkogni) contributed this code during a research
+        project in winter 2019.
+
+        Details are described in
+
+        - `TODO: Add tech report title`
+          <TODO: Wait for tech report upload>_
+          by Paul Fischer, 2020.
+        """
+        N = module.input0.size(0)
+        x_hat, var = self._get_normalized_input_and_var(module)
+        gamma = module.weight
+        eps = module.eps
+
+        factor = gamma / (N * (var + eps))
+
+        sum_127 = einsum("nc,vnc->vc", x_hat, mat)
+        sum_24 = einsum("nc->c", g_out[0])
+        sum_3 = einsum("nc,vnc->vc", g_out[0], mat)
+        sum_46 = einsum("vnc->vc", mat)
+        sum_567 = einsum("nc,nc->c", x_hat, g_out[0])
+
+        r_mat = -einsum("nc,vc->vnc", g_out[0], sum_127)
+        r_mat += (1.0 / N) * einsum("c,vc->vc", sum_24, sum_127).unsqueeze(1).expand(
+            -1, N, -1
+        )
+        r_mat -= einsum("nc,vc->vnc", x_hat, sum_3)
+        r_mat += (1.0 / N) * einsum("nc,c,vc->vnc", x_hat, sum_24, sum_46)
+
+        r_mat -= einsum("vnc,c->vnc", mat, sum_567)
+        r_mat += (1.0 / N) * einsum("c,vc->vc", sum_567, sum_46).unsqueeze(1).expand(
+            -1, N, -1
+        )
+        r_mat += (3.0 / N) * einsum("nc,vc,c->vnc", x_hat, sum_127, sum_567)
+
+        return einsum("c,vnc->vnc", factor, r_mat)
+
 
 class BatchNorm2dDerivatives(BatchNormNdDerivatives):
     """Derivatives for BatchNorm2d."""
