@@ -225,7 +225,11 @@ def test_weight_hh_l0_jac_t_mat_prod(problem, sum_batch, V=4):
     [True, False],
     ids=["save_memory=True", "save_memory=False"],
 )
-@pytest.mark.parametrize("problem", PROBLEMS_WITH_WEIGHTS, ids=IDS_WITH_WEIGHTS)
+@pytest.mark.parametrize(
+    "problem",
+    PROBLEMS_WITH_WEIGHTS + BATCH_NORM_PROBLEMS,
+    ids=IDS_WITH_WEIGHTS + BATCH_NORM_IDS,
+)
 def test_weight_jac_t_mat_prod(problem, sum_batch, save_memory, V=3):
     """Test the transposed Jacobian-matrix product w.r.t. to the weights.
 

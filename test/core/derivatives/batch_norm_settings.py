@@ -35,17 +35,21 @@ BATCH_NORM_SETTINGS = [
     {
         "module_fn": lambda: torch.nn.BatchNorm1d(num_features=7).train(mode=False),
         "input_fn": lambda: torch.rand(size=(5, 7)),
+        "id_prefix": "training=False",
     },
     {
         "module_fn": lambda: torch.nn.BatchNorm1d(num_features=7).train(mode=False),
         "input_fn": lambda: torch.rand(size=(5, 7, 4)),
+        "id_prefix": "training=False",
     },
     {
         "module_fn": lambda: torch.nn.BatchNorm2d(num_features=7).train(mode=False),
         "input_fn": lambda: torch.rand(size=(5, 7, 3, 4)),
+        "id_prefix": "training=False",
     },
     {
         "module_fn": lambda: torch.nn.BatchNorm3d(num_features=7).train(mode=False),
         "input_fn": lambda: torch.rand(size=(5, 7, 3, 4, 2)),
+        "id_prefix": "training=False",
     },
 ]

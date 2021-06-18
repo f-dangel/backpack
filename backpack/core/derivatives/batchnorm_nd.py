@@ -1,5 +1,6 @@
 """Contains derivatives for BatchNorm."""
 from typing import Tuple, Union
+from warnings import warn
 
 from torch import Size, Tensor, einsum
 from torch.nn import BatchNorm1d, BatchNorm2d, BatchNorm3d
@@ -146,6 +147,38 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
     @staticmethod
     def _get_n_axis(module: Union[BatchNorm1d, BatchNorm2d, BatchNorm3d]) -> int:
         return len(module.input0.shape) - 2
+
+    def _weight_jac_t_mat_prod(
+        self,
+        module: Union[BatchNorm1d, BatchNorm2d, BatchNorm3d],
+        g_inp: Tuple[Tensor],
+        g_out: Tuple[Tensor],
+        mat: Tensor,
+        sum_batch: bool = True,
+    ):
+        _n_dim: int = self._get_n_axis(module)
+        if module.training:
+            x_hat, _ = self._get_normalized_input_and_var(module)
+            equation = {
+                0: f"vnc,nc->v{'' if sum_batch else 'n'}c",
+                1: f"vncl,ncl->v{'' if sum_batch else 'n'}c",
+                2: f"vnchw,nchw->v{'' if sum_batch else 'n'}c",
+                3: f"vncdhw,ncdhw->v{'' if sum_batch else 'n'}c",
+            }[_n_dim]
+            return einsum(equation, mat, x_hat)
+        else:
+            equation = {
+                0: f"c,nc,vnc->v{'' if sum_batch else 'n'}c",
+                1: f"c,ncl,vncl->v{'' if sum_batch else 'n'}c",
+                2: f"c,nchw,vnchw->v{'' if sum_batch else 'n'}c",
+                3: f"c,ncdhw,vncdhw->v{'' if sum_batch else 'n'}c",
+            }[_n_dim]
+            return einsum(
+                equation,
+                ((module.running_var + module.eps) ** (-0.5)),
+                module.input0,
+                mat,
+            )
 
 
 class BatchNorm1dDerivatives(BatchNormNdDerivatives):
