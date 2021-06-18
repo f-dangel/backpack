@@ -11,6 +11,7 @@ from test.automated_test import check_sizes_and_values
 from test.core.derivatives.implementation.autograd import AutogradDerivatives
 from test.core.derivatives.implementation.backpack import BackpackDerivatives
 from test.core.derivatives.loss_settings import LOSS_FAIL_SETTINGS
+from test.core.derivatives.lstm_settings import LSTM_SETTINGS
 from test.core.derivatives.permute_settings import PERMUTE_SETTINGS
 from test.core.derivatives.problem import make_test_problems
 from test.core.derivatives.rnn_settings import RNN_SETTINGS as RNN_SETTINGS
@@ -37,14 +38,17 @@ LOSS_FAIL_IDS = [problem.make_id() for problem in LOSS_FAIL_PROBLEMS]
 RNN_PROBLEMS = make_test_problems(RNN_SETTINGS)
 RNN_IDS = [problem.make_id() for problem in RNN_PROBLEMS]
 
+LSTM_PROBLEMS = make_test_problems(LSTM_SETTINGS)
+LSTM_IDS = [problem.make_id() for problem in LSTM_PROBLEMS]
+
 PERMUTE_PROBLEMS = make_test_problems(PERMUTE_SETTINGS)
 PERMUTE_IDS = [problem.make_id() for problem in PERMUTE_PROBLEMS]
 
 
 @pytest.mark.parametrize(
     "problem",
-    NO_LOSS_PROBLEMS + RNN_PROBLEMS + PERMUTE_PROBLEMS,
-    ids=NO_LOSS_IDS + RNN_IDS + PERMUTE_IDS,
+    NO_LOSS_PROBLEMS + RNN_PROBLEMS + PERMUTE_PROBLEMS + LSTM_PROBLEMS,
+    ids=NO_LOSS_IDS + RNN_IDS + PERMUTE_IDS + LSTM_IDS,
 )
 def test_jac_mat_prod(problem, V=3):
     """Test the Jacobian-matrix product.
@@ -65,8 +69,8 @@ def test_jac_mat_prod(problem, V=3):
 
 @pytest.mark.parametrize(
     "problem",
-    NO_LOSS_PROBLEMS + RNN_PROBLEMS + PERMUTE_PROBLEMS,
-    ids=NO_LOSS_IDS + RNN_IDS + PERMUTE_IDS,
+    NO_LOSS_PROBLEMS + RNN_PROBLEMS + PERMUTE_PROBLEMS + LSTM_PROBLEMS,
+    ids=NO_LOSS_IDS + RNN_IDS + PERMUTE_IDS + LSTM_IDS,
 )
 def test_jac_t_mat_prod(problem, V=3):
     """Test the transposed Jacobian-matrix product.
@@ -96,7 +100,9 @@ for problem, problem_id in zip(PROBLEMS, IDS):
 @pytest.mark.parametrize(
     "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
 )
-@pytest.mark.parametrize("problem", RNN_PROBLEMS, ids=RNN_IDS)
+@pytest.mark.parametrize(
+    "problem", RNN_PROBLEMS + LSTM_PROBLEMS, ids=RNN_IDS + LSTM_IDS
+)
 def test_bias_ih_l0_jac_t_mat_prod(problem, sum_batch, V=3):
     """Test the transposed Jacobian-matrix product w.r.t. to bias_ih_l0.
 
@@ -122,7 +128,9 @@ def test_bias_ih_l0_jac_t_mat_prod(problem, sum_batch, V=3):
 @pytest.mark.parametrize(
     "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
 )
-@pytest.mark.parametrize("problem", RNN_PROBLEMS, ids=RNN_IDS)
+@pytest.mark.parametrize(
+    "problem", RNN_PROBLEMS + LSTM_PROBLEMS, ids=RNN_IDS + LSTM_IDS
+)
 def test_bias_hh_l0_jac_t_mat_prod(problem, sum_batch, V=3):
     """Test the transposed Jacobian-matrix product w.r.t. to bias_hh_l0.
 
@@ -148,7 +156,9 @@ def test_bias_hh_l0_jac_t_mat_prod(problem, sum_batch, V=3):
 @pytest.mark.parametrize(
     "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
 )
-@pytest.mark.parametrize("problem", RNN_PROBLEMS, ids=RNN_IDS)
+@pytest.mark.parametrize(
+    "problem", RNN_PROBLEMS + LSTM_PROBLEMS, ids=RNN_IDS + LSTM_IDS
+)
 def test_weight_ih_l0_jac_t_mat_prod(problem, sum_batch, V=3):
     """Test the transposed Jacobian-matrix product w.r.t. to weight_ih_l0.
 
@@ -174,7 +184,9 @@ def test_weight_ih_l0_jac_t_mat_prod(problem, sum_batch, V=3):
 @pytest.mark.parametrize(
     "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
 )
-@pytest.mark.parametrize("problem", RNN_PROBLEMS, ids=RNN_IDS)
+@pytest.mark.parametrize(
+    "problem", RNN_PROBLEMS + LSTM_PROBLEMS, ids=RNN_IDS + LSTM_IDS
+)
 def test_weight_hh_l0_jac_t_mat_prod(problem, sum_batch, V=4):
     """Test the transposed Jacobian-matrix product w.r.t. to weight_hh_l0.
 
