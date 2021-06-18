@@ -21,8 +21,7 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
     def _check_parameters(
         self, module: Union[BatchNorm1d, BatchNorm2d, BatchNorm3d]
     ) -> None:
-        if not module.training:
-            raise NotImplementedError("evaluation mode not implemented.")
+        pass
 
     def hessian_is_zero(self) -> bool:
         """Whether hessian is zero.
