@@ -15,38 +15,14 @@ class BatchNorm1dDerivatives(BaseParameterDerivatives):
     def hessian_is_diagonal(self):
         return False
 
-    def _jac_mat_prod(self, module, g_inp, g_out, mat):
+    def _jac_mat_prod(
+        self,
+        module: BatchNorm1d,
+        g_inp: Tuple[Tensor],
+        g_out: Tuple[Tensor],
+        mat: Tensor,
+    ) -> Tensor:
         return self._jac_t_mat_prod(module, g_inp, g_out, mat)
-
-    def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
-        """
-        Note:
-        -----
-        The Jacobian is *not independent* among the batch dimension, i.e.
-        D z_i = D z_i(x_1, ..., x_B).
-
-        This structure breaks the computation of the GGN diagonal,
-        for curvature-matrix products it should still work.
-
-        References:
-        -----------
-        https://kevinzakka.github.io/2016/09/14/batch_normalization/
-        https://chrisyeh96.github.io/2017/08/28/deriving-batchnorm-backprop.html
-        """
-        assert module.affine is True
-
-        N = module.input0.size(0)
-        x_hat, var = self._get_normalized_input_and_var(module)
-        ivar = 1.0 / (var + module.eps).sqrt()
-
-        dx_hat = einsum("vni,i->vni", (mat, module.weight))
-
-        jac_t_mat = N * dx_hat
-        jac_t_mat -= dx_hat.sum(1).unsqueeze(1).expand_as(jac_t_mat)
-        jac_t_mat -= einsum("ni,vsi,si->vni", (x_hat, dx_hat, x_hat))
-        jac_t_mat = einsum("vni,i->vni", (jac_t_mat, ivar / N))
-
-        return jac_t_mat
 
     @classmethod
     def _get_normalized_input_and_var(cls, module: BatchNorm1d):
@@ -55,18 +31,12 @@ class BatchNorm1dDerivatives(BaseParameterDerivatives):
         mean: Tensor = input.mean(dim=dim)
         var: Tensor = input.var(dim=dim, unbiased=False)
         mean_expanded = (
-            mean[None, :, None]
-            if cls._has_l_axis(module)
-            else mean[None, :]
+            mean[None, :, None] if cls._has_l_axis(module) else mean[None, :]
         )
-        var_expanded = (
-            var[None, :, None]
-            if cls._has_l_axis(module)
-            else var[None, :]
-        )
+        var_expanded = var[None, :, None] if cls._has_l_axis(module) else var[None, :]
         return (input - mean_expanded) / (var_expanded + module.eps).sqrt(), var
 
-    def _jac_t_mat_prod_alternative(
+    def _jac_t_mat_prod(
         self,
         module: BatchNorm1d,
         g_inp: Tuple[Tensor],
@@ -106,7 +76,13 @@ class BatchNorm1dDerivatives(BaseParameterDerivatives):
                 f"Can't handle input with {_dim} dimensions on module BatchNorm1d."
             )
 
-    def _residual_mat_prod(self, module, g_inp, g_out, mat):
+    def _residual_mat_prod(
+        self,
+        module: BatchNorm1d,
+        g_inp: Tuple[Tensor],
+        g_out: Tuple[Tensor],
+        mat: Tensor,
+    ) -> Tensor:
         """Multiply with BatchNorm1d residual-matrix.
 
         Paul Fischer (GitHub: @paulkogni) contributed this code during a research
