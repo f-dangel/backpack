@@ -221,6 +221,15 @@ class BatchNorm1dDerivatives(BatchNormNdDerivatives):
         - `TODO: Add tech report title`
           <TODO: Wait for tech report upload>_
           by Paul Fischer, 2020.
+
+        Args:
+            module: module
+            g_inp: input gradients
+            g_out: output gradients
+            mat: matrix to multiply
+
+        Returns:
+            product
         """
         N = module.input0.size(0)
         x_hat, var = self._get_normalized_input_and_var(module)
