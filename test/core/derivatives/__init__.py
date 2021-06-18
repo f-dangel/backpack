@@ -7,6 +7,9 @@ from torch.nn import (
     AvgPool1d,
     AvgPool2d,
     AvgPool3d,
+    BatchNorm1d,
+    BatchNorm2d,
+    BatchNorm3d,
     Conv1d,
     Conv2d,
     Conv3d,
@@ -26,13 +29,16 @@ from torch.nn import (
     Sigmoid,
     Tanh,
     ZeroPad2d,
-    BatchNorm1d,
 )
 
 from backpack.core.derivatives.avgpool1d import AvgPool1DDerivatives
 from backpack.core.derivatives.avgpool2d import AvgPool2DDerivatives
 from backpack.core.derivatives.avgpool3d import AvgPool3DDerivatives
-from backpack.core.derivatives.batchnorm1d import BatchNorm1dDerivatives
+from backpack.core.derivatives.batchnorm_nd import (
+    BatchNorm1dDerivatives,
+    BatchNorm2dDerivatives,
+    BatchNorm3dDerivatives,
+)
 from backpack.core.derivatives.conv1d import Conv1DDerivatives
 from backpack.core.derivatives.conv2d import Conv2DDerivatives
 from backpack.core.derivatives.conv3d import Conv3DDerivatives
@@ -88,4 +94,6 @@ derivatives_for = {
     Permute: PermuteDerivatives,
     LSTM: LSTMDerivatives,
     BatchNorm1d: BatchNorm1dDerivatives,
+    BatchNorm2d: BatchNorm2dDerivatives,
+    BatchNorm3d: BatchNorm3dDerivatives,
 }
