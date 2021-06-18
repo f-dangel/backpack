@@ -1,5 +1,5 @@
 """Contains derivatives for BatchNorm."""
-from typing import Tuple, Union
+from typing import List, Tuple, Union
 
 from torch import Size, Tensor, einsum
 from torch.nn import BatchNorm1d, BatchNorm2d, BatchNorm3d
@@ -147,6 +147,37 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
     def _get_n_axis(module: Union[BatchNorm1d, BatchNorm2d, BatchNorm3d]) -> int:
         return len(module.input0.shape) - 2
 
+    def _weight_jac_mat_prod(
+        self,
+        module: Union[BatchNorm1d, BatchNorm2d, BatchNorm3d],
+        g_inp: Tuple[Tensor],
+        g_out: Tuple[Tensor],
+        mat: Tensor,
+    ) -> Tensor:
+        _n_dim: int = self._get_n_axis(module)
+        if module.training:
+            x_hat, _ = self._get_normalized_input_and_var(module)
+            equation: str = {
+                0: "nc,vc->vnc",
+                1: "ncl,vc->vncl",
+                2: "nchw,vc->vnchw",
+                3: "ncdhw,vc->vncdhw",
+            }[_n_dim]
+            return einsum(equation, x_hat, mat)
+        else:
+            equation: str = {
+                0: "c,nc,vc->vnc",
+                1: "c,ncl,vc->vncl",
+                2: "c,nchw,vc->vnchw",
+                3: "c,ncdhw,vc->vncdhw",
+            }[_n_dim]
+            return einsum(
+                equation,
+                ((module.running_var + module.eps) ** (-0.5)),
+                module.input0,
+                mat,
+            )
+
     def _weight_jac_t_mat_prod(
         self,
         module: Union[BatchNorm1d, BatchNorm2d, BatchNorm3d],
@@ -154,7 +185,7 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
         g_out: Tuple[Tensor],
         mat: Tensor,
         sum_batch: bool = True,
-    ):
+    ) -> Tensor:
         _n_dim: int = self._get_n_axis(module)
         if module.training:
             x_hat, _ = self._get_normalized_input_and_var(module)
@@ -179,6 +210,23 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
                 mat,
             )
 
+    def _bias_jac_mat_prod(
+        self,
+        module: Union[BatchNorm1d, BatchNorm2d, BatchNorm3d],
+        g_inp: Tuple[Tensor],
+        g_out: Tuple[Tensor],
+        mat: Tensor,
+    ) -> Tensor:
+        print("matrix shape", mat.shape)
+        out = mat.unsqueeze(1)
+        _n_axis = self._get_n_axis(module)
+        for _ in range(_n_axis):
+            out = out.unsqueeze(-1)
+        dim_expand: List[int] = [-1, module.input0.shape[0], -1]
+        for n in range(_n_axis):
+            dim_expand.append(module.input0.shape[2 + n])
+        return out.expand(*dim_expand)
+
     def _bias_jac_t_mat_prod(
         self,
         module: Union[BatchNorm1d, BatchNorm2d, BatchNorm3d],
@@ -186,7 +234,7 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
         g_out: Tuple[Tensor],
         mat: Tensor,
         sum_batch: bool = True,
-    ):
+    ) -> Tensor:
         _n_dim: int = self._get_n_axis(module)
         axis_sum: Tuple[int] = {
             0: (1,) if sum_batch else None,

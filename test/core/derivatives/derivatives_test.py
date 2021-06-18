@@ -256,7 +256,11 @@ def test_weight_jac_t_mat_prod(problem, sum_batch, save_memory, V=3):
     problem.tear_down()
 
 
-@pytest.mark.parametrize("problem", PROBLEMS_WITH_WEIGHTS, ids=IDS_WITH_WEIGHTS)
+@pytest.mark.parametrize(
+    "problem",
+    PROBLEMS_WITH_WEIGHTS + BATCH_NORM_PROBLEMS,
+    ids=IDS_WITH_WEIGHTS + BATCH_NORM_IDS,
+)
 def test_weight_jac_mat_prod(problem, V=3):
     """Test the Jacobian-matrix product w.r.t. to the weights.
 
@@ -310,8 +314,8 @@ def test_bias_jac_t_mat_prod(problem, sum_batch, V=3):
 
 @pytest.mark.parametrize(
     "problem",
-    PROBLEMS_WITH_BIAS,
-    ids=IDS_WITH_BIAS,
+    PROBLEMS_WITH_BIAS + BATCH_NORM_PROBLEMS,
+    ids=IDS_WITH_BIAS + BATCH_NORM_IDS,
 )
 def test_bias_jac_mat_prod(problem, V=3):
     """Test the Jacobian-matrix product w.r.t. to the biass.
