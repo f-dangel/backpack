@@ -1,8 +1,7 @@
 from typing import Tuple
 from warnings import warn
 
-import torch
-from torch import Tensor, diag_embed, diagonal, einsum, ones, sqrt, zeros
+from torch import Tensor, einsum
 from torch.nn import BatchNorm1d
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
@@ -72,7 +71,7 @@ class BatchNorm1dDerivatives(BaseParameterDerivatives):
         elif _dim == 2:
             return False
         else:
-            raise NotImplemented(
+            raise NotImplementedError(
                 f"Can't handle input with {_dim} dimensions on module BatchNorm1d."
             )
 

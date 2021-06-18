@@ -1,6 +1,5 @@
 """Contains derivatives for BatchNorm."""
 from typing import Tuple, Union
-from warnings import warn
 
 from torch import Size, Tensor, einsum
 from torch.nn import BatchNorm1d, BatchNorm2d, BatchNorm3d
