@@ -9,10 +9,6 @@
 
 from test.automated_test import check_sizes_and_values
 from test.core.derivatives.batch_norm_settings import BATCH_NORM_SETTINGS
-from test.core.derivatives.convolution_settings import (
-    CONVOLUTION_FAIL_SETTINGS,
-    CONVOLUTION_TRANSPOSED_FAIL_SETTINGS,
-)
 from test.core.derivatives.implementation.autograd import AutogradDerivatives
 from test.core.derivatives.implementation.backpack import BackpackDerivatives
 from test.core.derivatives.loss_settings import LOSS_FAIL_SETTINGS
@@ -55,7 +51,11 @@ BATCH_NORM_IDS = [problem.make_id() for problem in BATCH_NORM_PROBLEMS]
 
 @pytest.mark.parametrize(
     "problem",
-    NO_LOSS_PROBLEMS + RNN_PROBLEMS + PERMUTE_PROBLEMS + LSTM_PROBLEMS + BATCH_NORM_PROBLEMS,
+    NO_LOSS_PROBLEMS
+    + RNN_PROBLEMS
+    + PERMUTE_PROBLEMS
+    + LSTM_PROBLEMS
+    + BATCH_NORM_PROBLEMS,
     ids=NO_LOSS_IDS + RNN_IDS + PERMUTE_IDS + LSTM_IDS + BATCH_NORM_IDS,
 )
 def test_jac_mat_prod(problem, V=3):
@@ -77,7 +77,11 @@ def test_jac_mat_prod(problem, V=3):
 
 @pytest.mark.parametrize(
     "problem",
-    NO_LOSS_PROBLEMS + RNN_PROBLEMS + PERMUTE_PROBLEMS + LSTM_PROBLEMS + BATCH_NORM_PROBLEMS,
+    NO_LOSS_PROBLEMS
+    + RNN_PROBLEMS
+    + PERMUTE_PROBLEMS
+    + LSTM_PROBLEMS
+    + BATCH_NORM_PROBLEMS,
     ids=NO_LOSS_IDS + RNN_IDS + PERMUTE_IDS + LSTM_IDS + BATCH_NORM_IDS,
 )
 def test_jac_t_mat_prod(problem, V=3):
