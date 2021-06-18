@@ -18,13 +18,11 @@ import torch
 LSTM_SETTINGS = []
 
 ###############################################################################
-#                                   examples                                  #
+#                                test settings                                #
 ###############################################################################
-
-example = {
-    "module_fn": lambda: torch.nn.LSTM(input_size=5, hidden_size=3, num_layers=1),
-    "input_fn": lambda: torch.rand(size=(10, 8, 5)),
-}
-LSTM_SETTINGS.append(example)
-
-# TODO write rest of test similar to linear_settings
+LSTM_SETTINGS += [
+    {
+        "module_fn": lambda: torch.nn.LSTM(input_size=5, hidden_size=3, num_layers=1),
+        "input_fn": lambda: torch.rand(size=(10, 8, 5)),
+    },
+]
