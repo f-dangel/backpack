@@ -181,12 +181,12 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
             )
 
     def _bias_jac_t_mat_prod(
-            self,
-            module: Union[BatchNorm1d, BatchNorm2d, BatchNorm3d],
-            g_inp: Tuple[Tensor],
-            g_out: Tuple[Tensor],
-            mat: Tensor,
-            sum_batch: bool = True,
+        self,
+        module: Union[BatchNorm1d, BatchNorm2d, BatchNorm3d],
+        g_inp: Tuple[Tensor],
+        g_out: Tuple[Tensor],
+        mat: Tensor,
+        sum_batch: bool = True,
     ):
         _n_dim: int = self._get_n_axis(module)
         axis_sum: Tuple[int] = {
