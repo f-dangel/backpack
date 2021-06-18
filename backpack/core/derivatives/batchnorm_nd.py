@@ -122,20 +122,17 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
         jac_t_mat = einsum(equation, jac_t_mat, ivar / denominator)
         return jac_t_mat
 
-    def _get_denominator(
-        self, module: Union[BatchNorm1d, BatchNorm2d, BatchNorm3d]
-    ) -> int:
+    @staticmethod
+    def _get_denominator(module: Union[BatchNorm1d, BatchNorm2d, BatchNorm3d]) -> int:
         shape_input: Size = module.input0.shape
         denominator: int = shape_input[0]
         for i in range(2, len(shape_input)):
             denominator *= shape_input[i]
         return denominator
 
-    def _get_n_axis(self, module: Union[BatchNorm1d, BatchNorm2d, BatchNorm3d]) -> int:
-        if self.n_dim == 1 and len(module.input0.shape) == 2:
-            return 0
-        else:
-            return self.n_dim
+    @staticmethod
+    def _get_n_axis(module: Union[BatchNorm1d, BatchNorm2d, BatchNorm3d]) -> int:
+        return len(module.input0.shape) - 2
 
 
 class BatchNorm1dDerivatives(BatchNormNdDerivatives):
