@@ -95,6 +95,12 @@ class DerivativesTestProblem:
         self.input_shape = self.make_input_shape()
         self.output_shape = self.make_output_shape()
 
+        if not self.module.training:
+            self.module.train(True)
+            for _ in range(3):
+                self.module(torch.randn_like(self.input))
+            self.module.train(False)
+
     def tear_down(self):
         del self.module
         del self.input
