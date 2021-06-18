@@ -32,7 +32,10 @@ class Variance(BackpropExtension):
 
     Stores the output in ``variance``. Same dimension as the gradient.
 
-    Note: beware of scaling issue
+    .. note::
+
+        Beware of scaling issue
+
         The variance depends on the scaling of the overall function.
         Let ``fᵢ`` be the loss of the ``i`` th sample, with gradient ``gᵢ``.
         ``Variance`` will return the variance of the vectors

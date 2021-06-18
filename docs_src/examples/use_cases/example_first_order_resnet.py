@@ -7,11 +7,11 @@ r"""First order extensions with a ResNet
 # Let's get the imports, configuration and some helper functions out of the way first.
 
 import torch
+import torch.nn.functional as F
 
 from backpack import backpack, extend
 from backpack.extensions import BatchGrad
 from backpack.utils.examples import load_one_batch_mnist
-import torch.nn.functional as F
 
 BATCH_SIZE = 3
 torch.manual_seed(0)
@@ -95,7 +95,7 @@ model.zero_grad()
 loss = F.cross_entropy(model(x_to_check), y_to_check)
 loss.backward()
 
-print("Do the individual gradient match?")
-for param_id, (name, p) in enumerate(model.named_parameters()):
+print("Do the individual gradients match?")
+for name, p in model.named_parameters():
     match = torch.allclose(p.grad_batch[sample_to_check, :], p.grad, atol=1e-7)
     print("{:<20} {}".format(name, match))

@@ -18,6 +18,7 @@ class BatchL2ConvND(BatchL2Base):
         super().__init__(params=params)
         self.N = N
 
+    # TODO Use bias Jacobian to compute `bias_gradient`
     def bias(self, ext, module, g_inp, g_out, backproped):
         """batch_l2 for bias.
 
@@ -31,10 +32,13 @@ class BatchL2ConvND(BatchL2Base):
         Returns:
             batch_l2 for bias
         """
-        C_axis = 1
-        return convUtils.get_bias_gradient_factors(g_out[0], C_axis, self.N)
+        spatial_dims = list(range(2, g_out[0].dim()))
+        channel_dim = 1
 
-    def weight(self, ext, module, g_inp, g_out, backproped):
+        return g_out[0].sum(spatial_dims).pow_(2).sum(channel_dim)
+
+
+def weight(self, ext, module, g_inp, g_out, backproped):
         """batch_l2 for weight.
 
         Args:
