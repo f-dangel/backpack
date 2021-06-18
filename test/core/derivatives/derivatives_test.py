@@ -283,8 +283,8 @@ for problem, problem_id in zip(PROBLEMS, IDS):
 )
 @pytest.mark.parametrize(
     "problem",
-    PROBLEMS_WITH_BIAS,
-    ids=IDS_WITH_BIAS,
+    PROBLEMS_WITH_BIAS + BATCH_NORM_PROBLEMS,
+    ids=IDS_WITH_BIAS + BATCH_NORM_IDS,
 )
 def test_bias_jac_t_mat_prod(problem, sum_batch, V=3):
     """Test the transposed Jacobian-matrix product w.r.t. to the biass.
