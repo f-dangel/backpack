@@ -118,55 +118,58 @@ class LSTMDerivatives(BaseParameterDerivatives):
         ifgo, c, c_tanh, _ = cls._forward_pass(module, mat)
 
         # backward pass
-        H_prod: Tensor = zeros(V, T, N, H, device=mat.device, dtype=mat.dtype)
-        C_prod: Tensor = zeros(V, T, N, H, device=mat.device, dtype=mat.dtype)
+        H_prod_t: Tensor = zeros(V, N, H, device=mat.device, dtype=mat.dtype)
+        C_prod_t: Tensor = zeros(V, N, H, device=mat.device, dtype=mat.dtype)
+        C_prod_old: Tensor = zeros(V, N, H, device=mat.device, dtype=mat.dtype)
         IFGO_prod: Tensor = zeros(V, T, N, 4 * H, device=mat.device, dtype=mat.dtype)
         for t in reversed(range(T)):
             # jac_t_mat_prod until node h
-            H_prod[:, t] = mat[:, t]
+            H_prod_t[:] = mat[:, t]
             if t != (T - 1):
-                H_prod[:, t] += einsum(
+                H_prod_t += einsum(
                     "vnh,hg->vng",
                     IFGO_prod[:, t + 1],
                     module.weight_hh_l0,
                 )
 
-            # C_prod = jac_t_mat_prod until node c
-            C_prod[:, t] = einsum(
+            # C_prod_t = jac_t_mat_prod until node c
+            if t != (T - 1):
+                C_prod_old[:] = C_prod_t
+            C_prod_t[:] = einsum(
                 "vnh,nh,nh->vnh",
-                H_prod[:, t],
+                H_prod_t,
                 ifgo[t, :, H3:H4],
                 (1 - c_tanh[t] ** 2),
             )
             if t != (T - 1):
-                C_prod[:, t] += einsum(
+                C_prod_t += einsum(
                     "vnh,nh->vnh",
-                    C_prod[:, t + 1],
+                    C_prod_old,
                     ifgo[t + 1, :, H1:H2],
                 )
 
             IFGO_prod[:, t, :, H3:H4] = einsum(
                 "vnh,nh,nh->vnh",
-                H_prod[:, t],
+                H_prod_t,
                 c_tanh[t],
                 ifgo[t, :, H3:H4] * (1 - ifgo[t, :, H3:H4]),
             )
             IFGO_prod[:, t, :, H0:H1] = einsum(
                 "vnh,nh,nh->vnh",
-                C_prod[:, t],
+                C_prod_t,
                 ifgo[t, :, H2:H3],
                 ifgo[t, :, H0:H1] * (1 - ifgo[t, :, H0:H1]),
             )
             if t >= 1:
                 IFGO_prod[:, t, :, H1:H2] = einsum(
                     "vnh,nh,nh->vnh",
-                    C_prod[:, t],
+                    C_prod_t,
                     c[t - 1],
                     ifgo[t, :, H1:H2] * (1 - ifgo[t, :, H1:H2]),
                 )
             IFGO_prod[:, t, :, H2:H3] = einsum(
                 "vnh,nh,nh->vnh",
-                C_prod[:, t],
+                C_prod_t,
                 ifgo[t, :, H0:H1],
                 1 - ifgo[t, :, H2:H3] ** 2,
             )
@@ -192,7 +195,8 @@ class LSTMDerivatives(BaseParameterDerivatives):
 
         ifgo, c, c_tanh, h = self._forward_pass(module, mat)
         H_prod: Tensor = zeros(V, T, N, H, device=mat.device, dtype=mat.dtype)
-        C_prod: Tensor = zeros(V, T, N, H, device=mat.device, dtype=mat.dtype)
+        C_prod_t: Tensor = zeros(V, N, H, device=mat.device, dtype=mat.dtype)
+        C_prod_old: Tensor = zeros(V, N, H, device=mat.device, dtype=mat.dtype)
         C_tanh_prod_t: Tensor = zeros(V, N, H, device=mat.device, dtype=mat.dtype)
         IFGO_prod_t: Tensor = zeros(V, N, 4 * H, device=mat.device, dtype=mat.dtype)
         for t in range(T):
@@ -225,7 +229,9 @@ class LSTMDerivatives(BaseParameterDerivatives):
             )
 
             # product until node c
-            C_prod[:, t] = (
+            if t >= 1:
+                C_prod_old[:] = C_prod_t
+            C_prod_t[:] = (
                 einsum(
                     "vnh,nh->vnh",
                     IFGO_prod_t[:, :, H0:H1],
@@ -234,9 +240,9 @@ class LSTMDerivatives(BaseParameterDerivatives):
                 + einsum("vnh,nh->vnh", IFGO_prod_t[:, :, H2:H3], ifgo[t, :, H0:H1])
             )
             if t >= 1:
-                C_prod[:, t] += einsum(
+                C_prod_t += einsum(
                     "vnh,nh->vnh",
-                    C_prod[:, t - 1],
+                    C_prod_old,
                     ifgo[t, :, H1:H2],
                 ) + einsum(
                     "vnh,nh->vnh",
@@ -247,7 +253,7 @@ class LSTMDerivatives(BaseParameterDerivatives):
             # product until node c_tanh
             C_tanh_prod_t[:] = einsum(
                 "vnh,nh->vnh",
-                C_prod[:, t],
+                C_prod_t,
                 1 - c_tanh[t] ** 2,
             )
 
