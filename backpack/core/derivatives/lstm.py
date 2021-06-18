@@ -136,10 +136,9 @@ class LSTMDerivatives(BaseParameterDerivatives):
             if t != (T - 1):
                 C_prod_old[:] = C_prod_t
             C_prod_t[:] = einsum(
-                "vnh,nh,nh->vnh",
+                "vnh,nh->vnh",
                 H_prod_t,
-                ifgo[t, :, H3:H4],
-                (1 - c_tanh[t] ** 2),
+                ifgo[t, :, H3:H4] * (1 - c_tanh[t] ** 2),
             )
             if t != (T - 1):
                 C_prod_t += einsum(
@@ -149,29 +148,25 @@ class LSTMDerivatives(BaseParameterDerivatives):
                 )
 
             IFGO_prod[:, t, :, H3:H4] = einsum(
-                "vnh,nh,nh->vnh",
+                "vnh,nh->vnh",
                 H_prod_t,
-                c_tanh[t],
-                ifgo[t, :, H3:H4] * (1 - ifgo[t, :, H3:H4]),
+                c_tanh[t] * (ifgo[t, :, H3:H4] * (1 - ifgo[t, :, H3:H4])),
             )
             IFGO_prod[:, t, :, H0:H1] = einsum(
-                "vnh,nh,nh->vnh",
+                "vnh,nh->vnh",
                 C_prod_t,
-                ifgo[t, :, H2:H3],
-                ifgo[t, :, H0:H1] * (1 - ifgo[t, :, H0:H1]),
+                ifgo[t, :, H2:H3] * (ifgo[t, :, H0:H1] * (1 - ifgo[t, :, H0:H1])),
             )
             if t >= 1:
                 IFGO_prod[:, t, :, H1:H2] = einsum(
-                    "vnh,nh,nh->vnh",
+                    "vnh,nh->vnh",
                     C_prod_t,
-                    c[t - 1],
-                    ifgo[t, :, H1:H2] * (1 - ifgo[t, :, H1:H2]),
+                    c[t - 1] * (ifgo[t, :, H1:H2] * (1 - ifgo[t, :, H1:H2])),
                 )
             IFGO_prod[:, t, :, H2:H3] = einsum(
-                "vnh,nh,nh->vnh",
+                "vnh,nh->vnh",
                 C_prod_t,
-                ifgo[t, :, H0:H1],
-                1 - ifgo[t, :, H2:H3] ** 2,
+                ifgo[t, :, H0:H1] * (1 - ifgo[t, :, H2:H3] ** 2),
             )
         return IFGO_prod
 
