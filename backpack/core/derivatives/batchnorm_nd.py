@@ -84,43 +84,56 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
     ) -> Tensor:
         self._check_parameters(module)
         _n_dim: int = self._get_n_axis(module)
-        denominator: int = self._get_denominator(module)
-        x_hat, var = self._get_normalized_input_and_var(module)
-        ivar = 1.0 / (var + module.eps).sqrt()
+        if module.training:
+            denominator: int = self._get_denominator(module)
+            x_hat, var = self._get_normalized_input_and_var(module)
+            ivar = 1.0 / (var + module.eps).sqrt()
 
-        equation = {
-            0: "vni,i->vni",
-            1: "vnil,i->vnil",
-            2: "vnihw,i->vnihw",
-            3: "vnidhw,i->vnidhw",
-        }[_n_dim]
-        dx_hat: Tensor = einsum(equation, mat, module.weight)
-        jac_t_mat = denominator * dx_hat
-        _axis_sum: Tuple[int] = {
-            0: (1,),
-            1: (1, 3),
-            2: (1, 3, 4),
-            3: (1, 3, 4, 5),
-        }[_n_dim]
-        jac_t_mat -= dx_hat.sum(
-            _axis_sum,
-            keepdim=True,
-        ).expand_as(jac_t_mat)
-        equation = {
-            0: "ni,vsi,si->vni",
-            1: "nil,vsix,six->vnil",
-            2: "nihw,vsixy,sixy->vnihw",
-            3: "nidhw,vsixyz,sixyz->vnidhw",
-        }[_n_dim]
-        jac_t_mat -= einsum(equation, x_hat, dx_hat, x_hat)
-        equation = {
-            0: "vni,i->vni",
-            1: "vnil,i->vnil",
-            2: "vnihw,i->vnihw",
-            3: "vnidhw,i->vnidhw",
-        }[_n_dim]
-        jac_t_mat = einsum(equation, jac_t_mat, ivar / denominator)
-        return jac_t_mat
+            equation = {
+                0: "vni,i->vni",
+                1: "vnil,i->vnil",
+                2: "vnihw,i->vnihw",
+                3: "vnidhw,i->vnidhw",
+            }[_n_dim]
+            dx_hat: Tensor = einsum(equation, mat, module.weight)
+            jac_t_mat = denominator * dx_hat
+            _axis_sum: Tuple[int] = {
+                0: (1,),
+                1: (1, 3),
+                2: (1, 3, 4),
+                3: (1, 3, 4, 5),
+            }[_n_dim]
+            jac_t_mat -= dx_hat.sum(
+                _axis_sum,
+                keepdim=True,
+            ).expand_as(jac_t_mat)
+            equation = {
+                0: "ni,vsi,si->vni",
+                1: "nil,vsix,six->vnil",
+                2: "nihw,vsixy,sixy->vnihw",
+                3: "nidhw,vsixyz,sixyz->vnidhw",
+            }[_n_dim]
+            jac_t_mat -= einsum(equation, x_hat, dx_hat, x_hat)
+            equation = {
+                0: "vni,i->vni",
+                1: "vnil,i->vnil",
+                2: "vnihw,i->vnihw",
+                3: "vnidhw,i->vnidhw",
+            }[_n_dim]
+            jac_t_mat = einsum(equation, jac_t_mat, ivar / denominator)
+            return jac_t_mat
+        else:
+            equation = {
+                0: "c,vnc->vnc",
+                1: "c,vncl->vncl",
+                2: "c,vnchw->vnchw",
+                3: "c,vncdhw->vncdhw",
+            }[_n_dim]
+            return einsum(
+                equation,
+                ((module.running_var + module.eps) ** (-0.5)) * module.weight,
+                mat,
+            )
 
     @staticmethod
     def _get_denominator(module: Union[BatchNorm1d, BatchNorm2d, BatchNorm3d]) -> int:
