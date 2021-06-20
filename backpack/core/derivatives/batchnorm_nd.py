@@ -8,7 +8,20 @@ from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 
 
 class BatchNormNdDerivatives(BaseParameterDerivatives):
-    """Derivatives for BatchNorm."""
+    """Derivatives for BatchNorm.
+
+    If training=False: saved statistics are used.
+    If training=True: statistics of current batch are used.
+
+    Index convention:
+    n: batch axis
+    c: category axis
+    {empty}/l/hw/dhw: dimension axis for 0/1/2/3-dimensions
+
+    As a starting point, see these references:
+    https://kevinzakka.github.io/2016/09/14/batch_normalization/
+    https://chrisyeh96.github.io/2017/08/28/deriving-batchnorm-backprop.html
+    """
 
     def __init__(self, n_dim: int):
         """Initialization.
@@ -193,9 +206,8 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
         g_out: Tuple[Tensor],
         mat: Tensor,
     ) -> Tensor:
-        print("matrix shape", mat.shape)
-        out = mat.unsqueeze(1)
         _n_axis = self._get_n_axis(module)
+        out = mat.unsqueeze(1)
         for _ in range(_n_axis):
             out = out.unsqueeze(-1)
         dim_expand: List[int] = [-1, module.input0.shape[0], -1]
