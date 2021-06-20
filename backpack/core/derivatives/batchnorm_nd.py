@@ -59,8 +59,12 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
             3: (0, 2, 3, 4),
         }[_n_axis]
         input: Tensor = module.input0
-        mean: Tensor = input.mean(dim=dim)
-        var: Tensor = input.var(dim=dim, unbiased=False)
+        if module.training:
+            mean: Tensor = input.mean(dim=dim)
+            var: Tensor = input.var(dim=dim, unbiased=False)
+        else:
+            mean: Tensor = module.running_mean
+            var: Tensor = module.running_var
         mean_expanded: Tensor = {
             0: mean[None, :],
             1: mean[None, :, None],
@@ -155,28 +159,14 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
         mat: Tensor,
     ) -> Tensor:
         _n_dim: int = self._get_n_axis(module)
-        if module.training:
-            x_hat, _ = self._get_normalized_input_and_var(module)
-            equation: str = {
-                0: "nc,vc->vnc",
-                1: "ncl,vc->vncl",
-                2: "nchw,vc->vnchw",
-                3: "ncdhw,vc->vncdhw",
-            }[_n_dim]
-            return einsum(equation, x_hat, mat)
-        else:
-            equation: str = {
-                0: "c,nc,vc->vnc",
-                1: "c,ncl,vc->vncl",
-                2: "c,nchw,vc->vnchw",
-                3: "c,ncdhw,vc->vncdhw",
-            }[_n_dim]
-            return einsum(
-                equation,
-                ((module.running_var + module.eps) ** (-0.5)),
-                module.input0,
-                mat,
-            )
+        x_hat, _ = self._get_normalized_input_and_var(module)
+        equation: str = {
+            0: "nc,vc->vnc",
+            1: "ncl,vc->vncl",
+            2: "nchw,vc->vnchw",
+            3: "ncdhw,vc->vncdhw",
+        }[_n_dim]
+        return einsum(equation, x_hat, mat)
 
     def _weight_jac_t_mat_prod(
         self,
@@ -187,28 +177,14 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
         sum_batch: bool = True,
     ) -> Tensor:
         _n_dim: int = self._get_n_axis(module)
-        if module.training:
-            x_hat, _ = self._get_normalized_input_and_var(module)
-            equation = {
-                0: f"vnc,nc->v{'' if sum_batch else 'n'}c",
-                1: f"vncl,ncl->v{'' if sum_batch else 'n'}c",
-                2: f"vnchw,nchw->v{'' if sum_batch else 'n'}c",
-                3: f"vncdhw,ncdhw->v{'' if sum_batch else 'n'}c",
-            }[_n_dim]
-            return einsum(equation, mat, x_hat)
-        else:
-            equation = {
-                0: f"c,nc,vnc->v{'' if sum_batch else 'n'}c",
-                1: f"c,ncl,vncl->v{'' if sum_batch else 'n'}c",
-                2: f"c,nchw,vnchw->v{'' if sum_batch else 'n'}c",
-                3: f"c,ncdhw,vncdhw->v{'' if sum_batch else 'n'}c",
-            }[_n_dim]
-            return einsum(
-                equation,
-                ((module.running_var + module.eps) ** (-0.5)),
-                module.input0,
-                mat,
-            )
+        x_hat, _ = self._get_normalized_input_and_var(module)
+        equation = {
+            0: f"vnc,nc->v{'' if sum_batch else 'n'}c",
+            1: f"vncl,ncl->v{'' if sum_batch else 'n'}c",
+            2: f"vnchw,nchw->v{'' if sum_batch else 'n'}c",
+            3: f"vncdhw,ncdhw->v{'' if sum_batch else 'n'}c",
+        }[_n_dim]
+        return einsum(equation, mat, x_hat)
 
     def _bias_jac_mat_prod(
         self,
