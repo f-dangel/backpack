@@ -11,8 +11,9 @@ from test.automated_test import check_sizes_and_values
 from test.core.derivatives.implementation.autograd import AutogradDerivatives
 from test.core.derivatives.implementation.backpack import BackpackDerivatives
 from test.core.derivatives.loss_settings import LOSS_FAIL_SETTINGS
-from test.core.derivatives.problem import make_test_problems
+from test.core.derivatives.problem import DerivativesTestProblem, make_test_problems
 from test.core.derivatives.settings import SETTINGS
+from warnings import warn
 
 import pytest
 import torch
@@ -284,16 +285,31 @@ def test_ea_jac_t_mat_jac_prod(problem):
     problem.tear_down()
 
 
-@pytest.mark.skip("[WAITING] Autograd issue with Hessian-vector products")
 @pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
-def test_hessian_is_zero(problem):
-    """Check if the input-output Hessian is (non-)zero."""
+def test_hessian_is_zero(problem: DerivativesTestProblem):
+    """Check if the input-output Hessian is (non-)zero.
+
+    Note:
+        `hessian_is_zero` is a global statement that assumes arbitrary inputs.
+        It can thus happen that the Hessian diagonal is zero for the current
+        input, but not in general.
+
+    Args:
+        problem: Test case.
+    """
     problem.set_up()
 
     backpack_res = BackpackDerivatives(problem).hessian_is_zero()
     autograd_res = AutogradDerivatives(problem).hessian_is_zero()
 
-    assert backpack_res == autograd_res
+    if autograd_res and not backpack_res:
+        warn(
+            "Autograd Hessian diagonal is zero for this input "
+            " while BackPACK implementation implies inputs with non-zero Hessian."
+        )
+    else:
+        assert backpack_res == autograd_res
+
     problem.tear_down()
 
 

@@ -78,12 +78,7 @@ class BackpackDerivatives(DerivativesImplementation):
             individual_hessians, self.problem.module.input0
         )
 
-    def hessian_is_zero(self):
-        """Return whether the input-output Hessian is zero.
-
-        Returns:
-            bool: `True`, if Hessian is zero, else `False`.
-        """
+    def hessian_is_zero(self) -> bool:
         return self.problem.derivative.hessian_is_zero()
 
     def _sample_hessians_from_sqrt(self, sqrt):
