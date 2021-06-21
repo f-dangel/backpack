@@ -17,6 +17,7 @@ from warnings import warn
 
 import pytest
 import torch
+from pytest import fixture, skip
 
 from backpack.core.derivatives.convnd import weight_jac_t_save_memory
 
@@ -285,8 +286,41 @@ def test_ea_jac_t_mat_jac_prod(problem):
     problem.tear_down()
 
 
-@pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
-def test_hessian_is_zero(problem: DerivativesTestProblem):
+@fixture(params=PROBLEMS, ids=lambda p: p.make_id())
+def instantiated_problem(request) -> DerivativesTestProblem:
+    """Set seed, create tested layer and data. Finally clean up.
+
+    Args:
+        request (SubRequest): Request for the fixture from a test/fixture function.
+
+    Yields:
+        Test case with deterministically constructed attributes.
+    """
+    case = request.param
+    case.set_up()
+    yield case
+    case.tear_down()
+
+
+@fixture
+def no_loss_problem(
+    instantiated_problem: DerivativesTestProblem,
+) -> DerivativesTestProblem:
+    """Skip cases that are loss functions.
+
+    Args:
+        instantiated_problem: Test case with instantiated layer and  data.
+
+    Yields:
+        Instantiated test case that is not a loss layer.
+    """
+    if instantiated_problem.is_loss():
+        skip("Only required for non-loss layers.")
+    else:
+        yield instantiated_problem
+
+
+def test_hessian_is_zero(no_loss_problem: DerivativesTestProblem):
     """Check if the input-output Hessian is (non-)zero.
 
     Note:
@@ -295,12 +329,10 @@ def test_hessian_is_zero(problem: DerivativesTestProblem):
         input, but not in general.
 
     Args:
-        problem: Test case.
+        no_loss_problem: Test case whose module is not a loss.
     """
-    problem.set_up()
-
-    backpack_res = BackpackDerivatives(problem).hessian_is_zero()
-    autograd_res = AutogradDerivatives(problem).hessian_is_zero()
+    backpack_res = BackpackDerivatives(no_loss_problem).hessian_is_zero()
+    autograd_res = AutogradDerivatives(no_loss_problem).hessian_is_zero()
 
     if autograd_res and not backpack_res:
         warn(
@@ -309,8 +341,6 @@ def test_hessian_is_zero(problem: DerivativesTestProblem):
         )
     else:
         assert backpack_res == autograd_res
-
-    problem.tear_down()
 
 
 @pytest.mark.skip
