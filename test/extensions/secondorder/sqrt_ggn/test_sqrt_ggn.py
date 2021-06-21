@@ -50,7 +50,7 @@ def small_problem(
         skip(f"Model has too many parameters: {num_params} > {max_num_params}")
 
 
-def test_sqrt_ggn_exact(small_problem: ExtensionsTestProblem):
+def test_ggn_exact(small_problem: ExtensionsTestProblem):
     """Compare exact GGN from BackPACK's matrix square root with autograd.
 
     Args:
@@ -62,8 +62,23 @@ def test_sqrt_ggn_exact(small_problem: ExtensionsTestProblem):
     check_sizes_and_values(autograd_res, backpack_res)
 
 
+def test_sqrt_ggn_mc_integration(small_problem: ExtensionsTestProblem):
+    """Check if MC-approximated GGN matrix square root code executes.
+
+    Note:
+        This test does not perform correctness checks on the results,
+        which are expensive because a large number of samples is required.
+        Such a check is performed by `test_sqrt_ggn_mc`, which is run less
+        frequently.
+
+    Args:
+        small_problem: Test case with small network whose GGN can be evaluated.
+    """
+    BackpackExtensions(small_problem).sqrt_ggn_mc(mc_samples=1)
+
+
 @mark.montecarlo
-def test_sqrt_ggn_mc(small_problem: ExtensionsTestProblem):
+def test_ggn_mc(small_problem: ExtensionsTestProblem):
     """Compare MC-approximated GGN from BackpACK's with exact version from autograd.
 
     Args:

@@ -142,7 +142,7 @@ class SqrtGGNMC(SqrtGGN):
     """
 
     def __init__(self, mc_samples: int = 1):
-        """Approximate loss Hessian via MC and set savefield to ``sqrt_ggn_exact``.
+        """Approximate loss Hessian via MC and set savefield to ``sqrt_ggn_mc``.
 
         Args:
             mc_samples: Number of Monte-Carlo samples. Default: ``1``.
