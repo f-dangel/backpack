@@ -102,7 +102,7 @@ class SqrtGGNExact(SqrtGGN):
 
     .. note::
 
-        (Relation to the GGN/Fisher) For each parameter, ``param.sqrt_ggn_exact``,
+        (Relation to the GGN/Fisher) For each parameter, ``param.sqrt_ggn_exact``
         can be viewed as a ``[C * N, param.numel()]`` matrix. Concatenating this
         matrix over all parameters results in a matrix ``Vᵀ``, which
         is the GGN/Fisher's matrix square root, i.e. ``G = V Vᵀ``.
