@@ -26,6 +26,7 @@ Available Extensions
 .. autofunction:: backpack.extensions.DiagHessian
 .. autofunction:: backpack.extensions.BatchDiagHessian
 .. autofunction:: backpack.extensions.SqrtGGNExact
+.. autofunction:: backpack.extensions.SqrtGGNMC
 
 -----
 
