@@ -81,14 +81,9 @@ We're working on how to handle those, as well as adding more
 Along those lines, some things that will (most likely) not work with BackPACK,
 but that we're trying to build support for:
 
-- Inplace operations (e.g., using ``inplace=True`` for activation functions like
-  :py:class:`torch.nn.ReLU`.
 - Reusing the same parameters or module multiple time in the computation graph.
 
   For second order extensions, this also holds for any module,
   whether or not they have parameters.
   This sadly mean that BackPACK can't compute the individual gradients or
   second-order information of a L2-regularized loss, for example.
-
-
-

@@ -1,7 +1,6 @@
 from torch import einsum
 
 from backpack.extensions.firstorder.base import FirstOrderModuleExtension
-from backpack.utils import conv as convUtils
 from backpack.utils import conv_transpose as convTransposeUtils
 
 
@@ -10,9 +9,12 @@ class BatchL2ConvTransposeND(FirstOrderModuleExtension):
         super().__init__(params=params)
         self.N = N
 
+    # TODO Use bias Jacobian to compute `bias_gradient`
     def bias(self, ext, module, g_inp, g_out, backproped):
-        C_axis = 1
-        return convUtils.get_bias_gradient_factors(g_out[0], C_axis, self.N)
+        spatial_dims = list(range(2, g_out[0].dim()))
+        channel_dim = 1
+
+        return g_out[0].sum(spatial_dims).pow_(2).sum(channel_dim)
 
     def weight(self, ext, module, g_inp, g_out, backproped):
         X, dE_dY = convTransposeUtils.get_weight_gradient_factors(

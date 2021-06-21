@@ -232,8 +232,7 @@ def test_hmp(problem, device):
     autograd_res = AutogradImpl(problem).hmp(matrices)
 
     check_sizes(autograd_res, backpack_res)
-    atol = 5e-4
-    rtol = 5e-4
+    atol, rtol = 5e-4, 5e-4
     check_values(autograd_res, backpack_res, atol=atol, rtol=rtol)
 
 
@@ -272,7 +271,8 @@ def test_hvp(problem, device):
     autograd_res = AutogradImpl(problem).hvp(vecs)
 
     check_sizes(autograd_res, backpack_res)
-    check_values(autograd_res, backpack_res)
+    atol, rtol = 5e-4, 5e-4
+    check_values(autograd_res, backpack_res, atol=atol, rtol=rtol)
 
 
 @pytest.mark.parametrize(

@@ -1,4 +1,5 @@
-"""Second order extensions.
+# noqa: D205, D415
+"""Second order extensions
 ====================================
 
 Second-order extensions propagate additional information through the graph
@@ -19,7 +20,7 @@ The implemented extensions are
 """
 
 from .diag_ggn import BatchDiagGGNExact, BatchDiagGGNMC, DiagGGNExact, DiagGGNMC
-from .diag_hessian import DiagHessian
+from .diag_hessian import BatchDiagHessian, DiagHessian
 from .hbp import HBP, KFAC, KFLR, KFRA
 
 __all__ = [
@@ -28,6 +29,7 @@ __all__ = [
     "DiagGGNMC",
     "BatchDiagGGNMC",
     "DiagHessian",
+    "BatchDiagHessian",
     "KFAC",
     "KFLR",
     "KFRA",

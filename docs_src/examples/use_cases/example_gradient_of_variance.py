@@ -25,11 +25,11 @@ along with some sanity checks.
 # Let's get the imports and configuration out of the way.
 
 import torch
+from torch import nn
 
 from backpack import backpack, extend
 from backpack.extensions import Variance
 from backpack.utils.examples import load_one_batch_mnist
-from torch import nn
 
 torch.manual_seed(0)
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -105,7 +105,7 @@ def individual_gradients_pytorch(x, y, model, lossfunc):
         grad_list_format = torch.autograd.grad(
             loss, model.parameters(), create_graph=True, retain_graph=True
         )
-        grad_vector_format = torch.cat([g.view(-1,) for g in grad_list_format])
+        grad_vector_format = torch.cat([g.view(-1) for g in grad_list_format])
         grads_vector_format.append(grad_vector_format.clone())
 
     return torch.stack(grads_vector_format)

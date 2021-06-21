@@ -1,4 +1,4 @@
-"""First order extensions.
+"""First order extensions
 ===================================
 
 First-order extensions make it easier to extract information from the gradients
@@ -14,9 +14,6 @@ The implemented extensions are
   The variance of the individual gradients
 - :func:`BatchL2Grad <backpack.extensions.BatchL2Grad>`
   The L2 norm of the individual gradients
-
-
-
 """
 
 from .batch_grad import BatchGrad

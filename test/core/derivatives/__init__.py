@@ -1,6 +1,7 @@
 """Test functionality of `backpack.core.derivatives` module."""
 from torch.nn import (
     ELU,
+    LSTM,
     RNN,
     SELU,
     AdaptiveAvgPool1d,
@@ -50,6 +51,7 @@ from backpack.core.derivatives.elu import ELUDerivatives
 from backpack.core.derivatives.leakyrelu import LeakyReLUDerivatives
 from backpack.core.derivatives.linear import LinearDerivatives
 from backpack.core.derivatives.logsigmoid import LogSigmoidDerivatives
+from backpack.core.derivatives.lstm import LSTMDerivatives
 from backpack.core.derivatives.maxpool1d import MaxPool1DDerivatives
 from backpack.core.derivatives.maxpool2d import MaxPool2DDerivatives
 from backpack.core.derivatives.maxpool3d import MaxPool3DDerivatives
@@ -90,6 +92,7 @@ derivatives_for = {
     MSELoss: MSELossDerivatives,
     RNN: RNNDerivatives,
     Permute: PermuteDerivatives,
+    LSTM: LSTMDerivatives,
     AdaptiveAvgPool1d: AdaptiveAvgPool1dDerivatives,
     AdaptiveAvgPool2d: AdaptiveAvgPool2dDerivatives,
     AdaptiveAvgPool3d: AdaptiveAvgPool3dDerivatives,

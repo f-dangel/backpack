@@ -1,15 +1,13 @@
-"""Test configurations for `backpack.core.derivatives`.
+"""Test cases for `backpack.core.derivatives`.
 
-Required entries:
-    The tests for individual categories are
-    written in respective files and imported here.
-    Tests:
-        Activation layers
-        Convolutional layers
-        Linear Layers
-        Loss functions
-        Pooling layers
-        Padding layers
+Cases are divided into the following layer categories:
+
+- Activations
+- (Transposed) convolutions
+- Linear
+- Losses
+- Padding
+- Pooling
 """
 
 from test.core.derivatives.activation_settings import ACTIVATION_SETTINGS
@@ -20,9 +18,7 @@ from test.core.derivatives.padding_settings import PADDING_SETTINGS
 from test.core.derivatives.pooling_adaptive_settings import POOLING_ADAPTIVE_SETTINGS
 from test.core.derivatives.pooling_settings import POOLING_SETTINGS
 
-SETTINGS = []
-
-SETTINGS.extend(
+SETTINGS = (
     ACTIVATION_SETTINGS
     + CONVOLUTION_SETTINGS
     + LINEAR_SETTINGS
