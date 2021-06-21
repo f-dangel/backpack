@@ -46,11 +46,6 @@ from backpack.extensions.secondorder.sqrt_ggn import (
 class SqrtGGN(BackpropExtension):
     """Base class for extensions that compute the GGN/Fisher matrix square root."""
 
-    VALID_LOSS_HESSIAN_STRATEGIES = [
-        LossHessianStrategy.EXACT,
-        LossHessianStrategy.SAMPLING,
-    ]
-
     def __init__(self, loss_hessian_strategy: str, savefield: str):
         """Store approximation for backpropagated object and where to save the result.
 
@@ -58,16 +53,7 @@ class SqrtGGN(BackpropExtension):
             loss_hessian_strategy: Which approximation is used for the backpropagated
                 loss Hessian. Must be ``'exact'`` or ``'sampling'``.
             savefield: Attribute under which the quantity is saved in a parameter.
-
-        Raises:
-            ValueError: For invalid choices of ``loss_hessian_strategy``.
         """
-        if loss_hessian_strategy not in self.VALID_LOSS_HESSIAN_STRATEGIES:
-            raise ValueError(
-                "Unknown hessian strategy: {}".format(loss_hessian_strategy)
-                + "Valid strategies: [{}]".format(self.VALID_LOSS_HESSIAN_STRATEGIES)
-            )
-
         self.loss_hessian_strategy = loss_hessian_strategy
         super().__init__(
             savefield=savefield,
