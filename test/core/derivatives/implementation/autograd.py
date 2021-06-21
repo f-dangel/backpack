@@ -171,7 +171,7 @@ class AutogradDerivatives(DerivativesImplementation):
             try:
                 yield self.hessian(t, x)
             except (RuntimeError, AttributeError):
-                return torch.zeros(*x.shape, *x.shape, device=x.device, dtype=x.dtype)
+                yield torch.zeros(*x.shape, *x.shape, device=x.device, dtype=x.dtype)
 
     def tensor_hessian(self, tensor, x):
         """Return the Hessian of a tensor `tensor` w.r.t. a tensor `x`.
