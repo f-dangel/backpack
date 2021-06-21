@@ -87,6 +87,14 @@ class SqrtGGN(BackpropExtension):
             },
         )
 
+    def get_loss_hessian_strategy(self) -> str:
+        """Return the strategy used to represent the backpropagated loss Hessian.
+
+        Returns:
+            Loss Hessian strategy.
+        """
+        return self.loss_hessian_strategy
+
 
 class SqrtGGNExact(SqrtGGN):
     """Exact matrix square root of the generalized Gauss-Newton/Fisher.

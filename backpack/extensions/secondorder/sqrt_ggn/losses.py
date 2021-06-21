@@ -41,7 +41,7 @@ class SqrtGGNBaseLossModule(SqrtGGNBaseModule):
         Raises:
             NotImplementedError: For invalid strategies to represent the loss Hessian.
         """
-        loss_hessian_strategy = ext.loss_hessian_strategy
+        loss_hessian_strategy = ext.get_loss_hessian_strategy()
 
         if loss_hessian_strategy == LossHessianStrategy.EXACT:
             return self.derivatives.sqrt_hessian(module, grad_inp, grad_out)
