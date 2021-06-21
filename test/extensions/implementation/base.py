@@ -1,5 +1,4 @@
-"""Base class containing the functions to compare between BackPACK and autograd."""
-
+"""Base class containing the functions to compare BackPACK and autograd."""
 from typing import List
 
 from torch import Tensor
