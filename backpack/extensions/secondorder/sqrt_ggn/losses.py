@@ -39,7 +39,7 @@ class SqrtGGNBaseLossModule(SqrtGGNBaseModule):
             Symmetric factorization of the loss Hessian w.r.t. the module input.
 
         Raises:
-            ValueError: For invalid strategies to represent the loss Hessian.
+            NotImplementedError: For invalid strategies to represent the loss Hessian.
         """
         loss_hessian_strategy = ext.loss_hessian_strategy
 
@@ -51,7 +51,9 @@ class SqrtGGNBaseLossModule(SqrtGGNBaseModule):
                 module, grad_inp, grad_out, mc_samples=mc_samples
             )
         else:
-            raise ValueError(f"Unknown hessian strategy {loss_hessian_strategy}")
+            raise NotImplementedError(
+                f"Unknown hessian strategy {loss_hessian_strategy}"
+            )
 
 
 class SqrtGGNMSELoss(SqrtGGNBaseLossModule):
