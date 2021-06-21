@@ -233,3 +233,18 @@ GROUP_CONV_SETTINGS = [
 ]
 
 SECONDORDER_SETTINGS += GROUP_CONV_SETTINGS
+
+SECONDORDER_SETTINGS += [
+    {
+        # Flatten layer does not add a node in the computation graph and thus the
+        # backward hook will be called at an unexpected stage. This must explicitly
+        # be addressed in the `backpropagate` function of the flatten module extension.
+        "input_fn": lambda: torch.rand(3, 5),
+        "module_fn": lambda: torch.nn.Sequential(
+            torch.nn.Linear(5, 4), torch.nn.Flatten(), torch.nn.Linear(4, 2)
+        ),
+        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="mean"),
+        "target_fn": lambda: classification_targets((3,), 2),
+        "id_prefix": "flatten-no-op",
+    },
+]
