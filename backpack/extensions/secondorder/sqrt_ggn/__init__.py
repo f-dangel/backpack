@@ -123,4 +123,5 @@ class SqrtGGNExact(SqrtGGN):
     """
 
     def __init__(self):
-        super().__init__(LossHessianStrategy.EXACT, "diag_ggn_exact")
+        """Use exact loss Hessian and set savefield to ``sqrt_ggn_exact``."""
+        super().__init__(LossHessianStrategy.EXACT, "sqrt_ggn_exact")

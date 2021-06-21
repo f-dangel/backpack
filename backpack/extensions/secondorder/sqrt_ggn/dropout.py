@@ -1,6 +1,6 @@
 """Contains extensions for dropout layers used by ``SqrtGGN{Exact, MC}``."""
 from backpack.core.derivatives.dropout import DropoutDerivatives
-from backpack.extensions.secondorder.sqrt_ggn.sqrt_ggn_base import SqrtGGNBaseModule
+from backpack.extensions.secondorder.sqrt_ggn.base import SqrtGGNBaseModule
 
 
 class SqrtGGNDropout(SqrtGGNBaseModule):

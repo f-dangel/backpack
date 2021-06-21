@@ -61,16 +61,14 @@ class SqrtGGNBaseLossModule(SqrtGGNBaseModule):
             ValueError: For invalid strategies to represent the loss Hessian.
         """
         loss_hessian_strategy = ext.loss_hessian_strategy
-        subsampling = ext.get_subsampling()
 
         if loss_hessian_strategy == LossHessianStrategy.EXACT:
-            return partial(self.derivatives.sqrt_hessian, subsampling=subsampling)
+            return self.derivatives.sqrt_hessian
         elif loss_hessian_strategy == LossHessianStrategy.SAMPLING:
             mc_samples = ext.get_num_mc_samples()
             return partial(
                 self.derivatives.sqrt_hessian_sampled,
                 mc_samples=mc_samples,
-                subsampling=subsampling,
             )
         else:
             raise ValueError(

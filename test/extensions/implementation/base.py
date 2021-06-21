@@ -1,3 +1,10 @@
+"""Base class containing the functions to compare between BackPACK and autograd."""
+
+from typing import List
+
+from torch import Tensor
+
+
 class ExtensionsImplementation:
     """Base class for autograd and BackPACK implementations of extensions."""
 
@@ -40,36 +47,44 @@ class ExtensionsImplementation:
         """Diagonal of Hessian"""
         raise NotImplementedError
 
-    def kfac(self, mc_samples=1):
+    def kfac(self, mc_samples: int = 1) -> List[List[Tensor]]:
         """Kronecker-factored approximate curvature (KFAC).
 
         Args:
-            mc_samples (int, optional): Number of Monte-Carlo samples. Default: ``1``.
+            mc_samples: Number of Monte-Carlo samples. Default: ``1``.
 
         Returns:
-            list(list(torch.Tensor)): Parameter-wise lists of Kronecker factors.
+            Parameter-wise lists of Kronecker factors.
         """
         raise NotImplementedError
 
-    def kflr(self):
+    def kflr(self) -> List[List[Tensor]]:
         """Kronecker-factored low-rank approximation (KFLR).
 
         Returns:
-            list(list(torch.Tensor)): Parameter-wise lists of Kronecker factors.
+            Parameter-wise lists of Kronecker factors.
         """
         raise NotImplementedError
 
-    def kfra(self):
+    def kfra(self) -> List[List[Tensor]]:
         """Kronecker-factored recursive approximation (KFRA).
 
         Returns:
-            list(list(torch.Tensor)): Parameter-wise lists of Kronecker factors.
+            Parameter-wise lists of Kronecker factors.
         """
 
-    def diag_h_batch(self):
+    def diag_h_batch(self) -> List[Tensor]:
         """Per-sample Hessian diagonal.
 
         Returns:
             list(torch.Tensor): Parameter-wise per-sample Hessian diagonal.
+        """
+        raise NotImplementedError
+
+    def ggn(self) -> Tensor:
+        """Exact generalized Gauss-Newton/Fisher matrix.
+
+        Returns:
+            Matrix representation of the exact GGN.
         """
         raise NotImplementedError

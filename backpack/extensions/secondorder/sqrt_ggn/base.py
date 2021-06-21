@@ -29,12 +29,12 @@ class SqrtGGNBaseModule(MatToJacMat):
             derivatives: derivatives object.
             params: List of parameter names. Defaults to None.
         """
-        super().__init__(derivatives, params=params)
-
         if params is not None:
             for param_str in params:
                 if not hasattr(self, param_str):
                     setattr(self, param_str, self._make_param_function(param_str))
+
+        super().__init__(derivatives, params=params)
 
     # TODO Replace Any with Union[SqrtGGNExact, SqrtGGNMC]
     # WAITING Deprecation of python3.6 (cyclic imports caused by annotations)
@@ -49,7 +49,6 @@ class SqrtGGNBaseModule(MatToJacMat):
         Returns:
             Function that computes the GGN/Fisher matrix square root.
         """
-
         # TODO Replace Any with Union[SqrtGGNExact, SqrtGGNMC]
         # WAITING Deprecation of python3.6 (cyclic imports caused by annotations)
         def param_function(

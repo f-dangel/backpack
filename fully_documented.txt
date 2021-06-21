@@ -14,3 +14,5 @@ backpack/extensions/secondorder/diag_hessian/conv2d.py
 backpack/extensions/secondorder/diag_hessian/conv3d.py
 
 backpack/extensions/__init__.py
+
+backpack/extensions/secondorder/sqrt_ggn
