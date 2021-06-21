@@ -21,7 +21,7 @@ def problem(request, max_num_params: int = 4000) -> ExtensionsTestProblem:
     Args:
         request (SubRequest): Request for the fixture from a test/fixture function.
         max_num_params: Maximum number of model parameters to run the case.
-            Default: ``1000``.
+            Default: ``4000``.
 
     Yields:
         Test case with deterministically constructed attributes.
