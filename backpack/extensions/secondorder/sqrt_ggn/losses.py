@@ -71,9 +71,7 @@ class SqrtGGNBaseLossModule(SqrtGGNBaseModule):
                 mc_samples=mc_samples,
             )
         else:
-            raise ValueError(
-                "Unknown hessian strategy {}".format(loss_hessian_strategy)
-            )
+            raise ValueError(f"Unknown hessian strategy {loss_hessian_strategy}")
 
 
 class SqrtGGNMSELoss(SqrtGGNBaseLossModule):
