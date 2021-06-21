@@ -30,7 +30,7 @@ def problem(request, max_num_params: int = 4000) -> ExtensionsTestProblem:
     case.set_up()
 
     num_params = sum(p.numel() for p in case.model.parameters() if p.requires_grad)
-    if num_params < max_num_params:
+    if num_params <= max_num_params:
         yield case
     else:
         skip(f"Model has too many parameters: {num_params} > {max_num_params}")
