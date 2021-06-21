@@ -20,6 +20,8 @@ The implemented extensions are
 - The symmetric (square root) factorization of the GGN/Fisher information,
   using exact computation
   (:func:`SqrtGGNExact <backpack.extensions.SqrtGGNExact>`)
+  or a Monte-Carlo (MC) approximation
+  (:func:`SqrtGGNMC<backpack.extensions.SqrtGGNMC>`)
 """
 
 from backpack.extensions.secondorder.diag_ggn import (
@@ -30,7 +32,7 @@ from backpack.extensions.secondorder.diag_ggn import (
 )
 from backpack.extensions.secondorder.diag_hessian import BatchDiagHessian, DiagHessian
 from backpack.extensions.secondorder.hbp import HBP, KFAC, KFLR, KFRA
-from backpack.extensions.secondorder.sqrt_ggn import SqrtGGNExact
+from backpack.extensions.secondorder.sqrt_ggn import SqrtGGNExact, SqrtGGNMC
 
 __all__ = [
     "DiagGGNExact",
@@ -44,4 +46,5 @@ __all__ = [
     "KFRA",
     "HBP",
     "SqrtGGNExact",
+    "SqrtGGNMC",
 ]

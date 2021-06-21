@@ -94,7 +94,7 @@ class AutogradExtensions(ExtensionsImplementation):
         _, output, loss = self.problem.forward_pass()
         return self._get_diag_ggn(loss, output)
 
-    def diag_ggn_batch(self):
+    def diag_ggn_exact_batch(self):
         batch_size = self.problem.input.shape[0]
         _, _, batch_loss = self.problem.forward_pass()
         loss_list = torch.zeros(batch_size, device=self.problem.device)
@@ -177,3 +177,21 @@ class AutogradExtensions(ExtensionsImplementation):
             ggn[i, :] = ggn_i
 
         return ggn
+
+    def diag_ggn_mc(self, mc_samples):
+        raise NotImplementedError
+
+    def diag_ggn_mc_batch(self, mc_samples):
+        raise NotImplementedError
+
+    def ggn_mc(self, mc_samples, chunks=1):
+        raise NotImplementedError
+
+    def kfac(self):
+        raise NotImplementedError
+
+    def kflr(self):
+        raise NotImplementedError
+
+    def kfra(self):
+        raise NotImplementedError

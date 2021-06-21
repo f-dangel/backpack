@@ -47,7 +47,7 @@ class SqrtGGNBaseLossModule(SqrtGGNBaseModule):
             return self.derivatives.sqrt_hessian(module, grad_inp, grad_out)
         elif loss_hessian_strategy == LossHessianStrategy.SAMPLING:
             mc_samples = ext.get_num_mc_samples()
-            self.derivatives.sqrt_hessian_sampled(
+            return self.derivatives.sqrt_hessian_sampled(
                 module, grad_inp, grad_out, mc_samples=mc_samples
             )
         else:

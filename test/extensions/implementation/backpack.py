@@ -4,8 +4,9 @@ from test.extensions.implementation.hooks import (
     ExtensionHookManager,
     SumGradSquaredHook,
 )
+from typing import List
 
-from torch import cat, einsum
+from torch import Tensor, cat, einsum
 
 import backpack.extensions as new_ext
 from backpack import backpack
@@ -194,16 +195,33 @@ class BackpackExtensions(ExtensionsImplementation):
         return diag_h_batch
 
     def ggn(self):
+        return self._square_sqrt_ggn(self.sqrt_ggn())
+
+    def sqrt_ggn(self) -> List[Tensor]:
         with backpack(new_ext.SqrtGGNExact()):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
 
-            V = cat(
-                [
-                    p.sqrt_ggn_exact.flatten(start_dim=2)
-                    for p in self.problem.model.parameters()
-                ],
-                dim=2,
-            )
+        return [p.sqrt_ggn_exact for p in self.problem.model.parameters()]
 
-            return einsum("cni,cnj->ij", V, V)
+    def sqrt_ggn_mc(self, mc_samples: int) -> List[Tensor]:
+        with backpack(new_ext.SqrtGGNMC(mc_samples=mc_samples)):
+            _, _, loss = self.problem.forward_pass()
+            loss.backward()
+
+        return [p.sqrt_ggn_mc for p in self.problem.model.parameters()]
+
+    def ggn_mc(self, mc_samples: int, chunks: int = 1) -> Tensor:
+        samples = self.chunk_sizes(mc_samples, chunks)
+        weights = [samples / mc_samples for samples in samples]
+
+        return sum(
+            w * self._square_sqrt_ggn(self.sqrt_ggn_mc(s))
+            for w, s in zip(weights, samples)
+        )
+
+    @staticmethod
+    def _square_sqrt_ggn(sqrt_ggn: List[Tensor]) -> Tensor:
+        """Utility function to concatenate and square the GGN factorization."""
+        sqrt_mat = cat([s.flatten(start_dim=2) for s in sqrt_ggn], dim=2)
+        return einsum("cni,cnj->ij", sqrt_mat, sqrt_mat)

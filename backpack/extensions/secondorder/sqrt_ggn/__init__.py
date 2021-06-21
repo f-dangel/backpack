@@ -119,3 +119,41 @@ class SqrtGGNExact(SqrtGGN):
     def __init__(self):
         """Use exact loss Hessian and set savefield to ``sqrt_ggn_exact``."""
         super().__init__(LossHessianStrategy.EXACT, "sqrt_ggn_exact")
+
+
+class SqrtGGNMC(SqrtGGN):
+    """Approximate matrix square root of the generalized Gauss-Newton/Fisher.
+
+    Uses a Monte-Carlo (MC) approximation of the Hessian of the loss w.r.t. the model
+    output.
+
+    Stores the output in :code:`sqrt_ggn_mc`, has shape ``[M, N, param.shape]``,
+    where ``M`` is the number of Monte-Carlo samples and ``N`` is the batch size.
+
+    For a more precise but slower alternative, see
+    :py:meth:`backpack.extensions.SqrtGGNExact`.
+
+    .. note::
+
+        (Relation to the GGN/Fisher) For each parameter, ``param.sqrt_ggn_mc``
+        can be viewed as a ``[M * N, param.numel()]`` matrix. Concatenating this
+        matrix over all parameters results in a matrix ``Vᵀ``, which
+        is the approximate GGN/Fisher's matrix square root, i.e. ``G ≈ V Vᵀ``.
+    """
+
+    def __init__(self, mc_samples: int = 1):
+        """Approximate loss Hessian via MC and set savefield to ``sqrt_ggn_mc``.
+
+        Args:
+            mc_samples: Number of Monte-Carlo samples. Default: ``1``.
+        """
+        self._mc_samples = mc_samples
+        super().__init__(LossHessianStrategy.SAMPLING, "sqrt_ggn_mc")
+
+    def get_num_mc_samples(self) -> int:
+        """Return the number of MC samples used to approximate the loss Hessian.
+
+        Returns:
+            Number of Monte-Carlo samples.
+        """
+        return self._mc_samples

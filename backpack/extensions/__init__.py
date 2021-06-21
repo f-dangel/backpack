@@ -14,6 +14,7 @@ from .secondorder import (
     DiagGGNMC,
     DiagHessian,
     SqrtGGNExact,
+    SqrtGGNMC,
 )
 
 __all__ = [
@@ -35,4 +36,5 @@ __all__ = [
     "DiagHessian",
     "BatchDiagHessian",
     "SqrtGGNExact",
+    "SqrtGGNMC",
 ]
