@@ -43,7 +43,7 @@ class ExtensionsImplementation(ABC):
         return
 
     @abstractmethod
-    def diag_ggn_batch(self) -> List[Tensor]:
+    def diag_ggn_exact_batch(self) -> List[Tensor]:
         """Individual diagonal of Generalized Gauss-Newton/Fisher."""
         return
 
