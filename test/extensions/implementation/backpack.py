@@ -5,6 +5,8 @@ from test.extensions.implementation.hooks import (
     SumGradSquaredHook,
 )
 
+from torch import cat, einsum
+
 import backpack.extensions as new_ext
 from backpack import backpack
 
@@ -190,3 +192,18 @@ class BackpackExtensions(ExtensionsImplementation):
             diag_h_batch = [p.diag_h_batch for p in self.problem.model.parameters()]
 
         return diag_h_batch
+
+    def ggn(self):
+        with backpack(new_ext.SqrtGGNExact()):
+            _, _, loss = self.problem.forward_pass()
+            loss.backward()
+
+            V = cat(
+                [
+                    p.sqrt_ggn_exact.flatten(start_dim=2)
+                    for p in self.problem.model.parameters()
+                ],
+                dim=2,
+            )
+
+            return einsum("cni,cnj->ij", V, V)

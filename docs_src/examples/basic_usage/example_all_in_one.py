@@ -29,6 +29,7 @@ from backpack.extensions import (
     DiagGGNExact,
     DiagGGNMC,
     DiagHessian,
+    SqrtGGNExact,
     SumGradSquared,
     Variance,
 )
@@ -165,6 +166,18 @@ for name, param in model.named_parameters():
     print(".grad.shape:             ", param.grad.shape)
     print(".diag_h.shape:           ", param.diag_h.shape)
     print(".diag_h_batch.shape:     ", param.diag_h_batch.shape)
+
+# %%
+# Matrix square root of the generalized Gauss-Newton
+
+loss = lossfunc(model(X), y)
+with backpack(SqrtGGNExact()):
+    loss.backward()
+
+for name, param in model.named_parameters():
+    print(name)
+    print(".grad.shape:             ", param.grad.shape)
+    print(".sqrt_ggn_exact.shape:   ", param.sqrt_ggn_exact.shape)
 
 # %%
 # Block-diagonal curvature products
