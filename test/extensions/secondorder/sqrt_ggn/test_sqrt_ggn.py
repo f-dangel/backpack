@@ -70,7 +70,7 @@ def test_sqrt_ggn_mc(small_problem: ExtensionsTestProblem):
         small_problem: Test case with small network whose GGN can be evaluated.
     """
     autograd_res = AutogradExtensions(small_problem).ggn()
-    atol, rtol = 5e-4, 1e-2
+    atol, rtol = 1e-3, 1e-2
     mc_samples, chunks = 500000, 50
     backpack_res = BackpackExtensions(small_problem).ggn_mc(mc_samples, chunks=chunks)
 
