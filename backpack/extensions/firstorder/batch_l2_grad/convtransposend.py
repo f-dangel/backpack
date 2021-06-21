@@ -1,6 +1,7 @@
 """batch_l2 extension for ConvTranspose."""
 from torch import einsum
 
+from backpack.core.derivatives.conv_transposend import ConvTransposeNDDerivatives
 from backpack.extensions.firstorder.batch_l2_grad.batch_l2_base import BatchL2Base
 from backpack.utils import conv_transpose as convTransposeUtils
 
@@ -15,27 +16,10 @@ class BatchL2ConvTransposeND(BatchL2Base):
             N: number of dimensions
             params: list of parameters. Defaults to None.
         """
-        super().__init__(params=params)
         self.N = N
-
-    # TODO Use bias Jacobian to compute `bias_gradient`
-    def bias(self, ext, module, g_inp, g_out, backproped):
-        """batch_l2 for bias.
-
-        Args:
-            ext: extension
-            module: module
-            g_inp: input gradients
-            g_out: output gradients
-            backproped: backpropagation quantities
-
-        Returns:
-            batch_l2 for bias
-        """
-        spatial_dims = list(range(2, g_out[0].dim()))
-        channel_dim = 1
-
-        return g_out[0].sum(spatial_dims).pow_(2).sum(channel_dim)
+        super().__init__(
+            params=params, derivatives=ConvTransposeNDDerivatives(N=self.N)
+        )
 
     def weight(self, ext, module, g_inp, g_out, backproped):
         """batch_l2 for weight.
