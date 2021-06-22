@@ -31,7 +31,7 @@ class BatchL2Base(FirstOrderModuleExtension):
             for param_str in params:
                 if not hasattr(self, param_str):
                     setattr(self, param_str, self._make_param_function(param_str))
-        super(BatchL2Base, self).__init__(params=params)
+        super().__init__(params=params)
 
     def _make_param_function(
         self, param_str: str
@@ -64,15 +64,12 @@ class BatchL2Base(FirstOrderModuleExtension):
             Returns:
                 batch_l2
             """
+            param_dims: List[int] = list(range(1, 1 + getattr(module, param_str).dim()))
             return (
-                (
-                    getattr(self.derivatives, f"{param_str}_jac_t_mat_prod")(
-                        module, g_inp, g_out, g_out[0], sum_batch=False
-                    )
-                    ** 2
+                getattr(self.derivatives, f"{param_str}_jac_t_mat_prod")(
+                    module, g_inp, g_out, g_out[0], sum_batch=False
                 )
-                .flatten(start_dim=1)
-                .sum(1)
-            )
+                ** 2
+            ).sum(param_dims)
 
         return param_function
