@@ -30,7 +30,7 @@ def unfold_input(module, input):
         return unfold_by_conv(input, module)
 
 
-def get_weight_gradient_factors(input, grad_out, module, N):
+def get_weight_gradient_factors(input, grad_out, module):
     X = unfold_input(module, input)
     dE_dY = rearrange(grad_out, "n c ... -> n c (...)")
     return X, dE_dY
