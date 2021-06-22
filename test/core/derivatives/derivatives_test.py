@@ -303,21 +303,42 @@ def instantiated_problem(request) -> DerivativesTestProblem:
 
 
 @fixture
-def no_loss_problem(
-    instantiated_problem: DerivativesTestProblem,
+def small_input_problem(
+    instantiated_problem: DerivativesTestProblem, max_input_numel: int = 100
 ) -> DerivativesTestProblem:
-    """Skip cases that are loss functions.
+    """Skip cases with large inputs.
 
     Args:
-        instantiated_problem: Test case with instantiated layer and  data.
+        max_input_numel: Maximum input size. Default: ``100``.
+
+    Yields:
+        Instantiated test case with small input.
+    """
+    if instantiated_problem.input.numel() > max_input_numel:
+        skip(
+            "Input is too large:"
+            + f" {instantiated_problem.input.numel()} > {max_input_numel}"
+        )
+    else:
+        yield instantiated_problem
+
+
+@fixture
+def no_loss_problem(
+    small_input_problem: DerivativesTestProblem,
+) -> DerivativesTestProblem:
+    """Skip cases that are loss functions or have to large inputs.
+
+    Args:
+        small_input_problem: Test case with small input.
 
     Yields:
         Instantiated test case that is not a loss layer.
     """
-    if instantiated_problem.is_loss():
+    if small_input_problem.is_loss():
         skip("Only required for non-loss layers.")
     else:
-        yield instantiated_problem
+        yield small_input_problem
 
 
 def test_hessian_is_zero(no_loss_problem: DerivativesTestProblem):
