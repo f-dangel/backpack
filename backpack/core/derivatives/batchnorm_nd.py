@@ -232,14 +232,6 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
         }[_n_dim]
         return mat if axis_sum is None else mat.sum(dim=axis_sum)
 
-
-class BatchNorm1dDerivatives(BatchNormNdDerivatives):
-    """Derivatives for BatchNorm1d."""
-
-    def __init__(self):
-        """Initialization."""
-        super().__init__(n_dim=1)
-
     def _residual_mat_prod(
         self,
         module: BatchNorm1d,
@@ -254,9 +246,10 @@ class BatchNorm1dDerivatives(BatchNormNdDerivatives):
 
         Details are described in
 
-        - `TODO: Add tech report title`
-          <TODO: Wait for tech report upload>_
-          by Paul Fischer, 2020.
+        `HESSIAN BACKPROPAGATION FOR BATCHNORM`
+        <https://uni-tuebingen.de/en/fakultaeten/mathematisch-naturwissenschaftliche-fakultaet/fachbereiche/informatik/lehrstuehle/methoden-des-maschinellen-lernens/personen/alumni/everyone-else/>
+        <TODO: Wait for tech report upload and add exact link>_
+        by Paul Fischer, 2020.
 
         Args:
             module: module
@@ -266,7 +259,19 @@ class BatchNorm1dDerivatives(BatchNormNdDerivatives):
 
         Returns:
             product
-        """
+
+        Raises:
+            NotImplementedError: if used with a not supported mode or input
+        """  # noqa: B950
+        self._check_parameters(module)
+        if module.training is False:
+            raise NotImplementedError("residual_mat_prod works only for training mode.")
+        if module.input0.dim() != 2:
+            raise NotImplementedError(
+                "residual_mat_prod is implemented only for 0 dimensions. "
+                "If you need more dimension make a feature request."
+            )
+
         N = module.input0.size(0)
         x_hat, var = self._get_normalized_input_and_var(module)
         gamma = module.weight
@@ -294,6 +299,14 @@ class BatchNorm1dDerivatives(BatchNormNdDerivatives):
         r_mat += (3.0 / N) * einsum("nc,vc,c->vnc", x_hat, sum_127, sum_567)
 
         return einsum("c,vnc->vnc", factor, r_mat)
+
+
+class BatchNorm1dDerivatives(BatchNormNdDerivatives):
+    """Derivatives for BatchNorm1d."""
+
+    def __init__(self):
+        """Initialization."""
+        super().__init__(n_dim=1)
 
 
 class BatchNorm2dDerivatives(BatchNormNdDerivatives):
