@@ -27,7 +27,7 @@ POOLING_ADAPTIVE_SETTINGS += [
     },
     {
         "module_fn": lambda: torch.nn.AdaptiveAvgPool2d(output_size=(3, 5)),
-        "input_fn": lambda: torch.rand(size=(1, 3, 9, 20)),
+        "input_fn": lambda: torch.rand(size=(2, 3, 9, 20)),
     },
     {
         "module_fn": lambda: torch.nn.AdaptiveAvgPool3d(output_size=(2, 2, 2)),
