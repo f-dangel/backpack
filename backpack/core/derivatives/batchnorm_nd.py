@@ -18,7 +18,12 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
     c: category axis
     {empty}/l/hw/dhw: dimension axis for 0/1/2/3-dimensions
 
-    As a starting point, see these references:
+    Links to PyTorch docs:
+    https://pytorch.org/docs/stable/generated/torch.nn.BatchNorm1d.html
+    https://pytorch.org/docs/stable/generated/torch.nn.BatchNorm2d.html
+    https://pytorch.org/docs/stable/generated/torch.nn.BatchNorm3d.html
+
+    As a starting point for derivative computation, see these references:
     https://kevinzakka.github.io/2016/09/14/batch_normalization/
     https://chrisyeh96.github.io/2017/08/28/deriving-batchnorm-backprop.html
     """
@@ -107,10 +112,10 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
             ivar = 1.0 / (var + module.eps).sqrt()
 
             equation = {
-                0: "vni,i->vni",
-                1: "vnil,i->vnil",
-                2: "vnihw,i->vnihw",
-                3: "vnidhw,i->vnidhw",
+                0: "vnc,c->vnc",
+                1: "vncl,c->vncl",
+                2: "vnchw,c->vnchw",
+                3: "vncdhw,c->vncdhw",
             }[_n_dim]
             dx_hat: Tensor = einsum(equation, mat, module.weight)
             jac_t_mat = denominator * dx_hat
@@ -125,17 +130,17 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
                 keepdim=True,
             ).expand_as(jac_t_mat)
             equation = {
-                0: "ni,vsi,si->vni",
-                1: "nil,vsix,six->vnil",
-                2: "nihw,vsixy,sixy->vnihw",
-                3: "nidhw,vsixyz,sixyz->vnidhw",
+                0: "nc,vmc,mc->vnc",
+                1: "ncl,vmcx,mcx->vncl",
+                2: "nchw,vmcxy,mcxy->vnchw",
+                3: "ncdhw,vmcxyz,mcxyz->vncdhw",
             }[_n_dim]
             jac_t_mat -= einsum(equation, x_hat, dx_hat, x_hat)
             equation = {
-                0: "vni,i->vni",
-                1: "vnil,i->vnil",
-                2: "vnihw,i->vnihw",
-                3: "vnidhw,i->vnidhw",
+                0: "vnc,c->vnc",
+                1: "vncl,c->vncl",
+                2: "vnchw,c->vnchw",
+                3: "vncdhw,c->vncdhw",
             }[_n_dim]
             jac_t_mat = einsum(equation, jac_t_mat, ivar / denominator)
             return jac_t_mat
