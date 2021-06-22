@@ -66,37 +66,6 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
     ) -> Tensor:
         return self._jac_t_mat_prod(module, g_inp, g_out, mat)
 
-    def _get_normalized_input_and_var(
-        self, module: Union[BatchNorm1d, BatchNorm2d, BatchNorm3d]
-    ) -> Tuple[Tensor, Tensor]:
-        _n_axis: int = self._get_n_axis(module)
-        dim: Tuple[int] = {
-            0: (0,),
-            1: (0, 2),
-            2: (0, 2, 3),
-            3: (0, 2, 3, 4),
-        }[_n_axis]
-        input: Tensor = module.input0
-        if module.training:
-            mean: Tensor = input.mean(dim=dim)
-            var: Tensor = input.var(dim=dim, unbiased=False)
-        else:
-            mean: Tensor = module.running_mean
-            var: Tensor = module.running_var
-        mean_expanded: Tensor = {
-            0: mean[None, :],
-            1: mean[None, :, None],
-            2: mean[None, :, None, None],
-            3: mean[None, :, None, None, None],
-        }[_n_axis]
-        var_expanded: Tensor = {
-            0: var[None, :],
-            1: var[None, :, None],
-            2: var[None, :, None, None],
-            3: var[None, :, None, None, None],
-        }[_n_axis]
-        return (input - mean_expanded) / (var_expanded + module.eps).sqrt(), var
-
     def _jac_t_mat_prod(
         self,
         module: BatchNorm1d,
@@ -105,7 +74,7 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
         mat: Tensor,
     ) -> Tensor:
         self._check_parameters(module)
-        _n_dim: int = self._get_n_axis(module)
+        N: int = self._get_n_axis(module)
         if module.training:
             denominator: int = self._get_denominator(module)
             x_hat, var = self._get_normalized_input_and_var(module)
@@ -116,17 +85,11 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
                 1: "vncl,c->vncl",
                 2: "vnchw,c->vnchw",
                 3: "vncdhw,c->vncdhw",
-            }[_n_dim]
+            }[N]
             dx_hat: Tensor = einsum(equation, mat, module.weight)
             jac_t_mat = denominator * dx_hat
-            _axis_sum: Tuple[int] = {
-                0: (1,),
-                1: (1, 3),
-                2: (1, 3, 4),
-                3: (1, 3, 4, 5),
-            }[_n_dim]
             jac_t_mat -= dx_hat.sum(
-                _axis_sum,
+                self._get_free_axes(module),
                 keepdim=True,
             ).expand_as(jac_t_mat)
             equation = {
@@ -134,14 +97,14 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
                 1: "ncl,vmcx,mcx->vncl",
                 2: "nchw,vmcxy,mcxy->vnchw",
                 3: "ncdhw,vmcxyz,mcxyz->vncdhw",
-            }[_n_dim]
+            }[N]
             jac_t_mat -= einsum(equation, x_hat, dx_hat, x_hat)
             equation = {
                 0: "vnc,c->vnc",
                 1: "vncl,c->vncl",
                 2: "vnchw,c->vnchw",
                 3: "vncdhw,c->vncdhw",
-            }[_n_dim]
+            }[N]
             jac_t_mat = einsum(equation, jac_t_mat, ivar / denominator)
             return jac_t_mat
         else:
@@ -150,24 +113,12 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
                 1: "c,vncl->vncl",
                 2: "c,vnchw->vnchw",
                 3: "c,vncdhw->vncdhw",
-            }[_n_dim]
+            }[N]
             return einsum(
                 equation,
                 ((module.running_var + module.eps) ** (-0.5)) * module.weight,
                 mat,
             )
-
-    @staticmethod
-    def _get_denominator(module: Union[BatchNorm1d, BatchNorm2d, BatchNorm3d]) -> int:
-        shape_input: Size = module.input0.shape
-        denominator: int = shape_input[0]
-        for i in range(2, len(shape_input)):
-            denominator *= shape_input[i]
-        return denominator
-
-    @staticmethod
-    def _get_n_axis(module: Union[BatchNorm1d, BatchNorm2d, BatchNorm3d]) -> int:
-        return module.input0.dim() - 2
 
     def _weight_jac_mat_prod(
         self,
@@ -176,14 +127,13 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
         g_out: Tuple[Tensor],
         mat: Tensor,
     ) -> Tensor:
-        _n_dim: int = self._get_n_axis(module)
         x_hat, _ = self._get_normalized_input_and_var(module)
         equation: str = {
             0: "nc,vc->vnc",
             1: "ncl,vc->vncl",
             2: "nchw,vc->vnchw",
             3: "ncdhw,vc->vncdhw",
-        }[_n_dim]
+        }[self._get_n_axis(module)]
         return einsum(equation, x_hat, mat)
 
     def _weight_jac_t_mat_prod(
@@ -194,14 +144,13 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
         mat: Tensor,
         sum_batch: bool = True,
     ) -> Tensor:
-        _n_dim: int = self._get_n_axis(module)
         x_hat, _ = self._get_normalized_input_and_var(module)
         equation = {
             0: f"vnc,nc->v{'' if sum_batch else 'n'}c",
             1: f"vncl,ncl->v{'' if sum_batch else 'n'}c",
             2: f"vnchw,nchw->v{'' if sum_batch else 'n'}c",
             3: f"vncdhw,ncdhw->v{'' if sum_batch else 'n'}c",
-        }[_n_dim]
+        }[self._get_n_axis(module)]
         return einsum(equation, mat, x_hat)
 
     def _bias_jac_mat_prod(
@@ -211,12 +160,9 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
         g_out: Tuple[Tensor],
         mat: Tensor,
     ) -> Tensor:
-        _n_axis = self._get_n_axis(module)
-        out = mat.unsqueeze(1)
-        for _ in range(_n_axis):
-            out = out.unsqueeze(-1)
+        out = self._unsqueeze_free_axis(module, mat, 1)
         dim_expand: List[int] = [-1, module.input0.shape[0], -1]
-        for n in range(_n_axis):
+        for n in range(self._get_n_axis(module)):
             dim_expand.append(module.input0.shape[2 + n])
         return out.expand(*dim_expand)
 
@@ -228,14 +174,8 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
         mat: Tensor,
         sum_batch: bool = True,
     ) -> Tensor:
-        _n_dim: int = self._get_n_axis(module)
-        axis_sum: Tuple[int] = {
-            0: (1,) if sum_batch else None,
-            1: (1, 3) if sum_batch else (3,),
-            2: (1, 3, 4) if sum_batch else (3, 4),
-            3: (1, 3, 4, 5) if sum_batch else (3, 4, 5),
-        }[_n_dim]
-        return mat if axis_sum is None else mat.sum(dim=axis_sum)
+        axis_sum: Tuple[int] = self._get_free_axes(module, with_batch_axis=sum_batch)
+        return mat.sum(dim=axis_sum) if axis_sum else mat
 
     def _residual_mat_prod(
         self,
@@ -304,6 +244,62 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
         r_mat += (3.0 / N) * einsum("nc,vc,c->vnc", x_hat, sum_127, sum_567)
 
         return einsum("c,vnc->vnc", factor, r_mat)
+
+    ###############################################################
+    #                  HELPER FUNCTIONS                         ###
+    ###############################################################
+    def _get_normalized_input_and_var(
+        self, module: Union[BatchNorm1d, BatchNorm2d, BatchNorm3d]
+    ) -> Tuple[Tensor, Tensor]:
+        input: Tensor = module.input0
+        if module.training:
+            dim: Tuple[int] = self._get_free_axes(module, index_batch=0)
+            mean: Tensor = input.mean(dim=dim)
+            var: Tensor = input.var(dim=dim, unbiased=False)
+        else:
+            mean: Tensor = module.running_mean
+            var: Tensor = module.running_var
+        mean: Tensor = self._unsqueeze_free_axis(module, mean, 0)
+        var_expanded: Tensor = self._unsqueeze_free_axis(module, var, 0)
+        return (input - mean) / (var_expanded + module.eps).sqrt(), var
+
+    def _get_denominator(
+        self, module: Union[BatchNorm1d, BatchNorm2d, BatchNorm3d]
+    ) -> int:
+        shape_input: Size = module.input0.shape
+        free_axes: Tuple[int] = self._get_free_axes(module, index_batch=0)
+        denominator: int = 1
+        for index in free_axes:
+            denominator *= shape_input[index]
+        return denominator
+
+    @staticmethod
+    def _get_n_axis(module: Union[BatchNorm1d, BatchNorm2d, BatchNorm3d]) -> int:
+        return module.input0.dim() - 2
+
+    def _unsqueeze_free_axis(
+        self,
+        module: Union[BatchNorm1d, BatchNorm2d, BatchNorm3d],
+        tensor: Tensor,
+        index_batch: int,
+    ) -> Tensor:
+        out = tensor.unsqueeze(index_batch)
+        for _ in range(self._get_n_axis(module)):
+            out = out.unsqueeze(-1)
+        return out
+
+    def _get_free_axes(
+        self,
+        module: Union[BatchNorm1d, BatchNorm2d, BatchNorm3d],
+        with_batch_axis: bool = True,
+        index_batch: int = 1,
+    ) -> Tuple[int]:
+        free_axes: List[int] = []
+        if with_batch_axis:
+            free_axes.append(index_batch)
+        for n in range(self._get_n_axis(module)):
+            free_axes.append(index_batch + n + 2)
+        return tuple(free_axes)
 
 
 class BatchNorm1dDerivatives(BatchNormNdDerivatives):
