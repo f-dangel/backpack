@@ -1,25 +1,15 @@
 """batch_l2 extension for ConvTranspose."""
 from torch import einsum
 
-from backpack.core.derivatives.conv_transposend import ConvTransposeNDDerivatives
+from backpack.core.derivatives.conv_transpose1d import ConvTranspose1DDerivatives
+from backpack.core.derivatives.conv_transpose2d import ConvTranspose2DDerivatives
+from backpack.core.derivatives.conv_transpose3d import ConvTranspose3DDerivatives
 from backpack.extensions.firstorder.batch_l2_grad.batch_l2_base import BatchL2Base
 from backpack.utils import conv_transpose as convTransposeUtils
 
 
 class BatchL2ConvTransposeND(BatchL2Base):
     """batch_l2 extension for ConvTranspose."""
-
-    def __init__(self, N, params=None):
-        """Initialization.
-
-        Args:
-            N: number of dimensions
-            params: list of parameters. Defaults to None.
-        """
-        self.N = N
-        super().__init__(
-            params=params, derivatives=ConvTransposeNDDerivatives(N=self.N)
-        )
 
     def weight(self, ext, module, g_inp, g_out, backproped):
         """batch_l2 for weight.
@@ -35,7 +25,7 @@ class BatchL2ConvTransposeND(BatchL2Base):
             batch_l2 for weight
         """
         X, dE_dY = convTransposeUtils.get_weight_gradient_factors(
-            module.input0, g_out[0], module, self.N
+            module.input0, g_out[0], module
         )
         return einsum("nmi,nki,nmj,nkj->n", dE_dY, X, dE_dY, X)
 
@@ -45,7 +35,9 @@ class BatchL2ConvTranspose1d(BatchL2ConvTransposeND):
 
     def __init__(self):
         """Initialization."""
-        super().__init__(N=1, params=["bias", "weight"])
+        super().__init__(
+            params=["bias", "weight"], derivatives=ConvTranspose1DDerivatives()
+        )
 
 
 class BatchL2ConvTranspose2d(BatchL2ConvTransposeND):
@@ -53,7 +45,9 @@ class BatchL2ConvTranspose2d(BatchL2ConvTransposeND):
 
     def __init__(self):
         """Initialization."""
-        super().__init__(N=2, params=["bias", "weight"])
+        super().__init__(
+            params=["bias", "weight"], derivatives=ConvTranspose2DDerivatives()
+        )
 
 
 class BatchL2ConvTranspose3d(BatchL2ConvTransposeND):
@@ -61,4 +55,6 @@ class BatchL2ConvTranspose3d(BatchL2ConvTransposeND):
 
     def __init__(self):
         """Initialization."""
-        super().__init__(N=3, params=["bias", "weight"])
+        super().__init__(
+            params=["bias", "weight"], derivatives=ConvTranspose3DDerivatives()
+        )
