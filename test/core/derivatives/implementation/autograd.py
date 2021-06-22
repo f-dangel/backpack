@@ -1,7 +1,7 @@
 from test.core.derivatives.implementation.base import DerivativesImplementation
 
 import torch
-from torch import Tensor, zeros_like
+from torch import zeros_like
 
 from backpack.hessianfree.hvp import hessian_vector_product
 from backpack.hessianfree.lop import transposed_jacobian_vector_product

@@ -1,7 +1,6 @@
 from test.core.derivatives.implementation.base import DerivativesImplementation
 
 import torch
-from torch import Tensor, zeros_like
 
 
 class BackpackDerivatives(DerivativesImplementation):
