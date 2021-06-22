@@ -25,9 +25,4 @@ def test_adaptive_avg_pool_check_parameters(problem: AdaptiveAvgPoolProblem):
     else:
         with pytest.raises(NotImplementedError):
             problem.check_parameters()
-        # TODO improve equivalence coverage and activate these lines
-        # check for perfect coverage:
-        # all cases that have equivalent parameters are recognized
-        # with pytest.raises(AssertionError):
-        #    problem.check_equivalence()
     problem.tear_down()
