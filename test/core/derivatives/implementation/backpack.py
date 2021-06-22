@@ -1,6 +1,7 @@
 from test.core.derivatives.implementation.base import DerivativesImplementation
 
 import torch
+from torch import Tensor, zeros_like
 
 
 class BackpackDerivatives(DerivativesImplementation):
@@ -60,7 +61,6 @@ class BackpackDerivatives(DerivativesImplementation):
         return self.problem.derivative.sum_hessian(self.problem.module, None, None)
 
     def input_hessian_via_sqrt_hessian(self, mc_samples=None):
-        # MC_SAMPLES = 100000
         self.store_forward_io()
 
         if mc_samples is not None:
@@ -80,9 +80,6 @@ class BackpackDerivatives(DerivativesImplementation):
 
     def hessian_is_zero(self) -> bool:
         return self.problem.derivative.hessian_is_zero()
-
-    def hessian_is_diagonal(self) -> bool:
-        return self.hessian_is_zero() or self.problem.derivative.hessian_is_diagonal()
 
     def _sample_hessians_from_sqrt(self, sqrt):
         """Convert individual matrix square root into individual full matrix."""

@@ -29,11 +29,3 @@ class DerivativesImplementation:
             `True`, if Hessian is zero, else `False`.
         """
         raise NotImplementedError
-
-    def hessian_is_diagonal(self) -> bool:
-        """Is `∂²output[i] / ∂input[j] ∂input[k]` nonzero only if `i = j = k`.
-
-        Returns:
-            Whether Hessian is diagonal.
-        """
-        raise NotImplementedError

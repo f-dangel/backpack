@@ -1,5 +1,9 @@
 """Base classes for more flexible Jacobians and second-order information."""
 import warnings
+from typing import Tuple
+
+from torch import Tensor
+from torch.nn import Module
 
 from backpack.core.derivatives import shape_check
 
@@ -138,10 +142,22 @@ class BaseDerivatives:
         """
         raise NotImplementedError
 
-    def hessian_diagonal(self):
+    # FIXME Currently returns `∂²output[i] / ∂input[i]² * g_out[0][i]`,
+    # which s the residual matrix diagonal, rather than the Hessian diagonal
+    def hessian_diagonal(
+        self, module: Module, g_in: Tuple[Tensor], g_out: Tuple[Tensor]
+    ) -> Tensor:
         """Return `∂²output[i] / ∂input[i]²`.
 
         Only required if `hessian_is_diagonal` returns `True`.
+
+        Args:
+            module: Module whose output-input Hessian diagonal is computed.
+            g_in: Gradients w.r.t. the module input.
+            g_out: Gradients w.r.t. the module output.
+
+        Returns:
+            Hessian diagonal. Has same shape as module input.
         """
         raise NotImplementedError
 

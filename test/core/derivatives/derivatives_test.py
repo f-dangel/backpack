@@ -362,37 +362,3 @@ def test_hessian_is_zero(no_loss_problem: DerivativesTestProblem):
         )
     else:
         assert backpack_res == autograd_res
-
-
-def test_hessian_is_diagonal(no_loss_problem: DerivativesTestProblem):
-    """Check if the input-output Hessian is diagonal.
-
-    Args:
-        no_loss_problem: Test case whose module is not a loss.
-    """
-    backpack_res = BackpackDerivatives(no_loss_problem).hessian_is_diagonal()
-    autograd_res = AutogradDerivatives(no_loss_problem).hessian_is_diagonal()
-
-    assert backpack_res == autograd_res
-
-
-@pytest.mark.skip
-@pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
-def test_hessian_diagonal(problem):
-    problem.set_up()
-
-    # TODO
-    raise NotImplementedError
-
-    problem.tear_down()
-
-
-@pytest.mark.skip
-@pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
-def test_hessian_is_psd(problem):
-    problem.set_up()
-
-    # TODO
-    raise NotImplementedError
-
-    problem.tear_down()
