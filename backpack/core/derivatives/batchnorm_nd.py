@@ -162,7 +162,7 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
 
     @staticmethod
     def _get_n_axis(module: Union[BatchNorm1d, BatchNorm2d, BatchNorm3d]) -> int:
-        return len(module.input0.shape) - 2
+        return module.input0.dim() - 2
 
     def _weight_jac_mat_prod(
         self,
