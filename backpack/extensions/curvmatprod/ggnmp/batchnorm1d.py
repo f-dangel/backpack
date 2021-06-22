@@ -1,11 +1,11 @@
-from backpack.core.derivatives.batchnorm_nd import BatchNorm1dDerivatives
+from backpack.core.derivatives.batchnorm_nd import BatchNormNdDerivatives
 from backpack.extensions.curvmatprod.ggnmp.ggnmpbase import GGNMPBase
 
 
 class GGNMPBatchNorm1d(GGNMPBase):
     def __init__(self):
         super().__init__(
-            derivatives=BatchNorm1dDerivatives(), params=["weight", "bias"]
+            derivatives=BatchNormNdDerivatives(), params=["weight", "bias"]
         )
 
     def weight(self, ext, module, g_inp, g_out, backproped):

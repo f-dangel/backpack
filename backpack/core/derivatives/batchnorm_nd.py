@@ -8,7 +8,7 @@ from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 
 
 class BatchNormNdDerivatives(BaseParameterDerivatives):
-    """Derivatives for BatchNorm.
+    """Derivatives for BatchNorm1d, 2d and 3d.
 
     If training=False: saved statistics are used.
     If training=True: statistics of current batch are used.
@@ -27,14 +27,6 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
     https://kevinzakka.github.io/2016/09/14/batch_normalization/
     https://chrisyeh96.github.io/2017/08/28/deriving-batchnorm-backprop.html
     """
-
-    def __init__(self, n_dim: int):
-        """Initialization.
-
-        Args:
-            n_dim: number of dimensions
-        """
-        self.n_dim = n_dim
 
     def _check_parameters(
         self, module: Union[BatchNorm1d, BatchNorm2d, BatchNorm3d]
@@ -290,27 +282,3 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
         2: "xy",
         3: "xyz",
     }
-
-
-class BatchNorm1dDerivatives(BatchNormNdDerivatives):
-    """Derivatives for BatchNorm1d."""
-
-    def __init__(self):
-        """Initialization."""
-        super().__init__(n_dim=1)
-
-
-class BatchNorm2dDerivatives(BatchNormNdDerivatives):
-    """Derivatives for BatchNorm2d."""
-
-    def __init__(self):
-        """Initialization."""
-        super().__init__(n_dim=2)
-
-
-class BatchNorm3dDerivatives(BatchNormNdDerivatives):
-    """Derivatives for BatchNorm3d."""
-
-    def __init__(self):
-        """Initialization."""
-        super().__init__(n_dim=3)
