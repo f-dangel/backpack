@@ -31,7 +31,10 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
     def _check_parameters(
         self, module: Union[BatchNorm1d, BatchNorm2d, BatchNorm3d]
     ) -> None:
-        pass
+        if module.affine is False:
+            raise NotImplementedError("Only implemented for affine=True")
+        if module.track_running_stats is False:
+            raise NotImplementedError("Only implemented for track_running_stats=True")
 
     def hessian_is_zero(self) -> bool:
         """Whether hessian is zero.
