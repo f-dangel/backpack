@@ -124,11 +124,18 @@ class BaseDerivatives:
         """
         raise NotImplementedError
 
-    def hessian_is_zero(self):
+    def hessian_is_zero(self) -> bool:
+        """Whether ``∂²output[i] / ∂input[j] ∂input[k] = 0  ∀ i,j,k``."""
         raise NotImplementedError
 
-    def hessian_is_diagonal(self):
-        """Is `∂²output[i] / ∂input[j] ∂input[k]` nonzero only if `i = j = k`."""
+    def hessian_is_diagonal(self) -> bool:
+        """Is `∂²output[i] / ∂input[j] ∂input[k]` nonzero only if `i = j = k`.
+
+        The Hessian diagonal is only defined for layers that preserve the size
+        of their input.
+
+        Must be implemented by descendants that don't implement ``hessian_is_zero``.
+        """
         raise NotImplementedError
 
     def hessian_diagonal(self):

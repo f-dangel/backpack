@@ -247,3 +247,24 @@ class AutogradDerivatives(DerivativesImplementation):
                     assert torch.allclose(block, hessian_different_samples)
 
         return sum_hessian
+
+    def hessian_is_diagonal(self) -> bool:
+        if self.hessian_is_zero():
+            return True
+
+        input, output, _ = self.problem.forward_pass(input_requires_grad=True)
+        zero = None
+
+        for idx, hessian in enumerate(self.elementwise_hessian(output, input)):
+            hessian = hessian.reshape(input.numel(), input.numel())
+
+            # set diagonal entry to zero
+            hessian[idx, idx] = 0
+
+            if zero is None:
+                zero = torch.zeros_like(hessian)
+
+            if not torch.allclose(hessian, zero):
+                return False
+
+        return True
