@@ -61,10 +61,24 @@ class LinearDerivatives(BaseParameterDerivatives):
         jac = module.weight.data
         return einsum("ik,ij,jl->kl", (jac, mat, jac))
 
-    def _weight_jac_mat_prod(self, module, g_inp, g_out, mat):
-        """Apply Jacobian of the output w.r.t. the weight."""
-        d_weight = module.input0
-        return einsum("ni,voi->vno", (d_weight, mat))
+    def _weight_jac_mat_prod(
+        self, module: Linear, g_inp: Any, g_out: Any, mat: Tensor
+    ) -> Tensor:
+        """Batch-apply Jacobian of the output w.r.t. the weight.
+
+        Args:
+            module: Linear layer.
+            g_inp: Gradients w.r.t. module input. Not required by the implementation.
+            g_out: Gradients w.r.t. module output. Not required by the implementation.
+            mat: Batch of ``V`` vectors of shape ``module.weight.shape`` to which the
+                transposed output-input Jacobian is applied. Has shape
+                ``[V, *module.weight.shape]``.
+
+        Returns:
+            Batched Jacobian vector products. Has shape
+            ``[V, N, *module.output.shape]``.
+        """
+        return einsum("n...i,voi->vn...o", module.input0, mat)
 
     def _weight_jac_t_mat_prod(
         self, module: Linear, g_inp: Any, g_out: Any, mat: Tensor, sum_batch: int = True

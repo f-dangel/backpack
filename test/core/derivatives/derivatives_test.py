@@ -129,13 +129,17 @@ def test_weight_jac_t_mat_prod(
     problem.tear_down()
 
 
-@pytest.mark.parametrize("problem", PROBLEMS_WITH_WEIGHTS, ids=IDS_WITH_WEIGHTS)
-def test_weight_jac_mat_prod(problem, V=3):
-    """Test the Jacobian-matrix product w.r.t. to the weights.
+@pytest.mark.parametrize(
+    "problem",
+    PROBLEMS_WITH_WEIGHTS + LINEAR_ADDITIONAL_DIMS_PROBLEMS,
+    ids=IDS_WITH_WEIGHTS + LINEAR_ADDITIONAL_DIMS_IDS,
+)
+def test_weight_jac_mat_prod(problem: DerivativesTestProblem, V: int = 3) -> None:
+    """Test the Jacobian-matrix product w.r.t. to the weight.
 
     Args:
-        problem (DerivativesProblem): Problem for derivative test.
-        V (int): Number of vectorized transposed Jacobian-vector products.
+        problem: Test case.
+        V: Number of vectorized Jacobian-vector products. Default: ``3``.
     """
     problem.set_up()
     mat = torch.rand(V, *problem.module.weight.shape).to(problem.device)
