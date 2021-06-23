@@ -1,3 +1,6 @@
+from typing import Tuple
+
+from backpack import BackpropExtension
 from backpack.utils.hooks import no_op
 
 
@@ -6,7 +9,7 @@ class CTX:
     Global Class holding the configuration of the backward pass
     """
 
-    active_exts = tuple()
+    active_exts: Tuple[BackpropExtension] = tuple()
     debug = False
     extension_hook = no_op
 

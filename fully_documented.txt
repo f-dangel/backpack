@@ -10,6 +10,7 @@ backpack/core/derivatives/adaptive_avg_pool_nd.py
 
 backpack/extensions/__init__.py
 backpack/extensions/backprop_extension.py
+backpack/extensions/module_extension.py
 backpack/extensions/mat_to_mat_jac_base.py
 
 backpack/extensions/firstorder/gradient/base.py

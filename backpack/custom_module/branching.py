@@ -1,39 +1,75 @@
 """Emulating branching with modules."""
 
 from collections import OrderedDict
+from typing import Any, Tuple, Union
 
 import torch
 
 # for marking information backpropagated by PyTorch's autograd
+from torch import Tensor
+from torch.nn import Module
+
 BRANCH_POINT_FIELD = "_backpack_branch_point"
 MERGE_POINT_FIELD = "_backpack_merge_point"
 MARKER = True
 
 
-def mark_branch_point(arg):
-    """Mark the input as branch entry point."""
+def mark_branch_point(arg: Tensor) -> None:
+    """Mark the input as branch entry point.
+
+    Args:
+        arg: tensor to be marked
+    """
     setattr(arg, BRANCH_POINT_FIELD, MARKER)
 
 
-def mark_merge_point(arg):
-    """Mark the input as merge entry point."""
+def mark_merge_point(arg: Tensor) -> None:
+    """Mark the input as merge entry point.
+
+    Args:
+        arg: tensor to be marked
+    """
     setattr(arg, MERGE_POINT_FIELD, MARKER)
 
 
-def is_branch_point(arg):
-    """Return whether input is marked as branch point."""
+def is_branch_point(arg: Tensor) -> bool:
+    """Return whether input is marked as branch point.
+
+    Args:
+        arg: tensor to be checked
+
+    Returns:
+        whether arg is branch point
+    """
     return getattr(arg, BRANCH_POINT_FIELD, None) is MARKER
 
 
-def is_merge_point(arg):
-    """Return whether input is marked as mergepoint."""
+def is_merge_point(arg: Tensor) -> bool:
+    """Return whether input is marked as mergepoint.
+
+    Args:
+        arg: tensor to be checked
+
+    Returns:
+        whether arg is merge point
+    """
     return getattr(arg, MERGE_POINT_FIELD, None) is MARKER
 
 
 class ActiveIdentity(torch.nn.Module):
     """Like ``torch.nn.Identity``, but creates a new node in the computation graph."""
 
-    def forward(self, input):
+    def forward(self, input: Tensor) -> Tensor:
+        """Forward pass.
+
+        Multiplies with 1.0 to create node in computation graph.
+
+        Args:
+            input: input
+
+        Returns:
+            1.0 * input
+        """
         return 1.0 * input
 
 
@@ -49,8 +85,12 @@ class Branch(torch.nn.Module):
             through every of these modules.
     """
 
-    def __init__(self, *args):
-        """Use interface of ``torch.nn.Sequential``. Modules are parallel sequence."""
+    def __init__(self, *args: Union[OrderedDict[str, Module], Module]):
+        """Use interface of ``torch.nn.Sequential``. Modules are parallel sequence.
+
+        Args:
+            args: either a dictionary of Modules or a Tuple of Modules
+        """
         super().__init__()
 
         if len(args) == 1 and isinstance(args[0], OrderedDict):
@@ -60,8 +100,15 @@ class Branch(torch.nn.Module):
             for idx, module in enumerate(args):
                 self.add_module(str(idx), module)
 
-    def forward(self, input):
-        """Feed one input through a set of modules."""
+    def forward(self, input: Tensor) -> Tuple[Any]:
+        """Feed one input through each child module.
+
+        Args:
+            input: input tensor
+
+        Returns:
+            tuple of output tensor
+        """
         mark_branch_point(input)
 
         return tuple(module(input) for module in self.children())
@@ -76,8 +123,18 @@ class Merge(torch.nn.Module):
 
     """
 
-    def forward(self, input):
-        """Sum up all inputs (a tuple of tensors)."""
+    def forward(self, input: Tuple[Tensor]) -> Tensor:
+        """Sum up all inputs (a tuple of tensors).
+
+        Args:
+            input: tuple of input tensors
+
+        Returns:
+            sum of all inputs
+
+        Raises:
+            ValueError: if input is no tuple
+        """
         if not isinstance(input, tuple):
             raise ValueError(f"Expecting tuple as input. Got {input.__class__}")
 
@@ -98,8 +155,12 @@ class Parallel(torch.nn.Sequential):
 
     """
 
-    def __init__(self, *args):
-        """Use interface of ``torch.nn.Sequential``. Modules are parallel sequence."""
+    def __init__(self, *args: Union[OrderedDict[str, Module], Module]):
+        """Use interface of ``torch.nn.Sequential``. Modules are parallel sequence.
+
+        Args:
+            args: either dictionary of modules or tuple of modules
+        """
         super().__init__()
 
         self.add_module("branch", Branch(*args))
