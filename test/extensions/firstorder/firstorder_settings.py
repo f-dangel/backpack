@@ -32,6 +32,7 @@ from torch.nn import (
     ConvTranspose2d,
     ConvTranspose3d,
     CrossEntropyLoss,
+    Flatten,
     Linear,
     MSELoss,
     ReLU,
@@ -80,6 +81,56 @@ FIRSTORDER_SETTINGS += [
         "module_fn": lambda: Sequential(Linear(10, 7), Sigmoid(), Linear(7, 5)),
         "loss_function_fn": lambda: MSELoss(reduction="mean"),
         "target_fn": lambda: regression_targets((3, 5)),
+    },
+]
+
+# linear with additional dimension
+FIRSTORDER_SETTINGS += [
+    # regression
+    {
+        "input_fn": lambda: rand(3, 4, 5),
+        "module_fn": lambda: Sequential(Linear(5, 3), Linear(3, 2)),
+        "loss_function_fn": lambda: MSELoss(reduction="mean"),
+        "target_fn": lambda: regression_targets((3, 4, 2)),
+        "id_prefix": "one-additional",
+    },
+    {
+        "input_fn": lambda: rand(3, 4, 2, 5),
+        "module_fn": lambda: Sequential(Linear(5, 3), Sigmoid(), Linear(3, 2)),
+        "loss_function_fn": lambda: MSELoss(reduction="mean"),
+        "target_fn": lambda: regression_targets((3, 4, 2, 2)),
+        "id_prefix": "two-additional",
+    },
+    {
+        "input_fn": lambda: rand(3, 4, 2, 3, 5),
+        "module_fn": lambda: Sequential(Linear(5, 3), Linear(3, 2)),
+        "loss_function_fn": lambda: MSELoss(reduction="sum"),
+        "target_fn": lambda: regression_targets((3, 4, 2, 3, 2)),
+        "id_prefix": "three-additional",
+    },
+    # classification
+    {
+        "input_fn": lambda: rand(3, 4, 5),
+        "module_fn": lambda: Sequential(Linear(5, 3), Linear(3, 2), Flatten()),
+        "loss_function_fn": lambda: CrossEntropyLoss(reduction="mean"),
+        "target_fn": lambda: classification_targets((3,), 8),
+        "id_prefix": "one-additional",
+    },
+    {
+        "input_fn": lambda: rand(3, 4, 2, 5),
+        "module_fn": lambda: Sequential(
+            Linear(5, 3), Sigmoid(), Linear(3, 2), Flatten()
+        ),
+        "loss_function_fn": lambda: CrossEntropyLoss(reduction="mean"),
+        "target_fn": lambda: classification_targets((3,), 16),
+        "id_prefix": "two-additional",
+    },
+    {
+        "input_fn": lambda: rand(3, 4, 2, 3, 5),
+        "module_fn": lambda: Sequential(Linear(5, 3), ReLU(), Linear(3, 2), Flatten()),
+        "loss_function_fn": lambda: CrossEntropyLoss(reduction="sum"),
+        "target_fn": lambda: classification_targets((3,), 48),
+        "id_prefix": "three-additional",
     },
 ]
 

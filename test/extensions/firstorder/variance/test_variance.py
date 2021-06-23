@@ -30,5 +30,6 @@ def test_variance(problem):
     backpack_res = BackpackExtensions(problem).variance()
     autograd_res = AutogradExtensions(problem).variance()
 
-    check_sizes_and_values(autograd_res, backpack_res)
+    rtol = 5e-5
+    check_sizes_and_values(autograd_res, backpack_res, rtol=rtol)
     problem.tear_down()

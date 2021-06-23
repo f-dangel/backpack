@@ -18,4 +18,13 @@ class SGSLinear(SGSBase):
             For details, see page 12 (paragraph about "second moment") of the
             paper (https://arxiv.org/pdf/1912.10985.pdf).
         """
+        add_axes = list(range(1, g_out[0].dim() - 1))
+
+        if add_axes:
+            # TODO Find out if einsum contraction is efficient. Otherwise it might be
+            # cheaper to compute individual gradients, then sum them
+            dE_dY = g_out[0].flatten(start_dim=1, end_dim=-2)
+            X = module.input0.flatten(start_dim=1, end_dim=-2)
+            return einsum("nmi,nmj,nki,nkj->ij", (dE_dY, X, dE_dY, X))
+
         return einsum("ni,nj->ij", (g_out[0] ** 2, module.input0 ** 2))
