@@ -40,6 +40,7 @@ from torch.nn import (
 
 from backpack.custom_module.branching import ActiveIdentity
 from backpack.custom_module.permute import Permute
+from backpack.custom_module.scale_module import ScaleModule
 from backpack.extensions.backprop_extension import BackpropExtension
 from backpack.extensions.secondorder.hbp import LossHessianStrategy
 
@@ -119,6 +120,7 @@ class DiagGGN(BackpropExtension):
                 SELU: activations.DiagGGNSELU(),
                 Identity: scale_module.DiagGGNScaleModule(),
                 ActiveIdentity: scale_module.DiagGGNScaleModule(),
+                ScaleModule: scale_module.DiagGGNScaleModule(),
                 RNN: rnn.DiagGGNRNN(),
                 Permute: permute.DiagGGNPermute(),
             },
@@ -240,6 +242,7 @@ class BatchDiagGGN(BackpropExtension):
                 SELU: activations.DiagGGNSELU(),
                 Identity: scale_module.DiagGGNScaleModule(),
                 ActiveIdentity: scale_module.DiagGGNScaleModule(),
+                ScaleModule: scale_module.DiagGGNScaleModule(),
                 RNN: rnn.BatchDiagGGNRNN(),
                 Permute: permute.DiagGGNPermute(),
             },
