@@ -2,7 +2,7 @@ from test.automated_test import check_sizes_and_values
 from test.extensions.implementation.autograd import AutogradExtensions
 from test.extensions.implementation.backpack import BackpackExtensions
 from test.extensions.problem import make_test_problems
-from test.extensions.secondorder.diag_ggn.diaggnn_settings import DiagGGN_SETTINGS
+from test.extensions.secondorder.diag_ggn.diagggn_settings import DiagGGN_SETTINGS
 
 import pytest
 
