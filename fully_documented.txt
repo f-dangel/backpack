@@ -24,3 +24,6 @@ backpack/extensions/__init__.py
 backpack/extensions/secondorder/sqrt_ggn
 
 backpack/core/derivatives/linear.py
+
+backpack/utils/linear.py
+backpack/utils/__init__.py

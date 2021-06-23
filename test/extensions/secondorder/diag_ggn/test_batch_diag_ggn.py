@@ -42,7 +42,7 @@ def test_diag_ggn_mc_batch_light(problem):
     problem.set_up()
 
     backpack_res = BackpackExtensions(problem).diag_ggn_exact_batch()
-    mc_samples = 5000
+    mc_samples = 6000
     backpack_res_mc_avg = BackpackExtensions(problem).diag_ggn_mc_batch(mc_samples)
 
     check_sizes_and_values(
