@@ -100,15 +100,21 @@ for problem, problem_id in zip(PROBLEMS, IDS):
     [True, False],
     ids=["save_memory=True", "save_memory=False"],
 )
-@pytest.mark.parametrize("problem", PROBLEMS_WITH_WEIGHTS, ids=IDS_WITH_WEIGHTS)
-def test_weight_jac_t_mat_prod(problem, sum_batch, save_memory, V=3):
-    """Test the transposed Jacobian-matrix product w.r.t. to the weights.
+@pytest.mark.parametrize(
+    "problem",
+    PROBLEMS_WITH_WEIGHTS + LINEAR_ADDITIONAL_DIMS_PROBLEMS,
+    ids=IDS_WITH_WEIGHTS + LINEAR_ADDITIONAL_DIMS_IDS,
+)
+def test_weight_jac_t_mat_prod(
+    problem: DerivativesTestProblem, sum_batch: bool, save_memory: bool, V: int = 3
+) -> None:
+    """Test the transposed Jacobian-matrix product w.r.t. to the weight.
 
     Args:
-        problem (DerivativesProblem): Problem for derivative test.
-        sum_batch (bool): Sum results over the batch dimension.
-        save_memory (bool): Use Owkin implementation to save memory.
-        V (int): Number of vectorized transposed Jacobian-vector products.
+        problem: Test case.
+        sum_batch: Sum out the batch dimension.
+        save_memory: Use Owkin implementation in convolutions to save memory.
+        V: Number of vectorized transposed Jacobian-vector products. Default: ``3``.
     """
     problem.set_up()
     mat = torch.rand(V, *problem.output_shape).to(problem.device)

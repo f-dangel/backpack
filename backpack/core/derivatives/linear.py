@@ -66,11 +66,37 @@ class LinearDerivatives(BaseParameterDerivatives):
         d_weight = module.input0
         return einsum("ni,voi->vno", (d_weight, mat))
 
-    def _weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
-        """Apply transposed Jacobian of the output w.r.t. the weight."""
+    def _weight_jac_t_mat_prod(
+        self, module: Linear, g_inp: Any, g_out: Any, mat: Tensor, sum_batch: int = True
+    ) -> Tensor:
+        """Batch-apply transposed Jacobian of the output w.r.t. the weight.
+
+        Args:
+            module: Linear layer.
+            g_inp: Gradients w.r.t. module input. Not required by the implementation.
+            g_out: Gradients w.r.t. module output. Not required by the implementation.
+            mat: Batch of ``V`` vectors of same shape as the layer output
+                (``[N, *, out_features]``) to which the transposed output-input Jacobian
+                is applied. Has shape ``[V, N, *, out_features]``.
+            sum_batch: Sum the result's batch axis. Default: ``True``.
+
+        Returns:
+            Batched transposed Jacobian vector products. Has shape
+                ``[V, N, *module.weight.shape]`` when ``sum_batch`` is ``False``. With
+                ``sum_batch=True``, has shape ``[V, *module.weight.shape]``.
+        """
         d_weight = module.input0
-        contract = "vno,ni->voi" if sum_batch else "vno,ni->vnoi"
-        return einsum(contract, (mat, d_weight))
+
+        if self._has_additional_dims(module):
+            # Flatten additional dimensions because they cannot be represented as
+            # ellipsis. WAITING https://github.com/pytorch/pytorch/issues/45854
+            d_weight = d_weight.flatten(start_dim=1, end_dim=-2)
+            mat = mat.flatten(start_dim=2, end_dim=-2)
+            equation = f"vnao,nai->v{'' if sum_batch else 'n'}oi"
+        else:
+            equation = f"vno,ni->v{'' if sum_batch else 'n'}oi"
+
+        return einsum(equation, mat, d_weight)
 
     def _bias_jac_mat_prod(self, module, g_inp, g_out, mat):
         """Apply Jacobian of the output w.r.t. the bias."""
@@ -84,3 +110,18 @@ class LinearDerivatives(BaseParameterDerivatives):
             return mat.sum(N_axis)
         else:
             return mat
+
+    @staticmethod
+    def _has_additional_dims(module: Linear) -> bool:
+        """Return whether the input to a linear layer has additional (>1) dimensions.
+
+        The input to a linear layer may have shape ``[N, *, out_features]``.
+        It has additional dimensions if ``*`` is non-empty.
+
+        Args:
+            module: Linear layer.
+
+        Returns:
+            Whether the input has hidden dimensions.
+        """
+        return module.input0.dim() != 2
