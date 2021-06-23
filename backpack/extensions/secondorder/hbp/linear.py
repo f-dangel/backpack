@@ -1,4 +1,5 @@
 from torch import einsum
+from torch.nn import Linear
 
 from backpack.core.derivatives.linear import LinearDerivatives
 from backpack.extensions.secondorder.hbp.hbp_options import (
@@ -13,6 +14,7 @@ class HBPLinear(HBPBaseModule):
         super().__init__(derivatives=LinearDerivatives(), params=["weight", "bias"])
 
     def weight(self, ext, module, g_inp, g_out, backproped):
+        self.check_parameters(ext, module)
         bp_strategy = ext.get_backprop_strategy()
 
         if BackpropStrategy.is_batch_average(bp_strategy):
@@ -44,6 +46,7 @@ class HBPLinear(HBPBaseModule):
         return [einsum("vni,vnj->ij", (backproped, backproped))]
 
     def bias(self, ext, module, g_inp, g_out, backproped):
+        self.check_parameters(ext, module)
         bp_strategy = ext.get_backprop_strategy()
 
         if BackpropStrategy.is_batch_average(bp_strategy):
@@ -61,3 +64,19 @@ class HBPLinear(HBPBaseModule):
         N = module.input0.size(0)
         flat_input = module.input0.reshape(N, -1)
         return einsum("ni,nj->ij", (flat_input, flat_input)) / N
+
+    def check_parameters(self, ext, module: Linear) -> None:
+        """Raise an exception if module parameters are not supported.
+
+        Args:
+            ext (KFAC or KFRA or KFLR): Extension calling out to the module.
+            module: Linear layer.
+
+        Raises:
+            NotImplementedError: If the setting is not implemented.
+        """
+        if module.input0.dim() != 2:
+            raise NotImplementedError(
+                f"Only 2d inputs are supported by {ext.__class__.__name__} "
+                + f"(got {module.input0.dim()})."
+            )
