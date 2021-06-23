@@ -189,15 +189,15 @@ def test_bias_jac_t_mat_prod(
 
 @pytest.mark.parametrize(
     "problem",
-    PROBLEMS_WITH_BIAS,
-    ids=IDS_WITH_BIAS,
+    PROBLEMS_WITH_BIAS + LINEAR_ADDITIONAL_DIMS_PROBLEMS,
+    ids=IDS_WITH_BIAS + LINEAR_ADDITIONAL_DIMS_IDS,
 )
-def test_bias_jac_mat_prod(problem, V=3):
-    """Test the Jacobian-matrix product w.r.t. to the biass.
+def test_bias_jac_mat_prod(problem: DerivativesTestProblem, V: int = 3) -> None:
+    """Test the Jacobian-matrix product w.r.t. to the bias.
 
     Args:
-        problem (DerivativesProblem): Problem for derivative test.
-        V (int): Number of vectorized transposed Jacobian-vector products.
+        problem: Test case.
+        V: Number of vectorized Jacobian-vector products. Default: ``3``.
     """
     problem.set_up()
     mat = torch.rand(V, *problem.module.bias.shape).to(problem.device)

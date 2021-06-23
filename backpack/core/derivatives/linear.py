@@ -1,6 +1,6 @@
 from typing import Any
 
-from torch import Tensor, einsum
+from torch import Size, Tensor, einsum
 from torch.nn import Linear
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
@@ -112,10 +112,32 @@ class LinearDerivatives(BaseParameterDerivatives):
 
         return einsum(equation, mat, d_weight)
 
-    def _bias_jac_mat_prod(self, module, g_inp, g_out, mat):
-        """Apply Jacobian of the output w.r.t. the bias."""
-        N = module.input0.size(0)
-        return mat.unsqueeze(1).expand(-1, N, -1)
+    def _bias_jac_mat_prod(
+        self, module: Linear, g_inp: Any, g_out: Any, mat: Tensor
+    ) -> Tensor:
+        """Batch-apply Jacobian of the output w.r.t. the bias.
+
+        Args:
+            module: Linear layer.
+            g_inp: Gradients w.r.t. module input. Not required by the implementation.
+            g_out: Gradients w.r.t. module output. Not required by the implementation.
+            mat: Batch of ``V`` vectors of shape ``module.bias.shape`` to which the
+                transposed output-input Jacobian is applied. Has shape
+                ``[V, *module.bias.shape]``.
+
+        Returns:
+            Batched Jacobian vector products. Has shape
+            ``[V, N, *module.output.shape]``.
+        """
+        N = module.input0.shape[0]
+        additional_dims = list(self._get_additional_dims(module))
+
+        for _ in range(len(additional_dims) + 1):
+            mat = mat.unsqueeze(1)
+
+        expand = [-1, N] + additional_dims + [-1]
+
+        return mat.expand(*expand)
 
     def _bias_jac_t_mat_prod(
         self, module: Linear, g_inp: Any, g_out: Any, mat: Tensor, sum_batch: int = True
@@ -140,8 +162,7 @@ class LinearDerivatives(BaseParameterDerivatives):
 
         return einsum(equation, mat)
 
-    @staticmethod
-    def _has_additional_dims(module: Linear) -> bool:
+    def _has_additional_dims(self, module: Linear) -> bool:
         """Return whether the input to a linear layer has additional (>1) dimensions.
 
         The input to a linear layer may have shape ``[N, *, out_features]``.
@@ -153,4 +174,16 @@ class LinearDerivatives(BaseParameterDerivatives):
         Returns:
             Whether the input has hidden dimensions.
         """
-        return module.input0.dim() != 2
+        return len(self._get_additional_dims(module)) != 0
+
+    def _get_additional_dims(self, module: Linear) -> Size:
+        """Return the shape of additional dimensions in the input to a linear layer.
+
+        Args:
+            module: A linear layer.
+
+        Returns:
+            Shape of the additional dimensions. Corresponds to ``*`` in the
+            input shape ``[N, *, out_features]``.
+        """
+        return module.input0.shape[1:-1]
