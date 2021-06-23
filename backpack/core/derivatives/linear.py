@@ -39,10 +39,23 @@ class LinearDerivatives(BaseParameterDerivatives):
         """
         return einsum("oi,vn...o->vn...i", module.weight.data, mat)
 
-    def _jac_mat_prod(self, module, g_inp, g_out, mat):
-        """Apply Jacobian of the output w.r.t. the input."""
-        d_input = module.weight.data
-        return einsum("oi,vni->vno", (d_input, mat))
+    def _jac_mat_prod(
+        self, module: Linear, g_inp: Any, g_out: Any, mat: Tensor
+    ) -> Tensor:
+        """Batch-apply Jacobian of the output w.r.t. the input.
+
+        Args:
+            module: Linear layer.
+            g_inp: Gradients w.r.t. module input. Not required by the implementation.
+            g_out: Gradients w.r.t. module output. Not required by the implementation.
+            mat: Batch of ``V`` vectors of same shape as the layer input
+                (``[N, *, in_features]``) to which the output-input Jacobian is applied.
+                Has shape ``[V, N, *, in_features]``.
+
+        Returns:
+            Batched Jacobian vector products. Has shape ``[V, N, *, out_features]``.
+        """
+        return einsum("oi,vn...i->vn...o", module.weight.data, mat)
 
     def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
         jac = module.weight.data

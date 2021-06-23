@@ -40,13 +40,17 @@ LINEAR_ADDITIONAL_DIMS_IDS = [
 ]
 
 
-@pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
-def test_jac_mat_prod(problem, V=3):
+@pytest.mark.parametrize(
+    "problem",
+    NO_LOSS_PROBLEMS + LINEAR_ADDITIONAL_DIMS_PROBLEMS,
+    ids=NO_LOSS_IDS + LINEAR_ADDITIONAL_DIMS_IDS,
+)
+def test_jac_mat_prod(problem: DerivativesTestProblem, V: int = 3) -> None:
     """Test the Jacobian-matrix product.
 
     Args:
-        problem (DerivativesProblem): Problem for derivative test.
-        V (int): Number of vectorized Jacobian-vector products.
+        problem: Test case.
+        V (int): Number of vectorized Jacobian-vector products. Default: ``3``.
     """
     problem.set_up()
     mat = torch.rand(V, *problem.input_shape).to(problem.device)
