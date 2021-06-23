@@ -285,9 +285,13 @@ def test_sum_hessian_should_fail(problem):
         test_sum_hessian(problem)
 
 
-@pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
-def test_ea_jac_t_mat_jac_prod(problem):
-    """Test KFRA backpropagation
+@pytest.mark.parametrize(
+    "problem",
+    NO_LOSS_PROBLEMS + LINEAR_ADDITIONAL_DIMS_PROBLEMS,
+    ids=NO_LOSS_IDS + LINEAR_ADDITIONAL_DIMS_IDS,
+)
+def test_ea_jac_t_mat_jac_prod(problem: DerivativesTestProblem) -> None:
+    """Test KFRA backpropagation.
 
     H_in →  1/N ∑ₙ Jₙ^T H_out Jₙ
 
@@ -298,10 +302,10 @@ def test_ea_jac_t_mat_jac_prod(problem):
         as `Dropout` is not deterministic.
 
     Args:
-        problem (DerivativesProblem): Problem for derivative test.
+        problem: Test case.
     """
     problem.set_up()
-    out_features = torch.prod(torch.tensor(problem.output_shape[1:]))
+    out_features = problem.output_shape[1:].numel()
     mat = torch.rand(out_features, out_features).to(problem.device)
 
     backpack_res = BackpackDerivatives(problem).ea_jac_t_mat_jac_prod(mat)

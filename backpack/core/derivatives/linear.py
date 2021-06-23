@@ -57,9 +57,32 @@ class LinearDerivatives(BaseParameterDerivatives):
         """
         return einsum("oi,vn...i->vn...o", module.weight.data, mat)
 
-    def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
+    def ea_jac_t_mat_jac_prod(
+        self, module: Linear, g_inp: Any, g_out: Any, mat: Tensor
+    ) -> Tensor:
+        """Expectation approximation of outer product with input-output Jacobian.
+
+        Used for KFRA backpropagation: ``mat ← E(Jₙᵀ mat Jₙ) = 1/N ∑ₙ Jₙᵀ mat Jₙ``.
+
+        Args:
+            module: Linear layer.
+            g_inp: Gradients w.r.t. module input. Not required by the implementation.
+            g_out: Gradients w.r.t. module output. Not required by the implementation.
+            mat: Matrix of shape
+                ``[module.output.numel() // N, module.output.numel() // N]``.
+
+        Returns:
+           Matrix of shape ``[module.input0.numel() // N, module.input0.numel() // N]``.
+        """
+        add_features = self._get_additional_dims(module).numel()
+        in_features, out_features = module.in_features, module.out_features
+
         jac = module.weight.data
-        return einsum("ik,ij,jl->kl", (jac, mat, jac))
+
+        result = mat.reshape(add_features, out_features, add_features, out_features)
+        result = einsum("ik,xiyj,jl->xkyl", (jac, result, jac))
+
+        return result.reshape(in_features * add_features, in_features * add_features)
 
     def _weight_jac_mat_prod(
         self, module: Linear, g_inp: Any, g_out: Any, mat: Tensor
