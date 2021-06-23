@@ -8,6 +8,8 @@ import torch
 from torch import Tensor
 from torch.nn import Module
 
+from backpack.custom_module.scale_module import ScaleModule
+
 BRANCH_POINT_FIELD = "_backpack_branch_point"
 MERGE_POINT_FIELD = "_backpack_merge_point"
 MARKER = True
@@ -55,21 +57,12 @@ def is_merge_point(arg: Tensor) -> bool:
     return getattr(arg, MERGE_POINT_FIELD, None) is MARKER
 
 
-class ActiveIdentity(torch.nn.Module):
+class ActiveIdentity(ScaleModule):
     """Like ``torch.nn.Identity``, but creates a new node in the computation graph."""
 
-    def forward(self, input: Tensor) -> Tensor:
-        """Forward pass.
-
-        Multiplies with 1.0 to create node in computation graph.
-
-        Args:
-            input: input
-
-        Returns:
-            1.0 * input
-        """
-        return 1.0 * input
+    def __init__(self):
+        """Initialization with weight=1.0."""
+        super().__init__(weight=1.0)
 
 
 class Branch(torch.nn.Module):
