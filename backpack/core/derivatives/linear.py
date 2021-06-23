@@ -1,3 +1,4 @@
+"""Contains partial derivatives for the ``torch.nn.Linear`` layer."""
 from typing import Any
 
 from torch import Size, Tensor, einsum
@@ -17,7 +18,12 @@ class LinearDerivatives(BaseParameterDerivatives):
     * i: Input dimension
     """
 
-    def hessian_is_zero(self):
+    def hessian_is_zero(self) -> bool:
+        """Linear layer output is linear w.r.t. to its input.
+
+        Returns:
+            True
+        """
         return True
 
     def _jac_t_mat_prod(
@@ -72,7 +78,8 @@ class LinearDerivatives(BaseParameterDerivatives):
                 ``[module.output.numel() // N, module.output.numel() // N]``.
 
         Returns:
-           Matrix of shape ``[module.input0.numel() // N, module.input0.numel() // N]``.
+            Matrix of shape
+            ``[module.input0.numel() // N, module.input0.numel() // N]``.
         """
         add_features = self._get_additional_dims(module).numel()
         in_features, out_features = module.in_features, module.out_features
