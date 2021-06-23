@@ -39,7 +39,7 @@ class AvgPoolNDDerivatives(BaseDerivatives):
             + "like count_include_pad=False"
         )
 
-    def get_parameters(self, module) -> Tuple[Any, Any, Any]:
+    def get_avg_pool_parameters(self, module) -> Tuple[Any, Any, Any]:
         """Return the parameters of the module.
 
         Args:
@@ -105,7 +105,7 @@ class AvgPoolNDDerivatives(BaseDerivatives):
         return result.unsqueeze(C_axis)
 
     def __apply_jacobian_of(self, module, mat):
-        stride, kernel_size, padding = self.get_parameters(module)
+        stride, kernel_size, padding = self.get_avg_pool_parameters(module)
         convnd = self.conv(
             in_channels=1,
             out_channels=1,
@@ -143,7 +143,7 @@ class AvgPoolNDDerivatives(BaseDerivatives):
         return self.reshape_like_input(jmp_as_pool, module)
 
     def __apply_jacobian_t_of(self, module, mat):
-        stride, kernel_size, padding = self.get_parameters(module)
+        stride, kernel_size, padding = self.get_avg_pool_parameters(module)
         C_for_conv_t = 1
 
         convnd_t = self.convt(

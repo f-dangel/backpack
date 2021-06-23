@@ -51,7 +51,7 @@ class AdaptiveAvgPoolNDDerivatives(AvgPoolNDDerivatives):
                 f"must be multiple of output shape ({shape_output})."
             )
 
-    def get_parameters(
+    def get_avg_pool_parameters(
         self, module: Union[AdaptiveAvgPool1d, AdaptiveAvgPool2d, AdaptiveAvgPool3d]
     ) -> Tuple[List[int], List[int], List[int]]:
         """Return parameters for an equivalent AvgPool.

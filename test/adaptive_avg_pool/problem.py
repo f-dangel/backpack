@@ -163,7 +163,7 @@ class AdaptiveAvgPoolProblem:
 
         Checks the sizes and values.
         """
-        stride, kernel_size, _ = self._get_derivatives().get_parameters(self.module)
+        stride, kernel_size, _ = self._get_derivatives().get_avg_pool_parameters(self.module)
         module_equivalent: Module = self._make_module_equivalent(stride, kernel_size)
         output_equivalent: Tensor = module_equivalent(self.input)
 
