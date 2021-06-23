@@ -5,3 +5,8 @@ from backpack.extensions.secondorder.diag_ggn.diag_ggn_base import DiagGGNBaseMo
 class DiagGGNIdentity(DiagGGNBaseModule):
     def __init__(self):
         super().__init__(derivatives=IdentityDerivatives())
+
+
+class BatchDiagGGNIdentity(DiagGGNBaseModule):
+    def __init__(self):
+        super().__init__(derivatives=IdentityDerivatives())

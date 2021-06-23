@@ -3,23 +3,15 @@ from test.automated_test import check_sizes_and_values
 from test.extensions.implementation.autograd import AutogradExtensions
 from test.extensions.implementation.backpack import BackpackExtensions
 from test.extensions.problem import make_test_problems
-from test.extensions.secondorder.diag_ggn.diag_ggn_settings import (
-    BRANCHING_SETTINGS,
-    DiagGGN_SETTINGS,
-)
+from test.extensions.secondorder.diag_ggn.diag_ggn_settings import DiagGGN_SETTINGS
 
 import pytest
 
 PROBLEMS = make_test_problems(DiagGGN_SETTINGS)
 IDS = [problem.make_id() for problem in PROBLEMS]
 
-BRANCHING_PROBLEMS = make_test_problems(BRANCHING_SETTINGS)
-BRANCHING_IDS = [problem.make_id() for problem in BRANCHING_PROBLEMS]
 
-
-@pytest.mark.parametrize(
-    "problem", PROBLEMS + BRANCHING_PROBLEMS, ids=IDS + BRANCHING_IDS
-)
+@pytest.mark.parametrize("problem", PROBLEMS, ids=IDS)
 def test_diag_ggn(problem):
     """Test the diagonal of generalized Gauss-Newton.
 

@@ -47,7 +47,7 @@ for act in activations:
 ###############################################################################
 # TODO Integrate with LOCAL_SETTINGS after integrating branching with the extensions
 # DiagGGNMC, BatchDiagGGNExact
-BRANCHING_SETTINGS = [
+LOCAL_SETTINGS += [
     {
         "input_fn": lambda: torch.rand(3, 10),
         "module_fn": lambda: torch.nn.Sequential(
@@ -121,6 +121,5 @@ BRANCHING_SETTINGS = [
         "id_prefix": "nested-branching-convolution",
     },
 ]
-
 
 DiagGGN_SETTINGS = SHARED_SETTINGS + LOCAL_SETTINGS

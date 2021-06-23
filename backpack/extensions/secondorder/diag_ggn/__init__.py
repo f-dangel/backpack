@@ -238,10 +238,24 @@ class BatchDiagGGN(BackpropExtension):
                 LogSigmoid: activations.DiagGGNLogSigmoid(),
                 ELU: activations.DiagGGNELU(),
                 SELU: activations.DiagGGNSELU(),
+                Identity: identity.DiagGGNIdentity(),
+                ActiveIdentity: identity.DiagGGNIdentity(),
                 RNN: rnn.BatchDiagGGNRNN(),
                 Permute: permute.DiagGGNPermute(),
             },
         )
+
+    def accumulate_backpropagated_quantities(self, existing, other):
+        """Sums existing and other.
+
+        Args:
+            existing: .
+            other: .
+
+        Returns:
+            sum
+        """
+        return existing + other
 
 
 class BatchDiagGGNExact(BatchDiagGGN):
