@@ -49,8 +49,8 @@ class AutogradDerivatives(DerivativesImplementation):
         else:
             N = input.shape[0]
 
-            sample_outputs = [output[n] for n in range(N)]
-            sample_vecs = [vec[n] for n in range(N)]
+            sample_outputs = [output[[n]] for n in range(N)]
+            sample_vecs = [vec[[n]] for n in range(N)]
 
             jac_t_sample_prods = [
                 transposed_jacobian_vector_product(n_out, param, n_vec)[0]

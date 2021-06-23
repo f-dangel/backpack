@@ -11,7 +11,7 @@ from test.automated_test import check_sizes_and_values
 from test.core.derivatives.implementation.autograd import AutogradDerivatives
 from test.core.derivatives.implementation.backpack import BackpackDerivatives
 from test.core.derivatives.loss_settings import LOSS_FAIL_SETTINGS
-from test.core.derivatives.problem import make_test_problems
+from test.core.derivatives.problem import DerivativesTestProblem, make_test_problems
 from test.core.derivatives.settings import SETTINGS
 
 import pytest
@@ -34,12 +34,12 @@ LOSS_FAIL_IDS = [problem.make_id() for problem in LOSS_FAIL_PROBLEMS]
 
 
 @pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
-def test_jac_mat_prod(problem, V=3):
+def test_jac_mat_prod(problem: DerivativesTestProblem, V: int = 3) -> None:
     """Test the Jacobian-matrix product.
 
     Args:
-        problem (DerivativesProblem): Problem for derivative test.
-        V (int): Number of vectorized Jacobian-vector products.
+        problem: Test case.
+        V (int): Number of vectorized Jacobian-vector products. Default: ``3``.
     """
     problem.set_up()
     mat = torch.rand(V, *problem.input_shape).to(problem.device)
@@ -52,12 +52,12 @@ def test_jac_mat_prod(problem, V=3):
 
 
 @pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
-def test_jac_t_mat_prod(problem, V=3):
+def test_jac_t_mat_prod(problem: DerivativesTestProblem, V: int = 3) -> None:
     """Test the transposed Jacobian-matrix product.
 
     Args:
-        problem (DerivativesProblem): Problem for derivative test.
-        V (int): Number of vectorized transposed Jacobian-vector products.
+        problem: Test case.
+        V: Number of vectorized transposed Jacobian-vector products. Default: ``3``.
     """
     problem.set_up()
     mat = torch.rand(V, *problem.output_shape).to(problem.device)
@@ -86,14 +86,16 @@ for problem, problem_id in zip(PROBLEMS, IDS):
     ids=["save_memory=True", "save_memory=False"],
 )
 @pytest.mark.parametrize("problem", PROBLEMS_WITH_WEIGHTS, ids=IDS_WITH_WEIGHTS)
-def test_weight_jac_t_mat_prod(problem, sum_batch, save_memory, V=3):
-    """Test the transposed Jacobian-matrix product w.r.t. to the weights.
+def test_weight_jac_t_mat_prod(
+    problem: DerivativesTestProblem, sum_batch: bool, save_memory: bool, V: int = 3
+) -> None:
+    """Test the transposed Jacobian-matrix product w.r.t. to the weight.
 
     Args:
-        problem (DerivativesProblem): Problem for derivative test.
-        sum_batch (bool): Sum results over the batch dimension.
-        save_memory (bool): Use Owkin implementation to save memory.
-        V (int): Number of vectorized transposed Jacobian-vector products.
+        problem: Test case.
+        sum_batch: Sum out the batch dimension.
+        save_memory: Use Owkin implementation in convolutions to save memory.
+        V: Number of vectorized transposed Jacobian-vector products. Default: ``3``.
     """
     problem.set_up()
     mat = torch.rand(V, *problem.output_shape).to(problem.device)
@@ -109,12 +111,12 @@ def test_weight_jac_t_mat_prod(problem, sum_batch, save_memory, V=3):
 
 
 @pytest.mark.parametrize("problem", PROBLEMS_WITH_WEIGHTS, ids=IDS_WITH_WEIGHTS)
-def test_weight_jac_mat_prod(problem, V=3):
-    """Test the Jacobian-matrix product w.r.t. to the weights.
+def test_weight_jac_mat_prod(problem: DerivativesTestProblem, V: int = 3) -> None:
+    """Test the Jacobian-matrix product w.r.t. to the weight.
 
     Args:
-        problem (DerivativesProblem): Problem for derivative test.
-        V (int): Number of vectorized transposed Jacobian-vector products.
+        problem: Test case.
+        V: Number of vectorized Jacobian-vector products. Default: ``3``.
     """
     problem.set_up()
     mat = torch.rand(V, *problem.module.weight.shape).to(problem.device)
@@ -137,18 +139,16 @@ for problem, problem_id in zip(PROBLEMS, IDS):
 @pytest.mark.parametrize(
     "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
 )
-@pytest.mark.parametrize(
-    "problem",
-    PROBLEMS_WITH_BIAS,
-    ids=IDS_WITH_BIAS,
-)
-def test_bias_jac_t_mat_prod(problem, sum_batch, V=3):
-    """Test the transposed Jacobian-matrix product w.r.t. to the biass.
+@pytest.mark.parametrize("problem", PROBLEMS_WITH_BIAS, ids=IDS_WITH_BIAS)
+def test_bias_jac_t_mat_prod(
+    problem: DerivativesTestProblem, sum_batch: bool, V: int = 3
+) -> None:
+    """Test the transposed Jacobian-matrix product w.r.t. to the bias.
 
     Args:
-        problem (DerivativesProblem): Problem for derivative test.
-        sum_batch (bool): Sum results over the batch dimension.
-        V (int): Number of vectorized transposed Jacobian-vector products.
+        problem: Test case.
+        sum_batch: Sum out the batch dimension.
+        V: Number of vectorized transposed Jacobian-vector products. Default: ``3``.
     """
     problem.set_up()
     mat = torch.rand(V, *problem.output_shape).to(problem.device)
@@ -160,17 +160,13 @@ def test_bias_jac_t_mat_prod(problem, sum_batch, V=3):
     problem.tear_down()
 
 
-@pytest.mark.parametrize(
-    "problem",
-    PROBLEMS_WITH_BIAS,
-    ids=IDS_WITH_BIAS,
-)
-def test_bias_jac_mat_prod(problem, V=3):
-    """Test the Jacobian-matrix product w.r.t. to the biass.
+@pytest.mark.parametrize("problem", PROBLEMS_WITH_BIAS, ids=IDS_WITH_BIAS)
+def test_bias_jac_mat_prod(problem: DerivativesTestProblem, V: int = 3) -> None:
+    """Test the Jacobian-matrix product w.r.t. to the bias.
 
     Args:
-        problem (DerivativesProblem): Problem for derivative test.
-        V (int): Number of vectorized transposed Jacobian-vector products.
+        problem: Test case.
+        V: Number of vectorized Jacobian-vector products. Default: ``3``.
     """
     problem.set_up()
     mat = torch.rand(V, *problem.module.bias.shape).to(problem.device)
@@ -259,8 +255,8 @@ def test_sum_hessian_should_fail(problem):
 
 
 @pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
-def test_ea_jac_t_mat_jac_prod(problem):
-    """Test KFRA backpropagation
+def test_ea_jac_t_mat_jac_prod(problem: DerivativesTestProblem) -> None:
+    """Test KFRA backpropagation.
 
     H_in →  1/N ∑ₙ Jₙ^T H_out Jₙ
 
@@ -271,10 +267,10 @@ def test_ea_jac_t_mat_jac_prod(problem):
         as `Dropout` is not deterministic.
 
     Args:
-        problem (DerivativesProblem): Problem for derivative test.
+        problem: Test case.
     """
     problem.set_up()
-    out_features = torch.prod(torch.tensor(problem.output_shape[1:]))
+    out_features = problem.output_shape[1:].numel()
     mat = torch.rand(out_features, out_features).to(problem.device)
 
     backpack_res = BackpackDerivatives(problem).ea_jac_t_mat_jac_prod(mat)
