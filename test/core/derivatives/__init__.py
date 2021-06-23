@@ -4,6 +4,9 @@ from torch.nn import (
     LSTM,
     RNN,
     SELU,
+    AdaptiveAvgPool1d,
+    AdaptiveAvgPool2d,
+    AdaptiveAvgPool3d,
     AvgPool1d,
     AvgPool2d,
     AvgPool3d,
@@ -28,6 +31,11 @@ from torch.nn import (
     ZeroPad2d,
 )
 
+from backpack.core.derivatives.adaptive_avg_pool_nd import (
+    AdaptiveAvgPool1dDerivatives,
+    AdaptiveAvgPool2dDerivatives,
+    AdaptiveAvgPool3dDerivatives,
+)
 from backpack.core.derivatives.avgpool1d import AvgPool1DDerivatives
 from backpack.core.derivatives.avgpool2d import AvgPool2DDerivatives
 from backpack.core.derivatives.avgpool3d import AvgPool3DDerivatives
@@ -85,4 +93,7 @@ derivatives_for = {
     RNN: RNNDerivatives,
     Permute: PermuteDerivatives,
     LSTM: LSTMDerivatives,
+    AdaptiveAvgPool1d: AdaptiveAvgPool1dDerivatives,
+    AdaptiveAvgPool2d: AdaptiveAvgPool2dDerivatives,
+    AdaptiveAvgPool3d: AdaptiveAvgPool3dDerivatives,
 }

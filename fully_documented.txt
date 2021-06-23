@@ -6,6 +6,7 @@ backpack/core/derivatives/shape_check.py
 backpack/core/derivatives/__init__.py
 backpack/core/derivatives/permute.py
 backpack/core/derivatives/lstm.py
+backpack/core/derivatives/adaptive_avg_pool_nd.py
 
 backpack/extensions/__init__.py
 backpack/extensions/backprop_extension.py
@@ -44,6 +45,7 @@ test/core/derivatives/utils.py
 test/core/derivatives/implementation/
 test/core/derivatives/permute_settings.py
 test/core/derivatives/lstm_settings.py
+test/core/derivatives/pooling_adaptive_settings.py
 
 test/extensions/problem.py
 test/extensions/test_backprop_extension.py
@@ -54,3 +56,5 @@ test/extensions/firstorder/batch_grad/batchgrad_settings.py
 test/extensions/secondorder/secondorder_settings.py
 test/extensions/secondorder/diag_ggn/
 test/extensions/secondorder/hbp
+
+test/adaptive_avg_pool/
