@@ -8,14 +8,14 @@
 Required entries:
     "module_fn" (callable): Contains a model constructed from `torch.nn` layers
     "input_fn" (callable): Used for specifying input function
-    "target_fn" (callable): Fetches the groundtruth/target classes 
+    "target_fn" (callable): Fetches the groundtruth/target classes
                             of regression/classification task
     "loss_function_fn" (callable): Loss function used in the model
 
 Optional entries:
     "device" [list(torch.device)]: List of devices to run the test on.
     "id_prefix" (str): Prefix to be included in the test name.
-    "seed" (int): seed for the random number for torch.rand
+    "seed" (int): seed for the random number for rand
 """
 
 
@@ -26,7 +26,7 @@ from test.extensions.automated_settings import (
     make_simple_pooling_setting,
 )
 
-import torch
+from torch import device, rand
 from torch.nn import (
     ELU,
     SELU,
@@ -39,12 +39,17 @@ from torch.nn import (
     ConvTranspose1d,
     ConvTranspose2d,
     ConvTranspose3d,
+    CrossEntropyLoss,
+    Flatten,
     LeakyReLU,
+    Linear,
     LogSigmoid,
     MaxPool1d,
     MaxPool2d,
     MaxPool3d,
+    MSELoss,
     ReLU,
+    Sequential,
     Sigmoid,
     Tanh,
 )
@@ -56,11 +61,11 @@ SECONDORDER_SETTINGS = []
 ###############################################################################
 
 example = {
-    "input_fn": lambda: torch.rand(3, 10),
-    "module_fn": lambda: torch.nn.Sequential(torch.nn.Linear(10, 5)),
-    "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(),
+    "input_fn": lambda: rand(3, 10),
+    "module_fn": lambda: Sequential(Linear(10, 5)),
+    "loss_function_fn": lambda: CrossEntropyLoss(),
     "target_fn": lambda: classification_targets((3,), 5),
-    "device": [torch.device("cpu")],
+    "device": [device("cpu")],
     "seed": 0,
     "id_prefix": "example",
 }
@@ -70,28 +75,22 @@ SECONDORDER_SETTINGS.append(example)
 SECONDORDER_SETTINGS += [
     # classification
     {
-        "input_fn": lambda: torch.rand(3, 10),
-        "module_fn": lambda: torch.nn.Sequential(
-            torch.nn.Linear(10, 7), torch.nn.Linear(7, 5)
-        ),
-        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="mean"),
+        "input_fn": lambda: rand(3, 10),
+        "module_fn": lambda: Sequential(Linear(10, 7), Linear(7, 5)),
+        "loss_function_fn": lambda: CrossEntropyLoss(reduction="mean"),
         "target_fn": lambda: classification_targets((3,), 5),
     },
     {
-        "input_fn": lambda: torch.rand(3, 10),
-        "module_fn": lambda: torch.nn.Sequential(
-            torch.nn.Linear(10, 7), torch.nn.ReLU(), torch.nn.Linear(7, 5)
-        ),
-        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="sum"),
+        "input_fn": lambda: rand(3, 10),
+        "module_fn": lambda: Sequential(Linear(10, 7), ReLU(), Linear(7, 5)),
+        "loss_function_fn": lambda: CrossEntropyLoss(reduction="sum"),
         "target_fn": lambda: classification_targets((3,), 5),
     },
     # Regression
     {
-        "input_fn": lambda: torch.rand(3, 10),
-        "module_fn": lambda: torch.nn.Sequential(
-            torch.nn.Linear(10, 7), torch.nn.Sigmoid(), torch.nn.Linear(7, 5)
-        ),
-        "loss_function_fn": lambda: torch.nn.MSELoss(reduction="mean"),
+        "input_fn": lambda: rand(3, 10),
+        "module_fn": lambda: Sequential(Linear(10, 7), Sigmoid(), Linear(7, 5)),
+        "loss_function_fn": lambda: MSELoss(reduction="mean"),
         "target_fn": lambda: regression_targets((3, 5)),
     },
 ]
@@ -109,8 +108,8 @@ for act in activations:
 ###############################################################################
 #                         test setting: Pooling Layers                       #
 """
-Syntax with default parameters: 
- - `torch.nn.MaxPoolNd(kernel_size, stride, padding, dilation, 
+Syntax with default parameters:
+ - `MaxPoolNd(kernel_size, stride, padding, dilation,
     return_indices, ceil_mode)`
 """
 ###############################################################################
@@ -150,18 +149,18 @@ SECONDORDER_SETTINGS += [
 ###############################################################################
 #                         test setting: Convolutional Layers                  #
 """
-Syntax with default parameters: 
- - `torch.nn.ConvNd(in_channels, out_channels, 
-    kernel_size, stride=1, padding=0, dilation=1, 
-    groups=1, bias=True, padding_mode='zeros)`    
+Syntax with default parameters:
+ - `ConvNd(in_channels, out_channels,
+    kernel_size, stride=1, padding=0, dilation=1,
+    groups=1, bias=True, padding_mode='zeros)`
 
- - `torch.nn.ConvTransposeNd(in_channels, out_channels, 
-    kernel_size, stride=1, padding=0, output_padding=0, 
+ - `ConvTransposeNd(in_channels, out_channels,
+    kernel_size, stride=1, padding=0, output_padding=0,
     groups=1, bias=True, dilation=1, padding_mode='zeros)`
 
-Note: There are 5 tests added to each `torch.nn.layers`. 
-For `torch.nn.ConvTranspose2d` and `torch.nn.ConvTranspose3d`
-only 3 tests are added because they are very memory intensive. 
+Note: There are 5 tests added to each `layers`.
+For `ConvTranspose2d` and `ConvTranspose3d`
+only 3 tests are added because they are very memory intensive.
 """
 ###############################################################################
 
@@ -239,11 +238,9 @@ SECONDORDER_SETTINGS += [
         # Flatten layer does not add a node in the computation graph and thus the
         # backward hook will be called at an unexpected stage. This must explicitly
         # be addressed in the `backpropagate` function of the flatten module extension.
-        "input_fn": lambda: torch.rand(3, 5),
-        "module_fn": lambda: torch.nn.Sequential(
-            torch.nn.Linear(5, 4), torch.nn.Flatten(), torch.nn.Linear(4, 2)
-        ),
-        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="mean"),
+        "input_fn": lambda: rand(3, 5),
+        "module_fn": lambda: Sequential(Linear(5, 4), Flatten(), Linear(4, 2)),
+        "loss_function_fn": lambda: CrossEntropyLoss(reduction="mean"),
         "target_fn": lambda: classification_targets((3,), 2),
         "id_prefix": "flatten-no-op",
     },
