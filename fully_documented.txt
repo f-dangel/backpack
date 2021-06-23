@@ -1,5 +1,7 @@
 test/extensions/test_backprop_extension.py
 
+test/extensions/firstorder/firstorder_settings.py
+
 test/extensions/secondorder/secondorder_settings.py
 
 test/extensions/secondorder/hbp
