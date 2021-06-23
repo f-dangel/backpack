@@ -24,6 +24,7 @@ from torch.nn import (
     CrossEntropyLoss,
     Dropout,
     Flatten,
+    Identity,
     LeakyReLU,
     Linear,
     LogSigmoid,
@@ -37,6 +38,7 @@ from torch.nn import (
     ZeroPad2d,
 )
 
+from backpack.branching import ActiveIdentity
 from backpack.custom_module.permute import Permute
 from backpack.extensions.backprop_extension import BackpropExtension
 from backpack.extensions.secondorder.hbp import LossHessianStrategy
@@ -51,6 +53,7 @@ from . import (
     convtranspose3d,
     dropout,
     flatten,
+    identity,
     linear,
     losses,
     padding,
@@ -114,10 +117,24 @@ class DiagGGN(BackpropExtension):
                 LogSigmoid: activations.DiagGGNLogSigmoid(),
                 ELU: activations.DiagGGNELU(),
                 SELU: activations.DiagGGNSELU(),
+                Identity: identity.DiagGGNIdentity(),
+                ActiveIdentity: identity.DiagGGNIdentity(),
                 RNN: rnn.DiagGGNRNN(),
                 Permute: permute.DiagGGNPermute(),
             },
         )
+
+    def accumulate_backpropagated_quantities(self, existing, other):
+        """Sums existing and other.
+
+        Args:
+            existing: .
+            other: .
+
+        Returns:
+            sum
+        """
+        return existing + other
 
 
 class DiagGGNExact(DiagGGN):

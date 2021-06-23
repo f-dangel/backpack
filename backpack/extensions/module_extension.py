@@ -1,5 +1,7 @@
 import warnings
 
+from backpack.branching import is_branch_point, is_merge_point
+
 
 class ModuleExtension:
     """
@@ -77,7 +79,12 @@ class ModuleExtension:
 
         bpQuantities = self.backpropagate(ext, module, g_inp, g_out, bpQuantities)
 
-        self.__backprop_quantities(ext, inp, out, bpQuantities)
+        # input to a merge point is a container of multiple inputs
+        module_inputs = inp if is_merge_point(out) else (inp,)
+
+        # distribute backproped quantities to all inputs
+        for module_inp in module_inputs:
+            self.__backprop_quantities(ext, module_inp, out, bpQuantities)
 
     @staticmethod
     def __backproped_quantities(ext, out):
@@ -86,13 +93,31 @@ class ModuleExtension:
 
     @staticmethod
     def __backprop_quantities(ext, inp, out, bpQuantities):
-        """Propagate back additional information by attaching it to the module input."""
+        """Propagate back additional information by attaching it to the module input.
 
-        setattr(inp, ext.savefield, bpQuantities)
+        When the computation graph has branches, multiple quantities will be
+        backpropagated to the same input. In this case, a rule for how this information
+        should be accumulated must be specified.
+        """
+        attach = bpQuantities
 
+        existing = getattr(inp, ext.savefield, None)
+        should_accumulate = is_branch_point(inp) and existing is not None
+
+        if should_accumulate:
+            attach = ext.accumulate_backpropagated_quantities(existing, attach)
+
+        setattr(inp, ext.savefield, attach)
+
+        ModuleExtension.__maybe_delete_received_bpQuantities(ext, inp, out)
+
+    @staticmethod
+    def __maybe_delete_received_bpQuantities(ext, inp, out):
+        """Delete additional backprop info attached to a module output if possible."""
         is_a_leaf = out.grad_fn is None
         retain_grad_is_on = getattr(out, "retains_grad", False)
         inp_is_out = id(inp) == id(out)
+
         should_retain_grad = is_a_leaf or retain_grad_is_on or inp_is_out
 
         if not should_retain_grad:
@@ -107,3 +132,10 @@ class ModuleExtension:
     @staticmethod
     def __save(value, extension, module, param):
         setattr(getattr(module, param), extension.savefield, value)
+
+
+class MergeModuleExtension(ModuleExtension):
+    """Handle backpropagation at a merge point. Passes on backpropagated info."""
+
+    def backpropagate(self, ext, module, grad_inp, grad_out, backproped):
+        return backproped

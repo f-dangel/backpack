@@ -5,8 +5,9 @@ from typing import Type
 import torch.nn
 from torch.nn import Sequential
 
+from backpack.branching import Branch, Merge, Parallel
 from backpack.custom_module.reduce_tuple import ReduceTuple
-from backpack.extensions.module_extension import ModuleExtension
+from backpack.extensions.module_extension import MergeModuleExtension, ModuleExtension
 from backpack.utils.hooks import no_op
 
 FAIL_ERROR = "ERROR"
@@ -79,8 +80,11 @@ class BackpropExtension:
 
         if module_extension is None:
 
-            if isinstance(module, (Sequential, ReduceTuple)):
+            if isinstance(module, (Sequential, Branch, Parallel, ReduceTuple)):
                 return no_op
+
+            if isinstance(module, Merge):
+                return MergeModuleExtension().apply
 
             if self.__fail_mode is FAIL_ERROR:
                 raise NotImplementedError(
@@ -109,3 +113,23 @@ class BackpropExtension:
         """
         module_extension = self.__get_module_extension(module)
         module_extension(self, module, g_inp, g_out)
+
+    def accumulate_backpropagated_quantities(self, existing, other):
+        """Specify how to accumulate info that is backpropagated to the same node.
+
+        Must be implemented by second-order extensions to function on computation
+        graphs with branching.
+
+        For instance, ``DiagGGN`` extensions must sum their quantities, while
+        ``curvmatprod`` extensions must accumulate functions to a sum of functions.
+
+        Args:
+            existing: already existing backpropagated quantity
+            other: new backpropagated quantity
+
+        Raises:
+            NotImplementedError: if not overwritten
+        """
+        raise NotImplementedError(
+            f"{self}: No accumulation rule for backpropagated info specified"
+        )

@@ -120,6 +120,7 @@ def hook_store_io(module, input, output):
         output (torch.Tensor or tuple): result of module(input)
     """
     if disable.should_store_io() and torch.is_grad_enabled():
+
         for i in range(len(input)):
             setattr(module, "input{}".format(i), input[i])
         if isinstance(output, tuple):
