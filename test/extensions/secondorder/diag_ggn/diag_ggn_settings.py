@@ -10,7 +10,7 @@ from test.extensions.secondorder.secondorder_settings import SECONDORDER_SETTING
 import torch
 from torch.nn import ELU, RNN, SELU, Flatten, Sequential
 
-from backpack import branching
+from backpack.custom_module import branching
 from backpack.custom_module.permute import Permute
 from backpack.custom_module.reduce_tuple import ReduceTuple
 

@@ -38,7 +38,7 @@ from torch.nn import (
     ZeroPad2d,
 )
 
-from backpack.branching import ActiveIdentity
+from backpack.custom_module.branching import ActiveIdentity
 from backpack.custom_module.permute import Permute
 from backpack.extensions.backprop_extension import BackpropExtension
 from backpack.extensions.secondorder.hbp import LossHessianStrategy

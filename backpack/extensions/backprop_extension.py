@@ -5,7 +5,7 @@ from typing import Type
 import torch.nn
 from torch.nn import Sequential
 
-from backpack.branching import Branch, Merge, Parallel
+from backpack.custom_module.branching import Branch, Merge, Parallel
 from backpack.custom_module.reduce_tuple import ReduceTuple
 from backpack.extensions.module_extension import MergeModuleExtension, ModuleExtension
 from backpack.utils.hooks import no_op

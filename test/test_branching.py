@@ -11,7 +11,7 @@ from torch.nn import CrossEntropyLoss, Identity, Linear, ReLU, Sequential, Sigmo
 from torch.nn.utils.convert_parameters import parameters_to_vector
 
 from backpack import backpack, extend, extensions
-from backpack.branching import ActiveIdentity, Branch, Merge, Parallel
+from backpack.custom_module.branching import ActiveIdentity, Branch, Merge, Parallel
 from backpack.hessianfree.ggnvp import ggn_vector_product
 from backpack.utils.convert_parameters import vector_to_parameter_list
 

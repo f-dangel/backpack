@@ -1,6 +1,6 @@
 import warnings
 
-from backpack.branching import is_branch_point, is_merge_point
+from backpack.custom_module.branching import is_branch_point, is_merge_point
 
 
 class ModuleExtension:

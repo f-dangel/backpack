@@ -15,7 +15,8 @@ class, instead of writing the forward pass manually.
 import torch
 from torch.nn.utils.convert_parameters import parameters_to_vector
 
-from backpack import backpack, branching, extend
+from backpack import backpack, extend
+from backpack.custom_module import branching
 from backpack.extensions import DiagGGNExact
 from backpack.hessianfree.ggnvp import ggn_vector_product
 from backpack.utils.convert_parameters import vector_to_parameter_list
