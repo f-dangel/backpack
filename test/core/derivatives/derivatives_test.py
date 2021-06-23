@@ -10,8 +10,9 @@
 from test.automated_test import check_sizes_and_values
 from test.core.derivatives.implementation.autograd import AutogradDerivatives
 from test.core.derivatives.implementation.backpack import BackpackDerivatives
+from test.core.derivatives.linear_settings import LINEAR_ADDITIONAL_DIMS_SETTINGS
 from test.core.derivatives.loss_settings import LOSS_FAIL_SETTINGS
-from test.core.derivatives.problem import make_test_problems
+from test.core.derivatives.problem import DerivativesTestProblem, make_test_problems
 from test.core.derivatives.settings import SETTINGS
 
 import pytest
@@ -32,6 +33,12 @@ LOSS_IDS = [problem.make_id() for problem in LOSS_PROBLEMS]
 LOSS_FAIL_PROBLEMS = make_test_problems(LOSS_FAIL_SETTINGS)
 LOSS_FAIL_IDS = [problem.make_id() for problem in LOSS_FAIL_PROBLEMS]
 
+# linear layer with additional dimensions
+LINEAR_ADDITIONAL_DIMS_PROBLEMS = make_test_problems(LINEAR_ADDITIONAL_DIMS_SETTINGS)
+LINEAR_ADDITIONAL_DIMS_IDS = [
+    problem.make_id() for problem in LINEAR_ADDITIONAL_DIMS_PROBLEMS
+]
+
 
 @pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
 def test_jac_mat_prod(problem, V=3):
@@ -51,13 +58,17 @@ def test_jac_mat_prod(problem, V=3):
     problem.tear_down()
 
 
-@pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
-def test_jac_t_mat_prod(problem, V=3):
+@pytest.mark.parametrize(
+    "problem",
+    NO_LOSS_PROBLEMS + LINEAR_ADDITIONAL_DIMS_PROBLEMS,
+    ids=NO_LOSS_IDS + LINEAR_ADDITIONAL_DIMS_IDS,
+)
+def test_jac_t_mat_prod(problem: DerivativesTestProblem, V: int = 3) -> None:
     """Test the transposed Jacobian-matrix product.
 
     Args:
-        problem (DerivativesProblem): Problem for derivative test.
-        V (int): Number of vectorized transposed Jacobian-vector products.
+        problem: Test case.
+        V: Number of vectorized transposed Jacobian-vector products. Default: ``3``.
     """
     problem.set_up()
     mat = torch.rand(V, *problem.output_shape).to(problem.device)

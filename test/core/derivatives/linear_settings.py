@@ -6,7 +6,7 @@ Required entries:
     "input_fn" (callable): Used for specifying input function
 
 Optional entries:
-    "target_fn" (callable): Fetches the groundtruth/target classes 
+    "target_fn" (callable): Fetches the groundtruth/target classes
                             of regression/classification task
     "loss_function_fn" (callable): Loss function used in the model
     "device" [list(torch.device)]: List of devices to run the test on.
@@ -53,5 +53,23 @@ LINEAR_SETTINGS += [
         "input_fn": lambda: torch.Tensor(
             [(-1, 43, 1.3), (-2, -0.3, 2.3), (0, -4, 0.33)]
         ),
+    },
+]
+
+LINEAR_ADDITIONAL_DIMS_SETTINGS = [
+    {
+        "module_fn": lambda: torch.nn.Linear(in_features=4, out_features=3, bias=True),
+        "input_fn": lambda: torch.rand(size=(3, 2, 4)),
+        "id_prefix": "one-additional",
+    },
+    {
+        "module_fn": lambda: torch.nn.Linear(in_features=4, out_features=3, bias=True),
+        "input_fn": lambda: torch.rand(size=(3, 2, 3, 4)),
+        "id_prefix": "two-additional",
+    },
+    {
+        "module_fn": lambda: torch.nn.Linear(in_features=4, out_features=3, bias=True),
+        "input_fn": lambda: torch.rand(size=(3, 2, 3, 5, 4)),
+        "id_prefix": "three-additional",
     },
 ]

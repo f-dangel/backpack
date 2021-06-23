@@ -1,4 +1,7 @@
-from torch import einsum
+from typing import Any
+
+from torch import Tensor, einsum
+from torch.nn import Linear
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 
@@ -17,10 +20,24 @@ class LinearDerivatives(BaseParameterDerivatives):
     def hessian_is_zero(self):
         return True
 
-    def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
-        """Apply transposed Jacobian of the output w.r.t. the input."""
-        d_input = module.weight.data
-        return einsum("oi,vno->vni", (d_input, mat))
+    def _jac_t_mat_prod(
+        self, module: Linear, g_inp: Any, g_out: Any, mat: Tensor
+    ) -> Tensor:
+        """Batch-apply transposed Jacobian of the output w.r.t. the input.
+
+        Args:
+            module: Linear layer.
+            g_inp: Gradients w.r.t. module input. Not required by the implementation.
+            g_out: Gradients w.r.t. module output. Not required by the implementation.
+            mat: Batch of ``V`` vectors of same shape as the layer output
+                (``[N, *, out_features]``) to which the transposed output-input Jacobian
+                is applied. Has shape ``[V, N, *, out_features]``.
+
+        Returns:
+            Batched transposed Jacobian vector products. Has shape
+            ``[V, N, *, in_features]``.
+        """
+        return einsum("oi,vn...o->vn...i", module.weight.data, mat)
 
     def _jac_mat_prod(self, module, g_inp, g_out, mat):
         """Apply Jacobian of the output w.r.t. the input."""
