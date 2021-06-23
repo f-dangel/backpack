@@ -56,7 +56,8 @@ LINEAR_SETTINGS += [
     },
 ]
 
-LINEAR_ADDITIONAL_DIMS_SETTINGS = [
+# additional dimensions
+LINEAR_SETTINGS += [
     {
         "module_fn": lambda: torch.nn.Linear(in_features=4, out_features=3, bias=True),
         "input_fn": lambda: torch.rand(size=(3, 2, 4)),
