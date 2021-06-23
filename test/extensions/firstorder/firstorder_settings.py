@@ -16,7 +16,7 @@ Required entries:
 Optional entries:
     "device" [list(device)]: List of devices to run the test on.
     "id_prefix" (str): Prefix to be included in the test name.
-    "seed" (int): seed for the random number for torch.rand
+    "seed" (int): seed set before initializing a case.
 """
 
 

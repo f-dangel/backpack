@@ -1,7 +1,7 @@
-"""Test configurations to test variance
+"""Test cases for ``Variance`` extension.
 
-The tests are taken from `test.extensions.firstorder.firstorder_settings`, 
-but additional custom tests can be defined here by appending it to the list.
+Uses shared test cases from `test.extensions.firstorder.firstorder_settings`,
+and the local cases defined in this file.
 """
 from test.extensions.firstorder.firstorder_settings import FIRSTORDER_SETTINGS
 
