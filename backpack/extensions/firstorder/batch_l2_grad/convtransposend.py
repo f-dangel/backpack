@@ -35,9 +35,7 @@ class BatchL2ConvTranspose1d(BatchL2ConvTransposeND):
 
     def __init__(self):
         """Initialization."""
-        super().__init__(
-            params=["bias", "weight"], derivatives=ConvTranspose1DDerivatives()
-        )
+        super().__init__(["bias", "weight"], derivatives=ConvTranspose1DDerivatives())
 
 
 class BatchL2ConvTranspose2d(BatchL2ConvTransposeND):
@@ -45,9 +43,7 @@ class BatchL2ConvTranspose2d(BatchL2ConvTransposeND):
 
     def __init__(self):
         """Initialization."""
-        super().__init__(
-            params=["bias", "weight"], derivatives=ConvTranspose2DDerivatives()
-        )
+        super().__init__(["bias", "weight"], derivatives=ConvTranspose2DDerivatives())
 
 
 class BatchL2ConvTranspose3d(BatchL2ConvTransposeND):
@@ -55,6 +51,4 @@ class BatchL2ConvTranspose3d(BatchL2ConvTransposeND):
 
     def __init__(self):
         """Initialization."""
-        super().__init__(
-            params=["bias", "weight"], derivatives=ConvTranspose3DDerivatives()
-        )
+        super().__init__(["bias", "weight"], derivatives=ConvTranspose3DDerivatives())

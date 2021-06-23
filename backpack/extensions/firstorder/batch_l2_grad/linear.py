@@ -18,7 +18,7 @@ class BatchL2Linear(BatchL2Base):
 
     def __init__(self):
         """Initialization."""
-        super().__init__(params=["bias", "weight"], derivatives=LinearDerivatives())
+        super().__init__(["bias", "weight"], derivatives=LinearDerivatives())
 
     def weight(
         self,

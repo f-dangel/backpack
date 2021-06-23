@@ -35,7 +35,7 @@ class BatchL2Conv1d(BatchL2ConvND):
 
     def __init__(self):
         """Initialization."""
-        super().__init__(params=["bias", "weight"], derivatives=Conv1DDerivatives())
+        super().__init__(["bias", "weight"], derivatives=Conv1DDerivatives())
 
 
 class BatchL2Conv2d(BatchL2ConvND):
@@ -43,7 +43,7 @@ class BatchL2Conv2d(BatchL2ConvND):
 
     def __init__(self):
         """Initialization."""
-        super().__init__(params=["bias", "weight"], derivatives=Conv2DDerivatives())
+        super().__init__(["bias", "weight"], derivatives=Conv2DDerivatives())
 
 
 class BatchL2Conv3d(BatchL2ConvND):
@@ -51,4 +51,4 @@ class BatchL2Conv3d(BatchL2ConvND):
 
     def __init__(self):
         """Initialization."""
-        super().__init__(params=["bias", "weight"], derivatives=Conv3DDerivatives())
+        super().__init__(["bias", "weight"], derivatives=Conv3DDerivatives())
