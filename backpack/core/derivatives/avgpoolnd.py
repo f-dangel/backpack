@@ -56,26 +56,11 @@ class AvgPoolNDDerivatives(BaseDerivatives):
     def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
         """Use fact that average pooling can be implemented as conv."""
         self.check_parameters(module)
-        if self.N == 1:
-            _, C, L_in = module.input0.size()
-            _, _, L_out = module.output.size()
-            in_features = C * L_in
-            out_features = C * L_out
-            shape_out = (1, L_out)
-        elif self.N == 2:
-            _, C, H_in, W_in = module.input0.size()
-            _, _, H_out, W_out = module.output.size()
-            in_features = C * H_in * W_in
-            out_features = C * H_out * W_out
-            shape_out = (1, H_out, W_out)
-        elif self.N == 3:
-            _, C, D_in, H_in, W_in = module.input0.size()
-            _, _, D_out, H_out, W_out = module.output.size()
-            in_features = C * D_in * H_in * W_in
-            out_features = C * D_out * H_out * W_out
-            shape_out = (1, D_out, H_out, W_out)
-        else:
-            raise NotImplementedError(f"N={self.N} not supported.")
+
+        C = module.input0.shape[1]
+        shape_out = (1,) + tuple(module.output.shape[2:])
+        in_features = module.input0.shape[1:].numel()
+        out_features = module.output.shape[1:].numel()
 
         mat = mat.reshape(out_features * C, *shape_out)
         jac_t_mat = self.__apply_jacobian_t_of(module, mat).reshape(
@@ -160,17 +145,7 @@ class AvgPoolNDDerivatives(BaseDerivatives):
         convnd_t.weight.data = avg_kernel
 
         V_N_C_in = mat.size(0)
-        if self.N == 1:
-            _, _, L_in = module.input0.size()
-            output_size = (V_N_C_in, C_for_conv_t, L_in)
-        elif self.N == 2:
-            _, _, H_in, W_in = module.input0.size()
-            output_size = (V_N_C_in, C_for_conv_t, H_in, W_in)
-        elif self.N == 3:
-            _, _, D_in, H_in, W_in = module.input0.size()
-            output_size = (V_N_C_in, C_for_conv_t, D_in, H_in, W_in)
-        else:
-            raise NotImplementedError(f"N={self.N} not supported.")
+        output_size = (V_N_C_in, C_for_conv_t) + tuple(module.input0.shape[2:])
 
         return convnd_t(mat, output_size=output_size)
 
