@@ -10,7 +10,7 @@ def extract_weight_diagonal(
 
     Args:
         module: Linear layer for which the diagonal is extracted w.r.t. the weight.
-        S: Backpropagated (symmetric factorization) of the loss Hessian. Has shape
+        S: Backpropagated symmetric factorization of the loss Hessian. Has shape
             ``(V, *module.output.shape)``.
         sum_batch: Sum out the weight diagonal's batch dimension. Default: ``True``.
 
@@ -25,11 +25,13 @@ def extract_weight_diagonal(
         S_flat = S.flatten(start_dim=2, end_dim=-2)
         X_flat = module.input0.flatten(start_dim=1, end_dim=-2)
         equation = f"vnmo,nmi,vnko,nki->{'' if sum_batch else 'n'}oi"
-        return einsum(equation, (S_flat, X_flat, S_flat, X_flat))
+        # TODO Compare `torch.einsum`, `opt_einsum.contract` and the base class
+        # implementation: https://github.com/fKunstner/backpack-discuss/issues/111
+        return einsum(equation, S_flat, X_flat, S_flat, X_flat)
 
     else:
         equation = f"vno,ni->{'' if sum_batch else 'n'}oi"
-        return einsum(equation, (S ** 2, module.input0 ** 2))
+        return einsum(equation, S ** 2, module.input0 ** 2)
 
 
 def extract_bias_diagonal(module: Linear, S: Tensor, sum_batch: bool = True) -> Tensor:
@@ -37,7 +39,7 @@ def extract_bias_diagonal(module: Linear, S: Tensor, sum_batch: bool = True) -> 
 
     Args:
         module: Linear layer for which the diagonal is extracted w.r.t. the bias.
-        S: Backpropagated (symmetric factorization) of the loss Hessian. Has shape
+        S: Backpropagated symmetric factorization of the loss Hessian. Has shape
             ``(V, *module.output.shape)``.
         sum_batch: Sum out the bias diagonal's batch dimension. Default: ``True``.
 
