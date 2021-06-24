@@ -47,8 +47,8 @@ class LSTMDerivatives(BaseParameterDerivatives):
             raise NotImplementedError("only dropout = 0 is supported")
         if module.bidirectional is not False:
             raise NotImplementedError("only bidirectional = False is supported")
-        if module.proj_size != 0:
-            raise NotImplementedError("only proj_size = 0 is supported")
+        # if module.proj_size != 0:
+        #     raise NotImplementedError("only proj_size = 0 is supported")
 
     @staticmethod
     def _forward_pass(

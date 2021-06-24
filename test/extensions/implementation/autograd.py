@@ -1,8 +1,9 @@
 from test.extensions.implementation.base import ExtensionsImplementation
 
 import torch
+from torch.nn.utils.convert_parameters import parameters_to_vector
 
-from backpack.hessianfree.ggnvp import ggn_vector_product_from_plist
+from backpack.hessianfree.ggnvp import ggn_vector_product, ggn_vector_product_from_plist
 from backpack.hessianfree.rop import R_op
 from backpack.utils.convert_parameters import vector_to_parameter_list
 
@@ -105,16 +106,16 @@ class AutogradExtensions(ExtensionsImplementation):
                 _, output, loss = self.problem.forward_pass()
                 return self._get_diag_ggn(loss, output)
 
-    def diag_ggn_batch(self):
+    def diag_ggn_exact_batch(self):
         try:
-            return self._diag_ggn_batch()
+            return self._diag_ggn_exact_batch()
         except RuntimeError:
             # torch does not implement cuda double-backwards pass on RNNs and
             # recommends this workaround
             with torch.backends.cudnn.flags(enabled=False):
-                return self._diag_ggn_batch()
+                return self._diag_ggn_exact_batch()
 
-    def _diag_ggn_batch(self):
+    def _diag_ggn_exact_batch(self):
         batch_size = self.problem.input.shape[0]
         _, _, batch_loss = self.problem.forward_pass()
         loss_list = torch.zeros(batch_size, device=self.problem.device)
@@ -176,3 +177,42 @@ class AutogradExtensions(ExtensionsImplementation):
         factor = self.problem.get_reduction_factor(batch_loss, loss_list)
         params_batch_diag_h = list(zip(*batch_diag_h))
         return [torch.stack(param) * factor for param in params_batch_diag_h]
+
+    def ggn(self):
+        _, output, loss = self.problem.forward_pass()
+        model = self.problem.model
+
+        num_params = sum(p.numel() for p in model.parameters())
+        ggn = torch.zeros(num_params, num_params).to(self.problem.device)
+
+        for i in range(num_params):
+            # GGN-vector product with i.th unit vector yields the i.th row
+            e_i = torch.zeros(num_params).to(self.problem.device)
+            e_i[i] = 1.0
+
+            # convert to model parameter shapes
+            e_i_list = vector_to_parameter_list(e_i, model.parameters())
+            ggn_i_list = ggn_vector_product(loss, output, model, e_i_list)
+
+            ggn_i = parameters_to_vector(ggn_i_list)
+            ggn[i, :] = ggn_i
+
+        return ggn
+
+    def diag_ggn_mc(self, mc_samples):
+        raise NotImplementedError
+
+    def diag_ggn_mc_batch(self, mc_samples):
+        raise NotImplementedError
+
+    def ggn_mc(self, mc_samples, chunks=1):
+        raise NotImplementedError
+
+    def kfac(self):
+        raise NotImplementedError
+
+    def kflr(self):
+        raise NotImplementedError
+
+    def kfra(self):
+        raise NotImplementedError
