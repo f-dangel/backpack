@@ -254,6 +254,19 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
         tensor: Tensor,
         index_batch: int,
     ) -> Tensor:
+        """Unsqueezes the free dimensions.
+
+        This function is useful to avoid broadcasting.
+        Also useful when applying .expand(self._get_free_axes()) afterwards.
+
+        Args:
+            module: extended module
+            tensor: the tensor to operate on
+            index_batch: the batch axes index
+
+        Returns:
+            tensor with the free dimensions unsqueezed.
+        """
         out = tensor.unsqueeze(index_batch)
         for _ in range(self._get_n_axis(module)):
             out = out.unsqueeze(-1)
