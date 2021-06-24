@@ -13,9 +13,11 @@ from test.core.derivatives.implementation.backpack import BackpackDerivatives
 from test.core.derivatives.loss_settings import LOSS_FAIL_SETTINGS
 from test.core.derivatives.problem import DerivativesTestProblem, make_test_problems
 from test.core.derivatives.settings import SETTINGS
+from warnings import warn
 
 import pytest
 import torch
+from pytest import fixture, skip
 
 from backpack.core.derivatives.convnd import weight_jac_t_save_memory
 
@@ -280,47 +282,79 @@ def test_ea_jac_t_mat_jac_prod(problem: DerivativesTestProblem) -> None:
     problem.tear_down()
 
 
-@pytest.mark.skip("[WAITING] Autograd issue with Hessian-vector products")
-@pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
-def test_hessian_is_zero(problem):
-    """Check if the input-output Hessian is (non-)zero."""
-    problem.set_up()
+@fixture(params=PROBLEMS, ids=lambda p: p.make_id())
+def instantiated_problem(request) -> DerivativesTestProblem:
+    """Set seed, create tested layer and data. Finally clean up.
 
-    backpack_res = BackpackDerivatives(problem).hessian_is_zero()
-    autograd_res = AutogradDerivatives(problem).hessian_is_zero()
+    Args:
+        request (SubRequest): Request for the fixture from a test/fixture function.
 
-    assert backpack_res == autograd_res
-    problem.tear_down()
-
-
-@pytest.mark.skip
-@pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
-def test_hessian_is_diagonal(problem):
-    problem.set_up()
-
-    # TODO
-    raise NotImplementedError
-
-    problem.tear_down()
+    Yields:
+        Test case with deterministically constructed attributes.
+    """
+    case = request.param
+    case.set_up()
+    yield case
+    case.tear_down()
 
 
-@pytest.mark.skip
-@pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
-def test_hessian_diagonal(problem):
-    problem.set_up()
+@fixture
+def small_input_problem(
+    instantiated_problem: DerivativesTestProblem, max_input_numel: int = 100
+) -> DerivativesTestProblem:
+    """Skip cases with large inputs.
 
-    # TODO
-    raise NotImplementedError
+    Args:
+        max_input_numel: Maximum input size. Default: ``100``.
 
-    problem.tear_down()
+    Yields:
+        Instantiated test case with small input.
+    """
+    if instantiated_problem.input.numel() > max_input_numel:
+        skip(
+            "Input is too large:"
+            + f" {instantiated_problem.input.numel()} > {max_input_numel}"
+        )
+    else:
+        yield instantiated_problem
 
 
-@pytest.mark.skip
-@pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
-def test_hessian_is_psd(problem):
-    problem.set_up()
+@fixture
+def no_loss_problem(
+    small_input_problem: DerivativesTestProblem,
+) -> DerivativesTestProblem:
+    """Skip cases that are loss functions or have to large inputs.
 
-    # TODO
-    raise NotImplementedError
+    Args:
+        small_input_problem: Test case with small input.
 
-    problem.tear_down()
+    Yields:
+        Instantiated test case that is not a loss layer.
+    """
+    if small_input_problem.is_loss():
+        skip("Only required for non-loss layers.")
+    else:
+        yield small_input_problem
+
+
+def test_hessian_is_zero(no_loss_problem: DerivativesTestProblem):
+    """Check if the input-output Hessian is (non-)zero.
+
+    Note:
+        `hessian_is_zero` is a global statement that assumes arbitrary inputs.
+        It can thus happen that the Hessian diagonal is zero for the current
+        input, but not in general.
+
+    Args:
+        no_loss_problem: Test case whose module is not a loss.
+    """
+    backpack_res = BackpackDerivatives(no_loss_problem).hessian_is_zero()
+    autograd_res = AutogradDerivatives(no_loss_problem).hessian_is_zero()
+
+    if autograd_res and not backpack_res:
+        warn(
+            "Autograd Hessian diagonal is zero for this input "
+            " while BackPACK implementation implies inputs with non-zero Hessian."
+        )
+    else:
+        assert backpack_res == autograd_res

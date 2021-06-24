@@ -60,7 +60,6 @@ class BackpackDerivatives(DerivativesImplementation):
         return self.problem.derivative.sum_hessian(self.problem.module, None, None)
 
     def input_hessian_via_sqrt_hessian(self, mc_samples=None):
-        # MC_SAMPLES = 100000
         self.store_forward_io()
 
         if mc_samples is not None:
@@ -78,12 +77,7 @@ class BackpackDerivatives(DerivativesImplementation):
             individual_hessians, self.problem.module.input0
         )
 
-    def hessian_is_zero(self):
-        """Return whether the input-output Hessian is zero.
-
-        Returns:
-            bool: `True`, if Hessian is zero, else `False`.
-        """
+    def hessian_is_zero(self) -> bool:
         return self.problem.derivative.hessian_is_zero()
 
     def _sample_hessians_from_sqrt(self, sqrt):

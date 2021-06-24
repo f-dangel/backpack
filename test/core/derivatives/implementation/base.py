@@ -21,3 +21,11 @@ class DerivativesImplementation:
 
     def bias_jac_mat_prod(self, mat):
         raise NotImplementedError
+
+    def hessian_is_zero(self) -> bool:
+        """Return whether the input-output Hessian is zero.
+
+        Returns:
+            `True`, if Hessian is zero, else `False`.
+        """
+        raise NotImplementedError

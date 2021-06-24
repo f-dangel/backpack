@@ -1,6 +1,7 @@
 from test.core.derivatives.implementation.base import DerivativesImplementation
 
 import torch
+from torch import zeros_like
 
 from backpack.hessianfree.hvp import hessian_vector_product
 from backpack.hessianfree.lop import transposed_jacobian_vector_product
@@ -160,10 +161,18 @@ class AutogradDerivatives(DerivativesImplementation):
     def elementwise_hessian(self, tensor, x):
         """Yield the Hessian of each element in `tensor` w.r.t `x`.
 
-        Hessians are returned in the order of elements in the flattened tensor.
+        If ``tensor`` is linear in ``x``, autograd raises a ``RuntimeError``.
+        If ``tensor`` does not depend on ``x``, autograd raises an ``AttributeError``.
+        In both cases, a Hessian of zeros is created manually and returned.
+
+        Yields:
+            Hessians in the order of elements in the flattened tensor.
         """
         for t in tensor.flatten():
-            yield self.hessian(t, x)
+            try:
+                yield self.hessian(t, x)
+            except (RuntimeError, AttributeError):
+                yield torch.zeros(*x.shape, *x.shape, device=x.device, dtype=x.dtype)
 
     def tensor_hessian(self, tensor, x):
         """Return the Hessian of a tensor `tensor` w.r.t. a tensor `x`.
@@ -185,18 +194,13 @@ class AutogradDerivatives(DerivativesImplementation):
 
         return torch.cat(list(self.elementwise_hessian(tensor, x))).reshape(shape)
 
-    def hessian_is_zero(self):
-        """Return whether the input-output Hessian is zero.
-
-        Returns:
-            bool: `True`, if Hessian is zero, else `False`.
-        """
+    def hessian_is_zero(self) -> bool:
         input, output, _ = self.problem.forward_pass(input_requires_grad=True)
 
         zero = None
         for hessian in self.elementwise_hessian(output, input):
             if zero is None:
-                zero = torch.zeros_like(hessian)
+                zero = zeros_like(hessian)
 
             if not torch.allclose(hessian, zero):
                 return False
