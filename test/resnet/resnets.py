@@ -30,21 +30,14 @@ solution = torch.tensor([[1.0, 1.0]])
 logits = x + net(x) * dt
 loss = loss_function(logits, solution)
 
-"""with backpack(KFAC()):
-    loss.backward()
-for param in net.parameters():
-    print(param.grad)
-    print(param.kfac)"""
-
-
 print("\nAlternative network.")
 # the BackPACK equivalent
-NET_KATHARINA = Parallel(
+net_euler = Parallel(
     Sequential(net, ScaleModule(weight=dt)),
     ActiveIdentity(),
 )
-NET_KATHARINA = extend(NET_KATHARINA)
-logits_alt = NET_KATHARINA(x)
+net_euler = extend(net_euler)
+logits_alt = net_euler(x)
 loss_alt = loss_function(logits_alt, solution)
 
 print("Do the logits match?", torch.allclose(logits, logits_alt))
