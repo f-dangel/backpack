@@ -1,6 +1,10 @@
 test/extensions/test_backprop_extension.py
 
+test/extensions/firstorder/firstorder_settings.py
+test/extensions/firstorder/variance
+
 test/extensions/secondorder/secondorder_settings.py
+test/extensions/secondorder/diag_ggn/diagggn_settings.py
 
 test/extensions/secondorder/hbp
 
@@ -20,3 +24,6 @@ backpack/extensions/__init__.py
 backpack/extensions/secondorder/sqrt_ggn
 
 backpack/core/derivatives/linear.py
+
+backpack/utils/linear.py
+backpack/utils/__init__.py

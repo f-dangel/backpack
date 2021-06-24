@@ -2,7 +2,7 @@ from test.automated_test import check_sizes_and_values
 from test.extensions.implementation.autograd import AutogradExtensions
 from test.extensions.implementation.backpack import BackpackExtensions
 from test.extensions.problem import make_test_problems
-from test.extensions.secondorder.diag_ggn.diaggnn_settings import DiagGGN_SETTINGS
+from test.extensions.secondorder.diag_ggn.diagggn_settings import DiagGGN_SETTINGS
 
 import pytest
 
@@ -42,7 +42,7 @@ def test_diag_ggn_mc_batch_light(problem):
     problem.set_up()
 
     backpack_res = BackpackExtensions(problem).diag_ggn_exact_batch()
-    mc_samples = 5000
+    mc_samples = 6000
     backpack_res_mc_avg = BackpackExtensions(problem).diag_ggn_mc_batch(mc_samples)
 
     check_sizes_and_values(

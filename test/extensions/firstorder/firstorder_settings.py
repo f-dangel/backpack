@@ -1,29 +1,29 @@
-"""Test configurations for `backpack.core.extensions.firstorder`
-that is shared among the following firstorder methods:
-- batch_grad
-- batch_l2_grad
-- sum_grad_sqaured
-- variance
+"""Shared test cases for BackPACK's first-order extensions.
 
+Shared by the tests of:
+- ``BatchGrad``
+- ``BatchL2Grad``
+- ``SumGradSquared``
+- ``Variance``
 
 Required entries:
     "module_fn" (callable): Contains a model constructed from `torch.nn` layers
     "input_fn" (callable): Used for specifying input function
-    "target_fn" (callable): Fetches the groundtruth/target classes 
+    "target_fn" (callable): Fetches the groundtruth/target classes
                             of regression/classification task
     "loss_function_fn" (callable): Loss function used in the model
 
 Optional entries:
-    "device" [list(torch.device)]: List of devices to run the test on.
+    "device" [list(device)]: List of devices to run the test on.
     "id_prefix" (str): Prefix to be included in the test name.
-    "seed" (int): seed for the random number for torch.rand
+    "seed" (int): seed set before initializing a case.
 """
 
 
 from test.core.derivatives.utils import classification_targets, regression_targets
 from test.extensions.automated_settings import make_simple_cnn_setting
 
-import torch
+from torch import device, rand
 from torch.nn import (
     Conv1d,
     Conv2d,
@@ -31,6 +31,13 @@ from torch.nn import (
     ConvTranspose1d,
     ConvTranspose2d,
     ConvTranspose3d,
+    CrossEntropyLoss,
+    Flatten,
+    Linear,
+    MSELoss,
+    ReLU,
+    Sequential,
+    Sigmoid,
 )
 
 FIRSTORDER_SETTINGS = []
@@ -40,11 +47,11 @@ FIRSTORDER_SETTINGS = []
 ###############################################################################
 
 example = {
-    "input_fn": lambda: torch.rand(3, 10),
-    "module_fn": lambda: torch.nn.Sequential(torch.nn.Linear(10, 5)),
-    "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="sum"),
+    "input_fn": lambda: rand(3, 10),
+    "module_fn": lambda: Sequential(Linear(10, 5)),
+    "loss_function_fn": lambda: CrossEntropyLoss(reduction="sum"),
     "target_fn": lambda: classification_targets((3,), 5),
-    "device": [torch.device("cpu")],
+    "device": [device("cpu")],
     "seed": 0,
     "id_prefix": "example",
 }
@@ -57,47 +64,91 @@ FIRSTORDER_SETTINGS.append(example)
 FIRSTORDER_SETTINGS += [
     # classification
     {
-        "input_fn": lambda: torch.rand(3, 10),
-        "module_fn": lambda: torch.nn.Sequential(
-            torch.nn.Linear(10, 7), torch.nn.Linear(7, 5)
-        ),
-        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="mean"),
+        "input_fn": lambda: rand(3, 10),
+        "module_fn": lambda: Sequential(Linear(10, 7), Linear(7, 5)),
+        "loss_function_fn": lambda: CrossEntropyLoss(reduction="mean"),
         "target_fn": lambda: classification_targets((3,), 5),
     },
     {
-        "input_fn": lambda: torch.rand(3, 10),
-        "module_fn": lambda: torch.nn.Sequential(
-            torch.nn.Linear(10, 7), torch.nn.ReLU(), torch.nn.Linear(7, 5)
-        ),
-        "loss_function_fn": lambda: torch.nn.CrossEntropyLoss(reduction="sum"),
+        "input_fn": lambda: rand(3, 10),
+        "module_fn": lambda: Sequential(Linear(10, 7), ReLU(), Linear(7, 5)),
+        "loss_function_fn": lambda: CrossEntropyLoss(reduction="sum"),
         "target_fn": lambda: classification_targets((3,), 5),
     },
-    # Regression
+    # regression
     {
-        "input_fn": lambda: torch.rand(3, 10),
-        "module_fn": lambda: torch.nn.Sequential(
-            torch.nn.Linear(10, 7), torch.nn.Sigmoid(), torch.nn.Linear(7, 5)
-        ),
-        "loss_function_fn": lambda: torch.nn.MSELoss(reduction="mean"),
+        "input_fn": lambda: rand(3, 10),
+        "module_fn": lambda: Sequential(Linear(10, 7), Sigmoid(), Linear(7, 5)),
+        "loss_function_fn": lambda: MSELoss(reduction="mean"),
         "target_fn": lambda: regression_targets((3, 5)),
+    },
+]
+
+# linear with additional dimension
+FIRSTORDER_SETTINGS += [
+    # regression
+    {
+        "input_fn": lambda: rand(3, 4, 5),
+        "module_fn": lambda: Sequential(Linear(5, 3), Linear(3, 2)),
+        "loss_function_fn": lambda: MSELoss(reduction="mean"),
+        "target_fn": lambda: regression_targets((3, 4, 2)),
+        "id_prefix": "one-additional",
+    },
+    {
+        "input_fn": lambda: rand(3, 4, 2, 5),
+        "module_fn": lambda: Sequential(Linear(5, 3), Sigmoid(), Linear(3, 2)),
+        "loss_function_fn": lambda: MSELoss(reduction="mean"),
+        "target_fn": lambda: regression_targets((3, 4, 2, 2)),
+        "id_prefix": "two-additional",
+    },
+    {
+        "input_fn": lambda: rand(3, 4, 2, 3, 5),
+        "module_fn": lambda: Sequential(Linear(5, 3), Linear(3, 2)),
+        "loss_function_fn": lambda: MSELoss(reduction="sum"),
+        "target_fn": lambda: regression_targets((3, 4, 2, 3, 2)),
+        "id_prefix": "three-additional",
+    },
+    # classification
+    {
+        "input_fn": lambda: rand(3, 4, 5),
+        "module_fn": lambda: Sequential(Linear(5, 3), Linear(3, 2), Flatten()),
+        "loss_function_fn": lambda: CrossEntropyLoss(reduction="mean"),
+        "target_fn": lambda: classification_targets((3,), 8),
+        "id_prefix": "one-additional",
+    },
+    {
+        "input_fn": lambda: rand(3, 4, 2, 5),
+        "module_fn": lambda: Sequential(
+            Linear(5, 3), Sigmoid(), Linear(3, 2), Flatten()
+        ),
+        "loss_function_fn": lambda: CrossEntropyLoss(reduction="mean"),
+        "target_fn": lambda: classification_targets((3,), 16),
+        "id_prefix": "two-additional",
+    },
+    {
+        "input_fn": lambda: rand(3, 4, 2, 3, 5),
+        "module_fn": lambda: Sequential(Linear(5, 3), ReLU(), Linear(3, 2), Flatten()),
+        "loss_function_fn": lambda: CrossEntropyLoss(reduction="sum"),
+        "target_fn": lambda: classification_targets((3,), 48),
+        "id_prefix": "three-additional",
     },
 ]
 
 ###############################################################################
 #                         test setting: Convolutional Layers                  #
 """
-Syntax with default parameters: 
- - `torch.nn.ConvNd(in_channels, out_channels, 
-    kernel_size, stride=1, padding=0, dilation=1, 
-    groups=1, bias=True, padding_mode='zeros)`    
+Syntax with default parameters:
+ - `torch.nn.ConvNd(in_channels, out_channels,
+    kernel_size, stride=1, padding=0, dilation=1,
+    groups=1, bias=True, padding_mode='zeros)`
 
- - `torch.nn.ConvTransposeNd(in_channels, out_channels, 
-    kernel_size, stride=1, padding=0, output_padding=0, 
+ - `torch.nn.ConvTransposeNd(in_channels, out_channels,
+    kernel_size, stride=1, padding=0, output_padding=0,
     groups=1, bias=True, dilation=1, padding_mode='zeros)`
 
-Note: There are 5 tests added to each `torch.nn.layers`. 
+Note: There are 5 tests added to each `torch.nn.layers`.
 For `torch.nn.ConvTranspose2d` and `torch.nn.ConvTranspose3d`
-only 3 tests are added because they are very memory intensive. 
+only 3 tests are added because they are very memory intensive.
 """
 ###############################################################################
 
