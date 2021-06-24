@@ -1,4 +1,5 @@
 test/extensions/test_backprop_extension.py
+test/extensions/curvmatprod
 
 test/extensions/secondorder/secondorder_settings.py
 

@@ -131,3 +131,15 @@ class ExtensionsImplementation(ABC):
             Matrix representation of the Monte-Carlo approximated GGN.
         """
         return
+
+    @abstractmethod
+    def ggnmp(self, mat_list: List[Tensor]) -> List[Tensor]:
+        """Multiply a matrix with the block diagonal generalized Gauss-Newton.
+
+        Args:
+            mat_list: Parameter-wise matrices that are multiplied by a GGN block.
+
+        Results:
+            Parameter-wise results of the multiplication.
+        """
+        return

@@ -1,6 +1,8 @@
 from test.extensions.implementation.base import ExtensionsImplementation
+from typing import List
 
 import torch
+from torch import Tensor, cat, stack
 from torch.nn.utils.convert_parameters import parameters_to_vector
 
 from backpack.hessianfree.ggnvp import ggn_vector_product, ggn_vector_product_from_plist
@@ -74,7 +76,7 @@ class AutogradExtensions(ExtensionsImplementation):
             v[i] = 1.0
             vs = vector_to_parameter_list(v, [p])
             GGN_vs = ggn_vector_product_from_plist(loss, output, [p], vs)
-            GGN_v = torch.cat([g.detach().view(-1) for g in GGN_vs])
+            GGN_v = cat([g.detach().view(-1) for g in GGN_vs])
             return GGN_v[i]
 
         diag_ggns = []
@@ -109,7 +111,7 @@ class AutogradExtensions(ExtensionsImplementation):
         factor = self.problem.get_reduction_factor(batch_loss, loss_list)
         # params_batch_diag_ggn has entries [param_idx][sample_idx]
         params_batch_diag_ggn = list(zip(*batch_diag_ggn))
-        return [torch.stack(param) * factor for param in params_batch_diag_ggn]
+        return [stack(param) * factor for param in params_batch_diag_ggn]
 
     def _get_diag_h(self, loss):
         def hvp(df_dx, x, v):
@@ -122,7 +124,7 @@ class AutogradExtensions(ExtensionsImplementation):
             vs = vector_to_parameter_list(v, [p])
 
             Hvs = hvp(df_dx, [p], vs)
-            Hv = torch.cat([g.detach().view(-1) for g in Hvs])
+            Hv = cat([g.detach().view(-1) for g in Hvs])
 
             return Hv[i]
 
@@ -155,7 +157,7 @@ class AutogradExtensions(ExtensionsImplementation):
             batch_diag_h.append(diag_h)
         factor = self.problem.get_reduction_factor(batch_loss, loss_list)
         params_batch_diag_h = list(zip(*batch_diag_h))
-        return [torch.stack(param) * factor for param in params_batch_diag_h]
+        return [stack(param) * factor for param in params_batch_diag_h]
 
     def ggn(self):
         _, output, loss = self.problem.forward_pass()
@@ -195,3 +197,32 @@ class AutogradExtensions(ExtensionsImplementation):
 
     def kfra(self):
         raise NotImplementedError
+
+    def ggnmp(self, mat_list: List[Tensor]) -> List[Tensor]:
+        _, output, loss = self.problem.forward_pass()
+
+        return [
+            self._param_ggnmp(mat, p, loss, output)
+            for mat, p in zip(mat_list, self.problem.model.parameters())
+        ]
+
+    def ggnvp(self, vec_list: List[Tensor]) -> List[Tensor]:
+        """Multiply a vector with the block diagonal GGN."""
+        _, output, loss = self.problem.forward_pass()
+
+        return [
+            self._param_ggnvp(vec, p, loss, output)
+            for vec, p in zip(vec_list, self.problem.model.parameters())
+        ]
+
+    def _param_ggnmp(
+        self, mat: Tensor, param: Tensor, loss: Tensor, output: Tensor
+    ) -> Tensor:
+        """Multiply a matrix with the GGN block of a parameter."""
+        return stack([self._param_ggnvp(vec, param, loss, output) for vec in mat])
+
+    def _param_ggnvp(
+        self, vec: Tensor, param: Tensor, loss: Tensor, output: Tensor
+    ) -> Tensor:
+        """Multiply a vector with the GGN block of a parameter."""
+        return ggn_vector_product_from_plist(loss, output, [param], [vec])[0]

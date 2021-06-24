@@ -225,3 +225,12 @@ class BackpackExtensions(ExtensionsImplementation):
         """Utility function to concatenate and square the GGN factorization."""
         sqrt_mat = cat([s.flatten(start_dim=2) for s in sqrt_ggn], dim=2)
         return einsum("cni,cnj->ij", sqrt_mat, sqrt_mat)
+
+    def ggnmp(self, mat_list: List[Tensor]) -> List[Tensor]:
+        with backpack(new_ext.GGNMP()):
+            _, _, loss = self.problem.forward_pass()
+            loss.backward()
+
+        return [
+            p.ggnmp(mat) for p, mat in zip(self.problem.model.parameters(), mat_list)
+        ]
