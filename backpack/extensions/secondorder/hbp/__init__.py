@@ -13,6 +13,8 @@ from torch.nn import (
     ZeroPad2d,
 )
 
+from backpack.custom_module.branching import ActiveIdentity
+from backpack.custom_module.scale_module import ScaleModule
 from backpack.extensions.backprop_extension import BackpropExtension
 from backpack.extensions.curvature import Curvature
 from backpack.extensions.secondorder.hbp.hbp_options import (
@@ -21,7 +23,17 @@ from backpack.extensions.secondorder.hbp.hbp_options import (
     LossHessianStrategy,
 )
 
-from . import activations, conv2d, dropout, flatten, linear, losses, padding, pooling
+from . import (
+    activations,
+    conv2d,
+    dropout,
+    flatten,
+    linear,
+    losses,
+    padding,
+    pooling,
+    scale_module,
+)
 
 
 class HBP(BackpropExtension):
@@ -54,6 +66,8 @@ class HBP(BackpropExtension):
                 ReLU: activations.HBPReLU(),
                 Sigmoid: activations.HBPSigmoid(),
                 Tanh: activations.HBPTanh(),
+                ScaleModule: scale_module.HBPScaleModule(),
+                ActiveIdentity: scale_module.HBPScaleModule(),
             },
         )
 
@@ -68,6 +82,9 @@ class HBP(BackpropExtension):
 
     def get_ea_strategy(self):
         return self.ea_strategy
+
+    def accumulate_backpropagated_quantities(self, existing, other):
+        return existing + other
 
 
 class KFAC(HBP):

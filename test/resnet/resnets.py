@@ -6,7 +6,7 @@ from torch.nn import MSELoss, Sequential, Tanh
 from backpack import backpack, extend
 from backpack.custom_module.branching import ActiveIdentity, Parallel
 from backpack.custom_module.scale_module import ScaleModule
-from backpack.extensions import DiagGGNExact
+from backpack.extensions import KFAC, DiagGGNExact
 
 # parameter
 dt = 0.1
@@ -23,7 +23,7 @@ net = extend(net)
 loss_function = extend(MSELoss())
 
 # define input and solution
-x = torch.tensor([[1.0, 2.0]])
+x = torch.tensor([[1.0, 2.0]], requires_grad=True)
 solution = torch.tensor([[1.0, 1.0]])
 
 # version from Katharina
@@ -43,8 +43,10 @@ loss_alt = loss_function(logits_alt, solution)
 print("Do the logits match?", torch.allclose(logits, logits_alt))
 print("Do the losses match?", torch.allclose(loss, loss_alt))
 
-with backpack(DiagGGNExact()):
+with backpack(KFAC(), DiagGGNExact()):
     loss_alt.backward()
-for param in net.parameters():
+for name, param in net.named_parameters():
+    print(name)
     print(param.grad)
+    print(param.kfac)
     print(param.diag_ggn_exact)

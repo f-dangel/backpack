@@ -11,7 +11,7 @@ from torch.nn import Module, Sequential
 from backpack.custom_module.branching import Branch, Merge, Parallel
 from backpack.custom_module.reduce_tuple import ReduceTuple
 from backpack.extensions.module_extension import MergeModuleExtension, ModuleExtension
-from backpack.utils.hooks import no_op
+from backpack.utils.hooks import apply_no_op
 
 FAIL_ERROR = "ERROR"
 FAIL_WARN = "WARN"
@@ -91,7 +91,7 @@ class BackpropExtension:
         if module_extension is None:
 
             if isinstance(module, (Sequential, Branch, Parallel, ReduceTuple)):
-                return no_op
+                return apply_no_op
 
             if isinstance(module, Merge):
                 return MergeModuleExtension().apply
@@ -109,7 +109,7 @@ class BackpropExtension:
                     + "Module {}".format(module.__class__)
                 )
 
-            return no_op
+            return apply_no_op
 
         return module_extension.apply
 
