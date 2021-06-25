@@ -489,7 +489,7 @@ def small_input_problem(
 def no_loss_problem(
     small_input_problem: DerivativesTestProblem,
 ) -> DerivativesTestProblem:
-    """Skip cases that are loss functions or have to large inputs.
+    """Skip cases that are loss functions.
 
     Args:
         small_input_problem: Test case with small input.

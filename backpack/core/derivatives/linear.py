@@ -87,7 +87,7 @@ class LinearDerivatives(BaseParameterDerivatives):
         jac = module.weight.data
 
         result = mat.reshape(add_features, out_features, add_features, out_features)
-        result = einsum("ik,xiyj,jl->xkyl", (jac, result, jac))
+        result = einsum("ik,xiyj,jl->xkyl", jac, result, jac)
 
         return result.reshape(in_features * add_features, in_features * add_features)
 
@@ -192,7 +192,8 @@ class LinearDerivatives(BaseParameterDerivatives):
 
         return einsum(equation, mat)
 
-    def _has_additional_dims(self, module: Linear) -> bool:
+    @classmethod
+    def _has_additional_dims(cls, module: Linear) -> bool:
         """Return whether the input to a linear layer has additional (>1) dimensions.
 
         The input to a linear layer may have shape ``[N, *, out_features]``.
@@ -204,9 +205,10 @@ class LinearDerivatives(BaseParameterDerivatives):
         Returns:
             Whether the input has hidden dimensions.
         """
-        return len(self._get_additional_dims(module)) != 0
+        return len(cls._get_additional_dims(module)) != 0
 
-    def _get_additional_dims(self, module: Linear) -> Size:
+    @staticmethod
+    def _get_additional_dims(module: Linear) -> Size:
         """Return the shape of additional dimensions in the input to a linear layer.
 
         Args:

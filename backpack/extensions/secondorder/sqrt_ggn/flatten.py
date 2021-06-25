@@ -9,10 +9,10 @@ from backpack.extensions.secondorder.sqrt_ggn.base import SqrtGGNBaseModule
 
 
 class SqrtGGNFlatten(SqrtGGNBaseModule):
-    """``SqrtGGN{Exact, MC}`` extension for ``torch.nn.Tanh`` module."""
+    """``SqrtGGN{Exact, MC}`` extension for ``torch.nn.Flatten`` module."""
 
     def __init__(self):
-        """Pass derivatives for ``torch.nn.Tanh`` module."""
+        """Pass derivatives for ``torch.nn.Flatten`` module."""
         super().__init__(FlattenDerivatives())
 
     # TODO Replace Any with Union[SqrtGGNExact, SqrtGGNMC]
