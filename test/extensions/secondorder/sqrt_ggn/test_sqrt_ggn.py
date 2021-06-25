@@ -29,7 +29,7 @@ def instantiated_problem(request) -> ExtensionsTestProblem:
 
 @fixture
 def small_problem(
-    instantiated_problem: ExtensionsTestProblem, max_num_params=4000
+    instantiated_problem: ExtensionsTestProblem, max_num_params=1000
 ) -> ExtensionsTestProblem:
     """Skip architectures with too many parameters whose GGN is expensive to evaluate.
 
@@ -85,7 +85,7 @@ def test_ggn_mc(small_problem: ExtensionsTestProblem):
         small_problem: Test case with small network whose GGN can be evaluated.
     """
     autograd_res = AutogradExtensions(small_problem).ggn()
-    atol, rtol = 2e-3, 1e-2
+    atol, rtol = 5e-2, 1e-2
     mc_samples, chunks = 300000, 30
     backpack_res = BackpackExtensions(small_problem).ggn_mc(mc_samples, chunks=chunks)
 
