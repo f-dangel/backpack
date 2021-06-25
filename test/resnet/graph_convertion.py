@@ -72,12 +72,8 @@ def transform_mul_to_scale_module(
     graph.lint()  # Does some checks to make sure the
     # Graph is well-formed.
     # TODO: delete_all_unused_submodules
+    print("End transformation.\n")
     return torch.fx.GraphModule(module, graph)
-
-
-module_new = transform_mul_to_scale_module(module_original, torch.fx.Tracer)
-symbolic_traced_tranformed = symbolic_trace(module_new)
-symbolic_traced_tranformed.graph.print_tabular()
 
 
 class MyCustomTracer(torch.fx.Tracer):
@@ -92,5 +88,6 @@ class MyCustomTracer(torch.fx.Tracer):
             return isinstance(m, ScaleModule)
 
 
+module_new = transform_mul_to_scale_module(module_original, torch.fx.Tracer)
 graph_new = MyCustomTracer().trace(module_new)
 graph_new.print_tabular()
