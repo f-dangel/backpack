@@ -226,7 +226,7 @@ class AutogradDerivatives(DerivativesImplementation):
 
         return hessian_vec_x.reshape(final_shape)
 
-    def _elementwise_hessian(self, tensor: Tensor, x: Tensor):
+    def _elementwise_hessian(self, tensor: Tensor, x: Tensor) -> Tensor:
         """Computes the Hessian of each element in `tensor` w.r.t `x`.
 
         Given a `tensor` of shape `[A, B, C]` and another tensor `x` with shape `[D, E]`
