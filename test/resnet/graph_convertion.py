@@ -6,7 +6,7 @@ Convertion consists of 2 steps:
 """
 from test.resnet.graph_utils import (
     MyCustomTracer,
-    find_branches,
+    convert_branches,
     transform_mul_to_scale_module,
 )
 
@@ -55,6 +55,13 @@ graph_new = MyCustomTracer().trace(module_new)
 graph_new.print_tabular()
 
 # find branching
-module_new = find_branches(module_new, MyCustomTracer)
+module_new = convert_branches(module_new, MyCustomTracer)
 graph_new = MyCustomTracer().trace(module_new)
 graph_new.print_tabular()
+
+# define input and solution
+x = torch.tensor([[1.0, 2.0]], requires_grad=True)
+solution = torch.tensor([[1.0, 1.0]])
+
+logits_original = module_original(x)
+# logits_mew = module_new(x)

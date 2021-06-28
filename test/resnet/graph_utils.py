@@ -1,11 +1,11 @@
 """Transformation tools to make graph BackPACK compatible."""
-from typing import Type, List
+from typing import List, Type
 
 import torch
 import torch.fx
 from torch.nn import Module
 
-from backpack.custom_module.branching import Merge, Branch, ActiveIdentity
+from backpack.custom_module.branching import ActiveIdentity, Branch, Merge
 from backpack.custom_module.scale_module import ScaleModule
 
 
@@ -50,7 +50,9 @@ def transform_mul_to_scale_module(
     return torch.fx.GraphModule(module, graph)
 
 
-def find_branches(module: Module, tracer_class: Type[torch.fx.Tracer], max_depth: int = 100) -> Module:
+def convert_branches(
+    module: Module, tracer_class: Type[torch.fx.Tracer], max_depth: int = 100
+) -> Module:
     print("\nBegin search for double usage of input...")
     list_input: List[torch.fx.node.Node] = []
     list_double_used: List[torch.fx.node.Node] = []
@@ -95,9 +97,12 @@ def find_branches(module: Module, tracer_class: Type[torch.fx.Tracer], max_depth
 
         with graph.inserting_after(argument):
             name = "branch_1"
-            new_node = graph.call_module(name, args=argument.args)
+            new_node = graph.call_module(name, args=(argument,))
             setattr(module, name, Branch())
-            argument.replace_all_uses_with(new_node)
+            replaced_usages = argument.replace_all_uses_with(new_node)
+            for changed_node in replaced_usages:
+                if str(changed_node) == name:
+                    changed_node.args = (argument,)
 
         merge_node_arg_list = list(merge_node.args)
         for i, arg_node in enumerate(merge_node.args):
@@ -114,4 +119,3 @@ def find_branches(module: Module, tracer_class: Type[torch.fx.Tracer], max_depth
     # TODO: delete_all_unused_submodules
     print("End search for double usage.\n")
     return torch.fx.GraphModule(module, graph)
-
