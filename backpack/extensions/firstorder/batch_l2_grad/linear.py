@@ -40,9 +40,9 @@ class BatchL2Linear(BatchL2Base):
         Returns:
             batch_l2 for weight
         """
-        add_axes = list(range(1, g_out[0].dim() - 1))
+        has_additional_axes = g_out[0].dim() > 2
 
-        if add_axes:
+        if has_additional_axes:
             # TODO Compare `torch.einsum`, `opt_einsum.contract` and the base class
             # implementation: https://github.com/fKunstner/backpack-discuss/issues/111
             dE_dY = g_out[0].flatten(start_dim=1, end_dim=-2)

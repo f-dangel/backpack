@@ -19,9 +19,9 @@ def extract_weight_diagonal(
         ``(N, module.weight.shape)`` with batch size ``N``) or summed weight diagonal
         if ``sum_batch=True`` (shape ``module.weight.shape``).
     """
-    add_axes = list(range(1, module.input0.dim() - 1))
+    has_additional_axes = module.input0.dim() > 2
 
-    if add_axes:
+    if has_additional_axes:
         S_flat = S.flatten(start_dim=2, end_dim=-2)
         X_flat = module.input0.flatten(start_dim=1, end_dim=-2)
         equation = f"vnmo,nmi,vnko,nki->{'' if sum_batch else 'n'}oi"
@@ -48,10 +48,10 @@ def extract_bias_diagonal(module: Linear, S: Tensor, sum_batch: bool = True) -> 
         ``(N, module.bias.shape)`` with batch size ``N``) or summed bias diagonal
         if ``sum_batch=True`` (shape ``module.bias.shape``).
     """
-    add_axes = list(range(2, module.input0.dim()))
+    additional_axes = list(range(2, module.input0.dim()))
 
-    if add_axes:
-        JS = S.sum(add_axes)
+    if additional_axes:
+        JS = S.sum(additional_axes)
     else:
         JS = S
 
