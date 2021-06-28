@@ -4,21 +4,14 @@ from typing import Any, Callable, List, Tuple, Union
 from torch import Tensor
 from torch.nn import Module
 
-from backpack.core.derivatives.basederivatives import (
-    BaseDerivatives,
-    BaseParameterDerivatives,
-)
+from backpack.core.derivatives.basederivatives import BaseDerivatives
 from backpack.extensions.mat_to_mat_jac_base import MatToJacMat
 
 
 class SqrtGGNBaseModule(MatToJacMat):
     """Base module extension for ``SqrtGGN{Exact, MC}``."""
 
-    def __init__(
-        self,
-        derivatives: Union[BaseParameterDerivatives, BaseDerivatives],
-        params: List[str] = None,
-    ):
+    def __init__(self, derivatives: BaseDerivatives, params: List[str] = None):
         """Store parameter names and derivatives.
 
         Sets up methods that extract the GGN/Fisher matrix square root for the
