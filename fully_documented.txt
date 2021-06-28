@@ -68,3 +68,4 @@ test/extensions/secondorder/sqrt_ggn
 
 test/extensions/implementation/base.py
 test/extensions/implementation/autograd.py
+test/extensions/implementation/backpack.py

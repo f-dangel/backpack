@@ -109,7 +109,7 @@ class ExtensionsImplementation(ABC):
         """Per-sample Hessian diagonal.
 
         Returns:
-            list(torch.Tensor): Parameter-wise per-sample Hessian diagonal.
+            Parameter-wise per-sample Hessian diagonal.
         """
         raise NotImplementedError
 
