@@ -4,13 +4,15 @@ Convertion consists of 2 steps:
 - converting all <built-in-functions> into CustomModules
 - finding parallel structures and replace with Parallel
 """
-from typing import Type
+from test.resnet.graph_utils import (
+    MyCustomTracer,
+    find_branches,
+    transform_mul_to_scale_module,
+)
 
 import torch.fx
 from torch.fx import symbolic_trace
 from torch.nn import Module, Sequential, Tanh
-
-from backpack.custom_module.scale_module import ScaleModule
 
 
 class ModuleOriginal(Module):
@@ -47,47 +49,12 @@ print(symbolic_traced.code)
 # print table of graph
 symbolic_traced.graph.print_tabular()
 
-
-def transform_mul_to_scale_module(
-    module: Module, tracer_class: Type[torch.fx.Tracer]
-) -> Module:
-    print("\nBegin transformation...")
-    graph: torch.fx.Graph = tracer_class().trace(module)
-    # FX represents its Graph as an ordered list of
-    # nodes, so we can iterate through them.
-    for node in graph.nodes:
-        # Checks if we're calling a function (i.e:
-        # torch.add)
-        if node.op == "call_function":
-            # The target attribute is the function
-            # that call_function calls.
-            if str(node.target) == "<built-in function mul>":
-                # TODO: use add_submodule
-                name = "scale_module_1"
-                setattr(module, name, ScaleModule(node.args[1]))
-                node.target = name
-                node.args = (node.args[0],)
-                node.op = "call_module"
-
-    graph.lint()  # Does some checks to make sure the
-    # Graph is well-formed.
-    # TODO: delete_all_unused_submodules
-    print("End transformation.\n")
-    return torch.fx.GraphModule(module, graph)
-
-
-class MyCustomTracer(torch.fx.Tracer):
-    # Inside here you can override various methods
-    # to customize tracing. See the `Tracer` API
-    # reference
-    def is_leaf_module(self, m, module_qualified_name):
-        default = super().is_leaf_module(m, module_qualified_name)
-        if default:
-            return default
-        else:
-            return isinstance(m, ScaleModule)
-
-
+# replace all multiplication operations with ScaleModule
 module_new = transform_mul_to_scale_module(module_original, torch.fx.Tracer)
+graph_new = MyCustomTracer().trace(module_new)
+graph_new.print_tabular()
+
+# find branching
+module_new = find_branches(module_new, MyCustomTracer)
 graph_new = MyCustomTracer().trace(module_new)
 graph_new.print_tabular()
