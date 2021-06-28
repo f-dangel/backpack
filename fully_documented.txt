@@ -67,3 +67,4 @@ test/extensions/secondorder/hbp
 test/extensions/secondorder/sqrt_ggn
 
 test/extensions/implementation/base.py
+test/extensions/implementation/autograd.py

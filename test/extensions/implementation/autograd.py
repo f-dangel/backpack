@@ -1,6 +1,9 @@
+"""Autograd implementation of BackPACK's extensions."""
 from test.extensions.implementation.base import ExtensionsImplementation
+from typing import List
 
 import torch
+from torch import Tensor
 from torch.nn.utils.convert_parameters import parameters_to_vector
 
 from backpack.hessianfree.ggnvp import ggn_vector_product, ggn_vector_product_from_plist
@@ -11,12 +14,7 @@ from backpack.utils.convert_parameters import vector_to_parameter_list
 class AutogradExtensions(ExtensionsImplementation):
     """Extension implementations with autograd."""
 
-    def batch_grad(self):
-        """Scaled individual gradients computed by BackPACK's BatchGrad extension.
-
-        Returns:
-            list[torch.Tensor]: batch_grads
-        """
+    def batch_grad(self) -> List[Tensor]:  # noqa: D102
         N = self.problem.input.shape[0]
         batch_grads = [
             torch.zeros(N, *p.size()).to(self.problem.device)
@@ -40,12 +38,12 @@ class AutogradExtensions(ExtensionsImplementation):
 
         return batch_grads
 
-    def batch_l2_grad(self):
+    def batch_l2_grad(self) -> List[Tensor]:  # noqa: D102
         batch_grad = self.batch_grad()
         batch_l2_grads = [(g ** 2).flatten(start_dim=1).sum(1) for g in batch_grad]
         return batch_l2_grads
 
-    def sgs(self):
+    def sgs(self) -> List[Tensor]:  # noqa: D102
         N = self.problem.input.shape[0]
         sgs = [
             torch.zeros(*p.size()).to(self.problem.device)
@@ -68,7 +66,7 @@ class AutogradExtensions(ExtensionsImplementation):
                 sgs[idx] += (g.detach() * factor) ** 2
         return sgs
 
-    def variance(self):
+    def variance(self) -> List[Tensor]:  # noqa: D102
         batch_grad = self.batch_grad()
         variances = [torch.var(g, dim=0, unbiased=False) for g in batch_grad]
         return variances
@@ -95,7 +93,7 @@ class AutogradExtensions(ExtensionsImplementation):
             diag_ggns.append(diag_ggn_p.view(p.size()))
         return diag_ggns
 
-    def diag_ggn(self):
+    def diag_ggn(self) -> List[Tensor]:  # noqa: D102
         try:
             _, output, loss = self.problem.forward_pass()
             return self._get_diag_ggn(loss, output)
@@ -106,7 +104,7 @@ class AutogradExtensions(ExtensionsImplementation):
                 _, output, loss = self.problem.forward_pass()
                 return self._get_diag_ggn(loss, output)
 
-    def diag_ggn_exact_batch(self):
+    def diag_ggn_exact_batch(self) -> List[Tensor]:  # noqa: D102
         try:
             return self._diag_ggn_exact_batch()
         except RuntimeError:
@@ -159,11 +157,11 @@ class AutogradExtensions(ExtensionsImplementation):
             diag_hs.append(diag_h_p.view(p.size()))
         return diag_hs
 
-    def diag_h(self):
+    def diag_h(self) -> List[Tensor]:  # noqa: D102
         _, _, loss = self.problem.forward_pass()
         return self._get_diag_h(loss)
 
-    def diag_h_batch(self):
+    def diag_h_batch(self) -> List[Tensor]:  # noqa: D102
         batch_size = self.problem.input.shape[0]
         _, _, batch_loss = self.problem.forward_pass()
         loss_list = torch.zeros(batch_size, device=self.problem.device)
@@ -178,7 +176,7 @@ class AutogradExtensions(ExtensionsImplementation):
         params_batch_diag_h = list(zip(*batch_diag_h))
         return [torch.stack(param) * factor for param in params_batch_diag_h]
 
-    def ggn(self):
+    def ggn(self) -> Tensor:  # noqa: D102
         _, output, loss = self.problem.forward_pass()
         model = self.problem.model
 
@@ -199,20 +197,20 @@ class AutogradExtensions(ExtensionsImplementation):
 
         return ggn
 
-    def diag_ggn_mc(self, mc_samples):
+    def diag_ggn_mc(self, mc_samples) -> List[Tensor]:  # noqa: D102
         raise NotImplementedError
 
-    def diag_ggn_mc_batch(self, mc_samples):
+    def diag_ggn_mc_batch(self, mc_samples: int) -> List[Tensor]:  # noqa: D102
         raise NotImplementedError
 
-    def ggn_mc(self, mc_samples, chunks=1):
+    def ggn_mc(self, mc_samples: int, chunks: int = 1):  # noqa: D102
         raise NotImplementedError
 
-    def kfac(self):
+    def kfac(self, mc_samples: int = 1) -> List[List[Tensor]]:  # noqa: D102
         raise NotImplementedError
 
-    def kflr(self):
+    def kflr(self) -> List[List[Tensor]]:  # noqa: D102
         raise NotImplementedError
 
-    def kfra(self):
+    def kfra(self) -> List[List[Tensor]]:  # noqa: D102
         raise NotImplementedError
