@@ -20,32 +20,32 @@ class ExtensionsImplementation(ABC):
     @abstractmethod
     def batch_grad(self) -> List[Tensor]:
         """Individual gradients."""
-        return
+        raise NotImplementedError
 
     @abstractmethod
     def batch_l2_grad(self) -> List[Tensor]:
         """L2 norm of Individual gradients."""
-        return
+        raise NotImplementedError
 
     @abstractmethod
     def sgs(self) -> List[Tensor]:
         """Sum of Square of Individual gradients."""
-        return
+        raise NotImplementedError
 
     @abstractmethod
     def variance(self) -> List[Tensor]:
         """Variance of Individual gradients."""
-        return
+        raise NotImplementedError
 
     @abstractmethod
     def diag_ggn(self) -> List[Tensor]:
         """Diagonal of Gauss Newton."""
-        return
+        raise NotImplementedError
 
     @abstractmethod
     def diag_ggn_exact_batch(self) -> List[Tensor]:
         """Individual diagonal of Generalized Gauss-Newton/Fisher."""
-        return
+        raise NotImplementedError
 
     @abstractmethod
     def diag_ggn_mc(self, mc_samples: int) -> List[Tensor]:
@@ -54,7 +54,7 @@ class ExtensionsImplementation(ABC):
         Args:
             mc_samples: Number of Monte-Carlo samples used for the approximation.
         """
-        return
+        raise NotImplementedError
 
     @abstractmethod
     def diag_ggn_mc_batch(self, mc_samples: int) -> List[Tensor]:
@@ -63,7 +63,7 @@ class ExtensionsImplementation(ABC):
         Args:
             mc_samples: Number of Monte-Carlo samples used for the approximation.
         """
-        return
+        raise NotImplementedError
 
     @abstractmethod
     def kfac(self, mc_samples: int = 1) -> List[List[Tensor]]:
@@ -75,7 +75,7 @@ class ExtensionsImplementation(ABC):
         Returns:
             Parameter-wise lists of Kronecker factors.
         """
-        return
+        raise NotImplementedError
 
     @abstractmethod
     def kflr(self) -> List[List[Tensor]]:
@@ -84,7 +84,7 @@ class ExtensionsImplementation(ABC):
         Returns:
             Parameter-wise lists of Kronecker factors.
         """
-        return
+        raise NotImplementedError
 
     @abstractmethod
     def kfra(self) -> List[List[Tensor]]:
@@ -93,7 +93,7 @@ class ExtensionsImplementation(ABC):
         Returns:
             Parameter-wise lists of Kronecker factors.
         """
-        return
+        raise NotImplementedError
 
     @abstractmethod
     def diag_h(self) -> List[Tensor]:
@@ -102,7 +102,7 @@ class ExtensionsImplementation(ABC):
         Returns:
             Hessian diagonal for each parameter.
         """
-        return
+        raise NotImplementedError
 
     @abstractmethod
     def diag_h_batch(self) -> List[Tensor]:
@@ -111,7 +111,7 @@ class ExtensionsImplementation(ABC):
         Returns:
             list(torch.Tensor): Parameter-wise per-sample Hessian diagonal.
         """
-        return
+        raise NotImplementedError
 
     @abstractmethod
     def ggn(self) -> Tensor:
@@ -120,7 +120,7 @@ class ExtensionsImplementation(ABC):
         Returns:
             Matrix representation of the exact GGN.
         """
-        return
+        raise NotImplementedError
 
     @abstractmethod
     def ggn_mc(self, mc_samples: int, chunks: int = 1) -> Tensor:
@@ -134,4 +134,4 @@ class ExtensionsImplementation(ABC):
         Returns:
             Matrix representation of the Monte-Carlo approximated GGN.
         """
-        return
+        raise NotImplementedError
