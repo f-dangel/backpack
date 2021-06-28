@@ -1,5 +1,5 @@
 """Contains base class for ``SqrtGGN{Exact, MC}`` module extensions."""
-from typing import Any, Callable, List, Tuple, Union
+from typing import Any, Callable, List, Tuple
 
 from torch import Tensor
 from torch.nn import Module
