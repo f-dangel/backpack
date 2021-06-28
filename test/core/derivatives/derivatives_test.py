@@ -57,7 +57,7 @@ def test_jac_mat_prod(problem: DerivativesTestProblem, V: int = 3) -> None:
 
     Args:
         problem: Test case.
-        V (int): Number of vectorized Jacobian-vector products. Default: ``3``.
+        V: Number of vectorized Jacobian-vector products. Default: ``3``.
     """
     problem.set_up()
     mat = torch.rand(V, *problem.input_shape).to(problem.device)
@@ -333,9 +333,6 @@ def test_sqrt_hessian_squared_equals_hessian(problem):
 
     backpack_res = BackpackDerivatives(problem).input_hessian_via_sqrt_hessian()
     autograd_res = AutogradDerivatives(problem).input_hessian()
-
-    print(backpack_res.device)
-    print(autograd_res.device)
 
     check_sizes_and_values(autograd_res, backpack_res)
     problem.tear_down()
