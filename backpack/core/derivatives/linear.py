@@ -43,7 +43,7 @@ class LinearDerivatives(BaseParameterDerivatives):
             Batched transposed Jacobian vector products. Has shape
             ``[V, N, *, in_features]``.
         """
-        return einsum("oi,vn...o->vn...i", module.weight.data, mat)
+        return einsum("oi,vn...o->vn...i", module.weight, mat)
 
     def _jac_mat_prod(
         self, module: Linear, g_inp: List[Tensor], g_out: List[Tensor], mat: Tensor
@@ -61,7 +61,7 @@ class LinearDerivatives(BaseParameterDerivatives):
         Returns:
             Batched Jacobian vector products. Has shape ``[V, N, *, out_features]``.
         """
-        return einsum("oi,vn...i->vn...o", module.weight.data, mat)
+        return einsum("oi,vn...i->vn...o", module.weight, mat)
 
     def ea_jac_t_mat_jac_prod(
         self, module: Linear, g_inp: List[Tensor], g_out: List[Tensor], mat: Tensor
@@ -84,10 +84,8 @@ class LinearDerivatives(BaseParameterDerivatives):
         add_features = self._get_additional_dims(module).numel()
         in_features, out_features = module.in_features, module.out_features
 
-        jac = module.weight.data
-
         result = mat.reshape(add_features, out_features, add_features, out_features)
-        result = einsum("ik,xiyj,jl->xkyl", jac, result, jac)
+        result = einsum("ik,xiyj,jl->xkyl", module.weight, result, module.weight)
 
         return result.reshape(in_features * add_features, in_features * add_features)
 
