@@ -1,5 +1,5 @@
 """Contains partial derivatives for the ``torch.nn.Linear`` layer."""
-from typing import List
+from typing import Tuple
 
 from torch import Size, Tensor, einsum
 from torch.nn import Linear
@@ -27,7 +27,7 @@ class LinearDerivatives(BaseParameterDerivatives):
         return True
 
     def _jac_t_mat_prod(
-        self, module: Linear, g_inp: List[Tensor], g_out: List[Tensor], mat: Tensor
+        self, module: Linear, g_inp: Tuple[Tensor], g_out: Tuple[Tensor], mat: Tensor
     ) -> Tensor:
         """Batch-apply transposed Jacobian of the output w.r.t. the input.
 
@@ -46,7 +46,7 @@ class LinearDerivatives(BaseParameterDerivatives):
         return einsum("oi,vn...o->vn...i", module.weight, mat)
 
     def _jac_mat_prod(
-        self, module: Linear, g_inp: List[Tensor], g_out: List[Tensor], mat: Tensor
+        self, module: Linear, g_inp: Tuple[Tensor], g_out: Tuple[Tensor], mat: Tensor
     ) -> Tensor:
         """Batch-apply Jacobian of the output w.r.t. the input.
 
@@ -64,7 +64,7 @@ class LinearDerivatives(BaseParameterDerivatives):
         return einsum("oi,vn...i->vn...o", module.weight, mat)
 
     def ea_jac_t_mat_jac_prod(
-        self, module: Linear, g_inp: List[Tensor], g_out: List[Tensor], mat: Tensor
+        self, module: Linear, g_inp: Tuple[Tensor], g_out: Tuple[Tensor], mat: Tensor
     ) -> Tensor:
         """Expectation approximation of outer product with input-output Jacobian.
 
@@ -90,7 +90,7 @@ class LinearDerivatives(BaseParameterDerivatives):
         return result.reshape(in_features * add_features, in_features * add_features)
 
     def _weight_jac_mat_prod(
-        self, module: Linear, g_inp: List[Tensor], g_out: List[Tensor], mat: Tensor
+        self, module: Linear, g_inp: Tuple[Tensor], g_out: Tuple[Tensor], mat: Tensor
     ) -> Tensor:
         """Batch-apply Jacobian of the output w.r.t. the weight.
 
@@ -111,8 +111,8 @@ class LinearDerivatives(BaseParameterDerivatives):
     def _weight_jac_t_mat_prod(
         self,
         module: Linear,
-        g_inp: List[Tensor],
-        g_out: List[Tensor],
+        g_inp: Tuple[Tensor],
+        g_out: Tuple[Tensor],
         mat: Tensor,
         sum_batch: int = True,
     ) -> Tensor:
@@ -146,7 +146,7 @@ class LinearDerivatives(BaseParameterDerivatives):
         return einsum(equation, mat, d_weight)
 
     def _bias_jac_mat_prod(
-        self, module: Linear, g_inp: List[Tensor], g_out: List[Tensor], mat: Tensor
+        self, module: Linear, g_inp: Tuple[Tensor], g_out: Tuple[Tensor], mat: Tensor
     ) -> Tensor:
         """Batch-apply Jacobian of the output w.r.t. the bias.
 
@@ -175,8 +175,8 @@ class LinearDerivatives(BaseParameterDerivatives):
     def _bias_jac_t_mat_prod(
         self,
         module: Linear,
-        g_inp: List[Tensor],
-        g_out: List[Tensor],
+        g_inp: Tuple[Tensor],
+        g_out: Tuple[Tensor],
         mat: Tensor,
         sum_batch: int = True,
     ) -> Tensor:
