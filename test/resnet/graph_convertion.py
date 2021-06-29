@@ -64,5 +64,5 @@ x = torch.tensor([[1.0, 2.0]], requires_grad=True)
 solution = torch.tensor([[1.0, 1.0]])
 
 logits_original = module_original(x)
-# logits_new = module_new(x)
-# print("\nAre the nets equivalent?", torch.allclose(logits_original, logits_new))
+logits_new = module_new(x)
+print("\nAre the nets equivalent?", torch.allclose(logits_original, logits_new))

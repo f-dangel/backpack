@@ -103,7 +103,10 @@ class ModuleExtension:
         bpQuantities = self.backpropagate(ext, module, g_inp, g_out, bpQuantities)
 
         # input to a merge point is a container of multiple inputs
-        module_inputs: Tuple[Tensor] = inp if is_merge_point(out) else (inp,)
+        # TODO make this more general
+        module_inputs: Tuple[Tensor] = (
+            (module.input0, module.input1) if is_merge_point(out) else (inp,)
+        )
 
         # distribute backproped quantities to all inputs
         for module_inp in module_inputs:

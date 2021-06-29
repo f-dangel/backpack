@@ -95,7 +95,7 @@ def convert_branches(
         # leave merge_node.args
         merge_node.op = "call_module"
 
-        with graph.inserting_after(argument):
+        """with graph.inserting_after(argument):
             name = "branch_1"
             new_node = graph.call_module(name, args=(argument,))
             setattr(module, name, Branch())
@@ -112,7 +112,7 @@ def convert_branches(
                     setattr(module, name, ActiveIdentity())
                     active_identity = graph.call_module(name, args=(arg_node,))
                 merge_node_arg_list[i] = active_identity
-        merge_node.args = tuple(merge_node_arg_list)
+        merge_node.args = tuple(merge_node_arg_list)"""
 
     graph.lint()  # Does some checks to make sure the
     # Graph is well-formed.

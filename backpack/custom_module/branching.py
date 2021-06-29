@@ -115,7 +115,7 @@ class Merge(torch.nn.Module):
 
     """
 
-    def forward(self, input: Tuple[Tensor]) -> Tensor:
+    def forward(self, *input: Tensor) -> Tensor:
         """Sum up all inputs (a tuple of tensors).
 
         Args:
@@ -136,7 +136,7 @@ class Merge(torch.nn.Module):
         return result
 
 
-class Parallel(torch.nn.Sequential):
+class Parallel(torch.nn.Module):
     """Feed the same input through a parallel sequence of modules. Sum the results.
 
     Used by BackPACK to emulate branched computations.
@@ -155,5 +155,10 @@ class Parallel(torch.nn.Sequential):
         """
         super().__init__()
 
-        self.add_module("branch", Branch(*args))
-        self.add_module("merge", Merge())
+        self.branch = Branch(*args)
+        self.merge = Merge()
+
+    def forward(self, input):
+        out = self.branch(input)
+        out = self.merge(*out)
+        return out
