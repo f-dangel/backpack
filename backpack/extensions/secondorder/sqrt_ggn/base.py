@@ -1,11 +1,16 @@
 """Contains base class for ``SqrtGGN{Exact, MC}`` module extensions."""
-from typing import Any, Callable, List, Tuple
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Callable, List, Tuple, Union
 
 from torch import Tensor
 from torch.nn import Module
 
 from backpack.core.derivatives.basederivatives import BaseDerivatives
 from backpack.extensions.mat_to_mat_jac_base import MatToJacMat
+
+if TYPE_CHECKING:
+    from backpack.extensions.secondorder.sqrt_ggn import SqrtGGNExact, SqrtGGNMC
 
 
 class SqrtGGNBaseModule(MatToJacMat):
@@ -28,11 +33,12 @@ class SqrtGGNBaseModule(MatToJacMat):
 
         super().__init__(derivatives, params=params)
 
-    # TODO Replace Any with Union[SqrtGGNExact, SqrtGGNMC]
-    # WAITING Deprecation of python3.6 (cyclic imports caused by annotations)
     def _make_param_function(
         self, param_str: str
-    ) -> Callable[[Any, Module, Tuple[Tensor], Tuple[Tensor], Tensor], Tensor]:
+    ) -> Callable[
+        [Union[SqrtGGNExact, SqrtGGNMC], Module, Tuple[Tensor], Tuple[Tensor], Tensor],
+        Tensor,
+    ]:
         """Create a function that computes the GGN/Fisher square root for a parameter.
 
         Args:
@@ -41,10 +47,9 @@ class SqrtGGNBaseModule(MatToJacMat):
         Returns:
             Function that computes the GGN/Fisher matrix square root.
         """
-        # TODO Replace Any with Union[SqrtGGNExact, SqrtGGNMC]
-        # WAITING Deprecation of python3.6 (cyclic imports caused by annotations)
+
         def param_function(
-            ext: Any,
+            ext: Union[SqrtGGNExact, SqrtGGNMC],
             module: Module,
             g_inp: Tuple[Tensor],
             g_out: Tuple[Tensor],
