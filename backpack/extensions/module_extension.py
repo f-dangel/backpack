@@ -143,13 +143,11 @@ class ModuleExtension:
         """
         attach = bpQuantities
 
-        existing = getattr(inp, ext.savefield, None)
-        should_accumulate = is_branch_point(inp) and existing is not None
-
-        if should_accumulate:
-            attach = ext.accumulate_backpropagated_quantities(existing, attach)
-
-        setattr(inp, ext.savefield, attach)
+        # is True for branch points
+        if hasattr(inp, ext.savefield):
+            setattr(inp, ext.savefield, getattr(inp, ext.savefield) + attach)
+        else:
+            setattr(inp, ext.savefield, attach)
 
         ModuleExtension.__maybe_delete_received_bpQuantities(ext, inp, out)
 
