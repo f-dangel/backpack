@@ -12,7 +12,10 @@ from test.resnet.graph_utils import (
 
 import torch.fx
 from torch.fx import symbolic_trace
-from torch.nn import Module, Sequential, Tanh
+from torch.nn import Module, MSELoss, Sequential, Tanh
+
+from backpack import backpack, extend
+from backpack.extensions import DiagGGNExact
 
 
 class ModuleOriginal(Module):
@@ -59,10 +62,22 @@ module_new = convert_branches(module_new, MyCustomTracer)
 graph_new = MyCustomTracer().trace(module_new)
 graph_new.print_tabular()
 
+# extend
+module_new = extend(module_new, is_container=True)
+loss_function = extend(MSELoss())
+
 # define input and solution
 x = torch.tensor([[1.0, 2.0]], requires_grad=True)
 solution = torch.tensor([[1.0, 1.0]])
 
 logits_original = module_original(x)
 logits_new = module_new(x)
-print("\nAre the nets equivalent?", torch.allclose(logits_original, logits_new))
+print("\nAre the nets equivalent?", torch.allclose(logits_original, logits_new), "\n")
+
+loss_new = loss_function(logits_new, solution)
+with backpack(DiagGGNExact()):
+    loss_new.backward()
+
+for name, param in module_new.named_parameters():
+    print(name)
+    print(param.diag_ggn_exact.shape)
