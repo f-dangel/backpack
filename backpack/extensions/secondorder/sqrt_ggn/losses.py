@@ -1,5 +1,7 @@
 """Contains base class and extensions for losses used by ``SqrtGGN{Exact, MC}``."""
-from typing import Any, Tuple
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Tuple, Union
 
 from torch import Tensor
 from torch.nn import Module
@@ -9,15 +11,16 @@ from backpack.core.derivatives.mseloss import MSELossDerivatives
 from backpack.extensions.secondorder.hbp import LossHessianStrategy
 from backpack.extensions.secondorder.sqrt_ggn.base import SqrtGGNBaseModule
 
+if TYPE_CHECKING:
+    from backpack.extensions.secondorder.sqrt_ggn import SqrtGGNExact, SqrtGGNMC
+
 
 class SqrtGGNBaseLossModule(SqrtGGNBaseModule):
     """Base class for losses used by ``SqrtGGN{Exact, MC}``."""
 
-    # TODO Replace Any with Union[SqrtGGNExact, SqrtGGNMC]
-    # WAITING Deprecation of python3.6 (cyclic imports caused by annotations)
     def backpropagate(
         self,
-        ext: Any,
+        ext: Union[SqrtGGNExact, SqrtGGNMC],
         module: Module,
         grad_inp: Tuple[Tensor],
         grad_out: Tuple[Tensor],
