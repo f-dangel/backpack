@@ -6,7 +6,7 @@ Convertion consists of 2 steps:
 """
 from test.resnet.graph_utils import (
     MyCustomTracer,
-    convert_branches,
+    transform_add_to_merge,
     transform_mul_to_scale_module,
 )
 
@@ -58,7 +58,7 @@ graph_new = MyCustomTracer().trace(module_new)
 graph_new.print_tabular()
 
 # find branching
-module_new = convert_branches(module_new, MyCustomTracer)
+module_new = transform_add_to_merge(module_new, MyCustomTracer)
 graph_new = MyCustomTracer().trace(module_new)
 graph_new.print_tabular()
 
