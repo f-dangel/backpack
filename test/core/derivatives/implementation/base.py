@@ -163,3 +163,12 @@ class DerivativesImplementation(ABC):
             the sum of hessians
         """
         raise NotImplementedError
+
+    @abstractmethod
+    def hessian_is_zero(self) -> bool:
+        """Return whether the input-output Hessian is zero.
+
+        Returns:
+            `True`, if Hessian is zero, else `False`.
+        """
+        raise NotImplementedError

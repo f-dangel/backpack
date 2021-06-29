@@ -45,7 +45,7 @@ class AdaptiveAvgPoolNDDerivatives(AvgPoolNDDerivatives):
             )
 
         # check if input shape is multiple of output shape
-        if any([shape_input[2 + n] % shape_output[2 + n] != 0 for n in range(self.N)]):
+        if any(shape_input[2 + n] % shape_output[2 + n] != 0 for n in range(self.N)):
             raise NotImplementedError(
                 f"No equivalent AvgPool (unadaptive): Input shape ({shape_input}) "
                 f"must be multiple of output shape ({shape_output})."

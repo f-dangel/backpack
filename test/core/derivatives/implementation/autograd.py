@@ -2,7 +2,7 @@
 from test.core.derivatives.implementation.base import DerivativesImplementation
 
 import torch
-from torch import Tensor
+from torch import Tensor, zeros_like
 
 from backpack.hessianfree.hvp import hessian_vector_product
 from backpack.hessianfree.lop import transposed_jacobian_vector_product
@@ -81,7 +81,7 @@ class AutogradDerivatives(DerivativesImplementation):
         Returns:
             torch.Tensor: product of jac_t and vec
         """
-        input, output, named_params = self.problem.forward_pass()
+        _, output, named_params = self.problem.forward_pass()
         param = named_params[name]
 
         if sum_batch:
@@ -226,23 +226,8 @@ class AutogradDerivatives(DerivativesImplementation):
 
         return hessian_vec_x.reshape(final_shape)
 
-    def _elementwise_hessian(self, tensor, x: Tensor):
+    def _elementwise_hessian(self, tensor: Tensor, x: Tensor) -> Tensor:
         """Computes the Hessian of each element in `tensor` w.r.t `x`.
-
-        Hessians are returned in the order of elements in the flattened tensor.
-
-        Args:
-            tensor: .
-            x: Tensor used in the computation graph of `loss`.
-
-        Yields:
-            hessian of each element
-        """
-        for t in tensor.flatten():
-            yield self._hessian(t, x)
-
-    def _tensor_hessian(self, tensor, x):
-        """Return the Hessian of a tensor `tensor` w.r.t. a tensor `x`.
 
         Given a `tensor` of shape `[A, B, C]` and another tensor `x` with shape `[D, E]`
         used in the computation of `tensor`, the generalized Hessian has shape
@@ -250,29 +235,30 @@ class AutogradDerivatives(DerivativesImplementation):
         `hessian[a, b, c]` contains the Hessian of the scalar entry `tensor[a, b, c]`
         w.r.t. `x[a, b, c]`.
 
+        If ``tensor`` is linear in ``x``, autograd raises a ``RuntimeError``.
+        If ``tensor`` does not depend on ``x``, autograd raises an ``AttributeError``.
+        In both cases, a Hessian of zeros is created manually and returned.
+
         Arguments:
-            tensor (torch.Tensor): An arbitrary tensor.
-            x (torch.Tensor): Tensor used in the computation graph of `tensor`.
+            tensor: An arbitrary tensor.
+            x: Tensor used in the computation graph of `tensor`.
 
-        Returns:
-            torch.Tensor: Generalized Hessian of `tensor` w.r.t. `x`.
+        Yields:
+            Hessians in the order of elements in the flattened tensor.
         """
-        shape = (*tensor.shape, *x.shape, *x.shape)
+        for t in tensor.flatten():
+            try:
+                yield self._hessian(t, x)
+            except (RuntimeError, AttributeError):
+                yield torch.zeros(*x.shape, *x.shape, device=x.device, dtype=x.dtype)
 
-        return torch.cat(list(self._elementwise_hessian(tensor, x))).reshape(shape)
-
-    def hessian_is_zero(self):
-        """Return whether the input-output Hessian is zero.
-
-        Returns:
-            bool: `True`, if Hessian is zero, else `False`.
-        """
+    def hessian_is_zero(self) -> bool:  # noqa: D102
         input, output, _ = self.problem.forward_pass(input_requires_grad=True)
 
         zero = None
         for hessian in self._elementwise_hessian(output, input):
             if zero is None:
-                zero = torch.zeros_like(hessian)
+                zero = zeros_like(hessian)
 
             if not torch.allclose(hessian, zero):
                 return False
