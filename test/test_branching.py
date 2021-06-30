@@ -11,7 +11,7 @@ from torch.nn import CrossEntropyLoss, Identity, Linear, ReLU, Sequential, Sigmo
 from torch.nn.utils.convert_parameters import parameters_to_vector
 
 from backpack import backpack, extend, extensions
-from backpack.custom_module.branching import ActiveIdentity, Branch, Merge, Parallel
+from backpack.custom_module.branching import ActiveIdentity, Branch, Parallel, SumModule
 from backpack.hessianfree.ggnvp import ggn_vector_product
 from backpack.utils.convert_parameters import vector_to_parameter_list
 
@@ -19,7 +19,7 @@ from backpack.utils.convert_parameters import vector_to_parameter_list
 def setup(apply_extend=False, active_identity=True):
     """Set seed. Generate and return inputs, labels, model and loss function.
 
-    A simple ResNet using the ``Branch`` and ``Merge`` modules to handle branching.
+    A simple ResNet using the ``Branch`` and ``SumModule`` modules to handle branching.
 
     Args:
         active_identity (bool): Whether the identity function should create a new node
@@ -47,7 +47,7 @@ def setup(apply_extend=False, active_identity=True):
             identity,
             Linear(hidden_features, hidden_features),
         ),
-        Merge(),
+        SumModule(),
         # end of skip connection
         Sigmoid(),
         Linear(hidden_features, out_features),
@@ -65,7 +65,7 @@ def setup_convenient(apply_extend=False, active_identity=True):
     """Set seed. Generate and return inputs, labels, model and loss function.
 
     A simple ResNet using the ``Parallel`` convenience module around the ``Branch`` and
-    ``Merge`` modules to handle branching.
+    ``SumModule`` modules to handle branching.
 
     Args:
         active_identity (bool): Whether the identity function should create a new node

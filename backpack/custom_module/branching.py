@@ -62,11 +62,11 @@ class Branch(torch.nn.Module):
         return tuple(module(input) for module in self.children())
 
 
-class Merge(torch.nn.Module):
+class SumModule(torch.nn.Module):
     """Module used by BackPACK to handle branch merges in the computation graph.
 
     module 1 ↘
-    module 2 → Merge (sum)
+    module 2 → SumModule (sum)
     ...      ↗
 
     """
@@ -94,7 +94,7 @@ class Parallel(torch.nn.Module):
     Used by BackPACK to emulate branched computations.
 
            ↗ module 1 ↘
-    Branch → module 2 → Merge (sum)
+    Branch → module 2 → SumModule (sum)
            ↘  ...     ↗
 
     """
@@ -108,10 +108,10 @@ class Parallel(torch.nn.Module):
         super().__init__()
 
         self.branch = Branch(*args)
-        self.merge = Merge()
+        self.sum = SumModule()
 
     def forward(self, input: Tensor) -> Tensor:
-        """Forward pass. Concatenation of Branch and Merge.
+        """Forward pass. Concatenation of Branch and SumModule.
 
         Args:
             input: module input
@@ -120,5 +120,5 @@ class Parallel(torch.nn.Module):
             result after results are merged again
         """
         out = self.branch(input)
-        out = self.merge(*out)
+        out = self.sum(*out)
         return out

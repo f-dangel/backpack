@@ -3,7 +3,7 @@ import torch
 import torch.fx
 from torch.nn import Flatten, Module
 
-from backpack.custom_module.branching import ActiveIdentity, Branch, Merge
+from backpack.custom_module.branching import ActiveIdentity, Branch, SumModule
 from backpack.custom_module.scale_module import ScaleModule
 
 
@@ -11,7 +11,7 @@ class MyCustomTracer(torch.fx.Tracer):
     def is_leaf_module(self, m, module_qualified_name):
         if isinstance(m, ScaleModule):
             return True
-        elif isinstance(m, Merge):
+        elif isinstance(m, SumModule):
             return True
         elif isinstance(m, Branch):
             return True
@@ -47,7 +47,7 @@ def transform_add_to_merge(module: Module) -> Module:
     for node in graph.nodes:
         if node.op == "call_function":
             if str(node.target) == "<built-in function add>":
-                _change_node_to_module(node, "merge", module, Merge(), node.args)
+                _change_node_to_module(node, "merge", module, SumModule(), node.args)
 
     graph.lint()
     # TODO: delete_all_unused_submodules
