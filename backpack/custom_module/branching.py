@@ -15,48 +15,6 @@ MERGE_POINT_FIELD = "_backpack_merge_point"
 MARKER = True
 
 
-def mark_branch_point(arg: Tensor) -> None:
-    """Mark the input as branch entry point.
-
-    Args:
-        arg: tensor to be marked
-    """
-    setattr(arg, BRANCH_POINT_FIELD, MARKER)
-
-
-def mark_merge_point(arg: Tensor) -> None:
-    """Mark the input as merge entry point.
-
-    Args:
-        arg: tensor to be marked
-    """
-    setattr(arg, MERGE_POINT_FIELD, MARKER)
-
-
-def is_branch_point(arg: Tensor) -> bool:
-    """Return whether input is marked as branch point.
-
-    Args:
-        arg: tensor to be checked
-
-    Returns:
-        whether arg is branch point
-    """
-    return getattr(arg, BRANCH_POINT_FIELD, None) is MARKER
-
-
-def is_merge_point(arg: Tensor) -> bool:
-    """Return whether input is marked as mergepoint.
-
-    Args:
-        arg: tensor to be checked
-
-    Returns:
-        whether arg is merge point
-    """
-    return getattr(arg, MERGE_POINT_FIELD, None) is MARKER
-
-
 class ActiveIdentity(ScaleModule):
     """Like ``torch.nn.Identity``, but creates a new node in the computation graph."""
 
@@ -101,8 +59,6 @@ class Branch(torch.nn.Module):
         Returns:
             tuple of output tensor
         """
-        mark_branch_point(input)
-
         return tuple(module(input) for module in self.children())
 
 
@@ -129,11 +85,7 @@ class Merge(torch.nn.Module):
         """
         if not isinstance(input, tuple):
             raise ValueError(f"Expecting tuple as input. Got {input.__class__}")
-
-        result = sum(input)
-        mark_merge_point(result)
-
-        return result
+        return sum(input)
 
 
 class Parallel(torch.nn.Module):
@@ -158,7 +110,15 @@ class Parallel(torch.nn.Module):
         self.branch = Branch(*args)
         self.merge = Merge()
 
-    def forward(self, input):
+    def forward(self, input: Tensor) -> Tensor:
+        """Forward pass. Concatenation of Branch and Merge.
+
+        Args:
+            input: module input
+
+        Returns:
+            result after results are merged again
+        """
         out = self.branch(input)
         out = self.merge(*out)
         return out

@@ -2,12 +2,10 @@
 from __future__ import annotations
 
 import warnings
-from typing import TYPE_CHECKING, Any, List, Tuple, Union
+from typing import TYPE_CHECKING, Any, List, Tuple
 
 from torch import Tensor
 from torch.nn import Module
-
-from backpack.custom_module.branching import is_merge_point
 
 if TYPE_CHECKING:
     from backpack import BackpropExtension
@@ -89,7 +87,6 @@ class ModuleExtension:
             g_inp: input gradients
             g_out: output gradients
         """
-        inp: Union[Tuple[Tensor], Tensor] = module.input0
         out: Tensor = module.output
 
         bpQuantities = self.__backproped_quantities(ext, out)
@@ -102,11 +99,16 @@ class ModuleExtension:
 
         bpQuantities = self.backpropagate(ext, module, g_inp, g_out, bpQuantities)
 
-        # input to a merge point is a container of multiple inputs
-        # TODO make this more general
-        module_inputs: Tuple[Tensor] = (
-            (module.input0, module.input1) if is_merge_point(out) else (inp,)
-        )
+        i = 0
+        module_inputs: Tuple[Tensor] = (module.input0,)
+        while True:
+            i += 1
+            if hasattr(module, f"input{i}"):
+                # TODO discuss: check for input{i}.requires_grad == True
+                module_inputs += (getattr(module, f"input{i}"),)
+            else:
+                break
+        del i
 
         # distribute backproped quantities to all inputs
         for module_inp in module_inputs:
