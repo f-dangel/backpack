@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, List, Tuple, Union
 from torch import Tensor
 from torch.nn import Module
 
-from backpack.custom_module.branching import is_branch_point, is_merge_point
+from backpack.custom_module.branching import is_merge_point
 
 if TYPE_CHECKING:
     from backpack import BackpropExtension
