@@ -147,7 +147,13 @@ class ModuleExtension:
 
         # is True for branch points
         if hasattr(inp, ext.savefield):
-            setattr(inp, ext.savefield, getattr(inp, ext.savefield) + attach)
+            setattr(
+                inp,
+                ext.savefield,
+                ext.accumulate_backpropagated_quantities(
+                    getattr(inp, ext.savefield), attach
+                ),
+            )
         else:
             setattr(inp, ext.savefield, attach)
 
