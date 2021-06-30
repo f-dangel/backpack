@@ -4,17 +4,16 @@ Convertion consists of 2 steps:
 - converting all <built-in-functions> into CustomModules
 - finding parallel structures and replace with Parallel
 """
-from test.resnet.graph_utils import (
-    print_table,
-    transform_add_to_merge,
-    transform_mul_to_scale_module,
-)
-
 import torch.fx
 from torch.fx import symbolic_trace
 from torch.nn import Module, MSELoss, Sequential, Tanh
 
 from backpack import backpack, extend
+from backpack.custom_module.graph_utils import (
+    print_table,
+    transform_add_to_merge,
+    transform_mul_to_scale_module,
+)
 from backpack.extensions import DiagGGNExact
 
 

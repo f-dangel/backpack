@@ -1,15 +1,14 @@
 """Test whether torchvision is extendable with graph utils."""
-from test.resnet.graph_utils import (
-    print_table,
-    transform_add_to_merge,
-    transform_flatten_to_module,
-)
-
 import torch
 import torchvision.models
 from torch.nn import MSELoss
 
 from backpack import backpack, extend
+from backpack.custom_module.graph_utils import (
+    print_table,
+    transform_add_to_merge,
+    transform_flatten_to_module,
+)
 from backpack.extensions import DiagGGNExact
 
 resnet18 = torchvision.models.resnet18()
