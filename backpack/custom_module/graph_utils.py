@@ -8,7 +8,9 @@ from backpack.custom_module.scale_module import ScaleModule
 
 
 class MyCustomTracer(torch.fx.Tracer):
-    def is_leaf_module(self, m, module_qualified_name):
+    """This custom tracer recognizes BackPACK custom modules."""
+
+    def is_leaf_module(self, m, module_qualified_name):  # noqa: D102
         if isinstance(m, ScaleModule):
             return True
         elif isinstance(m, SumModule):
@@ -21,7 +23,37 @@ class MyCustomTracer(torch.fx.Tracer):
             return super().is_leaf_module(m, module_qualified_name)
 
 
-def transform_mul_to_scale_module(module: Module) -> Module:
+def print_table(module: Module) -> None:
+    """Prints a table of the module.
+
+    Args:
+        module: module to analyze
+    """
+    graph_resnet18 = MyCustomTracer().trace(module)
+    graph_resnet18.print_tabular()
+
+
+def convert_module_to_backpack(module: Module) -> Module:
+    """Converts all modules to backpack-compatible modules.
+
+    Transformations:
+    - mul -> ScaleModule
+    - add -> AddModule
+    - flatten -> nn.Flatten
+
+    Args:
+        module: module to convert
+
+    Returns:
+        backpack compatible module
+    """
+    module_new = _transform_mul_to_scale_module(module)
+    module_new = _transform_flatten_to_module(module_new)
+    module_new = _transform_add_to_merge(module_new)
+    return module_new
+
+
+def _transform_mul_to_scale_module(module: Module) -> Module:
     print("\nBegin transformation...")
     graph: torch.fx.Graph = MyCustomTracer().trace(module)
     for node in graph.nodes:
@@ -41,7 +73,7 @@ def transform_mul_to_scale_module(module: Module) -> Module:
     return torch.fx.GraphModule(module, graph)
 
 
-def transform_add_to_merge(module: Module) -> Module:
+def _transform_add_to_merge(module: Module) -> Module:
     print("\nBegin transformation...")
     graph: torch.fx.Graph = MyCustomTracer().trace(module)
     for node in graph.nodes:
@@ -55,7 +87,7 @@ def transform_add_to_merge(module: Module) -> Module:
     return torch.fx.GraphModule(module, graph)
 
 
-def transform_flatten_to_module(module: Module) -> Module:
+def _transform_flatten_to_module(module: Module) -> Module:
     print("\nBegin transformation...")
     graph: torch.fx.Graph = MyCustomTracer().trace(module)
     for node in graph.nodes:
@@ -101,8 +133,3 @@ def _change_node_to_module(
     node.target = name
     node.args = args
     setattr(base_module, name, new_module)
-
-
-def print_table(module: Module) -> None:
-    graph_resnet18 = MyCustomTracer().trace(module)
-    graph_resnet18.print_tabular()

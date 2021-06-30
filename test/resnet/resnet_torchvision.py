@@ -4,21 +4,14 @@ import torchvision.models
 from torch.nn import MSELoss
 
 from backpack import backpack, extend
-from backpack.custom_module.graph_utils import (
-    print_table,
-    transform_add_to_merge,
-    transform_flatten_to_module,
-)
+from backpack.custom_module.graph_utils import convert_module_to_backpack, print_table
 from backpack.extensions import DiagGGNExact
 
 resnet18 = torchvision.models.resnet18()
 print_table(resnet18)
 
-# replace add
-resnet18_transformed = transform_add_to_merge(resnet18)
-
-# replace flatten
-resnet18_transformed = transform_flatten_to_module(resnet18_transformed)
+# convert to backpack
+resnet18_transformed = convert_module_to_backpack(resnet18)
 
 # print table
 print_table(resnet18_transformed)
