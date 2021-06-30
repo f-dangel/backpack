@@ -5,7 +5,7 @@ Convertion consists of 2 steps:
 - finding parallel structures and replace with Parallel
 """
 from test.resnet.graph_utils import (
-    MyCustomTracer,
+    print_table,
     transform_add_to_merge,
     transform_mul_to_scale_module,
 )
@@ -53,14 +53,12 @@ print(symbolic_traced.code)
 symbolic_traced.graph.print_tabular()
 
 # replace all multiplication operations with ScaleModule
-module_new = transform_mul_to_scale_module(module_original, torch.fx.Tracer)
-graph_new = MyCustomTracer().trace(module_new)
-graph_new.print_tabular()
+module_new = transform_mul_to_scale_module(module_original)
+print_table(module_new)
 
 # find branching
-module_new = transform_add_to_merge(module_new, MyCustomTracer)
-graph_new = MyCustomTracer().trace(module_new)
-graph_new.print_tabular()
+module_new = transform_add_to_merge(module_new)
+print_table(module_new)
 
 # extend
 module_new = extend(module_new, is_container=True)
