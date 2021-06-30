@@ -99,16 +99,22 @@ class Parallel(torch.nn.Module):
 
     """
 
-    def __init__(self, *args: Union[OrderedDict[str, Module], Module]):
+    def __init__(
+        self,
+        *args: Union[OrderedDict[str, Module], Module],
+        merge_module: Module = None,
+    ):
         """Use interface of ``torch.nn.Sequential``. Modules are parallel sequence.
 
         Args:
             args: either dictionary of modules or tuple of modules
+            merge_module: The module used for merging.
+                Defaults to None, which means SumModule() is used.
         """
         super().__init__()
 
         self.branch = Branch(*args)
-        self.sum = SumModule()
+        self.merge = SumModule() if merge_module is None else merge_module
 
     def forward(self, input: Tensor) -> Tensor:
         """Forward pass. Concatenation of Branch and SumModule.
@@ -120,5 +126,5 @@ class Parallel(torch.nn.Module):
             result after results are merged again
         """
         out = self.branch(input)
-        out = self.sum(*out)
+        out = self.merge(*out)
         return out
