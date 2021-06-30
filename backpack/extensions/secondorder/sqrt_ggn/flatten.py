@@ -1,5 +1,7 @@
 """Contains extensions for the flatten layer used by ``SqrtGGN{Exact, MC}``."""
-from typing import Any, Tuple
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Tuple, Union
 
 from torch import Tensor
 from torch.nn import Module
@@ -7,19 +9,20 @@ from torch.nn import Module
 from backpack.core.derivatives.flatten import FlattenDerivatives
 from backpack.extensions.secondorder.sqrt_ggn.base import SqrtGGNBaseModule
 
+if TYPE_CHECKING:
+    from backpack.extensions.secondorder.sqrt_ggn import SqrtGGNExact, SqrtGGNMC
+
 
 class SqrtGGNFlatten(SqrtGGNBaseModule):
-    """``SqrtGGN{Exact, MC}`` extension for ``torch.nn.Tanh`` module."""
+    """``SqrtGGN{Exact, MC}`` extension for ``torch.nn.Flatten`` module."""
 
     def __init__(self):
-        """Pass derivatives for ``torch.nn.Tanh`` module."""
+        """Pass derivatives for ``torch.nn.Flatten`` module."""
         super().__init__(FlattenDerivatives())
 
-    # TODO Replace Any with Union[SqrtGGNExact, SqrtGGNMC]
-    # WAITING Deprecation of python3.6 (cyclic imports caused by annotations)
     def backpropagate(
         self,
-        ext: Any,
+        ext: Union[SqrtGGNExact, SqrtGGNMC],
         module: Module,
         grad_inp: Tuple[Tensor],
         grad_out: Tuple[Tensor],

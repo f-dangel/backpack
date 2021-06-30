@@ -3,6 +3,7 @@
 Average pooling can be expressed as convolution over grouped channels with a constant
 kernel.
 """
+from typing import Any, Tuple
 
 import torch.nn
 from einops import rearrange
@@ -13,6 +14,7 @@ from torch.nn import (
     ConvTranspose1d,
     ConvTranspose2d,
     ConvTranspose3d,
+    Module,
 )
 
 from backpack.core.derivatives.basederivatives import BaseDerivatives
@@ -31,29 +33,34 @@ class AvgPoolNDDerivatives(BaseDerivatives):
             self.conv = Conv3d
             self.convt = ConvTranspose3d
 
+    def check_parameters(self, module: Module) -> None:
+        assert module.count_include_pad, (
+            "Might not work for exotic hyperparameters of AvgPool2d, "
+            + "like count_include_pad=False"
+        )
+
+    def get_avg_pool_parameters(self, module) -> Tuple[Any, Any, Any]:
+        """Return the parameters of the module.
+
+        Args:
+            module: module
+
+        Returns:
+            stride, kernel_size, padding
+        """
+        return module.stride, module.kernel_size, module.padding
+
     def hessian_is_zero(self):
         return True
 
     def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
         """Use fact that average pooling can be implemented as conv."""
-        if self.N == 1:
-            _, C, L_in = module.input0.size()
-            _, _, L_out = module.output.size()
-            in_features = C * L_in
-            out_features = C * L_out
-            shape_out = (1, L_out)
-        elif self.N == 2:
-            _, C, H_in, W_in = module.input0.size()
-            _, _, H_out, W_out = module.output.size()
-            in_features = C * H_in * W_in
-            out_features = C * H_out * W_out
-            shape_out = (1, H_out, W_out)
-        elif self.N == 3:
-            _, C, D_in, H_in, W_in = module.input0.size()
-            _, _, D_out, H_out, W_out = module.output.size()
-            in_features = C * D_in * H_in * W_in
-            out_features = C * D_out * H_out * W_out
-            shape_out = (1, D_out, H_out, W_out)
+        self.check_parameters(module)
+
+        C = module.input0.shape[1]
+        shape_out = (1,) + tuple(module.output.shape[2:])
+        in_features = module.input0.shape[1:].numel()
+        out_features = module.output.shape[1:].numel()
 
         mat = mat.reshape(out_features * C, *shape_out)
         jac_t_mat = self.__apply_jacobian_t_of(module, mat).reshape(
@@ -66,14 +73,8 @@ class AvgPoolNDDerivatives(BaseDerivatives):
 
         return jac_t_mat_t_jac.t()
 
-    def check_exotic_parameters(self, module):
-        assert module.count_include_pad, (
-            "Might not work for exotic hyperparameters of AvgPool2d, "
-            + "like count_include_pad=False"
-        )
-
     def _jac_mat_prod(self, module, g_inp, g_out, mat):
-        self.check_exotic_parameters(module)
+        self.check_parameters(module)
 
         mat_as_pool = self.__make_single_channel(mat, module)
         jmp_as_pool = self.__apply_jacobian_of(module, mat_as_pool)
@@ -89,12 +90,13 @@ class AvgPoolNDDerivatives(BaseDerivatives):
         return result.unsqueeze(C_axis)
 
     def __apply_jacobian_of(self, module, mat):
+        stride, kernel_size, padding = self.get_avg_pool_parameters(module)
         convnd = self.conv(
             in_channels=1,
             out_channels=1,
-            kernel_size=module.kernel_size,
-            stride=module.stride,
-            padding=module.padding,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=padding,
             bias=False,
         ).to(module.input0.device)
 
@@ -117,7 +119,7 @@ class AvgPoolNDDerivatives(BaseDerivatives):
             assert jmp_as_pool.shape == (V * N * C_out, 1, D_out, H_out, W_out)
 
     def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
-        self.check_exotic_parameters(module)
+        self.check_parameters(module)
 
         mat_as_pool = self.__make_single_channel(mat, module)
         jmp_as_pool = self.__apply_jacobian_t_of(module, mat_as_pool)
@@ -126,14 +128,15 @@ class AvgPoolNDDerivatives(BaseDerivatives):
         return self.reshape_like_input(jmp_as_pool, module)
 
     def __apply_jacobian_t_of(self, module, mat):
+        stride, kernel_size, padding = self.get_avg_pool_parameters(module)
         C_for_conv_t = 1
 
         convnd_t = self.convt(
             in_channels=C_for_conv_t,
             out_channels=C_for_conv_t,
-            kernel_size=module.kernel_size,
-            stride=module.stride,
-            padding=module.padding,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=padding,
             bias=False,
         ).to(module.input0.device)
 
@@ -142,15 +145,7 @@ class AvgPoolNDDerivatives(BaseDerivatives):
         convnd_t.weight.data = avg_kernel
 
         V_N_C_in = mat.size(0)
-        if self.N == 1:
-            _, _, L_in = module.input0.size()
-            output_size = (V_N_C_in, C_for_conv_t, L_in)
-        elif self.N == 2:
-            _, _, H_in, W_in = module.input0.size()
-            output_size = (V_N_C_in, C_for_conv_t, H_in, W_in)
-        elif self.N == 3:
-            _, _, D_in, H_in, W_in = module.input0.size()
-            output_size = (V_N_C_in, C_for_conv_t, D_in, H_in, W_in)
+        output_size = (V_N_C_in, C_for_conv_t) + tuple(module.input0.shape[2:])
 
         return convnd_t(mat, output_size=output_size)
 

@@ -1,5 +1,5 @@
 """Contains partial derivatives for the ``torch.nn.Linear`` layer."""
-from typing import Any
+from typing import Tuple
 
 from torch import Size, Tensor, einsum
 from torch.nn import Linear
@@ -27,7 +27,7 @@ class LinearDerivatives(BaseParameterDerivatives):
         return True
 
     def _jac_t_mat_prod(
-        self, module: Linear, g_inp: Any, g_out: Any, mat: Tensor
+        self, module: Linear, g_inp: Tuple[Tensor], g_out: Tuple[Tensor], mat: Tensor
     ) -> Tensor:
         """Batch-apply transposed Jacobian of the output w.r.t. the input.
 
@@ -43,10 +43,10 @@ class LinearDerivatives(BaseParameterDerivatives):
             Batched transposed Jacobian vector products. Has shape
             ``[V, N, *, in_features]``.
         """
-        return einsum("oi,vn...o->vn...i", module.weight.data, mat)
+        return einsum("oi,vn...o->vn...i", module.weight, mat)
 
     def _jac_mat_prod(
-        self, module: Linear, g_inp: Any, g_out: Any, mat: Tensor
+        self, module: Linear, g_inp: Tuple[Tensor], g_out: Tuple[Tensor], mat: Tensor
     ) -> Tensor:
         """Batch-apply Jacobian of the output w.r.t. the input.
 
@@ -61,10 +61,10 @@ class LinearDerivatives(BaseParameterDerivatives):
         Returns:
             Batched Jacobian vector products. Has shape ``[V, N, *, out_features]``.
         """
-        return einsum("oi,vn...i->vn...o", module.weight.data, mat)
+        return einsum("oi,vn...i->vn...o", module.weight, mat)
 
     def ea_jac_t_mat_jac_prod(
-        self, module: Linear, g_inp: Any, g_out: Any, mat: Tensor
+        self, module: Linear, g_inp: Tuple[Tensor], g_out: Tuple[Tensor], mat: Tensor
     ) -> Tensor:
         """Expectation approximation of outer product with input-output Jacobian.
 
@@ -84,15 +84,13 @@ class LinearDerivatives(BaseParameterDerivatives):
         add_features = self._get_additional_dims(module).numel()
         in_features, out_features = module.in_features, module.out_features
 
-        jac = module.weight.data
-
         result = mat.reshape(add_features, out_features, add_features, out_features)
-        result = einsum("ik,xiyj,jl->xkyl", (jac, result, jac))
+        result = einsum("ik,xiyj,jl->xkyl", module.weight, result, module.weight)
 
         return result.reshape(in_features * add_features, in_features * add_features)
 
     def _weight_jac_mat_prod(
-        self, module: Linear, g_inp: Any, g_out: Any, mat: Tensor
+        self, module: Linear, g_inp: Tuple[Tensor], g_out: Tuple[Tensor], mat: Tensor
     ) -> Tensor:
         """Batch-apply Jacobian of the output w.r.t. the weight.
 
@@ -111,7 +109,12 @@ class LinearDerivatives(BaseParameterDerivatives):
         return einsum("n...i,voi->vn...o", module.input0, mat)
 
     def _weight_jac_t_mat_prod(
-        self, module: Linear, g_inp: Any, g_out: Any, mat: Tensor, sum_batch: int = True
+        self,
+        module: Linear,
+        g_inp: Tuple[Tensor],
+        g_out: Tuple[Tensor],
+        mat: Tensor,
+        sum_batch: int = True,
     ) -> Tensor:
         """Batch-apply transposed Jacobian of the output w.r.t. the weight.
 
@@ -143,7 +146,7 @@ class LinearDerivatives(BaseParameterDerivatives):
         return einsum(equation, mat, d_weight)
 
     def _bias_jac_mat_prod(
-        self, module: Linear, g_inp: Any, g_out: Any, mat: Tensor
+        self, module: Linear, g_inp: Tuple[Tensor], g_out: Tuple[Tensor], mat: Tensor
     ) -> Tensor:
         """Batch-apply Jacobian of the output w.r.t. the bias.
 
@@ -170,7 +173,12 @@ class LinearDerivatives(BaseParameterDerivatives):
         return mat.expand(*expand)
 
     def _bias_jac_t_mat_prod(
-        self, module: Linear, g_inp: Any, g_out: Any, mat: Tensor, sum_batch: int = True
+        self,
+        module: Linear,
+        g_inp: Tuple[Tensor],
+        g_out: Tuple[Tensor],
+        mat: Tensor,
+        sum_batch: int = True,
     ) -> Tensor:
         """Batch-apply transposed Jacobian of the output w.r.t. the bias.
 
@@ -192,7 +200,8 @@ class LinearDerivatives(BaseParameterDerivatives):
 
         return einsum(equation, mat)
 
-    def _has_additional_dims(self, module: Linear) -> bool:
+    @classmethod
+    def _has_additional_dims(cls, module: Linear) -> bool:
         """Return whether the input to a linear layer has additional (>1) dimensions.
 
         The input to a linear layer may have shape ``[N, *, out_features]``.
@@ -204,9 +213,10 @@ class LinearDerivatives(BaseParameterDerivatives):
         Returns:
             Whether the input has hidden dimensions.
         """
-        return len(self._get_additional_dims(module)) != 0
+        return len(cls._get_additional_dims(module)) != 0
 
-    def _get_additional_dims(self, module: Linear) -> Size:
+    @staticmethod
+    def _get_additional_dims(module: Linear) -> Size:
         """Return the shape of additional dimensions in the input to a linear layer.
 
         Args:

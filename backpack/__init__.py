@@ -111,15 +111,22 @@ class disable:
 def hook_store_io(module, input, output):
     """Saves the input and output as attributes of the module.
 
+    The list of inputs with index i is saved as module.input[i]
+    The output is reduced to single output tensor and saved as module.output
+
     Args:
-        module: module
-        input: List of input tensors
-        output: output tensor
+        module (torch.nn.Module): the module on which to save the params
+        input (list): List of input tensors
+        output (torch.Tensor or tuple): result of module(input)
     """
     if disable.should_store_io() and torch.is_grad_enabled():
         for i in range(len(input)):
             setattr(module, "input{}".format(i), input[i])
-        module.output = output
+        if isinstance(output, tuple):
+            # is true for RNN,GRU,LSTM which return tuple (output, ...)
+            module.output = output[0]
+        else:
+            module.output = output
 
 
 def memory_cleanup(module):

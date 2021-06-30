@@ -11,7 +11,10 @@ from test.automated_test import check_sizes_and_values
 from test.core.derivatives.implementation.autograd import AutogradDerivatives
 from test.core.derivatives.implementation.backpack import BackpackDerivatives
 from test.core.derivatives.loss_settings import LOSS_FAIL_SETTINGS
+from test.core.derivatives.lstm_settings import LSTM_SETTINGS
+from test.core.derivatives.permute_settings import PERMUTE_SETTINGS
 from test.core.derivatives.problem import DerivativesTestProblem, make_test_problems
+from test.core.derivatives.rnn_settings import RNN_SETTINGS as RNN_SETTINGS
 from test.core.derivatives.settings import SETTINGS
 from warnings import warn
 
@@ -34,14 +37,27 @@ LOSS_IDS = [problem.make_id() for problem in LOSS_PROBLEMS]
 LOSS_FAIL_PROBLEMS = make_test_problems(LOSS_FAIL_SETTINGS)
 LOSS_FAIL_IDS = [problem.make_id() for problem in LOSS_FAIL_PROBLEMS]
 
+RNN_PROBLEMS = make_test_problems(RNN_SETTINGS)
+RNN_IDS = [problem.make_id() for problem in RNN_PROBLEMS]
 
-@pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
+LSTM_PROBLEMS = make_test_problems(LSTM_SETTINGS)
+LSTM_IDS = [problem.make_id() for problem in LSTM_PROBLEMS]
+
+PERMUTE_PROBLEMS = make_test_problems(PERMUTE_SETTINGS)
+PERMUTE_IDS = [problem.make_id() for problem in PERMUTE_PROBLEMS]
+
+
+@pytest.mark.parametrize(
+    "problem",
+    NO_LOSS_PROBLEMS + RNN_PROBLEMS + PERMUTE_PROBLEMS + LSTM_PROBLEMS,
+    ids=NO_LOSS_IDS + RNN_IDS + PERMUTE_IDS + LSTM_IDS,
+)
 def test_jac_mat_prod(problem: DerivativesTestProblem, V: int = 3) -> None:
     """Test the Jacobian-matrix product.
 
     Args:
         problem: Test case.
-        V (int): Number of vectorized Jacobian-vector products. Default: ``3``.
+        V: Number of vectorized Jacobian-vector products. Default: ``3``.
     """
     problem.set_up()
     mat = torch.rand(V, *problem.input_shape).to(problem.device)
@@ -53,17 +69,29 @@ def test_jac_mat_prod(problem: DerivativesTestProblem, V: int = 3) -> None:
     problem.tear_down()
 
 
-@pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
-def test_jac_t_mat_prod(problem: DerivativesTestProblem, V: int = 3) -> None:
+@pytest.mark.parametrize(
+    "problem",
+    NO_LOSS_PROBLEMS + RNN_PROBLEMS + PERMUTE_PROBLEMS + LSTM_PROBLEMS,
+    ids=NO_LOSS_IDS + RNN_IDS + PERMUTE_IDS + LSTM_IDS,
+)
+def test_jac_t_mat_prod(problem: DerivativesTestProblem, request, V: int = 3) -> None:
     """Test the transposed Jacobian-matrix product.
 
     Args:
-        problem: Test case.
+        problem: Problem for derivative test.
+        request: Pytest request, used for getting id.
         V: Number of vectorized transposed Jacobian-vector products. Default: ``3``.
     """
     problem.set_up()
     mat = torch.rand(V, *problem.output_shape).to(problem.device)
 
+    if all(
+        string in request.node.callspec.id for string in ["AdaptiveAvgPool3d", "cuda"]
+    ):
+        with pytest.warns(UserWarning):
+            BackpackDerivatives(problem).jac_t_mat_prod(mat)
+        problem.tear_down()
+        return
     backpack_res = BackpackDerivatives(problem).jac_t_mat_prod(mat)
     autograd_res = AutogradDerivatives(problem).jac_t_mat_prod(mat)
 
@@ -77,6 +105,118 @@ for problem, problem_id in zip(PROBLEMS, IDS):
     if problem.has_weight():
         PROBLEMS_WITH_WEIGHTS.append(problem)
         IDS_WITH_WEIGHTS.append(problem_id)
+
+
+@pytest.mark.parametrize(
+    "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
+)
+@pytest.mark.parametrize(
+    "problem", RNN_PROBLEMS + LSTM_PROBLEMS, ids=RNN_IDS + LSTM_IDS
+)
+def test_bias_ih_l0_jac_t_mat_prod(problem, sum_batch, V=3):
+    """Test the transposed Jacobian-matrix product w.r.t. to bias_ih_l0.
+
+    Args:
+        problem (DerivativesProblem): Problem for derivative test.
+        sum_batch (bool): Sum results over the batch dimension.
+        V (int): Number of vectorized transposed Jacobian-vector products.
+    """
+    problem.set_up()
+    mat = torch.rand(V, *problem.output_shape).to(problem.device)
+
+    autograd_res = AutogradDerivatives(problem).bias_ih_l0_jac_t_mat_prod(
+        mat, sum_batch
+    )
+    backpack_res = BackpackDerivatives(problem).bias_ih_l0_jac_t_mat_prod(
+        mat, sum_batch
+    )
+
+    check_sizes_and_values(autograd_res, backpack_res)
+    problem.tear_down()
+
+
+@pytest.mark.parametrize(
+    "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
+)
+@pytest.mark.parametrize(
+    "problem", RNN_PROBLEMS + LSTM_PROBLEMS, ids=RNN_IDS + LSTM_IDS
+)
+def test_bias_hh_l0_jac_t_mat_prod(problem, sum_batch, V=3):
+    """Test the transposed Jacobian-matrix product w.r.t. to bias_hh_l0.
+
+    Args:
+        problem (DerivativesProblem): Problem for derivative test.
+        sum_batch (bool): Sum results over the batch dimension.
+        V (int): Number of vectorized transposed Jacobian-vector products.
+    """
+    problem.set_up()
+    mat = torch.rand(V, *problem.output_shape).to(problem.device)
+
+    autograd_res = AutogradDerivatives(problem).bias_hh_l0_jac_t_mat_prod(
+        mat, sum_batch
+    )
+    backpack_res = BackpackDerivatives(problem).bias_hh_l0_jac_t_mat_prod(
+        mat, sum_batch
+    )
+
+    check_sizes_and_values(autograd_res, backpack_res)
+    problem.tear_down()
+
+
+@pytest.mark.parametrize(
+    "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
+)
+@pytest.mark.parametrize(
+    "problem", RNN_PROBLEMS + LSTM_PROBLEMS, ids=RNN_IDS + LSTM_IDS
+)
+def test_weight_ih_l0_jac_t_mat_prod(problem, sum_batch, V=3):
+    """Test the transposed Jacobian-matrix product w.r.t. to weight_ih_l0.
+
+    Args:
+        problem (DerivativesProblem): Problem for derivative test.
+        sum_batch (bool): Sum results over the batch dimension.
+        V (int): Number of vectorized transposed Jacobian-vector products.
+    """
+    problem.set_up()
+    mat = torch.rand(V, *problem.output_shape).to(problem.device)
+
+    autograd_res = AutogradDerivatives(problem).weight_ih_l0_jac_t_mat_prod(
+        mat, sum_batch
+    )
+    backpack_res = BackpackDerivatives(problem).weight_ih_l0_jac_t_mat_prod(
+        mat, sum_batch
+    )
+
+    check_sizes_and_values(autograd_res, backpack_res)
+    problem.tear_down()
+
+
+@pytest.mark.parametrize(
+    "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
+)
+@pytest.mark.parametrize(
+    "problem", RNN_PROBLEMS + LSTM_PROBLEMS, ids=RNN_IDS + LSTM_IDS
+)
+def test_weight_hh_l0_jac_t_mat_prod(problem, sum_batch, V=4):
+    """Test the transposed Jacobian-matrix product w.r.t. to weight_hh_l0.
+
+    Args:
+        problem (DerivativesProblem): Problem for derivative test.
+        sum_batch (bool): Sum results over the batch dimension.
+        V (int): Number of vectorized transposed Jacobian-vector products.
+    """
+    problem.set_up()
+    mat = torch.rand(V, *problem.output_shape).to(problem.device)
+
+    autograd_res = AutogradDerivatives(problem).weight_hh_l0_jac_t_mat_prod(
+        mat, sum_batch
+    )
+    backpack_res = BackpackDerivatives(problem).weight_hh_l0_jac_t_mat_prod(
+        mat, sum_batch
+    )
+
+    check_sizes_and_values(autograd_res, backpack_res)
+    problem.tear_down()
 
 
 @pytest.mark.parametrize(
@@ -194,15 +334,17 @@ def test_sqrt_hessian_squared_equals_hessian(problem):
     backpack_res = BackpackDerivatives(problem).input_hessian_via_sqrt_hessian()
     autograd_res = AutogradDerivatives(problem).input_hessian()
 
-    print(backpack_res.device)
-    print(autograd_res.device)
-
     check_sizes_and_values(autograd_res, backpack_res)
     problem.tear_down()
 
 
 @pytest.mark.parametrize("problem", LOSS_FAIL_PROBLEMS, ids=LOSS_FAIL_IDS)
 def test_sqrt_hessian_should_fail(problem):
+    """Test sqrt_hessian. Should fail.
+
+    Args:
+        problem: test problem
+    """
     with pytest.raises(ValueError):
         test_sqrt_hessian_squared_equals_hessian(problem)
 
@@ -213,6 +355,7 @@ def test_sqrt_hessian_sampled_squared_approximates_hessian(problem, mc_samples=1
 
     Args:
         problem (DerivativesProblem): Problem for derivative test.
+        mc_samples: number of samples. Defaults to 100000.
 
     Compares the Hessian to reconstruction from individual Hessian MC-sampled sqrt.
     """
@@ -230,6 +373,11 @@ def test_sqrt_hessian_sampled_squared_approximates_hessian(problem, mc_samples=1
 
 @pytest.mark.parametrize("problem", LOSS_FAIL_PROBLEMS, ids=LOSS_FAIL_IDS)
 def test_sqrt_hessian_sampled_should_fail(problem):
+    """Test sqrt_hessian. Should fail.
+
+    Args:
+        problem: test problem
+    """
     with pytest.raises(ValueError):
         test_sqrt_hessian_sampled_squared_approximates_hessian(problem)
 
@@ -252,12 +400,17 @@ def test_sum_hessian(problem):
 
 @pytest.mark.parametrize("problem", LOSS_FAIL_PROBLEMS, ids=LOSS_FAIL_IDS)
 def test_sum_hessian_should_fail(problem):
+    """Test sum_hessian, should fail.
+
+    Args:
+        problem: test problem
+    """
     with pytest.raises(ValueError):
         test_sum_hessian(problem)
 
 
 @pytest.mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
-def test_ea_jac_t_mat_jac_prod(problem: DerivativesTestProblem) -> None:
+def test_ea_jac_t_mat_jac_prod(problem: DerivativesTestProblem, request) -> None:
     """Test KFRA backpropagation.
 
     H_in →  1/N ∑ₙ Jₙ^T H_out Jₙ
@@ -270,10 +423,19 @@ def test_ea_jac_t_mat_jac_prod(problem: DerivativesTestProblem) -> None:
 
     Args:
         problem: Test case.
+        request: PyTest request, used to get test id.
     """
     problem.set_up()
     out_features = problem.output_shape[1:].numel()
     mat = torch.rand(out_features, out_features).to(problem.device)
+
+    if all(
+        string in request.node.callspec.id for string in ["AdaptiveAvgPool3d", "cuda"]
+    ):
+        with pytest.warns(UserWarning):
+            BackpackDerivatives(problem).ea_jac_t_mat_jac_prod(mat)
+        problem.tear_down()
+        return
 
     backpack_res = BackpackDerivatives(problem).ea_jac_t_mat_jac_prod(mat)
     autograd_res = AutogradDerivatives(problem).ea_jac_t_mat_jac_prod(mat)
@@ -305,6 +467,7 @@ def small_input_problem(
     """Skip cases with large inputs.
 
     Args:
+        instantiated_problem: Test case with deterministically constructed attributes.
         max_input_numel: Maximum input size. Default: ``100``.
 
     Yields:
@@ -323,7 +486,7 @@ def small_input_problem(
 def no_loss_problem(
     small_input_problem: DerivativesTestProblem,
 ) -> DerivativesTestProblem:
-    """Skip cases that are loss functions or have to large inputs.
+    """Skip cases that are loss functions.
 
     Args:
         small_input_problem: Test case with small input.
@@ -337,7 +500,7 @@ def no_loss_problem(
         yield small_input_problem
 
 
-def test_hessian_is_zero(no_loss_problem: DerivativesTestProblem):
+def test_hessian_is_zero(no_loss_problem: DerivativesTestProblem) -> None:
     """Check if the input-output Hessian is (non-)zero.
 
     Note:
