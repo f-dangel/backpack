@@ -121,6 +121,7 @@ class BackpropExtension:
         module_extension = self.__get_module_extension(module)
         module_extension(self, module, g_inp, g_out)
 
+    # TODO: discuss whether this is necessary or always existing+other
     def accumulate_backpropagated_quantities(self, existing, other):
         """Specify how to accumulate info that is backpropagated to the same node.
 
