@@ -34,6 +34,8 @@ def extract_weight_diagonal(
         return einsum(equation, S ** 2, module.input0 ** 2)
 
 
+# TODO This method applies the bias Jacobian, then squares and sums the result. Intro-
+# duce base class for {Batch}DiagHessian and DiagGGN{Exact,MC} and remove this method
 def extract_bias_diagonal(module: Linear, S: Tensor, sum_batch: bool = True) -> Tensor:
     """Extract diagonal of ``(Jᵀ S) (Jᵀ S)ᵀ`` where ``J`` is the bias Jacobian.
 

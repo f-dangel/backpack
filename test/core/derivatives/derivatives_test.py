@@ -467,7 +467,7 @@ def small_input_problem(
     """Skip cases with large inputs.
 
     Args:
-        instantiated_problem: Test case with constructed attributes.
+        instantiated_problem: Test case with deterministically constructed attributes.
         max_input_numel: Maximum input size. Default: ``100``.
 
     Yields:

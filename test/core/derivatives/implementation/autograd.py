@@ -229,6 +229,10 @@ class AutogradDerivatives(DerivativesImplementation):
     def _elementwise_hessian(self, tensor: Tensor, x: Tensor) -> Tensor:
         """Computes the Hessian of each element in `tensor` w.r.t `x`.
 
+        If ``tensor`` is linear in ``x``, autograd raises a ``RuntimeError``.
+        If ``tensor`` does not depend on ``x``, autograd raises an ``AttributeError``.
+        In both cases, a Hessian of zeros is created manually and returned.
+
         Given a `tensor` of shape `[A, B, C]` and another tensor `x` with shape `[D, E]`
         used in the computation of `tensor`, the generalized Hessian has shape
         [A, B, C, D, E, D, E]. Let `hessian` denote this generalized Hessian. Then,

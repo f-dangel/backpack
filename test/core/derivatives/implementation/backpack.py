@@ -124,7 +124,7 @@ class BackpackDerivatives(DerivativesImplementation):
     def hessian_is_zero(self) -> bool:  # noqa: D102
         return self.problem.derivative.hessian_is_zero()
 
-    def _sample_hessians_from_sqrt(self, sqrt: Tensor) -> Tensor:
+    def _sample_hessians_from_sqrt(self, sqrt):
         """Convert individual matrix square root into individual full matrix.
 
         Args:

@@ -48,6 +48,5 @@ class BatchL2Linear(BatchL2Base):
             dE_dY = g_out[0].flatten(start_dim=1, end_dim=-2)
             X = module.input0.flatten(start_dim=1, end_dim=-2)
             return einsum("nmi,nmj,nki,nkj->n", dE_dY, X, dE_dY, X)
-
         else:
             return einsum("ni,nj->n", g_out[0] ** 2, module.input0 ** 2)

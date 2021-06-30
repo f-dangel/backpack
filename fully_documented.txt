@@ -1,5 +1,3 @@
-setup.py
-
 backpack/custom_module/
 
 backpack/core/derivatives/basederivatives.py
@@ -14,7 +12,6 @@ backpack/core/derivatives/adaptive_avg_pool_nd.py
 backpack/extensions/__init__.py
 backpack/extensions/backprop_extension.py
 backpack/extensions/mat_to_mat_jac_base.py
-
 backpack/extensions/firstorder/gradient/base.py
 backpack/extensions/firstorder/gradient/rnn.py
 backpack/extensions/firstorder/gradient/__init__.py
@@ -28,7 +25,6 @@ backpack/extensions/firstorder/sum_grad_squared/sgs_base.py
 backpack/extensions/firstorder/sum_grad_squared/rnn.py
 backpack/extensions/firstorder/sum_grad_squared/__init__.py
 backpack/extensions/firstorder/batch_l2_grad/
-
 backpack/extensions/secondorder/__init__.py
 backpack/extensions/secondorder/diag_ggn/__init__.py
 backpack/extensions/secondorder/diag_ggn/diag_ggn_base.py
@@ -43,8 +39,18 @@ backpack/extensions/secondorder/sqrt_ggn/
 backpack/utils/linear.py
 backpack/utils/__init__.py
 
+test/extensions/test_backprop_extension.py
+test/extensions/firstorder/firstorder_settings.py
+test/extensions/firstorder/variance/
+test/extensions/firstorder/batch_grad/batchgrad_settings.py
+test/extensions/secondorder/secondorder_settings.py
+test/extensions/secondorder/diag_ggn/
+test/extensions/secondorder/hbp/
+test/extensions/secondorder/sqrt_ggn/
+test/extensions/implementation/base.py
+test/extensions/implementation/autograd.py
+test/extensions/implementation/backpack.py
 test/adaptive_avg_pool/
-
 test/core/derivatives/derivatives_test.py
 test/core/derivatives/__init__.py
 test/core/derivatives/rnn_settings.py
@@ -53,19 +59,4 @@ test/core/derivatives/implementation/
 test/core/derivatives/permute_settings.py
 test/core/derivatives/lstm_settings.py
 test/core/derivatives/pooling_adaptive_settings.py
-
-test/extensions/test_backprop_extension.py
 test/extensions/problem.py
-
-test/extensions/firstorder/firstorder_settings.py
-test/extensions/firstorder/variance/
-test/extensions/firstorder/batch_grad/batchgrad_settings.py
-
-test/extensions/secondorder/secondorder_settings.py
-test/extensions/secondorder/diag_ggn/
-test/extensions/secondorder/hbp/
-test/extensions/secondorder/sqrt_ggn/
-
-test/extensions/implementation/base.py
-test/extensions/implementation/autograd.py
-test/extensions/implementation/backpack.py
