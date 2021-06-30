@@ -8,6 +8,7 @@ from backpack.utils.hooks import no_op
 
 from . import extensions
 from .context import CTX
+from .custom_module.graph_utils import convert_module_to_backpack
 
 
 class backpack:
@@ -173,7 +174,9 @@ def run_extension_hook(module):
         raise RuntimeError(f"Post extensions hook failed: {message}")
 
 
-def extend(module: torch.nn.Module, debug=False, is_container=False):
+def extend(
+    module: torch.nn.Module, debug=False, is_container=False, use_converter=False
+):
     """Extends a ``module`` to make it BackPACK-ready.
 
     If the ``module`` has children, e.g. for a ``torch.nn.Sequential``,
@@ -184,12 +187,17 @@ def extend(module: torch.nn.Module, debug=False, is_container=False):
         debug (bool, optional): Print debug messages during the extension.
             Default: ``False``.
         is_container: defines whether top module is a containter. Is not extended then.
+        use_converter: whether to convert the module to a BackPACK-compatible network.
 
     Returns:
         torch.nn.Module: Extended module.
     """
     if debug:
         print("[DEBUG] Extending", module)
+
+    if use_converter:
+        module = convert_module_to_backpack(module)
+        return extend(module, is_container=True)
 
     for child in module.children():
         extend(child, debug=debug)

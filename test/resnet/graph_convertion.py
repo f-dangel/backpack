@@ -9,7 +9,7 @@ from torch.fx import symbolic_trace
 from torch.nn import Module, MSELoss, Sequential, Tanh
 
 from backpack import backpack, extend
-from backpack.custom_module.graph_utils import convert_module_to_backpack, print_table
+from backpack.custom_module.graph_utils import print_table
 from backpack.extensions import DiagGGNExact
 
 
@@ -48,11 +48,10 @@ print(symbolic_traced.code)
 symbolic_traced.graph.print_tabular()
 
 # replace all multiplication operations with ScaleModule
-module_new = convert_module_to_backpack(module_original)
+module_new = extend(module_original, use_converter=True)
 print_table(module_new)
 
 # extend
-module_new = extend(module_new, is_container=True)
 loss_function = extend(MSELoss())
 
 # define input and solution
