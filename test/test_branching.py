@@ -11,7 +11,7 @@ from torch.nn import CrossEntropyLoss, Identity, Linear, ReLU, Sequential, Sigmo
 from torch.nn.utils.convert_parameters import parameters_to_vector
 
 from backpack import backpack, extend, extensions
-from backpack.custom_module.branching import ActiveIdentity, Branch, Parallel, SumModule
+from backpack.custom_module.branching import ActiveIdentity, Parallel
 from backpack.hessianfree.ggnvp import ggn_vector_product
 from backpack.utils.convert_parameters import vector_to_parameter_list
 
@@ -43,11 +43,10 @@ def setup(apply_extend=False, active_identity=True):
         Linear(in_features, hidden_features),
         ReLU(),
         # skip connection
-        Branch(
+        Parallel(
             identity,
             Linear(hidden_features, hidden_features),
         ),
-        SumModule(),
         # end of skip connection
         Sigmoid(),
         Linear(hidden_features, out_features),
