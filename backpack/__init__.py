@@ -160,9 +160,6 @@ def memory_cleanup(module):
 
 
 def hook_run_extensions(module, g_inp, g_out):
-    print("backpack::hook_run_extensions on module", type(module))
-    #print("backpack::hook_run_extensions, g_inp", type(g_inp))
-    #print("backpack::hook_run_extensions, g_out", type(g_out))
     for backpack_extension in CTX.get_active_exts():
         if CTX.get_debug():
             print("[DEBUG] Running extension", backpack_extension, "on", module)

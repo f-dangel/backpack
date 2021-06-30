@@ -6,6 +6,7 @@ import torch.nn
 from torch.nn import Sequential
 
 from backpack.extensions.module_extension import ModuleExtension
+from backpack.extensions.saved_quantities import SavedQuantities
 from backpack.utils.hooks import no_op
 
 FAIL_ERROR = "ERROR"
@@ -43,6 +44,7 @@ class BackpropExtension:
                 - "SILENT": skip the module silently
                 Defaults to FAIL_ERROR = "ERROR"
         """
+        self.saved_quantities: SavedQuantities = SavedQuantities()
         self.savefield = savefield
         self.__module_extensions = module_exts
         self.__fail_mode = fail_mode

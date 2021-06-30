@@ -1,4 +1,9 @@
+from __future__ import annotations
 import warnings
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from backpack import BackpropExtension
 
 
 class ModuleExtension:
@@ -59,16 +64,19 @@ class ModuleExtension:
         """
         warnings.warn("Backpropagate has not been overwritten")
 
-    def apply(self, ext, module, g_inp, g_out):
+    def apply(self, ext: BackpropExtension, module, g_inp, g_out):
         inp = module.input0
         out = module.output
-        print("ModuleExtension::apply, out              ", type(out))
-        print("ModuleExtension::apply, out              ", id(out))
-        #print("ModuleExtension::apply, ext.savefield    ", ext.savefield)
-        #print("ModuleExtension::apply, hasattr          ", hasattr(out, ext.savefield))
-
-        bpQuantities = self.__backproped_quantities(ext, out)
-        #print("ModuleExtension::apply, bpQuantities     ", type(bpQuantities))
+        print("ModuleExtension::apply, module           ", type(module))
+        for i in range(len(g_out)):
+            print(f"ModuleExtension::apply, g_out[{i}]         ", id(g_out[i]))
+        for i in range(len(g_inp)):
+            print(f"ModuleExtension::apply, g_inp[{i}]         ", id(g_inp[i]))
+        # bpQuantities = self.__backproped_quantities(ext, out)
+        bpQuantities = ext.saved_quantities.retrieve_quantity(id(g_out[0]))
+        #if bpQuantities is None:
+        #    bpQuantities = ext.saved_quantities.retrieve_quantity(id(g_inp[0]))
+        print("ModuleExtension::apply, bpQuantities     ", type(bpQuantities))
 
         for param in self.__params:
             if self.__param_exists_and_requires_grad(module, param):
@@ -79,11 +87,7 @@ class ModuleExtension:
         bpQuantities = self.backpropagate(ext, module, g_inp, g_out, bpQuantities)
 
         self.__backprop_quantities(ext, inp, out, bpQuantities)
-
-        print("ModuleExtension::apply, inp              ", type(inp))
-        print("ModuleExtension::apply, inp              ", id(inp))
-        #print("ModuleExtension::apply, ext.savefield    ", ext.savefield)
-        #print("ModuleExtension::apply, hasattr          ", hasattr(inp, ext.savefield))
+        ext.saved_quantities.save_quantity(id(g_inp[0]), bpQuantities)
 
     @staticmethod
     def __backproped_quantities(ext, out):
