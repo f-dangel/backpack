@@ -38,7 +38,7 @@ from torch.nn import (
     ZeroPad2d,
 )
 
-from backpack.custom_module.branching import ActiveIdentity
+from backpack.custom_module.branching import ActiveIdentity, SumModule
 from backpack.custom_module.permute import Permute
 from backpack.custom_module.scale_module import ScaleModule
 from backpack.extensions.backprop_extension import BackpropExtension
@@ -52,6 +52,7 @@ from . import (
     convtranspose1d,
     convtranspose2d,
     convtranspose3d,
+    custom_module,
     dropout,
     flatten,
     linear,
@@ -60,7 +61,6 @@ from . import (
     permute,
     pooling,
     rnn,
-    scale_module,
 )
 
 
@@ -118,9 +118,10 @@ class DiagGGN(BackpropExtension):
                 LogSigmoid: activations.DiagGGNLogSigmoid(),
                 ELU: activations.DiagGGNELU(),
                 SELU: activations.DiagGGNSELU(),
-                Identity: scale_module.DiagGGNScaleModule(),
-                ActiveIdentity: scale_module.DiagGGNScaleModule(),
-                ScaleModule: scale_module.DiagGGNScaleModule(),
+                Identity: custom_module.DiagGGNScaleModule(),
+                ActiveIdentity: custom_module.DiagGGNScaleModule(),
+                ScaleModule: custom_module.DiagGGNScaleModule(),
+                SumModule: custom_module.DiagGGNSumModule(),
                 RNN: rnn.DiagGGNRNN(),
                 Permute: permute.DiagGGNPermute(),
             },
@@ -240,9 +241,10 @@ class BatchDiagGGN(BackpropExtension):
                 LogSigmoid: activations.DiagGGNLogSigmoid(),
                 ELU: activations.DiagGGNELU(),
                 SELU: activations.DiagGGNSELU(),
-                Identity: scale_module.DiagGGNScaleModule(),
-                ActiveIdentity: scale_module.DiagGGNScaleModule(),
-                ScaleModule: scale_module.DiagGGNScaleModule(),
+                Identity: custom_module.DiagGGNScaleModule(),
+                ActiveIdentity: custom_module.DiagGGNScaleModule(),
+                ScaleModule: custom_module.DiagGGNScaleModule(),
+                SumModule: custom_module.DiagGGNSumModule(),
                 RNN: rnn.BatchDiagGGNRNN(),
                 Permute: permute.DiagGGNPermute(),
             },

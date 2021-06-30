@@ -8,9 +8,9 @@ import torch.nn
 from torch import Tensor
 from torch.nn import Module, Sequential
 
-from backpack.custom_module.branching import Branch, Parallel, SumModule
+from backpack.custom_module.branching import Branch, Parallel
 from backpack.custom_module.reduce_tuple import ReduceTuple
-from backpack.extensions.module_extension import MergeModuleExtension, ModuleExtension
+from backpack.extensions.module_extension import ModuleExtension
 from backpack.utils.hooks import apply_no_op
 
 FAIL_ERROR = "ERROR"
@@ -92,9 +92,6 @@ class BackpropExtension:
 
             if isinstance(module, (Sequential, Branch, Parallel, ReduceTuple)):
                 return apply_no_op
-
-            if isinstance(module, SumModule):
-                return MergeModuleExtension().apply
 
             if self.__fail_mode is FAIL_ERROR:
                 raise NotImplementedError(

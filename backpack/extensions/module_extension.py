@@ -201,29 +201,3 @@ class ModuleExtension:
             param: parameter name, on this param the value is saved
         """
         setattr(getattr(module, param), extension.savefield, value)
-
-
-class MergeModuleExtension(ModuleExtension):
-    """Handle backpropagation at a merge point. Passes on backpropagated info."""
-
-    def backpropagate(
-        self,
-        ext: BackpropExtension,
-        module: Module,
-        g_inp: Tuple[Tensor],
-        g_out: Tuple[Tensor],
-        bpQuantities: Any,
-    ) -> Any:
-        """Backpropagate additional information through the graph.
-
-        Args:
-            ext: Instance of the extension currently running
-            module: Instance of the extended module
-            g_inp: Gradient of the loss w.r.t. the inputs
-            g_out: Gradient of the loss w.r.t. the output
-            bpQuantities: Quantities backpropagated w.r.t. the output
-
-        Returns:
-            Quantities backpropagated w.r.t. the input
-        """
-        return bpQuantities

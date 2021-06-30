@@ -13,7 +13,7 @@ from torch.nn import (
     ZeroPad2d,
 )
 
-from backpack.custom_module.branching import ActiveIdentity
+from backpack.custom_module.branching import ActiveIdentity, SumModule
 from backpack.custom_module.scale_module import ScaleModule
 from backpack.extensions.backprop_extension import BackpropExtension
 from backpack.extensions.curvature import Curvature
@@ -26,13 +26,13 @@ from backpack.extensions.secondorder.hbp.hbp_options import (
 from . import (
     activations,
     conv2d,
+    custom_module,
     dropout,
     flatten,
     linear,
     losses,
     padding,
     pooling,
-    scale_module,
 )
 
 
@@ -66,8 +66,9 @@ class HBP(BackpropExtension):
                 ReLU: activations.HBPReLU(),
                 Sigmoid: activations.HBPSigmoid(),
                 Tanh: activations.HBPTanh(),
-                ScaleModule: scale_module.HBPScaleModule(),
-                ActiveIdentity: scale_module.HBPScaleModule(),
+                ScaleModule: custom_module.HBPScaleModule(),
+                ActiveIdentity: custom_module.HBPScaleModule(),
+                SumModule: custom_module.HBPSumModule(),
             },
         )
 
