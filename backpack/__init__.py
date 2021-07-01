@@ -1,4 +1,5 @@
 """BackPACK."""
+import functools
 import inspect
 
 import torch
@@ -159,11 +160,11 @@ def memory_cleanup(module):
         i += 1
 
 
-def hook_run_extensions(module, g_inp, g_out):
+def hook_run_extensions(module, g_inp, g_out, use_legacy=False):
     for backpack_extension in CTX.get_active_exts():
         if CTX.get_debug():
             print("[DEBUG] Running extension", backpack_extension, "on", module)
-        backpack_extension.apply(module, g_inp, g_out)
+        backpack_extension.apply(module, g_inp, g_out, use_legacy=use_legacy)
 
     run_extension_hook(module)
 
@@ -213,7 +214,12 @@ def extend(module: torch.nn.Module, debug=False):
         if version.parse("1.8.0") <= version.parse(torch.__version__):
             CTX.add_hook_handle(module.register_full_backward_hook(hook_run_extensions))
         else:
-            CTX.add_hook_handle(module.register_backward_hook(hook_run_extensions))
+            hook_run_extensions_legacy = functools.partial(
+                hook_run_extensions, use_legacy=True
+            )
+            CTX.add_hook_handle(
+                module.register_backward_hook(hook_run_extensions_legacy)
+            )
         module._backpack_extend = True
 
     return module

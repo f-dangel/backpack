@@ -100,13 +100,14 @@ class BackpropExtension:
 
         return module_extension.apply
 
-    def apply(self, module, g_inp, g_out):
+    def apply(self, module, g_inp, g_out, use_legacy=False):
         """Applies backpropagation.
 
         Args:
             module(torch.nn.module): module to perform backpropagation on
             g_inp(tuple[torch.Tensor]): input gradient
             g_out(tuple[torch.Tensor]): output gradient
+            use_legacy: use old implementation
         """
         module_extension = self.__get_module_extension(module)
-        module_extension(self, module, g_inp, g_out)
+        module_extension(self, module, g_inp, g_out, use_legacy=use_legacy)
