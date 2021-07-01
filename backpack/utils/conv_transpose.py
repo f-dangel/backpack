@@ -8,7 +8,7 @@ from torch.nn.functional import conv_transpose1d, conv_transpose2d, conv_transpo
 from backpack.utils.conv import extract_bias_diagonal as conv_extract_bias_diagonal
 
 
-def get_weight_gradient_factors(input, grad_out, module, N):
+def get_weight_gradient_factors(input, grad_out, module):
     M, C_in = input.shape[0], input.shape[1]
     kernel_size_numel = module.weight.shape[2:].numel()
 

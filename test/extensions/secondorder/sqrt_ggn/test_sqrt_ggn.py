@@ -36,7 +36,7 @@ def small_problem(
     Args:
         instantiated_problem: Test case with instantiated model, data, etc.
         max_num_params: Maximum number of model parameters to run the case.
-            Default: ``4000``.
+            Default: ``1000``.
 
     Yields:
         Instantiated test case whose model's are small enough.

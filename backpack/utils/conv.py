@@ -1,22 +1,24 @@
+from typing import Union
+
 import torch
 from einops import rearrange
-from torch import einsum
+from torch import Tensor, einsum
+from torch.nn import Conv1d, Conv2d, Conv3d
 from torch.nn.functional import conv1d, conv2d, conv3d, unfold
 
 
-def unfold_input(module, input):
+def unfold_input(module: Union[Conv1d, Conv2d, Conv3d], input: Tensor) -> Tensor:
     """Return unfolded input to a convolution.
 
     Use PyTorch's ``unfold`` operation for 2d convolutions (4d input tensors),
     otherwise fall back to a custom implementation.
 
     Args:
-        module (torch.nn.Conv1d or torch.nn.Conv2d or torch.nn.Conv3d): Convolution
-            module whose hyperparameters are used for the unfold.
-        input (torch.Tensor): Input to convolution that will be unfolded.
+        module: Convolution module whose hyperparameters are used for the unfold.
+        input: Input to convolution that will be unfolded.
 
     Returns:
-        torch.Tensor: Unfolded input.
+        Unfolded input.
     """
     if input.dim() == 4:
         return unfold(
@@ -30,7 +32,7 @@ def unfold_input(module, input):
         return unfold_by_conv(input, module)
 
 
-def get_weight_gradient_factors(input, grad_out, module, N):
+def get_weight_gradient_factors(input, grad_out, module):
     X = unfold_input(module, input)
     dE_dY = rearrange(grad_out, "n c ... -> n c (...)")
     return X, dE_dY
