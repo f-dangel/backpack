@@ -111,12 +111,12 @@ class ExtensionsTestProblem:
     def forward_pass(self, sample_idx=None):
         """Do a forward pass. Return input, output, and parameters."""
         if sample_idx is None:
-            input = self.input.clone()#.detach()
-            #input.requires_grad = True
+            input = self.input.clone()  # .detach()
+            # input.requires_grad = True
             target = self.target.clone().detach()
         else:
-            input = self.input.clone()[sample_idx, :].unsqueeze(0)#.detach()
-            #input.requires_grad = True
+            input = self.input.clone()[sample_idx, :].unsqueeze(0)  # .detach()
+            # input.requires_grad = True
             target = self.target.clone()[sample_idx].unsqueeze(0).detach()
 
         output = self.model(input)

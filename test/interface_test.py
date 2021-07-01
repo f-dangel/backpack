@@ -15,7 +15,7 @@ def dummy_forward_pass():
     D_H = 10
     D_OUT = 2
 
-    X = torch.randn(N, D_IN)
+    X = torch.randn(N, D_IN, requires_grad=True)
     Y = torch.randint(2, size=(N,))
 
     lin1 = extend(Linear(in_features=D_IN, out_features=D_H, bias=True))
@@ -34,7 +34,7 @@ def dummy_forward_pass():
 
 def dummy_forward_pass_conv():
     N, C, H, W = 2, 3, 4, 4
-    X = torch.randn(N, C, H, W)
+    X = torch.randn(N, C, H, W, requires_grad=True)
     Y = torch.randint(high=5, size=(N,))
     conv = Conv2d(3, 2, 2)
     lin = Linear(18, 5)

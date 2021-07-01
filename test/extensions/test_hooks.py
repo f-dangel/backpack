@@ -9,7 +9,7 @@ from test.core.derivatives.utils import classification_targets, get_available_de
 import pytest
 import torch
 
-from backpack import backpack, extend, extensions
+from backpack import backpack, extend
 
 DEVICES = get_available_devices()
 DEVICES_ID = [str(dev) for dev in DEVICES]
@@ -20,7 +20,7 @@ def set_up(device):
     torch.manual_seed(0)
 
     B = 2
-    X = torch.rand(B, 4).to(device)
+    X = torch.rand(B, 4, requires_grad=True).to(device)
     y = classification_targets((B,), 2).to(device)
 
     model = torch.nn.Sequential(
@@ -65,27 +65,3 @@ def test_extension_hook_multiple_parameter_visits(device):
 
     with pytest.raises(AssertionError):
         check()
-
-
-@pytest.mark.parametrize("device", DEVICES, ids=DEVICES_ID)
-def test_extension_hook_param_before_savefield_exists(device):
-    """Extension hooks iterating over parameters may get called before BackPACK."""
-    _, loss = set_up(device)
-
-    params_without_grad_batch = []
-
-    def check_grad_batch(module):
-        """Raise ``AssertionError`` if one parameter misses ``'grad_batch'``."""
-        for p in module.parameters():
-            if not hasattr(p, "grad_batch"):
-                params_without_grad_batch.append(id(p))
-                raise AssertionError(f"Param {id(p)} has no 'grad_batch' attribute")
-
-    # AssertionError is caught inside BackPACK and will raise a RuntimeError
-    with pytest.raises(RuntimeError):
-        with backpack(
-            extensions.BatchGrad(), extension_hook=check_grad_batch, debug=True
-        ):
-            loss.backward()
-
-    assert len(params_without_grad_batch) > 0

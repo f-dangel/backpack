@@ -71,6 +71,7 @@ def test_forward():
     Handles single-instance and batch mode."""
     for ex in EXAMPLES:
         input, result = ex["in"], ex["out"]
+        input.requires_grad = True
 
         out_lin = lin(input)
         assert allclose(out_lin, result)
@@ -90,6 +91,7 @@ def test_grad():
     """Test computation of bias/weight gradients."""
     for ex in EXAMPLES:
         input, b_grad, w_grad = ex["in"], ex["bias_grad"], ex["weight_grad"]
+        input.requires_grad = True
 
         loss = loss_function(g_lin(input))
         with backpack(new_ext.BatchGrad()):
@@ -110,6 +112,7 @@ def test_grad_batch():
             ex["bias_grad_batch"],
             ex["weight_grad_batch"],
         )
+        input.requires_grad = True
 
         loss = loss_function(g_lin(input))
         with backpack(new_ext.BatchGrad()):

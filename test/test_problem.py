@@ -16,6 +16,7 @@ class TestProblem:
         loss: [N x D_out] x [N x D_y] -> scalar
         """
         self.X = X
+        self.X.requires_grad = True
         self.Y = Y
         self.model = extend(model)
         self.lossfunc = extend(lossfunc)

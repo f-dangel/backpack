@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import warnings
 from typing import TYPE_CHECKING
 
@@ -65,16 +66,19 @@ class ModuleExtension:
         warnings.warn("Backpropagate has not been overwritten")
 
     def apply(self, ext: BackpropExtension, module, g_inp, g_out):
-        inp = module.input0
-        out = module.output
+        # inp = module.input0
+        # out = module.output
         print("ModuleExtension::apply, module           ", type(module))
         for i in range(len(g_out)):
             print(f"ModuleExtension::apply, g_out[{i}]         ", id(g_out[i]))
+            print(f"ModuleExtension::apply, g_out[{i}]         ", g_out[i].sum().item())
         for i in range(len(g_inp)):
             print(f"ModuleExtension::apply, g_inp[{i}]         ", id(g_inp[i]))
+            print(f"ModuleExtension::apply, g_inp[{i}]         ", g_inp[i].sum().item())
         # bpQuantities = self.__backproped_quantities(ext, out)
-        bpQuantities = ext.saved_quantities.retrieve_quantity(id(g_out[0]))
-        #if bpQuantities is None:
+        # bpQuantities = ext.saved_quantities.retrieve_quantity(id(g_out[0]))
+        bpQuantities = ext.saved_quantities.retrieve_quantity(g_out[0].sum().item())
+        # if bpQuantities is None:
         #    bpQuantities = ext.saved_quantities.retrieve_quantity(id(g_inp[0]))
         print("ModuleExtension::apply, bpQuantities     ", type(bpQuantities))
 
@@ -86,8 +90,9 @@ class ModuleExtension:
 
         bpQuantities = self.backpropagate(ext, module, g_inp, g_out, bpQuantities)
 
-        self.__backprop_quantities(ext, inp, out, bpQuantities)
-        ext.saved_quantities.save_quantity(id(g_inp[0]), bpQuantities)
+        # self.__backprop_quantities(ext, inp, out, bpQuantities)
+        # ext.saved_quantities.save_quantity(id(g_inp[0]), bpQuantities)
+        ext.saved_quantities.save_quantity(g_inp[0].sum().item(), bpQuantities)
 
     @staticmethod
     def __backproped_quantities(ext, out):

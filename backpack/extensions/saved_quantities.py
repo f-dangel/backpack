@@ -5,7 +5,6 @@ from torch import Tensor
 
 
 class SavedQuantities:
-
     def __init__(self):
         self._saved_quantities: Dict[int, Tensor] = {}
 
