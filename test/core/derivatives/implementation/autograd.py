@@ -2,7 +2,7 @@
 from test.core.derivatives.implementation.base import DerivativesImplementation
 
 import torch
-from torch import Tensor, zeros_like
+from torch import Tensor, stack, zeros_like
 
 from backpack.hessianfree.hvp import hessian_vector_product
 from backpack.hessianfree.lop import transposed_jacobian_vector_product
@@ -25,31 +25,21 @@ class AutogradDerivatives(DerivativesImplementation):
         return jacobian_vector_product(output, input, vec)[0]
 
     def jac_mat_prod(self, mat):  # noqa: D102
-        V = mat.shape[0]
-
-        vecs = [mat[v] for v in range(V)]
         try:
-            jac_vec_prods = [self.jac_vec_prod(vec) for vec in vecs]
+            return stack([self.jac_vec_prod(vec) for vec in mat])
         except RuntimeError:
             # A RuntimeError is thrown for RNNs on CUDA,
             # because PyTorch does not support double-backwards pass for them.
             # This is the recommended workaround.
             with torch.backends.cudnn.flags(enabled=False):
-                jac_vec_prods = [self.jac_vec_prod(vec) for vec in vecs]
-
-        return torch.stack(jac_vec_prods)
+                return stack([self.jac_vec_prod(vec) for vec in mat])
 
     def jac_t_vec_prod(self, vec):  # noqa: D102
         input, output, _ = self.problem.forward_pass(input_requires_grad=True)
         return transposed_jacobian_vector_product(output, input, vec)[0]
 
     def jac_t_mat_prod(self, mat):  # noqa: D102
-        V = mat.shape[0]
-
-        vecs = [mat[v] for v in range(V)]
-        jac_t_vec_prods = [self.jac_t_vec_prod(vec) for vec in vecs]
-
-        return torch.stack(jac_t_vec_prods)
+        return stack([self.jac_t_vec_prod(vec) for vec in mat])
 
     def weight_jac_t_mat_prod(self, mat, sum_batch):  # noqa: D102
         return self.param_jac_t_mat_prod("weight", mat, sum_batch)
@@ -95,7 +85,7 @@ class AutogradDerivatives(DerivativesImplementation):
                 for n_out, n_vec in zip(sample_outputs, sample_vecs)
             ]
 
-            return torch.stack(jac_t_sample_prods)
+            return stack(jac_t_sample_prods)
 
     def param_jac_t_mat_prod(self, name, mat, sum_batch, axis_batch=0):
         """Compute the product of jac_t and the given matrix.
@@ -110,15 +100,12 @@ class AutogradDerivatives(DerivativesImplementation):
         Returns:
             torch.Tensor: product of jac_t and mat
         """
-        V = mat.shape[0]
-
-        vecs = [mat[v] for v in range(V)]
-        jac_t_vec_prods = [
-            self.param_jac_t_vec_prod(name, vec, sum_batch, axis_batch=axis_batch)
-            for vec in vecs
-        ]
-
-        return torch.stack(jac_t_vec_prods)
+        return stack(
+            [
+                self.param_jac_t_vec_prod(name, vec, sum_batch, axis_batch=axis_batch)
+                for vec in mat
+            ]
+        )
 
     def weight_jac_mat_prod(self, mat) -> Tensor:
         """Product of jacobian and matrix.
@@ -149,12 +136,7 @@ class AutogradDerivatives(DerivativesImplementation):
         return jacobian_vector_product(output, param, vec)[0]
 
     def _param_jac_mat_prod(self, name, mat):
-        V = mat.shape[0]
-
-        vecs = [mat[v] for v in range(V)]
-        jac_vec_prods = [self._param_jac_vec_prod(name, vec) for vec in vecs]
-
-        return torch.stack(jac_vec_prods)
+        return stack([self._param_jac_vec_prod(name, vec) for vec in mat])
 
     def ea_jac_t_mat_jac_prod(self, mat):  # noqa: D102
         def _sample_jac_t_mat_jac_prod(sample_idx, mat):

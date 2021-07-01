@@ -65,10 +65,12 @@ class DiagGGNBaseModule(MatToJacMat):
             Returns:
                 diagonal
             """
-            JS: Tensor = getattr(self.derivatives, f"{param}_jac_t_mat_prod")(
-                module, grad_inp, grad_out, backproped, sum_batch=False
-            )
             axis: Tuple[int] = (0, 1) if sum_batch else (0,)
-            return (JS ** 2).sum(axis=axis)
+            return (
+                getattr(self.derivatives, f"{param}_jac_t_mat_prod")(
+                    module, grad_inp, grad_out, backproped, sum_batch=False
+                )
+                ** 2
+            ).sum(axis=axis)
 
         return _param

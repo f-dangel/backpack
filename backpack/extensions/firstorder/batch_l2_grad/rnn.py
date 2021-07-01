@@ -8,7 +8,7 @@ class BatchL2RNN(BatchL2Base):
 
     def __init__(self):
         """Initialization."""
-        super(BatchL2RNN, self).__init__(
+        super().__init__(
             ["bias_ih_l0", "bias_hh_l0", "weight_ih_l0", "weight_hh_l0"],
             derivatives=RNNDerivatives(),
         )

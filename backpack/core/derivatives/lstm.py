@@ -270,7 +270,6 @@ class LSTMDerivatives(BaseParameterDerivatives):
     def _jac_t_mat_prod(
         self, module: LSTM, g_inp: Tuple[Tensor], g_out: Tuple[Tensor], mat: Tensor
     ) -> Tensor:
-
         self._check_parameters(module)
 
         IFGO_prod: Tensor = self._ifgo_jac_t_mat_prod(module, mat)
@@ -304,11 +303,9 @@ class LSTMDerivatives(BaseParameterDerivatives):
         mat: Tensor,
         sum_batch: bool = True,
     ) -> Tensor:
-        self._check_parameters(module)
-
-        IFGO_prod: Tensor = self._ifgo_jac_t_mat_prod(module, mat)
-
-        return einsum(f"vtnh->v{'' if sum_batch else 'n'}h", IFGO_prod)
+        return self._bias_ih_l0_jac_t_mat_prod(
+            module, g_inp, g_out, mat, sum_batch=sum_batch
+        )
 
     def _weight_ih_l0_jac_t_mat_prod(
         self,
@@ -344,5 +341,11 @@ class LSTMDerivatives(BaseParameterDerivatives):
         return einsum(
             f"vtnh,tng->v{'' if sum_batch else 'n'}hg",
             IFGO_prod,
-            cat([zeros(1, N, H, device=mat.device), module.output[0:-1]], dim=0),
+            cat(
+                [
+                    zeros(1, N, H, device=mat.device, dtype=mat.dtype),
+                    module.output[0:-1],
+                ],
+                dim=0,
+            ),
         )

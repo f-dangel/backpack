@@ -241,10 +241,7 @@ class BatchDiagGGNExact(BatchDiagGGN):
 
         Chooses exact loss strategy and savefield diag_ggn_exact_batch.
         """
-        super().__init__(
-            loss_hessian_strategy=LossHessianStrategy.EXACT,
-            savefield="diag_ggn_exact_batch",
-        )
+        super().__init__(LossHessianStrategy.EXACT, "diag_ggn_exact_batch")
 
 
 class BatchDiagGGNMC(BatchDiagGGN):
@@ -269,10 +266,7 @@ class BatchDiagGGNMC(BatchDiagGGN):
             mc_samples: Number of Monte-Carlo samples. Default: ``1``.
         """
         self._mc_samples = mc_samples
-        super().__init__(
-            loss_hessian_strategy=LossHessianStrategy.SAMPLING,
-            savefield="diag_ggn_mc_batch",
-        )
+        super().__init__(LossHessianStrategy.SAMPLING, "diag_ggn_mc_batch")
 
     def get_num_mc_samples(self) -> int:
         """Returns number of Monte-Carlo samples.

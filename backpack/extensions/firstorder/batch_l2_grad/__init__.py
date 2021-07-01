@@ -15,8 +15,12 @@ from torch.nn import (
 )
 
 from backpack.extensions.backprop_extension import BackpropExtension
-
-from . import convnd, convtransposend, linear, rnn
+from backpack.extensions.firstorder.batch_l2_grad import (
+    convnd,
+    convtransposend,
+    linear,
+    rnn,
+)
 
 
 class BatchL2Grad(BackpropExtension):
@@ -42,7 +46,7 @@ class BatchL2Grad(BackpropExtension):
 
         Define the extensions for each module.
         """
-        super(BatchL2Grad, self).__init__(
+        super().__init__(
             savefield="batch_l2",
             fail_mode="WARNING",
             module_exts={

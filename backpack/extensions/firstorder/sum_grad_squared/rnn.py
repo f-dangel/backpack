@@ -8,7 +8,7 @@ class SGSRNN(SGSBase):
 
     def __init__(self):
         """Initialization."""
-        super(SGSRNN, self).__init__(
+        super().__init__(
             derivatives=RNNDerivatives(),
             params=["bias_ih_l0", "bias_hh_l0", "weight_ih_l0", "weight_hh_l0"],
         )
