@@ -1,10 +1,11 @@
 """Contains partial derivatives for the ``torch.nn.Linear`` layer."""
-from typing import Tuple
+from typing import List, Tuple
 
 from torch import Size, Tensor, einsum
 from torch.nn import Linear
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
+from backpack.utils.subsampling import subsample
 
 
 class LinearDerivatives(BaseParameterDerivatives):
@@ -115,6 +116,7 @@ class LinearDerivatives(BaseParameterDerivatives):
         g_out: Tuple[Tensor],
         mat: Tensor,
         sum_batch: int = True,
+        subsampling: List[int] = None,
     ) -> Tensor:
         """Batch-apply transposed Jacobian of the output w.r.t. the weight.
 
@@ -124,15 +126,19 @@ class LinearDerivatives(BaseParameterDerivatives):
             g_out: Gradients w.r.t. module output. Not required by the implementation.
             mat: Batch of ``V`` vectors of same shape as the layer output
                 (``[N, *, out_features]``) to which the transposed output-input Jacobian
-                is applied. Has shape ``[V, N, *, out_features]``.
+                is applied. Has shape ``[V, N, *, out_features]`` if subsampling is not
+                used, otherwise ``N`` must be ``len(subsampling)`` instead.
             sum_batch: Sum the result's batch axis. Default: ``True``.
+            subsampling: Indices of samples along the output's batch dimension that
+                should be considered. Defaults to ``None`` (use all samples).
 
         Returns:
             Batched transposed Jacobian vector products. Has shape
-                ``[V, N, *module.weight.shape]`` when ``sum_batch`` is ``False``. With
-                ``sum_batch=True``, has shape ``[V, *module.weight.shape]``.
+            ``[V, N, *module.weight.shape]`` when ``sum_batch`` is ``False``. With
+            ``sum_batch=True``, has shape ``[V, *module.weight.shape]``. If sub-
+            sampling is used, ``N`` must be ``len(subsampling)`` instead.
         """
-        d_weight = module.input0
+        d_weight = subsample(module, "input0", subsampling=subsampling)
 
         if self._has_additional_dims(module):
             # Flatten additional dimensions because they cannot be represented as

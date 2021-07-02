@@ -16,11 +16,13 @@ from test.core.derivatives.permute_settings import PERMUTE_SETTINGS
 from test.core.derivatives.problem import DerivativesTestProblem, make_test_problems
 from test.core.derivatives.rnn_settings import RNN_SETTINGS as RNN_SETTINGS
 from test.core.derivatives.settings import SETTINGS
+from typing import List, Tuple, Union
 from warnings import warn
 
 import pytest
 import torch
 from pytest import fixture, skip
+from torch import Size, Tensor
 
 from backpack.core.derivatives.convnd import weight_jac_t_save_memory
 
@@ -45,6 +47,9 @@ LSTM_IDS = [problem.make_id() for problem in LSTM_PROBLEMS]
 
 PERMUTE_PROBLEMS = make_test_problems(PERMUTE_SETTINGS)
 PERMUTE_IDS = [problem.make_id() for problem in PERMUTE_PROBLEMS]
+
+SUBSAMPLINGS = [None, [0, 0], [2, 0]]
+SUBSAMPLING_IDS = [f"subsampling={s}".replace(" ", "") for s in SUBSAMPLINGS]
 
 
 @pytest.mark.parametrize(
@@ -227,29 +232,55 @@ def test_weight_hh_l0_jac_t_mat_prod(problem, sum_batch, V=4):
     [True, False],
     ids=["save_memory=True", "save_memory=False"],
 )
-@pytest.mark.parametrize("problem", PROBLEMS_WITH_WEIGHTS, ids=IDS_WITH_WEIGHTS)
 def test_weight_jac_t_mat_prod(
-    problem: DerivativesTestProblem, sum_batch: bool, save_memory: bool, V: int = 3
+    problem_weight_jac_t_mat_prod,
+    sum_batch: bool,
+    save_memory: bool,
 ) -> None:
     """Test the transposed Jacobian-matrix product w.r.t. to the weight.
 
     Args:
-        problem: Test case.
+        problem_weight_jac_t_mat_prod: Instantiated test case, subsampling, and
+            input for weight_jac_t
         sum_batch: Sum out the batch dimension.
         save_memory: Use Owkin implementation in convolutions to save memory.
-        V: Number of vectorized transposed Jacobian-vector products. Default: ``3``.
     """
-    problem.set_up()
-    mat = torch.rand(V, *problem.output_shape).to(problem.device)
+    problem, subsampling, mat = problem_weight_jac_t_mat_prod
 
     with weight_jac_t_save_memory(save_memory):
         backpack_res = BackpackDerivatives(problem).weight_jac_t_mat_prod(
-            mat, sum_batch
+            mat, sum_batch, subsampling=subsampling
         )
-    autograd_res = AutogradDerivatives(problem).weight_jac_t_mat_prod(mat, sum_batch)
+    autograd_res = AutogradDerivatives(problem).weight_jac_t_mat_prod(
+        mat, sum_batch, subsampling=subsampling
+    )
 
     check_sizes_and_values(autograd_res, backpack_res)
-    problem.tear_down()
+
+
+def rand_mat_like_output(
+    V: int, output_shape: Size, subsampling: List[int] = None
+) -> Tensor:
+    """Generate random matrix whose columns are shaped like the layer output.
+
+    Can be used to generate random inputs to functions that act on tensors
+    shaped like the module output (like ``*_jac_t_mat_prod``).
+
+    Args:
+        V: Number of rows.
+        output_shape: Shape of the module output.
+        subsampling: Indices of samples used by sub-sampling.
+
+    Returns:
+        Random matrix with (subsampled) output shape.
+    """
+    subsample_shape = list(output_shape)
+
+    if subsampling is not None:
+        N_axis = 0
+        subsample_shape[N_axis] = len(subsampling)
+
+    return torch.rand(V, *subsample_shape)
 
 
 @pytest.mark.parametrize("problem", PROBLEMS_WITH_WEIGHTS, ids=IDS_WITH_WEIGHTS)
@@ -458,6 +489,44 @@ def instantiated_problem(request) -> DerivativesTestProblem:
     case.set_up()
     yield case
     case.tear_down()
+
+
+@fixture(params=SUBSAMPLINGS, ids=SUBSAMPLING_IDS)
+def problem_weight_jac_t_mat_prod(
+    request, instantiated_problem: DerivativesTestProblem
+) -> Tuple[DerivativesTestProblem, Union[None, List[int]], Tensor]:
+    """Create matrix that will be multiplied by the weight Jacobian.
+
+    Skip cases that don't have a weight parameter, or if there is a conflict where the
+    subsampling indices exceed the samples in the input.
+
+    Args:
+        request (SubRequest): Request for the fixture from a test/fixture function.
+        instantiated_problem: Test case with deterministically constructed attributes.
+
+    Yields:
+        instantiated case, subsampling, and matrix for weight_jac_t
+    """
+    has_weight = (
+        hasattr(instantiated_problem.module, "weight")
+        and instantiated_problem.module.weight is not None
+    )
+    if not has_weight:
+        skip("No weight")
+
+    subsampling: Union[None, List[int]] = request.param
+    batch_size = instantiated_problem.input_shape[0]
+    enough_samples = subsampling is None or batch_size >= max(subsampling)
+
+    if not enough_samples:
+        skip(f"Not enough samples: sub-sampling {subsampling}, batch_size {batch_size}")
+
+    mat = rand_mat_like_output(
+        3, instantiated_problem.output_shape, subsampling=subsampling
+    ).to(instantiated_problem.device)
+
+    yield (instantiated_problem, subsampling, mat)
+    del mat
 
 
 @fixture

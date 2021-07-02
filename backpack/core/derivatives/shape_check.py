@@ -8,6 +8,8 @@ from typing import Any, Callable
 from torch import Tensor
 from torch.nn import Module
 
+from backpack.utils.subsampling import subsample
+
 
 ###############################################################################
 #                              Utility functions                              #
@@ -59,7 +61,12 @@ def _check_same_V_dim(mat1, mat2):
 
 
 def _check_like(mat, module, name, diff=1, *args, **kwargs):
-    return check_shape(mat, getattr(module, name), diff=diff)
+    if name == "output" and "subsampling" in kwargs.keys():
+        compare = subsample(module, name, subsampling=kwargs["subsampling"])
+    else:
+        compare = getattr(module, name)
+
+    return check_shape(mat, compare, diff=diff)
 
 
 def _check_like_with_sum_batch(mat, module, name, sum_batch=True, *args, **kwargs):
