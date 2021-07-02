@@ -153,6 +153,8 @@ class ModuleExtension:
         if use_legacy:
             setattr(reference_tensor, extension.savefield, bpQuantities)
 
+            # TODO: discuss: is this code actually tested somewhere?
+            # TODO: implement same functionality in new hook
             is_a_leaf = out.grad_fn is None
             retain_grad_is_on = getattr(out, "retains_grad", False)
             inp_is_out = id(inp) == id(out)
