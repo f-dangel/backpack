@@ -5,7 +5,10 @@ from torch import Tensor
 
 
 class SavedQuantities:
+    """Implements interface to save backpropagation quantities."""
+
     def __init__(self):
+        """Initialization."""
         self._saved_quantities: Dict[int, Tensor] = {}
 
     def save_quantity(self, key: int, quantity: Tensor) -> bool:
