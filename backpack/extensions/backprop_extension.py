@@ -5,6 +5,7 @@ from typing import Type
 import torch.nn
 from torch.nn import Sequential
 
+from backpack.custom_module.reduce_tuple import ReduceTuple
 from backpack.extensions.module_extension import ModuleExtension
 from backpack.extensions.saved_quantities import SavedQuantities
 from backpack.utils.hooks import no_op
@@ -80,7 +81,7 @@ class BackpropExtension:
 
         if module_extension is None:
 
-            if isinstance(module, Sequential):
+            if isinstance(module, (Sequential, ReduceTuple)):
                 return no_op
 
             if self.__fail_mode is FAIL_ERROR:

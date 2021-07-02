@@ -1,4 +1,5 @@
-"""Second order extensions.
+# noqa: D205, D415
+"""Second order extensions
 ====================================
 
 Second-order extensions propagate additional information through the graph
@@ -16,11 +17,22 @@ The implemented extensions are
   :func:`KFRA <backpack.extensions.KFRA>`,
   :func:`KFLR <backpack.extensions.KFLR>`.
 - The diagonal of the Hessian :func:`DiagHessian <backpack.extensions.DiagHessian>`
+- The symmetric (square root) factorization of the GGN/Fisher information,
+  using exact computation
+  (:func:`SqrtGGNExact <backpack.extensions.SqrtGGNExact>`)
+  or a Monte-Carlo (MC) approximation
+  (:func:`SqrtGGNMC<backpack.extensions.SqrtGGNMC>`)
 """
 
-from .diag_ggn import BatchDiagGGNExact, BatchDiagGGNMC, DiagGGNExact, DiagGGNMC
-from .diag_hessian import DiagHessian
-from .hbp import HBP, KFAC, KFLR, KFRA
+from backpack.extensions.secondorder.diag_ggn import (
+    BatchDiagGGNExact,
+    BatchDiagGGNMC,
+    DiagGGNExact,
+    DiagGGNMC,
+)
+from backpack.extensions.secondorder.diag_hessian import BatchDiagHessian, DiagHessian
+from backpack.extensions.secondorder.hbp import HBP, KFAC, KFLR, KFRA
+from backpack.extensions.secondorder.sqrt_ggn import SqrtGGNExact, SqrtGGNMC
 
 __all__ = [
     "DiagGGNExact",
@@ -28,8 +40,11 @@ __all__ = [
     "DiagGGNMC",
     "BatchDiagGGNMC",
     "DiagHessian",
+    "BatchDiagHessian",
     "KFAC",
     "KFLR",
     "KFRA",
     "HBP",
+    "SqrtGGNExact",
+    "SqrtGGNMC",
 ]

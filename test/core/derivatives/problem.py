@@ -132,6 +132,10 @@ class DerivativesTestProblem:
         else:
             output = module(input, target)
 
+        if isinstance(output, tuple):
+            # is true for RNN,GRU,LSTM which return tuple (output, ...)
+            output = output[0]
+
         return output.shape
 
     def is_loss(self):
@@ -152,6 +156,10 @@ class DerivativesTestProblem:
             output = self.module(input, self.target)
         else:
             output = self.module(input)
+
+        if isinstance(output, tuple):
+            # is true for RNN,GRU,LSTM which return tuple (output, ...)
+            output = output[0]
 
         return input, output, dict(self.module.named_parameters())
 
@@ -177,13 +185,3 @@ class DerivativesTestProblem:
     def has_bias(self):
         module = self.make_module()
         return hasattr(module, "bias") and module.bias is not None
-
-    def is_group_conv(self):
-        """Return whether module represents grouped convolution."""
-        module = self.make_module()
-        group_conv = False
-
-        if isinstance(module, (torch.nn.Conv1d, torch.nn.Conv2d, torch.nn.Conv3d)):
-            group_conv = module.groups > 1
-
-        return group_conv

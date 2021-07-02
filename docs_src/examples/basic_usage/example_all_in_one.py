@@ -10,7 +10,7 @@ on a linear model for MNIST.
 # %%
 # Let's start by loading some dummy data and extending the model
 
-from torch import allclose, rand
+from torch import rand
 from torch.nn import CrossEntropyLoss, Flatten, Linear, Sequential
 
 from backpack import backpack, extend
@@ -21,11 +21,16 @@ from backpack.extensions import (
     KFLR,
     KFRA,
     PCHMP,
+    BatchDiagGGNExact,
+    BatchDiagGGNMC,
+    BatchDiagHessian,
     BatchGrad,
     BatchL2Grad,
     DiagGGNExact,
     DiagGGNMC,
     DiagHessian,
+    SqrtGGNExact,
+    SqrtGGNMC,
     SumGradSquared,
     Variance,
 )
@@ -111,7 +116,7 @@ for name, param in model.named_parameters():
 # --------------------------
 
 # %%
-# Diagonal of the Gauss-Newton and its Monte-Carlo approximation
+# Diagonal of the generalized Gauss-Newton and its Monte-Carlo approximation
 
 loss = lossfunc(model(X), y)
 with backpack(DiagGGNExact(), DiagGGNMC(mc_samples=1)):
@@ -122,6 +127,19 @@ for name, param in model.named_parameters():
     print(".grad.shape:             ", param.grad.shape)
     print(".diag_ggn_mc.shape:      ", param.diag_ggn_mc.shape)
     print(".diag_ggn_exact.shape:   ", param.diag_ggn_exact.shape)
+
+# %%
+# Per-sample diagonal of the generalized Gauss-Newton and its Monte-Carlo approximation
+
+loss = lossfunc(model(X), y)
+with backpack(BatchDiagGGNExact(), BatchDiagGGNMC(mc_samples=1)):
+    loss.backward()
+
+for name, param in model.named_parameters():
+    print(name)
+    print(".diag_ggn_mc_batch.shape:      ", param.diag_ggn_mc_batch.shape)
+    print(".diag_ggn_exact_batch.shape:   ", param.diag_ggn_exact_batch.shape)
+
 
 # %%
 # KFAC, KFRA and KFLR
@@ -138,16 +156,30 @@ for name, param in model.named_parameters():
     print(".kfra (shapes):          ", [kfra.shape for kfra in param.kfra])
 
 # %%
-# Diagonal Hessian
+# Diagonal Hessian and per-sample diagonal Hessian
 
 loss = lossfunc(model(X), y)
-with backpack(DiagHessian()):
+with backpack(DiagHessian(), BatchDiagHessian()):
     loss.backward()
 
 for name, param in model.named_parameters():
     print(name)
     print(".grad.shape:             ", param.grad.shape)
     print(".diag_h.shape:           ", param.diag_h.shape)
+    print(".diag_h_batch.shape:     ", param.diag_h_batch.shape)
+
+# %%
+# Matrix square root of the generalized Gauss-Newton or its Monte-Carlo approximation
+
+loss = lossfunc(model(X), y)
+with backpack(SqrtGGNExact(), SqrtGGNMC(mc_samples=1)):
+    loss.backward()
+
+for name, param in model.named_parameters():
+    print(name)
+    print(".grad.shape:             ", param.grad.shape)
+    print(".sqrt_ggn_exact.shape:   ", param.sqrt_ggn_exact.shape)
+    print(".sqrt_ggn_mc.shape:      ", param.sqrt_ggn_mc.shape)
 
 # %%
 # Block-diagonal curvature products

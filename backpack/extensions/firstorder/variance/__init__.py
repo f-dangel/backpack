@@ -1,4 +1,9 @@
+"""Defines backpropagation extension for variance: Variance.
+
+Defines module extension for each module.
+"""
 from torch.nn import (
+    RNN,
     Conv1d,
     Conv2d,
     Conv3d,
@@ -18,6 +23,7 @@ from . import (
     convtranspose2d,
     convtranspose3d,
     linear,
+    rnn,
 )
 
 
@@ -26,7 +32,10 @@ class Variance(BackpropExtension):
 
     Stores the output in ``variance``. Same dimension as the gradient.
 
-    Note: beware of scaling issue
+    .. note::
+
+        Beware of scaling issue
+
         The variance depends on the scaling of the overall function.
         Let ``fᵢ`` be the loss of the ``i`` th sample, with gradient ``gᵢ``.
         ``Variance`` will return the variance of the vectors
@@ -36,6 +45,10 @@ class Variance(BackpropExtension):
     """
 
     def __init__(self):
+        """Initialization.
+
+        Defines module extension for each module.
+        """
         super().__init__(
             savefield="variance",
             fail_mode="WARNING",
@@ -47,5 +60,6 @@ class Variance(BackpropExtension):
                 ConvTranspose1d: convtranspose1d.VarianceConvTranspose1d(),
                 ConvTranspose2d: convtranspose2d.VarianceConvTranspose2d(),
                 ConvTranspose3d: convtranspose3d.VarianceConvTranspose3d(),
+                RNN: rnn.VarianceRNN(),
             },
         )

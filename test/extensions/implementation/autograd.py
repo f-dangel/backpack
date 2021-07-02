@@ -1,8 +1,12 @@
+"""Autograd implementation of BackPACK's extensions."""
 from test.extensions.implementation.base import ExtensionsImplementation
+from typing import List
 
 import torch
+from torch import Tensor
+from torch.nn.utils.convert_parameters import parameters_to_vector
 
-from backpack.hessianfree.ggnvp import ggn_vector_product_from_plist
+from backpack.hessianfree.ggnvp import ggn_vector_product, ggn_vector_product_from_plist
 from backpack.hessianfree.rop import R_op
 from backpack.utils.convert_parameters import vector_to_parameter_list
 
@@ -10,7 +14,7 @@ from backpack.utils.convert_parameters import vector_to_parameter_list
 class AutogradExtensions(ExtensionsImplementation):
     """Extension implementations with autograd."""
 
-    def batch_grad(self):
+    def batch_grad(self) -> List[Tensor]:  # noqa: D102
         N = self.problem.input.shape[0]
         batch_grads = [
             torch.zeros(N, *p.size()).to(self.problem.device)
@@ -34,12 +38,12 @@ class AutogradExtensions(ExtensionsImplementation):
 
         return batch_grads
 
-    def batch_l2_grad(self):
+    def batch_l2_grad(self) -> List[Tensor]:  # noqa: D102
         batch_grad = self.batch_grad()
         batch_l2_grads = [(g ** 2).flatten(start_dim=1).sum(1) for g in batch_grad]
         return batch_l2_grads
 
-    def sgs(self):
+    def sgs(self) -> List[Tensor]:  # noqa: D102
         N = self.problem.input.shape[0]
         sgs = [
             torch.zeros(*p.size()).to(self.problem.device)
@@ -62,7 +66,7 @@ class AutogradExtensions(ExtensionsImplementation):
                 sgs[idx] += (g.detach() * factor) ** 2
         return sgs
 
-    def variance(self):
+    def variance(self) -> List[Tensor]:  # noqa: D102
         batch_grad = self.batch_grad()
         variances = [torch.var(g, dim=0, unbiased=False) for g in batch_grad]
         return variances
@@ -89,11 +93,27 @@ class AutogradExtensions(ExtensionsImplementation):
             diag_ggns.append(diag_ggn_p.view(p.size()))
         return diag_ggns
 
-    def diag_ggn(self):
-        _, output, loss = self.problem.forward_pass()
-        return self._get_diag_ggn(loss, output)
+    def diag_ggn(self) -> List[Tensor]:  # noqa: D102
+        try:
+            _, output, loss = self.problem.forward_pass()
+            return self._get_diag_ggn(loss, output)
+        except RuntimeError:
+            # torch does not implement cuda double-backwards pass on RNNs and
+            # recommends this workaround
+            with torch.backends.cudnn.flags(enabled=False):
+                _, output, loss = self.problem.forward_pass()
+                return self._get_diag_ggn(loss, output)
 
-    def diag_ggn_batch(self):
+    def diag_ggn_exact_batch(self) -> List[Tensor]:  # noqa: D102
+        try:
+            return self._diag_ggn_exact_batch()
+        except RuntimeError:
+            # torch does not implement cuda double-backwards pass on RNNs and
+            # recommends this workaround
+            with torch.backends.cudnn.flags(enabled=False):
+                return self._diag_ggn_exact_batch()
+
+    def _diag_ggn_exact_batch(self):
         batch_size = self.problem.input.shape[0]
         _, _, batch_loss = self.problem.forward_pass()
         loss_list = torch.zeros(batch_size, device=self.problem.device)
@@ -110,9 +130,7 @@ class AutogradExtensions(ExtensionsImplementation):
         params_batch_diag_ggn = list(zip(*batch_diag_ggn))
         return [torch.stack(param) * factor for param in params_batch_diag_ggn]
 
-    def diag_h(self):
-        _, _, loss = self.problem.forward_pass()
-
+    def _get_diag_h(self, loss):
         def hvp(df_dx, x, v):
             Hv = R_op(df_dx, x, v)
             return [j.detach() for j in Hv]
@@ -137,5 +155,62 @@ class AutogradExtensions(ExtensionsImplementation):
                 diag_h_p[parameter_index] = diag_value
 
             diag_hs.append(diag_h_p.view(p.size()))
-
         return diag_hs
+
+    def diag_h(self) -> List[Tensor]:  # noqa: D102
+        _, _, loss = self.problem.forward_pass()
+        return self._get_diag_h(loss)
+
+    def diag_h_batch(self) -> List[Tensor]:  # noqa: D102
+        batch_size = self.problem.input.shape[0]
+        _, _, batch_loss = self.problem.forward_pass()
+        loss_list = torch.zeros(batch_size, device=self.problem.device)
+
+        batch_diag_h = []
+        for b in range(batch_size):
+            _, _, loss = self.problem.forward_pass(sample_idx=b)
+            loss_list[b] = loss
+            diag_h = self._get_diag_h(loss)
+            batch_diag_h.append(diag_h)
+        factor = self.problem.get_reduction_factor(batch_loss, loss_list)
+        params_batch_diag_h = list(zip(*batch_diag_h))
+        return [torch.stack(param) * factor for param in params_batch_diag_h]
+
+    def ggn(self) -> Tensor:  # noqa: D102
+        _, output, loss = self.problem.forward_pass()
+        model = self.problem.model
+
+        num_params = sum(p.numel() for p in model.parameters())
+        ggn = torch.zeros(num_params, num_params).to(self.problem.device)
+
+        for i in range(num_params):
+            # GGN-vector product with i.th unit vector yields the i.th row
+            e_i = torch.zeros(num_params).to(self.problem.device)
+            e_i[i] = 1.0
+
+            # convert to model parameter shapes
+            e_i_list = vector_to_parameter_list(e_i, model.parameters())
+            ggn_i_list = ggn_vector_product(loss, output, model, e_i_list)
+
+            ggn_i = parameters_to_vector(ggn_i_list)
+            ggn[i, :] = ggn_i
+
+        return ggn
+
+    def diag_ggn_mc(self, mc_samples) -> List[Tensor]:  # noqa: D102
+        raise NotImplementedError
+
+    def diag_ggn_mc_batch(self, mc_samples: int) -> List[Tensor]:  # noqa: D102
+        raise NotImplementedError
+
+    def ggn_mc(self, mc_samples: int, chunks: int = 1):  # noqa: D102
+        raise NotImplementedError
+
+    def kfac(self, mc_samples: int = 1) -> List[List[Tensor]]:  # noqa: D102
+        raise NotImplementedError
+
+    def kflr(self) -> List[List[Tensor]]:  # noqa: D102
+        raise NotImplementedError
+
+    def kfra(self) -> List[List[Tensor]]:  # noqa: D102
+        raise NotImplementedError

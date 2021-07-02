@@ -1,8 +1,9 @@
+"""Test DiagGGN extension."""
 from test.automated_test import check_sizes_and_values
 from test.extensions.implementation.autograd import AutogradExtensions
 from test.extensions.implementation.backpack import BackpackExtensions
 from test.extensions.problem import make_test_problems
-from test.extensions.secondorder.diag_ggn.diaggnn_settings import DiagGGN_SETTINGS
+from test.extensions.secondorder.diag_ggn.diag_ggn_settings import DiagGGN_SETTINGS
 
 import pytest
 
@@ -12,7 +13,7 @@ IDS = [problem.make_id() for problem in PROBLEMS]
 
 @pytest.mark.parametrize("problem", PROBLEMS, ids=IDS)
 def test_diag_ggn(problem):
-    """Test the diagonal of Gauss-Newton
+    """Test the diagonal of generalized Gauss-Newton.
 
     Args:
         problem (ExtensionsTestProblem): Problem for extension test.
@@ -33,8 +34,9 @@ MC_RTOL = 1e-2
 
 @pytest.mark.parametrize("problem", PROBLEMS, ids=IDS)
 def test_diag_ggn_mc_light(problem):
-    """Test the MC approximation of Diagonal of Gauss-Newton
-        with few mc_samples (light version)
+    """Test the MC approximation of Diagonal of generalized Gauss-Newton.
+
+    with few mc_samples (light version)
 
     Args:
         problem (ExtensionsTestProblem): Problem for extension test.
@@ -54,8 +56,9 @@ def test_diag_ggn_mc_light(problem):
 @pytest.mark.montecarlo
 @pytest.mark.parametrize("problem", PROBLEMS, ids=IDS)
 def test_diag_ggn_mc(problem):
-    """Test the MC approximation of Diagonal of Gauss-Newton
-       with more samples (slow version)
+    """Test the MC approximation of Diagonal of generalized Gauss-Newton.
+
+    with more samples (slow version)
 
     Args:
         problem (ExtensionsTestProblem): Problem for extension test.

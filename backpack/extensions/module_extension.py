@@ -66,6 +66,10 @@ class ModuleExtension:
         warnings.warn("Backpropagate has not been overwritten")
 
     def apply(self, ext: BackpropExtension, module, g_inp, g_out, use_legacy=False):
+        """
+        Fetch backpropagated quantities from module output, apply backpropagation
+        rule, and attach the result to module input(s).
+        """
         if use_legacy:
             bpQuantities = self.__backproped_quantities(ext, module.output)
         else:
@@ -86,10 +90,12 @@ class ModuleExtension:
 
     @staticmethod
     def __backproped_quantities(ext, out):
+        """Fetch backpropagated quantities attached to the module output."""
         return getattr(out, ext.savefield, None)
 
     @staticmethod
     def __backprop_quantities(ext, inp, out, bpQuantities):
+        """Propagate back additional information by attaching it to the module input."""
 
         setattr(inp, ext.savefield, bpQuantities)
 
