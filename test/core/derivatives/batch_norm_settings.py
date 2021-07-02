@@ -68,7 +68,9 @@ BATCH_NORM_SETTINGS = [
         "id_prefix": "training=False",
     },
     {
-        "module_fn": lambda: torch.nn.BatchNorm3d(num_features=7).train(mode=False),
+        "module_fn": lambda: _initialize_training_false(
+            torch.nn.BatchNorm3d(num_features=7)
+        ),
         "input_fn": lambda: torch.rand(size=(5, 7, 3, 4, 2)),
         "id_prefix": "training=False",
     },
