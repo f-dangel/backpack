@@ -1,46 +1,58 @@
 """BackPACK."""
 import functools
 import inspect
+from typing import Callable, Tuple, Union
 
 import torch
-from packaging import version
+from torch import Tensor
+from torch.nn import Module
 
 from backpack.extensions.backprop_extension import BackpropExtension
 from backpack.utils.hooks import no_op
 
 from . import extensions
 from .context import CTX
+from .utils import TORCH_VERSION_HIGHER_THAN_1_8_0
 
 
 class backpack:
-    """Activate BackPACK extensions.
+    """Activate BackPACK extensions."""
 
-    Enables the BackPACK extensions passed as arguments in the
-    :code:`backward` calls inside the current :code:`with` block.
+    def __init__(
+        self,
+        *exts: BackpropExtension,
+        extension_hook: Callable = None,
+        debug: bool = False
+    ):
+        """Activate BackPACK extensions.
 
-    Args:
-        exts ([BackpropExtension]): Extensions to activate in the backward pass.
-        extension_hook (function, optional): Function called on each module after
-            all BackPACK extensions have run. Takes a ``torch.nn.Module`` and returns
-            ``None``. Default: ``None`` (no operation will be formed).
+        Enables the BackPACK extensions passed as arguments in the
+        :code:`backward` calls inside the current :code:`with` block.
 
-            Can be used to reduce memory overhead if the goal is to compute
-            transformations of BackPACK quantities. Information can be compacted
-            during a backward pass and obsolete tensors be freed manually (``del``).
 
-            .. note::
+        Can be used to reduce memory overhead if the goal is to compute
+        transformations of BackPACK quantities. Information can be compacted
+        during a backward pass and obsolete tensors be freed manually (``del``).
 
-                If the callable iterates over the ``module.parameters()``, the same
-                parameter may be seen multiple times across calls. This happens
-                if the parameters are part of multiple modules.
-                For example, the parameters of a `torch.nn.Linear` module in
-                ``model = torch.nn.Sequential(torch.nn.Linear(...))`` are part of
-                both the ``Linear`` and the ``Sequential``.
-        debug (bool, optional): Print debug messages during the backward pass.
-            Default: ``False``.
-    """
+        .. note::
+            If the callable iterates over the ``module.parameters()``, the same
+            parameter may be seen multiple times across calls. This happens
+            if the parameters are part of multiple modules.
+            For example, the parameters of a `torch.nn.Linear` module in
+            ``model = torch.nn.Sequential(torch.nn.Linear(...))`` are part of
+            both the ``Linear`` and the ``Sequential``.
 
-    def __init__(self, *exts: BackpropExtension, extension_hook=None, debug=False):
+        Args:
+            exts: Extensions to activate in the backward pass.
+            extension_hook: Function called on each module after
+                all BackPACK extensions have run. Takes a ``torch.nn.Module`` and returns
+                ``None``. Default: ``None`` (no operation will be formed).
+            debug: Print debug messages during the backward pass. Default: ``False``.
+
+        Raises:
+            ValueError: if extensions are not valid
+        """
+        # TODO check if this docstring makes sense
         for ext in exts:
             if not isinstance(ext, BackpropExtension):
                 if inspect.isclass(ext) and issubclass(ext, BackpropExtension):
@@ -60,6 +72,7 @@ class backpack:
         self.extension_hook = no_op if extension_hook is None else extension_hook
 
     def __enter__(self):
+        """Setup backpack environment."""
         self.old_CTX = CTX.get_active_exts()
         self.old_debug = CTX.get_debug()
         self.old_extension_hook = CTX.get_extension_hook()
@@ -68,6 +81,13 @@ class backpack:
         CTX.set_extension_hook(self.extension_hook)
 
     def __exit__(self, type, value, traceback):
+        """Leave backpack environment.
+
+        Args:
+            type: .
+            value: .
+            traceback: .
+        """
         CTX.set_active_exts(self.old_CTX)
         CTX.set_debug(self.old_debug)
         CTX.set_extension_hook(self.old_extension_hook)
@@ -93,33 +113,45 @@ class disable:
         even if the forward pass is carried out in ``with backpack(...)``.
     """
 
-    store_io = True
+    store_io: bool = True
 
     def __enter__(self):
         """Disable input/output storing."""
-        self.old_store_io = disable.store_io
+        self.old_store_io: bool = disable.store_io
         disable.store_io = False
 
     def __exit__(self, type, value, traceback):
-        """Set input/output storing to old value."""
+        """Set input/output storing to old value.
+
+        Args:
+            type: .
+            value: .
+            traceback: .
+        """
         disable.store_io = self.old_store_io
 
     @staticmethod
-    def should_store_io():
-        """Return whether input and output should be stored."""
+    def should_store_io() -> bool:
+        """Return whether input and output should be stored.
+
+        Returns:
+            whether input and output should be stored
+        """
         return disable.store_io
 
 
-def hook_store_io(module, input, output):
+def hook_store_io(
+    module: Module, input: Tuple[Tensor], output: Union[Tensor, Tuple[Tensor]]
+) -> None:
     """Saves the input and output as attributes of the module.
 
     The list of inputs with index i is saved as module.input[i]
     The output is reduced to single output tensor and saved as module.output
 
     Args:
-        module (torch.nn.Module): the module on which to save the params
-        input (list): List of input tensors
-        output (torch.Tensor or tuple): result of module(input)
+        module: the module on which to save the params
+        input: List of input tensors
+        output: result of module(input)
     """
     if disable.should_store_io() and torch.is_grad_enabled():
         for i in range(len(input)):
@@ -131,10 +163,13 @@ def hook_store_io(module, input, output):
             module.output = output
 
 
-def memory_cleanup(module):
+def memory_cleanup(module) -> None:
     """Remove I/O stored by backpack during the forward pass.
 
     Deletes the attributes created by `hook_store_io`.
+
+    Args:
+        module: current module
     """
     if hasattr(module, "output"):
         delattr(module, "output")
@@ -144,7 +179,20 @@ def memory_cleanup(module):
         i += 1
 
 
-def hook_run_extensions(module, g_inp, g_out, use_legacy=False):
+def hook_run_extensions(
+    module: Module, g_inp: Tuple[Tensor], g_out: Tuple[Tensor], use_legacy: bool = False
+) -> None:
+    """The backward hook function.
+
+    It executes all BackPACK operations during the backward pass.
+
+    Args:
+        module: current module
+        g_inp: input gradients
+        g_out: output gradients
+        use_legacy: whether to use the legacy backward hook.
+            Deprecated since torch version 1.8.0. Default: False.
+    """
     for backpack_extension in CTX.get_active_exts():
         if CTX.get_debug():
             print("[DEBUG] Running extension", backpack_extension, "on", module)
@@ -162,10 +210,16 @@ def hook_run_extensions(module, g_inp, g_out, use_legacy=False):
         memory_cleanup(module)
 
 
-def run_extension_hook(module):
+def run_extension_hook(module: Module) -> None:
     """Execute the post extensions hook on a module after all BackPACK extensions.
 
     See the `post_backward_hook` argument of the `backpack` context manager for details.
+
+    Args:
+        module: current module
+
+    Raises:
+        RuntimeError: if any extension occurred during the backward hook
     """
     try:
         CTX.get_extension_hook()(module)
@@ -174,19 +228,18 @@ def run_extension_hook(module):
         raise RuntimeError(f"Post extensions hook failed: {message}")
 
 
-def extend(module: torch.nn.Module, debug=False):
+def extend(module: Module, debug: bool = False) -> Module:
     """Extends a ``module`` to make it BackPACK-ready.
 
     If the ``module`` has children, e.g. for a ``torch.nn.Sequential``,
     they will also be extended.
 
     Args:
-        module (torch.nn.Module): The module to extend.
-        debug (bool, optional): Print debug messages during the extension.
-            Default: ``False``.
+        module: The module to extend.
+        debug: Print debug messages during the extension. Default: ``False``.
 
     Returns:
-        torch.nn.Module: Extended module.
+        Extended module.
     """
     if debug:
         print("[DEBUG] Extending", module)
@@ -197,7 +250,7 @@ def extend(module: torch.nn.Module, debug=False):
     module_was_already_extended = getattr(module, "_backpack_extend", False)
     if not module_was_already_extended:
         CTX.add_hook_handle(module.register_forward_hook(hook_store_io))
-        if version.parse("1.8.0") <= version.parse(torch.__version__):
+        if TORCH_VERSION_HIGHER_THAN_1_8_0:
             CTX.add_hook_handle(module.register_full_backward_hook(hook_run_extensions))
         else:
             hook_run_extensions_legacy = functools.partial(
