@@ -34,10 +34,10 @@ class HBPBaseModule(ModuleExtension):
         return ggn
 
     def second_order_module_effects(self, module, g_inp, g_out):
-        if self.derivatives.hessian_is_zero():
+        if self.derivatives.hessian_is_zero(module):
             return None
 
-        elif not self.derivatives.hessian_is_diagonal():
+        elif not self.derivatives.hessian_is_diagonal(module):
             raise NotImplementedError(
                 "Residual terms are only supported for elementwise functions"
             )

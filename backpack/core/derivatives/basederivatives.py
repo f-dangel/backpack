@@ -140,10 +140,13 @@ class BaseDerivatives(ABC):
         """
         raise NotImplementedError
 
-    def hessian_is_zero(self) -> bool:
+    def hessian_is_zero(self, module: Module) -> bool:
         """Returns whether Hessian is zero.
 
         I.e. whether ``∂²output[i] / ∂input[j] ∂input[k] = 0  ∀ i,j,k``.
+
+        Args:
+            module: current module to evaluate
 
         # noqa: DAR202
         Returns:
@@ -154,13 +157,16 @@ class BaseDerivatives(ABC):
         """
         raise NotImplementedError
 
-    def hessian_is_diagonal(self) -> bool:
+    def hessian_is_diagonal(self, module: Module) -> bool:
         """Is `∂²output[i] / ∂input[j] ∂input[k]` nonzero only if `i = j = k`.
 
         The Hessian diagonal is only defined for layers that preserve the size
         of their input.
 
         Must be implemented by descendants that don't implement ``hessian_is_zero``.
+
+        Args:
+            module: current module to evaluate
 
         # noqa: DAR202
         Returns:

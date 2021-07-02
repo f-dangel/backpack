@@ -21,7 +21,7 @@ class PCHMPBase(ModuleExtension):
         Given mat → ℋz(x) mat, backpropagate mat → ℋx mat.
         """
         diagonal_or_zero_residual = (
-            self.derivatives.hessian_is_zero() or self.derivatives.hessian_is_diagonal()
+            self.derivatives.hessian_is_zero(module) or self.derivatives.hessian_is_diagonal(module)
         )
         if not diagonal_or_zero_residual:
             raise ValueError("Only linear or element-wise operations supported.")
@@ -45,7 +45,7 @@ class PCHMPBase(ModuleExtension):
             result = self.derivatives.jac_t_mat_prod(module, g_inp, g_out, result)
 
             # Multiply with the residual term: mat → [∑ᵢ Hzᵢ(x) δzᵢ] mat.
-            if not self.derivatives.hessian_is_zero():
+            if not self.derivatives.hessian_is_zero(module):
                 result += self.modified_residual_mat_prod(
                     ext, module, g_inp, g_out, mat, modify
                 )

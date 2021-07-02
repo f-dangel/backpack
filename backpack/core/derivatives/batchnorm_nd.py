@@ -36,21 +36,48 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
         if module.track_running_stats is False:
             raise NotImplementedError("Only implemented for track_running_stats=True")
 
-    def hessian_is_zero(self) -> bool:
+    def hessian_is_zero(
+        self, module: Union[BatchNorm1d, BatchNorm2d, BatchNorm3d]
+    ) -> bool:
         """Whether hessian is zero.
+
+        Args:
+            module: current module to evaluate
 
         Returns:
             whether hessian is zero
-        """
-        return False
 
-    def hessian_is_diagonal(self) -> bool:
+        Raises:
+            NotImplementedError: if module is in evaluation mode
+        """
+        if module.training is True:
+            return False
+        else:
+            raise NotImplementedError(
+                "hessian_is_zero is not tested for BatchNorm. Create an issue if you need it."
+            )
+
+    def hessian_is_diagonal(
+        self, module: Union[BatchNorm1d, BatchNorm2d, BatchNorm3d]
+    ) -> bool:
         """Whether hessian is diagonal.
+
+        Args:
+            module: current module to evaluate
 
         Returns:
             whether hessian is diagonal
+
+        Raises:
+            NotImplementedError: if module is in evaluation mode
         """
-        return False
+        if module.training is True:
+            return False
+        else:
+            raise NotImplementedError(
+                "hessian_is_diagonal is not tested for BatchNorm. "
+                "Create an issue if you need it."
+            )
 
     def _jac_mat_prod(
         self,
