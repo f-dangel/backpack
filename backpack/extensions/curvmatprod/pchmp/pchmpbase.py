@@ -20,9 +20,9 @@ class PCHMPBase(ModuleExtension):
 
         Given mat → ℋz(x) mat, backpropagate mat → ℋx mat.
         """
-        diagonal_or_zero_residual = (
-            self.derivatives.hessian_is_zero(module) or self.derivatives.hessian_is_diagonal(module)
-        )
+        diagonal_or_zero_residual = self.derivatives.hessian_is_zero(
+            module
+        ) or self.derivatives.hessian_is_diagonal(module)
         if not diagonal_or_zero_residual:
             raise ValueError("Only linear or element-wise operations supported.")
 
