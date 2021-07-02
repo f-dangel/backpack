@@ -44,6 +44,7 @@ BATCH_NORM_SETTINGS = [
     {
         "module_fn": lambda: torch.nn.BatchNorm3d(num_features=7),
         "input_fn": lambda: torch.rand(size=(5, 7, 3, 4, 2)),
+        "seed": 1,
     },
     {
         "module_fn": lambda: _initialize_training_false(
