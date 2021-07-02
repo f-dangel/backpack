@@ -30,7 +30,7 @@ class SGSBase(FirstOrderModuleExtension):
         for param_str in params:
             if not hasattr(self, param_str):
                 setattr(self, param_str, self._make_param_function(param_str))
-        super(SGSBase, self).__init__(params=params)
+        super().__init__(params=params)
 
     def _make_param_function(
         self, param_str: str
@@ -63,9 +63,11 @@ class SGSBase(FirstOrderModuleExtension):
             Returns:
                 sum_grad_squared
             """
-            grad_batch = getattr(self.derivatives, f"{param_str}_jac_t_mat_prod")(
-                module, g_inp, g_out, g_out[0], sum_batch=False
-            )
-            return (grad_batch ** 2).sum(self.N_axis)
+            return (
+                getattr(self.derivatives, f"{param_str}_jac_t_mat_prod")(
+                    module, g_inp, g_out, g_out[0], sum_batch=False
+                )
+                ** 2
+            ).sum(self.N_axis)
 
         return param_function

@@ -15,14 +15,9 @@ from torch.nn import (
 )
 
 from backpack.extensions.backprop_extension import BackpropExtension
-
-from . import (
-    conv1d,
-    conv2d,
-    conv3d,
-    convtranspose1d,
-    convtranspose2d,
-    convtranspose3d,
+from backpack.extensions.firstorder.batch_l2_grad import (
+    convnd,
+    convtransposend,
     linear,
     rnn,
 )
@@ -51,17 +46,17 @@ class BatchL2Grad(BackpropExtension):
 
         Define the extensions for each module.
         """
-        super(BatchL2Grad, self).__init__(
+        super().__init__(
             savefield="batch_l2",
             fail_mode="WARNING",
             module_exts={
                 Linear: linear.BatchL2Linear(),
-                Conv1d: conv1d.BatchL2Conv1d(),
-                Conv2d: conv2d.BatchL2Conv2d(),
-                Conv3d: conv3d.BatchL2Conv3d(),
-                ConvTranspose1d: convtranspose1d.BatchL2ConvTranspose1d(),
-                ConvTranspose2d: convtranspose2d.BatchL2ConvTranspose2d(),
-                ConvTranspose3d: convtranspose3d.BatchL2ConvTranspose3d(),
+                Conv1d: convnd.BatchL2Conv1d(),
+                Conv2d: convnd.BatchL2Conv2d(),
+                Conv3d: convnd.BatchL2Conv3d(),
+                ConvTranspose1d: convtransposend.BatchL2ConvTranspose1d(),
+                ConvTranspose2d: convtransposend.BatchL2ConvTranspose2d(),
+                ConvTranspose3d: convtransposend.BatchL2ConvTranspose3d(),
                 RNN: rnn.BatchL2RNN(),
             },
         )

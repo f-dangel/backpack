@@ -9,7 +9,7 @@ class VarianceRNN(VarianceBaseModule):
 
     def __init__(self):
         """Initialization."""
-        super(VarianceRNN, self).__init__(
+        super().__init__(
             params=["bias_ih_l0", "bias_hh_l0", "weight_ih_l0", "weight_hh_l0"],
             grad_extension=GradRNN(),
             sgs_extension=SGSRNN(),

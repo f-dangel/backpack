@@ -146,7 +146,7 @@ class ExtensionsTestProblem:
             input = self.input.clone().detach()
             target = self.target.clone().detach()
         else:
-            target = self.target.clone()[sample_idx].unsqueeze(0).detach()
+            target = self.target.split(1, dim=0)[sample_idx].detach()
             input = self.input.split(1, dim=0)[sample_idx].detach()
 
         output = self.model(input)

@@ -1,20 +1,24 @@
-"""Test configurations to test diag_ggn.
+"""Test cases for BackPACK extensions for the GGN diagonal.
 
-The tests are taken from `test.extensions.secondorder.secondorder_settings`, 
-but additional custom tests can be defined here by appending it to the list.
+Includes
+- ``DiagGGNExact``
+- ``DiagGGNMC``
+- ``BatchDiagGGNExact``
+- ``BatchDiagGGNMC``
+
+Shared settings are taken from `test.extensions.secondorder.secondorder_settings`.
+Additional local cases can be defined here through ``LOCAL_SETTINGS``.
 """
 from test.core.derivatives.utils import regression_targets
-from test.extensions.automated_settings import make_simple_act_setting
 from test.extensions.secondorder.secondorder_settings import SECONDORDER_SETTINGS
 
 import torch
-from torch.nn import ELU, RNN, SELU, Flatten, Sequential
+from torch.nn import RNN, Flatten, Sequential
 
 from backpack.custom_module.permute import Permute
 from backpack.custom_module.reduce_tuple import ReduceTuple
 
 SHARED_SETTINGS = SECONDORDER_SETTINGS
-
 LOCAL_SETTINGS = [
     # RNN settings
     {
@@ -30,14 +34,4 @@ LOCAL_SETTINGS = [
         "target_fn": lambda: regression_targets((8, 3 * 5)),
     },
 ]
-
-###############################################################################
-#                         test setting: Activation Layers                     #
-###############################################################################
-activations = [ELU, SELU]
-
-for act in activations:
-    for bias in [True, False]:
-        LOCAL_SETTINGS.append(make_simple_act_setting(act, bias=bias))
-
 DiagGGN_SETTINGS = SHARED_SETTINGS + LOCAL_SETTINGS

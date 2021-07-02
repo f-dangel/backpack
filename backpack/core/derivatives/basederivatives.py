@@ -141,11 +141,13 @@ class BaseDerivatives(ABC):
         raise NotImplementedError
 
     def hessian_is_zero(self) -> bool:
-        """Returns whether hessian is zero.
+        """Returns whether Hessian is zero.
+
+        I.e. whether ``∂²output[i] / ∂input[j] ∂input[k] = 0  ∀ i,j,k``.
 
         # noqa: DAR202
         Returns:
-            whether hessian is zero
+            whether Hessian is zero
 
         Raises:
             NotImplementedError: if not overwritten
@@ -155,23 +157,39 @@ class BaseDerivatives(ABC):
     def hessian_is_diagonal(self) -> bool:
         """Is `∂²output[i] / ∂input[j] ∂input[k]` nonzero only if `i = j = k`.
 
+        The Hessian diagonal is only defined for layers that preserve the size
+        of their input.
+
+        Must be implemented by descendants that don't implement ``hessian_is_zero``.
+
         # noqa: DAR202
         Returns:
-            whether hessian is diagonal
+            whether Hessian is diagonal
 
         Raises:
             NotImplementedError: if not overwritten
         """
         raise NotImplementedError
 
-    def hessian_diagonal(self) -> Tensor:
-        """Return `∂²output[i] / ∂input[i]²`.
+    # FIXME Currently returns `∂²output[i] / ∂input[i]² * g_out[0][i]`,
+    # which s the residual matrix diagonal, rather than the Hessian diagonal
+    def hessian_diagonal(
+        self, module: Module, g_in: Tuple[Tensor], g_out: Tuple[Tensor]
+    ) -> Tensor:
+        """Return the Hessian diagonal `∂²output[i] / ∂input[i]²`.
 
         Only required if `hessian_is_diagonal` returns `True`.
+        The Hessian diagonal is only defined for layers that preserve the size
+        of their input.
+
+        Args:
+            module: Module whose output-input Hessian diagonal is computed.
+            g_in: Gradients w.r.t. the module input.
+            g_out: Gradients w.r.t. the module output.
 
         # noqa: DAR202
         Returns:
-            hessian diagonal
+            Hessian diagonal. Has same shape as module input.
 
         Raises:
             NotImplementedError: if not overwritten
