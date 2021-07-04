@@ -116,11 +116,11 @@ class ConvNDDerivatives(BaseParameterDerivatives):
 
         return jac_mat.expand(*expand_shape)
 
-    def _bias_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
-        axes = list(range(3, len(module.output.shape) + 1))
-        if sum_batch:
-            axes = [1] + axes
-        return mat.sum(axes)
+    def _bias_jac_t_mat_prod(
+        self, module, g_inp, g_out, mat, sum_batch=True, subsampling=None
+    ):
+        equation = f"vnc...->v{'' if sum_batch else 'n'}c"
+        return einsum(equation, mat)
 
     def _weight_jac_mat_prod(self, module, g_inp, g_out, mat):
         # separate output channel groups

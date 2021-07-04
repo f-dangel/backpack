@@ -329,6 +329,7 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
         g_out: Tuple[Tensor],
         mat: Tensor,
         sum_batch: bool = True,
+        subsampling: List[int] = None,
     ) -> Tensor:
         """Apply transposed Jacobian of the output w.r.t. bias to a matrix.
 
@@ -337,15 +338,21 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
             g_inp: input gradients
             g_out: output gradients
             mat: Matrix the transposed Jacobian will be applied to.
-                Must have shape [V, N, C_out, H_out, ...].
+                Has shape ``[V, *module.output.shape]``; but if used with
+                sub-sampling, the batch dimension is replaced by ``len(subsampling)``.
             sum_batch: Whether to sum over the batch dimension on the fly.
+            subsampling: Indices of samples along the output's batch dimension that
+                should be considered. Defaults to ``None`` (use all samples).
 
         Returns:
             Jacobian-matrix product.
-            Has shape [V, N, C_b, ...] if `sum_batch == False`.
-            Has shape [V, C_b, ...] if `sum_batch == True`.
+            If ``sum_batch=False``, has shape ``[V, N, *module.bias.shape]``.
+            If ``sum_batch=True``, has shape ``[V, *module.bias.shape]``.
+            If sub-sampling is used, ``N`` is replaced by ``len(subsampling)``.
         """
-        return self._bias_jac_t_mat_prod(module, g_inp, g_out, mat, sum_batch=sum_batch)
+        return self._bias_jac_t_mat_prod(
+            module, g_inp, g_out, mat, sum_batch=sum_batch, subsampling=subsampling
+        )
 
     def _bias_jac_t_mat_prod(
         self,
@@ -354,6 +361,7 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
         g_out: Tuple[Tensor],
         mat: Tensor,
         sum_batch: bool = True,
+        subsampling: List[int] = None,
     ) -> Tensor:
         raise NotImplementedError
 
@@ -401,8 +409,7 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
             g_out: output gradients
             mat: Matrix the transposed Jacobian will be applied to.
                 Has shape ``[V, *module.output.shape]``; but if used with
-                sub-sampling, the batch dimension from is replaced by
-                ``len(subsampling)``.
+                sub-sampling, the batch dimension is replaced by ``len(subsampling)``.
             sum_batch: Whether to sum over the batch dimension on the fly.
             subsampling: Indices of samples along the output's batch dimension that
                 should be considered. Defaults to ``None`` (use all samples).

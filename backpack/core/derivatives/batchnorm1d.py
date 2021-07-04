@@ -111,7 +111,9 @@ class BatchNorm1dDerivatives(BaseParameterDerivatives):
         N = module.input0.size(0)
         return mat.unsqueeze(1).repeat(1, N, 1)
 
-    def _bias_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
+    def _bias_jac_t_mat_prod(
+        self, module, g_inp, g_out, mat, sum_batch=True, subsampling=None
+    ):
         self._maybe_warn_no_batch_summation(sum_batch)
         if not sum_batch:
             return mat
