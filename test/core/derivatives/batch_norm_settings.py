@@ -1,7 +1,9 @@
 """Test configurations for `backpack.core.derivatives` BatchNorm layers.
+
 Required entries:
     "module_fn" (callable): Contains a model constructed from `torch.nn` layers
     "input_fn" (callable): Used for specifying input function
+
 Optional entries:
     "target_fn" (callable): Fetches the groundtruth/target classes
                             of regression/classification task
