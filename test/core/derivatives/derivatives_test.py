@@ -8,6 +8,7 @@
 """
 
 from test.automated_test import check_sizes_and_values
+from test.core.derivatives.batch_norm_settings import BATCH_NORM_SETTINGS
 from test.core.derivatives.implementation.autograd import AutogradDerivatives
 from test.core.derivatives.implementation.backpack import BackpackDerivatives
 from test.core.derivatives.loss_settings import LOSS_FAIL_SETTINGS
@@ -47,6 +48,8 @@ LSTM_IDS = [problem.make_id() for problem in LSTM_PROBLEMS]
 
 PERMUTE_PROBLEMS = make_test_problems(PERMUTE_SETTINGS)
 PERMUTE_IDS = [problem.make_id() for problem in PERMUTE_PROBLEMS]
+
+BATCH_NORM_PROBLEMS = make_test_problems(BATCH_NORM_SETTINGS)
 
 SUBSAMPLINGS = [None, [0, 0], [2, 0]]
 SUBSAMPLING_IDS = [f"subsampling={s}".replace(" ", "") for s in SUBSAMPLINGS]
@@ -475,7 +478,7 @@ def test_ea_jac_t_mat_jac_prod(problem: DerivativesTestProblem, request) -> None
     problem.tear_down()
 
 
-@fixture(params=PROBLEMS, ids=lambda p: p.make_id())
+@fixture(params=PROBLEMS + BATCH_NORM_PROBLEMS, ids=lambda p: p.make_id())
 def problem(request) -> DerivativesTestProblem:
     """Set seed, create tested layer and data. Finally clean up.
 

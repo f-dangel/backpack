@@ -10,6 +10,7 @@ from torch.nn import (
     AvgPool1d,
     AvgPool2d,
     AvgPool3d,
+    BatchNorm1d,
     Conv1d,
     Conv2d,
     Conv3d,
@@ -39,6 +40,7 @@ from backpack.core.derivatives.adaptive_avg_pool_nd import (
 from backpack.core.derivatives.avgpool1d import AvgPool1DDerivatives
 from backpack.core.derivatives.avgpool2d import AvgPool2DDerivatives
 from backpack.core.derivatives.avgpool3d import AvgPool3DDerivatives
+from backpack.core.derivatives.batchnorm1d import BatchNorm1dDerivatives
 from backpack.core.derivatives.conv1d import Conv1DDerivatives
 from backpack.core.derivatives.conv2d import Conv2DDerivatives
 from backpack.core.derivatives.conv3d import Conv3DDerivatives
@@ -96,4 +98,5 @@ derivatives_for = {
     AdaptiveAvgPool1d: AdaptiveAvgPool1dDerivatives,
     AdaptiveAvgPool2d: AdaptiveAvgPool2dDerivatives,
     AdaptiveAvgPool3d: AdaptiveAvgPool3dDerivatives,
+    BatchNorm1d: BatchNorm1dDerivatives,
 }
