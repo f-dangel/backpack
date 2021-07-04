@@ -3,6 +3,7 @@ from warnings import warn
 from torch import einsum
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
+from backpack.utils.subsampling import subsample
 
 
 class BatchNorm1dDerivatives(BaseParameterDerivatives):
@@ -95,28 +96,38 @@ class BatchNorm1dDerivatives(BaseParameterDerivatives):
         x_hat, _ = self.get_normalized_input_and_var(module)
         return einsum("ni,vi->vni", (x_hat, mat))
 
-    def _weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch):
-        if not sum_batch:
-            warn(
-                "BatchNorm batch summation disabled."
-                "This may not compute meaningful quantities"
-            )
+    def _weight_jac_t_mat_prod(
+        self, module, g_inp, g_out, mat, sum_batch, subsampling=None
+    ):
+        self._maybe_warn_no_batch_summation(sum_batch)
+
         x_hat, _ = self.get_normalized_input_and_var(module)
-        equation = "vni,ni->v{}i".format("" if sum_batch is True else "n")
-        operands = [mat, x_hat]
-        return einsum(equation, operands)
+        x_hat = subsample(x_hat, subsampling=subsampling)
+        equation = f"vni,ni->v{'' if sum_batch is True else 'n'}i"
+
+        return einsum(equation, mat, x_hat)
 
     def _bias_jac_mat_prod(self, module, g_inp, g_out, mat):
         N = module.input0.size(0)
         return mat.unsqueeze(1).repeat(1, N, 1)
 
     def _bias_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
+        self._maybe_warn_no_batch_summation(sum_batch)
+        if not sum_batch:
+            return mat
+        else:
+            N_axis = 1
+            return mat.sum(N_axis)
+
+    @staticmethod
+    def _maybe_warn_no_batch_summation(sum_batch: bool) -> None:
+        """Warn that Jacobians w.r.t. single components are not per-sample gradients.
+
+        Args:
+            sum_batch: Whether to sum out the batch dimension.
+        """
         if not sum_batch:
             warn(
                 "BatchNorm batch summation disabled."
                 "This may not compute meaningful quantities"
             )
-            return mat
-        else:
-            N_axis = 1
-            return mat.sum(N_axis)

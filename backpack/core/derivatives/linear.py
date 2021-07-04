@@ -138,7 +138,7 @@ class LinearDerivatives(BaseParameterDerivatives):
             ``sum_batch=True``, has shape ``[V, *module.weight.shape]``. If sub-
             sampling is used, ``N`` must be ``len(subsampling)`` instead.
         """
-        d_weight = subsample(module, "input0", subsampling=subsampling)
+        d_weight = subsample(module.input0, subsampling=subsampling)
 
         if self._has_additional_dims(module):
             # Flatten additional dimensions because they cannot be represented as

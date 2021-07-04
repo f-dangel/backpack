@@ -105,7 +105,7 @@ class ConvTransposeNDDerivatives(BaseParameterDerivatives):
         mat_reshape = mat.reshape(V, N, G, C_out // G, *module.output.shape[2:])
 
         u = unfold_by_conv_transpose(
-            subsample(module, "input0", subsampling=subsampling), module
+            subsample(module.input0, subsampling=subsampling), module
         ).reshape(N, G, C_in // G, *module.weight.shape[2:], *module.output.shape[2:])
 
         dims_kern = "xyz"[: self.conv_dims]

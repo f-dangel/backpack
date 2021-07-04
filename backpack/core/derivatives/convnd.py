@@ -187,7 +187,7 @@ class ConvNDDerivatives(BaseParameterDerivatives):
         mat = mat.unsqueeze(C_in_axis)
 
         input = rearrange(
-            subsample(module, "input0", subsampling=subsampling), "n c ... -> (n c) ..."
+            subsample(module.input0, subsampling=subsampling), "n c ... -> (n c) ..."
         )
         input = input.unsqueeze(N_axis)
         repeat_pattern = [1, V] + [1 for _ in range(self.conv_dims)]
@@ -254,7 +254,7 @@ class ConvNDDerivatives(BaseParameterDerivatives):
         # Reshape to extract groups from the convolutional layer
         # Channels are seen as an extra spatial dimension with kernel size 1
         input_conv = (
-            subsample(module, "input0", subsampling=subsampling)
+            subsample(module.input0, subsampling=subsampling)
             .reshape(1, N * G, *spatial_dim)
             .repeat(*spatial_dim_axis)
         )
