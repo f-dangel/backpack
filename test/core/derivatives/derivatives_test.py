@@ -476,7 +476,7 @@ def test_ea_jac_t_mat_jac_prod(problem: DerivativesTestProblem, request) -> None
 
 
 @fixture(params=PROBLEMS, ids=lambda p: p.make_id())
-def instantiated_problem(request) -> DerivativesTestProblem:
+def problem(request) -> DerivativesTestProblem:
     """Set seed, create tested layer and data. Finally clean up.
 
     Args:
@@ -492,23 +492,18 @@ def instantiated_problem(request) -> DerivativesTestProblem:
 
 
 @fixture
-def problem_weight(
-    instantiated_problem: DerivativesTestProblem,
-) -> DerivativesTestProblem:
+def problem_weight(problem: DerivativesTestProblem) -> DerivativesTestProblem:
     """Filter out cases that don't have a weight parameter.
 
     Args:
-        instantiated_problem: Test case with deterministically constructed attributes.
+        problem: Test case with deterministically constructed attributes.
 
     Yields:
         Instantiated cases that have a weight parameter.
     """
-    has_weight = (
-        hasattr(instantiated_problem.module, "weight")
-        and instantiated_problem.module.weight is not None
-    )
+    has_weight = hasattr(problem.module, "weight") and problem.module.weight is not None
     if has_weight:
-        yield instantiated_problem
+        yield problem
     else:
         skip("Test case has no weight parameter.")
 
@@ -547,24 +542,21 @@ def problem_weight_jac_t_mat(
 
 @fixture
 def small_input_problem(
-    instantiated_problem: DerivativesTestProblem, max_input_numel: int = 100
+    problem: DerivativesTestProblem, max_input_numel: int = 100
 ) -> DerivativesTestProblem:
     """Skip cases with large inputs.
 
     Args:
-        instantiated_problem: Test case with deterministically constructed attributes.
+        problem: Test case with deterministically constructed attributes.
         max_input_numel: Maximum input size. Default: ``100``.
 
     Yields:
         Instantiated test case with small input.
     """
-    if instantiated_problem.input.numel() > max_input_numel:
-        skip(
-            "Input is too large:"
-            + f" {instantiated_problem.input.numel()} > {max_input_numel}"
-        )
+    if problem.input.numel() > max_input_numel:
+        skip("Input is too large:" + f" {problem.input.numel()} > {max_input_numel}")
     else:
-        yield instantiated_problem
+        yield problem
 
 
 @fixture
