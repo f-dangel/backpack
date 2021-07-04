@@ -233,19 +233,19 @@ def test_weight_hh_l0_jac_t_mat_prod(problem, sum_batch, V=4):
     ids=["save_memory=True", "save_memory=False"],
 )
 def test_weight_jac_t_mat_prod(
-    problem_weight_jac_t_mat_prod,
+    problem_weight_jac_t_mat,
     sum_batch: bool,
     save_memory: bool,
 ) -> None:
     """Test the transposed Jacobian-matrix product w.r.t. to the weight.
 
     Args:
-        problem_weight_jac_t_mat_prod: Instantiated test case, subsampling, and
+        problem_weight_jac_t_mat: Instantiated test case, subsampling, and
             input for weight_jac_t
         sum_batch: Sum out the batch dimension.
         save_memory: Use Owkin implementation in convolutions to save memory.
     """
-    problem, subsampling, mat = problem_weight_jac_t_mat_prod
+    problem, subsampling, mat = problem_weight_jac_t_mat
 
     with weight_jac_t_save_memory(save_memory):
         backpack_res = BackpackDerivatives(problem).weight_jac_t_mat_prod(
@@ -491,41 +491,57 @@ def instantiated_problem(request) -> DerivativesTestProblem:
     case.tear_down()
 
 
-@fixture(params=SUBSAMPLINGS, ids=SUBSAMPLING_IDS)
-def problem_weight_jac_t_mat_prod(
-    request, instantiated_problem: DerivativesTestProblem
-) -> Tuple[DerivativesTestProblem, Union[None, List[int]], Tensor]:
-    """Create matrix that will be multiplied by the weight Jacobian.
-
-    Skip cases that don't have a weight parameter, or if there is a conflict where the
-    subsampling indices exceed the samples in the input.
+@fixture
+def problem_weight(
+    instantiated_problem: DerivativesTestProblem,
+) -> DerivativesTestProblem:
+    """Filter out cases that don't have a weight parameter.
 
     Args:
-        request (SubRequest): Request for the fixture from a test/fixture function.
         instantiated_problem: Test case with deterministically constructed attributes.
 
     Yields:
-        instantiated case, subsampling, and matrix for weight_jac_t
+        Instantiated cases that have a weight parameter.
     """
     has_weight = (
         hasattr(instantiated_problem.module, "weight")
         and instantiated_problem.module.weight is not None
     )
-    if not has_weight:
-        skip("No weight")
+    if has_weight:
+        yield instantiated_problem
+    else:
+        skip("Test case has no weight parameter.")
 
+
+@fixture(params=SUBSAMPLINGS, ids=SUBSAMPLING_IDS)
+def problem_weight_jac_t_mat(
+    request, problem_weight: DerivativesTestProblem
+) -> Tuple[DerivativesTestProblem, Union[None, List[int]], Tensor]:
+    """Create matrix that will be multiplied by the weight Jacobian.
+
+    Skip if there is a conflict where the subsampling indices exceed the number of
+    samples in the input.
+
+    Args:
+        request (SubRequest): Request for the fixture from a test/fixture function.
+        problem_weight: Test case with weight parameter.
+
+    Yields:
+        problem with weight, subsampling, matrix for weight_jac_t
+    """
     subsampling: Union[None, List[int]] = request.param
-    batch_size = instantiated_problem.input_shape[0]
-    enough_samples = subsampling is None or batch_size >= max(subsampling)
+    N = problem_weight.input_shape[0]
+    enough_samples = subsampling is None or N >= max(subsampling)
 
     if not enough_samples:
-        skip(f"Not enough samples: sub-sampling {subsampling}, batch_size {batch_size}")
+        skip(f"Not enough samples: sub-sampling {subsampling}, batch_size {N}")
 
+    V = 3
     mat = rand_mat_like_output(
-        3, instantiated_problem.output_shape, subsampling=subsampling
-    ).to(instantiated_problem.device)
+        V, problem_weight.output_shape, subsampling=subsampling
+    ).to(problem_weight.device)
 
-    yield (instantiated_problem, subsampling, mat)
+    yield (problem_weight, subsampling, mat)
     del mat
 
 
