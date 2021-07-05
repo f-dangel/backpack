@@ -138,8 +138,7 @@ class LinearDerivatives(BaseParameterDerivatives):
         d_weight = module.input0
 
         if self._has_additional_dims(module):
-            # Flatten additional dimensions because they cannot be represented as
-            # ellipsis. WAITING https://github.com/pytorch/pytorch/issues/45854
+            # TODO Change to f"vn...o,n...i" after supporting torch>=1.9.0
             d_weight = d_weight.flatten(start_dim=1, end_dim=-2)
             mat = mat.flatten(start_dim=2, end_dim=-2)
             equation = f"vnao,nai->v{'' if sum_batch else 'n'}oi"
