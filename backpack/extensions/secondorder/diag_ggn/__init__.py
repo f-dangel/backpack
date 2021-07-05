@@ -12,6 +12,9 @@ from torch.nn import (
     ELU,
     RNN,
     SELU,
+    AdaptiveAvgPool1d,
+    AdaptiveAvgPool2d,
+    AdaptiveAvgPool3d,
     AvgPool1d,
     AvgPool2d,
     AvgPool3d,
@@ -43,6 +46,7 @@ from backpack.extensions.secondorder.hbp import LossHessianStrategy
 
 from . import (
     activations,
+    adaptive_avg_pool_nd,
     conv1d,
     conv2d,
     conv3d,
@@ -116,6 +120,9 @@ class DiagGGN(BackpropExtension):
                 SELU: activations.DiagGGNSELU(),
                 RNN: rnn.DiagGGNRNN(),
                 Permute: permute.DiagGGNPermute(),
+                AdaptiveAvgPool1d: adaptive_avg_pool_nd.DiagGGNAdaptiveAvgPool(1),
+                AdaptiveAvgPool2d: adaptive_avg_pool_nd.DiagGGNAdaptiveAvgPool(2),
+                AdaptiveAvgPool3d: adaptive_avg_pool_nd.DiagGGNAdaptiveAvgPool(3),
             },
         )
 
@@ -223,6 +230,9 @@ class BatchDiagGGN(BackpropExtension):
                 SELU: activations.DiagGGNSELU(),
                 RNN: rnn.BatchDiagGGNRNN(),
                 Permute: permute.DiagGGNPermute(),
+                AdaptiveAvgPool1d: adaptive_avg_pool_nd.DiagGGNAdaptiveAvgPool(1),
+                AdaptiveAvgPool2d: adaptive_avg_pool_nd.DiagGGNAdaptiveAvgPool(2),
+                AdaptiveAvgPool3d: adaptive_avg_pool_nd.DiagGGNAdaptiveAvgPool(3),
             },
         )
 

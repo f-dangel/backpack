@@ -104,6 +104,7 @@ class ExtensionsTestProblem:
 
         self.model = self.module_fn().to(self.device)
         self.input = self.input_fn().to(self.device)
+        self.input.requires_grad = True
         self.target = self.target_fn().to(self.device)
         self.loss_function = self.loss_function_fn().to(self.device)
 
@@ -143,11 +144,11 @@ class ExtensionsTestProblem:
                 input, output, loss, each with batch axis first
         """
         if sample_idx is None:
-            input = self.input.clone().detach()
-            target = self.target.clone().detach()
+            input = self.input.clone()
+            target = self.target.clone()
         else:
-            target = self.target.split(1, dim=0)[sample_idx].detach()
-            input = self.input.split(1, dim=0)[sample_idx].detach()
+            target = self.target.split(1, dim=0)[sample_idx]
+            input = self.input.split(1, dim=0)[sample_idx]
 
         output = self.model(input)
 

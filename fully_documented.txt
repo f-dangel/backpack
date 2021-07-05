@@ -33,6 +33,7 @@ backpack/extensions/secondorder/diag_ggn/__init__.py
 backpack/extensions/secondorder/diag_ggn/diag_ggn_base.py
 backpack/extensions/secondorder/diag_ggn/rnn.py
 backpack/extensions/secondorder/diag_ggn/permute.py
+backpack/extensions/secondorder/diag_ggn/adaptive_avg_pool_nd.py
 backpack/extensions/secondorder/diag_hessian/__init__.py
 backpack/extensions/secondorder/diag_hessian/conv1d.py
 backpack/extensions/secondorder/diag_hessian/conv2d.py
