@@ -14,64 +14,56 @@ Optional entries:
 """
 from typing import Union
 
-import torch
+from torch import rand, rand_like
 from torch.nn import BatchNorm1d, BatchNorm2d, BatchNorm3d
 
 
 def _initialize_training_false(
     module: Union[BatchNorm1d, BatchNorm2d, BatchNorm3d]
 ) -> Union[BatchNorm1d, BatchNorm2d, BatchNorm3d]:
-    module.running_mean = torch.rand_like(module.running_mean)
-    module.running_var = torch.rand_like(module.running_var)
-    module.weight.data = torch.rand_like(module.weight)
-    module.bias.data = torch.rand_like(module.bias)
+    module.running_mean = rand_like(module.running_mean)
+    module.running_var = rand_like(module.running_var)
+    module.weight.data = rand_like(module.weight)
+    module.bias.data = rand_like(module.bias)
     return module.train(False)
 
 
 BATCH_NORM_SETTINGS = [
     {
-        "module_fn": lambda: torch.nn.BatchNorm1d(num_features=7),
-        "input_fn": lambda: torch.rand(size=(5, 7)),
+        "module_fn": lambda: BatchNorm1d(num_features=7),
+        "input_fn": lambda: rand(size=(5, 7)),
     },
     {
-        "module_fn": lambda: torch.nn.BatchNorm1d(num_features=7),
-        "input_fn": lambda: torch.rand(size=(5, 7, 4)),
+        "module_fn": lambda: BatchNorm1d(num_features=7),
+        "input_fn": lambda: rand(size=(5, 7, 4)),
     },
     {
-        "module_fn": lambda: torch.nn.BatchNorm2d(num_features=7),
-        "input_fn": lambda: torch.rand(size=(5, 7, 3, 4)),
+        "module_fn": lambda: BatchNorm2d(num_features=7),
+        "input_fn": lambda: rand(size=(5, 7, 3, 4)),
     },
     {
-        "module_fn": lambda: torch.nn.BatchNorm3d(num_features=7),
-        "input_fn": lambda: torch.rand(size=(5, 7, 3, 4, 2)),
+        "module_fn": lambda: BatchNorm3d(num_features=7),
+        "input_fn": lambda: rand(size=(5, 7, 3, 4, 2)),
         "seed": 1,
     },
     {
-        "module_fn": lambda: _initialize_training_false(
-            torch.nn.BatchNorm1d(num_features=7)
-        ),
-        "input_fn": lambda: torch.rand(size=(5, 7)),
+        "module_fn": lambda: _initialize_training_false(BatchNorm1d(num_features=7)),
+        "input_fn": lambda: rand(size=(5, 7)),
         "id_prefix": "training=False",
     },
     {
-        "module_fn": lambda: _initialize_training_false(
-            torch.nn.BatchNorm1d(num_features=7)
-        ),
-        "input_fn": lambda: torch.rand(size=(5, 7, 4)),
+        "module_fn": lambda: _initialize_training_false(BatchNorm1d(num_features=7)),
+        "input_fn": lambda: rand(size=(5, 7, 4)),
         "id_prefix": "training=False",
     },
     {
-        "module_fn": lambda: _initialize_training_false(
-            torch.nn.BatchNorm2d(num_features=7)
-        ),
-        "input_fn": lambda: torch.rand(size=(5, 7, 3, 4)),
+        "module_fn": lambda: _initialize_training_false(BatchNorm2d(num_features=7)),
+        "input_fn": lambda: rand(size=(5, 7, 3, 4)),
         "id_prefix": "training=False",
     },
     {
-        "module_fn": lambda: _initialize_training_false(
-            torch.nn.BatchNorm3d(num_features=7)
-        ),
-        "input_fn": lambda: torch.rand(size=(5, 7, 3, 4, 2)),
+        "module_fn": lambda: _initialize_training_false(BatchNorm3d(num_features=7)),
+        "input_fn": lambda: rand(size=(5, 7, 3, 4, 2)),
         "id_prefix": "training=False",
     },
 ]
