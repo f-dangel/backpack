@@ -190,8 +190,7 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
         Details are described in
 
         `HESSIAN BACKPROPAGATION FOR BATCHNORM`
-        <https://uni-tuebingen.de/en/fakultaeten/mathematisch-naturwissenschaftliche-fakultaet/fachbereiche/informatik/lehrstuehle/methoden-des-maschinellen-lernens/personen/alumni/everyone-else/>
-        <TODO: Wait for tech report upload and add exact link>_
+        <https://uni-tuebingen.de/securedl/sdl-eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE2MjU0ODY0NzAsImV4cCI6MTYyNTU3NjQ2NCwidXNlciI6MCwiZ3JvdXBzIjpbMCwtMV0sImZpbGUiOiJmaWxlYWRtaW5cL1VuaV9UdWViaW5nZW5cL0Zha3VsdGFldGVuXC9NYXROYXRcL0ZhY2hiZXJlaWNoZVwvSW5mb3JtYXRpa1wvTGVocnN0dWVobGVcL01ldGhNYXNjaExlcm5cL0Rva3VtZW50ZVwvVGhlc2VzXC9BYnNjaGx1c3NiZXJpY2h0X0Zpc2NoZXIucGRmIiwicGFnZSI6MTczNDc1fQ.xMe4WmTsyak9J-C7iTxGqTdpYMxMxtGfouyAZgW158I/Abschlussbericht_Fischer.pdf>
         by Paul Fischer, 2020.
 
         Args:
