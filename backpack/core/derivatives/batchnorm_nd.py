@@ -145,6 +145,7 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
     ) -> Tensor:
         x_hat, _ = self._get_normalized_input_and_var(module)
         # TODO Change to f"vnc...,nc..." after supporting torch>=1.9.0
+        N: int = self._get_n_axis(module)
         spatial_dims = "xyz"[:N]
         return einsum(
             f"vnc{spatial_dims},nc{spatial_dims}->v{'' if sum_batch else 'n'}c",
