@@ -95,6 +95,9 @@ class DiagHessian(BackpropExtension):
             },
         )
 
+    def expects_backpropagation_quantities(self) -> bool:  # noqa: D102
+        return True
+
 
 class BatchDiagHessian(BackpropExtension):
     """BackPACK extensions that computes the per-sample (individual) Hessian diagonal.
@@ -141,3 +144,6 @@ class BatchDiagHessian(BackpropExtension):
                 SELU: activations.DiagHSELU(),
             },
         )
+
+    def expects_backpropagation_quantities(self) -> bool:  # noqa: D102
+        return True

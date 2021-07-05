@@ -69,6 +69,9 @@ class HBP(BackpropExtension):
     def get_ea_strategy(self):
         return self.ea_strategy
 
+    def expects_backpropagation_quantities(self) -> bool:  # noq: D102
+        return True
+
 
 class KFAC(HBP):
     """

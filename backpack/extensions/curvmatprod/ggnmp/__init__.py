@@ -64,3 +64,6 @@ class GGNMP(BackpropExtension):
                 BatchNorm1d: batchnorm1d.GGNMPBatchNorm1d(),
             },
         )
+
+    def expects_backpropagation_quantities(self) -> bool:  # noqa: D102
+        return True

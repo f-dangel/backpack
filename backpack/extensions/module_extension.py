@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING, Any, List, Tuple
 from torch import Tensor
 from torch.nn import Module
 
+from backpack.utils.module_classification import is_loss
+
 if TYPE_CHECKING:
     from backpack import BackpropExtension
 
@@ -86,10 +88,23 @@ class ModuleExtension:
             g_out: output gradients
             use_legacy: whether to use the legacy backward hook.
                 Deprecated since torch version 1.8.0. Default: False.
+
+        Raises:
+            AssertionError: if there is no saved quantity although extension expects one
         """
         bpQuantities = self.__get_backproped_quantity(
             extension, module.output if use_legacy else g_out[0], use_legacy
         )
+        if (
+            extension.expects_backpropagation_quantities() is True
+            and bpQuantities is None
+            and is_loss(module) is False
+            and use_legacy is False
+        ):
+            raise AssertionError(
+                "BackPACK extension expects a backpropagation quantity but it is None. "
+                f"Module: {module}, Extension: {extension}."
+            )
 
         for param in self.__params:
             if self.__param_exists_and_requires_grad(module, param):
@@ -97,16 +112,18 @@ class ModuleExtension:
                 extValue = extFunc(extension, module, g_inp, g_out, bpQuantities)
                 self.__save_value_on_parameter(extValue, extension, module, param)
 
-        bpQuantities = self.backpropagate(extension, module, g_inp, g_out, bpQuantities)
-
-        self.__save_backprop_quantity(
-            extension,
-            module.input0,
-            module.output,
-            module.input0 if use_legacy else g_inp[0],
-            bpQuantities,
-            use_legacy,
-        )
+        if extension.expects_backpropagation_quantities():
+            bpQuantities = self.backpropagate(
+                extension, module, g_inp, g_out, bpQuantities
+            )
+            self.__save_backprop_quantity(
+                extension,
+                module.input0,
+                module.output,
+                module.input0 if use_legacy else g_inp[0],
+                bpQuantities,
+                use_legacy,
+            )
 
     @staticmethod
     def __get_backproped_quantity(
@@ -123,6 +140,9 @@ class ModuleExtension:
         Returns:
             the backpropagation quantity
         """
+        if extension.expects_backpropagation_quantities() is False:
+            return None
+
         if use_legacy:
             return getattr(reference_tensor, extension.savefield, None)
         else:

@@ -63,3 +63,6 @@ class SumGradSquared(BackpropExtension):
                 RNN: rnn.SGSRNN(),
             },
         )
+
+    def expects_backpropagation_quantities(self) -> bool:  # noqa: D102
+        return False

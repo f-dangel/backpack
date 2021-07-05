@@ -70,3 +70,6 @@ class BatchGrad(BackpropExtension):
                 RNN: rnn.BatchGradRNN(),
             },
         )
+
+    def expects_backpropagation_quantities(self) -> bool:  # noqa: D102
+        return False

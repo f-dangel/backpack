@@ -43,6 +43,7 @@ backpack/extensions/secondorder/sqrt_ggn/
 
 backpack/utils/linear.py
 backpack/utils/__init__.py
+backpack/utils/module_classification.py
 
 test/extensions/problem.py
 test/extensions/test_backprop_extension.py

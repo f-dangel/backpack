@@ -69,5 +69,8 @@ class PCHMP(BackpropExtension):
         )
         self._modify = modify
 
+    def expects_backpropagation_quantities(self) -> bool:  # noqa: D102
+        return True
+
     def get_modification_mode(self):
         return self._modify

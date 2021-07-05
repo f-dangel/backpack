@@ -119,6 +119,9 @@ class DiagGGN(BackpropExtension):
             },
         )
 
+    def expects_backpropagation_quantities(self) -> bool:  # noqa: D102
+        return True
+
 
 class DiagGGNExact(DiagGGN):
     """Diagonal of the Generalized Gauss-Newton/Fisher.
@@ -225,6 +228,9 @@ class BatchDiagGGN(BackpropExtension):
                 Permute: permute.DiagGGNPermute(),
             },
         )
+
+    def expects_backpropagation_quantities(self) -> bool:  # noqa: D102
+        return True
 
 
 class BatchDiagGGNExact(BatchDiagGGN):

@@ -13,6 +13,7 @@ from backpack.utils.hooks import no_op
 from . import extensions
 from .context import CTX
 from .utils import TORCH_VERSION_HIGHER_THAN_1_8_0
+from .utils.module_classification import is_no_op
 
 
 class backpack:
@@ -250,15 +251,20 @@ def extend(module: Module, debug: bool = False) -> Module:
     module_was_already_extended = getattr(module, "_backpack_extend", False)
     if not module_was_already_extended:
         CTX.add_hook_handle(module.register_forward_hook(hook_store_io))
-        if TORCH_VERSION_HIGHER_THAN_1_8_0:
-            CTX.add_hook_handle(module.register_full_backward_hook(hook_run_extensions))
-        else:
-            hook_run_extensions_legacy = functools.partial(
-                hook_run_extensions, use_legacy=True
-            )
-            CTX.add_hook_handle(
-                module.register_backward_hook(hook_run_extensions_legacy)
-            )
+        _register_hooks(module)
         module._backpack_extend = True
 
     return module
+
+
+def _register_hooks(module: Module) -> None:
+    if is_no_op(module):
+        return
+
+    if TORCH_VERSION_HIGHER_THAN_1_8_0:
+        CTX.add_hook_handle(module.register_full_backward_hook(hook_run_extensions))
+    else:
+        hook_run_extensions_legacy = functools.partial(
+            hook_run_extensions, use_legacy=True
+        )
+        CTX.add_hook_handle(module.register_backward_hook(hook_run_extensions_legacy))

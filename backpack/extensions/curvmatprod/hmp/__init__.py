@@ -61,3 +61,6 @@ class HMP(BackpropExtension):
                 BatchNorm1d: batchnorm1d.HMPBatchNorm1d(),
             },
         )
+
+    def expects_backpropagation_quantities(self) -> bool:  # noqa: D102
+        return True

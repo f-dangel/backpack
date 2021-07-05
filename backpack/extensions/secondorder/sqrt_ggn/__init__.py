@@ -95,6 +95,9 @@ class SqrtGGN(BackpropExtension):
         """
         return self.loss_hessian_strategy
 
+    def expects_backpropagation_quantities(self) -> bool:  # noqa: D102
+        return True
+
 
 class SqrtGGNExact(SqrtGGN):
     """Exact matrix square root of the generalized Gauss-Newton/Fisher.
