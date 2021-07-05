@@ -92,12 +92,12 @@ class ModuleExtension:
         Raises:
             AssertionError: if there is no saved quantity although extension expects one
         """
-        bpQuantities = self.__get_backproped_quantity(
+        bp_quantity = self.__get_backproped_quantity(
             extension, module.output if use_legacy else g_out[0], use_legacy
         )
         if (
             extension.expects_backpropagation_quantities() is True
-            and bpQuantities is None
+            and bp_quantity is None
             and is_loss(module) is False
             and use_legacy is False
         ):
@@ -109,19 +109,19 @@ class ModuleExtension:
         for param in self.__params:
             if self.__param_exists_and_requires_grad(module, param):
                 extFunc = getattr(self, param)
-                extValue = extFunc(extension, module, g_inp, g_out, bpQuantities)
+                extValue = extFunc(extension, module, g_inp, g_out, bp_quantity)
                 self.__save_value_on_parameter(extValue, extension, module, param)
 
         if extension.expects_backpropagation_quantities():
-            bpQuantities = self.backpropagate(
-                extension, module, g_inp, g_out, bpQuantities
+            bp_quantity = self.backpropagate(
+                extension, module, g_inp, g_out, bp_quantity
             )
             self.__save_backprop_quantity(
                 extension,
                 module.input0,
                 module.output,
                 module.input0 if use_legacy else g_inp[0],
-                bpQuantities,
+                bp_quantity,
                 use_legacy,
             )
 
@@ -140,9 +140,6 @@ class ModuleExtension:
         Returns:
             the backpropagation quantity
         """
-        if extension.expects_backpropagation_quantities() is False:
-            return None
-
         if use_legacy:
             return getattr(reference_tensor, extension.savefield, None)
         else:
