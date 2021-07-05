@@ -12,7 +12,7 @@ on:
 
 jobs:
   tests:
-    name: "Python ${{ matrix.python-version }}"
+    name: "Python ${{ matrix.python-version }} / PyTorch ${{  matrix.pytorch-version}}"
     runs-on: ubuntu-latest
     env:
       USING_COVERAGE: '3.7,3.9'
