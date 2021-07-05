@@ -19,8 +19,11 @@ class LinearDerivatives(BaseParameterDerivatives):
     * i: Input dimension
     """
 
-    def hessian_is_zero(self) -> bool:
+    def hessian_is_zero(self, module: Linear) -> bool:
         """Linear layer output is linear w.r.t. to its input.
+
+        Args:
+            module: current module
 
         Returns:
             True

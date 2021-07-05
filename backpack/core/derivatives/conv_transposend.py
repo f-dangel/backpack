@@ -48,7 +48,7 @@ class ConvTransposeNDDerivatives(BaseParameterDerivatives):
             raise ValueError(f"ConvTranspose{N}d not supported.")
         self.conv_dims = N
 
-    def hessian_is_zero(self):
+    def hessian_is_zero(self, module):
         return True
 
     def _bias_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):

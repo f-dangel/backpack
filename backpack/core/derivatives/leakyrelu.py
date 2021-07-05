@@ -4,7 +4,7 @@ from backpack.core.derivatives.elementwise import ElementwiseDerivatives
 
 
 class LeakyReLUDerivatives(ElementwiseDerivatives):
-    def hessian_is_zero(self):
+    def hessian_is_zero(self, module):
         """`LeakyReLU''(x) = 0`."""
         return True
 
