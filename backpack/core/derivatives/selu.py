@@ -10,7 +10,7 @@ class SELUDerivatives(ElementwiseDerivatives):
     alpha = 1.6732632423543772848170429916717
     scale = 1.0507009873554804934193349852946
 
-    def hessian_is_zero(self):
+    def hessian_is_zero(self, module):
         """`SELU''(x) != 0`."""
         return False
 

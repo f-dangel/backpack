@@ -50,7 +50,7 @@ class AvgPoolNDDerivatives(BaseDerivatives):
         """
         return module.stride, module.kernel_size, module.padding
 
-    def hessian_is_zero(self):
+    def hessian_is_zero(self, module):
         return True
 
     def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):

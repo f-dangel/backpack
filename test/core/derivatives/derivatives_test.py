@@ -8,6 +8,7 @@
 """
 
 from test.automated_test import check_sizes_and_values
+from test.core.derivatives.batch_norm_settings import BATCH_NORM_SETTINGS
 from test.core.derivatives.implementation.autograd import AutogradDerivatives
 from test.core.derivatives.implementation.backpack import BackpackDerivatives
 from test.core.derivatives.loss_settings import LOSS_FAIL_SETTINGS
@@ -46,11 +47,18 @@ LSTM_IDS = [problem.make_id() for problem in LSTM_PROBLEMS]
 PERMUTE_PROBLEMS = make_test_problems(PERMUTE_SETTINGS)
 PERMUTE_IDS = [problem.make_id() for problem in PERMUTE_PROBLEMS]
 
+BATCH_NORM_PROBLEMS = make_test_problems(BATCH_NORM_SETTINGS)
+BATCH_NORM_IDS = [problem.make_id() for problem in BATCH_NORM_PROBLEMS]
+
 
 @pytest.mark.parametrize(
     "problem",
-    NO_LOSS_PROBLEMS + RNN_PROBLEMS + PERMUTE_PROBLEMS + LSTM_PROBLEMS,
-    ids=NO_LOSS_IDS + RNN_IDS + PERMUTE_IDS + LSTM_IDS,
+    NO_LOSS_PROBLEMS
+    + RNN_PROBLEMS
+    + PERMUTE_PROBLEMS
+    + LSTM_PROBLEMS
+    + BATCH_NORM_PROBLEMS,
+    ids=NO_LOSS_IDS + RNN_IDS + PERMUTE_IDS + LSTM_IDS + BATCH_NORM_IDS,
 )
 def test_jac_mat_prod(problem: DerivativesTestProblem, V: int = 3) -> None:
     """Test the Jacobian-matrix product.
@@ -71,8 +79,12 @@ def test_jac_mat_prod(problem: DerivativesTestProblem, V: int = 3) -> None:
 
 @pytest.mark.parametrize(
     "problem",
-    NO_LOSS_PROBLEMS + RNN_PROBLEMS + PERMUTE_PROBLEMS + LSTM_PROBLEMS,
-    ids=NO_LOSS_IDS + RNN_IDS + PERMUTE_IDS + LSTM_IDS,
+    NO_LOSS_PROBLEMS
+    + RNN_PROBLEMS
+    + PERMUTE_PROBLEMS
+    + LSTM_PROBLEMS
+    + BATCH_NORM_PROBLEMS,
+    ids=NO_LOSS_IDS + RNN_IDS + PERMUTE_IDS + LSTM_IDS + BATCH_NORM_IDS,
 )
 def test_jac_t_mat_prod(problem: DerivativesTestProblem, request, V: int = 3) -> None:
     """Test the transposed Jacobian-matrix product.
@@ -227,7 +239,11 @@ def test_weight_hh_l0_jac_t_mat_prod(problem, sum_batch, V=4):
     [True, False],
     ids=["save_memory=True", "save_memory=False"],
 )
-@pytest.mark.parametrize("problem", PROBLEMS_WITH_WEIGHTS, ids=IDS_WITH_WEIGHTS)
+@pytest.mark.parametrize(
+    "problem",
+    PROBLEMS_WITH_WEIGHTS + BATCH_NORM_PROBLEMS,
+    ids=IDS_WITH_WEIGHTS + BATCH_NORM_IDS,
+)
 def test_weight_jac_t_mat_prod(
     problem: DerivativesTestProblem, sum_batch: bool, save_memory: bool, V: int = 3
 ) -> None:
@@ -252,7 +268,11 @@ def test_weight_jac_t_mat_prod(
     problem.tear_down()
 
 
-@pytest.mark.parametrize("problem", PROBLEMS_WITH_WEIGHTS, ids=IDS_WITH_WEIGHTS)
+@pytest.mark.parametrize(
+    "problem",
+    PROBLEMS_WITH_WEIGHTS + BATCH_NORM_PROBLEMS,
+    ids=IDS_WITH_WEIGHTS + BATCH_NORM_IDS,
+)
 def test_weight_jac_mat_prod(problem: DerivativesTestProblem, V: int = 3) -> None:
     """Test the Jacobian-matrix product w.r.t. to the weight.
 
@@ -281,7 +301,11 @@ for problem, problem_id in zip(PROBLEMS, IDS):
 @pytest.mark.parametrize(
     "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
 )
-@pytest.mark.parametrize("problem", PROBLEMS_WITH_BIAS, ids=IDS_WITH_BIAS)
+@pytest.mark.parametrize(
+    "problem",
+    PROBLEMS_WITH_BIAS + BATCH_NORM_PROBLEMS,
+    ids=IDS_WITH_BIAS + BATCH_NORM_IDS,
+)
 def test_bias_jac_t_mat_prod(
     problem: DerivativesTestProblem, sum_batch: bool, V: int = 3
 ) -> None:
@@ -302,7 +326,11 @@ def test_bias_jac_t_mat_prod(
     problem.tear_down()
 
 
-@pytest.mark.parametrize("problem", PROBLEMS_WITH_BIAS, ids=IDS_WITH_BIAS)
+@pytest.mark.parametrize(
+    "problem",
+    PROBLEMS_WITH_BIAS + BATCH_NORM_PROBLEMS,
+    ids=IDS_WITH_BIAS + BATCH_NORM_IDS,
+)
 def test_bias_jac_mat_prod(problem: DerivativesTestProblem, V: int = 3) -> None:
     """Test the Jacobian-matrix product w.r.t. to the bias.
 
