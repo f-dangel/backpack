@@ -8,7 +8,7 @@ from typing import Any, Callable
 from torch import Tensor
 from torch.nn import Module
 
-from backpack.utils.subsampling import subsample
+from backpack.utils.subsampling import get_batch_axis, subsample
 
 
 ###############################################################################
@@ -62,7 +62,9 @@ def _check_same_V_dim(mat1, mat2):
 
 def _check_like(mat, module, name, diff=1, *args, **kwargs):
     if name == "output" and "subsampling" in kwargs.keys():
-        compare = subsample(module.output, subsampling=kwargs["subsampling"])
+        compare = subsample(
+            module.output, dim=get_batch_axis(module), subsampling=kwargs["subsampling"]
+        )
     else:
         compare = getattr(module, name)
 
