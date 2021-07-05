@@ -16,7 +16,8 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
     Index convention:
     n: batch axis
     c: category axis
-    {empty}/l/hw/dhw: dimension axis for 0/1/2/3-dimensions
+    {empty}/l/hw/dhw: dimension axis for 0/1/2/3-dimensions (alternatively using xyz)
+    ...: usually for the remaining dimension axis (same as dhw)
 
     Links to PyTorch docs:
     https://pytorch.org/docs/stable/generated/torch.nn.BatchNorm1d.html
@@ -102,24 +103,27 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
             x_hat, var = self._get_normalized_input_and_var(module)
             ivar = 1.0 / (var + module.eps).sqrt()
 
-            equation = "vncl,c->vncl".replace("l", self.free_index[N])
-            dx_hat: Tensor = einsum(equation, mat, module.weight)
+            dx_hat: Tensor = einsum("vnc...,c->vnc...", mat, module.weight)
             jac_t_mat = denominator * dx_hat
             jac_t_mat -= dx_hat.sum(
                 self._get_free_axes(module),
                 keepdim=True,
             ).expand_as(jac_t_mat)
-            equation = "ncl,vmcx,mcx->vncl".replace("l", self.free_index[N]).replace(
-                "x", self.free_index_alternative[N]
+            equation = "nc...,vmcx,mcx->vnc...".replace(
+                "x",
+                {
+                    0: "",
+                    1: "x",
+                    2: "xy",
+                    3: "xyz",
+                }[N],
             )
             jac_t_mat -= einsum(equation, x_hat, dx_hat, x_hat)
-            equation = "vncl,c->vncl".replace("l", self.free_index[N])
-            jac_t_mat = einsum(equation, jac_t_mat, ivar / denominator)
+            jac_t_mat = einsum("vnc...,c->vnc...", jac_t_mat, ivar / denominator)
             return jac_t_mat
         else:
-            equation = "c,vncl->vncl".replace("l", self.free_index[N])
             return einsum(
-                equation,
+                "c,vnc...->vnc...",
                 ((module.running_var + module.eps) ** (-0.5)) * module.weight,
                 mat,
             )
@@ -132,10 +136,7 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
         mat: Tensor,
     ) -> Tensor:
         x_hat, _ = self._get_normalized_input_and_var(module)
-        equation: str = "ncl,vc->vncl".replace(
-            "l", self.free_index[self._get_n_axis(module)]
-        )
-        return einsum(equation, x_hat, mat)
+        return einsum("nc...,vc->vnc...", x_hat, mat)
 
     def _weight_jac_t_mat_prod(
         self,
@@ -146,10 +147,7 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
         sum_batch: bool = True,
     ) -> Tensor:
         x_hat, _ = self._get_normalized_input_and_var(module)
-        equation = f"vncl,ncl->v{'' if sum_batch else 'n'}c".replace(
-            "l", self.free_index[self._get_n_axis(module)]
-        )
-        return einsum(equation, mat, x_hat)
+        return einsum(f"vnc...,nc...->v{'' if sum_batch else 'n'}c", mat, x_hat)
 
     def _bias_jac_mat_prod(
         self,
@@ -310,17 +308,3 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
         for n in range(self._get_n_axis(module)):
             free_axes.append(index_batch + n + 2)
         return tuple(free_axes)
-
-    free_index: Dict[int, str] = {
-        0: "",
-        1: "l",
-        2: "hw",
-        3: "dhw",
-    }
-
-    free_index_alternative: Dict[int, str] = {
-        0: "",
-        1: "x",
-        2: "xy",
-        3: "xyz",
-    }
