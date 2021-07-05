@@ -50,7 +50,7 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
         Raises:
             NotImplementedError: if module is in evaluation mode
         """
-        if module.training is True:
+        if module.training:
             return False
         else:
             raise NotImplementedError(
@@ -71,7 +71,7 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
         Raises:
             NotImplementedError: if module is in evaluation mode
         """
-        if module.training is True:
+        if module.training:
             return False
         else:
             raise NotImplementedError(
