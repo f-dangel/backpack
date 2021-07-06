@@ -1,8 +1,9 @@
 import warnings
+from typing import List, Tuple, Union
 
 from einops import rearrange, reduce
 from numpy import prod
-from torch import einsum
+from torch import Tensor, einsum
 from torch.nn import Conv1d, Conv2d, Conv3d
 from torch.nn.functional import (
     conv1d,
@@ -16,6 +17,7 @@ from torch.nn.grad import _grad_input_padding
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 from backpack.utils import conv as convUtils
+from backpack.utils.subsampling import subsample
 
 
 class weight_jac_t_save_memory:
@@ -131,11 +133,21 @@ class ConvNDDerivatives(BaseParameterDerivatives):
 
         return self.reshape_like_output(jac_mat, module)
 
-    def _weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
+    def _weight_jac_t_mat_prod(
+        self,
+        module: Union[Conv1d, Conv2d, Conv3d],
+        g_inp: Tuple[Tensor],
+        g_out: Tuple[Tensor],
+        mat: Tensor,
+        sum_batch: bool = True,
+        subsampling: List[int] = None,
+    ) -> Tensor:
         save_memory = weight_jac_t_save_memory._SAVE_MEMORY
 
         if save_memory and self.conv_dims in [1, 2]:
-            return self.__higher_conv_weight_jac_t(module, mat, sum_batch)
+            return self.__higher_conv_weight_jac_t(
+                module, mat, sum_batch, subsampling=subsampling
+            )
 
         else:
 
@@ -147,13 +159,22 @@ class ConvNDDerivatives(BaseParameterDerivatives):
                     )
                 )
 
-            return self.__same_conv_weight_jac_t(module, mat, sum_batch)
+            return self.__same_conv_weight_jac_t(
+                module, mat, sum_batch, subsampling=subsampling
+            )
 
-    def __same_conv_weight_jac_t(self, module, mat, sum_batch):
+    def __same_conv_weight_jac_t(
+        self,
+        module: Union[Conv1d, Conv2d, Conv3d],
+        mat: Tensor,
+        sum_batch: bool,
+        subsampling: List[int] = None,
+    ) -> Tensor:
         """Uses convolution of same order."""
         G = module.groups
         V = mat.shape[0]
-        N, C_out = module.output.shape[0], module.output.shape[1]
+        C_out = module.output.shape[1]
+        N = module.output.shape[0] if subsampling is None else len(subsampling)
         C_in = module.input0.shape[1]
         C_in_axis = 1
         N_axis = 0
@@ -165,7 +186,9 @@ class ConvNDDerivatives(BaseParameterDerivatives):
         mat = rearrange(mat, "a b ... -> (a b) ...")
         mat = mat.unsqueeze(C_in_axis)
 
-        input = rearrange(module.input0, "n c ... -> (n c) ...")
+        input = rearrange(
+            subsample(module.input0, subsampling=subsampling), "n c ... -> (n c) ..."
+        )
         input = input.unsqueeze(N_axis)
         repeat_pattern = [1, V] + [1 for _ in range(self.conv_dims)]
         input = input.repeat(*repeat_pattern)
@@ -191,7 +214,13 @@ class ConvNDDerivatives(BaseParameterDerivatives):
         else:
             return rearrange(grad_weight, "(v n g i o) ... -> v n (g o) i ...", **dim)
 
-    def __higher_conv_weight_jac_t(self, module, mat, sum_batch):
+    def __higher_conv_weight_jac_t(
+        self,
+        module: Union[Conv1d, Conv2d, Conv3d],
+        mat: Tensor,
+        sum_batch: bool,
+        subsampling: List[int] = None,
+    ) -> Tensor:
         """Requires higher-order convolution.
 
         The algorithm is proposed in:
@@ -201,7 +230,8 @@ class ConvNDDerivatives(BaseParameterDerivatives):
         """
         G = module.groups
         V = mat.shape[0]
-        N, C_out = module.output.shape[0], module.output.shape[1]
+        C_out = module.output.shape[1]
+        N = module.output.shape[0] if subsampling is None else len(subsampling)
         C_in = module.input0.shape[1]
 
         if self.conv_dims == 1:
@@ -223,8 +253,10 @@ class ConvNDDerivatives(BaseParameterDerivatives):
 
         # Reshape to extract groups from the convolutional layer
         # Channels are seen as an extra spatial dimension with kernel size 1
-        input_conv = module.input0.reshape(1, N * G, *spatial_dim).repeat(
-            *spatial_dim_axis
+        input_conv = (
+            subsample(module.input0, subsampling=subsampling)
+            .reshape(1, N * G, *spatial_dim)
+            .repeat(*spatial_dim_axis)
         )
         # Compute convolution between input and output; the batchsize is seen
         # as channels, taking advantage of the `groups` argument

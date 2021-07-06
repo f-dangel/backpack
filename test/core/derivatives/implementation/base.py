@@ -1,5 +1,6 @@
 """Contains DerivativesImplementation, the base class for autograd and backpack."""
 from abc import ABC, abstractmethod
+from typing import List
 
 from torch import Tensor
 
@@ -42,12 +43,15 @@ class DerivativesImplementation(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def weight_jac_t_mat_prod(self, mat: Tensor, sum_batch: bool) -> Tensor:
-        """Product of jacobian and matrix.
+    def weight_jac_t_mat_prod(
+        self, mat: Tensor, sum_batch: bool, subsampling: List[int] = None
+    ) -> Tensor:
+        """Matrix-Jacobian products w.r.t. the weight.
 
         Args:
             mat: matrix
             sum_batch: whether to sum along batch axis
+            subsampling: Active samples in the output. Default: ``None`` (all).
 
         Returns:
             product
