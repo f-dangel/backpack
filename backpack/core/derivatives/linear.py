@@ -210,7 +210,7 @@ class LinearDerivatives(BaseParameterDerivatives):
             Batched transposed Jacobian vector products. Has shape
             ``[V, N, *module.bias.shape]`` when ``sum_batch`` is ``False``. With
             ``sum_batch=True``, has shape ``[V, *module.bias.shape]``. If sub-
-            sampling is used, ``N`` must be ``len(subsampling)`` instead.
+            sampling is used, ``N`` is replaced by ``len(subsampling)``.
         """
         equation = f"vn...o->v{'' if sum_batch else 'n'}o"
         return einsum(equation, mat)
