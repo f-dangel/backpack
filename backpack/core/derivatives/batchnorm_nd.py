@@ -175,6 +175,7 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
         g_out: Tuple[Tensor],
         mat: Tensor,
         sum_batch: bool = True,
+        subsampling: List[int] = None,
     ) -> Tensor:
         self._maybe_warn_no_batch_summation(sum_batch)
         axis_sum: Tuple[int] = self._get_free_axes(module, with_batch_axis=sum_batch)
