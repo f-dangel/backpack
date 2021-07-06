@@ -49,7 +49,7 @@ def convert_module_to_backpack(module: Module) -> Module:
     """
     module_new = _transform_mul_to_scale_module(module)
     module_new = _transform_flatten_to_module(module_new)
-    module_new = _transform_add_to_merge(module_new)
+    module_new = _transform_add_to_sum_module(module_new)
     module_new = _transform_inplace_to_normal(module_new)
     return module_new
 
@@ -74,13 +74,13 @@ def _transform_mul_to_scale_module(module: Module) -> Module:
     return torch.fx.GraphModule(module, graph)
 
 
-def _transform_add_to_merge(module: Module) -> Module:
+def _transform_add_to_sum_module(module: Module) -> Module:
     print("\nBegin transformation...")
     graph: torch.fx.Graph = MyCustomTracer().trace(module)
     for node in graph.nodes:
         if node.op == "call_function":
             if str(node.target) == "<built-in function add>":
-                _change_node_to_module(node, "merge", module, SumModule(), node.args)
+                _change_node_to_module(node, "sum_module", module, SumModule(), node.args)
 
     graph.lint()
     # TODO: delete_all_unused_submodules
