@@ -26,3 +26,7 @@ print(f"\nResults same? {torch.allclose(result_original, result_transformed)}")
 loss = extend(MSELoss())(result_transformed, torch.rand_like(result_transformed))
 with backpack(DiagGGNExact()):
     loss.backward()
+for name, param in resnet18_transformed.named_parameters():
+    print(name)
+    print(param.grad.shape)
+    print(param.diag_ggn_exact.shape)
