@@ -4,7 +4,7 @@ from backpack.core.derivatives.elementwise import ElementwiseDerivatives
 
 
 class DropoutDerivatives(ElementwiseDerivatives):
-    def hessian_is_zero(self):
+    def hessian_is_zero(self, module):
         return True
 
     def df(self, module, g_inp, g_out):

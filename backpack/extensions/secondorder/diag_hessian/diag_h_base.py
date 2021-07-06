@@ -24,9 +24,9 @@ class DiagHBaseModule(MatToJacMat):
         return {"matrices": bp_matrices, "signs": bp_signs}
 
     def __local_curvatures(self, module, g_inp, g_out):
-        if self.derivatives.hessian_is_zero():
+        if self.derivatives.hessian_is_zero(module):
             return []
-        if not self.derivatives.hessian_is_diagonal():
+        if not self.derivatives.hessian_is_diagonal(module):
             raise NotImplementedError
 
         def positive_part(sign, H):
