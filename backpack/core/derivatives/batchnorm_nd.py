@@ -5,6 +5,7 @@ from torch import Size, Tensor, einsum
 from torch.nn import BatchNorm1d, BatchNorm2d, BatchNorm3d
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
+from backpack.utils import TORCH_VERSION, VERSION_1_9_0
 
 
 class BatchNormNdDerivatives(BaseParameterDerivatives):
@@ -109,16 +110,13 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
                 self._get_free_axes(module),
                 keepdim=True,
             ).expand_as(jac_t_mat)
-            equation = "nc...,vmcx,mcx->vnc...".replace(
-                "x",
-                {
-                    0: "",
-                    1: "x",
-                    2: "xy",
-                    3: "xyz",
-                }[N],
+            spatial_dims = "xyz"[:N]
+            jac_t_mat -= einsum(
+                f"nc...,vmc{spatial_dims},mc{spatial_dims}->vnc...",
+                x_hat,
+                dx_hat,
+                x_hat,
             )
-            jac_t_mat -= einsum(equation, x_hat, dx_hat, x_hat)
             jac_t_mat = einsum("vnc...,c->vnc...", jac_t_mat, ivar / denominator)
             return jac_t_mat
         else:
@@ -147,7 +145,18 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
         sum_batch: bool = True,
     ) -> Tensor:
         x_hat, _ = self._get_normalized_input_and_var(module)
-        return einsum(f"vnc...,nc...->v{'' if sum_batch else 'n'}c", mat, x_hat)
+
+        if TORCH_VERSION >= VERSION_1_9_0:
+            equation = f"vnc...,nc...->v{'' if sum_batch else 'n'}c"
+        # TODO Remove else-branch after deprecating torch<1.9.0
+        else:
+            N: int = self._get_n_axis(module)
+            spatial_dims = "xyz"[:N]
+            equation = (
+                f"vnc{spatial_dims},nc{spatial_dims}->v{'' if sum_batch else 'n'}c"
+            )
+
+        return einsum(equation, mat, x_hat)
 
     def _bias_jac_mat_prod(
         self,
