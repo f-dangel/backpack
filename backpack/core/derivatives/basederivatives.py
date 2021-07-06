@@ -467,9 +467,10 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
 
         Returns:
             Jacobian-matrix product.
-            Has shape [V, T, N, H] if `sum_batch == False`; but if used with
-            sub-sampling, the batch dimension is replaced by ``len(subsampling)``.
-            Has shape [V, T, H] if `sum_batch == True`.
+            Has shape [V, N, *module.bias_ih_l0.shape] if ``sum_batch == False``; but if
+            used with sub-sampling, the batch dimension is replaced by
+            ``len(subsampling)``. Has shape [V, *module.bias_ih_l0.shape] if
+            ``sum_batch == True``.
         """
         return self._bias_ih_l0_jac_t_mat_prod(
             module, g_inp, g_out, mat, sum_batch=sum_batch, subsampling=subsampling
@@ -512,9 +513,10 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
 
         Returns:
             Jacobian-matrix product.
-            Has shape [V, T, N, H] if `sum_batch == False`; but if used with
-            sub-sampling, the batch dimension is replaced by ``len(subsampling)``.
-            Has shape [V, T, H] if `sum_batch == True`.
+            Has shape [V, N, *module.bias_hh_l0.shape] if ``sum_batch == False``; but if
+            used with sub-sampling, the batch dimension is replaced by
+            ``len(subsampling)``. Has shape [V, *module.bias_hh_l0.shape] if
+            ``sum_batch == True``.
         """
         return self._bias_hh_l0_jac_t_mat_prod(
             module, g_inp, g_out, mat, sum_batch=sum_batch, subsampling=subsampling
@@ -557,9 +559,10 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
 
         Returns:
             Jacobian-matrix product.
-            Has shape [V, T, N, H, I] if `sum_batch == False`; but if used with
-            sub-sampling, the batch dimension is replaced by ``len(subsampling)``.
-            Has shape [V, T, H, I] if `sum_batch == True`.
+            Has shape [V, N, *module.weight_ih_l0.shape] if ``sum_batch == False``; but
+            if used with sub-sampling, the batch dimension is replaced by
+            ``len(subsampling)``. Has shape [V, *module.weight_ih_l0.shape] if
+            ``sum_batch == True``.
         """
         return self._weight_ih_l0_jac_t_mat_prod(
             module, g_inp, g_out, mat, sum_batch=sum_batch, subsampling=subsampling
@@ -602,9 +605,10 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
 
         Returns:
             Jacobian-matrix product.
-            Has shape [V, T, N, H, I] if `sum_batch == False`; but if used with
-            sub-sampling, the batch dimension is replaced by ``len(subsampling)``.
-            Has shape [V, T, H, I] if `sum_batch == True`.
+            Has shape [V, N, *module.weight_hh_l0.shape] if ``sum_batch == False``; but
+            if used with sub-sampling, the batch dimension is replaced by
+            ``len(subsampling)``. Has shape [V, *module.weight_hh_l0.shape] if
+            ``sum_batch == True``.
         """
         return self._weight_hh_l0_jac_t_mat_prod(
             module, g_inp, g_out, mat, sum_batch=sum_batch, subsampling=subsampling
