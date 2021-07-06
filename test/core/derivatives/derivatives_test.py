@@ -266,8 +266,7 @@ def test_weight_jac_t_mat_prod(
     autograd_res = AutogradDerivatives(problem).weight_jac_t_mat_prod(
         mat, sum_batch, subsampling=subsampling
     )
-
-    check_sizes_and_values(autograd_res, backpack_res)
+    check_sizes_and_values(autograd_res, backpack_res, rtol=5e-5)
 
 
 def rand_mat_like_output(
