@@ -407,8 +407,7 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
             g_out: output gradients
             mat: Matrix the transposed Jacobian will be applied to.
                 Has shape ``[V, *module.output.shape]``; but if used with
-                sub-sampling, the batch dimension from is replaced by
-                ``len(subsampling)``.
+                sub-sampling, the batch dimension is replaced by ``len(subsampling)``.
             sum_batch: Whether to sum over the batch dimension on the fly.
             subsampling: Indices of samples along the output's batch dimension that
                 should be considered. Defaults to ``None`` (use all samples).
