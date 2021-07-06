@@ -31,6 +31,10 @@ def _initialize_training_false(
 BATCH_NORM_SETTINGS = [
     {
         "module_fn": lambda: BatchNorm1d(num_features=7),
+        "input_fn": lambda: rand(size=(5, 7)),
+    },
+    {
+        "module_fn": lambda: BatchNorm1d(num_features=7),
         "input_fn": lambda: rand(size=(5, 7, 4)),
     },
     {
