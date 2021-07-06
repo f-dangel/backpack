@@ -450,6 +450,7 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
         g_out: Tuple[Tensor],
         mat: Tensor,
         sum_batch: bool = True,
+        subsampling: List[int] = None,
     ) -> Tensor:
         """Apply transposed Jacobian of the output w.r.t. bias_ih_l0 to a matrix.
 
@@ -458,16 +459,21 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
             g_inp: input gradients
             g_out: output gradients
             mat: Matrix the transposed Jacobian will be applied to.
-                Must have shape [V, T, N, H].
+                Must have shape [V, T, N, H]; but if used with sub-sampling, the batch
+                dimension is replaced by ``len(subsampling)``.
             sum_batch: Whether to sum over the batch dimension on the fly.
+            subsampling: Indices of samples along the output's batch dimension that
+                should be considered. Defaults to ``None`` (use all samples).
 
         Returns:
             Jacobian-matrix product.
-            Has shape [V, T, N, H] if `sum_batch == False`.
-            Has shape [V, T, H] if `sum_batch == True`.
+            Has shape [V, N, *module.bias_ih_l0.shape] if ``sum_batch == False``; but if
+            used with sub-sampling, the batch dimension is replaced by
+            ``len(subsampling)``. Has shape [V, *module.bias_ih_l0.shape] if
+            ``sum_batch == True``.
         """
         return self._bias_ih_l0_jac_t_mat_prod(
-            module, g_inp, g_out, mat, sum_batch=sum_batch
+            module, g_inp, g_out, mat, sum_batch=sum_batch, subsampling=subsampling
         )
 
     def _bias_ih_l0_jac_t_mat_prod(
@@ -477,6 +483,7 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
         g_out: Tuple[Tensor],
         mat: Tensor,
         sum_batch: bool = True,
+        subsampling: List[int] = None,
     ) -> Tensor:
         raise NotImplementedError
 
@@ -489,6 +496,7 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
         g_out: Tuple[Tensor],
         mat: Tensor,
         sum_batch: bool = True,
+        subsampling: List[int] = None,
     ) -> Tensor:
         """Apply transposed Jacobian of the output w.r.t. bias_hh_l0 to a matrix.
 
@@ -497,16 +505,21 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
             g_inp: input gradients
             g_out: output gradients
             mat: Matrix the transposed Jacobian will be applied to.
-                Must have shape [V, T, N, H].
+                Must have shape [V, T, N, H]; but if used with sub-sampling, the batch
+                dimension is replaced by ``len(subsampling)``.
             sum_batch: Whether to sum over the batch dimension on the fly.
+            subsampling: Indices of samples along the output's batch dimension that
+                should be considered. Defaults to ``None`` (use all samples).
 
         Returns:
             Jacobian-matrix product.
-            Has shape [V, T, N, H] if `sum_batch == False`.
-            Has shape [V, T, H] if `sum_batch == True`.
+            Has shape [V, N, *module.bias_hh_l0.shape] if ``sum_batch == False``; but if
+            used with sub-sampling, the batch dimension is replaced by
+            ``len(subsampling)``. Has shape [V, *module.bias_hh_l0.shape] if
+            ``sum_batch == True``.
         """
         return self._bias_hh_l0_jac_t_mat_prod(
-            module, g_inp, g_out, mat, sum_batch=sum_batch
+            module, g_inp, g_out, mat, sum_batch=sum_batch, subsampling=subsampling
         )
 
     def _bias_hh_l0_jac_t_mat_prod(
@@ -516,6 +529,7 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
         g_out: Tuple[Tensor],
         mat: Tensor,
         sum_batch: bool = True,
+        subsampling: List[int] = None,
     ) -> Tensor:
         raise NotImplementedError
 
@@ -528,6 +542,7 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
         g_out: Tuple[Tensor],
         mat: Tensor,
         sum_batch: bool = True,
+        subsampling: List[int] = None,
     ) -> Tensor:
         """Apply transposed Jacobian of the output w.r.t. weight_ih_l0 to a matrix.
 
@@ -536,16 +551,21 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
             g_inp: input gradients
             g_out: output gradients
             mat: Matrix the transposed Jacobian will be applied to.
-                Must have shape [V, T, N, H].
+                Must have shape [V, T, N, H]; but if used with sub-sampling, the batch
+                dimension is replaced by ``len(subsampling)``.
             sum_batch: Whether to sum over the batch dimension on the fly.
+            subsampling: Indices of samples along the output's batch dimension that
+                should be considered. Defaults to ``None`` (use all samples).
 
         Returns:
             Jacobian-matrix product.
-            Has shape [V, T, N, H, I] if `sum_batch == False`.
-            Has shape [V, T, H, I] if `sum_batch == True`.
+            Has shape [V, N, *module.weight_ih_l0.shape] if ``sum_batch == False``; but
+            if used with sub-sampling, the batch dimension is replaced by
+            ``len(subsampling)``. Has shape [V, *module.weight_ih_l0.shape] if
+            ``sum_batch == True``.
         """
         return self._weight_ih_l0_jac_t_mat_prod(
-            module, g_inp, g_out, mat, sum_batch=sum_batch
+            module, g_inp, g_out, mat, sum_batch=sum_batch, subsampling=subsampling
         )
 
     def _weight_ih_l0_jac_t_mat_prod(
@@ -555,6 +575,7 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
         g_out: Tuple[Tensor],
         mat: Tensor,
         sum_batch: bool = True,
+        subsampling: List[int] = None,
     ) -> Tensor:
         raise NotImplementedError
 
@@ -567,6 +588,7 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
         g_out: Tuple[Tensor],
         mat: Tensor,
         sum_batch: bool = True,
+        subsampling: List[int] = None,
     ) -> Tensor:
         """Apply transposed Jacobian of the output w.r.t. weight_hh_l0 to a matrix.
 
@@ -575,16 +597,21 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
             g_inp: input gradients
             g_out: output gradients
             mat: Matrix the transposed Jacobian will be applied to.
-                Must have shape [V, T, N, H].
+                Must have shape [V, T, N, H]; but if used with sub-sampling, the batch
+                dimension is replaced by ``len(subsampling)``.
             sum_batch: Whether to sum over the batch dimension on the fly.
+            subsampling: Indices of samples along the output's batch dimension that
+                should be considered. Defaults to ``None`` (use all samples).
 
         Returns:
             Jacobian-matrix product.
-            Has shape [V, T, N, H, I] if `sum_batch == False`.
-            Has shape [V, T, H, I] if `sum_batch == True`.
+            Has shape [V, N, *module.weight_hh_l0.shape] if ``sum_batch == False``; but
+            if used with sub-sampling, the batch dimension is replaced by
+            ``len(subsampling)``. Has shape [V, *module.weight_hh_l0.shape] if
+            ``sum_batch == True``.
         """
         return self._weight_hh_l0_jac_t_mat_prod(
-            module, g_inp, g_out, mat, sum_batch=sum_batch
+            module, g_inp, g_out, mat, sum_batch=sum_batch, subsampling=subsampling
         )
 
     def _weight_hh_l0_jac_t_mat_prod(
@@ -594,6 +621,7 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
         g_out: Tuple[Tensor],
         mat: Tensor,
         sum_batch: bool = True,
+        subsampling: List[int] = None,
     ) -> Tensor:
         raise NotImplementedError
 

@@ -1,11 +1,12 @@
 """Partial derivatives for nn.LSTM."""
-from typing import Tuple
+from typing import List, Tuple
 
 from torch import Tensor, cat, einsum, sigmoid, tanh, zeros
 from torch.nn import LSTM
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 from backpack.utils import TORCH_VERSION, VERSION_1_8_0
+from backpack.utils.subsampling import get_batch_axis, subsample
 
 
 class LSTMDerivatives(BaseParameterDerivatives):
@@ -54,7 +55,7 @@ class LSTMDerivatives(BaseParameterDerivatives):
 
     @staticmethod
     def _forward_pass(
-        module: LSTM, mat: Tensor
+        module: LSTM, mat: Tensor, subsampling: List[int] = None
     ) -> Tuple[Tensor, Tensor, Tensor, Tensor]:
         """This performs an additional forward pass and returns the hidden variables.
 
@@ -65,7 +66,8 @@ class LSTMDerivatives(BaseParameterDerivatives):
 
         Args:
             module: module
-            mat: matrix, used to extract device and shapes
+            mat: matrix, used to extract device and shapes.
+            subsampling: Indices of active samples. Defaults to ``None`` (all samples).
 
         Returns:
             ifgo, c, c_tanh, h
@@ -83,16 +85,19 @@ class LSTMDerivatives(BaseParameterDerivatives):
         c: Tensor = zeros(T, N, H, device=mat.device, dtype=mat.dtype)
         c_tanh: Tensor = zeros(T, N, H, device=mat.device, dtype=mat.dtype)
         h: Tensor = zeros(T, N, H, device=mat.device, dtype=mat.dtype)
+
+        N_axis = get_batch_axis(module)
+        input0 = subsample(module.input0, dim=N_axis, subsampling=subsampling)
+        output = subsample(module.output, dim=N_axis, subsampling=subsampling)
+
         for t in range(T):
             ifgo[t] = (
-                einsum("hi,ni->nh", module.weight_ih_l0, module.input0[t])
+                einsum("hi,ni->nh", module.weight_ih_l0, input0[t])
                 + module.bias_ih_l0
                 + module.bias_hh_l0
             )
             if t != 0:
-                ifgo[t] += einsum(
-                    "hg,ng->nh", module.weight_hh_l0, module.output[t - 1]
-                )
+                ifgo[t] += einsum("hg,ng->nh", module.weight_hh_l0, output[t - 1])
             ifgo[t, :, H0:H1] = sigmoid(ifgo[t, :, H0:H1])
             ifgo[t, :, H1:H2] = sigmoid(ifgo[t, :, H1:H2])
             ifgo[t, :, H2:H3] = tanh(ifgo[t, :, H2:H3])
@@ -106,7 +111,9 @@ class LSTMDerivatives(BaseParameterDerivatives):
         return ifgo, c, c_tanh, h
 
     @classmethod
-    def _ifgo_jac_t_mat_prod(cls, module: LSTM, mat: Tensor) -> Tensor:
+    def _ifgo_jac_t_mat_prod(
+        cls, module: LSTM, mat: Tensor, subsampling: List[int] = None
+    ) -> Tensor:
         V: int = mat.shape[0]
         T: int = mat.shape[1]
         N: int = mat.shape[2]
@@ -117,7 +124,7 @@ class LSTMDerivatives(BaseParameterDerivatives):
         H3: int = 3 * H
         H4: int = 4 * H
 
-        ifgo, c, c_tanh, _ = cls._forward_pass(module, mat)
+        ifgo, c, c_tanh, _ = cls._forward_pass(module, mat, subsampling=subsampling)
 
         # backward pass
         H_prod_t: Tensor = zeros(V, N, H, device=mat.device, dtype=mat.dtype)
@@ -288,10 +295,13 @@ class LSTMDerivatives(BaseParameterDerivatives):
         g_out: Tuple[Tensor],
         mat: Tensor,
         sum_batch: bool = True,
+        subsampling: List[int] = None,
     ) -> Tensor:
         self._check_parameters(module)
 
-        IFGO_prod: Tensor = self._ifgo_jac_t_mat_prod(module, mat)
+        IFGO_prod: Tensor = self._ifgo_jac_t_mat_prod(
+            module, mat, subsampling=subsampling
+        )
 
         return einsum(f"vtnh->v{'' if sum_batch else 'n'}h", IFGO_prod)
 
@@ -302,9 +312,10 @@ class LSTMDerivatives(BaseParameterDerivatives):
         g_out: Tuple[Tensor],
         mat: Tensor,
         sum_batch: bool = True,
+        subsampling: List[int] = None,
     ) -> Tensor:
         return self._bias_ih_l0_jac_t_mat_prod(
-            module, g_inp, g_out, mat, sum_batch=sum_batch
+            module, g_inp, g_out, mat, sum_batch=sum_batch, subsampling=subsampling
         )
 
     def _weight_ih_l0_jac_t_mat_prod(
@@ -314,13 +325,20 @@ class LSTMDerivatives(BaseParameterDerivatives):
         g_out: Tuple[Tensor],
         mat: Tensor,
         sum_batch: bool = True,
+        subsampling: List[int] = None,
     ) -> Tensor:
         self._check_parameters(module)
 
-        IFGO_prod: Tensor = self._ifgo_jac_t_mat_prod(module, mat)
+        IFGO_prod: Tensor = self._ifgo_jac_t_mat_prod(
+            module, mat, subsampling=subsampling
+        )
 
         return einsum(
-            f"vtnh,tni->v{'' if sum_batch else 'n'}hi", IFGO_prod, module.input0
+            f"vtnh,tni->v{'' if sum_batch else 'n'}hi",
+            IFGO_prod,
+            subsample(
+                module.input0, dim=get_batch_axis(module), subsampling=subsampling
+            ),
         )
 
     def _weight_hh_l0_jac_t_mat_prod(
@@ -330,13 +348,16 @@ class LSTMDerivatives(BaseParameterDerivatives):
         g_out: Tuple[Tensor],
         mat: Tensor,
         sum_batch: bool = True,
+        subsampling: List[int] = None,
     ) -> Tensor:
         self._check_parameters(module)
 
         N: int = mat.shape[2]
         H: int = module.hidden_size
 
-        IFGO_prod: Tensor = self._ifgo_jac_t_mat_prod(module, mat)
+        IFGO_prod: Tensor = self._ifgo_jac_t_mat_prod(
+            module, mat, subsampling=subsampling
+        )
 
         return einsum(
             f"vtnh,tng->v{'' if sum_batch else 'n'}hg",
@@ -344,7 +365,11 @@ class LSTMDerivatives(BaseParameterDerivatives):
             cat(
                 [
                     zeros(1, N, H, device=mat.device, dtype=mat.dtype),
-                    module.output[0:-1],
+                    subsample(
+                        module.output,
+                        dim=get_batch_axis(module),
+                        subsampling=subsampling,
+                    )[0:-1],
                 ],
                 dim=0,
             ),
