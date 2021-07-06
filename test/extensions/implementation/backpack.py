@@ -30,14 +30,14 @@ class BackpackExtensions(ExtensionsImplementation):
         with backpack(new_ext.BatchGrad()):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
-            batch_grads = [p.grad_batch for p in self.problem.model.parameters()]
+            batch_grads = [p.grad_batch for p in self.problem.trainable_parameters()]
         return batch_grads
 
     def batch_l2_grad(self) -> List[Tensor]:  # noqa:D102
         with backpack(new_ext.BatchL2Grad()):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
-            batch_l2_grad = [p.batch_l2 for p in self.problem.model.parameters()]
+            batch_l2_grad = [p.batch_l2 for p in self.problem.trainable_parameters()]
         return batch_l2_grad
 
     def batch_l2_grad_extension_hook(self) -> List[Tensor]:
@@ -50,14 +50,16 @@ class BackpackExtensions(ExtensionsImplementation):
         with backpack(new_ext.BatchGrad(), extension_hook=hook):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
-            batch_l2_grad = [p.batch_l2_hook for p in self.problem.model.parameters()]
+            batch_l2_grad = [
+                p.batch_l2_hook for p in self.problem.trainable_parameters()
+            ]
         return batch_l2_grad
 
     def sgs(self) -> List[Tensor]:  # noqa:D102
         with backpack(new_ext.SumGradSquared()):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
-            sgs = [p.sum_grad_squared for p in self.problem.model.parameters()]
+            sgs = [p.sum_grad_squared for p in self.problem.trainable_parameters()]
         return sgs
 
     def sgs_extension_hook(self) -> List[Tensor]:
@@ -70,21 +72,21 @@ class BackpackExtensions(ExtensionsImplementation):
         with backpack(new_ext.BatchGrad(), extension_hook=hook):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
-            sgs = [p.sum_grad_squared_hook for p in self.problem.model.parameters()]
+            sgs = [p.sum_grad_squared_hook for p in self.problem.trainable_parameters()]
         return sgs
 
     def variance(self) -> List[Tensor]:  # noqa:D102
         with backpack(new_ext.Variance()):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
-            variances = [p.variance for p in self.problem.model.parameters()]
+            variances = [p.variance for p in self.problem.trainable_parameters()]
         return variances
 
     def diag_ggn(self) -> List[Tensor]:  # noqa:D102
         with backpack(new_ext.DiagGGNExact()):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
-            diag_ggn = [p.diag_ggn_exact for p in self.problem.model.parameters()]
+            diag_ggn = [p.diag_ggn_exact for p in self.problem.trainable_parameters()]
         return diag_ggn
 
     def diag_ggn_exact_batch(self) -> List[Tensor]:  # noqa:D102
@@ -92,7 +94,7 @@ class BackpackExtensions(ExtensionsImplementation):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
             diag_ggn_exact_batch = [
-                p.diag_ggn_exact_batch for p in self.problem.model.parameters()
+                p.diag_ggn_exact_batch for p in self.problem.trainable_parameters()
             ]
         return diag_ggn_exact_batch
 
@@ -100,7 +102,7 @@ class BackpackExtensions(ExtensionsImplementation):
         with backpack(new_ext.DiagGGNMC(mc_samples=mc_samples)):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
-            diag_ggn_mc = [p.diag_ggn_mc for p in self.problem.model.parameters()]
+            diag_ggn_mc = [p.diag_ggn_mc for p in self.problem.trainable_parameters()]
         return diag_ggn_mc
 
     def diag_ggn_mc_batch(self, mc_samples) -> List[Tensor]:  # noqa:D102
@@ -108,7 +110,7 @@ class BackpackExtensions(ExtensionsImplementation):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
             diag_ggn_mc_batch = [
-                p.diag_ggn_mc_batch for p in self.problem.model.parameters()
+                p.diag_ggn_mc_batch for p in self.problem.trainable_parameters()
             ]
         return diag_ggn_mc_batch
 
@@ -198,14 +200,14 @@ class BackpackExtensions(ExtensionsImplementation):
         with backpack(new_ext.DiagHessian()):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
-            diag_h = [p.diag_h for p in self.problem.model.parameters()]
+            diag_h = [p.diag_h for p in self.problem.trainable_parameters()]
         return diag_h
 
     def kfac(self, mc_samples: int = 1) -> List[List[Tensor]]:  # noqa:D102
         with backpack(new_ext.KFAC(mc_samples=mc_samples)):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
-            kfac = [p.kfac for p in self.problem.model.parameters()]
+            kfac = [p.kfac for p in self.problem.trainable_parameters()]
 
         return kfac
 
@@ -213,7 +215,7 @@ class BackpackExtensions(ExtensionsImplementation):
         with backpack(new_ext.KFLR()):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
-            kflr = [p.kflr for p in self.problem.model.parameters()]
+            kflr = [p.kflr for p in self.problem.trainable_parameters()]
 
         return kflr
 
@@ -221,7 +223,7 @@ class BackpackExtensions(ExtensionsImplementation):
         with backpack(new_ext.KFRA()):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
-            kfra = [p.kfra for p in self.problem.model.parameters()]
+            kfra = [p.kfra for p in self.problem.trainable_parameters()]
 
         return kfra
 
@@ -229,7 +231,7 @@ class BackpackExtensions(ExtensionsImplementation):
         with backpack(new_ext.BatchDiagHessian()):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
-            diag_h_batch = [p.diag_h_batch for p in self.problem.model.parameters()]
+            diag_h_batch = [p.diag_h_batch for p in self.problem.trainable_parameters()]
 
         return diag_h_batch
 
@@ -246,7 +248,7 @@ class BackpackExtensions(ExtensionsImplementation):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
 
-        return [p.sqrt_ggn_exact for p in self.problem.model.parameters()]
+        return [p.sqrt_ggn_exact for p in self.problem.trainable_parameters()]
 
     def sqrt_ggn_mc(self, mc_samples: int) -> List[Tensor]:
         """Compute the approximate matrix square root of the generalized Gauss-Newton.
@@ -261,7 +263,7 @@ class BackpackExtensions(ExtensionsImplementation):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
 
-        return [p.sqrt_ggn_mc for p in self.problem.model.parameters()]
+        return [p.sqrt_ggn_mc for p in self.problem.trainable_parameters()]
 
     def ggn_mc(self, mc_samples: int, chunks: int = 1) -> Tensor:  # noqa:D102
         samples = self.chunk_sizes(mc_samples, chunks)

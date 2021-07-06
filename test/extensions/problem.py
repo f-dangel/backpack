@@ -2,8 +2,10 @@
 
 import copy
 from test.core.derivatives.utils import get_available_devices
+from typing import Iterator
 
 import torch
+from torch.nn.parameter import Parameter
 
 from backpack import extend
 
@@ -191,3 +193,13 @@ class ExtensionsTestProblem:
                 f"'mean': {mean_loss}, 'sum': {sum_loss}, loss: {loss}",
             )
         return factor
+
+    def trainable_parameters(self) -> Iterator[Parameter]:
+        """Yield the model's trainable parameters.
+
+        Yields:
+            Model parameter with gradients enabled.
+        """
+        for p in self.model.parameters():
+            if p.requires_grad:
+                yield p
