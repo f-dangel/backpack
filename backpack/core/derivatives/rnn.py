@@ -254,10 +254,7 @@ class RNNDerivatives(BaseParameterDerivatives):
             "vtnh,tnk->" + ("vhk" if sum_batch else "vnhk"),
             self._a_jac_t_mat_prod(output, module.weight_hh_l0, mat),
             cat(
-                [
-                    zeros(1, N, H, device=mat.device, dtype=mat.dtype),
-                    output[0:-1],
-                ],
+                [zeros(1, N, H, device=mat.device, dtype=mat.dtype), output[0:-1]],
                 dim=0,
             ),
         )
