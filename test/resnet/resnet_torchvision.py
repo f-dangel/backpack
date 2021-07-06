@@ -17,7 +17,7 @@ resnet18_transformed = extend(resnet18, use_converter=True)
 print_table(resnet18_transformed)
 
 # compare result
-x = torch.randn(128, 3, 21, 21, requires_grad=True)
+x = torch.randn(8, 3, 21, 21, requires_grad=True)
 result_original = resnet18(x)
 result_transformed = resnet18_transformed(x)
 print(f"\nResults same? {torch.allclose(result_original, result_transformed)}")
