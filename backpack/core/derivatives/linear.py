@@ -5,6 +5,7 @@ from torch import Size, Tensor, einsum
 from torch.nn import Linear
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
+from backpack.utils import TORCH_VERSION, VERSION_1_9_0
 from backpack.utils.subsampling import subsample
 
 
@@ -19,8 +20,11 @@ class LinearDerivatives(BaseParameterDerivatives):
     * i: Input dimension
     """
 
-    def hessian_is_zero(self) -> bool:
+    def hessian_is_zero(self, module: Linear) -> bool:
         """Linear layer output is linear w.r.t. to its input.
+
+        Args:
+            module: current module
 
         Returns:
             True
@@ -140,14 +144,16 @@ class LinearDerivatives(BaseParameterDerivatives):
         """
         d_weight = subsample(module.input0, subsampling=subsampling)
 
-        if self._has_additional_dims(module):
-            # Flatten additional dimensions because they cannot be represented as
-            # ellipsis. WAITING https://github.com/pytorch/pytorch/issues/45854
-            d_weight = d_weight.flatten(start_dim=1, end_dim=-2)
-            mat = mat.flatten(start_dim=2, end_dim=-2)
-            equation = f"vnao,nai->v{'' if sum_batch else 'n'}oi"
+        if TORCH_VERSION >= VERSION_1_9_0:
+            equation = f"vn...o,n...i->v{'' if sum_batch else 'n'}oi"
+        # TODO Remove else-branch after deprecating torch<1.9.0
         else:
-            equation = f"vno,ni->v{'' if sum_batch else 'n'}oi"
+            if self._has_additional_dims(module):
+                d_weight = d_weight.flatten(start_dim=1, end_dim=-2)
+                mat = mat.flatten(start_dim=2, end_dim=-2)
+                equation = f"vnao,nai->v{'' if sum_batch else 'n'}oi"
+            else:
+                equation = f"vno,ni->v{'' if sum_batch else 'n'}oi"
 
         return einsum(equation, mat, d_weight)
 
@@ -204,11 +210,12 @@ class LinearDerivatives(BaseParameterDerivatives):
             Batched transposed Jacobian vector products. Has shape
             ``[V, N, *module.bias.shape]`` when ``sum_batch`` is ``False``. With
             ``sum_batch=True``, has shape ``[V, *module.bias.shape]``. If sub-
-            sampling is used, ``N`` must be ``len(subsampling)`` instead.
+            sampling is used, ``N`` is replaced by ``len(subsampling)``.
         """
         equation = f"vn...o->v{'' if sum_batch else 'n'}o"
         return einsum(equation, mat)
 
+    # TODO Remove after deprecating torch<1.9.0
     @classmethod
     def _has_additional_dims(cls, module: Linear) -> bool:
         """Return whether the input to a linear layer has additional (>1) dimensions.
