@@ -24,6 +24,8 @@ jobs:
         exclude:
           - pytorch-version: 1.6.0
             python-version: 3.9
+          - pytorch-version: 1.7.1
+            python-version: 3.9
     steps:
     - uses: actions/checkout@v1
     - uses: actions/setup-python@v1
