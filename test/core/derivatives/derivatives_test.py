@@ -23,7 +23,7 @@ from warnings import warn
 import pytest
 import torch
 from pytest import fixture, skip
-from torch import Size, Tensor
+from torch import Tensor
 
 from backpack.core.derivatives.convnd import weight_jac_t_save_memory
 from backpack.utils.subsampling import get_batch_axis
