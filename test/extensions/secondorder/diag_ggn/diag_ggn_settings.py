@@ -11,6 +11,7 @@ Additional local cases can be defined here through ``LOCAL_SETTINGS``.
 """
 from test.core.derivatives.utils import regression_targets
 from test.extensions.secondorder.secondorder_settings import SECONDORDER_SETTINGS
+from test.utils.evaluation_mode import initialize_training_false_recursive
 
 from torch import rand
 from torch.nn import (
@@ -18,6 +19,9 @@ from torch.nn import (
     AdaptiveAvgPool1d,
     AdaptiveAvgPool2d,
     AdaptiveAvgPool3d,
+    BatchNorm1d,
+    BatchNorm2d,
+    BatchNorm3d,
     Flatten,
     MSELoss,
     Sequential,
@@ -58,6 +62,30 @@ LOCAL_SETTINGS = [
         "module_fn": lambda: Sequential(AdaptiveAvgPool3d((3, 5, 2)), Flatten()),
         "loss_function_fn": lambda: MSELoss(),
         "target_fn": lambda: regression_targets((2, 2 * 3 * 5 * 2)),
+    },
+    {
+        "input_fn": lambda: rand(2, 3, 4),
+        "module_fn": lambda: initialize_training_false_recursive(
+            Sequential(BatchNorm1d(num_features=3), Flatten())
+        ),
+        "loss_function_fn": lambda: MSELoss(),
+        "target_fn": lambda: regression_targets((2, 4 * 3)),
+    },
+    {
+        "input_fn": lambda: rand(3, 2, 4, 3),
+        "module_fn": lambda: initialize_training_false_recursive(
+            Sequential(BatchNorm2d(num_features=2), Flatten())
+        ),
+        "loss_function_fn": lambda: MSELoss(),
+        "target_fn": lambda: regression_targets((3, 2 * 4 * 3)),
+    },
+    {
+        "input_fn": lambda: rand(3, 3, 4, 1, 2),
+        "module_fn": lambda: initialize_training_false_recursive(
+            Sequential(BatchNorm3d(num_features=3), Flatten())
+        ),
+        "loss_function_fn": lambda: MSELoss(),
+        "target_fn": lambda: regression_targets((3, 3 * 4 * 1 * 2)),
     },
 ]
 DiagGGN_SETTINGS = SHARED_SETTINGS + LOCAL_SETTINGS

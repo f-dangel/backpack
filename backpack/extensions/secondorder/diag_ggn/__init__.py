@@ -18,6 +18,9 @@ from torch.nn import (
     AvgPool1d,
     AvgPool2d,
     AvgPool3d,
+    BatchNorm1d,
+    BatchNorm2d,
+    BatchNorm3d,
     Conv1d,
     Conv2d,
     Conv3d,
@@ -47,6 +50,7 @@ from backpack.extensions.secondorder.hbp import LossHessianStrategy
 from . import (
     activations,
     adaptive_avg_pool_nd,
+    batchnorm_nd,
     conv1d,
     conv2d,
     conv3d,
@@ -123,6 +127,9 @@ class DiagGGN(BackpropExtension):
                 AdaptiveAvgPool1d: adaptive_avg_pool_nd.DiagGGNAdaptiveAvgPool(1),
                 AdaptiveAvgPool2d: adaptive_avg_pool_nd.DiagGGNAdaptiveAvgPool(2),
                 AdaptiveAvgPool3d: adaptive_avg_pool_nd.DiagGGNAdaptiveAvgPool(3),
+                BatchNorm1d: batchnorm_nd.DiagGGNBatchNorm(),
+                BatchNorm2d: batchnorm_nd.DiagGGNBatchNorm(),
+                BatchNorm3d: batchnorm_nd.DiagGGNBatchNorm(),
             },
         )
 
@@ -233,6 +240,9 @@ class BatchDiagGGN(BackpropExtension):
                 AdaptiveAvgPool1d: adaptive_avg_pool_nd.DiagGGNAdaptiveAvgPool(1),
                 AdaptiveAvgPool2d: adaptive_avg_pool_nd.DiagGGNAdaptiveAvgPool(2),
                 AdaptiveAvgPool3d: adaptive_avg_pool_nd.DiagGGNAdaptiveAvgPool(3),
+                BatchNorm1d: batchnorm_nd.BatchDiagGGNBatchNorm(),
+                BatchNorm2d: batchnorm_nd.BatchDiagGGNBatchNorm(),
+                BatchNorm3d: batchnorm_nd.BatchDiagGGNBatchNorm(),
             },
         )
 
