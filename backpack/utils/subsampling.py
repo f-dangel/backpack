@@ -28,7 +28,7 @@ def subsample(tensor: Tensor, dim: int = 0, subsampling: List[int] = None) -> Te
         elif dim == 1:
             return tensor[:, subsampling]
         else:
-            raise NotImplementedError(f"Only supports dim = 0,1 . Got {dim}.")
+            raise NotImplementedError(f"Only supports dim = 0,1. Got {dim}.")
 
 
 def get_batch_axis(module: Module) -> int:
