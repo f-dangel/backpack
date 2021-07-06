@@ -1,9 +1,14 @@
+"""Gradient extension for BatchNorm."""
 from backpack.core.derivatives.batchnorm_nd import BatchNormNdDerivatives
-from backpack.extensions.firstorder.batch_grad.batch_grad_base import BatchGradBase
+
+from .base import GradBaseModule
 
 
-class BatchGradBatchNorm1d(BatchGradBase):
+class GradBatchNormNd(GradBaseModule):
+    """Gradient extension for BatchNorm."""
+
     def __init__(self):
+        """Initialization."""
         super().__init__(
             derivatives=BatchNormNdDerivatives(), params=["bias", "weight"]
         )

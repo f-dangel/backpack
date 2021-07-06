@@ -4,6 +4,9 @@ Defines module extension for each module.
 """
 from torch.nn import (
     RNN,
+    BatchNorm1d,
+    BatchNorm2d,
+    BatchNorm3d,
     Conv1d,
     Conv2d,
     Conv3d,
@@ -16,6 +19,7 @@ from torch.nn import (
 from backpack.extensions.backprop_extension import BackpropExtension
 
 from . import (
+    batchnorm_nd,
     conv1d,
     conv2d,
     conv3d,
@@ -61,5 +65,8 @@ class Variance(BackpropExtension):
                 ConvTranspose2d: convtranspose2d.VarianceConvTranspose2d(),
                 ConvTranspose3d: convtranspose3d.VarianceConvTranspose3d(),
                 RNN: rnn.VarianceRNN(),
+                BatchNorm1d: batchnorm_nd.VarianceBatchNorm(),
+                BatchNorm2d: batchnorm_nd.VarianceBatchNorm(),
+                BatchNorm3d: batchnorm_nd.VarianceBatchNorm(),
             },
         )

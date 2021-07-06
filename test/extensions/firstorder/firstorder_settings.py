@@ -20,10 +20,14 @@ Optional entries:
 """
 from test.core.derivatives.utils import classification_targets, regression_targets
 from test.extensions.automated_settings import make_simple_cnn_setting
+from test.utils.evaluation_mode import initialize_training_false_recursive
 
 from torch import device, rand
 from torch.nn import (
     RNN,
+    BatchNorm1d,
+    BatchNorm2d,
+    BatchNorm3d,
     Conv1d,
     Conv2d,
     Conv3d,
@@ -207,9 +211,37 @@ FIRSTORDER_SETTINGS += [
 ]
 
 ###############################################################################
+#                         test setting: BatchNorm                             #
+###############################################################################
+FIRSTORDER_SETTINGS += [
+    {
+        "input_fn": lambda: rand(2, 3, 4),
+        "module_fn": lambda: initialize_training_false_recursive(
+            BatchNorm1d(num_features=3)
+        ),
+        "loss_function_fn": lambda: CrossEntropyLoss(reduction="mean"),
+        "target_fn": lambda: classification_targets((2, 4), 3),
+    },
+    {
+        "input_fn": lambda: rand(3, 2, 4, 3),
+        "module_fn": lambda: initialize_training_false_recursive(
+            BatchNorm2d(num_features=2)
+        ),
+        "loss_function_fn": lambda: CrossEntropyLoss(reduction="mean"),
+        "target_fn": lambda: classification_targets((3, 4, 3), 2),
+    },
+    {
+        "input_fn": lambda: rand(3, 3, 4, 1, 2),
+        "module_fn": lambda: initialize_training_false_recursive(
+            BatchNorm3d(num_features=3)
+        ),
+        "loss_function_fn": lambda: CrossEntropyLoss(reduction="mean"),
+        "target_fn": lambda: classification_targets((3, 4, 1, 2), 3),
+    },
+]
+###############################################################################
 #                         test setting: RNN Layers                            #
 ###############################################################################
-
 FIRSTORDER_SETTINGS += [
     {
         "input_fn": lambda: rand(8, 5, 6),
