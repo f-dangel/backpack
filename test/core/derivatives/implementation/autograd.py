@@ -47,8 +47,10 @@ class AutogradDerivatives(DerivativesImplementation):
             "weight", mat, sum_batch, subsampling=subsampling
         )
 
-    def bias_jac_t_mat_prod(self, mat, sum_batch):  # noqa: D102
-        return self.param_jac_t_mat_prod("bias", mat, sum_batch)
+    def bias_jac_t_mat_prod(self, mat, sum_batch, subsampling=None):  # noqa: D102
+        return self.param_jac_t_mat_prod(
+            "bias", mat, sum_batch, subsampling=subsampling
+        )
 
     def bias_ih_l0_jac_t_mat_prod(self, mat, sum_batch):  # noqa: D102
         return self.param_jac_t_mat_prod("bias_ih_l0", mat, sum_batch, axis_batch=1)

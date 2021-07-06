@@ -245,7 +245,7 @@ def test_weight_hh_l0_jac_t_mat_prod(problem, sum_batch, V=4):
     ids=["save_memory=True", "save_memory=False"],
 )
 def test_weight_jac_t_mat_prod(
-    problem_weight_jac_t_mat,
+    problem_weight_jac_t_mat: Tuple[DerivativesTestProblem, List[int], Tensor],
     sum_batch: bool,
     save_memory: bool,
 ) -> None:
@@ -266,6 +266,7 @@ def test_weight_jac_t_mat_prod(
     autograd_res = AutogradDerivatives(problem).weight_jac_t_mat_prod(
         mat, sum_batch, subsampling=subsampling
     )
+
     check_sizes_and_values(autograd_res, backpack_res, rtol=5e-5)
 
 
@@ -327,29 +328,27 @@ for problem, problem_id in zip(PROBLEMS, IDS):
 @pytest.mark.parametrize(
     "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
 )
-@pytest.mark.parametrize(
-    "problem",
-    PROBLEMS_WITH_BIAS + BATCH_NORM_PROBLEMS,
-    ids=IDS_WITH_BIAS + BATCH_NORM_IDS,
-)
 def test_bias_jac_t_mat_prod(
-    problem: DerivativesTestProblem, sum_batch: bool, V: int = 3
+    problem_bias_jac_t_mat: Tuple[DerivativesTestProblem, List[int], Tensor],
+    sum_batch: bool,
 ) -> None:
     """Test the transposed Jacobian-matrix product w.r.t. to the bias.
 
     Args:
-        problem: Test case.
+        problem_bias_jac_t_mat: Instantiated test case, subsampling, and
+            input for bias_jac_t
         sum_batch: Sum out the batch dimension.
-        V: Number of vectorized transposed Jacobian-vector products. Default: ``3``.
     """
-    problem.set_up()
-    mat = torch.rand(V, *problem.output_shape).to(problem.device)
+    problem, subsampling, mat = problem_bias_jac_t_mat
 
-    backpack_res = BackpackDerivatives(problem).bias_jac_t_mat_prod(mat, sum_batch)
-    autograd_res = AutogradDerivatives(problem).bias_jac_t_mat_prod(mat, sum_batch)
+    backpack_res = BackpackDerivatives(problem).bias_jac_t_mat_prod(
+        mat, sum_batch, subsampling=subsampling
+    )
+    autograd_res = AutogradDerivatives(problem).bias_jac_t_mat_prod(
+        mat, sum_batch, subsampling=subsampling
+    )
 
     check_sizes_and_values(autograd_res, backpack_res)
-    problem.tear_down()
 
 
 @pytest.mark.parametrize(
@@ -524,7 +523,7 @@ def problem_weight(problem: DerivativesTestProblem) -> DerivativesTestProblem:
     Yields:
         Instantiated cases that have a weight parameter.
     """
-    has_weight = hasattr(problem.module, "weight") and problem.module.weight is not None
+    has_weight = getattr(problem.module, "weight", None) is not None
     if has_weight:
         yield problem
     else:
@@ -560,6 +559,55 @@ def problem_weight_jac_t_mat(
     ).to(problem_weight.device)
 
     yield (problem_weight, subsampling, mat)
+    del mat
+
+
+@fixture
+def problem_bias(problem: DerivativesTestProblem) -> DerivativesTestProblem:
+    """Filter out cases that don't have a bias parameter.
+
+    Args:
+        problem: Test case with deterministically constructed attributes.
+
+    Yields:
+        Instantiated cases that have a bias parameter.
+    """
+    has_bias = getattr(problem.module, "bias", None) is not None
+    if has_bias:
+        yield problem
+    else:
+        skip("Test case has no bias parameter.")
+
+
+@fixture(params=SUBSAMPLINGS, ids=SUBSAMPLING_IDS)
+def problem_bias_jac_t_mat(
+    request, problem_bias: DerivativesTestProblem
+) -> Tuple[DerivativesTestProblem, Union[None, List[int]], Tensor]:
+    """Create matrix that will be multiplied by the bias Jacobian.
+
+    Skip if there is a conflict where the subsampling indices exceed the number of
+    samples in the input.
+
+    Args:
+        request (SubRequest): Request for the fixture from a test/fixture function.
+        problem_bias: Test case with bias parameter.
+
+    Yields:
+        problem with bias, subsampling, matrix for bias_jac_t
+    """
+    subsampling: Union[None, List[int]] = request.param
+    N = problem_bias.input_shape[0]
+    enough_samples = subsampling is None or N >= max(subsampling)
+
+    if not enough_samples:
+        skip(f"Not enough samples: sub-sampling {subsampling}, batch_size {N}")
+
+    V = 3
+    mat = rand_mat_like_output(
+        V, problem_bias.output_shape, subsampling=subsampling
+    ).to(problem_bias.device)
+
+    yield (problem_bias, subsampling, mat)
     del mat
 
 

@@ -191,6 +191,7 @@ class LinearDerivatives(BaseParameterDerivatives):
         g_out: Tuple[Tensor],
         mat: Tensor,
         sum_batch: int = True,
+        subsampling: List[int] = None,
     ) -> Tensor:
         """Batch-apply transposed Jacobian of the output w.r.t. the bias.
 
@@ -202,14 +203,16 @@ class LinearDerivatives(BaseParameterDerivatives):
                 (``[N, *, out_features]``) to which the transposed output-input Jacobian
                 is applied. Has shape ``[V, N, *, out_features]``.
             sum_batch: Sum the result's batch axis. Default: ``True``.
+            subsampling: Indices of samples along the output's batch dimension that
+                should be considered. Defaults to ``None`` (use all samples).
 
         Returns:
             Batched transposed Jacobian vector products. Has shape
-                ``[V, N, *module.bias.shape]`` when ``sum_batch`` is ``False``. With
-                ``sum_batch=True``, has shape ``[V, *module.bias.shape]``.
+            ``[V, N, *module.bias.shape]`` when ``sum_batch`` is ``False``. With
+            ``sum_batch=True``, has shape ``[V, *module.bias.shape]``. If sub-
+            sampling is used, ``N`` is replaced by ``len(subsampling)``.
         """
         equation = f"vn...o->v{'' if sum_batch else 'n'}o"
-
         return einsum(equation, mat)
 
     # TODO Remove after deprecating torch<1.9.0
