@@ -147,7 +147,7 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
         x_hat, _ = self._get_normalized_input_and_var(module)
 
         if TORCH_VERSION >= VERSION_1_9_0:
-            equation = "vnc...,nc...->v{'' if sum_batch else 'n'}c"
+            equation = f"vnc...,nc...->v{'' if sum_batch else 'n'}c"
         # TODO Remove else-branch after deprecating torch<1.9.0
         else:
             N: int = self._get_n_axis(module)
