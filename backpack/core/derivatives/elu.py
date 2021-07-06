@@ -7,7 +7,7 @@ from backpack.core.derivatives.elementwise import ElementwiseDerivatives
 class ELUDerivatives(ElementwiseDerivatives):
     """Implement first- and second-order partial derivatives of ELU."""
 
-    def hessian_is_zero(self):
+    def hessian_is_zero(self, module):
         """`ELU''(x) ≠ 0`."""
         return False
 

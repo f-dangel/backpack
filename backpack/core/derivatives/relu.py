@@ -4,7 +4,7 @@ from backpack.core.derivatives.elementwise import ElementwiseDerivatives
 
 
 class ReLUDerivatives(ElementwiseDerivatives):
-    def hessian_is_zero(self):
+    def hessian_is_zero(self, module):
         """`ReLU''(x) = 0`."""
         return True
 

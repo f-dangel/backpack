@@ -4,18 +4,14 @@ from typing import List, Tuple, Union
 from torch import Tensor
 from torch.nn import Module
 
-from ..core.derivatives.basederivatives import BaseDerivatives, BaseParameterDerivatives
-from .module_extension import ModuleExtension
+from backpack.core.derivatives.basederivatives import BaseDerivatives
+from backpack.extensions.module_extension import ModuleExtension
 
 
 class MatToJacMat(ModuleExtension):
     """Base class for backpropagation of matrices by multiplying with Jacobians."""
 
-    def __init__(
-        self,
-        derivatives: Union[BaseDerivatives, BaseParameterDerivatives],
-        params: List[str] = None,
-    ):
+    def __init__(self, derivatives: BaseDerivatives, params: List[str] = None):
         """Initialization.
 
         Args:
@@ -46,11 +42,10 @@ class MatToJacMat(ModuleExtension):
             derivative wrt input
         """
         if isinstance(backproped, list):
-            M_list: List[Tensor] = [
+            return [
                 self.derivatives.jac_t_mat_prod(module, grad_inp, grad_out, M)
                 for M in backproped
             ]
-            return M_list
         else:
             return self.derivatives.jac_t_mat_prod(
                 module, grad_inp, grad_out, backproped

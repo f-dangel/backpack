@@ -1,7 +1,7 @@
 # <img alt="BackPACK" src="./logo/backpack_logo_torch.svg" height="90"> BackPACK developer manual
 
-## General standards 
-- Python version: support 3.6+, use 3.7 for development
+## General standards
+- Python version: support 3.7+, use 3.7 for development
 - `git` [branching model](https://nvie.com/posts/a-successful-git-branching-model/)
 - Docstring style:  [Google](https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html)
 - Test runner: [`pytest`](https://docs.pytest.org/en/latest/)

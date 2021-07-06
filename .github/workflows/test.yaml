@@ -9,7 +9,6 @@ on:
       - development
       - master
       - release
-      - rnn
 
 jobs:
   tests:

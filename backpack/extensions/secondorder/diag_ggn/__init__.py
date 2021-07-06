@@ -12,9 +12,15 @@ from torch.nn import (
     ELU,
     RNN,
     SELU,
+    AdaptiveAvgPool1d,
+    AdaptiveAvgPool2d,
+    AdaptiveAvgPool3d,
     AvgPool1d,
     AvgPool2d,
     AvgPool3d,
+    BatchNorm1d,
+    BatchNorm2d,
+    BatchNorm3d,
     Conv1d,
     Conv2d,
     Conv3d,
@@ -46,6 +52,8 @@ from backpack.extensions.secondorder.hbp import LossHessianStrategy
 
 from . import (
     activations,
+    adaptive_avg_pool_nd,
+    batchnorm_nd,
     conv1d,
     conv2d,
     conv3d,
@@ -124,6 +132,12 @@ class DiagGGN(BackpropExtension):
                 SumModule: custom_module.DiagGGNSumModule(),
                 RNN: rnn.DiagGGNRNN(),
                 Permute: permute.DiagGGNPermute(),
+                AdaptiveAvgPool1d: adaptive_avg_pool_nd.DiagGGNAdaptiveAvgPool(1),
+                AdaptiveAvgPool2d: adaptive_avg_pool_nd.DiagGGNAdaptiveAvgPool(2),
+                AdaptiveAvgPool3d: adaptive_avg_pool_nd.DiagGGNAdaptiveAvgPool(3),
+                BatchNorm1d: batchnorm_nd.DiagGGNBatchNorm(),
+                BatchNorm2d: batchnorm_nd.DiagGGNBatchNorm(),
+                BatchNorm3d: batchnorm_nd.DiagGGNBatchNorm(),
             },
         )
 
@@ -247,6 +261,12 @@ class BatchDiagGGN(BackpropExtension):
                 SumModule: custom_module.DiagGGNSumModule(),
                 RNN: rnn.BatchDiagGGNRNN(),
                 Permute: permute.DiagGGNPermute(),
+                AdaptiveAvgPool1d: adaptive_avg_pool_nd.DiagGGNAdaptiveAvgPool(1),
+                AdaptiveAvgPool2d: adaptive_avg_pool_nd.DiagGGNAdaptiveAvgPool(2),
+                AdaptiveAvgPool3d: adaptive_avg_pool_nd.DiagGGNAdaptiveAvgPool(3),
+                BatchNorm1d: batchnorm_nd.BatchDiagGGNBatchNorm(),
+                BatchNorm2d: batchnorm_nd.BatchDiagGGNBatchNorm(),
+                BatchNorm3d: batchnorm_nd.BatchDiagGGNBatchNorm(),
             },
         )
 
@@ -277,10 +297,7 @@ class BatchDiagGGNExact(BatchDiagGGN):
 
         Chooses exact loss strategy and savefield diag_ggn_exact_batch.
         """
-        super().__init__(
-            loss_hessian_strategy=LossHessianStrategy.EXACT,
-            savefield="diag_ggn_exact_batch",
-        )
+        super().__init__(LossHessianStrategy.EXACT, "diag_ggn_exact_batch")
 
 
 class BatchDiagGGNMC(BatchDiagGGN):
@@ -305,10 +322,7 @@ class BatchDiagGGNMC(BatchDiagGGN):
             mc_samples: Number of Monte-Carlo samples. Default: ``1``.
         """
         self._mc_samples = mc_samples
-        super().__init__(
-            loss_hessian_strategy=LossHessianStrategy.SAMPLING,
-            savefield="diag_ggn_mc_batch",
-        )
+        super().__init__(LossHessianStrategy.SAMPLING, "diag_ggn_mc_batch")
 
     def get_num_mc_samples(self) -> int:
         """Returns number of Monte-Carlo samples.

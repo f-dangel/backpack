@@ -65,7 +65,7 @@ class ElementwiseDerivatives(BaseDerivatives):
 
         return self.d2f(module, g_inp, g_out) * g_out[0]
 
-    def hessian_is_diagonal(self):
+    def hessian_is_diagonal(self, module):
         """Elementwise activation function Hessians are diagonal.
 
         Returns:

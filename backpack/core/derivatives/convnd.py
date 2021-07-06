@@ -54,7 +54,7 @@ class ConvNDDerivatives(BaseParameterDerivatives):
             raise ValueError("{}-dimensional Conv. is not implemented.".format(N))
         self.conv_dims = N
 
-    def hessian_is_zero(self):
+    def hessian_is_zero(self, module):
         return True
 
     def get_unfolded_input(self, module):

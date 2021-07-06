@@ -5,6 +5,8 @@ It defines the module extension for each module.
 from torch.nn import (
     RNN,
     BatchNorm1d,
+    BatchNorm2d,
+    BatchNorm3d,
     Conv1d,
     Conv2d,
     Conv3d,
@@ -17,7 +19,7 @@ from torch.nn import (
 from backpack.extensions.backprop_extension import BackpropExtension
 
 from . import (
-    batchnorm1d,
+    batchnorm_nd,
     conv1d,
     conv2d,
     conv3d,
@@ -66,7 +68,9 @@ class BatchGrad(BackpropExtension):
                 ConvTranspose1d: conv_transpose1d.BatchGradConvTranspose1d(),
                 ConvTranspose2d: conv_transpose2d.BatchGradConvTranspose2d(),
                 ConvTranspose3d: conv_transpose3d.BatchGradConvTranspose3d(),
-                BatchNorm1d: batchnorm1d.BatchGradBatchNorm1d(),
+                BatchNorm1d: batchnorm_nd.BatchGradBatchNormNd(),
+                BatchNorm2d: batchnorm_nd.BatchGradBatchNormNd(),
+                BatchNorm3d: batchnorm_nd.BatchGradBatchNormNd(),
                 RNN: rnn.BatchGradRNN(),
             },
         )

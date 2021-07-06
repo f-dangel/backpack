@@ -56,16 +56,16 @@ help:
 ###
 # Test coverage
 test:
-	@pytest -vx --run-optional-tests=montecarlo --cov=backpack .
+	@pytest -vx -rs --run-optional-tests=montecarlo --cov=backpack .
 
 test-light:
-	@pytest -vx --cov=backpack .
+	@pytest -vx -rs --cov=backpack .
 
 test-no-gpu:
-	@pytest -k "not cuda" -vx --run-optional-tests=montecarlo --cov=backpack .
+	@pytest -k "not cuda" -vx -rs --run-optional-tests=montecarlo --cov=backpack .
 
 test-light-no-gpu:
-	@pytest -k "not cuda" -vx --cov=backpack .
+	@pytest -k "not cuda" -vx -rs --cov=backpack .
 
 ###
 # Linter and autoformatter

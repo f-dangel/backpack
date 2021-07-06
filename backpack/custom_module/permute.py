@@ -14,7 +14,7 @@ class Permute(Module):
         Args:
             dims: The desired ordering of dimensions.
         """
-        super(Permute, self).__init__()
+        super().__init__()
         self.dims = dims
 
     def forward(self, input: Tensor) -> Tensor:

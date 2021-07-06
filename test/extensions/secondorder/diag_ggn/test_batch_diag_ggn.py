@@ -12,7 +12,7 @@ IDS = [problem.make_id() for problem in PROBLEMS]
 
 
 @pytest.mark.parametrize("problem", PROBLEMS, ids=IDS)
-def test_diag_ggn_batch(problem):
+def test_diag_ggn_exact_batch(problem):
     """Test the individual diagonal of Generalized Gauss-Newton/Fisher.
 
     Args:
@@ -21,7 +21,7 @@ def test_diag_ggn_batch(problem):
     problem.set_up()
 
     backpack_res = BackpackExtensions(problem).diag_ggn_exact_batch()
-    autograd_res = AutogradExtensions(problem).diag_ggn_batch()
+    autograd_res = AutogradExtensions(problem).diag_ggn_exact_batch()
 
     check_sizes_and_values(autograd_res, backpack_res)
     problem.tear_down()
@@ -44,7 +44,7 @@ def test_diag_ggn_mc_batch_light(problem):
     problem.set_up()
 
     backpack_res = BackpackExtensions(problem).diag_ggn_exact_batch()
-    mc_samples = 5000
+    mc_samples = 6000
     backpack_res_mc_avg = BackpackExtensions(problem).diag_ggn_mc_batch(mc_samples)
 
     check_sizes_and_values(
