@@ -1,7 +1,7 @@
 """Transformation tools to make graph BackPACK compatible."""
 import torch
 import torch.fx
-from torch.nn import Flatten, Module
+from torch.nn import Flatten, Module, ReLU
 
 from backpack.custom_module.branching import ActiveIdentity, Branch, SumModule
 from backpack.custom_module.scale_module import ScaleModule
@@ -50,6 +50,7 @@ def convert_module_to_backpack(module: Module) -> Module:
     module_new = _transform_mul_to_scale_module(module)
     module_new = _transform_flatten_to_module(module_new)
     module_new = _transform_add_to_merge(module_new)
+    module_new = _transform_inplace_to_normal(module_new)
     return module_new
 
 
@@ -107,6 +108,15 @@ def _transform_flatten_to_module(module: Module) -> Module:
     # TODO: delete_all_unused_submodules
     print("End transformation.\n")
     return torch.fx.GraphModule(module, graph)
+
+
+def _transform_inplace_to_normal(module: Module) -> Module:
+    if isinstance(module, ReLU):
+        module.inplace = False
+    for child_module in module.children():
+        _transform_inplace_to_normal(child_module)
+
+    return module
 
 
 def _change_node_to_module(
