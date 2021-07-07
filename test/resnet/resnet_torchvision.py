@@ -7,7 +7,7 @@ from backpack import backpack, extend
 from backpack.custom_module.graph_utils import print_table
 from backpack.extensions import DiagGGNExact
 
-resnet18 = torchvision.models.resnet18(num_classes=10)
+resnet18 = torchvision.models.resnet18(num_classes=100).eval()
 print_table(resnet18)
 
 # convert to backpack
