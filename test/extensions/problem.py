@@ -214,7 +214,8 @@ class ExtensionsTestProblem:
             List of attributes saved under the trainable model parameters.
 
         Raises:
-            RuntimeError: If a non-differentiable with the attribute is encountered.
+            RuntimeError: If a non-differentiable parameter with the attribute is
+                encountered.
         """
         data = []
 
