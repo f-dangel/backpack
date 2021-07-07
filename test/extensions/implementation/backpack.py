@@ -30,15 +30,13 @@ class BackpackExtensions(ExtensionsImplementation):
         with backpack(new_ext.BatchGrad()):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
-            batch_grads = [p.grad_batch for p in self.problem.model.parameters()]
-        return batch_grads
+        return self.problem.collect_data("grad_batch")
 
     def batch_l2_grad(self) -> List[Tensor]:  # noqa:D102
         with backpack(new_ext.BatchL2Grad()):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
-            batch_l2_grad = [p.batch_l2 for p in self.problem.model.parameters()]
-        return batch_l2_grad
+        return self.problem.collect_data("batch_l2")
 
     def batch_l2_grad_extension_hook(self) -> List[Tensor]:
         """Individual gradient squared ℓ₂ norms via extension hook.
@@ -50,15 +48,13 @@ class BackpackExtensions(ExtensionsImplementation):
         with backpack(new_ext.BatchGrad(), extension_hook=hook):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
-            batch_l2_grad = [p.batch_l2_hook for p in self.problem.model.parameters()]
-        return batch_l2_grad
+        return self.problem.collect_data("batch_l2_hook")
 
     def sgs(self) -> List[Tensor]:  # noqa:D102
         with backpack(new_ext.SumGradSquared()):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
-            sgs = [p.sum_grad_squared for p in self.problem.model.parameters()]
-        return sgs
+        return self.problem.collect_data("sum_grad_squared")
 
     def sgs_extension_hook(self) -> List[Tensor]:
         """Individual gradient second moment via extension hook.
@@ -70,47 +66,37 @@ class BackpackExtensions(ExtensionsImplementation):
         with backpack(new_ext.BatchGrad(), extension_hook=hook):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
-            sgs = [p.sum_grad_squared_hook for p in self.problem.model.parameters()]
-        return sgs
+        return self.problem.collect_data("sum_grad_squared_hook")
 
     def variance(self) -> List[Tensor]:  # noqa:D102
         with backpack(new_ext.Variance()):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
-            variances = [p.variance for p in self.problem.model.parameters()]
-        return variances
+        return self.problem.collect_data("variance")
 
     def diag_ggn(self) -> List[Tensor]:  # noqa:D102
         with backpack(new_ext.DiagGGNExact()):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
-            diag_ggn = [p.diag_ggn_exact for p in self.problem.model.parameters()]
-        return diag_ggn
+        return self.problem.collect_data("diag_ggn_exact")
 
     def diag_ggn_exact_batch(self) -> List[Tensor]:  # noqa:D102
         with backpack(new_ext.BatchDiagGGNExact()):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
-            diag_ggn_exact_batch = [
-                p.diag_ggn_exact_batch for p in self.problem.model.parameters()
-            ]
-        return diag_ggn_exact_batch
+        return self.problem.collect_data("diag_ggn_exact_batch")
 
     def diag_ggn_mc(self, mc_samples) -> List[Tensor]:  # noqa:D102
         with backpack(new_ext.DiagGGNMC(mc_samples=mc_samples)):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
-            diag_ggn_mc = [p.diag_ggn_mc for p in self.problem.model.parameters()]
-        return diag_ggn_mc
+        return self.problem.collect_data("diag_ggn_mc")
 
     def diag_ggn_mc_batch(self, mc_samples) -> List[Tensor]:  # noqa:D102
         with backpack(new_ext.BatchDiagGGNMC(mc_samples=mc_samples)):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
-            diag_ggn_mc_batch = [
-                p.diag_ggn_mc_batch for p in self.problem.model.parameters()
-            ]
-        return diag_ggn_mc_batch
+        return self.problem.collect_data("diag_ggn_mc_batch")
 
     def diag_ggn_mc_chunk(self, mc_samples: int, chunks: int = 10) -> List[Tensor]:
         """Like ``diag_ggn_mc``, but can handle more samples by chunking.
@@ -198,40 +184,31 @@ class BackpackExtensions(ExtensionsImplementation):
         with backpack(new_ext.DiagHessian()):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
-            diag_h = [p.diag_h for p in self.problem.model.parameters()]
-        return diag_h
+        return self.problem.collect_data("diag_h")
 
     def kfac(self, mc_samples: int = 1) -> List[List[Tensor]]:  # noqa:D102
         with backpack(new_ext.KFAC(mc_samples=mc_samples)):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
-            kfac = [p.kfac for p in self.problem.model.parameters()]
-
-        return kfac
+        return self.problem.collect_data("kfac")
 
     def kflr(self) -> List[List[Tensor]]:  # noqa:D102
         with backpack(new_ext.KFLR()):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
-            kflr = [p.kflr for p in self.problem.model.parameters()]
-
-        return kflr
+        return self.problem.collect_data("kflr")
 
     def kfra(self) -> List[List[Tensor]]:  # noqa:D102
         with backpack(new_ext.KFRA()):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
-            kfra = [p.kfra for p in self.problem.model.parameters()]
-
-        return kfra
+        return self.problem.collect_data("kfra")
 
     def diag_h_batch(self) -> List[Tensor]:  # noqa:D102
         with backpack(new_ext.BatchDiagHessian()):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
-            diag_h_batch = [p.diag_h_batch for p in self.problem.model.parameters()]
-
-        return diag_h_batch
+        return self.problem.collect_data("diag_h_batch")
 
     def ggn(self) -> Tensor:  # noqa:D102
         return self._square_sqrt_ggn(self.sqrt_ggn())
@@ -245,8 +222,7 @@ class BackpackExtensions(ExtensionsImplementation):
         with backpack(new_ext.SqrtGGNExact()):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
-
-        return [p.sqrt_ggn_exact for p in self.problem.model.parameters()]
+        return self.problem.collect_data("sqrt_ggn_exact")
 
     def sqrt_ggn_mc(self, mc_samples: int) -> List[Tensor]:
         """Compute the approximate matrix square root of the generalized Gauss-Newton.
@@ -260,8 +236,7 @@ class BackpackExtensions(ExtensionsImplementation):
         with backpack(new_ext.SqrtGGNMC(mc_samples=mc_samples)):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
-
-        return [p.sqrt_ggn_mc for p in self.problem.model.parameters()]
+        return self.problem.collect_data("sqrt_ggn_mc")
 
     def ggn_mc(self, mc_samples: int, chunks: int = 1) -> Tensor:  # noqa:D102
         samples = self.chunk_sizes(mc_samples, chunks)

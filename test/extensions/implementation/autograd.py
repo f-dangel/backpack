@@ -18,14 +18,14 @@ class AutogradExtensions(ExtensionsImplementation):
         N = self.problem.input.shape[0]
         batch_grads = [
             torch.zeros(N, *p.size()).to(self.problem.device)
-            for p in self.problem.model.parameters()
+            for p in self.problem.trainable_parameters()
         ]
 
         loss_list = torch.zeros((N))
         gradients_list = []
         for b in range(N):
             _, _, loss = self.problem.forward_pass(sample_idx=b)
-            gradients = torch.autograd.grad(loss, self.problem.model.parameters())
+            gradients = torch.autograd.grad(loss, self.problem.trainable_parameters())
             gradients_list.append(gradients)
             loss_list[b] = loss
 
@@ -47,14 +47,14 @@ class AutogradExtensions(ExtensionsImplementation):
         N = self.problem.input.shape[0]
         sgs = [
             torch.zeros(*p.size()).to(self.problem.device)
-            for p in self.problem.model.parameters()
+            for p in self.problem.trainable_parameters()
         ]
 
         loss_list = torch.zeros((N))
         gradients_list = []
         for b in range(N):
             _, _, loss = self.problem.forward_pass(sample_idx=b)
-            gradients = torch.autograd.grad(loss, self.problem.model.parameters())
+            gradients = torch.autograd.grad(loss, self.problem.trainable_parameters())
             loss_list[b] = loss
             gradients_list.append(gradients)
 
@@ -81,7 +81,7 @@ class AutogradExtensions(ExtensionsImplementation):
             return GGN_v[i]
 
         diag_ggns = []
-        for p in list(self.problem.model.parameters()):
+        for p in list(self.problem.trainable_parameters()):
             diag_ggn_p = torch.zeros_like(p).view(-1)
 
             for parameter_index in range(p.numel()):
@@ -146,7 +146,7 @@ class AutogradExtensions(ExtensionsImplementation):
             return Hv[i]
 
         diag_hs = []
-        for p in list(self.problem.model.parameters()):
+        for p in list(self.problem.trainable_parameters()):
             diag_h_p = torch.zeros_like(p).view(-1)
 
             df_dx = torch.autograd.grad(loss, [p], create_graph=True, retain_graph=True)
@@ -179,8 +179,9 @@ class AutogradExtensions(ExtensionsImplementation):
     def ggn(self) -> Tensor:  # noqa: D102
         _, output, loss = self.problem.forward_pass()
         model = self.problem.model
+        params = list(self.problem.trainable_parameters())
 
-        num_params = sum(p.numel() for p in model.parameters())
+        num_params = sum(p.numel() for p in params)
         ggn = torch.zeros(num_params, num_params).to(self.problem.device)
 
         for i in range(num_params):
@@ -189,7 +190,7 @@ class AutogradExtensions(ExtensionsImplementation):
             e_i[i] = 1.0
 
             # convert to model parameter shapes
-            e_i_list = vector_to_parameter_list(e_i, model.parameters())
+            e_i_list = vector_to_parameter_list(e_i, params)
             ggn_i_list = ggn_vector_product(loss, output, model, e_i_list)
 
             ggn_i = parameters_to_vector(ggn_i_list)
