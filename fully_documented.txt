@@ -45,6 +45,7 @@ backpack/utils/linear.py
 backpack/utils/subsampling.py
 backpack/utils/__init__.py
 
+test/extensions/automated_settings.py
 test/extensions/problem.py
 test/extensions/test_backprop_extension.py
 test/extensions/firstorder/firstorder_settings.py

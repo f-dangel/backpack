@@ -1,36 +1,36 @@
+"""Contains helpers to create CNN test cases."""
 from test.core.derivatives.utils import classification_targets
+from typing import Any, Tuple, Type
 
-from torch import rand
+from torch import Tensor, rand
 from torch.nn import Conv2d, CrossEntropyLoss, Flatten, Linear, Module, ReLU, Sequential
 
-###
-# Helpers
-###
 
-
-def set_requires_grad(model: Module, new_requires_grad) -> None:
+def set_requires_grad(model: Module, new_requires_grad: bool) -> None:
     """Set the ``requires_grad`` attribute of the module parameters.
 
     Args:
-        module: Network or layer.
+        model: Network or layer.
         new_requires_grad: New value for ``requires_grad``.
     """
     for p in model.parameters():
         p.requires_grad = new_requires_grad
 
 
-def make_simple_act_setting(act_cls, bias):
-    """
-    input: Activation function & Bias setting
-    return: simple CNN Network
+def make_simple_act_setting(act_cls: Type[Module], bias: bool) -> dict:
+    """Create a simple CNN with activation and bias as test case dictionary.
 
-    This function is used to automatically create a
-    simple CNN Network consisting of CNN & Linear layer
-    for different activation functions.
-    It is used to test `test.extensions`.
+    Make parameters of final linear layer non-differentiable to save run time.
+
+    Args:
+        act_cls: Class of the activation function.
+        bias: Use bias in the convolution.
+
+    Returns:
+        Dictionary representation of the simple CNN test case.
     """
 
-    def make_simple_cnn(act_cls, bias):
+    def _make_simple_cnn(act_cls: Type[Module], bias: bool) -> Sequential:
         linear = Linear(72, 5)
         set_requires_grad(linear, False)
 
@@ -38,7 +38,7 @@ def make_simple_act_setting(act_cls, bias):
 
     dict_setting = {
         "input_fn": lambda: rand(3, 3, 7, 7),
-        "module_fn": lambda: make_simple_cnn(act_cls, bias),
+        "module_fn": lambda: _make_simple_cnn(act_cls, bias),
         "loss_function_fn": lambda: CrossEntropyLoss(),
         "target_fn": lambda: classification_targets((3,), 5),
         "id_prefix": "automated-simple-cnn-act",
@@ -47,37 +47,36 @@ def make_simple_act_setting(act_cls, bias):
     return dict_setting
 
 
-def make_simple_cnn_setting(input_size, conv_class, conv_params):
-    """
-    input_size: tuple of input size of (N*C*Image Size)
-    conv_class: convolutional class
-    conv_params: configurations for convolutional class
-    return: simple CNN Network
+def make_simple_cnn_setting(
+    input_size: Tuple[int], conv_cls: Type[Module], conv_params: Tuple[Any]
+) -> dict:
+    """Create CNN with specified convolution hyperparameters as test case dictionary.
 
-    This function is used to automatically create a
-    simple CNN Network consisting of CNN & Linear layer
-    for different convolutional layers.
-    It is used to test `test.extensions`.
+    Make parameters of final linear layer non-differentiable to save run time.
+
+    Args:
+        input_size: Input shape ``[N, C_in, ...]``.
+        conv_cls: Class of convolution layer.
+        conv_params: Convolution hyperparameters.
+
+    Returns:
+        Dictionary representation of the test case.
     """
 
-    def make_cnn(conv_class, output_size, conv_params):
-        """Note: output class size is assumed to be 5"""
-        linear = Linear(output_size, 5)
+    def _make_cnn(
+        conv_cls: Type[Module], output_dim: int, conv_params: Tuple
+    ) -> Sequential:
+        linear = Linear(output_dim, 5)
         set_requires_grad(linear, False)
 
-        return Sequential(conv_class(*conv_params), ReLU(), Flatten(), linear)
-
-    def get_output_shape(module, module_params, input):
-        """Returns the output shape for a given layer."""
-        output = module(*module_params)(input)
-        return output.numel() // output.shape[0]
+        return Sequential(conv_cls(*conv_params), ReLU(), Flatten(), linear)
 
     input = rand(input_size)
-    output_size = get_output_shape(conv_class, conv_params, input)
+    output_dim = _get_output_dim(conv_cls(*conv_params), input)
 
     dict_setting = {
         "input_fn": lambda: rand(input_size),
-        "module_fn": lambda: make_cnn(conv_class, output_size, conv_params),
+        "module_fn": lambda: _make_cnn(conv_cls, output_dim, conv_params),
         "loss_function_fn": lambda: CrossEntropyLoss(reduction="sum"),
         "target_fn": lambda: classification_targets((3,), 5),
         "id_prefix": "automated-simple-cnn",
@@ -86,44 +85,50 @@ def make_simple_cnn_setting(input_size, conv_class, conv_params):
     return dict_setting
 
 
-def make_simple_pooling_setting(input_size, conv_class, pool_cls, pool_params):
-    """
-    input_size: tuple of input size of (N*C*Image Size)
-    conv_class: convolutional class
-    conv_params: configurations for convolutional class
-    return: simple CNN Network
+def make_simple_pooling_setting(
+    input_size: Tuple[int],
+    conv_cls: Type[Module],
+    pool_cls: Type[Module],
+    pool_params: Tuple[Any],
+) -> dict:
+    """Create CNN with convolution and pooling layer as test case dictionary.
 
-    This function is used to automatically create a
-    simple CNN Network consisting of CNN & Linear layer
-    for different convolutional layers.
-    It is used to test `test.extensions`.
+    Make parameters of final linear layer non-differentiable to save run time.
+
+    Args:
+        input_size: Input shape ``[N, C_in, ...]``.
+        conv_cls: Class of convolution layer.
+        pool_cls: Class of pooling layer.
+        pool_params: Pooling hyperparameters.
+
+    Returns:
+        Dictionary representation of the test case.
     """
 
-    def make_cnn(conv_class, output_size, conv_params, pool_cls, pool_params):
-        """Note: output class size is assumed to be 5"""
+    def _make_cnn(
+        conv_cls: Type[Module],
+        output_size: int,
+        conv_params: Tuple[Any],
+        pool_cls: Type[Module],
+        pool_params: Tuple[Any],
+    ) -> Sequential:
         linear = Linear(output_size, 5)
         set_requires_grad(linear, False)
 
         return Sequential(
-            conv_class(*conv_params), ReLU(), pool_cls(*pool_params), Flatten(), linear
+            conv_cls(*conv_params), ReLU(), pool_cls(*pool_params), Flatten(), linear
         )
-
-    def get_output_shape(module, module_params, input, pool, pool_params):
-        """Returns the output shape for a given layer."""
-        output_1 = module(*module_params)(input)
-        output = pool_cls(*pool_params)(output_1)
-        return output.numel() // output.shape[0]
 
     conv_params = (3, 2, 2)
     input = rand(input_size)
-    output_size = get_output_shape(
-        conv_class, conv_params, input, pool_cls, pool_params
+    output_dim = _get_output_dim(
+        Sequential(conv_cls(*conv_params), pool_cls(*pool_params)), input
     )
 
     dict_setting = {
         "input_fn": lambda: rand(input_size),
-        "module_fn": lambda: make_cnn(
-            conv_class, output_size, conv_params, pool_cls, pool_params
+        "module_fn": lambda: _make_cnn(
+            conv_cls, output_dim, conv_params, pool_cls, pool_params
         ),
         "loss_function_fn": lambda: CrossEntropyLoss(reduction="sum"),
         "target_fn": lambda: classification_targets((3,), 5),
@@ -131,3 +136,8 @@ def make_simple_pooling_setting(input_size, conv_class, pool_cls, pool_params):
     }
 
     return dict_setting
+
+
+def _get_output_dim(module: Module, input: Tensor) -> int:
+    output = module(input)
+    return output.numel() // output.shape[0]
