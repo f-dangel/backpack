@@ -80,7 +80,9 @@ def _transform_add_to_sum_module(module: Module) -> Module:
     for node in graph.nodes:
         if node.op == "call_function":
             if str(node.target) == "<built-in function add>":
-                _change_node_to_module(node, "sum_module", module, SumModule(), node.args)
+                _change_node_to_module(
+                    node, "sum_module", module, SumModule(), node.args
+                )
 
     graph.lint()
     # TODO: delete_all_unused_submodules
