@@ -145,7 +145,7 @@ class AutogradExtensions(ExtensionsImplementation):
 
     def ggn(self) -> Tensor:  # noqa: D102
         _, output, loss = self.problem.forward_pass()
-        return stack([col for col in self._ggn_columns(loss, output)], dim=1)
+        return stack(list(self._ggn_columns(loss, output)), dim=1)
 
     def _ggn_columns(self, loss: Tensor, output: Tensor) -> Iterator[Tensor]:
         params = list(self.problem.trainable_parameters())
