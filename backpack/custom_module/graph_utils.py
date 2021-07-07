@@ -1,6 +1,10 @@
 """Transformation tools to make graph BackPACK compatible."""
+from copy import deepcopy
+from typing import Set
+
 import torch
 import torch.fx
+from torch.fx import GraphModule
 from torch.nn import Flatten, Module, ReLU
 
 from backpack.custom_module.branching import ActiveIdentity, Branch, SumModule
@@ -51,6 +55,7 @@ def convert_module_to_backpack(module: Module) -> Module:
     module_new = _transform_flatten_to_module(module_new)
     module_new = _transform_add_to_sum_module(module_new)
     module_new = _transform_inplace_to_normal(module_new)
+    module_new = _transform_remove_duplicates(module_new)
     return module_new
 
 
@@ -119,6 +124,35 @@ def _transform_inplace_to_normal(module: Module) -> Module:
         _transform_inplace_to_normal(child_module)
 
     return module
+
+
+def _transform_remove_duplicates(module: GraphModule, max_depth: int = 100) -> Module:
+    print("Removing duplicates...")
+    graph: torch.fx.Graph = MyCustomTracer().trace(module)
+    targets: Set[str] = set()
+    for node in graph.nodes:
+        if node.target in targets:
+            original_module = module.get_submodule(node.target)
+            for _ in original_module.parameters():
+                raise NotImplementedError(
+                    f"Transformation not successful, because a cycle was detected. "
+                    f"There is a module={original_module} with target={node.target} "
+                    f"that is used twice. This detected module has parameters."
+                )
+            new_module = deepcopy(original_module)
+            for i in range(max_depth):
+                target = f"{node.target}{i}"
+                try:
+                    module.get_submodule(target)
+                except AttributeError:
+                    module.add_submodule(target, new_module)
+                    node.target = target
+                    break
+        else:
+            targets.add(node.target)
+
+    graph.lint()
+    return torch.fx.GraphModule(module, graph)
 
 
 def _change_node_to_module(
