@@ -64,7 +64,6 @@ class ResNet2(Module):
         self.layer3 = self._make_layer(BasicBlock, 4 * ResNet2.inplanes, 2, stride=2)
         self.avgpool = AdaptiveAvgPool2d((1, 1))
         self.fc = Linear(4 * ResNet2.inplanes, self.num_classes)
-        print(ResNet2.inplanes)
 
     def forward(self, x):
         x = self.conv1(x)
