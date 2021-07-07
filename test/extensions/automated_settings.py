@@ -7,7 +7,7 @@ from torch.nn import Conv2d, CrossEntropyLoss, Flatten, Linear, Module, ReLU, Se
 
 
 def set_requires_grad(model: Module, new_requires_grad: bool) -> None:
-    """Set the ``requires_grad`` attribute of the module parameters.
+    """Set the ``requires_grad`` attribute of the model parameters.
 
     Args:
         model: Network or layer.
@@ -18,7 +18,7 @@ def set_requires_grad(model: Module, new_requires_grad: bool) -> None:
 
 
 def make_simple_act_setting(act_cls: Type[Module], bias: bool) -> dict:
-    """Create a simple CNN with activation and bias as test case dictionary.
+    """Create a simple CNN with activation as test case dictionary.
 
     Make parameters of final linear layer non-differentiable to save run time.
 
@@ -50,7 +50,7 @@ def make_simple_act_setting(act_cls: Type[Module], bias: bool) -> dict:
 def make_simple_cnn_setting(
     input_size: Tuple[int], conv_cls: Type[Module], conv_params: Tuple[Any]
 ) -> dict:
-    """Create CNN with specified convolution hyperparameters as test case dictionary.
+    """Create ReLU CNN with convolution hyperparameters as test case dictionary.
 
     Make parameters of final linear layer non-differentiable to save run time.
 
