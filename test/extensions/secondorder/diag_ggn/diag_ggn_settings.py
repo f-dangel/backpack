@@ -11,6 +11,7 @@ Additional local cases can be defined here through ``LOCAL_SETTINGS``.
 """
 from test.core.derivatives.utils import classification_targets, regression_targets
 from test.extensions.secondorder.secondorder_settings import SECONDORDER_SETTINGS
+from test.resnet.resnets_examples import ResNet1, ResNet2
 from test.utils.evaluation_mode import initialize_training_false_recursive
 
 from torch import rand
@@ -33,6 +34,7 @@ from torch.nn import (
     Sigmoid,
 )
 
+from backpack import convert_module_to_backpack
 from backpack.custom_module import branching
 from backpack.custom_module.branching import ActiveIdentity, Parallel
 from backpack.custom_module.permute import Permute
@@ -173,6 +175,20 @@ LOCAL_SETTINGS += [
         "loss_function_fn": lambda: CrossEntropyLoss(),
         "target_fn": lambda: classification_targets((4,), 5),
         "id_prefix": "nested-branching-convolution",
+    },
+    {
+        "input_fn": lambda: ResNet1.input_test,
+        "module_fn": lambda: convert_module_to_backpack(ResNet1().eval()),
+        "loss_function_fn": lambda: ResNet1.loss_test,
+        "target_fn": lambda: ResNet1.target_test,
+        "id_prefix": "ResNet1",
+    },
+    {
+        "input_fn": lambda: rand(ResNet2.input_test),
+        "module_fn": lambda: convert_module_to_backpack(ResNet2().eval()),
+        "loss_function_fn": lambda: ResNet2.loss_test,
+        "target_fn": lambda: rand(ResNet2.target_test),
+        "id_prefix": "ResNet2",
     },
 ]
 DiagGGN_SETTINGS = SHARED_SETTINGS + LOCAL_SETTINGS
