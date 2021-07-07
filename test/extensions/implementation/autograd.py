@@ -1,11 +1,11 @@
 """Autograd implementation of BackPACK's extensions."""
 from test.extensions.implementation.base import ExtensionsImplementation
-from typing import List, Union
+from typing import Iterator, List, Union
 
 from torch import Tensor, autograd, backends, cat, stack, var, zeros, zeros_like
 from torch.nn.utils.convert_parameters import parameters_to_vector
 
-from backpack.hessianfree.ggnvp import ggn_vector_product, ggn_vector_product_from_plist
+from backpack.hessianfree.ggnvp import ggn_vector_product
 from backpack.hessianfree.rop import R_op
 from backpack.utils.convert_parameters import vector_to_parameter_list
 from backpack.utils.subsampling import get_batch_axis
@@ -56,27 +56,13 @@ class AutogradExtensions(ExtensionsImplementation):
             var(g, dim=0, unbiased=False) for g in self.batch_grad(subsampling=None)
         ]
 
-    def _get_diag_ggn(self, loss, output):
-        def extract_ith_element_of_diag_ggn(i, p, loss, output):
-            v = zeros(p.numel()).to(self.problem.device)
-            v[i] = 1.0
-            vs = vector_to_parameter_list(v, [p])
-            GGN_vs = ggn_vector_product_from_plist(loss, output, [p], vs)
-            GGN_v = cat([g.detach().flatten() for g in GGN_vs])
-            return GGN_v[i]
-
-        diag_ggns = []
-        for p in list(self.problem.trainable_parameters()):
-            diag_ggn_p = zeros_like(p).flatten()
-
-            for parameter_index in range(p.numel()):
-                diag_value = extract_ith_element_of_diag_ggn(
-                    parameter_index, p, loss, output
-                )
-                diag_ggn_p[parameter_index] = diag_value
-
-            diag_ggns.append(diag_ggn_p.view(p.size()))
-        return diag_ggns
+    def _get_diag_ggn(self, loss: Tensor, output: Tensor) -> List[Tensor]:
+        diag_ggn_flat = cat(
+            [col[[i]] for i, col in enumerate(self._ggn_columns(loss, output))]
+        )
+        return vector_to_parameter_list(
+            diag_ggn_flat, list(self.problem.trainable_parameters())
+        )
 
     def diag_ggn(self) -> List[Tensor]:  # noqa: D102
         try:
@@ -159,11 +145,12 @@ class AutogradExtensions(ExtensionsImplementation):
 
     def ggn(self) -> Tensor:  # noqa: D102
         _, output, loss = self.problem.forward_pass()
-        model = self.problem.model
-        params = list(self.problem.trainable_parameters())
+        return stack([col for col in self._ggn_columns(loss, output)], dim=1)
 
+    def _ggn_columns(self, loss: Tensor, output: Tensor) -> Iterator[Tensor]:
+        params = list(self.problem.trainable_parameters())
         num_params = sum(p.numel() for p in params)
-        ggn = zeros(num_params, num_params).to(self.problem.device)
+        model = self.problem.model
 
         for i in range(num_params):
             # GGN-vector product with i.th unit vector yields the i.th row
@@ -174,10 +161,7 @@ class AutogradExtensions(ExtensionsImplementation):
             e_i_list = vector_to_parameter_list(e_i, params)
             ggn_i_list = ggn_vector_product(loss, output, model, e_i_list)
 
-            ggn_i = parameters_to_vector(ggn_i_list)
-            ggn[i, :] = ggn_i
-
-        return ggn
+            yield parameters_to_vector(ggn_i_list)
 
     def diag_ggn_mc(self, mc_samples) -> List[Tensor]:  # noqa: D102
         raise NotImplementedError
