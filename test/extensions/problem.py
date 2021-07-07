@@ -2,7 +2,7 @@
 
 import copy
 from test.core.derivatives.utils import get_available_devices
-from typing import Iterator
+from typing import Any, Iterator, List
 
 import torch
 from torch.nn.parameter import Parameter
@@ -203,3 +203,28 @@ class ExtensionsTestProblem:
         for p in self.model.parameters():
             if p.requires_grad:
                 yield p
+
+    def collect_data(self, savefield: str) -> List[Any]:
+        """Collect BackPACK attributes from trainable parameters.
+
+        Args:
+            savefield: Attribute name.
+
+        Returns:
+            List of attributes saved under the trainable model parameters.
+
+        Raises:
+            RuntimeError: If a non-differentiable with the attribute is encountered.
+        """
+        data = []
+
+        for p in self.model.parameters():
+            if p.requires_grad:
+                data.append(getattr(p, savefield))
+            else:
+                if hasattr(p, savefield):
+                    raise RuntimeError(
+                        f"Found non-differentiable parameter with attribute '{savefield}'."
+                    )
+
+        return data
