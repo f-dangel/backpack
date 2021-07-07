@@ -43,37 +43,18 @@ class AutogradExtensions(ExtensionsImplementation):
         return batch_grads
 
     def batch_l2_grad(self) -> List[Tensor]:  # noqa: D102
-        batch_grad = self.batch_grad(subsampling=None)
-        batch_l2_grads = [(g ** 2).flatten(start_dim=1).sum(1) for g in batch_grad]
-        return batch_l2_grads
-
-    def sgs(self) -> List[Tensor]:  # noqa: D102
-        N = self.problem.input.shape[0]
-        sgs = [
-            zeros(*p.size()).to(self.problem.device)
-            for p in self.problem.trainable_parameters()
+        return [
+            (g ** 2).flatten(start_dim=1).sum(1)
+            for g in self.batch_grad(subsampling=None)
         ]
 
-        loss_list = zeros(N)
-        gradients_list = []
-        for b in range(N):
-            _, _, loss = self.problem.forward_pass(sample_idx=b)
-            gradients = autograd.grad(loss, self.problem.trainable_parameters())
-            loss_list[b] = loss
-            gradients_list.append(gradients)
-
-        _, _, batch_loss = self.problem.forward_pass()
-        factor = self.problem.get_reduction_factor(batch_loss, loss_list)
-
-        for _, gradients in zip(range(N), gradients_list):
-            for idx, g in enumerate(gradients):
-                sgs[idx] += (g.detach() * factor) ** 2
-        return sgs
+    def sgs(self) -> List[Tensor]:  # noqa: D102
+        return [(g ** 2).sum(0) for g in self.batch_grad(subsampling=None)]
 
     def variance(self) -> List[Tensor]:  # noqa: D102
-        batch_grad = self.batch_grad(subsampling=None)
-        variances = [var(g, dim=0, unbiased=False) for g in batch_grad]
-        return variances
+        return [
+            var(g, dim=0, unbiased=False) for g in self.batch_grad(subsampling=None)
+        ]
 
     def _get_diag_ggn(self, loss, output):
         def extract_ith_element_of_diag_ggn(i, p, loss, output):
@@ -81,12 +62,12 @@ class AutogradExtensions(ExtensionsImplementation):
             v[i] = 1.0
             vs = vector_to_parameter_list(v, [p])
             GGN_vs = ggn_vector_product_from_plist(loss, output, [p], vs)
-            GGN_v = cat([g.detach().view(-1) for g in GGN_vs])
+            GGN_v = cat([g.detach().flatten() for g in GGN_vs])
             return GGN_v[i]
 
         diag_ggns = []
         for p in list(self.problem.trainable_parameters()):
-            diag_ggn_p = zeros_like(p).view(-1)
+            diag_ggn_p = zeros_like(p).flatten()
 
             for parameter_index in range(p.numel()):
                 diag_value = extract_ith_element_of_diag_ggn(
@@ -135,23 +116,19 @@ class AutogradExtensions(ExtensionsImplementation):
         return [stack(param) * factor for param in params_batch_diag_ggn]
 
     def _get_diag_h(self, loss):
-        def hvp(df_dx, x, v):
-            Hv = R_op(df_dx, x, v)
-            return [j.detach() for j in Hv]
-
         def extract_ith_element_of_diag_h(i, p, df_dx):
-            v = zeros(p.numel()).to(self.problem.device)
+            v = zeros_like(p).flatten()
             v[i] = 1.0
             vs = vector_to_parameter_list(v, [p])
 
-            Hvs = hvp(df_dx, [p], vs)
-            Hv = cat([g.detach().view(-1) for g in Hvs])
+            Hvs = R_op(df_dx, [p], vs)
+            Hv = cat([g.flatten() for g in Hvs])
 
             return Hv[i]
 
         diag_hs = []
         for p in list(self.problem.trainable_parameters()):
-            diag_h_p = zeros_like(p).view(-1)
+            diag_h_p = zeros_like(p).flatten()
 
             df_dx = autograd.grad(loss, [p], create_graph=True, retain_graph=True)
             for parameter_index in range(p.numel()):
