@@ -17,7 +17,7 @@ def ggn_vector_product(
 
     Note:
         ``G v = J.T @ H @ J @ v`` where ``J`` is the Jacobian of ``output`` w.r.t.
-        ``model``'s trainable parameters. and `H` is the Hessian of `loss` w.r.t.
+        ``model``'s trainable parameters and `H` is the Hessian of `loss` w.r.t.
         ``output``. ``v`` is the flattened and concatenated version of the passed
         list of vectors.
 
@@ -25,8 +25,7 @@ def ggn_vector_product(
         loss: Scalar tensor that represents the loss.
         output: Model output.
         model: The model.
-        v: Vector specified as list of tensors matching the sizes of trainable
-            parameters.
+        v: Vector specified as list of tensors matching the trainable parameters.
 
     Returns:
         GGN-vector product in list format, i.e. as list that matches the sizes
@@ -40,7 +39,7 @@ def ggn_vector_product(
 def ggn_vector_product_from_plist(
     loss: Tensor, output: Tensor, plist: List[Parameter], v: List[Tensor]
 ) -> Tuple[Tensor]:
-    """Multiply a vector with sub-blocks of the generalized Gauss-Newton/Fisher.
+    """Multiply a vector with a sub-block of the generalized Gauss-Newton/Fisher.
 
     Args:
         loss: Scalar tensor that represents the loss.
