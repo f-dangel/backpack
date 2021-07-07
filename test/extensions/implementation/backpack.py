@@ -26,8 +26,8 @@ class BackpackExtensions(ExtensionsImplementation):
         problem.extend()
         super().__init__(problem)
 
-    def batch_grad(self) -> List[Tensor]:  # noqa:D102
-        with backpack(new_ext.BatchGrad()):
+    def batch_grad(self, subsampling) -> List[Tensor]:  # noqa:D102
+        with backpack(new_ext.BatchGrad(subsampling=subsampling)):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
         return self.problem.collect_data("grad_batch")
