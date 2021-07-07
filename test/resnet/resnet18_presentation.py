@@ -3,15 +3,15 @@
 2021-07-08: Code presented to Phillipp.
 """
 from torch import rand, rand_like
-from torchvision.models import resnet18
 from torch.nn import MSELoss
+from torchvision.models import resnet18
 
 from backpack import backpack, extend
 from backpack.extensions import DiagGGNExact
 
 resnet18 = extend(resnet18(num_classes=100).eval(), use_converter=True)
 
-x = rand(8, 3, 224, 224, requires_grad=True)
+x = rand(8, 3, 224, 224)
 y_predict = resnet18(x)
 
 loss = extend(MSELoss())(y_predict, rand_like(y_predict))
