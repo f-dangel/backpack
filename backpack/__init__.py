@@ -174,9 +174,7 @@ def run_extension_hook(module):
         raise RuntimeError(f"Post extensions hook failed: {message}")
 
 
-def extend(
-    module: torch.nn.Module, debug=False, is_container=False, use_converter=False
-):
+def extend(module: torch.nn.Module, debug=False, use_converter=False):
     """Extends a ``module`` to make it BackPACK-ready.
 
     If the ``module`` has children, e.g. for a ``torch.nn.Sequential``,
@@ -186,7 +184,6 @@ def extend(
         module (torch.nn.Module): The module to extend.
         debug (bool, optional): Print debug messages during the extension.
             Default: ``False``.
-        is_container: defines whether top module is a containter. Is not extended then.
         use_converter: whether to convert the module to a BackPACK-compatible network.
 
     Returns:
@@ -197,7 +194,7 @@ def extend(
 
     if use_converter:
         module = convert_module_to_backpack(module)
-        return extend(module, is_container=True)
+        return extend(module)
 
     for child in module.children():
         extend(child, debug=debug)
@@ -205,8 +202,6 @@ def extend(
     module_was_already_extended = getattr(module, "_backpack_extend", False)
     # TODO find a different way to exclude all containers
     # containers are: GraphModule, Sequential, and maybe user-defined modules
-    if is_container:
-        module_was_already_extended = True
     if not module_was_already_extended:
         CTX.add_hook_handle(module.register_forward_hook(hook_store_io))
         CTX.add_hook_handle(module.register_backward_hook(hook_run_extensions))

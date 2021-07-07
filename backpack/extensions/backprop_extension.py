@@ -6,6 +6,7 @@ from typing import Callable, Dict, Tuple, Type
 
 import torch.nn
 from torch import Tensor
+from torch.fx import GraphModule
 from torch.nn import Module, Sequential
 
 from backpack.custom_module.branching import Branch, Parallel
@@ -90,7 +91,9 @@ class BackpropExtension:
 
         if module_extension is None:
 
-            if isinstance(module, (Sequential, Branch, Parallel, ReduceTuple)):
+            if isinstance(
+                module, (GraphModule, Sequential, Branch, Parallel, ReduceTuple)
+            ):
                 return apply_no_op
 
             if self.__fail_mode is FAIL_ERROR:
