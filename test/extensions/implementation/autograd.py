@@ -57,9 +57,13 @@ class AutogradExtensions(ExtensionsImplementation):
         ]
 
     def _get_diag_ggn(self, loss: Tensor, output: Tensor) -> List[Tensor]:
-        diag_ggn_flat = cat(
-            [col[[i]] for i, col in enumerate(self._ggn_columns(loss, output))]
-        )
+        try:
+            diag_ggn_flat = cat(
+                [col[[i]] for i, col in enumerate(self._ggn_columns(loss, output))]
+            )
+        # raises RuntimeError if list is empty
+        except RuntimeError:
+            diag_ggn_flat = Tensor()
         return vector_to_parameter_list(
             diag_ggn_flat, list(self.problem.trainable_parameters())
         )
