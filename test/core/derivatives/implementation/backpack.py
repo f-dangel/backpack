@@ -36,16 +36,26 @@ class BackpackDerivatives(DerivativesImplementation):
             self.problem.module, None, None, mat
         )
 
-    def weight_jac_t_mat_prod(self, mat, sum_batch):  # noqa: D102
+    def weight_jac_t_mat_prod(self, mat, sum_batch, subsampling=None):  # noqa: D102
         self.store_forward_io()
         return self.problem.derivative.weight_jac_t_mat_prod(
-            self.problem.module, None, None, mat, sum_batch=sum_batch
+            self.problem.module,
+            None,
+            None,
+            mat,
+            sum_batch=sum_batch,
+            subsampling=subsampling,
         )
 
-    def bias_jac_t_mat_prod(self, mat, sum_batch):  # noqa: D102
+    def bias_jac_t_mat_prod(self, mat, sum_batch, subsampling=None):  # noqa: D102
         self.store_forward_io()
         return self.problem.derivative.bias_jac_t_mat_prod(
-            self.problem.module, None, None, mat, sum_batch=sum_batch
+            self.problem.module,
+            None,
+            None,
+            mat,
+            sum_batch=sum_batch,
+            subsampling=subsampling,
         )
 
     def weight_jac_mat_prod(self, mat):  # noqa: D102
@@ -60,28 +70,52 @@ class BackpackDerivatives(DerivativesImplementation):
             self.problem.module, None, None, mat
         )
 
-    def bias_ih_l0_jac_t_mat_prod(self, mat, sum_batch):  # noqa: D102
+    def bias_ih_l0_jac_t_mat_prod(self, mat, sum_batch, subsampling=None):  # noqa: D102
         self.store_forward_io()
         return self.problem.derivative.bias_ih_l0_jac_t_mat_prod(
-            self.problem.module, None, None, mat, sum_batch=sum_batch
+            self.problem.module,
+            None,
+            None,
+            mat,
+            sum_batch=sum_batch,
+            subsampling=subsampling,
         )
 
-    def bias_hh_l0_jac_t_mat_prod(self, mat, sum_batch):  # noqa: D102
+    def bias_hh_l0_jac_t_mat_prod(self, mat, sum_batch, subsampling=None):  # noqa: D102
         self.store_forward_io()
         return self.problem.derivative.bias_hh_l0_jac_t_mat_prod(
-            self.problem.module, None, None, mat, sum_batch=sum_batch
+            self.problem.module,
+            None,
+            None,
+            mat,
+            sum_batch=sum_batch,
+            subsampling=subsampling,
         )
 
-    def weight_ih_l0_jac_t_mat_prod(self, mat, sum_batch):  # noqa: D102
+    def weight_ih_l0_jac_t_mat_prod(
+        self, mat, sum_batch, subsampling=None
+    ):  # noqa: D102
         self.store_forward_io()
         return self.problem.derivative.weight_ih_l0_jac_t_mat_prod(
-            self.problem.module, None, None, mat, sum_batch=sum_batch
+            self.problem.module,
+            None,
+            None,
+            mat,
+            sum_batch=sum_batch,
+            subsampling=subsampling,
         )
 
-    def weight_hh_l0_jac_t_mat_prod(self, mat, sum_batch):  # noqa: D102
+    def weight_hh_l0_jac_t_mat_prod(
+        self, mat, sum_batch, subsampling=None
+    ):  # noqa: D102
         self.store_forward_io()
         return self.problem.derivative.weight_hh_l0_jac_t_mat_prod(
-            self.problem.module, None, None, mat, sum_batch=sum_batch
+            self.problem.module,
+            None,
+            None,
+            mat,
+            sum_batch=sum_batch,
+            subsampling=subsampling,
         )
 
     def ea_jac_t_mat_jac_prod(self, mat):  # noqa: D102
@@ -122,7 +156,7 @@ class BackpackDerivatives(DerivativesImplementation):
         )
 
     def hessian_is_zero(self) -> bool:  # noqa: D102
-        return self.problem.derivative.hessian_is_zero()
+        return self.problem.derivative.hessian_is_zero(self.problem.module)
 
     def _sample_hessians_from_sqrt(self, sqrt):
         """Convert individual matrix square root into individual full matrix.

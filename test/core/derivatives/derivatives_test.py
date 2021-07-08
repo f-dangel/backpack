@@ -8,6 +8,7 @@
 """
 
 from test.automated_test import check_sizes_and_values
+from test.core.derivatives.batch_norm_settings import BATCH_NORM_SETTINGS
 from test.core.derivatives.implementation.autograd import AutogradDerivatives
 from test.core.derivatives.implementation.backpack import BackpackDerivatives
 from test.core.derivatives.loss_settings import LOSS_FAIL_SETTINGS
@@ -16,13 +17,16 @@ from test.core.derivatives.permute_settings import PERMUTE_SETTINGS
 from test.core.derivatives.problem import DerivativesTestProblem, make_test_problems
 from test.core.derivatives.rnn_settings import RNN_SETTINGS as RNN_SETTINGS
 from test.core.derivatives.settings import SETTINGS
+from typing import List, Tuple, Union
 from warnings import warn
 
 import pytest
 import torch
 from pytest import fixture, skip
+from torch import Tensor
 
 from backpack.core.derivatives.convnd import weight_jac_t_save_memory
+from backpack.utils.subsampling import get_batch_axis
 
 PROBLEMS = make_test_problems(SETTINGS)
 IDS = [problem.make_id() for problem in PROBLEMS]
@@ -46,11 +50,21 @@ LSTM_IDS = [problem.make_id() for problem in LSTM_PROBLEMS]
 PERMUTE_PROBLEMS = make_test_problems(PERMUTE_SETTINGS)
 PERMUTE_IDS = [problem.make_id() for problem in PERMUTE_PROBLEMS]
 
+BATCH_NORM_PROBLEMS = make_test_problems(BATCH_NORM_SETTINGS)
+BATCH_NORM_IDS = [problem.make_id() for problem in BATCH_NORM_PROBLEMS]
+
+SUBSAMPLINGS = [None, [0, 0], [2, 0]]
+SUBSAMPLING_IDS = [f"subsampling={s}".replace(" ", "") for s in SUBSAMPLINGS]
+
 
 @pytest.mark.parametrize(
     "problem",
-    NO_LOSS_PROBLEMS + RNN_PROBLEMS + PERMUTE_PROBLEMS + LSTM_PROBLEMS,
-    ids=NO_LOSS_IDS + RNN_IDS + PERMUTE_IDS + LSTM_IDS,
+    NO_LOSS_PROBLEMS
+    + RNN_PROBLEMS
+    + PERMUTE_PROBLEMS
+    + LSTM_PROBLEMS
+    + BATCH_NORM_PROBLEMS,
+    ids=NO_LOSS_IDS + RNN_IDS + PERMUTE_IDS + LSTM_IDS + BATCH_NORM_IDS,
 )
 def test_jac_mat_prod(problem: DerivativesTestProblem, V: int = 3) -> None:
     """Test the Jacobian-matrix product.
@@ -71,8 +85,12 @@ def test_jac_mat_prod(problem: DerivativesTestProblem, V: int = 3) -> None:
 
 @pytest.mark.parametrize(
     "problem",
-    NO_LOSS_PROBLEMS + RNN_PROBLEMS + PERMUTE_PROBLEMS + LSTM_PROBLEMS,
-    ids=NO_LOSS_IDS + RNN_IDS + PERMUTE_IDS + LSTM_IDS,
+    NO_LOSS_PROBLEMS
+    + RNN_PROBLEMS
+    + PERMUTE_PROBLEMS
+    + LSTM_PROBLEMS
+    + BATCH_NORM_PROBLEMS,
+    ids=NO_LOSS_IDS + RNN_IDS + PERMUTE_IDS + LSTM_IDS + BATCH_NORM_IDS,
 )
 def test_jac_t_mat_prod(problem: DerivativesTestProblem, request, V: int = 3) -> None:
     """Test the transposed Jacobian-matrix product.
@@ -107,112 +125,144 @@ for problem, problem_id in zip(PROBLEMS, IDS):
         IDS_WITH_WEIGHTS.append(problem_id)
 
 
+@pytest.mark.parametrize("subsampling", SUBSAMPLINGS, ids=SUBSAMPLING_IDS)
 @pytest.mark.parametrize(
     "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
 )
 @pytest.mark.parametrize(
     "problem", RNN_PROBLEMS + LSTM_PROBLEMS, ids=RNN_IDS + LSTM_IDS
 )
-def test_bias_ih_l0_jac_t_mat_prod(problem, sum_batch, V=3):
+def test_bias_ih_l0_jac_t_mat_prod(
+    problem: DerivativesTestProblem,
+    sum_batch: bool,
+    subsampling: Union[List[int], None],
+    V: int = 3,
+) -> None:
     """Test the transposed Jacobian-matrix product w.r.t. to bias_ih_l0.
 
     Args:
-        problem (DerivativesProblem): Problem for derivative test.
-        sum_batch (bool): Sum results over the batch dimension.
-        V (int): Number of vectorized transposed Jacobian-vector products.
+        problem: Problem for derivative test.
+        sum_batch: Sum results over the batch dimension.
+        subsampling: Indices of active samples.
+        V: Number of vectorized transposed Jacobian-vector products.
     """
     problem.set_up()
-    mat = torch.rand(V, *problem.output_shape).to(problem.device)
+    _skip_if_subsampling_conflict(problem, subsampling)
+    mat = rand_mat_like_output(V, problem, subsampling=subsampling).to(problem.device)
 
     autograd_res = AutogradDerivatives(problem).bias_ih_l0_jac_t_mat_prod(
-        mat, sum_batch
+        mat, sum_batch, subsampling=subsampling
     )
     backpack_res = BackpackDerivatives(problem).bias_ih_l0_jac_t_mat_prod(
-        mat, sum_batch
+        mat, sum_batch, subsampling=subsampling
     )
 
     check_sizes_and_values(autograd_res, backpack_res)
     problem.tear_down()
 
 
+@pytest.mark.parametrize("subsampling", SUBSAMPLINGS, ids=SUBSAMPLING_IDS)
 @pytest.mark.parametrize(
     "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
 )
 @pytest.mark.parametrize(
     "problem", RNN_PROBLEMS + LSTM_PROBLEMS, ids=RNN_IDS + LSTM_IDS
 )
-def test_bias_hh_l0_jac_t_mat_prod(problem, sum_batch, V=3):
+def test_bias_hh_l0_jac_t_mat_prod(
+    problem: DerivativesTestProblem,
+    sum_batch: bool,
+    subsampling: Union[List[int], None],
+    V: int = 3,
+) -> None:
     """Test the transposed Jacobian-matrix product w.r.t. to bias_hh_l0.
 
     Args:
-        problem (DerivativesProblem): Problem for derivative test.
-        sum_batch (bool): Sum results over the batch dimension.
-        V (int): Number of vectorized transposed Jacobian-vector products.
+        problem: Problem for derivative test.
+        sum_batch: Sum results over the batch dimension.
+        subsampling: Indices of active samples.
+        V: Number of vectorized transposed Jacobian-vector products.
     """
     problem.set_up()
-    mat = torch.rand(V, *problem.output_shape).to(problem.device)
+    _skip_if_subsampling_conflict(problem, subsampling)
+    mat = rand_mat_like_output(V, problem, subsampling=subsampling).to(problem.device)
 
     autograd_res = AutogradDerivatives(problem).bias_hh_l0_jac_t_mat_prod(
-        mat, sum_batch
+        mat, sum_batch, subsampling=subsampling
     )
     backpack_res = BackpackDerivatives(problem).bias_hh_l0_jac_t_mat_prod(
-        mat, sum_batch
+        mat, sum_batch, subsampling=subsampling
     )
 
     check_sizes_and_values(autograd_res, backpack_res)
     problem.tear_down()
 
 
+@pytest.mark.parametrize("subsampling", SUBSAMPLINGS, ids=SUBSAMPLING_IDS)
 @pytest.mark.parametrize(
     "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
 )
 @pytest.mark.parametrize(
     "problem", RNN_PROBLEMS + LSTM_PROBLEMS, ids=RNN_IDS + LSTM_IDS
 )
-def test_weight_ih_l0_jac_t_mat_prod(problem, sum_batch, V=3):
+def test_weight_ih_l0_jac_t_mat_prod(
+    problem: DerivativesTestProblem,
+    sum_batch: bool,
+    subsampling: Union[List[int], None],
+    V: int = 3,
+) -> None:
     """Test the transposed Jacobian-matrix product w.r.t. to weight_ih_l0.
 
     Args:
-        problem (DerivativesProblem): Problem for derivative test.
-        sum_batch (bool): Sum results over the batch dimension.
-        V (int): Number of vectorized transposed Jacobian-vector products.
+        problem: Problem for derivative test.
+        sum_batch: Sum results over the batch dimension.
+        subsampling: Indices of active samples.
+        V: Number of vectorized transposed Jacobian-vector products.
     """
     problem.set_up()
-    mat = torch.rand(V, *problem.output_shape).to(problem.device)
+    _skip_if_subsampling_conflict(problem, subsampling)
+    mat = rand_mat_like_output(V, problem, subsampling=subsampling).to(problem.device)
 
     autograd_res = AutogradDerivatives(problem).weight_ih_l0_jac_t_mat_prod(
-        mat, sum_batch
+        mat, sum_batch, subsampling=subsampling
     )
     backpack_res = BackpackDerivatives(problem).weight_ih_l0_jac_t_mat_prod(
-        mat, sum_batch
+        mat, sum_batch, subsampling=subsampling
     )
 
     check_sizes_and_values(autograd_res, backpack_res)
     problem.tear_down()
 
 
+@pytest.mark.parametrize("subsampling", SUBSAMPLINGS, ids=SUBSAMPLING_IDS)
 @pytest.mark.parametrize(
     "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
 )
 @pytest.mark.parametrize(
     "problem", RNN_PROBLEMS + LSTM_PROBLEMS, ids=RNN_IDS + LSTM_IDS
 )
-def test_weight_hh_l0_jac_t_mat_prod(problem, sum_batch, V=4):
+def test_weight_hh_l0_jac_t_mat_prod(
+    problem: DerivativesTestProblem,
+    sum_batch: bool,
+    subsampling: Union[List[int], None],
+    V: int = 3,
+) -> None:
     """Test the transposed Jacobian-matrix product w.r.t. to weight_hh_l0.
 
     Args:
-        problem (DerivativesProblem): Problem for derivative test.
-        sum_batch (bool): Sum results over the batch dimension.
-        V (int): Number of vectorized transposed Jacobian-vector products.
+        problem: Problem for derivative test.
+        sum_batch: Sum results over the batch dimension.
+        subsampling: Indices of active samples.
+        V: Number of vectorized transposed Jacobian-vector products.
     """
     problem.set_up()
-    mat = torch.rand(V, *problem.output_shape).to(problem.device)
+    _skip_if_subsampling_conflict(problem, subsampling)
+    mat = rand_mat_like_output(V, problem, subsampling=subsampling).to(problem.device)
 
     autograd_res = AutogradDerivatives(problem).weight_hh_l0_jac_t_mat_prod(
-        mat, sum_batch
+        mat, sum_batch, subsampling=subsampling
     )
     backpack_res = BackpackDerivatives(problem).weight_hh_l0_jac_t_mat_prod(
-        mat, sum_batch
+        mat, sum_batch, subsampling=subsampling
     )
 
     check_sizes_and_values(autograd_res, backpack_res)
@@ -227,32 +277,62 @@ def test_weight_hh_l0_jac_t_mat_prod(problem, sum_batch, V=4):
     [True, False],
     ids=["save_memory=True", "save_memory=False"],
 )
-@pytest.mark.parametrize("problem", PROBLEMS_WITH_WEIGHTS, ids=IDS_WITH_WEIGHTS)
 def test_weight_jac_t_mat_prod(
-    problem: DerivativesTestProblem, sum_batch: bool, save_memory: bool, V: int = 3
+    problem_weight_jac_t_mat: Tuple[DerivativesTestProblem, List[int], Tensor],
+    sum_batch: bool,
+    save_memory: bool,
 ) -> None:
     """Test the transposed Jacobian-matrix product w.r.t. to the weight.
 
     Args:
-        problem: Test case.
+        problem_weight_jac_t_mat: Instantiated test case, subsampling, and
+            input for weight_jac_t
         sum_batch: Sum out the batch dimension.
         save_memory: Use Owkin implementation in convolutions to save memory.
-        V: Number of vectorized transposed Jacobian-vector products. Default: ``3``.
     """
-    problem.set_up()
-    mat = torch.rand(V, *problem.output_shape).to(problem.device)
+    problem, subsampling, mat = problem_weight_jac_t_mat
 
     with weight_jac_t_save_memory(save_memory):
         backpack_res = BackpackDerivatives(problem).weight_jac_t_mat_prod(
-            mat, sum_batch
+            mat, sum_batch, subsampling=subsampling
         )
-    autograd_res = AutogradDerivatives(problem).weight_jac_t_mat_prod(mat, sum_batch)
+    autograd_res = AutogradDerivatives(problem).weight_jac_t_mat_prod(
+        mat, sum_batch, subsampling=subsampling
+    )
 
-    check_sizes_and_values(autograd_res, backpack_res)
-    problem.tear_down()
+    check_sizes_and_values(autograd_res, backpack_res, rtol=5e-5)
 
 
-@pytest.mark.parametrize("problem", PROBLEMS_WITH_WEIGHTS, ids=IDS_WITH_WEIGHTS)
+def rand_mat_like_output(
+    V: int, problem: DerivativesTestProblem, subsampling: List[int] = None
+) -> Tensor:
+    """Generate random matrix whose columns are shaped like the layer output.
+
+    Can be used to generate random inputs to functions that act on tensors
+    shaped like the module output (like ``*_jac_t_mat_prod``).
+
+    Args:
+        V: Number of rows.
+        problem: Test case.
+        subsampling: Indices of samples used by sub-sampling.
+
+    Returns:
+        Random matrix with (subsampled) output shape.
+    """
+    subsample_shape = list(problem.output_shape)
+
+    if subsampling is not None:
+        N_axis = get_batch_axis(problem.module)
+        subsample_shape[N_axis] = len(subsampling)
+
+    return torch.rand(V, *subsample_shape)
+
+
+@pytest.mark.parametrize(
+    "problem",
+    PROBLEMS_WITH_WEIGHTS + BATCH_NORM_PROBLEMS,
+    ids=IDS_WITH_WEIGHTS + BATCH_NORM_IDS,
+)
 def test_weight_jac_mat_prod(problem: DerivativesTestProblem, V: int = 3) -> None:
     """Test the Jacobian-matrix product w.r.t. to the weight.
 
@@ -281,28 +361,34 @@ for problem, problem_id in zip(PROBLEMS, IDS):
 @pytest.mark.parametrize(
     "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
 )
-@pytest.mark.parametrize("problem", PROBLEMS_WITH_BIAS, ids=IDS_WITH_BIAS)
 def test_bias_jac_t_mat_prod(
-    problem: DerivativesTestProblem, sum_batch: bool, V: int = 3
+    problem_bias_jac_t_mat: Tuple[DerivativesTestProblem, List[int], Tensor],
+    sum_batch: bool,
 ) -> None:
     """Test the transposed Jacobian-matrix product w.r.t. to the bias.
 
     Args:
-        problem: Test case.
+        problem_bias_jac_t_mat: Instantiated test case, subsampling, and
+            input for bias_jac_t
         sum_batch: Sum out the batch dimension.
-        V: Number of vectorized transposed Jacobian-vector products. Default: ``3``.
     """
-    problem.set_up()
-    mat = torch.rand(V, *problem.output_shape).to(problem.device)
+    problem, subsampling, mat = problem_bias_jac_t_mat
 
-    backpack_res = BackpackDerivatives(problem).bias_jac_t_mat_prod(mat, sum_batch)
-    autograd_res = AutogradDerivatives(problem).bias_jac_t_mat_prod(mat, sum_batch)
+    backpack_res = BackpackDerivatives(problem).bias_jac_t_mat_prod(
+        mat, sum_batch, subsampling=subsampling
+    )
+    autograd_res = AutogradDerivatives(problem).bias_jac_t_mat_prod(
+        mat, sum_batch, subsampling=subsampling
+    )
 
     check_sizes_and_values(autograd_res, backpack_res)
-    problem.tear_down()
 
 
-@pytest.mark.parametrize("problem", PROBLEMS_WITH_BIAS, ids=IDS_WITH_BIAS)
+@pytest.mark.parametrize(
+    "problem",
+    PROBLEMS_WITH_BIAS + BATCH_NORM_PROBLEMS,
+    ids=IDS_WITH_BIAS + BATCH_NORM_IDS,
+)
 def test_bias_jac_mat_prod(problem: DerivativesTestProblem, V: int = 3) -> None:
     """Test the Jacobian-matrix product w.r.t. to the bias.
 
@@ -444,8 +530,8 @@ def test_ea_jac_t_mat_jac_prod(problem: DerivativesTestProblem, request) -> None
     problem.tear_down()
 
 
-@fixture(params=PROBLEMS, ids=lambda p: p.make_id())
-def instantiated_problem(request) -> DerivativesTestProblem:
+@fixture(params=PROBLEMS + BATCH_NORM_PROBLEMS, ids=lambda p: p.make_id())
+def problem(request) -> DerivativesTestProblem:
     """Set seed, create tested layer and data. Finally clean up.
 
     Args:
@@ -461,25 +547,133 @@ def instantiated_problem(request) -> DerivativesTestProblem:
 
 
 @fixture
+def problem_weight(problem: DerivativesTestProblem) -> DerivativesTestProblem:
+    """Filter out cases that don't have a weight parameter.
+
+    Args:
+        problem: Test case with deterministically constructed attributes.
+
+    Yields:
+        Instantiated cases that have a weight parameter.
+    """
+    _skip_if_no_param(problem, "weight")
+    yield problem
+
+
+@fixture(params=SUBSAMPLINGS, ids=SUBSAMPLING_IDS)
+def problem_weight_jac_t_mat(
+    request, problem_weight: DerivativesTestProblem
+) -> Tuple[DerivativesTestProblem, Union[None, List[int]], Tensor]:
+    """Create matrix that will be multiplied by the weight Jacobian.
+
+    Skip if there is a conflict where the subsampling indices exceed the number of
+    samples in the input.
+
+    Args:
+        request (SubRequest): Request for the fixture from a test/fixture function.
+        problem_weight: Test case with weight parameter.
+
+    Yields:
+        problem with weight, subsampling, matrix for weight_jac_t
+    """
+    subsampling: Union[None, List[int]] = request.param
+    _skip_if_subsampling_conflict(problem_weight, subsampling)
+
+    V = 3
+    mat = rand_mat_like_output(V, problem_weight, subsampling=subsampling).to(
+        problem_weight.device
+    )
+
+    yield (problem_weight, subsampling, mat)
+    del mat
+
+
+def _skip_if_subsampling_conflict(
+    problem: DerivativesTestProblem, subsampling: Union[List[int], None]
+) -> None:
+    """Skip if some samples in subsampling are not contained in input.
+
+    Args:
+        problem: Test case.
+        subsampling: Indices of active samples.
+    """
+    N = problem.input_shape[get_batch_axis(problem.module)]
+    enough_samples = subsampling is None or N >= max(subsampling)
+    if not enough_samples:
+        skip("Not enough samples.")
+
+
+def _skip_if_no_param(problem: DerivativesTestProblem, param_str: str) -> None:
+    """Skip if test case does not contain the parameter.
+
+    Args:
+        problem: Test case.
+        param_str: Parameter name.
+    """
+    has_param = getattr(problem.module, param_str, None) is not None
+    if not has_param:
+        skip(f"Test case has no {param_str} parameter.")
+
+
+@fixture
+def problem_bias(problem: DerivativesTestProblem) -> DerivativesTestProblem:
+    """Filter out cases that don't have a bias parameter.
+
+    Args:
+        problem: Test case with deterministically constructed attributes.
+
+    Yields:
+        Instantiated cases that have a bias parameter.
+    """
+    _skip_if_no_param(problem, "bias")
+    yield problem
+
+
+@fixture(params=SUBSAMPLINGS, ids=SUBSAMPLING_IDS)
+def problem_bias_jac_t_mat(
+    request, problem_bias: DerivativesTestProblem
+) -> Tuple[DerivativesTestProblem, Union[None, List[int]], Tensor]:
+    """Create matrix that will be multiplied by the bias Jacobian.
+
+    Skip if there is a conflict where the subsampling indices exceed the number of
+    samples in the input.
+
+    Args:
+        request (SubRequest): Request for the fixture from a test/fixture function.
+        problem_bias: Test case with bias parameter.
+
+    Yields:
+        problem with bias, subsampling, matrix for bias_jac_t
+    """
+    subsampling: Union[None, List[int]] = request.param
+    _skip_if_subsampling_conflict(problem_bias, subsampling)
+
+    V = 3
+    mat = rand_mat_like_output(V, problem_bias, subsampling=subsampling).to(
+        problem_bias.device
+    )
+
+    yield (problem_bias, subsampling, mat)
+    del mat
+
+
+@fixture
 def small_input_problem(
-    instantiated_problem: DerivativesTestProblem, max_input_numel: int = 100
+    problem: DerivativesTestProblem, max_input_numel: int = 100
 ) -> DerivativesTestProblem:
     """Skip cases with large inputs.
 
     Args:
-        instantiated_problem: Test case with deterministically constructed attributes.
+        problem: Test case with deterministically constructed attributes.
         max_input_numel: Maximum input size. Default: ``100``.
 
     Yields:
         Instantiated test case with small input.
     """
-    if instantiated_problem.input.numel() > max_input_numel:
-        skip(
-            "Input is too large:"
-            + f" {instantiated_problem.input.numel()} > {max_input_numel}"
-        )
+    if problem.input.numel() > max_input_numel:
+        skip("Input is too large:" + f" {problem.input.numel()} > {max_input_numel}")
     else:
-        yield instantiated_problem
+        yield problem
 
 
 @fixture
