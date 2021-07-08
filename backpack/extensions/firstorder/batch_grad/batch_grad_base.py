@@ -1,5 +1,17 @@
 """Calculates the batch_grad derivative."""
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Callable, List, Tuple
+
+from torch import Tensor
+from torch.nn import Module
+
+from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 from backpack.extensions.firstorder.base import FirstOrderModuleExtension
+from backpack.utils.subsampling import get_batch_axis, subsample
+
+if TYPE_CHECKING:
+    from backpack.extensions.firstorder import BatchGrad
 
 
 class BatchGradBase(FirstOrderModuleExtension):
@@ -18,48 +30,64 @@ class BatchGradBase(FirstOrderModuleExtension):
     In this case, the method is not overwritten by this class.
     """
 
-    def __init__(self, derivatives, params):
+    def __init__(
+        self, derivatives: BaseParameterDerivatives, params: List[str]
+    ) -> None:
         """Initializes all methods.
 
         If the param method has already been defined, it is left unchanged.
 
         Args:
-            derivatives(backpack.core.derivatives.basederivatives.BaseParameterDerivatives): # noqa: B950
-                Derivatives object assigned to self.derivatives.
-            params (list[str]): list of strings with parameter names.
-                For each, a method is assigned.
+            derivatives: Derivatives object used to apply parameter Jacobians.
+            params: List of parameter names.
         """
-        self.derivatives = derivatives
+        self._derivatives = derivatives
         for param_str in params:
             if not hasattr(self, param_str):
                 setattr(self, param_str, self._make_param_function(param_str))
         super().__init__(params=params)
 
-    def _make_param_function(self, param):
-        """Creates a function that calculates batch_grad wrt param.
+    def _make_param_function(
+        self, param_str: str
+    ) -> Callable[[BatchGrad, Module, Tuple[Tensor], Tuple[Tensor], None], Tensor]:
+        """Creates a function that calculates batch_grad w.r.t. param.
 
         Args:
-            param(str): name of parameter
+            param_str: Parameter name.
 
         Returns:
-            function: function that calculates batch_grad wrt param
+            Function that calculates batch_grad wrt param
         """
 
-        def param_function(ext, module, g_inp, g_out, bpQuantities):
+        def param_function(
+            ext: BatchGrad,
+            module: Module,
+            g_inp: Tuple[Tensor],
+            g_out: Tuple[Tensor],
+            bpQuantities: None,
+        ) -> Tensor:
             """Calculates batch_grad with the help of derivatives object.
 
             Args:
-                ext(backpack.extensions.BatchGrad): extension that is used
-                module(torch.nn.Module): module that performed forward pass
-                g_inp(tuple[torch.Tensor]): input gradient tensors
-                g_out(tuple[torch.Tensor]): output gradient tensors
-                bpQuantities(None): additional quantities for second order
+                ext: extension that is used
+                module: module that performed forward pass
+                g_inp: input gradient tensors
+                g_out: output gradient tensors
+                bpQuantities: additional quantities for second order
 
             Returns:
-                torch.Tensor: scaled individual gradients
+                Scaled individual gradients
             """
-            return getattr(self.derivatives, f"{param}_jac_t_mat_prod")(
-                module, g_inp, g_out, g_out[0], sum_batch=False
+            subsampling = ext.get_subsampling()
+            return getattr(self._derivatives, f"{param_str}_jac_t_mat_prod")(
+                module,
+                g_inp,
+                g_out,
+                subsample(
+                    g_out[0], dim=get_batch_axis(module), subsampling=subsampling
+                ),
+                sum_batch=False,
+                subsampling=subsampling,
             )
 
         return param_function
