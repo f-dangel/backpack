@@ -1,11 +1,32 @@
 """Utility functions for extracting transpose convolution BackPACK quantities."""
 
+from typing import Type, Union
+
 import torch
 from einops import rearrange
 from torch import einsum
+from torch.nn import ConvTranspose1d, ConvTranspose2d, ConvTranspose3d
 from torch.nn.functional import conv_transpose1d, conv_transpose2d, conv_transpose3d
 
 from backpack.utils.conv import extract_bias_diagonal as conv_extract_bias_diagonal
+
+
+def get_conv_transpose_module(
+    N: int,
+) -> Union[Type[ConvTranspose1d], Type[ConvTranspose2d], Type[ConvTranspose3d]]:
+    """Return the PyTorch module class of N-dimensional transposeconvolution.
+
+    Args:
+        N: Transpose convolution dimension.
+
+    Returns:
+        Transpose convolution class.
+    """
+    return {
+        1: ConvTranspose1d,
+        2: ConvTranspose2d,
+        3: ConvTranspose3d,
+    }[N]
 
 
 def get_weight_gradient_factors(input, grad_out, module):

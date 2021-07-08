@@ -7,31 +7,18 @@ from typing import Any, Tuple
 
 import torch.nn
 from einops import rearrange
-from torch.nn import (
-    Conv1d,
-    Conv2d,
-    Conv3d,
-    ConvTranspose1d,
-    ConvTranspose2d,
-    ConvTranspose3d,
-    Module,
-)
+from torch.nn import Module
 
 from backpack.core.derivatives.basederivatives import BaseDerivatives
+from backpack.utils.conv import get_conv_module
+from backpack.utils.conv_transpose import get_conv_transpose_module
 
 
 class AvgPoolNDDerivatives(BaseDerivatives):
-    def __init__(self, N):
+    def __init__(self, N: int):
+        self.conv = get_conv_module(N)
+        self.convt = get_conv_transpose_module(N)
         self.N = N
-        if self.N == 1:
-            self.conv = Conv1d
-            self.convt = ConvTranspose1d
-        elif self.N == 2:
-            self.conv = Conv2d
-            self.convt = ConvTranspose2d
-        elif self.N == 3:
-            self.conv = Conv3d
-            self.convt = ConvTranspose3d
 
     def check_parameters(self, module: Module) -> None:
         assert module.count_include_pad, (
@@ -107,16 +94,10 @@ class AvgPoolNDDerivatives(BaseDerivatives):
         return convnd(mat)
 
     def __check_jmp_out_as_pool(self, mat, jmp_as_pool, module):
-        V = mat.size(0)
-        if self.N == 1:
-            N, C_out, L_out = module.output.shape
-            assert jmp_as_pool.shape == (V * N * C_out, 1, L_out)
-        elif self.N == 2:
-            N, C_out, H_out, W_out = module.output.shape
-            assert jmp_as_pool.shape == (V * N * C_out, 1, H_out, W_out)
-        elif self.N == 3:
-            N, C_out, D_out, H_out, W_out = module.output.shape
-            assert jmp_as_pool.shape == (V * N * C_out, 1, D_out, H_out, W_out)
+        V = mat.shape[0]
+        N, C_out = module.output.shape[:2]
+
+        assert jmp_as_pool.shape == (V * N * C_out, 1) + module.output.shape[2:]
 
     def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
         self.check_parameters(module)
@@ -150,13 +131,7 @@ class AvgPoolNDDerivatives(BaseDerivatives):
         return convnd_t(mat, output_size=output_size)
 
     def __check_jmp_in_as_pool(self, mat, jmp_as_pool, module):
-        V = mat.size(0)
-        if self.N == 1:
-            N, C_in, L_in = module.input0.size()
-            assert jmp_as_pool.shape == (V * N * C_in, 1, L_in)
-        elif self.N == 2:
-            N, C_in, H_in, W_in = module.input0.size()
-            assert jmp_as_pool.shape == (V * N * C_in, 1, H_in, W_in)
-        elif self.N == 3:
-            N, C_in, D_in, H_in, W_in = module.input0.size()
-            assert jmp_as_pool.shape == (V * N * C_in, 1, D_in, H_in, W_in)
+        V = mat.shape[0]
+        N, C_in = module.input0.shape[:2]
+
+        assert jmp_as_pool.shape == (V * N * C_in, 1) + module.input0.shape[2:]

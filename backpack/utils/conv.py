@@ -1,10 +1,26 @@
-from typing import Union
+from typing import Type, Union
 
 import torch
 from einops import rearrange
 from torch import Tensor, einsum
 from torch.nn import Conv1d, Conv2d, Conv3d
 from torch.nn.functional import conv1d, conv2d, conv3d, unfold
+
+
+def get_conv_module(N: int) -> Union[Type[Conv1d], Type[Conv2d], Type[Conv3d]]:
+    """Return the PyTorch module class of N-dimensional convolution.
+
+    Args:
+        N: Convolution dimension.
+
+    Returns:
+        Convolution class.
+    """
+    return {
+        1: Conv1d,
+        2: Conv2d,
+        3: Conv3d,
+    }[N]
 
 
 def unfold_input(module: Union[Conv1d, Conv2d, Conv3d], input: Tensor) -> Tensor:
