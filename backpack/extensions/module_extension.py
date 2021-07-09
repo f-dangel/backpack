@@ -7,10 +7,11 @@ from typing import TYPE_CHECKING, Any, List, Tuple
 from torch import Tensor
 from torch.nn import Module
 
+from backpack import TORCH_VERSION_HIGHER_THAN_1_9_0
 from backpack.utils.module_classification import is_loss
 
 if TYPE_CHECKING:
-    from backpack import TORCH_VERSION_HIGHER_THAN_1_9_0, BackpropExtension
+    from backpack import BackpropExtension
 
 
 class ModuleExtension:
