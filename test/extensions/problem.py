@@ -106,7 +106,6 @@ class ExtensionsTestProblem:
 
         self.model = self.module_fn().to(self.device)
         self.input = self.input_fn().to(self.device)
-        self.input.requires_grad = True
         self.target = self.target_fn().to(self.device)
         self.loss_function = self.loss_function_fn().to(self.device)
 

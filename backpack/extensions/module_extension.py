@@ -181,9 +181,10 @@ class ModuleExtension:
                 if hasattr(out, extension.savefield):
                     delattr(out, extension.savefield)
         else:
-            extension.saved_quantities.save_quantity(
-                reference_tensor.data_ptr(), bpQuantities
-            )
+            if reference_tensor is not None:
+                extension.saved_quantities.save_quantity(
+                    reference_tensor.data_ptr(), bpQuantities
+                )
 
     @staticmethod
     def __param_exists_and_requires_grad(module: Module, param: str) -> bool:

@@ -49,9 +49,7 @@ def test_convolutions_stride_issue_30(params):
         dilation=params["dil"],
     )
     backpack.extend(mod)
-    x = torch.randn(
-        size=(params["N"], params["C_in"], params["W"], params["H"]), requires_grad=True
-    )
+    x = torch.randn(size=(params["N"], params["C_in"], params["W"], params["H"]))
 
     with backpack.backpack(backpack.extensions.BatchGrad()):
         loss = torch.sum(mod(x))
