@@ -10,7 +10,7 @@ from torch.nn import Module
 from backpack.utils.module_classification import is_loss
 
 if TYPE_CHECKING:
-    from backpack import BackpropExtension
+    from backpack import TORCH_VERSION_HIGHER_THAN_1_9_0, BackpropExtension
 
 
 class ModuleExtension:
@@ -74,7 +74,6 @@ class ModuleExtension:
         module: Module,
         g_inp: Tuple[Tensor],
         g_out: Tuple[Tensor],
-        use_legacy: bool = False,
     ) -> None:
         """Apply all actions required by the extension.
 
@@ -86,18 +85,16 @@ class ModuleExtension:
             module: current module
             g_inp: input gradients
             g_out: output gradients
-            use_legacy: whether to use the legacy backward hook.
-                Deprecated since torch version 1.8.0. Default: False.
 
         Raises:
             AssertionError: if there is no saved quantity although extension expects one
         """
-        bp_quantity = self.__get_backproped_quantity(extension, module.output, False)
+        bp_quantity = self.__get_backproped_quantity(extension, module.output)
         if (
             extension.expects_backpropagation_quantities() is True
             and bp_quantity is None
             and is_loss(module) is False
-            and use_legacy is False
+            and TORCH_VERSION_HIGHER_THAN_1_9_0
         ):
             raise AssertionError(
                 "BackPACK extension expects a backpropagation quantity but it is None. "
@@ -117,72 +114,40 @@ class ModuleExtension:
             self.__save_backprop_quantity(
                 extension,
                 module.input0,
-                module.output,
-                module.input0,
                 bp_quantity,
-                False,
             )
 
     @staticmethod
     def __get_backproped_quantity(
-        extension: BackpropExtension, reference_tensor: Tensor, use_legacy: bool
+        extension: BackpropExtension, reference_tensor: Tensor
     ) -> Tensor or None:
         """Fetch backpropagated quantities attached to the module output.
 
         Args:
             extension: current BackPACK extension
             reference_tensor: the output Tensor of the current module
-            use_legacy: whether to use the legacy backward hook.
-                Deprecated since torch version 1.8.0. Default: False.
 
         Returns:
             the backpropagation quantity
         """
-        if use_legacy:
-            return getattr(reference_tensor, extension.savefield, None)
-        else:
-            return extension.saved_quantities.retrieve_quantity(
-                reference_tensor.data_ptr()
-            )
+        return extension.saved_quantities.retrieve_quantity(reference_tensor.data_ptr())
 
     @staticmethod
     def __save_backprop_quantity(
         extension: BackpropExtension,
-        inp: Tensor,
-        out: Tensor,
         reference_tensor: Tensor,
         bpQuantities: Any,
-        use_legacy: bool,
     ) -> None:
         """Propagate back additional information by attaching it to the module input.
 
         Args:
             extension: current BackPACK extension
-            inp: input tensor
-            out: output tensor
             reference_tensor: reference tensor on which to save
             bpQuantities: backpropagation quantities that should be saved
-            use_legacy: whether to use the legacy backward hook.
-                Deprecated since torch version 1.8.0. Default: False.
         """
-        if use_legacy:
-            setattr(reference_tensor, extension.savefield, bpQuantities)
-
-            # TODO: discuss: is this code actually tested somewhere?
-            # TODO: implement same functionality in new hook
-            is_a_leaf = out.grad_fn is None
-            retain_grad_is_on = getattr(out, "retains_grad", False)
-            inp_is_out = id(inp) == id(out)
-            should_retain_grad = is_a_leaf or retain_grad_is_on or inp_is_out
-
-            if not should_retain_grad:
-                if hasattr(out, extension.savefield):
-                    delattr(out, extension.savefield)
-        else:
-            if reference_tensor is not None:
-                extension.saved_quantities.save_quantity(
-                    reference_tensor.data_ptr(), bpQuantities
-                )
+        extension.saved_quantities.save_quantity(
+            reference_tensor.data_ptr(), bpQuantities
+        )
 
     @staticmethod
     def __param_exists_and_requires_grad(module: Module, param: str) -> bool:

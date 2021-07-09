@@ -1,5 +1,4 @@
 """BackPACK."""
-import functools
 import inspect
 from typing import Callable, Tuple, Union
 
@@ -181,7 +180,7 @@ def memory_cleanup(module) -> None:
 
 
 def hook_run_extensions(
-    module: Module, g_inp: Tuple[Tensor], g_out: Tuple[Tensor], use_legacy: bool = False
+    module: Module, g_inp: Tuple[Tensor], g_out: Tuple[Tensor]
 ) -> None:
     """The backward hook function.
 
@@ -191,13 +190,11 @@ def hook_run_extensions(
         module: current module
         g_inp: input gradients
         g_out: output gradients
-        use_legacy: whether to use the legacy backward hook.
-            Deprecated since torch version 1.8.0. Default: False.
     """
     for backpack_extension in CTX.get_active_exts():
         if CTX.get_debug():
             print("[DEBUG] Running extension", backpack_extension, "on", module)
-        backpack_extension.apply(module, g_inp, g_out, use_legacy=use_legacy)
+        backpack_extension.apply(module, g_inp, g_out)
 
     run_extension_hook(module)
 
@@ -264,7 +261,4 @@ def _register_hooks(module: Module) -> None:
     if TORCH_VERSION_HIGHER_THAN_1_9_0:
         CTX.add_hook_handle(module.register_full_backward_hook(hook_run_extensions))
     else:
-        hook_run_extensions_legacy = functools.partial(
-            hook_run_extensions, use_legacy=True
-        )
-        CTX.add_hook_handle(module.register_backward_hook(hook_run_extensions_legacy))
+        CTX.add_hook_handle(module.register_backward_hook(hook_run_extensions))

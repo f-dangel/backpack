@@ -119,7 +119,6 @@ class BackpropExtension(ABC):
         module: Module,
         g_inp: Tuple[Tensor],
         g_out: Tuple[Tensor],
-        use_legacy: bool = False,
     ) -> None:
         """Applies backpropagation.
 
@@ -127,10 +126,9 @@ class BackpropExtension(ABC):
             module: module to perform backpropagation on
             g_inp: input gradient
             g_out: output gradient
-            use_legacy: use old implementation
         """
         module_extension = self.__get_module_extension(module)
-        module_extension(self, module, g_inp, g_out, use_legacy=use_legacy)
+        module_extension(self, module, g_inp, g_out)
 
     @abc.abstractmethod
     def expects_backpropagation_quantities(self) -> bool:
