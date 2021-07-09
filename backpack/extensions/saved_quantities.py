@@ -22,7 +22,11 @@ class SavedQuantities:
             whether save was successful
         """
         if key in self._saved_quantities:
-            return False
+            self._saved_quantities[key] = quantity
+            # TODO clear saved quantities after backward finished
+            # this avoids that the quantity exists from previous backward
+
+            # TODO if exists: accumulate quantities (ResNet)
         else:
             self._saved_quantities[key] = quantity
             return True
