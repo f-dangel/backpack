@@ -92,9 +92,7 @@ class ModuleExtension:
         Raises:
             AssertionError: if there is no saved quantity although extension expects one
         """
-        bp_quantity = self.__get_backproped_quantity(
-            extension, module.output if use_legacy else g_out[0], use_legacy
-        )
+        bp_quantity = self.__get_backproped_quantity(extension, module.output, False)
         if (
             extension.expects_backpropagation_quantities() is True
             and bp_quantity is None
@@ -120,9 +118,9 @@ class ModuleExtension:
                 extension,
                 module.input0,
                 module.output,
-                module.input0 if use_legacy else g_inp[0],
+                module.input0,
                 bp_quantity,
-                use_legacy,
+                False,
             )
 
     @staticmethod
