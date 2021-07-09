@@ -32,7 +32,11 @@ from backpack.custom_module.permute import Permute
 from backpack.custom_module.reduce_tuple import ReduceTuple
 
 SHARED_SETTINGS = SECONDORDER_SETTINGS
-LOCAL_SETTINGS = [
+LOCAL_SETTINGS = []
+##################################################################
+#                         RNN settings                           #
+##################################################################
+LOCAL_SETTINGS += [
     # RNN settings
     {
         "input_fn": lambda: rand(8, 5, 6),
@@ -46,6 +50,11 @@ LOCAL_SETTINGS = [
         "loss_function_fn": lambda: MSELoss(),
         "target_fn": lambda: regression_targets((8, 3 * 5)),
     },
+]
+##################################################################
+#                AdaptiveAvgPool settings                        #
+##################################################################
+LOCAL_SETTINGS += [
     {
         "input_fn": lambda: rand(2, 2, 9),
         "module_fn": lambda: Sequential(
@@ -70,6 +79,11 @@ LOCAL_SETTINGS = [
         "loss_function_fn": lambda: MSELoss(),
         "target_fn": lambda: regression_targets((2, 2 * 3 * 5 * 2)),
     },
+]
+##################################################################
+#                      BatchNorm settings                        #
+##################################################################
+LOCAL_SETTINGS += [
     {
         "input_fn": lambda: rand(2, 3, 4),
         "module_fn": lambda: initialize_training_false_recursive(
