@@ -23,6 +23,7 @@ from torch.nn import (
     BatchNorm2d,
     BatchNorm3d,
     Flatten,
+    Linear,
     MSELoss,
     Sequential,
 )
@@ -47,19 +48,25 @@ LOCAL_SETTINGS = [
     },
     {
         "input_fn": lambda: rand(2, 2, 9),
-        "module_fn": lambda: Sequential(AdaptiveAvgPool1d((3,)), Flatten()),
+        "module_fn": lambda: Sequential(
+            Linear(9, 9), AdaptiveAvgPool1d((3,)), Flatten()
+        ),
         "loss_function_fn": lambda: MSELoss(),
         "target_fn": lambda: regression_targets((2, 2 * 3)),
     },
     {
         "input_fn": lambda: rand(2, 2, 6, 8),
-        "module_fn": lambda: Sequential(AdaptiveAvgPool2d((3, 4)), Flatten()),
+        "module_fn": lambda: Sequential(
+            Linear(8, 8), AdaptiveAvgPool2d((3, 4)), Flatten()
+        ),
         "loss_function_fn": lambda: MSELoss(),
         "target_fn": lambda: regression_targets((2, 2 * 3 * 4)),
     },
     {
         "input_fn": lambda: rand(2, 2, 9, 5, 4),
-        "module_fn": lambda: Sequential(AdaptiveAvgPool3d((3, 5, 2)), Flatten()),
+        "module_fn": lambda: Sequential(
+            Linear(4, 4), AdaptiveAvgPool3d((3, 5, 2)), Flatten()
+        ),
         "loss_function_fn": lambda: MSELoss(),
         "target_fn": lambda: regression_targets((2, 2 * 3 * 5 * 2)),
     },
