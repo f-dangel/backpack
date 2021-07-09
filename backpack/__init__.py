@@ -12,7 +12,7 @@ from backpack.utils.hooks import no_op
 
 from . import extensions
 from .context import CTX
-from .utils import TORCH_VERSION_HIGHER_THAN_1_8_0
+from .utils import TORCH_VERSION_HIGHER_THAN_1_9_0
 from .utils.module_classification import is_no_op
 
 
@@ -261,7 +261,7 @@ def _register_hooks(module: Module) -> None:
     if is_no_op(module):
         return
 
-    if TORCH_VERSION_HIGHER_THAN_1_8_0:
+    if TORCH_VERSION_HIGHER_THAN_1_9_0:
         CTX.add_hook_handle(module.register_full_backward_hook(hook_run_extensions))
     else:
         hook_run_extensions_legacy = functools.partial(
