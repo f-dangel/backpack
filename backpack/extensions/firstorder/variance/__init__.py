@@ -65,8 +65,8 @@ class Variance(BackpropExtension):
                 ConvTranspose2d: convtranspose2d.VarianceConvTranspose2d(),
                 ConvTranspose3d: convtranspose3d.VarianceConvTranspose3d(),
                 RNN: rnn.VarianceRNN(),
-                BatchNorm1d: batchnorm_nd.VarianceBatchNorm(),
-                BatchNorm2d: batchnorm_nd.VarianceBatchNorm(),
-                BatchNorm3d: batchnorm_nd.VarianceBatchNorm(),
+                BatchNorm1d: batchnorm_nd.VarianceBatchNormNd(),
+                BatchNorm2d: batchnorm_nd.VarianceBatchNormNd(),
+                BatchNorm3d: batchnorm_nd.VarianceBatchNormNd(),
             },
         )
