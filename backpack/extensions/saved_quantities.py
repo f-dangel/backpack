@@ -11,25 +11,24 @@ class SavedQuantities:
         """Initialization."""
         self._saved_quantities: Dict[int, Tensor] = {}
 
-    def save_quantity(self, key: int, quantity: Tensor) -> bool:
+    def save_quantity(self, key: int, quantity: Tensor) -> None:
         """Saves the quantity under the specified key.
 
         Args:
             key: id of grad_input[0]
             quantity: tensor to save
 
-        Returns:
-            whether save was successful
+        Raises:
+            NotImplementedError: if the key already exists
         """
         if key in self._saved_quantities:
-            self._saved_quantities[key] = quantity
-            # TODO clear saved quantities after backward finished
-            # this avoids that the quantity exists from previous backward
-
             # TODO if exists: accumulate quantities (ResNet)
+            raise NotImplementedError(
+                "Quantity with given key already exists. Multiple backpropagated "
+                "quantities like in ResNets are not supported yet."
+            )
         else:
             self._saved_quantities[key] = quantity
-            return True
 
     def retrieve_quantity(self, key: int) -> Union[Tensor, None]:
         """Returns the saved quantity.
@@ -41,3 +40,7 @@ class SavedQuantities:
             the saved quantity, None if it does not exist
         """
         return self._saved_quantities.pop(key, None)
+
+    def clear(self) -> None:
+        """Clear saved quantities."""
+        self._saved_quantities.clear()
