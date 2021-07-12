@@ -21,26 +21,13 @@ class backpack:
     def __init__(
         self,
         *exts: BackpropExtension,
-        extension_hook: Callable = None,
+        extension_hook: Callable[[Module], None] = None,
         debug: bool = False
     ):
         """Activate BackPACK extensions.
 
         Enables the BackPACK extensions passed as arguments in the
         :code:`backward` calls inside the current :code:`with` block.
-
-
-        Can be used to reduce memory overhead if the goal is to compute
-        transformations of BackPACK quantities. Information can be compacted
-        during a backward pass and obsolete tensors be freed manually (``del``).
-
-        .. note::
-            If the callable iterates over the ``module.parameters()``, the same
-            parameter may be seen multiple times across calls. This happens
-            if the parameters are part of multiple modules.
-            For example, the parameters of a `torch.nn.Linear` module in
-            ``model = torch.nn.Sequential(torch.nn.Linear(...))`` are part of
-            both the ``Linear`` and the ``Sequential``.
 
         Args:
             exts: Extensions to activate in the backward pass.
@@ -49,10 +36,14 @@ class backpack:
                 ``None``. Default: ``None`` (no operation will be formed).
             debug: Print debug messages during the backward pass. Default: ``False``.
 
+        .. note::
+            extension_hook can be used to reduce memory overhead if the goal is to compute
+            transformations of BackPACK quantities. Information can be compacted
+            during a backward pass and obsolete tensors be freed manually (``del``).
+
         Raises:
             ValueError: if extensions are not valid
         """
-        # TODO check if this docstring makes sense
         for ext in exts:
             if not isinstance(ext, BackpropExtension):
                 if inspect.isclass(ext) and issubclass(ext, BackpropExtension):
@@ -67,9 +58,11 @@ class backpack:
                         + " but received [{}].".format(ext)
                     )
 
-        self.exts = exts
-        self.debug = debug
-        self.extension_hook = no_op if extension_hook is None else extension_hook
+        self.exts: Tuple[BackpropExtension, ...] = exts
+        self.debug: bool = debug
+        self.extension_hook: Callable[[Module], None] = (
+            no_op if extension_hook is None else extension_hook
+        )
 
     def __enter__(self):
         """Setup backpack environment."""
