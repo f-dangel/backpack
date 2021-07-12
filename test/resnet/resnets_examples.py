@@ -19,6 +19,12 @@ class ResNet1(Module):
     """Small ResNet from Katharina."""
 
     def __init__(self, in_dim: int = 2, out_dim: int = 10):
+        """Initialization.
+
+        Args:
+            in_dim: input dimensions
+            out_dim: output dimensions
+        """
         super().__init__()
         self.net = Sequential(
             Linear(in_dim, out_dim),
@@ -29,6 +35,14 @@ class ResNet1(Module):
         )
 
     def forward(self, input):
+        """Forward pass. One Euler step.
+
+        Args:
+            input: input tensor
+
+        Returns:
+            result
+        """
         x = self.net(input)
         return input + x * 0.1
 
@@ -50,6 +64,7 @@ class ResNet2(Module):
     loss_test = MSELoss()
 
     def __init__(self):
+        """Initialization."""
         super().__init__()
         self.inplanes = ResNet2.inplanes
 
@@ -66,6 +81,14 @@ class ResNet2(Module):
         self.fc = Linear(4 * ResNet2.inplanes, self.num_classes)
 
     def forward(self, x):
+        """Forward pass.
+
+        Args:
+            x: input tensor
+
+        Returns:
+            result
+        """
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
