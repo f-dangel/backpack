@@ -38,7 +38,8 @@ class BackpackDerivatives(DerivativesImplementation):
 
     def weight_jac_t_mat_prod(self, mat, sum_batch, subsampling=None):  # noqa: D102
         self.store_forward_io()
-        return self.problem.derivative.weight_jac_t_mat_prod(
+        return self.problem.derivative.param_mjp(
+            "weight",
             self.problem.module,
             None,
             None,
@@ -49,7 +50,8 @@ class BackpackDerivatives(DerivativesImplementation):
 
     def bias_jac_t_mat_prod(self, mat, sum_batch, subsampling=None):  # noqa: D102
         self.store_forward_io()
-        return self.problem.derivative.bias_jac_t_mat_prod(
+        return self.problem.derivative.param_mjp(
+            "bias",
             self.problem.module,
             None,
             None,
@@ -72,7 +74,8 @@ class BackpackDerivatives(DerivativesImplementation):
 
     def bias_ih_l0_jac_t_mat_prod(self, mat, sum_batch, subsampling=None):  # noqa: D102
         self.store_forward_io()
-        return self.problem.derivative.bias_ih_l0_jac_t_mat_prod(
+        return self.problem.derivative.param_mjp(
+            "bias_ih_l0",
             self.problem.module,
             None,
             None,
@@ -83,7 +86,8 @@ class BackpackDerivatives(DerivativesImplementation):
 
     def bias_hh_l0_jac_t_mat_prod(self, mat, sum_batch, subsampling=None):  # noqa: D102
         self.store_forward_io()
-        return self.problem.derivative.bias_hh_l0_jac_t_mat_prod(
+        return self.problem.derivative.param_mjp(
+            "bias_hh_l0",
             self.problem.module,
             None,
             None,
@@ -96,7 +100,8 @@ class BackpackDerivatives(DerivativesImplementation):
         self, mat, sum_batch, subsampling=None
     ):  # noqa: D102
         self.store_forward_io()
-        return self.problem.derivative.weight_ih_l0_jac_t_mat_prod(
+        return self.problem.derivative.param_mjp(
+            "weight_ih_l0",
             self.problem.module,
             None,
             None,
@@ -109,7 +114,8 @@ class BackpackDerivatives(DerivativesImplementation):
         self, mat, sum_batch, subsampling=None
     ):  # noqa: D102
         self.store_forward_io()
-        return self.problem.derivative.weight_hh_l0_jac_t_mat_prod(
+        return self.problem.derivative.param_mjp(
+            "weight_hh_l0",
             self.problem.module,
             None,
             None,

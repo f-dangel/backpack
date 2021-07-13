@@ -370,44 +370,6 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
     ) -> Tensor:
         raise NotImplementedError
 
-    def bias_jac_t_mat_prod(
-        self,
-        module: Module,
-        g_inp: Tuple[Tensor],
-        g_out: Tuple[Tensor],
-        mat: Tensor,
-        sum_batch: bool = True,
-        subsampling: List[int] = None,
-    ) -> Tensor:
-        """Apply transposed Jacobian of the output w.r.t. bias to a matrix.
-
-        Args:
-            module: module to perform derivatives on
-            g_inp: input gradients
-            g_out: output gradients
-            mat: Matrix the transposed Jacobian will be applied to.
-                Has shape ``[V, *module.output.shape]``; but if used with
-                sub-sampling, the batch dimension is replaced by ``len(subsampling)``.
-            sum_batch: Whether to sum over the batch dimension on the fly.
-            subsampling: Indices of samples along the output's batch dimension that
-                should be considered. Defaults to ``None`` (use all samples).
-
-        Returns:
-            Jacobian-matrix product.
-            If ``sum_batch=False``, has shape ``[V, N, *module.bias.shape]``.
-            If ``sum_batch=True``, has shape ``[V, *module.bias.shape]``.
-            If sub-sampling is used, ``N`` is replaced by ``len(subsampling)``.
-        """
-        return self.param_mjp(
-            "bias",
-            module,
-            g_inp,
-            g_out,
-            mat,
-            sum_batch=sum_batch,
-            subsampling=subsampling,
-        )
-
     def _bias_jac_t_mat_prod(
         self,
         module: Module,
@@ -444,44 +406,6 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
     ) -> Tensor:
         raise NotImplementedError
 
-    def weight_jac_t_mat_prod(
-        self,
-        module: Module,
-        g_inp: Tuple[Tensor],
-        g_out: Tuple[Tensor],
-        mat: Tensor,
-        sum_batch: bool = True,
-        subsampling: List[int] = None,
-    ) -> Tensor:
-        """Apply transposed Jacobian of the output w.r.t. weight to a matrix.
-
-        Args:
-            module: module to perform derivatives on
-            g_inp: input gradients
-            g_out: output gradients
-            mat: Matrix the transposed Jacobian will be applied to.
-                Has shape ``[V, *module.output.shape]``; but if used with
-                sub-sampling, the batch dimension is replaced by ``len(subsampling)``.
-            sum_batch: Whether to sum over the batch dimension on the fly.
-            subsampling: Indices of samples along the output's batch dimension that
-                should be considered. Defaults to ``None`` (use all samples).
-
-        Returns:
-            Jacobian-matrix product.
-            If ``sum_batch=False``, has shape ``[V, N, *module.weight.shape]``.
-            If ``sum_batch=True``, has shape ``[V, *module.weight.shape]``.
-            If sub-sampling is used, ``N`` is replaced by ``len(subsampling)``.
-        """
-        return self.param_mjp(
-            "weight",
-            module,
-            g_inp,
-            g_out,
-            mat,
-            sum_batch=sum_batch,
-            subsampling=subsampling,
-        )
-
     def _weight_jac_t_mat_prod(
         self,
         module: Module,
@@ -492,45 +416,6 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
         subsampling: List[int] = None,
     ) -> Tensor:
         raise NotImplementedError
-
-    def bias_ih_l0_jac_t_mat_prod(
-        self,
-        module: Module,
-        g_inp: Tuple[Tensor],
-        g_out: Tuple[Tensor],
-        mat: Tensor,
-        sum_batch: bool = True,
-        subsampling: List[int] = None,
-    ) -> Tensor:
-        """Apply transposed Jacobian of the output w.r.t. bias_ih_l0 to a matrix.
-
-        Args:
-            module: module to perform derivatives on
-            g_inp: input gradients
-            g_out: output gradients
-            mat: Matrix the transposed Jacobian will be applied to.
-                Must have shape [V, T, N, H]; but if used with sub-sampling, the batch
-                dimension is replaced by ``len(subsampling)``.
-            sum_batch: Whether to sum over the batch dimension on the fly.
-            subsampling: Indices of samples along the output's batch dimension that
-                should be considered. Defaults to ``None`` (use all samples).
-
-        Returns:
-            Jacobian-matrix product.
-            Has shape [V, N, *module.bias_ih_l0.shape] if ``sum_batch == False``; but if
-            used with sub-sampling, the batch dimension is replaced by
-            ``len(subsampling)``. Has shape [V, *module.bias_ih_l0.shape] if
-            ``sum_batch == True``.
-        """
-        return self.param_mjp(
-            "bias_ih_l0",
-            module,
-            g_inp,
-            g_out,
-            mat,
-            sum_batch=sum_batch,
-            subsampling=subsampling,
-        )
 
     def _bias_ih_l0_jac_t_mat_prod(
         self,
@@ -543,45 +428,6 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
     ) -> Tensor:
         raise NotImplementedError
 
-    def bias_hh_l0_jac_t_mat_prod(
-        self,
-        module: Module,
-        g_inp: Tuple[Tensor],
-        g_out: Tuple[Tensor],
-        mat: Tensor,
-        sum_batch: bool = True,
-        subsampling: List[int] = None,
-    ) -> Tensor:
-        """Apply transposed Jacobian of the output w.r.t. bias_hh_l0 to a matrix.
-
-        Args:
-            module: module to perform derivatives on
-            g_inp: input gradients
-            g_out: output gradients
-            mat: Matrix the transposed Jacobian will be applied to.
-                Must have shape [V, T, N, H]; but if used with sub-sampling, the batch
-                dimension is replaced by ``len(subsampling)``.
-            sum_batch: Whether to sum over the batch dimension on the fly.
-            subsampling: Indices of samples along the output's batch dimension that
-                should be considered. Defaults to ``None`` (use all samples).
-
-        Returns:
-            Jacobian-matrix product.
-            Has shape [V, N, *module.bias_hh_l0.shape] if ``sum_batch == False``; but if
-            used with sub-sampling, the batch dimension is replaced by
-            ``len(subsampling)``. Has shape [V, *module.bias_hh_l0.shape] if
-            ``sum_batch == True``.
-        """
-        return self.param_mjp(
-            "bias_hh_l0",
-            module,
-            g_inp,
-            g_out,
-            mat,
-            sum_batch=sum_batch,
-            subsampling=subsampling,
-        )
-
     def _bias_hh_l0_jac_t_mat_prod(
         self,
         module: Module,
@@ -593,45 +439,6 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
     ) -> Tensor:
         raise NotImplementedError
 
-    def weight_ih_l0_jac_t_mat_prod(
-        self,
-        module: Module,
-        g_inp: Tuple[Tensor],
-        g_out: Tuple[Tensor],
-        mat: Tensor,
-        sum_batch: bool = True,
-        subsampling: List[int] = None,
-    ) -> Tensor:
-        """Apply transposed Jacobian of the output w.r.t. weight_ih_l0 to a matrix.
-
-        Args:
-            module: module to perform derivatives on
-            g_inp: input gradients
-            g_out: output gradients
-            mat: Matrix the transposed Jacobian will be applied to.
-                Must have shape [V, T, N, H]; but if used with sub-sampling, the batch
-                dimension is replaced by ``len(subsampling)``.
-            sum_batch: Whether to sum over the batch dimension on the fly.
-            subsampling: Indices of samples along the output's batch dimension that
-                should be considered. Defaults to ``None`` (use all samples).
-
-        Returns:
-            Jacobian-matrix product.
-            Has shape [V, N, *module.weight_ih_l0.shape] if ``sum_batch == False``; but
-            if used with sub-sampling, the batch dimension is replaced by
-            ``len(subsampling)``. Has shape [V, *module.weight_ih_l0.shape] if
-            ``sum_batch == True``.
-        """
-        return self.param_mjp(
-            "weight_ih_l0",
-            module,
-            g_inp,
-            g_out,
-            mat,
-            sum_batch=sum_batch,
-            subsampling=subsampling,
-        )
-
     def _weight_ih_l0_jac_t_mat_prod(
         self,
         module: Module,
@@ -642,45 +449,6 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
         subsampling: List[int] = None,
     ) -> Tensor:
         raise NotImplementedError
-
-    def weight_hh_l0_jac_t_mat_prod(
-        self,
-        module: Module,
-        g_inp: Tuple[Tensor],
-        g_out: Tuple[Tensor],
-        mat: Tensor,
-        sum_batch: bool = True,
-        subsampling: List[int] = None,
-    ) -> Tensor:
-        """Apply transposed Jacobian of the output w.r.t. weight_hh_l0 to a matrix.
-
-        Args:
-            module: module to perform derivatives on
-            g_inp: input gradients
-            g_out: output gradients
-            mat: Matrix the transposed Jacobian will be applied to.
-                Must have shape [V, T, N, H]; but if used with sub-sampling, the batch
-                dimension is replaced by ``len(subsampling)``.
-            sum_batch: Whether to sum over the batch dimension on the fly.
-            subsampling: Indices of samples along the output's batch dimension that
-                should be considered. Defaults to ``None`` (use all samples).
-
-        Returns:
-            Jacobian-matrix product.
-            Has shape [V, N, *module.weight_hh_l0.shape] if ``sum_batch == False``; but
-            if used with sub-sampling, the batch dimension is replaced by
-            ``len(subsampling)``. Has shape [V, *module.weight_hh_l0.shape] if
-            ``sum_batch == True``.
-        """
-        return self.param_mjp(
-            "weight_hh_l0",
-            module,
-            g_inp,
-            g_out,
-            mat,
-            sum_batch=sum_batch,
-            subsampling=subsampling,
-        )
 
     def _weight_hh_l0_jac_t_mat_prod(
         self,
