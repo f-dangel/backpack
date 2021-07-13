@@ -370,17 +370,6 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
     ) -> Tensor:
         raise NotImplementedError
 
-    def _bias_jac_t_mat_prod(
-        self,
-        module: Module,
-        g_inp: Tuple[Tensor],
-        g_out: Tuple[Tensor],
-        mat: Tensor,
-        sum_batch: bool = True,
-        subsampling: List[int] = None,
-    ) -> Tensor:
-        raise NotImplementedError
-
     @shape_check.weight_jac_mat_prod_accept_vectors
     @shape_check.weight_jac_mat_prod_check_shapes
     def weight_jac_mat_prod(
@@ -403,61 +392,6 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
 
     def _weight_jac_mat_prod(
         self, module: Module, g_inp: Tuple[Tensor], g_out: Tuple[Tensor], mat: Tensor
-    ) -> Tensor:
-        raise NotImplementedError
-
-    def _weight_jac_t_mat_prod(
-        self,
-        module: Module,
-        g_inp: Tuple[Tensor],
-        g_out: Tuple[Tensor],
-        mat: Tensor,
-        sum_batch: bool = True,
-        subsampling: List[int] = None,
-    ) -> Tensor:
-        raise NotImplementedError
-
-    def _bias_ih_l0_jac_t_mat_prod(
-        self,
-        module: Module,
-        g_inp: Tuple[Tensor],
-        g_out: Tuple[Tensor],
-        mat: Tensor,
-        sum_batch: bool = True,
-        subsampling: List[int] = None,
-    ) -> Tensor:
-        raise NotImplementedError
-
-    def _bias_hh_l0_jac_t_mat_prod(
-        self,
-        module: Module,
-        g_inp: Tuple[Tensor],
-        g_out: Tuple[Tensor],
-        mat: Tensor,
-        sum_batch: bool = True,
-        subsampling: List[int] = None,
-    ) -> Tensor:
-        raise NotImplementedError
-
-    def _weight_ih_l0_jac_t_mat_prod(
-        self,
-        module: Module,
-        g_inp: Tuple[Tensor],
-        g_out: Tuple[Tensor],
-        mat: Tensor,
-        sum_batch: bool = True,
-        subsampling: List[int] = None,
-    ) -> Tensor:
-        raise NotImplementedError
-
-    def _weight_hh_l0_jac_t_mat_prod(
-        self,
-        module: Module,
-        g_inp: Tuple[Tensor],
-        g_out: Tuple[Tensor],
-        mat: Tensor,
-        sum_batch: bool = True,
-        subsampling: List[int] = None,
     ) -> Tensor:
         raise NotImplementedError
 
