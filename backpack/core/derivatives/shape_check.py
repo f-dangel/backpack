@@ -122,15 +122,6 @@ jac_t_mat_prod_accept_vectors = functools.partial(
     vec_criterion=same_dim_as_output,
 )
 
-weight_jac_t_mat_prod_accept_vectors = functools.partial(
-    _mat_prod_accept_vectors,
-    vec_criterion=same_dim_as_output,
-)
-bias_jac_t_mat_prod_accept_vectors = functools.partial(
-    _mat_prod_accept_vectors,
-    vec_criterion=same_dim_as_output,
-)
-
 jac_mat_prod_accept_vectors = functools.partial(
     _mat_prod_accept_vectors,
     vec_criterion=same_dim_as_input,
@@ -316,3 +307,38 @@ def make_hessian_mat_prod_check_shapes(
         return _new_hessian_mat_prod
 
     return _wrapped_make_hessian_mat_prod
+
+
+def param_mjp_accept_vectors(
+    mat_prod: Callable[..., Tensor],
+) -> Callable[..., Tensor]:
+    """Add support for vectors to matrix products.
+
+    vec_criterion(mat, module) returns if mat is a vector.
+
+    Args:
+        mat_prod: Function that processes multiple vectors in format of a matrix.
+
+    Returns:
+        Wrapped ``mat_prod`` function that processes multiple vectors in format of
+            a matrix, and supports vector-shaped inputs which are internally converted
+            to the correct format.
+            Preserves format of input:
+                If the input format is a vector, the output format is a vector.
+                If the input format is a matrix, the output format is a matrix.
+    """
+
+    @functools.wraps(mat_prod)
+    def _wrapped_mat_prod_accept_vectors(
+        self, param_str, module, g_inp, g_out, mat, *args, **kwargs
+    ):
+        is_vec = same_dim_as_output(mat, module)
+        mat_in = mat if not is_vec else _add_V_dim(mat)
+        mat_out = mat_prod(
+            self, param_str, module, g_inp, g_out, mat_in, *args, **kwargs
+        )
+        mat_out = mat_out if not is_vec else _remove_V_dim(mat_out)
+
+        return mat_out
+
+    return _wrapped_mat_prod_accept_vectors
