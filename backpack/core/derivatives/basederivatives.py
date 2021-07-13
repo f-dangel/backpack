@@ -303,6 +303,7 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
     """
 
     @shape_check.param_mjp_accept_vectors
+    @shape_check.param_mjp_check_shapes
     def param_mjp(
         self,
         param_str: str,
@@ -339,42 +340,10 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
             batch summation, the result has shape ``[V, N, *param_shape]`` (vector case
             has shape ``[N, *param_shape]``).
         """
-        # handle vector inputs (TODO extract to _param_mjp_handle_vector_input)
-        # is_vec = mat.dim() == module.output.dim()
-        # if is_vec:
-        #    mat = mat.unsqueeze(0)
-
-        # check input shape (TODO extract to _param_mjp_check_input)
-        # assert mat.dim() == module.output.dim() + 1
-        # assert mat.shape[1:] == module.output.shape
-
-        # apply MJP
         mjp = getattr(self, f"_{param_str}_jac_t_mat_prod")
         mjp_out = mjp(
             module, g_inp, g_out, mat, sum_batch=sum_batch, subsampling=subsampling
         )
-
-        # check output shape (TODO extract to _param_mjp_check_output)
-        assert mjp_out.shape[0] == mat.shape[0]  # same V
-
-        param = getattr(module, param_str)
-        more_dims = 1 if sum_batch else 2
-        assert mjp_out.dim() == param.dim() + more_dims  # dimensions
-
-        # if not sum_batch:
-        #    batch_axis = 0 if param_str in ["bias", "weight"] else 1
-        #    print("batch axis", batch_axis)
-        #    print("mjp_out", mjp_out.shape)
-        #    print("module.output", module.output.shape)
-        #    print("mat", mat.shape)
-        #    assert mjp_out.shape[1] == module.output.shape[batch_axis]  # batch size
-
-        assert mjp_out.shape[more_dims:] == param.shape  # parameter shape
-
-        # preserve vector format (TODO extract to _param_mjp_accept_vectors)
-        # if is_vec:
-        #    mjp_out = mjp_out.squeeze(0)
-
         return mjp_out
 
     @shape_check.bias_jac_mat_prod_accept_vectors
@@ -401,7 +370,6 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
     ) -> Tensor:
         raise NotImplementedError
 
-    @shape_check.bias_jac_t_mat_prod_check_shapes
     def bias_jac_t_mat_prod(
         self,
         module: Module,
@@ -476,7 +444,6 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
     ) -> Tensor:
         raise NotImplementedError
 
-    @shape_check.weight_jac_t_mat_prod_check_shapes
     def weight_jac_t_mat_prod(
         self,
         module: Module,
@@ -526,7 +493,6 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
     ) -> Tensor:
         raise NotImplementedError
 
-    @shape_check.bias_rnn_jac_t_mat_prod_check_shapes
     def bias_ih_l0_jac_t_mat_prod(
         self,
         module: Module,
@@ -577,7 +543,6 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
     ) -> Tensor:
         raise NotImplementedError
 
-    @shape_check.bias_rnn_jac_t_mat_prod_check_shapes
     def bias_hh_l0_jac_t_mat_prod(
         self,
         module: Module,
@@ -628,7 +593,6 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
     ) -> Tensor:
         raise NotImplementedError
 
-    @shape_check.weight_ih_jac_t_mat_prod_check_shapes
     def weight_ih_l0_jac_t_mat_prod(
         self,
         module: Module,
@@ -679,7 +643,6 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
     ) -> Tensor:
         raise NotImplementedError
 
-    @shape_check.weight_hh_jac_t_mat_prod_check_shapes
     def weight_hh_l0_jac_t_mat_prod(
         self,
         module: Module,

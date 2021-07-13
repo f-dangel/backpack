@@ -182,21 +182,6 @@ shape_like_output = functools.partial(_check_like, name="output")
 shape_like_input = functools.partial(_check_like, name="input0")
 shape_like_weight = functools.partial(_check_like, name="weight")
 shape_like_bias = functools.partial(_check_like, name="bias")
-shape_like_weight_with_sum_batch = functools.partial(
-    _check_like_with_sum_batch, name="weight"
-)
-shape_like_bias_with_sum_batch = functools.partial(
-    _check_like_with_sum_batch, name="bias"
-)
-shape_like_bias_rnn_with_sum_batch = functools.partial(
-    _check_like_with_sum_batch, name="bias_ih_l0"
-)
-shape_like_weight_ih_with_sum_batch = functools.partial(
-    _check_like_with_sum_batch, name="weight_ih_l0"
-)
-shape_like_weight_hh_with_sum_batch = functools.partial(
-    _check_like_with_sum_batch, name="weight_hh_l0"
-)
 
 # decorators for shape checking
 jac_mat_prod_check_shapes = functools.partial(
@@ -213,33 +198,6 @@ bias_jac_mat_prod_check_shapes = functools.partial(
 
 jac_t_mat_prod_check_shapes = functools.partial(
     mat_prod_check_shapes, in_check=shape_like_output, out_check=shape_like_input
-)
-
-
-weight_jac_t_mat_prod_check_shapes = functools.partial(
-    mat_prod_check_shapes,
-    in_check=shape_like_output,
-    out_check=shape_like_weight_with_sum_batch,
-)
-bias_jac_t_mat_prod_check_shapes = functools.partial(
-    mat_prod_check_shapes,
-    in_check=shape_like_output,
-    out_check=shape_like_bias_with_sum_batch,
-)
-bias_rnn_jac_t_mat_prod_check_shapes = functools.partial(
-    mat_prod_check_shapes,
-    in_check=shape_like_output,
-    out_check=shape_like_bias_rnn_with_sum_batch,
-)
-weight_ih_jac_t_mat_prod_check_shapes = functools.partial(
-    mat_prod_check_shapes,
-    in_check=shape_like_output,
-    out_check=shape_like_weight_ih_with_sum_batch,
-)
-weight_hh_jac_t_mat_prod_check_shapes = functools.partial(
-    mat_prod_check_shapes,
-    in_check=shape_like_output,
-    out_check=shape_like_weight_hh_with_sum_batch,
 )
 
 ###############################################################################
@@ -351,3 +309,32 @@ def param_mjp_accept_vectors(
         return mat_out
 
     return _wrapped_mat_prod_accept_vectors
+
+
+def param_mjp_check_shapes(
+    mat_prod: Callable,
+) -> Callable[..., Tensor]:
+    """Check that input and output have correct shapes.
+
+    Args:
+        mat_prod: Function that applies a derivative operator to multiple vectors
+            handed in as a matrix.
+
+    Returns:
+        Wrapped mat_prod function with input and output checks
+    """
+
+    @functools.wraps(mat_prod)
+    def wrapped_mat_prod_check_shapes(
+        self, param_str, module, g_inp, g_out, mat, *args, **kwargs
+    ):
+        shape_like_output(mat, module, *args, **kwargs)
+
+        mat_out = mat_prod(self, param_str, module, g_inp, g_out, mat, *args, **kwargs)
+
+        _check_like_with_sum_batch(mat_out, module, param_str, **kwargs)
+        _check_same_V_dim(mat_out, mat)
+
+        return mat_out
+
+    return wrapped_mat_prod_check_shapes
