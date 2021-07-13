@@ -1,8 +1,9 @@
 """Derivatives computed with PyTorch's autograd."""
 from test.core.derivatives.implementation.base import DerivativesImplementation
+from typing import List
 
 import torch
-from torch import Tensor
+from torch import Tensor, stack, zeros_like
 
 from backpack.hessianfree.hvp import hessian_vector_product
 from backpack.hessianfree.lop import transposed_jacobian_vector_product
@@ -25,100 +26,123 @@ class AutogradDerivatives(DerivativesImplementation):
         return jacobian_vector_product(output, input, vec)[0]
 
     def jac_mat_prod(self, mat):  # noqa: D102
-        V = mat.shape[0]
-
-        vecs = [mat[v] for v in range(V)]
         try:
-            jac_vec_prods = [self.jac_vec_prod(vec) for vec in vecs]
+            return stack([self.jac_vec_prod(vec) for vec in mat])
         except RuntimeError:
             # A RuntimeError is thrown for RNNs on CUDA,
             # because PyTorch does not support double-backwards pass for them.
             # This is the recommended workaround.
             with torch.backends.cudnn.flags(enabled=False):
-                jac_vec_prods = [self.jac_vec_prod(vec) for vec in vecs]
-
-        return torch.stack(jac_vec_prods)
+                return stack([self.jac_vec_prod(vec) for vec in mat])
 
     def jac_t_vec_prod(self, vec):  # noqa: D102
         input, output, _ = self.problem.forward_pass(input_requires_grad=True)
         return transposed_jacobian_vector_product(output, input, vec)[0]
 
     def jac_t_mat_prod(self, mat):  # noqa: D102
-        V = mat.shape[0]
+        return stack([self.jac_t_vec_prod(vec) for vec in mat])
 
-        vecs = [mat[v] for v in range(V)]
-        jac_t_vec_prods = [self.jac_t_vec_prod(vec) for vec in vecs]
+    def weight_jac_t_mat_prod(self, mat, sum_batch, subsampling=None):  # noqa: D102
+        return self.param_jac_t_mat_prod(
+            "weight", mat, sum_batch, subsampling=subsampling
+        )
 
-        return torch.stack(jac_t_vec_prods)
+    def bias_jac_t_mat_prod(self, mat, sum_batch, subsampling=None):  # noqa: D102
+        return self.param_jac_t_mat_prod(
+            "bias", mat, sum_batch, subsampling=subsampling
+        )
 
-    def weight_jac_t_mat_prod(self, mat, sum_batch):  # noqa: D102
-        return self.param_jac_t_mat_prod("weight", mat, sum_batch)
+    def bias_ih_l0_jac_t_mat_prod(self, mat, sum_batch, subsampling=None):  # noqa: D102
+        return self.param_jac_t_mat_prod(
+            "bias_ih_l0", mat, sum_batch, axis_batch=1, subsampling=subsampling
+        )
 
-    def bias_jac_t_mat_prod(self, mat, sum_batch):  # noqa: D102
-        return self.param_jac_t_mat_prod("bias", mat, sum_batch)
+    def bias_hh_l0_jac_t_mat_prod(self, mat, sum_batch, subsampling=None):  # noqa: D102
+        return self.param_jac_t_mat_prod(
+            "bias_ih_l0", mat, sum_batch, axis_batch=1, subsampling=subsampling
+        )
 
-    def bias_ih_l0_jac_t_mat_prod(self, mat, sum_batch):  # noqa: D102
-        return self.param_jac_t_mat_prod("bias_ih_l0", mat, sum_batch, axis_batch=1)
+    def weight_ih_l0_jac_t_mat_prod(
+        self, mat, sum_batch, subsampling=None
+    ):  # noqa: D102
+        return self.param_jac_t_mat_prod(
+            "weight_ih_l0", mat, sum_batch, axis_batch=1, subsampling=subsampling
+        )
 
-    def bias_hh_l0_jac_t_mat_prod(self, mat, sum_batch):  # noqa: D102
-        return self.param_jac_t_mat_prod("bias_ih_l0", mat, sum_batch, axis_batch=1)
+    def weight_hh_l0_jac_t_mat_prod(
+        self, mat, sum_batch, subsampling=None
+    ):  # noqa: D102
+        return self.param_jac_t_mat_prod(
+            "weight_hh_l0", mat, sum_batch, axis_batch=1, subsampling=subsampling
+        )
 
-    def weight_ih_l0_jac_t_mat_prod(self, mat, sum_batch):  # noqa: D102
-        return self.param_jac_t_mat_prod("weight_ih_l0", mat, sum_batch, axis_batch=1)
-
-    def weight_hh_l0_jac_t_mat_prod(self, mat, sum_batch):  # noqa: D102
-        return self.param_jac_t_mat_prod("weight_hh_l0", mat, sum_batch, axis_batch=1)
-
-    def param_jac_t_vec_prod(self, name, vec, sum_batch, axis_batch=0):
+    def param_jac_t_vec_prod(
+        self,
+        name: str,
+        vec: Tensor,
+        sum_batch: bool,
+        axis_batch: int = 0,
+        subsampling: List[int] = None,
+    ) -> Tensor:
         """Compute the product of jac_t and the given vector.
 
         Args:
-            name (str): name of parameter for derivative
-            vec (torch.Tensor): vectors which to multiply
-            sum_batch (boolean): whether to sum along batch axis
-            axis_batch (int, optional): index of batch axis. Defaults to 0.
+            name: name of parameter for derivative
+            vec: vectors which to multiply
+            sum_batch: whether to sum along batch axis
+            axis_batch: index of batch axis. Defaults to 0.
+            subsampling: Indices of active samples. Default: ``None`` (all).
 
         Returns:
-            torch.Tensor: product of jac_t and vec
+            product of jac_t and vec
         """
         input, output, named_params = self.problem.forward_pass()
         param = named_params[name]
 
+        samples = range(input.shape[axis_batch]) if subsampling is None else subsampling
+        sample_outputs = output.split(1, dim=axis_batch)
+        sample_vecs = vec.split(1, dim=axis_batch)
+
+        jac_t_sample_prods = stack(
+            [
+                transposed_jacobian_vector_product(sample_outputs[n], param, vec_n)[0]
+                for n, vec_n in zip(samples, sample_vecs)
+            ],
+        )
+
         if sum_batch:
-            return transposed_jacobian_vector_product(output, param, vec)[0]
-        else:
-            sample_outputs = output.split(1, dim=axis_batch)
-            sample_vecs = vec.split(1, dim=axis_batch)
+            jac_t_sample_prods = jac_t_sample_prods.sum(0)
 
-            jac_t_sample_prods = [
-                transposed_jacobian_vector_product(n_out, param, n_vec)[0]
-                for n_out, n_vec in zip(sample_outputs, sample_vecs)
-            ]
+        return jac_t_sample_prods
 
-            return torch.stack(jac_t_sample_prods)
-
-    def param_jac_t_mat_prod(self, name, mat, sum_batch, axis_batch=0):
+    def param_jac_t_mat_prod(
+        self,
+        name: str,
+        mat: Tensor,
+        sum_batch: bool,
+        axis_batch: int = 0,
+        subsampling: List[int] = None,
+    ) -> Tensor:
         """Compute the product of jac_t and the given matrix.
 
         Args:
-            name (str): name of parameter for derivative
-            mat (torch.Tensor): matrix which to multiply
-            sum_batch (boolean): whether to sum along batch axis
-            axis_batch (int, optional): index of batch axis. This is counted
-                without the first axis. Defaults to 0.
+            name: name of parameter for derivative
+            mat: matrix which to multiply
+            sum_batch: whether to sum along batch axis
+            axis_batch: Batch axis, counted without the first axis. Defaults to 0.
+            subsampling: Indices of active samples. Default: ``None`` (all).
 
         Returns:
-            torch.Tensor: product of jac_t and mat
+            product of jac_t and mat
         """
-        V = mat.shape[0]
-
-        vecs = [mat[v] for v in range(V)]
-        jac_t_vec_prods = [
-            self.param_jac_t_vec_prod(name, vec, sum_batch, axis_batch=axis_batch)
-            for vec in vecs
-        ]
-
-        return torch.stack(jac_t_vec_prods)
+        return stack(
+            [
+                self.param_jac_t_vec_prod(
+                    name, vec, sum_batch, axis_batch=axis_batch, subsampling=subsampling
+                )
+                for vec in mat
+            ]
+        )
 
     def weight_jac_mat_prod(self, mat) -> Tensor:
         """Product of jacobian and matrix.
@@ -149,12 +173,7 @@ class AutogradDerivatives(DerivativesImplementation):
         return jacobian_vector_product(output, param, vec)[0]
 
     def _param_jac_mat_prod(self, name, mat):
-        V = mat.shape[0]
-
-        vecs = [mat[v] for v in range(V)]
-        jac_vec_prods = [self._param_jac_vec_prod(name, vec) for vec in vecs]
-
-        return torch.stack(jac_vec_prods)
+        return stack([self._param_jac_vec_prod(name, vec) for vec in mat])
 
     def ea_jac_t_mat_jac_prod(self, mat):  # noqa: D102
         def _sample_jac_t_mat_jac_prod(sample_idx, mat):
@@ -226,23 +245,12 @@ class AutogradDerivatives(DerivativesImplementation):
 
         return hessian_vec_x.reshape(final_shape)
 
-    def _elementwise_hessian(self, tensor, x: Tensor):
+    def _elementwise_hessian(self, tensor: Tensor, x: Tensor) -> Tensor:
         """Computes the Hessian of each element in `tensor` w.r.t `x`.
 
-        Hessians are returned in the order of elements in the flattened tensor.
-
-        Args:
-            tensor: .
-            x: Tensor used in the computation graph of `loss`.
-
-        Yields:
-            hessian of each element
-        """
-        for t in tensor.flatten():
-            yield self._hessian(t, x)
-
-    def _tensor_hessian(self, tensor, x):
-        """Return the Hessian of a tensor `tensor` w.r.t. a tensor `x`.
+        If ``tensor`` is linear in ``x``, autograd raises a ``RuntimeError``.
+        If ``tensor`` does not depend on ``x``, autograd raises an ``AttributeError``.
+        In both cases, a Hessian of zeros is created manually and returned.
 
         Given a `tensor` of shape `[A, B, C]` and another tensor `x` with shape `[D, E]`
         used in the computation of `tensor`, the generalized Hessian has shape
@@ -250,29 +258,30 @@ class AutogradDerivatives(DerivativesImplementation):
         `hessian[a, b, c]` contains the Hessian of the scalar entry `tensor[a, b, c]`
         w.r.t. `x[a, b, c]`.
 
+        If ``tensor`` is linear in ``x``, autograd raises a ``RuntimeError``.
+        If ``tensor`` does not depend on ``x``, autograd raises an ``AttributeError``.
+        In both cases, a Hessian of zeros is created manually and returned.
+
         Arguments:
-            tensor (torch.Tensor): An arbitrary tensor.
-            x (torch.Tensor): Tensor used in the computation graph of `tensor`.
+            tensor: An arbitrary tensor.
+            x: Tensor used in the computation graph of `tensor`.
 
-        Returns:
-            torch.Tensor: Generalized Hessian of `tensor` w.r.t. `x`.
+        Yields:
+            Hessians in the order of elements in the flattened tensor.
         """
-        shape = (*tensor.shape, *x.shape, *x.shape)
+        for t in tensor.flatten():
+            try:
+                yield self._hessian(t, x)
+            except (RuntimeError, AttributeError):
+                yield torch.zeros(*x.shape, *x.shape, device=x.device, dtype=x.dtype)
 
-        return torch.cat(list(self._elementwise_hessian(tensor, x))).reshape(shape)
-
-    def hessian_is_zero(self):
-        """Return whether the input-output Hessian is zero.
-
-        Returns:
-            bool: `True`, if Hessian is zero, else `False`.
-        """
+    def hessian_is_zero(self) -> bool:  # noqa: D102
         input, output, _ = self.problem.forward_pass(input_requires_grad=True)
 
         zero = None
         for hessian in self._elementwise_hessian(output, input):
             if zero is None:
-                zero = torch.zeros_like(hessian)
+                zero = zeros_like(hessian)
 
             if not torch.allclose(hessian, zero):
                 return False

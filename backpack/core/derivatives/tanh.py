@@ -2,7 +2,7 @@ from backpack.core.derivatives.elementwise import ElementwiseDerivatives
 
 
 class TanhDerivatives(ElementwiseDerivatives):
-    def hessian_is_zero(self):
+    def hessian_is_zero(self, module):
         return False
 
     def df(self, module, g_inp, g_out):

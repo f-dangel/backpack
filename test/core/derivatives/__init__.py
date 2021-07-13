@@ -1,11 +1,18 @@
 """Test functionality of `backpack.core.derivatives` module."""
 from torch.nn import (
     ELU,
+    LSTM,
     RNN,
     SELU,
+    AdaptiveAvgPool1d,
+    AdaptiveAvgPool2d,
+    AdaptiveAvgPool3d,
     AvgPool1d,
     AvgPool2d,
     AvgPool3d,
+    BatchNorm1d,
+    BatchNorm2d,
+    BatchNorm3d,
     Conv1d,
     Conv2d,
     Conv3d,
@@ -27,9 +34,15 @@ from torch.nn import (
     ZeroPad2d,
 )
 
+from backpack.core.derivatives.adaptive_avg_pool_nd import (
+    AdaptiveAvgPool1dDerivatives,
+    AdaptiveAvgPool2dDerivatives,
+    AdaptiveAvgPool3dDerivatives,
+)
 from backpack.core.derivatives.avgpool1d import AvgPool1DDerivatives
 from backpack.core.derivatives.avgpool2d import AvgPool2DDerivatives
 from backpack.core.derivatives.avgpool3d import AvgPool3DDerivatives
+from backpack.core.derivatives.batchnorm_nd import BatchNormNdDerivatives
 from backpack.core.derivatives.conv1d import Conv1DDerivatives
 from backpack.core.derivatives.conv2d import Conv2DDerivatives
 from backpack.core.derivatives.conv3d import Conv3DDerivatives
@@ -42,16 +55,19 @@ from backpack.core.derivatives.elu import ELUDerivatives
 from backpack.core.derivatives.leakyrelu import LeakyReLUDerivatives
 from backpack.core.derivatives.linear import LinearDerivatives
 from backpack.core.derivatives.logsigmoid import LogSigmoidDerivatives
+from backpack.core.derivatives.lstm import LSTMDerivatives
 from backpack.core.derivatives.maxpool1d import MaxPool1DDerivatives
 from backpack.core.derivatives.maxpool2d import MaxPool2DDerivatives
 from backpack.core.derivatives.maxpool3d import MaxPool3DDerivatives
 from backpack.core.derivatives.mseloss import MSELossDerivatives
+from backpack.core.derivatives.permute import PermuteDerivatives
 from backpack.core.derivatives.relu import ReLUDerivatives
 from backpack.core.derivatives.rnn import RNNDerivatives
 from backpack.core.derivatives.selu import SELUDerivatives
 from backpack.core.derivatives.sigmoid import SigmoidDerivatives
 from backpack.core.derivatives.tanh import TanhDerivatives
 from backpack.core.derivatives.zeropad2d import ZeroPad2dDerivatives
+from backpack.custom_module.permute import Permute
 
 derivatives_for = {
     Linear: LinearDerivatives,
@@ -79,4 +95,12 @@ derivatives_for = {
     CrossEntropyLoss: CrossEntropyLossDerivatives,
     MSELoss: MSELossDerivatives,
     RNN: RNNDerivatives,
+    Permute: PermuteDerivatives,
+    LSTM: LSTMDerivatives,
+    AdaptiveAvgPool1d: AdaptiveAvgPool1dDerivatives,
+    AdaptiveAvgPool2d: AdaptiveAvgPool2dDerivatives,
+    AdaptiveAvgPool3d: AdaptiveAvgPool3dDerivatives,
+    BatchNorm1d: BatchNormNdDerivatives,
+    BatchNorm2d: BatchNormNdDerivatives,
+    BatchNorm3d: BatchNormNdDerivatives,
 }

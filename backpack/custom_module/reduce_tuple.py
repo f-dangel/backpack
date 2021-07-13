@@ -14,7 +14,7 @@ class ReduceTuple(Module):
         Args:
             index: which element to choose
         """
-        super(ReduceTuple, self).__init__()
+        super().__init__()
         self.index = index
 
     def forward(self, input: tuple) -> Union[tuple, Tensor]:

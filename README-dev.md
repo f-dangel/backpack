@@ -1,7 +1,7 @@
 # <img alt="BackPACK" src="./logo/backpack_logo_torch.svg" height="90"> BackPACK developer manual
 
-## General standards 
-- Python version: support 3.6+, use 3.7 for development
+## General standards
+- Python version: support 3.7+, use 3.7 for development
 - `git` [branching model](https://nvie.com/posts/a-successful-git-branching-model/)
 - Docstring style:  [Google](https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html)
 - Test runner: [`pytest`](https://docs.pytest.org/en/latest/)
@@ -27,7 +27,7 @@ git checkout development
 make conda-env
 conda activate backpack
 ```
-3. Install the development dependencies and `pre-commit` hooks
+3. Install the development dependencies
 ```bash
 make install-dev
 ```
@@ -84,6 +84,5 @@ Code that is affected (has a `git diff`) by a pull request must satisfy the foll
     - Lint code: [`flake8`](http://flake8.pycqa.org/) ([`flake8` config](.flake8))
     - Check docstring style: [`pydocstyle`](https://github.com/PyCQA/pydocstyle) ([`pydocstyle` config](.pydocstyle))
     - Check docstring description matches definition: [`darglint`](https://github.com/terrencepreilly/darglint) ([`darglint` config](.darglint))
-- Optional [`pre-commit`](https://github.com/pre-commit/pre-commit) hooks [ `pre-commit` config ](.pre-commit-config.yaml)
 
 ###### _BackPACK is not endorsed by or affiliated with Facebook, Inc. PyTorch, the PyTorch logo and any related marks are trademarks of Facebook, Inc._

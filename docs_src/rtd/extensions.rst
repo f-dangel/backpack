@@ -18,10 +18,15 @@ Available Extensions
 
 .. autofunction:: backpack.extensions.DiagGGNMC
 .. autofunction:: backpack.extensions.DiagGGNExact
+.. autofunction:: backpack.extensions.BatchDiagGGNMC
+.. autofunction:: backpack.extensions.BatchDiagGGNExact
 .. autofunction:: backpack.extensions.KFAC
 .. autofunction:: backpack.extensions.KFLR
 .. autofunction:: backpack.extensions.KFRA
 .. autofunction:: backpack.extensions.DiagHessian
+.. autofunction:: backpack.extensions.BatchDiagHessian
+.. autofunction:: backpack.extensions.SqrtGGNExact
+.. autofunction:: backpack.extensions.SqrtGGNMC
 
 -----
 
@@ -32,4 +37,3 @@ Available Extensions
 .. autofunction:: backpack.extensions.HMP
 .. autofunction:: backpack.extensions.GGNMP
 .. autofunction:: backpack.extensions.PCHMP
-

@@ -1,7 +1,6 @@
 """Contains GradRNN."""
 from backpack.core.derivatives.rnn import RNNDerivatives
-
-from .base import GradBaseModule
+from backpack.extensions.firstorder.gradient.base import GradBaseModule
 
 
 class GradRNN(GradBaseModule):

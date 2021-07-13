@@ -1,6 +1,9 @@
+"""Partial derivatives for ``torch.nn.ConvTranspose{1,2,3}d``."""
+from typing import List, Tuple, Union
+
 from einops import rearrange
 from numpy import prod
-from torch import einsum
+from torch import Tensor, einsum
 from torch.nn import ConvTranspose1d, ConvTranspose2d, ConvTranspose3d
 from torch.nn.functional import (
     conv1d,
@@ -14,10 +17,21 @@ from torch.nn.grad import _grad_input_padding
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 from backpack.utils.conv_transpose import unfold_by_conv_transpose
+from backpack.utils.subsampling import subsample
 
 
 class ConvTransposeNDDerivatives(BaseParameterDerivatives):
+    """Base class for partial derivatives of transpose convolution."""
+
     def __init__(self, N):
+        """Store convolution dimension and operations.
+
+        Args:
+            N (int): Convolution dimension. Must be ``1``, ``2``, or ``3``.
+
+        Raises:
+            ValueError: If convolution dimension is unsupported.
+        """
         if N == 1:
             self.module = ConvTranspose1d
             self.conv_func = conv1d
@@ -31,17 +45,17 @@ class ConvTransposeNDDerivatives(BaseParameterDerivatives):
             self.conv_func = conv3d
             self.conv_transpose_func = conv_transpose3d
         else:
-            raise ValueError("{}-dimensional Conv. is not implemented.".format(N))
+            raise ValueError(f"ConvTranspose{N}d not supported.")
         self.conv_dims = N
 
-    def hessian_is_zero(self):
+    def hessian_is_zero(self, module):
         return True
 
-    def _bias_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
-        axes = list(range(3, len(module.output.shape) + 1))
-        if sum_batch:
-            axes = [1] + axes
-        return mat.sum(axes)
+    def _bias_jac_t_mat_prod(
+        self, module, g_inp, g_out, mat, sum_batch=True, subsampling=None
+    ):
+        equation = f"vnc...->v{'' if sum_batch else 'n'}c"
+        return einsum(equation, mat)
 
     def _bias_jac_mat_prod(self, module, g_inp, g_out, mat):
         # Expand batch dimension
@@ -55,47 +69,49 @@ class ConvTransposeNDDerivatives(BaseParameterDerivatives):
         return jac_mat.expand(*expand_shape)
 
     def _weight_jac_mat_prod(self, module, g_inp, g_out, mat):
-        if module.groups != 1:
-            raise NotImplementedError("Groups greater than 1 are not supported yet")
-
         V = mat.shape[0]
         G = module.groups
         C_in = module.input0.shape[1]
         N = module.output.shape[0]
         C_out = module.output.shape[1]
 
-        mat_reshape = mat.reshape(V, C_in, G, C_out // G, *module.weight.shape[2:])
+        mat_reshape = mat.reshape(V, G, C_in // G, C_out // G, *module.weight.shape[2:])
         u = unfold_by_conv_transpose(module.input0, module).reshape(
-            N, C_in // G, G, *module.weight.shape[2:], *module.output.shape[2:]
+            N, G, C_in // G, *module.weight.shape[2:], *module.output.shape[2:]
         )
 
         dims_kern = "xyz"[: self.conv_dims]
         dims_data = "abc"[: self.conv_dims]
-        einstr = "nig{0}{1},vigo{0}->vngo{1}".format(dims_kern, dims_data)
+        einstr = "ngi{0}{1},vgio{0}->vngo{1}".format(dims_kern, dims_data)
         jac_mat = einsum(einstr, u, mat_reshape)
 
         return self.reshape_like_output(jac_mat, module)
 
-    def _weight_jac_t_mat_prod(self, module, g_inp, g_out, mat, sum_batch=True):
-        if module.groups != 1:
-            raise NotImplementedError("Groups greater than 1 are not supported yet")
-
+    def _weight_jac_t_mat_prod(
+        self,
+        module: Union[ConvTranspose1d, ConvTranspose2d, ConvTranspose3d],
+        g_inp: Tuple[Tensor],
+        g_out: Tuple[Tensor],
+        mat: Tensor,
+        sum_batch: bool = True,
+        subsampling: List[int] = None,
+    ) -> Tensor:
         V = mat.shape[0]
         G = module.groups
         C_in = module.input0.shape[1]
-        N = module.output.shape[0]
+        N = module.output.shape[0] if subsampling is None else len(subsampling)
         C_out = module.output.shape[1]
 
         mat_reshape = mat.reshape(V, N, G, C_out // G, *module.output.shape[2:])
 
-        u = unfold_by_conv_transpose(module.input0, module).reshape(
-            N, C_in // G, G, *module.weight.shape[2:], *module.output.shape[2:]
-        )
+        u = unfold_by_conv_transpose(
+            subsample(module.input0, subsampling=subsampling), module
+        ).reshape(N, G, C_in // G, *module.weight.shape[2:], *module.output.shape[2:])
 
         dims_kern = "xyz"[: self.conv_dims]
         dims_data = "abc"[: self.conv_dims]
-        result_str = ("vigo" if sum_batch else "vnigo") + dims_kern
-        equation = "nig{0}{1},vngo{1}->{2}".format(dims_kern, dims_data, result_str)
+        result_str = ("vgio" if sum_batch else "vngio") + dims_kern
+        equation = f"ngi{dims_kern}{dims_data},vngo{dims_data}->{result_str}"
 
         final_shape = (
             (V, *module.weight.shape) if sum_batch else (V, N, *module.weight.shape)

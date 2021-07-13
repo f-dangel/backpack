@@ -37,7 +37,7 @@ class VarianceBaseModule(FirstOrderModuleExtension):
         for param_str in params:
             if not hasattr(self, param_str):
                 setattr(self, param_str, self._make_param_function(param_str))
-        super(VarianceBaseModule, self).__init__(params=params)
+        super().__init__(params=params)
 
     @staticmethod
     def _variance_from(grad: Tensor, sgs: Tensor, N: int) -> Tensor:
@@ -55,7 +55,7 @@ class VarianceBaseModule(FirstOrderModuleExtension):
         """Creates a function that calculates variance of grad_batch.
 
         Args:
-            param(str): name of parameter
+            param: name of parameter
 
         Returns:
             function that calculates variance of grad_batch

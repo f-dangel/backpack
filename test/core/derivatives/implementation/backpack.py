@@ -36,16 +36,26 @@ class BackpackDerivatives(DerivativesImplementation):
             self.problem.module, None, None, mat
         )
 
-    def weight_jac_t_mat_prod(self, mat, sum_batch):  # noqa: D102
+    def weight_jac_t_mat_prod(self, mat, sum_batch, subsampling=None):  # noqa: D102
         self.store_forward_io()
         return self.problem.derivative.weight_jac_t_mat_prod(
-            self.problem.module, None, None, mat, sum_batch=sum_batch
+            self.problem.module,
+            None,
+            None,
+            mat,
+            sum_batch=sum_batch,
+            subsampling=subsampling,
         )
 
-    def bias_jac_t_mat_prod(self, mat, sum_batch):  # noqa: D102
+    def bias_jac_t_mat_prod(self, mat, sum_batch, subsampling=None):  # noqa: D102
         self.store_forward_io()
         return self.problem.derivative.bias_jac_t_mat_prod(
-            self.problem.module, None, None, mat, sum_batch=sum_batch
+            self.problem.module,
+            None,
+            None,
+            mat,
+            sum_batch=sum_batch,
+            subsampling=subsampling,
         )
 
     def weight_jac_mat_prod(self, mat):  # noqa: D102
@@ -60,28 +70,52 @@ class BackpackDerivatives(DerivativesImplementation):
             self.problem.module, None, None, mat
         )
 
-    def bias_ih_l0_jac_t_mat_prod(self, mat, sum_batch):  # noqa: D102
+    def bias_ih_l0_jac_t_mat_prod(self, mat, sum_batch, subsampling=None):  # noqa: D102
         self.store_forward_io()
         return self.problem.derivative.bias_ih_l0_jac_t_mat_prod(
-            self.problem.module, None, None, mat, sum_batch=sum_batch
+            self.problem.module,
+            None,
+            None,
+            mat,
+            sum_batch=sum_batch,
+            subsampling=subsampling,
         )
 
-    def bias_hh_l0_jac_t_mat_prod(self, mat, sum_batch):  # noqa: D102
+    def bias_hh_l0_jac_t_mat_prod(self, mat, sum_batch, subsampling=None):  # noqa: D102
         self.store_forward_io()
         return self.problem.derivative.bias_hh_l0_jac_t_mat_prod(
-            self.problem.module, None, None, mat, sum_batch=sum_batch
+            self.problem.module,
+            None,
+            None,
+            mat,
+            sum_batch=sum_batch,
+            subsampling=subsampling,
         )
 
-    def weight_ih_l0_jac_t_mat_prod(self, mat, sum_batch):  # noqa: D102
+    def weight_ih_l0_jac_t_mat_prod(
+        self, mat, sum_batch, subsampling=None
+    ):  # noqa: D102
         self.store_forward_io()
         return self.problem.derivative.weight_ih_l0_jac_t_mat_prod(
-            self.problem.module, None, None, mat, sum_batch=sum_batch
+            self.problem.module,
+            None,
+            None,
+            mat,
+            sum_batch=sum_batch,
+            subsampling=subsampling,
         )
 
-    def weight_hh_l0_jac_t_mat_prod(self, mat, sum_batch):  # noqa: D102
+    def weight_hh_l0_jac_t_mat_prod(
+        self, mat, sum_batch, subsampling=None
+    ):  # noqa: D102
         self.store_forward_io()
         return self.problem.derivative.weight_hh_l0_jac_t_mat_prod(
-            self.problem.module, None, None, mat, sum_batch=sum_batch
+            self.problem.module,
+            None,
+            None,
+            mat,
+            sum_batch=sum_batch,
+            subsampling=subsampling,
         )
 
     def ea_jac_t_mat_jac_prod(self, mat):  # noqa: D102
@@ -99,8 +133,7 @@ class BackpackDerivatives(DerivativesImplementation):
 
         Args:
             mc_samples: If int, uses an MC approximation with the specified
-                number of samples.
-                If None, uses the exact hessian. Defaults to None.
+                number of samples. If None, uses the exact hessian. Defaults to None.
 
         Returns:
             hessian
@@ -122,15 +155,10 @@ class BackpackDerivatives(DerivativesImplementation):
             individual_hessians, self.problem.module.input0
         )
 
-    def hessian_is_zero(self):
-        """Return whether the input-output Hessian is zero.
+    def hessian_is_zero(self) -> bool:  # noqa: D102
+        return self.problem.derivative.hessian_is_zero(self.problem.module)
 
-        Returns:
-            bool: `True`, if Hessian is zero, else `False`.
-        """
-        return self.problem.derivative.hessian_is_zero()
-
-    def _sample_hessians_from_sqrt(self, sqrt: Tensor) -> Tensor:
+    def _sample_hessians_from_sqrt(self, sqrt):
         """Convert individual matrix square root into individual full matrix.
 
         Args:
@@ -140,7 +168,7 @@ class BackpackDerivatives(DerivativesImplementation):
             individual full matrix
 
         Raises:
-            ValueError: if input is not 2d
+            ValueError: if input is not 3d
         """
         equation = None
         num_axes = len(sqrt.shape)

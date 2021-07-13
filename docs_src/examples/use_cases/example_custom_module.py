@@ -3,10 +3,11 @@
 
 This tutorial shows how to support a custom module in a simple fashion.
 We focus on `BackPACK's first-order extensions <https://docs.backpack.pt/en/master/extensions.html#first-order-extensions>`_.
-They don't backpropagate additional information and thus require less functionality be implemented.
+They don't backpropagate additional information and thus require less functionality be
+implemented.
 
 Let's get the imports out of our way.
-"""
+"""  # noqa: B950
 
 import torch
 
