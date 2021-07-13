@@ -311,6 +311,7 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
         g_out: Tuple[Tensor],
         mat: Tensor,
         sum_batch: bool = True,
+        subsampling: List[int] = None,
     ) -> Tensor:
         """Compute matrix-Jacobian products (MJPs) of the module w.r.t. a parameter.
 
@@ -329,6 +330,8 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
                 ``[V, *module.output.shape]`` (matrix case) or same shape as
                 ``module.output`` (vector case).
             sum_batch: Sum out the MJP's batch axis. Default: ``True``.
+            subsampling: Indices of samples along the output's batch dimension that
+                should be considered. Defaults to ``None`` (use all samples).
 
         Returns:
             Matrix-Jacobian products. Has shape ``[V, *param_shape]`` when batch
@@ -337,17 +340,19 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
             has shape ``[N, *param_shape]``).
         """
         # handle vector inputs (TODO extract to _param_mjp_handle_vector_input)
-        is_vec = mat.dim() == module.output.dim()
-        if is_vec:
-            mat = mat.unsqueeze(0)
+        # is_vec = mat.dim() == module.output.dim()
+        # if is_vec:
+        #    mat = mat.unsqueeze(0)
 
         # check input shape (TODO extract to _param_mjp_check_input)
-        assert mat.dim() == module.output.dim() + 1
-        assert mat.shape[1:] == module.output.shape
+        # assert mat.dim() == module.output.dim() + 1
+        # assert mat.shape[1:] == module.output.shape
 
         # apply MJP
         mjp = getattr(self, f"_{param_str}_jac_t_mat_prod")
-        mjp_out = mjp(module, g_inp, g_out, mat, sum_batch=sum_batch)
+        mjp_out = mjp(
+            module, g_inp, g_out, mat, sum_batch=sum_batch, subsampling=subsampling
+        )
 
         # check output shape (TODO extract to _param_mjp_check_output)
         assert mjp_out.shape[0] == mat.shape[0]  # same V
@@ -356,19 +361,19 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
         more_dims = 1 if sum_batch else 2
         assert mjp_out.dim() == param.dim() + more_dims  # dimensions
 
-        if not sum_batch:
-            batch_axis = 0 if param_str in ["bias", "weight"] else 1
-            print("batch axis", batch_axis)
-            print("mjp_out", mjp_out.shape)
-            print("module.output", module.output.shape)
-            print("mat", mat.shape)
-            assert mjp_out.shape[1] == module.output.shape[batch_axis]  # batch size
+        # if not sum_batch:
+        #    batch_axis = 0 if param_str in ["bias", "weight"] else 1
+        #    print("batch axis", batch_axis)
+        #    print("mjp_out", mjp_out.shape)
+        #    print("module.output", module.output.shape)
+        #    print("mat", mat.shape)
+        #    assert mjp_out.shape[1] == module.output.shape[batch_axis]  # batch size
 
         assert mjp_out.shape[more_dims:] == param.shape  # parameter shape
 
         # preserve vector format (TODO extract to _param_mjp_accept_vectors)
-        if is_vec:
-            mjp_out = mjp_out.squeeze(0)
+        # if is_vec:
+        #    mjp_out = mjp_out.squeeze(0)
 
         return mjp_out
 
@@ -425,7 +430,15 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
             If ``sum_batch=True``, has shape ``[V, *module.bias.shape]``.
             If sub-sampling is used, ``N`` is replaced by ``len(subsampling)``.
         """
-        return self.param_mjp("bias", module, g_inp, g_out, mat, sum_batch=sum_batch, subsampling=subsampling)
+        return self.param_mjp(
+            "bias",
+            module,
+            g_inp,
+            g_out,
+            mat,
+            sum_batch=sum_batch,
+            subsampling=subsampling,
+        )
 
     def _bias_jac_t_mat_prod(
         self,
@@ -492,7 +505,15 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
             If ``sum_batch=True``, has shape ``[V, *module.weight.shape]``.
             If sub-sampling is used, ``N`` is replaced by ``len(subsampling)``.
         """
-        return self.param_mjp("weight", module, g_inp, g_out, mat, sum_batch=sum_batch, subsampling=subsampling)
+        return self.param_mjp(
+            "weight",
+            module,
+            g_inp,
+            g_out,
+            mat,
+            sum_batch=sum_batch,
+            subsampling=subsampling,
+        )
 
     def _weight_jac_t_mat_prod(
         self,
@@ -536,7 +557,13 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
             ``sum_batch == True``.
         """
         return self.param_mjp(
-            "bias_ih_l0", module, g_inp, g_out, mat, sum_batch=sum_batch, subsampling=subsampling
+            "bias_ih_l0",
+            module,
+            g_inp,
+            g_out,
+            mat,
+            sum_batch=sum_batch,
+            subsampling=subsampling,
         )
 
     def _bias_ih_l0_jac_t_mat_prod(
@@ -581,7 +608,13 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
             ``sum_batch == True``.
         """
         return self.param_mjp(
-            "bias_hh_l0", module, g_inp, g_out, mat, sum_batch=sum_batch, subsampling=subsampling
+            "bias_hh_l0",
+            module,
+            g_inp,
+            g_out,
+            mat,
+            sum_batch=sum_batch,
+            subsampling=subsampling,
         )
 
     def _bias_hh_l0_jac_t_mat_prod(
@@ -626,7 +659,13 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
             ``sum_batch == True``.
         """
         return self.param_mjp(
-            "weight_ih_l0", module, g_inp, g_out, mat, sum_batch=sum_batch, subsampling=subsampling
+            "weight_ih_l0",
+            module,
+            g_inp,
+            g_out,
+            mat,
+            sum_batch=sum_batch,
+            subsampling=subsampling,
         )
 
     def _weight_ih_l0_jac_t_mat_prod(
@@ -671,7 +710,13 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
             ``sum_batch == True``.
         """
         return self.param_mjp(
-            "weight_hh_l0", module, g_inp, g_out, mat, sum_batch=sum_batch, subsampling=subsampling
+            "weight_hh_l0",
+            module,
+            g_inp,
+            g_out,
+            mat,
+            sum_batch=sum_batch,
+            subsampling=subsampling,
         )
 
     def _weight_hh_l0_jac_t_mat_prod(
