@@ -1,7 +1,7 @@
 """Skip specific tests."""
 import pytest
 
-from backpack.utils import TORCH_VERSION_HIGHER_THAN_1_9_1
+from backpack.utils import TORCH_VERSION_AT_LEAST_1_9_1
 
 
 def skip_adaptive_avg_pool3d_cuda(request) -> None:
@@ -10,7 +10,7 @@ def skip_adaptive_avg_pool3d_cuda(request) -> None:
     Args:
         request: problem request
     """
-    if TORCH_VERSION_HIGHER_THAN_1_9_1:
+    if TORCH_VERSION_AT_LEAST_1_9_1:
         pass
     else:
         if all(

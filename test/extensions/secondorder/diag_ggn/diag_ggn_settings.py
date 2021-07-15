@@ -80,21 +80,6 @@ LOCAL_SETTINGS += [
         "loss_function_fn": lambda: MSELoss(),
         "target_fn": lambda: regression_targets((2, 2 * 3 * 5 * 2)),
     },
-    {
-        "input_fn": lambda: rand(3, 3, 4, 1, 2),
-        "module_fn": lambda: initialize_training_false_recursive(
-            Sequential(
-                BatchNorm3d(num_features=3),
-                Linear(2, 3),
-                BatchNorm3d(num_features=3),
-                ReLU(),
-                BatchNorm3d(num_features=3),
-                Flatten(),
-            )
-        ),
-        "loss_function_fn": lambda: MSELoss(),
-        "target_fn": lambda: regression_targets((3, 4 * 1 * 3 * 3)),
-    },
 ]
 ##################################################################
 #                      BatchNorm settings                        #
@@ -123,6 +108,21 @@ LOCAL_SETTINGS += [
         ),
         "loss_function_fn": lambda: MSELoss(),
         "target_fn": lambda: regression_targets((3, 3 * 4 * 1 * 2)),
+    },
+    {
+        "input_fn": lambda: rand(3, 3, 4, 1, 2),
+        "module_fn": lambda: initialize_training_false_recursive(
+            Sequential(
+                BatchNorm3d(num_features=3),
+                Linear(2, 3),
+                BatchNorm3d(num_features=3),
+                ReLU(),
+                BatchNorm3d(num_features=3),
+                Flatten(),
+            )
+        ),
+        "loss_function_fn": lambda: MSELoss(),
+        "target_fn": lambda: regression_targets((3, 4 * 1 * 3 * 3)),
     },
 ]
 DiagGGN_SETTINGS = SHARED_SETTINGS + LOCAL_SETTINGS

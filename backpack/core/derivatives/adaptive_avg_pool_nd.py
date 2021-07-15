@@ -6,7 +6,7 @@ from torch import Size
 from torch.nn import AdaptiveAvgPool1d, AdaptiveAvgPool2d, AdaptiveAvgPool3d
 
 from backpack.core.derivatives.avgpoolnd import AvgPoolNDDerivatives
-from backpack.utils import TORCH_VERSION_HIGHER_THAN_1_9_1
+from backpack.utils import TORCH_VERSION_AT_LEAST_1_9_1
 
 
 class AdaptiveAvgPoolNDDerivatives(AvgPoolNDDerivatives):
@@ -29,8 +29,8 @@ class AdaptiveAvgPoolNDDerivatives(AvgPoolNDDerivatives):
             NotImplementedError: if the given shapes do not match
         """
         if (
-            TORCH_VERSION_HIGHER_THAN_1_9_1 is False
-            and ("cuda" in str(module.input0.device))
+            TORCH_VERSION_AT_LEAST_1_9_1 is False
+            and module.input0.is_cuda
             and (self.N == 3)
         ):
             warn(
