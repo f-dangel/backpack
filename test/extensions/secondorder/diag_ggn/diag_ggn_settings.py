@@ -9,7 +9,7 @@ Includes
 Shared settings are taken from `test.extensions.secondorder.secondorder_settings`.
 Additional local cases can be defined here through ``LOCAL_SETTINGS``.
 """
-from test.core.derivatives.utils import classification_targets, regression_targets
+from test.core.derivatives.utils import regression_targets
 from test.extensions.secondorder.secondorder_settings import SECONDORDER_SETTINGS
 from test.utils.evaluation_mode import initialize_training_false_recursive
 
@@ -22,7 +22,6 @@ from torch.nn import (
     BatchNorm1d,
     BatchNorm2d,
     BatchNorm3d,
-    CrossEntropyLoss,
     Flatten,
     Linear,
     MSELoss,
