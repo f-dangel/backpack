@@ -74,7 +74,7 @@ def test_param_jac_t_mat_prod(
         request: problem request
     """
     _skip_if_subsampling_conflict(problem, subsampling)
-    test_save_memory = "Conv" in request.node.callspec.id
+    test_save_memory: bool = "Conv" in request.node.callspec.id
 
     for param_str, _ in problem.module.named_parameters():
         print(f"testing derivative wrt {param_str}")
@@ -85,9 +85,9 @@ def test_param_jac_t_mat_prod(
         )
 
         for save_memory in [True, False] if test_save_memory else [None]:
-            with contextlib.nullcontext() if test_save_memory else weight_jac_t_save_memory(
+            with weight_jac_t_save_memory(
                 save_memory=save_memory
-            ):
+            ) if test_save_memory else contextlib.nullcontext():
                 if test_save_memory:
                     print(f"testing with save_memory={save_memory}")
                 backpack_res = getattr(
