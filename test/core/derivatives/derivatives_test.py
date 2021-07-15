@@ -6,7 +6,7 @@
 - Jacobian-matrix products with respect to layer parameters
 - Transposed Jacobian-matrix products with respect to layer parameters
 """
-
+import contextlib
 from test.automated_test import check_sizes_and_values
 from test.core.derivatives.batch_norm_settings import BATCH_NORM_SETTINGS
 from test.core.derivatives.implementation.autograd import AutogradDerivatives
@@ -25,6 +25,7 @@ import torch
 from pytest import fixture, skip
 from torch import Tensor
 
+from backpack.core.derivatives.convnd import weight_jac_t_save_memory
 from backpack.utils.subsampling import get_batch_axis
 
 PROBLEMS = make_test_problems(SETTINGS)
@@ -59,7 +60,10 @@ SUBSAMPLING_IDS = [f"subsampling={s}".replace(" ", "") for s in SUBSAMPLINGS]
     "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
 )
 def test_param_jac_t_mat_prod(
-    problem: DerivativesTestProblem, sum_batch: bool, subsampling: List[int] or None
+    problem: DerivativesTestProblem,
+    sum_batch: bool,
+    subsampling: List[int] or None,
+    request,
 ) -> None:
     """Test all parameter derivatives.
 
@@ -67,8 +71,10 @@ def test_param_jac_t_mat_prod(
         problem: test problem
         sum_batch: whether to sum along batch axis
         subsampling: subsampling indices
+        request: problem request
     """
     _skip_if_subsampling_conflict(problem, subsampling)
+    test_save_memory = "Conv" in request.node.callspec.id
 
     for param_str, _ in problem.module.named_parameters():
         print(f"testing derivative wrt {param_str}")
@@ -78,9 +84,15 @@ def test_param_jac_t_mat_prod(
             problem.device
         )
 
-        backpack_res = getattr(
-            BackpackDerivatives(problem), f"{param_str}_jac_t_mat_prod"
-        )(mat, sum_batch, subsampling=subsampling)
+        for save_memory in [True, False] if test_save_memory else [None]:
+            with contextlib.nullcontext() if test_save_memory else weight_jac_t_save_memory(
+                save_memory=save_memory
+            ):
+                if test_save_memory:
+                    print(f"testing with save_memory={save_memory}")
+                backpack_res = getattr(
+                    BackpackDerivatives(problem), f"{param_str}_jac_t_mat_prod"
+                )(mat, sum_batch, subsampling=subsampling)
         autograd_res = getattr(
             AutogradDerivatives(problem), f"{param_str}_jac_t_mat_prod"
         )(mat, sum_batch, subsampling=subsampling)
