@@ -9,7 +9,7 @@ Includes
 Shared settings are taken from `test.extensions.secondorder.secondorder_settings`.
 Additional local cases can be defined here through ``LOCAL_SETTINGS``.
 """
-from test.core.derivatives.utils import regression_targets
+from test.core.derivatives.utils import classification_targets, regression_targets
 from test.extensions.secondorder.secondorder_settings import SECONDORDER_SETTINGS
 from test.utils.evaluation_mode import initialize_training_false_recursive
 
@@ -22,9 +22,11 @@ from torch.nn import (
     BatchNorm1d,
     BatchNorm2d,
     BatchNorm3d,
+    CrossEntropyLoss,
     Flatten,
     Linear,
     MSELoss,
+    ReLU,
     Sequential,
 )
 
@@ -78,6 +80,21 @@ LOCAL_SETTINGS += [
         ),
         "loss_function_fn": lambda: MSELoss(),
         "target_fn": lambda: regression_targets((2, 2 * 3 * 5 * 2)),
+    },
+    {
+        "input_fn": lambda: rand(3, 3, 4, 1, 2),
+        "module_fn": lambda: initialize_training_false_recursive(
+            Sequential(
+                BatchNorm3d(num_features=3),
+                Linear(2, 3),
+                BatchNorm3d(num_features=3),
+                ReLU(),
+                BatchNorm3d(num_features=3),
+                Flatten(),
+            )
+        ),
+        "loss_function_fn": lambda: MSELoss(),
+        "target_fn": lambda: regression_targets((3, 4 * 1 * 3 * 3)),
     },
 ]
 ##################################################################
