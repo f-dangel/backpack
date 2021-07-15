@@ -179,6 +179,9 @@ class LSTMDerivatives(BaseParameterDerivatives):
             )
         return IFGO_prod
 
+    def hessian_is_zero(self, module: LSTM) -> bool:  # noqa: D102
+        return False
+
     def _jac_mat_prod(
         self,
         module: LSTM,

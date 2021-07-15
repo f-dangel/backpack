@@ -41,10 +41,8 @@ LOSS_FAIL_PROBLEMS = make_test_problems(LOSS_FAIL_SETTINGS)
 LOSS_FAIL_IDS = [problem.make_id() for problem in LOSS_FAIL_PROBLEMS]
 
 RNN_PROBLEMS = make_test_problems(RNN_SETTINGS)
+RNN_PROBLEMS += make_test_problems(LSTM_SETTINGS)
 RNN_IDS = [problem.make_id() for problem in RNN_PROBLEMS]
-
-LSTM_PROBLEMS = make_test_problems(LSTM_SETTINGS)
-LSTM_IDS = [problem.make_id() for problem in LSTM_PROBLEMS]
 
 PERMUTE_PROBLEMS = make_test_problems(PERMUTE_SETTINGS)
 PERMUTE_IDS = [problem.make_id() for problem in PERMUTE_PROBLEMS]
@@ -92,12 +90,8 @@ def test_param_jac_t_mat_prod(
 
 @pytest.mark.parametrize(
     "problem",
-    NO_LOSS_PROBLEMS
-    + RNN_PROBLEMS
-    + PERMUTE_PROBLEMS
-    + LSTM_PROBLEMS
-    + BATCH_NORM_PROBLEMS,
-    ids=NO_LOSS_IDS + RNN_IDS + PERMUTE_IDS + LSTM_IDS + BATCH_NORM_IDS,
+    NO_LOSS_PROBLEMS + RNN_PROBLEMS + PERMUTE_PROBLEMS + BATCH_NORM_PROBLEMS,
+    ids=NO_LOSS_IDS + RNN_IDS + PERMUTE_IDS + BATCH_NORM_IDS,
 )
 def test_jac_mat_prod(problem: DerivativesTestProblem, V: int = 3) -> None:
     """Test the Jacobian-matrix product.
@@ -118,12 +112,8 @@ def test_jac_mat_prod(problem: DerivativesTestProblem, V: int = 3) -> None:
 
 @pytest.mark.parametrize(
     "problem",
-    NO_LOSS_PROBLEMS
-    + RNN_PROBLEMS
-    + PERMUTE_PROBLEMS
-    + LSTM_PROBLEMS
-    + BATCH_NORM_PROBLEMS,
-    ids=NO_LOSS_IDS + RNN_IDS + PERMUTE_IDS + LSTM_IDS + BATCH_NORM_IDS,
+    NO_LOSS_PROBLEMS + RNN_PROBLEMS + PERMUTE_PROBLEMS + BATCH_NORM_PROBLEMS,
+    ids=NO_LOSS_IDS + RNN_IDS + PERMUTE_IDS + BATCH_NORM_IDS,
 )
 def test_jac_t_mat_prod(problem: DerivativesTestProblem, request, V: int = 3) -> None:
     """Test the transposed Jacobian-matrix product.
@@ -359,7 +349,9 @@ def test_ea_jac_t_mat_jac_prod(problem: DerivativesTestProblem, request) -> None
     problem.tear_down()
 
 
-@fixture(params=PROBLEMS + BATCH_NORM_PROBLEMS, ids=lambda p: p.make_id())
+@fixture(
+    params=PROBLEMS + BATCH_NORM_PROBLEMS + RNN_PROBLEMS, ids=lambda p: p.make_id()
+)
 def problem(request) -> DerivativesTestProblem:
     """Set seed, create tested layer and data. Finally clean up.
 
