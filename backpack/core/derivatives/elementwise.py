@@ -1,6 +1,9 @@
 """Base class for more flexible Jacobians/Hessians of activation functions."""
 
-from torch import einsum
+from typing import List, Tuple
+
+from torch import Tensor, einsum
+from torch.nn import Module
 
 from backpack.core.derivatives.basederivatives import BaseDerivatives
 
@@ -20,18 +23,24 @@ class ElementwiseDerivatives(BaseDerivatives):
           - If the activation is piece-wise linear: `hessian_is_zero`, else `d2f`.
     """
 
-    def df(self, module, g_inp, g_out):
+    def df(
+        self,
+        module: Module,
+        g_inp: Tuple[Tensor],
+        g_out: Tuple[Tensor],
+        subsampling: List[int] = None,
+    ):
         """Elementwise first derivative.
 
         Args:
-            module (torch.nn.Module): PyTorch activation function module.
-            g_inp ([torch.Tensor]): Gradients of the module w.r.t. its inputs.
-            g_out ([torch.Tensor]): Gradients of the module w.r.t. its outputs.
+            module: PyTorch activation function module.
+            g_inp: Gradients of the module w.r.t. its inputs.
+            g_out: Gradients of the module w.r.t. its outputs.
+            subsampling: Indices of active samples. ``None`` means all samples.
 
         Returns:
-            (torch.Tensor): Tensor containing the derivatives `f'(input[i]) ∀ i`.
+            Tensor containing the derivatives `f'(input[i]) ∀ i`.
         """
-
         raise NotImplementedError("First derivatives not implemented")
 
     def d2f(self, module, g_inp, g_out):
@@ -73,11 +82,18 @@ class ElementwiseDerivatives(BaseDerivatives):
         """
         return True
 
-    def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
+    def _jac_t_mat_prod(
+        self,
+        module: Module,
+        g_inp: Tuple[Tensor],
+        g_out: Tuple[Tensor],
+        mat: Tensor,
+        subsampling: List[int] = None,
+    ) -> Tensor:
         self._no_inplace(module)
 
-        df_elementwise = self.df(module, g_inp, g_out)
-        return einsum("...,v...->v...", (df_elementwise, mat))
+        df_elementwise = self.df(module, g_inp, g_out, subsampling=subsampling)
+        return einsum("...,v...->v...", df_elementwise, mat)
 
     def _jac_mat_prod(self, module, g_inp, g_out, mat):
         self._no_inplace(module)
@@ -89,21 +105,22 @@ class ElementwiseDerivatives(BaseDerivatives):
 
         N = module.input0.size(0)
         df_flat = self.df(module, g_inp, g_out).reshape(N, -1)
-        return einsum("ni,nj,ij->ij", (df_flat, df_flat, mat)) / N
+        return einsum("ni,nj,ij->ij", df_flat, df_flat, mat) / N
 
     def _residual_mat_prod(self, module, g_inp, g_out, mat):
         residual = self.d2f(module, g_inp, g_out) * g_out[0]
-        return einsum("...,v...->v...", (residual, mat))
+        return einsum("...,v...->v...", residual, mat)
 
+    # TODO Deprecate after supporting torch >= 1.8.0 and full_backward_hook
     @staticmethod
-    def _no_inplace(module):
+    def _no_inplace(module: Module):
         """Do not support inplace modification.
 
         Jacobians/Hessians might be computed using the modified input instead
         of the original.
 
         Args:
-            module (torch.nn.Module): Elementwise activation module.
+            module: Elementwise activation module.
 
         Raises:
             NotImplementedError: If `module` has inplace option enabled.

@@ -3,10 +3,10 @@
 Average pooling can be expressed as convolution over grouped channels with a constant
 kernel.
 """
-from typing import Any, Tuple
+from typing import Any, List, Tuple
 
-import torch.nn
 from einops import rearrange
+from torch import Tensor, ones_like
 from torch.nn import Module
 
 from backpack.core.derivatives.basederivatives import BaseDerivatives
@@ -88,7 +88,7 @@ class AvgPoolNDDerivatives(BaseDerivatives):
         ).to(module.input0.device)
 
         convnd.weight.requires_grad = False
-        avg_kernel = torch.ones_like(convnd.weight) / convnd.weight.numel()
+        avg_kernel = ones_like(convnd.weight) / convnd.weight.numel()
         convnd.weight.data = avg_kernel
 
         return convnd(mat)
@@ -99,14 +99,20 @@ class AvgPoolNDDerivatives(BaseDerivatives):
 
         assert jmp_as_pool.shape == (V * N * C_out, 1) + module.output.shape[2:]
 
-    def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
+    def _jac_t_mat_prod(
+        self,
+        module: Module,
+        g_inp: Tuple[Tensor],
+        g_out: Tuple[Tensor],
+        mat: Tensor,
+        subsampling: List[int] = None,
+    ) -> Tensor:
         self.check_parameters(module)
 
         mat_as_pool = self.__make_single_channel(mat, module)
         jmp_as_pool = self.__apply_jacobian_t_of(module, mat_as_pool)
-        self.__check_jmp_in_as_pool(mat, jmp_as_pool, module)
 
-        return self.reshape_like_input(jmp_as_pool, module)
+        return self.reshape_like_input(jmp_as_pool, module, subsampling=subsampling)
 
     def __apply_jacobian_t_of(self, module, mat):
         stride, kernel_size, padding = self.get_avg_pool_parameters(module)
@@ -122,16 +128,10 @@ class AvgPoolNDDerivatives(BaseDerivatives):
         ).to(module.input0.device)
 
         convnd_t.weight.requires_grad = False
-        avg_kernel = torch.ones_like(convnd_t.weight) / convnd_t.weight.numel()
+        avg_kernel = ones_like(convnd_t.weight) / convnd_t.weight.numel()
         convnd_t.weight.data = avg_kernel
 
         V_N_C_in = mat.size(0)
         output_size = (V_N_C_in, C_for_conv_t) + tuple(module.input0.shape[2:])
 
         return convnd_t(mat, output_size=output_size)
-
-    def __check_jmp_in_as_pool(self, mat, jmp_as_pool, module):
-        V = mat.shape[0]
-        N, C_in = module.input0.shape[:2]
-
-        assert jmp_as_pool.shape == (V * N * C_in, 1) + module.input0.shape[2:]

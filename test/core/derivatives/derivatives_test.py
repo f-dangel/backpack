@@ -22,10 +22,12 @@ from warnings import warn
 
 import pytest
 import torch
-from pytest import fixture, skip
+from pytest import fixture, mark, skip
 from torch import Tensor
+from torch.nn.modules.batchnorm import BatchNorm1d, BatchNorm2d, BatchNorm3d
 
 from backpack.core.derivatives.convnd import weight_jac_t_save_memory
+from backpack.custom_module.permute import Permute
 from backpack.utils.subsampling import get_batch_axis
 
 PROBLEMS = make_test_problems(SETTINGS)
@@ -83,7 +85,8 @@ def test_jac_mat_prod(problem: DerivativesTestProblem, V: int = 3) -> None:
     problem.tear_down()
 
 
-@pytest.mark.parametrize(
+@mark.parametrize("subsampling", SUBSAMPLINGS, ids=SUBSAMPLING_IDS)
+@mark.parametrize(
     "problem",
     NO_LOSS_PROBLEMS
     + RNN_PROBLEMS
@@ -92,26 +95,39 @@ def test_jac_mat_prod(problem: DerivativesTestProblem, V: int = 3) -> None:
     + BATCH_NORM_PROBLEMS,
     ids=NO_LOSS_IDS + RNN_IDS + PERMUTE_IDS + LSTM_IDS + BATCH_NORM_IDS,
 )
-def test_jac_t_mat_prod(problem: DerivativesTestProblem, request, V: int = 3) -> None:
+def test_jac_t_mat_prod(
+    problem: DerivativesTestProblem,
+    subsampling: Union[None, List[int]],
+    request,
+    V: int = 3,
+) -> None:
     """Test the transposed Jacobian-matrix product.
 
     Args:
         problem: Problem for derivative test.
+        subsampling: Indices of active samples.
         request: Pytest request, used for getting id.
         V: Number of vectorized transposed Jacobian-vector products. Default: ``3``.
     """
     problem.set_up()
-    mat = torch.rand(V, *problem.output_shape).to(problem.device)
+    _skip_permute_with_subsampling(problem, subsampling)
+    _skip_batch_norm_train_mode_with_subsampling(problem, subsampling)
+    _skip_if_subsampling_conflict(problem, subsampling)
+    mat = rand_mat_like_output(V, problem, subsampling=subsampling)
 
     if all(
         string in request.node.callspec.id for string in ["AdaptiveAvgPool3d", "cuda"]
     ):
         with pytest.warns(UserWarning):
-            BackpackDerivatives(problem).jac_t_mat_prod(mat)
+            BackpackDerivatives(problem).jac_t_mat_prod(mat, subsampling=subsampling)
         problem.tear_down()
         return
-    backpack_res = BackpackDerivatives(problem).jac_t_mat_prod(mat)
-    autograd_res = AutogradDerivatives(problem).jac_t_mat_prod(mat)
+    backpack_res = BackpackDerivatives(problem).jac_t_mat_prod(
+        mat, subsampling=subsampling
+    )
+    autograd_res = AutogradDerivatives(problem).jac_t_mat_prod(
+        mat, subsampling=subsampling
+    )
 
     check_sizes_and_values(autograd_res, backpack_res)
     problem.tear_down()
@@ -148,7 +164,7 @@ def test_bias_ih_l0_jac_t_mat_prod(
     """
     problem.set_up()
     _skip_if_subsampling_conflict(problem, subsampling)
-    mat = rand_mat_like_output(V, problem, subsampling=subsampling).to(problem.device)
+    mat = rand_mat_like_output(V, problem, subsampling=subsampling)
 
     autograd_res = AutogradDerivatives(problem).bias_ih_l0_jac_t_mat_prod(
         mat, sum_batch, subsampling=subsampling
@@ -184,7 +200,7 @@ def test_bias_hh_l0_jac_t_mat_prod(
     """
     problem.set_up()
     _skip_if_subsampling_conflict(problem, subsampling)
-    mat = rand_mat_like_output(V, problem, subsampling=subsampling).to(problem.device)
+    mat = rand_mat_like_output(V, problem, subsampling=subsampling)
 
     autograd_res = AutogradDerivatives(problem).bias_hh_l0_jac_t_mat_prod(
         mat, sum_batch, subsampling=subsampling
@@ -220,7 +236,7 @@ def test_weight_ih_l0_jac_t_mat_prod(
     """
     problem.set_up()
     _skip_if_subsampling_conflict(problem, subsampling)
-    mat = rand_mat_like_output(V, problem, subsampling=subsampling).to(problem.device)
+    mat = rand_mat_like_output(V, problem, subsampling=subsampling)
 
     autograd_res = AutogradDerivatives(problem).weight_ih_l0_jac_t_mat_prod(
         mat, sum_batch, subsampling=subsampling
@@ -256,7 +272,7 @@ def test_weight_hh_l0_jac_t_mat_prod(
     """
     problem.set_up()
     _skip_if_subsampling_conflict(problem, subsampling)
-    mat = rand_mat_like_output(V, problem, subsampling=subsampling).to(problem.device)
+    mat = rand_mat_like_output(V, problem, subsampling=subsampling)
 
     autograd_res = AutogradDerivatives(problem).weight_hh_l0_jac_t_mat_prod(
         mat, sum_batch, subsampling=subsampling
@@ -325,7 +341,7 @@ def rand_mat_like_output(
         N_axis = get_batch_axis(problem.module)
         subsample_shape[N_axis] = len(subsampling)
 
-    return torch.rand(V, *subsample_shape)
+    return torch.rand(V, *subsample_shape, device=problem.device)
 
 
 @pytest.mark.parametrize(
@@ -580,12 +596,39 @@ def problem_weight_jac_t_mat(
     _skip_if_subsampling_conflict(problem_weight, subsampling)
 
     V = 3
-    mat = rand_mat_like_output(V, problem_weight, subsampling=subsampling).to(
-        problem_weight.device
-    )
+    mat = rand_mat_like_output(V, problem_weight, subsampling=subsampling)
 
     yield (problem_weight, subsampling, mat)
     del mat
+
+
+def _skip_permute_with_subsampling(
+    problem: DerivativesTestProblem, subsampling: Union[List[int], None]
+) -> None:
+    """Skip Permute module when sub-sampling is turned on.
+
+    Permute does not assume a batch axis.
+
+    Args:
+        problem: Test case.
+        subsampling: Indices of active samples.
+    """
+    if isinstance(problem.module, Permute) and subsampling is not None:
+        skip(f"Skipping Permute with sub-sampling: {subsampling}")
+
+
+def _skip_batch_norm_train_mode_with_subsampling(
+    problem: DerivativesTestProblem, subsampling: Union[List[int], None]
+) -> None:
+    """Skip BatchNorm in train mode when sub-sampling is turned on.
+
+    Args:
+        problem: Test case.
+        subsampling: Indices of active samples.
+    """
+    if isinstance(problem.module, (BatchNorm1d, BatchNorm2d, BatchNorm3d)):
+        if problem.module.train and subsampling is not None:
+            skip(f"Skipping BatchNorm in train mode with sub-sampling: {subsampling}")
 
 
 def _skip_if_subsampling_conflict(
@@ -598,7 +641,7 @@ def _skip_if_subsampling_conflict(
         subsampling: Indices of active samples.
     """
     N = problem.input_shape[get_batch_axis(problem.module)]
-    enough_samples = subsampling is None or N >= max(subsampling)
+    enough_samples = subsampling is None or N > max(subsampling)
     if not enough_samples:
         skip("Not enough samples.")
 
@@ -649,9 +692,7 @@ def problem_bias_jac_t_mat(
     _skip_if_subsampling_conflict(problem_bias, subsampling)
 
     V = 3
-    mat = rand_mat_like_output(V, problem_bias, subsampling=subsampling).to(
-        problem_bias.device
-    )
+    mat = rand_mat_like_output(V, problem_bias, subsampling=subsampling)
 
     yield (problem_bias, subsampling, mat)
     del mat

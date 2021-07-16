@@ -7,6 +7,7 @@ from torch import Tensor
 from torch.nn import Module
 
 from backpack.core.derivatives import shape_check
+from backpack.utils.subsampling import get_batch_axis
 
 
 class BaseDerivatives(ABC):
@@ -80,7 +81,12 @@ class BaseDerivatives(ABC):
     @shape_check.jac_t_mat_prod_accept_vectors
     @shape_check.jac_t_mat_prod_check_shapes
     def jac_t_mat_prod(
-        self, module: Module, g_inp: Tuple[Tensor], g_out: Tuple[Tensor], mat: Tensor
+        self,
+        module: Module,
+        g_inp: Tuple[Tensor],
+        g_out: Tuple[Tensor],
+        mat: Tensor,
+        subsampling: List[int] = None,
     ) -> Tensor:
         """Apply transposed input-ouput Jacobian of module output to a matrix.
 
@@ -93,16 +99,25 @@ class BaseDerivatives(ABC):
             g_inp: input gradients
             g_out: output gradients
             mat: Matrix the transposed Jacobian will be applied to.
-                Must have shape [V, N, C_out, H_out, ...].
+                Must have shape ``[V, *module.output.shape]``; but if used with
+                sub-sampling, the batch dimension is replaced by ``len(subsampling)``.
+            subsampling: Indices of samples along the output's batch dimension that
+                should be considered. Defaults to ``None`` (use all samples).
 
         Returns:
             Transposed Jacobian-matrix product.
-            Has shape [V, N, C_in, H_in, ...].
+            Has shape ``[V, *module.input0.shape]``; but if used with sub-sampling,
+            the batch dimension is replaced by ``len(subsampling)``.
         """
-        return self._jac_t_mat_prod(module, g_inp, g_out, mat)
+        return self._jac_t_mat_prod(module, g_inp, g_out, mat, subsampling=subsampling)
 
     def _jac_t_mat_prod(
-        self, module: Module, g_inp: Tuple[Tensor], g_out: Tuple[Tensor], mat: Tensor
+        self,
+        module: Module,
+        g_inp: Tuple[Tensor],
+        g_out: Tuple[Tensor],
+        mat: Tensor,
+        subsampling: List[int] = None,
     ) -> Tensor:
         raise NotImplementedError
 
@@ -244,34 +259,39 @@ class BaseDerivatives(ABC):
         raise NotImplementedError
 
     @staticmethod
-    def _reshape_like(mat: Tensor, like: Tensor) -> Tensor:
+    def _reshape_like(mat: Tensor, shape: Tuple[int]) -> Tensor:
         """Reshape as like with trailing and additional 0th dimension.
 
         If like is [N, C, H, ...], returns shape [-1, N, C, H, ...]
 
         Args:
-            mat: matrix to reshape
-            like: matrix with target shape
+            mat: Matrix to reshape.
+            shape: Trailing target shape.
 
         Returns:
             reshaped matrix
         """
-        V = -1
-        shape = (V, *like.shape)
-        return mat.reshape(shape)
+        return mat.reshape(-1, *shape)
 
     @classmethod
-    def reshape_like_input(cls, mat: Tensor, module: Module) -> Tensor:
+    def reshape_like_input(
+        cls, mat: Tensor, module: Module, subsampling: List[int] = None
+    ) -> Tensor:
         """Reshapes matrix according to input.
 
         Args:
             mat: matrix to reshape
             module: module which input shape is used
+            subsampling: Indices of active samples. ``None`` means use all samples.
 
         Returns:
             reshaped matrix
         """
-        return cls._reshape_like(mat, module.input0)
+        shape = list(module.input0.shape)
+        if subsampling is not None:
+            shape[get_batch_axis(module)] = len(subsampling)
+
+        return cls._reshape_like(mat, shape)
 
     @classmethod
     def reshape_like_output(cls, mat: Tensor, module: Module) -> Tensor:
@@ -284,7 +304,7 @@ class BaseDerivatives(ABC):
         Returns:
             reshaped matrix
         """
-        return cls._reshape_like(mat, module.output)
+        return cls._reshape_like(mat, module.output.shape)
 
 
 class BaseParameterDerivatives(BaseDerivatives, ABC):

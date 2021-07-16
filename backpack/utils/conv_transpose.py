@@ -1,11 +1,11 @@
 """Utility functions for extracting transpose convolution BackPACK quantities."""
 
-from typing import Type, Union
+from typing import Callable, Type
 
 import torch
 from einops import rearrange
 from torch import einsum
-from torch.nn import ConvTranspose1d, ConvTranspose2d, ConvTranspose3d
+from torch.nn import ConvTranspose1d, ConvTranspose2d, ConvTranspose3d, Module
 from torch.nn.functional import conv_transpose1d, conv_transpose2d, conv_transpose3d
 
 from backpack.utils.conv import extract_bias_diagonal as conv_extract_bias_diagonal
@@ -13,8 +13,8 @@ from backpack.utils.conv import extract_bias_diagonal as conv_extract_bias_diago
 
 def get_conv_transpose_module(
     N: int,
-) -> Union[Type[ConvTranspose1d], Type[ConvTranspose2d], Type[ConvTranspose3d]]:
-    """Return the PyTorch module class of N-dimensional transposeconvolution.
+) -> Type[Module]:
+    """Return the PyTorch module class of N-dimensional transpose convolution.
 
     Args:
         N: Transpose convolution dimension.
@@ -26,6 +26,22 @@ def get_conv_transpose_module(
         1: ConvTranspose1d,
         2: ConvTranspose2d,
         3: ConvTranspose3d,
+    }[N]
+
+
+def get_conv_transpose_function(N: int) -> Callable:
+    """Return the PyTorch function of N-dimensional transpose convolution.
+
+    Args:
+        N: Transpose convolution dimension.
+
+    Returns:
+        Transpose convolution function.
+    """
+    return {
+        1: conv_transpose1d,
+        2: conv_transpose2d,
+        3: conv_transpose3d,
     }[N]
 
 
@@ -130,15 +146,9 @@ def unfold_by_conv_transpose(input, module):
         weight = weight.repeat(*repeat)
         return weight.to(module.weight.device)
 
-    def get_conv_transpose():
-        functional_for_module_cls = {
-            torch.nn.ConvTranspose1d: conv_transpose1d,
-            torch.nn.ConvTranspose2d: conv_transpose2d,
-            torch.nn.ConvTranspose3d: conv_transpose3d,
-        }
-        return functional_for_module_cls[module.__class__]
+    conv_dim = input.dim() - 2
+    conv_transpose = get_conv_transpose_function(conv_dim)
 
-    conv_transpose = get_conv_transpose()
     unfold = conv_transpose(
         input,
         make_weight().to(module.weight.device),

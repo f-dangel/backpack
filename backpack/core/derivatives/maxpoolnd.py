@@ -1,28 +1,31 @@
+from typing import List, Tuple, Union
+
 from einops import rearrange
-from torch import zeros
+from torch import Tensor, zeros
+from torch.nn import MaxPool1d, MaxPool2d, MaxPool3d
 from torch.nn.functional import max_pool1d, max_pool2d, max_pool3d
 
 from backpack.core.derivatives.basederivatives import BaseDerivatives
+from backpack.utils.subsampling import subsample
 
 
 class MaxPoolNDDerivatives(BaseDerivatives):
-    def __init__(self, N):
+    def __init__(self, N: int):
         self.N = N
-        if self.N == 1:
-            self.maxpool = max_pool1d
-        elif self.N == 2:
-            self.maxpool = max_pool2d
-        elif self.N == 3:
-            self.maxpool = max_pool3d
-        else:
-            raise ValueError(
-                "{}-dimensional Maxpool. is not implemented.".format(self.N)
-            )
+        self.maxpool = {
+            1: max_pool1d,
+            2: max_pool2d,
+            3: max_pool3d,
+        }[N]
 
     # TODO: Do not recompute but get from forward pass of module
-    def get_pooling_idx(self, module):
+    def get_pooling_idx(
+        self,
+        module: Union[MaxPool1d, MaxPool2d, MaxPool3d],
+        subsampling: List[int] = None,
+    ) -> Tensor:
         _, pool_idx = self.maxpool(
-            module.input0,
+            subsample(module.input0, subsampling=subsampling),
             kernel_size=module.kernel_size,
             stride=module.stride,
             padding=module.padding,
@@ -48,22 +51,9 @@ class MaxPoolNDDerivatives(BaseDerivatives):
         """
         device = mat.device
 
-        if self.N == 1:
-            N, C, L_in = module.input0.size()
-            _, _, L_out = module.output.size()
-            in_pixels = L_in
-            out_pixels = L_out
-        elif self.N == 2:
-            N, C, H_in, W_in = module.input0.size()
-            _, _, H_out, W_out = module.output.size()
-            in_pixels = H_in * W_in
-            out_pixels = H_out * W_out
-        elif self.N == 3:
-            N, C, D_in, H_in, W_in = module.input0.size()
-            _, _, D_out, H_out, W_out = module.output.size()
-            in_pixels = D_in * H_in * W_in
-            out_pixels = D_out * H_out * W_out
-
+        N, C = module.input0.shape[:2]
+        in_pixels = module.input0.shape[2:].numel()
+        out_pixels = module.output.shape[2:].numel()
         in_features = C * in_pixels
 
         pool_idx = self.get_pooling_idx(module).view(N, C, out_pixels)
@@ -102,46 +92,56 @@ class MaxPoolNDDerivatives(BaseDerivatives):
         pool_idx = self.__pool_idx_for_jac(module, V)
         return mat.gather(N_axis, pool_idx)
 
-    def __pool_idx_for_jac(self, module, V):
+    def __pool_idx_for_jac(
+        self,
+        module: Union[MaxPool1d, MaxPool2d, MaxPool3d],
+        V: int,
+        subsampling: List[int] = None,
+    ) -> Tensor:
         """Manipulated pooling indices ready-to-use in jac(t)."""
-        pool_idx = self.get_pooling_idx(module)
+        pool_idx = self.get_pooling_idx(module, subsampling=subsampling)
         pool_idx = rearrange(pool_idx, "n c ... -> n c (...)")
 
-        V_axis = 0
+        return pool_idx.unsqueeze(0).expand(V, -1, -1, -1)
 
-        return pool_idx.unsqueeze(V_axis).expand(V, -1, -1, -1)
-
-    def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
+    def _jac_t_mat_prod(
+        self,
+        module: Union[MaxPool1d, MaxPool2d, MaxPool3d],
+        g_inp: Tuple[Tensor],
+        g_out: Tuple[Tensor],
+        mat: Tensor,
+        subsampling: List[int] = None,
+    ) -> Tensor:
         mat_as_pool = rearrange(mat, "v n c ... -> v n c (...)")
-        jmp_as_pool = self.__apply_jacobian_t_of(module, mat_as_pool)
-        return self.reshape_like_input(jmp_as_pool, module)
+        jmp_as_pool = self.__apply_jacobian_t_of(
+            module, mat_as_pool, subsampling=subsampling
+        )
+        return self.reshape_like_input(jmp_as_pool, module, subsampling=subsampling)
 
-    def __apply_jacobian_t_of(self, module, mat):
+    def __apply_jacobian_t_of(
+        self,
+        module: Union[MaxPool1d, MaxPool2d, MaxPool3d],
+        mat: Tensor,
+        subsampling: List[int] = None,
+    ) -> Tensor:
         V = mat.shape[0]
-        result = self.__zero_for_jac_t(module, V, mat.device)
-        pool_idx = self.__pool_idx_for_jac(module, V)
+        result = self.__zero_for_jac_t(module, V, subsampling=subsampling)
+        pool_idx = self.__pool_idx_for_jac(module, V, subsampling=subsampling)
 
         N_axis = 3
         result.scatter_add_(N_axis, pool_idx, mat)
         return result
 
-    def __zero_for_jac_t(self, module, V, device):
-        if self.N == 1:
-            N, C_out, _ = module.output.shape
-            _, _, L_in = module.input0.size()
+    def __zero_for_jac_t(
+        self,
+        module: Union[MaxPool1d, MaxPool2d, MaxPool3d],
+        V: int,
+        subsampling: List[int] = None,
+    ) -> Tensor:
+        N, C_out = module.output.shape[:2]
+        in_pixels = module.input0.shape[2:].numel()
+        N = N if subsampling is None else len(subsampling)
 
-            shape = (V, N, C_out, L_in)
+        shape = (V, N, C_out, in_pixels)
 
-        elif self.N == 2:
-            N, C_out, _, _ = module.output.shape
-            _, _, H_in, W_in = module.input0.size()
-
-            shape = (V, N, C_out, H_in * W_in)
-
-        elif self.N == 3:
-            N, C_out, _, _, _ = module.output.shape
-            _, _, D_in, H_in, W_in = module.input0.size()
-
-            shape = (V, N, C_out, D_in * H_in * W_in)
-
-        return zeros(shape, device=device)
+        return zeros(shape, device=module.output.device)

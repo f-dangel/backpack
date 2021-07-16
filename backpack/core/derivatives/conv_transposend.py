@@ -4,48 +4,29 @@ from typing import List, Tuple, Union
 from einops import rearrange
 from numpy import prod
 from torch import Tensor, einsum
-from torch.nn import ConvTranspose1d, ConvTranspose2d, ConvTranspose3d
-from torch.nn.functional import (
-    conv1d,
-    conv2d,
-    conv3d,
-    conv_transpose1d,
-    conv_transpose2d,
-    conv_transpose3d,
-)
+from torch.nn import ConvTranspose1d, ConvTranspose2d, ConvTranspose3d, Module
 from torch.nn.grad import _grad_input_padding
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
-from backpack.utils.conv_transpose import unfold_by_conv_transpose
+from backpack.utils.conv import get_conv_function
+from backpack.utils.conv_transpose import (
+    get_conv_transpose_function,
+    unfold_by_conv_transpose,
+)
 from backpack.utils.subsampling import subsample
 
 
 class ConvTransposeNDDerivatives(BaseParameterDerivatives):
     """Base class for partial derivatives of transpose convolution."""
 
-    def __init__(self, N):
-        """Store convolution dimension and operations.
+    def __init__(self, N: int):
+        """Store transpose convolution dimension and operations.
 
         Args:
-            N (int): Convolution dimension. Must be ``1``, ``2``, or ``3``.
-
-        Raises:
-            ValueError: If convolution dimension is unsupported.
+            N: Transpose convolution dimension.
         """
-        if N == 1:
-            self.module = ConvTranspose1d
-            self.conv_func = conv1d
-            self.conv_transpose_func = conv_transpose1d
-        elif N == 2:
-            self.module = ConvTranspose2d
-            self.conv_func = conv2d
-            self.conv_transpose_func = conv_transpose2d
-        elif N == 3:
-            self.module = ConvTranspose3d
-            self.conv_func = conv3d
-            self.conv_transpose_func = conv_transpose3d
-        else:
-            raise ValueError(f"ConvTranspose{N}d not supported.")
+        self.conv_func = get_conv_function(N)
+        self.conv_transpose_func = get_conv_transpose_function(N)
         self.conv_dims = N
 
     def hessian_is_zero(self, module):
@@ -150,7 +131,7 @@ class ConvTransposeNDDerivatives(BaseParameterDerivatives):
             dilation=module.dilation,
         )
 
-        jac_t_mat = conv_transpose1d(
+        jac_t_mat = self.conv_transpose_func(
             input=mat,
             weight=module.weight,
             bias=None,
@@ -160,14 +141,22 @@ class ConvTransposeNDDerivatives(BaseParameterDerivatives):
             groups=module.groups,
             dilation=module.dilation,
         )
+
         return jac_t_mat
 
-    def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
+    def _jac_t_mat_prod(
+        self,
+        module: Module,
+        g_inp: Tuple[Tensor],
+        g_out: Tuple[Tensor],
+        mat: Tensor,
+        subsampling: List[int] = None,
+    ) -> Tensor:
         mat_as_conv = rearrange(mat, "v n c ... -> (v n) c ...")
         jmp_as_conv = self.__jac_t(module, mat_as_conv)
-        return self.reshape_like_input(jmp_as_conv, module)
+        return self.reshape_like_input(jmp_as_conv, module, subsampling=subsampling)
 
-    def __jac_t(self, module, mat):
+    def __jac_t(self, module: Module, mat: Tensor) -> Tensor:
         jac_t = self.conv_func(
             mat,
             module.weight,
