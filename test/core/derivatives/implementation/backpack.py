@@ -1,5 +1,6 @@
 """Contains derivative calculation with BackPACK."""
 from test.core.derivatives.implementation.base import DerivativesImplementation
+from typing import List
 
 import torch
 from torch import Tensor
@@ -36,22 +37,16 @@ class BackpackDerivatives(DerivativesImplementation):
             self.problem.module, None, None, mat
         )
 
-    def weight_jac_t_mat_prod(self, mat, sum_batch, subsampling=None):  # noqa: D102
+    def param_jac_t_mat_prod(
+        self,
+        param_str: str,
+        mat: Tensor,
+        sum_batch: bool,
+        subsampling: List[int] = None,
+    ) -> Tensor:  # noqa: D102
         self.store_forward_io()
         return self.problem.derivative.param_mjp(
-            "weight",
-            self.problem.module,
-            None,
-            None,
-            mat,
-            sum_batch=sum_batch,
-            subsampling=subsampling,
-        )
-
-    def bias_jac_t_mat_prod(self, mat, sum_batch, subsampling=None):  # noqa: D102
-        self.store_forward_io()
-        return self.problem.derivative.param_mjp(
-            "bias",
+            param_str,
             self.problem.module,
             None,
             None,
@@ -70,58 +65,6 @@ class BackpackDerivatives(DerivativesImplementation):
         self.store_forward_io()
         return self.problem.derivative.bias_jac_mat_prod(
             self.problem.module, None, None, mat
-        )
-
-    def bias_ih_l0_jac_t_mat_prod(self, mat, sum_batch, subsampling=None):  # noqa: D102
-        self.store_forward_io()
-        return self.problem.derivative.param_mjp(
-            "bias_ih_l0",
-            self.problem.module,
-            None,
-            None,
-            mat,
-            sum_batch=sum_batch,
-            subsampling=subsampling,
-        )
-
-    def bias_hh_l0_jac_t_mat_prod(self, mat, sum_batch, subsampling=None):  # noqa: D102
-        self.store_forward_io()
-        return self.problem.derivative.param_mjp(
-            "bias_hh_l0",
-            self.problem.module,
-            None,
-            None,
-            mat,
-            sum_batch=sum_batch,
-            subsampling=subsampling,
-        )
-
-    def weight_ih_l0_jac_t_mat_prod(
-        self, mat, sum_batch, subsampling=None
-    ):  # noqa: D102
-        self.store_forward_io()
-        return self.problem.derivative.param_mjp(
-            "weight_ih_l0",
-            self.problem.module,
-            None,
-            None,
-            mat,
-            sum_batch=sum_batch,
-            subsampling=subsampling,
-        )
-
-    def weight_hh_l0_jac_t_mat_prod(
-        self, mat, sum_batch, subsampling=None
-    ):  # noqa: D102
-        self.store_forward_io()
-        return self.problem.derivative.param_mjp(
-            "weight_hh_l0",
-            self.problem.module,
-            None,
-            None,
-            mat,
-            sum_batch=sum_batch,
-            subsampling=subsampling,
         )
 
     def ea_jac_t_mat_jac_prod(self, mat):  # noqa: D102

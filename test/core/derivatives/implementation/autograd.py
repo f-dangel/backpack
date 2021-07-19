@@ -42,38 +42,25 @@ class AutogradDerivatives(DerivativesImplementation):
     def jac_t_mat_prod(self, mat):  # noqa: D102
         return stack([self.jac_t_vec_prod(vec) for vec in mat])
 
-    def weight_jac_t_mat_prod(self, mat, sum_batch, subsampling=None):  # noqa: D102
-        return self.param_jac_t_mat_prod(
-            "weight", mat, sum_batch, subsampling=subsampling
-        )
-
-    def bias_jac_t_mat_prod(self, mat, sum_batch, subsampling=None):  # noqa: D102
-        return self.param_jac_t_mat_prod(
-            "bias", mat, sum_batch, subsampling=subsampling
-        )
-
-    def bias_ih_l0_jac_t_mat_prod(self, mat, sum_batch, subsampling=None):  # noqa: D102
-        return self.param_jac_t_mat_prod(
-            "bias_ih_l0", mat, sum_batch, axis_batch=1, subsampling=subsampling
-        )
-
-    def bias_hh_l0_jac_t_mat_prod(self, mat, sum_batch, subsampling=None):  # noqa: D102
-        return self.param_jac_t_mat_prod(
-            "bias_ih_l0", mat, sum_batch, axis_batch=1, subsampling=subsampling
-        )
-
-    def weight_ih_l0_jac_t_mat_prod(
-        self, mat, sum_batch, subsampling=None
-    ):  # noqa: D102
-        return self.param_jac_t_mat_prod(
-            "weight_ih_l0", mat, sum_batch, axis_batch=1, subsampling=subsampling
-        )
-
-    def weight_hh_l0_jac_t_mat_prod(
-        self, mat, sum_batch, subsampling=None
-    ):  # noqa: D102
-        return self.param_jac_t_mat_prod(
-            "weight_hh_l0", mat, sum_batch, axis_batch=1, subsampling=subsampling
+    def param_jac_t_mat_prod(
+        self,
+        param_str: str,
+        mat: Tensor,
+        sum_batch: bool,
+        subsampling: List[int] = None,
+    ) -> Tensor:  # noqa: D102
+        axis_batch = 0 if param_str in ("weight", "bias") else 1
+        return stack(
+            [
+                self.param_jac_t_vec_prod(
+                    param_str,
+                    vec,
+                    sum_batch,
+                    axis_batch=axis_batch,
+                    subsampling=subsampling,
+                )
+                for vec in mat
+            ]
         )
 
     def param_jac_t_vec_prod(
@@ -114,35 +101,6 @@ class AutogradDerivatives(DerivativesImplementation):
             jac_t_sample_prods = jac_t_sample_prods.sum(0)
 
         return jac_t_sample_prods
-
-    def param_jac_t_mat_prod(
-        self,
-        name: str,
-        mat: Tensor,
-        sum_batch: bool,
-        axis_batch: int = 0,
-        subsampling: List[int] = None,
-    ) -> Tensor:
-        """Compute the product of jac_t and the given matrix.
-
-        Args:
-            name: name of parameter for derivative
-            mat: matrix which to multiply
-            sum_batch: whether to sum along batch axis
-            axis_batch: Batch axis, counted without the first axis. Defaults to 0.
-            subsampling: Indices of active samples. Default: ``None`` (all).
-
-        Returns:
-            product of jac_t and mat
-        """
-        return stack(
-            [
-                self.param_jac_t_vec_prod(
-                    name, vec, sum_batch, axis_batch=axis_batch, subsampling=subsampling
-                )
-                for vec in mat
-            ]
-        )
 
     def weight_jac_mat_prod(self, mat) -> Tensor:
         """Product of jacobian and matrix.
