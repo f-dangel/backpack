@@ -49,6 +49,7 @@ backpack/hessianfree/ggnvp.py
 
 backpack/utils/linear.py
 backpack/utils/subsampling.py
+backpack/utils/errors.py
 backpack/utils/__init__.py
 
 test/extensions/automated_settings.py
