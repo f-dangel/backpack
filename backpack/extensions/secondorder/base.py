@@ -1,5 +1,5 @@
 """Contains base classes for second order extensions."""
-from backpack import BackpropExtension
+from backpack.extensions.backprop_extension import BackpropExtension
 
 
 class SecondOrderBackpropExtension(BackpropExtension):
