@@ -191,7 +191,7 @@ def hook_run_extensions(
             print("[DEBUG] Running extension", backpack_extension, "on", module)
         backpack_extension.apply(module, g_inp, g_out)
 
-    run_extension_hook(module)
+    post_extension_hook(module)
 
     if not (
         CTX.is_extension_active(
@@ -203,7 +203,7 @@ def hook_run_extensions(
         memory_cleanup(module)
 
 
-def run_extension_hook(module: Module) -> None:
+def post_extension_hook(module: Module) -> None:
     """Execute the post extensions hook on a module after all BackPACK extensions.
 
     See the `post_backward_hook` argument of the `backpack` context manager for details.
@@ -212,7 +212,7 @@ def run_extension_hook(module: Module) -> None:
         module: current module
 
     Raises:
-        RuntimeError: if any extension occurred during the backward hook
+        RuntimeError: if any error occurred during the backward hook
     """
     try:
         CTX.get_extension_hook()(module)
