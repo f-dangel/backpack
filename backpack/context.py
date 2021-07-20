@@ -4,7 +4,7 @@ from typing import Callable, Iterable, List, Tuple, Type
 from torch.nn import Module
 from torch.utils.hooks import RemovableHandle
 
-from backpack import BackpropExtension
+from backpack.extensions.backprop_extension import BackpropExtension
 from backpack.utils.hooks import no_op
 
 
