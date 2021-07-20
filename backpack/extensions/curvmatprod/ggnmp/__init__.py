@@ -18,7 +18,7 @@ from torch.nn import (
     ZeroPad2d,
 )
 
-from backpack.extensions.backprop_extension import BackpropExtension
+from backpack.extensions.secondorder.base import SecondOrderBackpropExtension
 
 from . import (
     activations,
@@ -33,7 +33,7 @@ from . import (
 )
 
 
-class GGNMP(BackpropExtension):
+class GGNMP(SecondOrderBackpropExtension):
     """
     Matrix-free Multiplication with the block-diagonal generalized Gauss-Newton/Fisher.
 
@@ -64,6 +64,3 @@ class GGNMP(BackpropExtension):
                 BatchNorm1d: batchnorm1d.GGNMPBatchNorm1d(),
             },
         )
-
-    def expects_backpropagation_quantities(self) -> bool:  # noqa: D102
-        return True
