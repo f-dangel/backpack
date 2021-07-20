@@ -14,7 +14,7 @@ from torch.nn import (
     Linear,
 )
 
-from backpack.extensions.backprop_extension import BackpropExtension
+from backpack.extensions.firstorder.base import FirstOrderBackpropExtension
 from backpack.extensions.firstorder.batch_l2_grad import (
     convnd,
     convtransposend,
@@ -23,7 +23,7 @@ from backpack.extensions.firstorder.batch_l2_grad import (
 )
 
 
-class BatchL2Grad(BackpropExtension):
+class BatchL2Grad(FirstOrderBackpropExtension):
     """The squared L2 norm of individual gradients in the minibatch.
 
     Stores the output in ``batch_l2`` as a tensor of size ``[N]``,
@@ -60,6 +60,3 @@ class BatchL2Grad(BackpropExtension):
                 RNN: rnn.BatchL2RNN(),
             },
         )
-
-    def expects_backpropagation_quantities(self) -> bool:  # noqa: D102
-        return False

@@ -16,7 +16,7 @@ from torch.nn import (
     Linear,
 )
 
-from backpack.extensions.backprop_extension import BackpropExtension
+from backpack.extensions.firstorder.base import FirstOrderBackpropExtension
 
 from . import (
     batchnorm1d,
@@ -31,7 +31,7 @@ from . import (
 )
 
 
-class BatchGrad(BackpropExtension):
+class BatchGrad(FirstOrderBackpropExtension):
     """Individual gradients for each sample in a minibatch.
 
     Stores the output in ``grad_batch`` as a ``[N x ...]`` tensor,
@@ -89,6 +89,3 @@ class BatchGrad(BackpropExtension):
             means all samples will be considered.
         """
         return self._subsampling
-
-    def expects_backpropagation_quantities(self) -> bool:  # noqa: D102
-        return False
