@@ -22,5 +22,5 @@ class DropoutDerivatives(ElementwiseDerivatives):
     ) -> Tensor:
         output = subsample(module.output, subsampling=subsampling)
         scaling = 1 / (1 - module.p)
-        mask = 1 - eq(output, 0.0).float()
+        mask = 1 - eq(output, 0.0).to(output.dtype)
         return mask * scaling
