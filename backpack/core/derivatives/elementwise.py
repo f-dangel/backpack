@@ -33,7 +33,7 @@ class ElementwiseDerivatives(BaseDerivatives):
         """Elementwise first derivative.
 
         Args:
-            module: PyTorch activation function module.
+            module: PyTorch activation module.
             g_inp: Gradients of the module w.r.t. its inputs.
             g_out: Gradients of the module w.r.t. its outputs.
             subsampling: Indices of active samples. ``None`` means all samples.
@@ -49,7 +49,7 @@ class ElementwiseDerivatives(BaseDerivatives):
         Only needs to be implemented for non piece-wise linear functions.
 
         Args:
-            module (torch.nn.Module): PyTorch activation function module.
+            module (torch.nn.Module): PyTorch activation module.
             g_inp ([torch.Tensor]): Gradients of the module w.r.t. its inputs.
             g_out ([torch.Tensor]): Gradients of the module w.r.t. its outputs.
 
@@ -66,7 +66,7 @@ class ElementwiseDerivatives(BaseDerivatives):
             - Only required if `hessian_is_diagonal` returns `True`.
 
         Args:
-            module (torch.nn.Module): PyTorch activation function module.
+            module (torch.nn.Module): PyTorch activation module.
             g_inp ([torch.Tensor]): Gradients of the module w.r.t. its inputs.
             g_out ([torch.Tensor]): Gradients of the module w.r.t. its outputs.
         """
