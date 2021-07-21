@@ -5,6 +5,9 @@ Within it, define the extension for each module.
 """
 from torch.nn import (
     RNN,
+    BatchNorm1d,
+    BatchNorm2d,
+    BatchNorm3d,
     Conv1d,
     Conv2d,
     Conv3d,
@@ -16,6 +19,7 @@ from torch.nn import (
 
 from backpack.extensions.backprop_extension import BackpropExtension
 from backpack.extensions.firstorder.batch_l2_grad import (
+    batchnorm_nd,
     convnd,
     convtransposend,
     linear,
@@ -58,5 +62,8 @@ class BatchL2Grad(BackpropExtension):
                 ConvTranspose2d: convtransposend.BatchL2ConvTranspose2d(),
                 ConvTranspose3d: convtransposend.BatchL2ConvTranspose3d(),
                 RNN: rnn.BatchL2RNN(),
+                BatchNorm1d: batchnorm_nd.BatchL2BatchNorm(),
+                BatchNorm2d: batchnorm_nd.BatchL2BatchNorm(),
+                BatchNorm3d: batchnorm_nd.BatchL2BatchNorm(),
             },
         )
