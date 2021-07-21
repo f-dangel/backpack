@@ -19,11 +19,9 @@ def batch_norm_raise_error_if_train(
     """
     if module.training:
         message = (
-            "There is a BatchNorm module in training mode. "
-            "It is possible to compute BackPACK quantities in training mode."
-            "Be aware that quantities might be different, i.e. individual "
-            "gradients are not well defined anymore."
-            "If you want to compute quantities in training mode delete this error."
+            "Encountered BatchNorm module in training mode. BackPACK's computation "
+            "will pass, but results like individual gradients may not be meaningful, "
+            "as BatchNorm mixes samples. Only proceed if you know what you are doing."
         )
         if raise_error:
             raise NotImplementedError(message)
