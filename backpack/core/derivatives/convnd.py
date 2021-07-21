@@ -1,5 +1,6 @@
 import warnings
 from typing import List, Tuple, Union
+from warnings import warn
 
 from einops import rearrange, reduce
 from numpy import prod
@@ -133,23 +134,16 @@ class ConvNDDerivatives(BaseParameterDerivatives):
         save_memory = weight_jac_t_save_memory._SAVE_MEMORY
 
         if save_memory and self.conv_dims in [1, 2]:
-            return self.__higher_conv_weight_jac_t(
-                module, mat, sum_batch, subsampling=subsampling
-            )
-
+            weight_jac_t_func = self.__higher_conv_weight_jac_t
         else:
-
             if save_memory and self.conv_dims == 3:
-                warnings.warn(
-                    UserWarning(
-                        "Conv3d: Cannot save memory as there is no Conv4d."
-                        + " Fallback to more memory-intense method."
-                    )
+                warn(
+                    "Conv3d: Cannot save memory as there is no Conv4d."
+                    + " Fallback to more memory-intense method."
                 )
+            weight_jac_t_func = self.__same_conv_weight_jac_t
 
-            return self.__same_conv_weight_jac_t(
-                module, mat, sum_batch, subsampling=subsampling
-            )
+        return weight_jac_t_func(module, mat, sum_batch, subsampling=subsampling)
 
     def __same_conv_weight_jac_t(
         self,
