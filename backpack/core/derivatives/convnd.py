@@ -224,20 +224,9 @@ class ConvNDDerivatives(BaseParameterDerivatives):
 
         higher_conv_func = get_conv_function(self.conv_dims + 1)
 
-        if self.conv_dims == 1:
-            _, _, L_in = module.input0.size()
-            K_L_axis = 2
-            K_L = module.kernel_size[0]
-            spatial_dim = (C_in // G, L_in)
-            spatial_dim_axis = (1, V, 1, 1)
-            spatial_dim_new = (C_in // G, K_L)
-        else:
-            _, _, H_in, W_in = module.input0.size()
-            K_H_axis, K_W_axis = 2, 3
-            K_H, K_W = module.kernel_size
-            spatial_dim = (C_in // G, H_in, W_in)
-            spatial_dim_axis = (1, V, 1, 1, 1)
-            spatial_dim_new = (C_in // G, K_H, K_W)
+        spatial_dim = (C_in // G,) + module.input0.shape[2:]
+        spatial_dim_axis = (1, V) + tuple([1] * (self.conv_dims + 1))
+        spatial_dim_new = (C_in // G,) + module.weight.shape[2:]
 
         # Reshape to extract groups from the convolutional layer
         # Channels are seen as an extra spatial dimension with kernel size 1
@@ -265,10 +254,8 @@ class ConvNDDerivatives(BaseParameterDerivatives):
 
         # Because of rounding shapes when using non-default stride or dilation,
         # convolution result must be truncated to convolution kernel size
-        if self.conv_dims == 1:
-            conv = conv.narrow(K_L_axis, 0, K_L)
-        else:
-            conv = conv.narrow(K_H_axis, 0, K_H).narrow(K_W_axis, 0, K_W)
+        for axis in range(2, 2 + self.conv_dims):
+            conv = conv.narrow(axis, 0, module.weight.shape[axis])
 
         new_shape = [V, N, C_out, *spatial_dim_new]
         weight_grad = conv.reshape(*new_shape)
