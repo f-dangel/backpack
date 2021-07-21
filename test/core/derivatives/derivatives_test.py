@@ -17,6 +17,7 @@ from test.core.derivatives.permute_settings import PERMUTE_SETTINGS
 from test.core.derivatives.problem import DerivativesTestProblem, make_test_problems
 from test.core.derivatives.rnn_settings import RNN_SETTINGS as RNN_SETTINGS
 from test.core.derivatives.settings import SETTINGS
+from test.utils.skip_test import skip_adaptive_avg_pool3d_cuda
 from typing import List, Tuple, Union
 from warnings import warn
 
@@ -109,19 +110,14 @@ def test_jac_t_mat_prod(
         request: Pytest request, used for getting id.
         V: Number of vectorized transposed Jacobian-vector products. Default: ``3``.
     """
+    skip_adaptive_avg_pool3d_cuda(request)
+
     problem.set_up()
     _skip_permute_with_subsampling(problem, subsampling)
     _skip_batch_norm_train_mode_with_subsampling(problem, subsampling)
     _skip_if_subsampling_conflict(problem, subsampling)
     mat = rand_mat_like_output(V, problem, subsampling=subsampling)
 
-    if all(
-        string in request.node.callspec.id for string in ["AdaptiveAvgPool3d", "cuda"]
-    ):
-        with pytest.warns(UserWarning):
-            BackpackDerivatives(problem).jac_t_mat_prod(mat, subsampling=subsampling)
-        problem.tear_down()
-        return
     backpack_res = BackpackDerivatives(problem).jac_t_mat_prod(
         mat, subsampling=subsampling
     )
@@ -527,17 +523,11 @@ def test_ea_jac_t_mat_jac_prod(problem: DerivativesTestProblem, request) -> None
         problem: Test case.
         request: PyTest request, used to get test id.
     """
+    skip_adaptive_avg_pool3d_cuda(request)
+
     problem.set_up()
     out_features = problem.output_shape[1:].numel()
     mat = torch.rand(out_features, out_features).to(problem.device)
-
-    if all(
-        string in request.node.callspec.id for string in ["AdaptiveAvgPool3d", "cuda"]
-    ):
-        with pytest.warns(UserWarning):
-            BackpackDerivatives(problem).ea_jac_t_mat_jac_prod(mat)
-        problem.tear_down()
-        return
 
     backpack_res = BackpackDerivatives(problem).ea_jac_t_mat_jac_prod(mat)
     autograd_res = AutogradDerivatives(problem).ea_jac_t_mat_jac_prod(mat)
