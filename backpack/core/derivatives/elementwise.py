@@ -56,7 +56,6 @@ class ElementwiseDerivatives(BaseDerivatives):
         Returns:
             (torch.Tensor): Tensor containing the derivatives `f''(input[i]) ∀ i`.
         """
-
         raise NotImplementedError("Second derivatives not implemented")
 
     def hessian_diagonal(self, module, g_inp, g_out):
