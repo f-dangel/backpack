@@ -144,4 +144,4 @@ class MaxPoolNDDerivatives(BaseDerivatives):
 
         shape = (V, N, C_out, in_pixels)
 
-        return zeros(shape, device=module.output.device)
+        return zeros(shape, device=module.output.device, dtype=module.output.dtype)
