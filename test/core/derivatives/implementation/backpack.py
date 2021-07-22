@@ -37,7 +37,7 @@ class BackpackDerivatives(DerivativesImplementation):
             self.problem.module, None, None, mat
         )
 
-    def param_jac_t_mat_prod(
+    def param_mjp(
         self,
         param_str: str,
         mat: Tensor,

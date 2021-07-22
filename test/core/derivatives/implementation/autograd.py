@@ -42,7 +42,7 @@ class AutogradDerivatives(DerivativesImplementation):
     def jac_t_mat_prod(self, mat):  # noqa: D102
         return stack([self.jac_t_vec_prod(vec) for vec in mat])
 
-    def param_jac_t_mat_prod(
+    def param_mjp(
         self,
         param_str: str,
         mat: Tensor,
@@ -52,18 +52,12 @@ class AutogradDerivatives(DerivativesImplementation):
         axis_batch = 0 if param_str in ("weight", "bias") else 1
         return stack(
             [
-                self.param_jac_t_vec_prod(
-                    param_str,
-                    vec,
-                    sum_batch,
-                    axis_batch=axis_batch,
-                    subsampling=subsampling,
-                )
+                self._param_vjp(param_str, vec, sum_batch, axis_batch=axis_batch, subsampling=subsampling)
                 for vec in mat
             ]
         )
 
-    def param_jac_t_vec_prod(
+    def _param_vjp(
         self,
         name: str,
         vec: Tensor,

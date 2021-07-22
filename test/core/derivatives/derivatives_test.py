@@ -91,12 +91,9 @@ def test_param_jac_t_mat_prod(
             ) if test_save_memory else contextlib.nullcontext():
                 if test_save_memory:
                     print(f"testing with save_memory={save_memory}")
-                backpack_res = BackpackDerivatives(problem).param_jac_t_mat_prod(
-                    param_str, mat, sum_batch, subsampling=subsampling
-                )
-        autograd_res = AutogradDerivatives(problem).param_jac_t_mat_prod(
-            param_str, mat, sum_batch, subsampling=subsampling
-        )
+                backpack_res = BackpackDerivatives(problem).param_mjp(param_str, mat, sum_batch,
+                                                                      subsampling=subsampling)
+        autograd_res = AutogradDerivatives(problem).param_mjp(param_str, mat, sum_batch, subsampling=subsampling)
 
         check_sizes_and_values(autograd_res, backpack_res)
 
