@@ -22,4 +22,4 @@ class ReLUDerivatives(ElementwiseDerivatives):
     ) -> Tensor:
         """First ReLU derivative: `ReLU'(x) = 0 if x < 0 else 1`."""
         input0 = subsample(module.input0, subsampling=subsampling)
-        return gt(input0, 0).float()
+        return gt(input0, 0).to(input0.dtype)
