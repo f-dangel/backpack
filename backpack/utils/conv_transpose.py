@@ -11,9 +11,7 @@ from torch.nn.functional import conv_transpose1d, conv_transpose2d, conv_transpo
 from backpack.utils.conv import extract_bias_diagonal as conv_extract_bias_diagonal
 
 
-def get_conv_transpose_module(
-    N: int,
-) -> Type[Module]:
+def get_conv_transpose_module(N: int) -> Type[Module]:
     """Return the PyTorch module class of N-dimensional transpose convolution.
 
     Args:
