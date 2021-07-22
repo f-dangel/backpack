@@ -60,7 +60,7 @@ SUBSAMPLING_IDS = [f"subsampling={s}".replace(" ", "") for s in SUBSAMPLINGS]
 @pytest.mark.parametrize(
     "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
 )
-def test_param_jac_t_mat_prod(
+def test_param_mjp(
     problem: DerivativesTestProblem,
     sum_batch: bool,
     subsampling: List[int] or None,
