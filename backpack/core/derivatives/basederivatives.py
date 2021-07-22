@@ -328,7 +328,8 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
             g_out: Gradients w.r.t. module output.
             mat: Matrix the Jacobian will be applied to. Has shape
                 ``[V, *module.output.shape]`` (matrix case) or same shape as
-                ``module.output`` (vector case).
+                ``module.output`` (vector case). If used with subsampling, has dimension
+                len(subsampling) instead of batch size along the batch axis.
             sum_batch: Sum out the MJP's batch axis. Default: ``True``.
             subsampling: Indices of samples along the output's batch dimension that
                 should be considered. Defaults to ``None`` (use all samples).
@@ -337,7 +338,8 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
             Matrix-Jacobian products. Has shape ``[V, *param_shape]`` when batch
             summation is enabled (same shape as parameter in the vector case). Without
             batch summation, the result has shape ``[V, N, *param_shape]`` (vector case
-            has shape ``[N, *param_shape]``).
+            has shape ``[N, *param_shape]``). If used with subsampling, the batch size N
+            is replaced by len(subsampling).
 
         Raises:
             NotImplementedError: if required method is not implemented by derivatives class

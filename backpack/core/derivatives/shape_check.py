@@ -307,11 +307,11 @@ def param_mjp_accept_vectors(
 
     Returns:
         Wrapped ``mat_prod`` function that processes multiple vectors in format of
-            a matrix, and supports vector-shaped inputs which are internally converted
-            to the correct format.
-            Preserves format of input:
-                If the input format is a vector, the output format is a vector.
-                If the input format is a matrix, the output format is a matrix.
+        a matrix, and supports vector-shaped inputs which are internally converted
+        to the correct format.
+        Preserves format of input:
+            If the input format is a vector, the output format is a vector.
+            If the input format is a matrix, the output format is a matrix.
     """
 
     @functools.wraps(mat_prod)
