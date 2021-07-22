@@ -19,6 +19,7 @@ backpack/extensions/backprop_extension.py
 backpack/extensions/module_extension.py
 backpack/extensions/saved_quantities.py
 backpack/extensions/mat_to_mat_jac_base.py
+backpack/extensions/firstorder/base.py
 backpack/extensions/firstorder/gradient/base.py
 backpack/extensions/firstorder/gradient/rnn.py
 backpack/extensions/firstorder/gradient/__init__.py
@@ -49,6 +50,7 @@ backpack/utils/linear.py
 backpack/utils/subsampling.py
 backpack/utils/__init__.py
 backpack/utils/module_classification.py
+backpack/utils/hooks.py
 
 test/extensions/automated_settings.py
 test/extensions/problem.py

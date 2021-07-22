@@ -1,10 +1,13 @@
+"""Base class for first order extensions."""
 from backpack.extensions.backprop_extension import BackpropExtension
 from backpack.extensions.module_extension import ModuleExtension
 
 
 class FirstOrderModuleExtension(ModuleExtension):
-    def backpropagate(self, ext, module, g_inp, g_out, bpQuantities):
-        return None
+    """Base class for first order module extensions."""
+
+    def backpropagate(self, ext, module, g_inp, g_out, bpQuantities):  # noqa: D102
+        pass
 
 
 class FirstOrderBackpropExtension(BackpropExtension):

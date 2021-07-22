@@ -1,6 +1,7 @@
 """BackPACK."""
 import inspect
-from typing import Callable, Tuple, Union
+from types import TracebackType
+from typing import Callable, Optional, Tuple, Type, Union
 
 import torch
 from torch import Tensor
@@ -33,7 +34,7 @@ class backpack:
             exts: Extensions to activate in the backward pass.
             extension_hook: Function called on each module after
                 all BackPACK extensions have run. Takes a ``torch.nn.Module`` and returns
-                ``None``. Default: ``None`` (no operation will be formed).
+                ``None``. Default: ``None`` (no operation will be performed).
             debug: Print debug messages during the backward pass. Default: ``False``.
 
         .. note::
@@ -73,13 +74,18 @@ class backpack:
         CTX.set_debug(self.debug)
         CTX.set_extension_hook(self.extension_hook)
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(
+        self,
+        __exc_type: Optional[Type[BaseException]],
+        __exc_value: Optional[BaseException],
+        __traceback: Optional[TracebackType],
+    ):
         """Leave backpack environment.
 
         Args:
-            type: .
-            value: .
-            traceback: .
+            __exc_type: exception type
+            __exc_value: exception value
+            __traceback: exception traceback
         """
         for backprop_extension in CTX.get_active_exts():
             backprop_extension.clear()
@@ -115,22 +121,27 @@ class disable:
         self.old_store_io: bool = disable.store_io
         disable.store_io = False
 
-    def __exit__(self, type, value, traceback):
-        """Set input/output storing to old value.
+    def __exit__(
+        self,
+        __exc_type: Optional[Type[BaseException]],
+        __exc_value: Optional[BaseException],
+        __traceback: Optional[TracebackType],
+    ):
+        """Leave backpack environment.
 
         Args:
-            type: .
-            value: .
-            traceback: .
+            __exc_type: exception type
+            __exc_value: exception value
+            __traceback: exception traceback
         """
         disable.store_io = self.old_store_io
 
     @staticmethod
     def should_store_io() -> bool:
-        """Return whether input and output should be stored.
+        """Return whether input and output should be stored during forward pass.
 
         Returns:
-            whether input and output should be stored
+            whether input and output should be stored during forward pass
         """
         return disable.store_io
 
@@ -144,7 +155,7 @@ def hook_store_io(
     The output is reduced to single output tensor and saved as module.output
 
     Args:
-        module: the module on which to save the params
+        module: the module on which to save the inputs/outputs
         input: List of input tensors
         output: result of module(input)
     """
@@ -191,7 +202,7 @@ def hook_run_extensions(
             print("[DEBUG] Running extension", backpack_extension, "on", module)
         backpack_extension.apply(module, g_inp, g_out)
 
-    post_extension_hook(module)
+    CTX.get_post_extension_hook()(module)
 
     if not (
         CTX.is_extension_active(
@@ -201,24 +212,6 @@ def hook_run_extensions(
         )
     ):
         memory_cleanup(module)
-
-
-def post_extension_hook(module: Module) -> None:
-    """Execute the post extensions hook on a module after all BackPACK extensions.
-
-    See the `post_backward_hook` argument of the `backpack` context manager for details.
-
-    Args:
-        module: current module
-
-    Raises:
-        RuntimeError: if any error occurred during the backward hook
-    """
-    try:
-        CTX.get_extension_hook()(module)
-    except Exception as e:
-        message = getattr(e, "message", repr(e))
-        raise RuntimeError(f"Post extensions hook failed: {message}")
 
 
 def extend(module: Module, debug: bool = False) -> Module:
