@@ -6,7 +6,7 @@
 - Jacobian-matrix products with respect to layer parameters
 - Transposed Jacobian-matrix products with respect to layer parameters
 """
-import contextlib
+from contextlib import nullcontext
 from test.automated_test import check_sizes_and_values
 from test.core.derivatives.batch_norm_settings import BATCH_NORM_SETTINGS
 from test.core.derivatives.implementation.autograd import AutogradDerivatives
@@ -88,12 +88,15 @@ def test_param_jac_t_mat_prod(
         for save_memory in [True, False] if test_save_memory else [None]:
             with weight_jac_t_save_memory(
                 save_memory=save_memory
-            ) if test_save_memory else contextlib.nullcontext():
+            ) if test_save_memory else nullcontext():
                 if test_save_memory:
                     print(f"testing with save_memory={save_memory}")
-                backpack_res = BackpackDerivatives(problem).param_mjp(param_str, mat, sum_batch,
-                                                                      subsampling=subsampling)
-        autograd_res = AutogradDerivatives(problem).param_mjp(param_str, mat, sum_batch, subsampling=subsampling)
+                backpack_res = BackpackDerivatives(problem).param_mjp(
+                    param_str, mat, sum_batch, subsampling=subsampling
+                )
+        autograd_res = AutogradDerivatives(problem).param_mjp(
+            param_str, mat, sum_batch, subsampling=subsampling
+        )
 
         check_sizes_and_values(autograd_res, backpack_res)
 

@@ -52,7 +52,13 @@ class AutogradDerivatives(DerivativesImplementation):
         axis_batch = 0 if param_str in ("weight", "bias") else 1
         return stack(
             [
-                self._param_vjp(param_str, vec, sum_batch, axis_batch=axis_batch, subsampling=subsampling)
+                self._param_vjp(
+                    param_str,
+                    vec,
+                    sum_batch,
+                    axis_batch=axis_batch,
+                    subsampling=subsampling,
+                )
                 for vec in mat
             ]
         )
