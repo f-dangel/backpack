@@ -1,10 +1,42 @@
-from typing import Union
+from typing import Callable, Type, Union
 
 import torch
 from einops import rearrange
 from torch import Tensor, einsum
-from torch.nn import Conv1d, Conv2d, Conv3d
+from torch.nn import Conv1d, Conv2d, Conv3d, Module
 from torch.nn.functional import conv1d, conv2d, conv3d, unfold
+
+
+def get_conv_module(N: int) -> Type[Module]:
+    """Return the PyTorch module class of N-dimensional convolution.
+
+    Args:
+        N: Convolution dimension.
+
+    Returns:
+        Convolution class.
+    """
+    return {
+        1: Conv1d,
+        2: Conv2d,
+        3: Conv3d,
+    }[N]
+
+
+def get_conv_function(N: int) -> Callable:
+    """Return the PyTorch function of N-dimensional convolution.
+
+    Args:
+        N: Convolution dimension.
+
+    Returns:
+        Convolution function.
+    """
+    return {
+        1: conv1d,
+        2: conv2d,
+        3: conv3d,
+    }[N]
 
 
 def unfold_input(module: Union[Conv1d, Conv2d, Conv3d], input: Tensor) -> Tensor:
@@ -118,15 +150,9 @@ def unfold_by_conv(input, module):
         repeat = [C_in, 1] + [1 for _ in kernel_size]
         return weight.repeat(*repeat)
 
-    def get_conv():
-        functional_for_module_cls = {
-            torch.nn.Conv1d: conv1d,
-            torch.nn.Conv2d: conv2d,
-            torch.nn.Conv3d: conv3d,
-        }
-        return functional_for_module_cls[module.__class__]
+    conv_dim = input.dim() - 2
+    conv = get_conv_function(conv_dim)
 
-    conv = get_conv()
     unfold = conv(
         input,
         make_weight().to(input.device),

@@ -30,11 +30,12 @@ class DerivativesImplementation(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def jac_t_mat_prod(self, mat: Tensor) -> Tensor:
+    def jac_t_mat_prod(self, mat: Tensor, subsampling: List[int] = None) -> Tensor:
         """Vectorized product of transposed jacobian and matrix.
 
         Args:
             mat: matrix: the vectors along its leading dimension will be multiplied.
+            subsampling: Active samples in the output. Default: ``None`` (all).
 
         Returns:
             Tensor representing the result of Jacobian-vector product.
