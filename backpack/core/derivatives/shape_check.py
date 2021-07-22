@@ -295,9 +295,7 @@ def make_hessian_mat_prod_check_shapes(
     return _wrapped_make_hessian_mat_prod
 
 
-def param_mjp_accept_vectors(
-    mat_prod: Callable[..., Tensor],
-) -> Callable[..., Tensor]:
+def param_mjp_accept_vectors(mat_prod: Callable[..., Tensor]) -> Callable[..., Tensor]:
     """Add support for vectors to matrix products.
 
     vec_criterion(mat, module) returns if mat is a vector.
