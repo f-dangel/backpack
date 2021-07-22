@@ -4,6 +4,7 @@
 
 # %%
 # Let's get the imports out of the way.
+import torch
 import torchvision.models
 from torch import rand, rand_like
 from torch.nn import MSELoss
@@ -13,7 +14,9 @@ from backpack.custom_module.graph_utils import print_table
 from backpack.extensions import BatchGrad
 from backpack.extensions.secondorder.diag_ggn import DiagGGNExact
 
-inputs = rand(64, 3, 224, 224)
+DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+inputs = rand(64, 3, 224, 224, device=DEVICE)
 loss_function = extend(MSELoss())
 
 
@@ -22,7 +25,7 @@ loss_function = extend(MSELoss())
 #
 # The network has to be in evaluation mode, because there are BatchNorm layers involved.
 # For these, individual gradients can be computed but are not well-defined.
-resnet18 = torchvision.models.resnet18().eval()
+resnet18 = torchvision.models.resnet18(num_classes=10).eval().to(DEVICE)
 resnet18 = extend(resnet18)
 
 # %%
@@ -47,7 +50,7 @@ for name, param in resnet18.named_parameters():
 # is not memory efficient enough.
 #
 # Note: When using the converter the returned module will be a torch.fx.GraphModule.
-resnet18 = torchvision.models.resnet18(num_classes=10).eval()
+resnet18 = torchvision.models.resnet18(num_classes=5).eval().to(DEVICE)
 resnet18 = extend(resnet18, use_converter=True)
 print_table(resnet18)
 
