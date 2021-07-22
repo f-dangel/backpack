@@ -1,9 +1,10 @@
 """ResNets in BackPACK
 ======================
 """
-
 # %%
 # Let's get the imports out of the way.
+from test.resnet.resnets_examples import ResNet2
+
 import torch
 import torchvision.models
 from torch import rand, rand_like
@@ -16,21 +17,37 @@ from backpack.extensions.secondorder.diag_ggn import DiagGGNExact
 
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-inputs = rand(64, 3, 224, 224, device=DEVICE)
-loss_function = extend(MSELoss())
+# %%
+# Read-the-docs has limited memory. Therefore, we use a smaller custom example.
+# Flip the switch to use resnet18.
+use_resnet18 = False
 
+
+def resnet18():
+    model = torchvision.models.resnet18(num_classes=5) if use_resnet18 else ResNet2()
+    return model.to(DEVICE)
+
+
+def get_inputs():
+    inputs = (
+        rand(64, 3, 224, 224, device=DEVICE) if use_resnet18 else ResNet2.input_test
+    )
+    return inputs.to(DEVICE)
+
+
+loss_function = extend(MSELoss())
 
 # %%
 # Extend resnet18
 #
 # The network has to be in evaluation mode, because there are BatchNorm layers involved.
 # For these, individual gradients can be computed but are not well-defined.
-resnet18 = torchvision.models.resnet18(num_classes=10).eval().to(DEVICE)
+resnet18 = resnet18().eval()
 resnet18 = extend(resnet18)
 
 # %%
 # First order extensions work out of the box.
-outputs = resnet18(inputs)
+outputs = resnet18(get_inputs())
 loss = loss_function(outputs, rand_like(outputs))
 with backpack(BatchGrad()):
     loss.backward()
@@ -50,15 +67,13 @@ for name, param in resnet18.named_parameters():
 # is not memory efficient enough.
 #
 # Note: When using the converter the returned module will be a torch.fx.GraphModule.
-resnet18 = torchvision.models.resnet18(num_classes=5).eval().to(DEVICE)
+resnet18 = resnet18().eval()
 resnet18 = extend(resnet18, use_converter=True)
 print_table(resnet18)
 
 # %%
 # Now we can compute second order quantities.
-#
-# and yes, this takes a while (1 min) ...
-outputs = resnet18(inputs)
+outputs = resnet18(get_inputs())
 loss = loss_function(outputs, rand_like(outputs))
 with backpack(DiagGGNExact()):
     loss.backward()
