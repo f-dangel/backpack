@@ -22,6 +22,6 @@ class LeakyReLUDerivatives(ElementwiseDerivatives):
     ) -> Tensor:
         """``LeakyReLU'(x) = negative_slope if x < 0 else 1``."""
         input0 = subsample(module.input0, subsampling=subsampling)
-        df_leakyrelu = gt(input0, 0).float()
+        df_leakyrelu = gt(input0, 0).to(input0.dtype)
         df_leakyrelu[df_leakyrelu == 0] = module.negative_slope
         return df_leakyrelu
