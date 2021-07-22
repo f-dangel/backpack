@@ -104,7 +104,6 @@ class ExtensionsTestProblem:
 
         self.model = self.module_fn().to(self.device)
         self.input = self.input_fn().to(self.device)
-        self.input.requires_grad = True
         self.target = self.target_fn().to(self.device)
         self.loss_function = self.loss_function_fn().to(self.device)
 
@@ -177,12 +176,15 @@ class ExtensionsTestProblem:
         mean_loss = unreduced_loss.flatten().mean()
         sum_loss = unreduced_loss.flatten().sum()
         if torch.allclose(mean_loss, sum_loss):
-            raise RuntimeError(
-                "Cannot determine reduction factor. ",
-                "Results from 'mean' and 'sum' reduction are identical. ",
-                f"'mean': {mean_loss}, 'sum': {sum_loss}",
-            )
-        if torch.allclose(loss, mean_loss):
+            if unreduced_loss.numel() == 1 and torch.allclose(loss, sum_loss):
+                factor = 1.0
+            else:
+                raise RuntimeError(
+                    "Cannot determine reduction factor. ",
+                    "Results from 'mean' and 'sum' reduction are identical. ",
+                    f"'mean': {mean_loss}, 'sum': {sum_loss}",
+                )
+        elif torch.allclose(loss, mean_loss):
             factor = 1.0 / unreduced_loss.numel()
         elif torch.allclose(loss, sum_loss):
             factor = 1.0
