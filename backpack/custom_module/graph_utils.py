@@ -64,14 +64,14 @@ def convert_module_to_backpack(module: Module) -> GraphModule:
     module_new = _transform_add_to_sum_module(module_new)
     module_new = _transform_inplace_to_normal(module_new)
     module_new = _transform_remove_duplicates(module_new)
-    print("Delete unused modules.")
+    print("\tDelete unused modules.")
     module_new.delete_all_unused_submodules()
     print("Finished transformation.\n")
     return module_new
 
 
 def _transform_mul_to_scale_module(module: Module) -> GraphModule:
-    print("Begin transformation: <built-in function mul> -> ScaleModule")
+    print("\tBegin transformation: <built-in function mul> -> ScaleModule")
     counter: int = 0
     graph: Graph = BackPackTracer().trace(module)
     for node in graph.nodes:
@@ -87,12 +87,12 @@ def _transform_mul_to_scale_module(module: Module) -> GraphModule:
             counter += 1
 
     graph.lint()
-    print(f"Multiplications transformed: {counter}")
+    print(f"\tMultiplications transformed: {counter}")
     return GraphModule(module, graph)
 
 
 def _transform_add_to_sum_module(module: Module) -> GraphModule:
-    print("Begin transformation: <built-in function add> -> SumModule")
+    print("\tBegin transformation: <built-in function add> -> SumModule")
     counter: int = 0
     graph: Graph = BackPackTracer().trace(module)
     for node in graph.nodes:
@@ -104,12 +104,12 @@ def _transform_add_to_sum_module(module: Module) -> GraphModule:
                 counter += 1
 
     graph.lint()
-    print(f"Summations transformed: {counter}")
+    print(f"\tSummations transformed: {counter}")
     return GraphModule(module, graph)
 
 
 def _transform_flatten_to_module(module: Module) -> GraphModule:
-    print("Begin transformation: <built-in method flatten> -> Flatten")
+    print("\tBegin transformation: <built-in method flatten> -> Flatten")
     counter: int = 0
     graph: Graph = BackPackTracer().trace(module)
     for node in graph.nodes:
@@ -127,7 +127,7 @@ def _transform_flatten_to_module(module: Module) -> GraphModule:
                 counter += 1
 
     graph.lint()
-    print(f"Flatten transformed: {counter}")
+    print(f"\tFlatten transformed: {counter}")
     return GraphModule(module, graph)
 
 
@@ -135,7 +135,7 @@ def _transform_inplace_to_normal(
     module: Module, initialize_recursion: bool = True
 ) -> Module:
     if initialize_recursion:
-        print("Begin transformation: in-place -> standard")
+        print("\tBegin transformation: in-place -> standard")
         _transform_inplace_to_normal.counter = 0
     if hasattr(module, "inplace") and module.inplace:
         module.inplace = False
@@ -144,13 +144,13 @@ def _transform_inplace_to_normal(
         _transform_inplace_to_normal(child_module, initialize_recursion=False)
 
     if initialize_recursion:
-        print(f"In-place changed: {_transform_inplace_to_normal.counter}")
+        print(f"\tIn-place changed: {_transform_inplace_to_normal.counter}")
         delattr(_transform_inplace_to_normal, "counter")
     return module
 
 
 def _transform_remove_duplicates(module: Module, max_depth: int = 100) -> GraphModule:
-    print("Begin transformation: remove duplicates")
+    print("\tBegin transformation: remove duplicates")
     counter = 0
     graph: Graph = BackPackTracer().trace(module)
     targets: Set[str] = set()
@@ -177,7 +177,7 @@ def _transform_remove_duplicates(module: Module, max_depth: int = 100) -> GraphM
             targets.add(node.target)
 
     graph.lint()
-    print(f"Duplicates removed: {counter}")
+    print(f"\tDuplicates removed: {counter}")
     return GraphModule(module, graph)
 
 
