@@ -303,7 +303,6 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
     """
 
     @shape_check.param_mjp_accept_vectors
-    @shape_check.param_mjp_check_shapes
     def param_mjp(
         self,
         param_str: str,
@@ -339,11 +338,30 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
             summation is enabled (same shape as parameter in the vector case). Without
             batch summation, the result has shape ``[V, N, *param_shape]`` (vector case
             has shape ``[N, *param_shape]``).
+
+        Raises:
+            NotImplementedError: if required method is not implemented by derivatives class
         """
-        mjp = getattr(self, f"_{param_str}_jac_t_mat_prod")
+        # input check
+        shape_check.shape_like_output(mat, module, subsampling=subsampling)
+
+        method_name = f"_{param_str}_jac_t_mat_prod"
+        mjp = getattr(self, method_name, None)
+        if mjp is None:
+            raise NotImplementedError(
+                f"Computation requires implementation of {method_name}, but {self} "
+                f"(defining derivatives of {module}) does not implement it."
+            )
         mjp_out = mjp(
             module, g_inp, g_out, mat, sum_batch=sum_batch, subsampling=subsampling
         )
+
+        # output check
+        shape_check.check_like_with_sum_batch(
+            mjp_out, module, param_str, sum_batch=sum_batch
+        )
+        shape_check.check_same_V_dim(mjp_out, mat)
+
         return mjp_out
 
     @shape_check.bias_jac_mat_prod_accept_vectors

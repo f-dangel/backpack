@@ -54,7 +54,16 @@ def check_shape(mat: Tensor, like: Tensor, diff: int = 1) -> None:
         )
 
 
-def _check_same_V_dim(mat1, mat2):
+def check_same_V_dim(mat1, mat2):
+    """Check whether V dim (first dim) matches.
+
+    Args:
+        mat1: first tensor
+        mat2: second tensor
+
+    Raises:
+        RuntimeError: if V dim (first dim) doesn't match
+    """
     V1, V2 = mat1.shape[0], mat2.shape[0]
     if V1 != V2:
         raise RuntimeError("Number of vectors changed. Got {} and {}".format(V1, V2))
@@ -71,9 +80,19 @@ def _check_like(mat, module, name, diff=1, *args, **kwargs):
     return check_shape(mat, compare, diff=diff)
 
 
-def _check_like_with_sum_batch(mat, module, name, sum_batch=True, *args, **kwargs):
+def check_like_with_sum_batch(mat, module, name, sum_batch=True, *args, **kwargs):
+    """Checks shape, considers sum_batch.
+
+    Args:
+        mat: matrix to multiply
+        module: module
+        name: parameter to operate on: module.name
+        sum_batch: whether to consider with or without sum
+        *args: ignored
+        **kwargs: ignored
+    """
     diff = 1 if sum_batch else 2
-    return check_shape(mat, getattr(module, name), diff=diff)
+    check_shape(mat, getattr(module, name), diff=diff)
 
 
 def _same_dim_as(mat, module, name, *args, **kwargs):
@@ -170,7 +189,7 @@ def mat_prod_check_shapes(
         in_check(mat, module, *args, **kwargs)
         mat_out = mat_prod(self, module, g_inp, g_out, mat, *args, **kwargs)
         out_check(mat_out, module, *args, **kwargs)
-        _check_same_V_dim(mat_out, mat)
+        check_same_V_dim(mat_out, mat)
 
         return mat_out
 
@@ -309,32 +328,3 @@ def param_mjp_accept_vectors(
         return mat_out
 
     return _wrapped_mat_prod_accept_vectors
-
-
-def param_mjp_check_shapes(
-    mat_prod: Callable,
-) -> Callable[..., Tensor]:
-    """Check that input and output have correct shapes.
-
-    Args:
-        mat_prod: Function that applies a derivative operator to multiple vectors
-            handed in as a matrix.
-
-    Returns:
-        Wrapped mat_prod function with input and output checks
-    """
-
-    @functools.wraps(mat_prod)
-    def wrapped_mat_prod_check_shapes(
-        self, param_str, module, g_inp, g_out, mat, *args, **kwargs
-    ):
-        shape_like_output(mat, module, *args, **kwargs)
-
-        mat_out = mat_prod(self, param_str, module, g_inp, g_out, mat, *args, **kwargs)
-
-        _check_like_with_sum_batch(mat_out, module, param_str, **kwargs)
-        _check_same_V_dim(mat_out, mat)
-
-        return mat_out
-
-    return wrapped_mat_prod_check_shapes
