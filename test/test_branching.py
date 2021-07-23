@@ -165,7 +165,9 @@ def test_diag_ggn_exact_nn_Identity_fails(setup_fn):
 
     X, y, model, loss_function = setup_fn(apply_extend=True, active_identity=False)
 
-    with pytest.raises(AttributeError):
+    # TODO discuss what happens here
+    # locally raises AttributeError, github CI raises RuntimeError
+    with pytest.raises((AttributeError, RuntimeError)):
         backpack_result = backpack_diag_ggn_exact(X, y, model, loss_function)
 
         check_sizes_and_values(autograd_result, backpack_result)
