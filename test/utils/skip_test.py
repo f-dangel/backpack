@@ -89,4 +89,4 @@ def skip_no_param(problem: DerivativesTestProblem, param_str: str) -> None:
 def skip_pytorch_below_1_9_0() -> None:
     """Skip test if pytorch version is below 1.9.0."""
     if not TORCH_VERSION_AT_LEAST_1_9_0:
-        skip(f"Test needs PyTorch>=1.9.0")
+        skip("Test needs PyTorch>=1.9.0")
