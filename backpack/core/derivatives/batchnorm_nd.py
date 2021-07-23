@@ -1,10 +1,13 @@
 """Contains derivatives for BatchNorm."""
 from typing import List, Tuple, Union
+from warnings import warn
 
 from torch import Size, Tensor, einsum
 from torch.nn import BatchNorm1d, BatchNorm2d, BatchNorm3d
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
+from backpack.utils import TORCH_VERSION, VERSION_1_9_0
+from backpack.utils.subsampling import subsample
 
 
 class BatchNormNdDerivatives(BaseParameterDerivatives):
@@ -47,16 +50,8 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
 
         Returns:
             whether hessian is zero
-
-        Raises:
-            NotImplementedError: if module is in evaluation mode
         """
-        if module.training:
-            return False
-        else:
-            raise NotImplementedError(
-                "hessian_is_zero is not tested for BatchNorm. Create an issue if you need it."
-            )
+        return not module.training
 
     def hessian_is_diagonal(
         self, module: Union[BatchNorm1d, BatchNorm2d, BatchNorm3d]
@@ -95,10 +90,17 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
         g_inp: Tuple[Tensor],
         g_out: Tuple[Tensor],
         mat: Tensor,
+        subsampling: List[int] = None,
     ) -> Tensor:
         self._check_parameters(module)
         N: int = self._get_n_axis(module)
         if module.training:
+
+            if subsampling is not None:
+                raise NotImplementedError(
+                    "BatchNorm VJP sub-sampling is not defined in train mode."
+                )
+
             denominator: int = self._get_denominator(module)
             x_hat, var = self._get_normalized_input_and_var(module)
             ivar = 1.0 / (var + module.eps).sqrt()
@@ -109,16 +111,13 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
                 self._get_free_axes(module),
                 keepdim=True,
             ).expand_as(jac_t_mat)
-            equation = "nc...,vmcx,mcx->vnc...".replace(
-                "x",
-                {
-                    0: "",
-                    1: "x",
-                    2: "xy",
-                    3: "xyz",
-                }[N],
+            spatial_dims = "xyz"[:N]
+            jac_t_mat -= einsum(
+                f"nc...,vmc{spatial_dims},mc{spatial_dims}->vnc...",
+                x_hat,
+                dx_hat,
+                x_hat,
             )
-            jac_t_mat -= einsum(equation, x_hat, dx_hat, x_hat)
             jac_t_mat = einsum("vnc...,c->vnc...", jac_t_mat, ivar / denominator)
             return jac_t_mat
         else:
@@ -145,9 +144,23 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
         g_out: Tuple[Tensor],
         mat: Tensor,
         sum_batch: bool = True,
+        subsampling: List[int] = None,
     ) -> Tensor:
+        self._maybe_warn_no_batch_summation(sum_batch)
         x_hat, _ = self._get_normalized_input_and_var(module)
-        return einsum(f"vnc...,nc...->v{'' if sum_batch else 'n'}c", mat, x_hat)
+        x_hat = subsample(x_hat, subsampling=subsampling)
+
+        if TORCH_VERSION >= VERSION_1_9_0:
+            equation = f"vnc...,nc...->v{'' if sum_batch else 'n'}c"
+        # TODO Remove else-branch after deprecating torch<1.9.0
+        else:
+            N: int = self._get_n_axis(module)
+            spatial_dims = "xyz"[:N]
+            equation = (
+                f"vnc{spatial_dims},nc{spatial_dims}->v{'' if sum_batch else 'n'}c"
+            )
+
+        return einsum(equation, mat, x_hat)
 
     def _bias_jac_mat_prod(
         self,
@@ -169,7 +182,9 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
         g_out: Tuple[Tensor],
         mat: Tensor,
         sum_batch: bool = True,
+        subsampling: List[int] = None,
     ) -> Tensor:
+        self._maybe_warn_no_batch_summation(sum_batch)
         axis_sum: Tuple[int] = self._get_free_axes(module, with_batch_axis=sum_batch)
         return mat.sum(dim=axis_sum) if axis_sum else mat
 
@@ -308,3 +323,16 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
         for n in range(self._get_n_axis(module)):
             free_axes.append(index_batch + n + 2)
         return tuple(free_axes)
+
+    @staticmethod
+    def _maybe_warn_no_batch_summation(sum_batch: bool) -> None:
+        """Warn that Jacobians w.r.t. single components are not per-sample gradients.
+
+        Args:
+            sum_batch: Whether to sum out the batch dimension.
+        """
+        if not sum_batch:
+            warn(
+                "BatchNorm batch summation disabled."
+                "This may not compute meaningful quantities"
+            )

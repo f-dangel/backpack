@@ -3,7 +3,7 @@ from backpack.core.derivatives.adaptive_avg_pool_nd import AdaptiveAvgPoolNDDeri
 from backpack.extensions.secondorder.diag_ggn.diag_ggn_base import DiagGGNBaseModule
 
 
-class DiagGGNAdaptiveAvgPool(DiagGGNBaseModule):
+class DiagGGNAdaptiveAvgPoolNd(DiagGGNBaseModule):
     """DiagGGN extension for AdaptiveAvgPool."""
 
     def __init__(self, N: int):

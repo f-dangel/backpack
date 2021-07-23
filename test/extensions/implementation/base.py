@@ -1,7 +1,7 @@
 """Base class containing the functions to compare BackPACK and autograd."""
 from abc import ABC, abstractmethod
 from test.extensions.problem import ExtensionsTestProblem
-from typing import List
+from typing import List, Union
 
 from torch import Tensor
 
@@ -18,8 +18,12 @@ class ExtensionsImplementation(ABC):
         self.problem = problem
 
     @abstractmethod
-    def batch_grad(self) -> List[Tensor]:
-        """Individual gradients."""
+    def batch_grad(self, subsampling: Union[List[int], None]) -> List[Tensor]:
+        """Individual gradients.
+
+        Args:
+            subsampling: List of active samples. ``None`` means all samples.
+        """
         return
 
     @abstractmethod

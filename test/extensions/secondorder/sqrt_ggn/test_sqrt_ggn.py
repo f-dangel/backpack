@@ -41,9 +41,7 @@ def small_problem(
     Yields:
         Instantiated test case whose model's are small enough.
     """
-    num_params = sum(
-        p.numel() for p in instantiated_problem.model.parameters() if p.requires_grad
-    )
+    num_params = sum(p.numel() for p in instantiated_problem.trainable_parameters())
     if num_params <= max_num_params:
         yield instantiated_problem
     else:

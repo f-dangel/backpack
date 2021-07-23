@@ -1,10 +1,12 @@
 """Contains partial derivatives for the ``torch.nn.Linear`` layer."""
-from typing import Tuple
+from typing import List, Tuple
 
 from torch import Size, Tensor, einsum
 from torch.nn import Linear
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
+from backpack.utils import TORCH_VERSION, VERSION_1_9_0
+from backpack.utils.subsampling import subsample
 
 
 class LinearDerivatives(BaseParameterDerivatives):
@@ -30,7 +32,12 @@ class LinearDerivatives(BaseParameterDerivatives):
         return True
 
     def _jac_t_mat_prod(
-        self, module: Linear, g_inp: Tuple[Tensor], g_out: Tuple[Tensor], mat: Tensor
+        self,
+        module: Linear,
+        g_inp: Tuple[Tensor],
+        g_out: Tuple[Tensor],
+        mat: Tensor,
+        subsampling: List[int] = None,
     ) -> Tensor:
         """Batch-apply transposed Jacobian of the output w.r.t. the input.
 
@@ -40,13 +47,16 @@ class LinearDerivatives(BaseParameterDerivatives):
             g_out: Gradients w.r.t. module output. Not required by the implementation.
             mat: Batch of ``V`` vectors of same shape as the layer output
                 (``[N, *, out_features]``) to which the transposed output-input Jacobian
-                is applied. Has shape ``[V, N, *, out_features]``.
+                is applied. Has shape ``[V, N, *, out_features]``; but if used with
+                sub-sampling, ``N`` is replaced by ``len(subsampling)``.
+            subsampling: Indices of active samples. ``None`` means all samples.
 
         Returns:
             Batched transposed Jacobian vector products. Has shape
-            ``[V, N, *, in_features]``.
+            ``[V, N, *, in_features]``. If used with sub-sampling, ``N`` is replaced
+            by ``len(subsampling)``.
         """
-        return einsum("oi,vn...o->vn...i", module.weight, mat)
+        return einsum("vn...o,oi->vn...i", mat, module.weight)
 
     def _jac_mat_prod(
         self, module: Linear, g_inp: Tuple[Tensor], g_out: Tuple[Tensor], mat: Tensor
@@ -118,6 +128,7 @@ class LinearDerivatives(BaseParameterDerivatives):
         g_out: Tuple[Tensor],
         mat: Tensor,
         sum_batch: int = True,
+        subsampling: List[int] = None,
     ) -> Tensor:
         """Batch-apply transposed Jacobian of the output w.r.t. the weight.
 
@@ -127,24 +138,30 @@ class LinearDerivatives(BaseParameterDerivatives):
             g_out: Gradients w.r.t. module output. Not required by the implementation.
             mat: Batch of ``V`` vectors of same shape as the layer output
                 (``[N, *, out_features]``) to which the transposed output-input Jacobian
-                is applied. Has shape ``[V, N, *, out_features]``.
+                is applied. Has shape ``[V, N, *, out_features]`` if subsampling is not
+                used, otherwise ``N`` must be ``len(subsampling)`` instead.
             sum_batch: Sum the result's batch axis. Default: ``True``.
+            subsampling: Indices of samples along the output's batch dimension that
+                should be considered. Defaults to ``None`` (use all samples).
 
         Returns:
             Batched transposed Jacobian vector products. Has shape
-                ``[V, N, *module.weight.shape]`` when ``sum_batch`` is ``False``. With
-                ``sum_batch=True``, has shape ``[V, *module.weight.shape]``.
+            ``[V, N, *module.weight.shape]`` when ``sum_batch`` is ``False``. With
+            ``sum_batch=True``, has shape ``[V, *module.weight.shape]``. If sub-
+            sampling is used, ``N`` must be ``len(subsampling)`` instead.
         """
-        d_weight = module.input0
+        d_weight = subsample(module.input0, subsampling=subsampling)
 
-        if self._has_additional_dims(module):
-            # Flatten additional dimensions because they cannot be represented as
-            # ellipsis. WAITING https://github.com/pytorch/pytorch/issues/45854
-            d_weight = d_weight.flatten(start_dim=1, end_dim=-2)
-            mat = mat.flatten(start_dim=2, end_dim=-2)
-            equation = f"vnao,nai->v{'' if sum_batch else 'n'}oi"
+        if TORCH_VERSION >= VERSION_1_9_0:
+            equation = f"vn...o,n...i->v{'' if sum_batch else 'n'}oi"
+        # TODO Remove else-branch after deprecating torch<1.9.0
         else:
-            equation = f"vno,ni->v{'' if sum_batch else 'n'}oi"
+            if self._has_additional_dims(module):
+                d_weight = d_weight.flatten(start_dim=1, end_dim=-2)
+                mat = mat.flatten(start_dim=2, end_dim=-2)
+                equation = f"vnao,nai->v{'' if sum_batch else 'n'}oi"
+            else:
+                equation = f"vno,ni->v{'' if sum_batch else 'n'}oi"
 
         return einsum(equation, mat, d_weight)
 
@@ -182,6 +199,7 @@ class LinearDerivatives(BaseParameterDerivatives):
         g_out: Tuple[Tensor],
         mat: Tensor,
         sum_batch: int = True,
+        subsampling: List[int] = None,
     ) -> Tensor:
         """Batch-apply transposed Jacobian of the output w.r.t. the bias.
 
@@ -193,16 +211,19 @@ class LinearDerivatives(BaseParameterDerivatives):
                 (``[N, *, out_features]``) to which the transposed output-input Jacobian
                 is applied. Has shape ``[V, N, *, out_features]``.
             sum_batch: Sum the result's batch axis. Default: ``True``.
+            subsampling: Indices of samples along the output's batch dimension that
+                should be considered. Defaults to ``None`` (use all samples).
 
         Returns:
             Batched transposed Jacobian vector products. Has shape
-                ``[V, N, *module.bias.shape]`` when ``sum_batch`` is ``False``. With
-                ``sum_batch=True``, has shape ``[V, *module.bias.shape]``.
+            ``[V, N, *module.bias.shape]`` when ``sum_batch`` is ``False``. With
+            ``sum_batch=True``, has shape ``[V, *module.bias.shape]``. If sub-
+            sampling is used, ``N`` is replaced by ``len(subsampling)``.
         """
         equation = f"vn...o->v{'' if sum_batch else 'n'}o"
-
         return einsum(equation, mat)
 
+    # TODO Remove after deprecating torch<1.9.0
     @classmethod
     def _has_additional_dims(cls, module: Linear) -> bool:
         """Return whether the input to a linear layer has additional (>1) dimensions.

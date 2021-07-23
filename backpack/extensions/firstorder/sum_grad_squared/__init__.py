@@ -65,8 +65,8 @@ class SumGradSquared(BackpropExtension):
                 ConvTranspose2d: convtranspose2d.SGSConvTranspose2d(),
                 ConvTranspose3d: convtranspose3d.SGSConvTranspose3d(),
                 RNN: rnn.SGSRNN(),
-                BatchNorm1d: batchnorm_nd.SGSBatchNorm(),
-                BatchNorm2d: batchnorm_nd.SGSBatchNorm(),
-                BatchNorm3d: batchnorm_nd.SGSBatchNorm(),
+                BatchNorm1d: batchnorm_nd.SGSBatchNormNd(),
+                BatchNorm2d: batchnorm_nd.SGSBatchNormNd(),
+                BatchNorm3d: batchnorm_nd.SGSBatchNormNd(),
             },
         )

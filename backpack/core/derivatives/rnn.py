@@ -6,6 +6,7 @@ from torch import Tensor, cat, einsum, zeros
 from torch.nn import RNN
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
+from backpack.utils.subsampling import get_batch_axis, subsample
 
 
 class RNNDerivatives(BaseParameterDerivatives):
@@ -88,12 +89,23 @@ class RNNDerivatives(BaseParameterDerivatives):
         return a_jac_t_mat_prod
 
     def _jac_t_mat_prod(
-        self, module: RNN, g_inp: Tuple[Tensor], g_out: Tuple[Tensor], mat: Tensor
+        self,
+        module: RNN,
+        g_inp: Tuple[Tensor],
+        g_out: Tuple[Tensor],
+        mat: Tensor,
+        subsampling: List[int] = None,
     ) -> Tensor:
         self._check_parameters(module)
         return torch.einsum(
             "vtnh,hk->vtnk",
-            self._a_jac_t_mat_prod(module.output, module.weight_hh_l0, mat),
+            self._a_jac_t_mat_prod(
+                subsample(
+                    module.output, dim=get_batch_axis(module), subsampling=subsampling
+                ),
+                module.weight_hh_l0,
+                mat,
+            ),
             module.weight_ih_l0,
         )
 
@@ -134,6 +146,7 @@ class RNNDerivatives(BaseParameterDerivatives):
         g_out: Tuple[Tensor],
         mat: Tensor,
         sum_batch: bool = True,
+        subsampling: List[int] = None,
     ) -> Tensor:
         """Apply transposed Jacobian of the output w.r.t. bias_ih_l0.
 
@@ -143,6 +156,7 @@ class RNNDerivatives(BaseParameterDerivatives):
             g_out: output gradient
             mat: matrix to multiply
             sum_batch: Whether to sum along batch axis. Defaults to True.
+            subsampling: Indices of active samples. Defaults to ``None`` (all samples).
 
         Returns:
             product
@@ -152,9 +166,13 @@ class RNNDerivatives(BaseParameterDerivatives):
             dim: List[int] = [1, 2]
         else:
             dim: int = 1
-        return self._a_jac_t_mat_prod(module.output, module.weight_hh_l0, mat).sum(
-            dim=dim
-        )
+        return self._a_jac_t_mat_prod(
+            subsample(
+                module.output, dim=get_batch_axis(module), subsampling=subsampling
+            ),
+            module.weight_hh_l0,
+            mat,
+        ).sum(dim=dim)
 
     def _bias_hh_l0_jac_t_mat_prod(
         self,
@@ -163,6 +181,7 @@ class RNNDerivatives(BaseParameterDerivatives):
         g_out: Tuple[Tensor],
         mat: Tensor,
         sum_batch: bool = True,
+        subsampling: List[int] = None,
     ) -> Tensor:
         """Apply transposed Jacobian of the output w.r.t. bias_hh_l0.
 
@@ -172,12 +191,13 @@ class RNNDerivatives(BaseParameterDerivatives):
             g_out: output gradient
             mat: matrix to multiply
             sum_batch: Whether to sum along batch axis. Defaults to True.
+            subsampling: Indices of active samples. Defaults to ``None`` (all samples).
 
         Returns:
             product
         """
         return self._bias_ih_l0_jac_t_mat_prod(
-            module, g_inp, g_out, mat, sum_batch=sum_batch
+            module, g_inp, g_out, mat, sum_batch=sum_batch, subsampling=subsampling
         )
 
     def _weight_ih_l0_jac_t_mat_prod(
@@ -187,6 +207,7 @@ class RNNDerivatives(BaseParameterDerivatives):
         g_out: Tuple[Tensor],
         mat: Tensor,
         sum_batch: bool = True,
+        subsampling: List[int] = None,
     ) -> Tensor:
         """Apply transposed Jacobian of the output w.r.t. weight_ih_l0.
 
@@ -196,15 +217,21 @@ class RNNDerivatives(BaseParameterDerivatives):
             g_out: output gradient
             mat: matrix to multiply
             sum_batch: Whether to sum along batch axis. Defaults to True.
+            subsampling: Indices of active samples. Defaults to ``None`` (all samples).
 
         Returns:
             product
         """
         self._check_parameters(module)
+        N_axis = get_batch_axis(module)
         return einsum(
             "vtnh,tnj->" + ("vhj" if sum_batch else "vnhj"),
-            self._a_jac_t_mat_prod(module.output, module.weight_hh_l0, mat),
-            module.input0,
+            self._a_jac_t_mat_prod(
+                subsample(module.output, dim=N_axis, subsampling=subsampling),
+                module.weight_hh_l0,
+                mat,
+            ),
+            subsample(module.input0, dim=N_axis, subsampling=subsampling),
         )
 
     def _weight_hh_l0_jac_t_mat_prod(
@@ -214,6 +241,7 @@ class RNNDerivatives(BaseParameterDerivatives):
         g_out: Tuple[Tensor],
         mat: Tensor,
         sum_batch: bool = True,
+        subsampling: List[int] = None,
     ) -> Tensor:
         """Apply transposed Jacobian of the output w.r.t. weight_hh_l0.
 
@@ -223,21 +251,21 @@ class RNNDerivatives(BaseParameterDerivatives):
             g_out: output gradient
             mat: matrix to multiply
             sum_batch: Whether to sum along batch axis. Defaults to True.
+            subsampling: Indices of active samples. Defaults to ``None`` (all samples).
 
         Returns:
             product
         """
         self._check_parameters(module)
-        N: int = mat.shape[2]
+        N_axis = get_batch_axis(module)
+        N: int = mat.shape[N_axis + 1]
         H: int = mat.shape[3]
+        output = subsample(module.output, dim=N_axis, subsampling=subsampling)
         return einsum(
             "vtnh,tnk->" + ("vhk" if sum_batch else "vnhk"),
-            self._a_jac_t_mat_prod(module.output, module.weight_hh_l0, mat),
+            self._a_jac_t_mat_prod(output, module.weight_hh_l0, mat),
             cat(
-                [
-                    zeros(1, N, H, device=mat.device, dtype=mat.dtype),
-                    module.output[0:-1],
-                ],
+                [zeros(1, N, H, device=mat.device, dtype=mat.dtype), output[0:-1]],
                 dim=0,
             ),
         )

@@ -1,12 +1,14 @@
 """Derivatives computed with PyTorch's autograd."""
 from test.core.derivatives.implementation.base import DerivativesImplementation
+from typing import List
 
 import torch
-from torch import Tensor, stack, zeros_like
+from torch import Tensor, cat, stack, zeros_like
 
 from backpack.hessianfree.hvp import hessian_vector_product
 from backpack.hessianfree.lop import transposed_jacobian_vector_product
 from backpack.hessianfree.rop import jacobian_vector_product
+from backpack.utils.subsampling import get_batch_axis, subsample
 
 
 class AutogradDerivatives(DerivativesImplementation):
@@ -34,75 +36,131 @@ class AutogradDerivatives(DerivativesImplementation):
             with torch.backends.cudnn.flags(enabled=False):
                 return stack([self.jac_vec_prod(vec) for vec in mat])
 
-    def jac_t_vec_prod(self, vec):  # noqa: D102
+    def jac_t_vec_prod(self, vec: Tensor, subsampling=None) -> Tensor:  # noqa: D102
         input, output, _ = self.problem.forward_pass(input_requires_grad=True)
-        return transposed_jacobian_vector_product(output, input, vec)[0]
 
-    def jac_t_mat_prod(self, mat):  # noqa: D102
-        return stack([self.jac_t_vec_prod(vec) for vec in mat])
+        if subsampling is None:
+            return transposed_jacobian_vector_product(output, input, vec)[0]
+        else:
+            # for each sample, multiply by full input Jacobian, slice out result:
+            # ( (∂ output[n] / ∂ input)ᵀ v[n] )[n]
+            batch_axis = get_batch_axis(self.problem.module)
+            output = subsample(output, dim=batch_axis, subsampling=subsampling)
+            output = output.split(1, dim=batch_axis)
+            vec = vec.split(1, dim=batch_axis)
 
-    def weight_jac_t_mat_prod(self, mat, sum_batch):  # noqa: D102
-        return self.param_jac_t_mat_prod("weight", mat, sum_batch)
+            vjps: List[Tensor] = []
 
-    def bias_jac_t_mat_prod(self, mat, sum_batch):  # noqa: D102
-        return self.param_jac_t_mat_prod("bias", mat, sum_batch)
+            for sample_idx, out, v in zip(subsampling, output, vec):
+                vjp = transposed_jacobian_vector_product(out, input, v)[0]
+                vjp = subsample(vjp, dim=batch_axis, subsampling=[sample_idx])
+                vjps.append(vjp)
 
-    def bias_ih_l0_jac_t_mat_prod(self, mat, sum_batch):  # noqa: D102
-        return self.param_jac_t_mat_prod("bias_ih_l0", mat, sum_batch, axis_batch=1)
+            return cat(vjps, dim=batch_axis)
 
-    def bias_hh_l0_jac_t_mat_prod(self, mat, sum_batch):  # noqa: D102
-        return self.param_jac_t_mat_prod("bias_ih_l0", mat, sum_batch, axis_batch=1)
+    def jac_t_mat_prod(
+        self, mat: Tensor, subsampling: List[int] = None
+    ) -> Tensor:  # noqa: D102
+        return stack([self.jac_t_vec_prod(vec, subsampling=subsampling) for vec in mat])
 
-    def weight_ih_l0_jac_t_mat_prod(self, mat, sum_batch):  # noqa: D102
-        return self.param_jac_t_mat_prod("weight_ih_l0", mat, sum_batch, axis_batch=1)
+    def weight_jac_t_mat_prod(self, mat, sum_batch, subsampling=None):  # noqa: D102
+        return self.param_jac_t_mat_prod(
+            "weight", mat, sum_batch, subsampling=subsampling
+        )
 
-    def weight_hh_l0_jac_t_mat_prod(self, mat, sum_batch):  # noqa: D102
-        return self.param_jac_t_mat_prod("weight_hh_l0", mat, sum_batch, axis_batch=1)
+    def bias_jac_t_mat_prod(self, mat, sum_batch, subsampling=None):  # noqa: D102
+        return self.param_jac_t_mat_prod(
+            "bias", mat, sum_batch, subsampling=subsampling
+        )
 
-    def param_jac_t_vec_prod(self, name, vec, sum_batch, axis_batch=0):
+    def bias_ih_l0_jac_t_mat_prod(self, mat, sum_batch, subsampling=None):  # noqa: D102
+        return self.param_jac_t_mat_prod(
+            "bias_ih_l0", mat, sum_batch, axis_batch=1, subsampling=subsampling
+        )
+
+    def bias_hh_l0_jac_t_mat_prod(self, mat, sum_batch, subsampling=None):  # noqa: D102
+        return self.param_jac_t_mat_prod(
+            "bias_ih_l0", mat, sum_batch, axis_batch=1, subsampling=subsampling
+        )
+
+    def weight_ih_l0_jac_t_mat_prod(
+        self, mat, sum_batch, subsampling=None
+    ):  # noqa: D102
+        return self.param_jac_t_mat_prod(
+            "weight_ih_l0", mat, sum_batch, axis_batch=1, subsampling=subsampling
+        )
+
+    def weight_hh_l0_jac_t_mat_prod(
+        self, mat, sum_batch, subsampling=None
+    ):  # noqa: D102
+        return self.param_jac_t_mat_prod(
+            "weight_hh_l0", mat, sum_batch, axis_batch=1, subsampling=subsampling
+        )
+
+    def param_jac_t_vec_prod(
+        self,
+        name: str,
+        vec: Tensor,
+        sum_batch: bool,
+        axis_batch: int = 0,
+        subsampling: List[int] = None,
+    ) -> Tensor:
         """Compute the product of jac_t and the given vector.
 
         Args:
-            name (str): name of parameter for derivative
-            vec (torch.Tensor): vectors which to multiply
-            sum_batch (boolean): whether to sum along batch axis
-            axis_batch (int, optional): index of batch axis. Defaults to 0.
+            name: name of parameter for derivative
+            vec: vectors which to multiply
+            sum_batch: whether to sum along batch axis
+            axis_batch: index of batch axis. Defaults to 0.
+            subsampling: Indices of active samples. Default: ``None`` (all).
 
         Returns:
-            torch.Tensor: product of jac_t and vec
+            product of jac_t and vec
         """
-        _, output, named_params = self.problem.forward_pass()
+        input, output, named_params = self.problem.forward_pass()
         param = named_params[name]
 
+        samples = range(input.shape[axis_batch]) if subsampling is None else subsampling
+        sample_outputs = output.split(1, dim=axis_batch)
+        sample_vecs = vec.split(1, dim=axis_batch)
+
+        jac_t_sample_prods = stack(
+            [
+                transposed_jacobian_vector_product(sample_outputs[n], param, vec_n)[0]
+                for n, vec_n in zip(samples, sample_vecs)
+            ],
+        )
+
         if sum_batch:
-            return transposed_jacobian_vector_product(output, param, vec)[0]
-        else:
-            sample_outputs = output.split(1, dim=axis_batch)
-            sample_vecs = vec.split(1, dim=axis_batch)
+            jac_t_sample_prods = jac_t_sample_prods.sum(0)
 
-            jac_t_sample_prods = [
-                transposed_jacobian_vector_product(n_out, param, n_vec)[0]
-                for n_out, n_vec in zip(sample_outputs, sample_vecs)
-            ]
+        return jac_t_sample_prods
 
-            return stack(jac_t_sample_prods)
-
-    def param_jac_t_mat_prod(self, name, mat, sum_batch, axis_batch=0):
+    def param_jac_t_mat_prod(
+        self,
+        name: str,
+        mat: Tensor,
+        sum_batch: bool,
+        axis_batch: int = 0,
+        subsampling: List[int] = None,
+    ) -> Tensor:
         """Compute the product of jac_t and the given matrix.
 
         Args:
-            name (str): name of parameter for derivative
-            mat (torch.Tensor): matrix which to multiply
-            sum_batch (boolean): whether to sum along batch axis
-            axis_batch (int, optional): index of batch axis. This is counted
-                without the first axis. Defaults to 0.
+            name: name of parameter for derivative
+            mat: matrix which to multiply
+            sum_batch: whether to sum along batch axis
+            axis_batch: Batch axis, counted without the first axis. Defaults to 0.
+            subsampling: Indices of active samples. Default: ``None`` (all).
 
         Returns:
-            torch.Tensor: product of jac_t and mat
+            product of jac_t and mat
         """
         return stack(
             [
-                self.param_jac_t_vec_prod(name, vec, sum_batch, axis_batch=axis_batch)
+                self.param_jac_t_vec_prod(
+                    name, vec, sum_batch, axis_batch=axis_batch, subsampling=subsampling
+                )
                 for vec in mat
             ]
         )

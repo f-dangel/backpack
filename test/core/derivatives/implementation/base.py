@@ -1,5 +1,6 @@
 """Contains DerivativesImplementation, the base class for autograd and backpack."""
 from abc import ABC, abstractmethod
+from typing import List
 
 from torch import Tensor
 
@@ -29,11 +30,12 @@ class DerivativesImplementation(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def jac_t_mat_prod(self, mat: Tensor) -> Tensor:
+    def jac_t_mat_prod(self, mat: Tensor, subsampling: List[int] = None) -> Tensor:
         """Vectorized product of transposed jacobian and matrix.
 
         Args:
             mat: matrix: the vectors along its leading dimension will be multiplied.
+            subsampling: Active samples in the output. Default: ``None`` (all).
 
         Returns:
             Tensor representing the result of Jacobian-vector product.
@@ -42,12 +44,15 @@ class DerivativesImplementation(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def weight_jac_t_mat_prod(self, mat: Tensor, sum_batch: bool) -> Tensor:
-        """Product of jacobian and matrix.
+    def weight_jac_t_mat_prod(
+        self, mat: Tensor, sum_batch: bool, subsampling: List[int] = None
+    ) -> Tensor:
+        """Matrix-Jacobian products w.r.t. the weight.
 
         Args:
             mat: matrix
             sum_batch: whether to sum along batch axis
+            subsampling: Active samples in the output. Default: ``None`` (all).
 
         Returns:
             product
@@ -55,12 +60,15 @@ class DerivativesImplementation(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def bias_jac_t_mat_prod(self, mat: Tensor, sum_batch: bool) -> Tensor:
+    def bias_jac_t_mat_prod(
+        self, mat: Tensor, sum_batch: bool, subsampling: List[int] = None
+    ) -> Tensor:
         """Product of jacobian and matrix.
 
         Args:
             mat: matrix
             sum_batch: whether to sum along batch axis
+            subsampling: Active samples in the output. Default: ``None`` (all).
 
         Returns:
             product
@@ -92,12 +100,15 @@ class DerivativesImplementation(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def bias_ih_l0_jac_t_mat_prod(self, mat: Tensor, sum_batch: bool) -> Tensor:
+    def bias_ih_l0_jac_t_mat_prod(
+        self, mat: Tensor, sum_batch: bool, subsampling: List[int] = None
+    ) -> Tensor:
         """Product of jacobian and matrix.
 
         Args:
             mat: matrix
             sum_batch: whether to sum along batch axis
+            subsampling: Active samples in the output. Default: ``None`` (all).
 
         Returns:
             product
@@ -105,12 +116,15 @@ class DerivativesImplementation(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def bias_hh_l0_jac_t_mat_prod(self, mat: Tensor, sum_batch: bool) -> Tensor:
+    def bias_hh_l0_jac_t_mat_prod(
+        self, mat: Tensor, sum_batch: bool, subsampling: List[int] = None
+    ) -> Tensor:
         """Product of jacobian and matrix.
 
         Args:
             mat: matrix
             sum_batch: whether to sum along batch axis
+            subsampling: Active samples in the output. Default: ``None`` (all).
 
         Returns:
             product
@@ -118,12 +132,15 @@ class DerivativesImplementation(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def weight_ih_l0_jac_t_mat_prod(self, mat: Tensor, sum_batch: bool) -> Tensor:
+    def weight_ih_l0_jac_t_mat_prod(
+        self, mat: Tensor, sum_batch: bool, subsampling: List[int] = None
+    ) -> Tensor:
         """Product of jacobian and matrix.
 
         Args:
             mat: matrix
             sum_batch: whether to sum along batch axis
+            subsampling: Active samples in the output. Default: ``None`` (all).
 
         Returns:
             product
@@ -131,12 +148,15 @@ class DerivativesImplementation(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def weight_hh_l0_jac_t_mat_prod(self, mat: Tensor, sum_batch: bool) -> Tensor:
+    def weight_hh_l0_jac_t_mat_prod(
+        self, mat: Tensor, sum_batch: bool, subsampling: List[int] = None
+    ) -> Tensor:
         """Product of jacobian and matrix.
 
         Args:
             mat: matrix
             sum_batch: whether to sum along batch axis
+            subsampling: Active samples in the output. Default: ``None`` (all).
 
         Returns:
             product

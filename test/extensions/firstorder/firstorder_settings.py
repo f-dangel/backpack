@@ -240,6 +240,20 @@ FIRSTORDER_SETTINGS += [
         "loss_function_fn": lambda: CrossEntropyLoss(reduction="mean"),
         "target_fn": lambda: classification_targets((3, 4, 1, 2), 3),
     },
+    {
+        "input_fn": lambda: rand(3, 3, 4, 1, 2),
+        "module_fn": lambda: initialize_training_false_recursive(
+            Sequential(
+                BatchNorm3d(num_features=3),
+                Linear(2, 3),
+                BatchNorm3d(num_features=3),
+                ReLU(),
+                BatchNorm3d(num_features=3),
+            )
+        ),
+        "loss_function_fn": lambda: CrossEntropyLoss(reduction="mean"),
+        "target_fn": lambda: classification_targets((3, 4, 1, 3), 3),
+    },
 ]
 ###############################################################################
 #                         test setting: RNN Layers                            #

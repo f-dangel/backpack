@@ -1,5 +1,9 @@
+"""Partial derivatives for the ZeroPad2d function."""
+from typing import List, Tuple
+
 from einops import rearrange
-from torch.nn import functional
+from torch import Tensor
+from torch.nn import ZeroPad2d, functional
 
 from backpack.core.derivatives.basederivatives import BaseDerivatives
 
@@ -27,7 +31,14 @@ class ZeroPad2dDerivatives(BaseDerivatives):
 
         return result.view(in_features, in_features)
 
-    def _jac_t_mat_prod(self, module, g_inp, g_out, mat):
+    def _jac_t_mat_prod(
+        self,
+        module: ZeroPad2d,
+        g_inp: Tuple[Tensor],
+        g_out: Tuple[Tensor],
+        mat: Tensor,
+        subsampling: List[int] = None,
+    ) -> Tensor:
         (W_top, W_bottom), (H_bottom, H_top) = self.__unpad_indices(module)
         return mat[:, :, :, W_top:W_bottom, H_bottom:H_top]
 

@@ -2,6 +2,8 @@
 
 It defines the module extension for each module.
 """
+from typing import List, Union
+
 from torch.nn import (
     RNN,
     BatchNorm1d,
@@ -37,6 +39,9 @@ class BatchGrad(BackpropExtension):
     Stores the output in ``grad_batch`` as a ``[N x ...]`` tensor,
     where ``N`` batch size and ``...`` is the shape of the gradient.
 
+    If ``subsampling`` is specified, ``N`` is replaced by the number of active
+    samples.
+
     .. note::
 
         Beware of scaling issue
@@ -52,10 +57,14 @@ class BatchGrad(BackpropExtension):
     objective is a sum of independent functions (no batchnorm).
     """
 
-    def __init__(self):
+    def __init__(self, subsampling: List[int] = None):
         """Initialization.
 
         Defines extension for each module.
+
+        Args:
+            subsampling: Indices of samples in the mini-batch for which individual
+                gradients will be computed. Defaults to ``None`` (use all samples).
         """
         super().__init__(
             savefield="grad_batch",
@@ -74,3 +83,13 @@ class BatchGrad(BackpropExtension):
                 RNN: rnn.BatchGradRNN(),
             },
         )
+        self._subsampling = subsampling
+
+    def get_subsampling(self) -> Union[List[int], None]:
+        """Get the indices of samples for which individual gradients are requested.
+
+        Returns:
+            List of indices containing the active samples in the mini-batch. ``None``
+            means all samples will be considered.
+        """
+        return self._subsampling

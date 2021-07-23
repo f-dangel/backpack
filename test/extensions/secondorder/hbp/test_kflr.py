@@ -6,6 +6,8 @@ from test.extensions.secondorder.hbp.kflr_settings import NOT_SUPPORTED_SETTINGS
 
 import pytest
 
+from backpack.utils import TORCH_VERSION, VERSION_1_6_0
+
 NOT_SUPPORTED_PROBLEMS = make_test_problems(NOT_SUPPORTED_SETTINGS)
 NOT_SUPPORTED_IDS = [problem.make_id() for problem in NOT_SUPPORTED_PROBLEMS]
 
@@ -19,7 +21,8 @@ def test_kflr_not_supported(problem):
     """
     problem.set_up()
 
-    with pytest.raises(NotImplementedError):
+    exception = RuntimeError if TORCH_VERSION == VERSION_1_6_0 else NotImplementedError
+    with pytest.raises(exception):
         BackpackExtensions(problem).kflr()
 
     problem.tear_down()
