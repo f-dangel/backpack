@@ -7,7 +7,7 @@ from torch.nn import Flatten, Module
 
 from backpack.custom_module.branching import ActiveIdentity, Branch, SumModule
 from backpack.custom_module.scale_module import ScaleModule
-from backpack.utils import TORCH_VERSION_HIGHER_THAN_1_9_0
+from backpack.utils import TORCH_VERSION_AT_LEAST_1_9_0
 
 
 class BackPackTracer(Tracer):
@@ -53,7 +53,7 @@ def convert_module_to_backpack(module: Module) -> GraphModule:
     Raises:
         NotImplementedError: if not torch >= 1.9.0
     """
-    if TORCH_VERSION_HIGHER_THAN_1_9_0 is False:
+    if TORCH_VERSION_AT_LEAST_1_9_0 is False:
         raise NotImplementedError(
             "Conversion is only possible for torch >= 1.9.0. This is because these "
             "functions use functionality such as torch.nn.Module.get_submodule"
