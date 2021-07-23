@@ -1,5 +1,5 @@
 """Derivatives of the identity module."""
-from typing import Tuple, Union
+from typing import List, Tuple, Union
 
 from torch import Tensor
 from torch.nn import Identity
@@ -15,6 +15,7 @@ class ScaleModuleDerivatives(BaseDerivatives):
         g_inp: Tuple[Tensor],
         g_out: Tuple[Tensor],
         mat: Tensor,
+        subsampling: List[int] = None,
     ) -> Tensor:
         if isinstance(module, Identity):
             return mat

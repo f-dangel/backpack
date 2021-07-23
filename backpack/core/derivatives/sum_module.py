@@ -1,5 +1,5 @@
 """Contains derivatives for SumModule."""
-from typing import Tuple
+from typing import List, Tuple
 
 from torch import Tensor
 
@@ -16,5 +16,6 @@ class SumModuleDerivatives(BaseDerivatives):
         g_inp: Tuple[Tensor],
         g_out: Tuple[Tensor],
         mat: Tensor,
+        subsampling: List[int] = None,
     ) -> Tensor:
         return mat

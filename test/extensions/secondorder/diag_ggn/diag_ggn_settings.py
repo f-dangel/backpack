@@ -13,7 +13,6 @@ from test.core.derivatives.utils import classification_targets, regression_targe
 from test.extensions.secondorder.secondorder_settings import SECONDORDER_SETTINGS
 from test.resnet.resnets_examples import ResNet1, ResNet2
 from test.utils.evaluation_mode import initialize_training_false_recursive
-from test.utils.evaluation_mode import initialize_training_false_recursive
 
 from torch import rand
 from torch.nn import (
