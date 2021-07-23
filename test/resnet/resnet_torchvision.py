@@ -1,4 +1,5 @@
 """Test whether torchvision is extendable with graph utils."""
+from test.utils.skip_test import skip_pytorch_below_1_9_0
 from typing import Tuple
 
 import pytest
@@ -17,6 +18,7 @@ def model_and_input() -> Tuple[Module, Tensor]:
     Yields:
         model and input
     """
+    skip_pytorch_below_1_9_0()
     resnet18 = torchvision.models.resnet18(num_classes=10).eval()
     yield extend(resnet18, use_converter=True), rand(8, 3, 21, 21, requires_grad=True)
     del resnet18

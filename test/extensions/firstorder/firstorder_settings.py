@@ -44,9 +44,12 @@ from torch.nn import (
 )
 from torchvision.models import resnet18
 
-from backpack import convert_module_to_backpack
 from backpack.custom_module.permute import Permute
 from backpack.custom_module.reduce_tuple import ReduceTuple
+from backpack.utils import TORCH_VERSION_AT_LEAST_1_9_0
+
+if TORCH_VERSION_AT_LEAST_1_9_0:
+    from backpack import convert_module_to_backpack
 
 FIRSTORDER_SETTINGS = []
 
@@ -286,12 +289,15 @@ FIRSTORDER_SETTINGS += [
 ###############################################################################
 #                     test setting: torchvision resnet                        #
 ###############################################################################
-FIRSTORDER_SETTINGS += [
-    {
-        "input_fn": lambda: rand(8, 3, 21, 21),
-        "module_fn": lambda: convert_module_to_backpack(resnet18(num_classes=4).eval()),
-        "loss_function_fn": lambda: MSELoss(),
-        "target_fn": lambda: regression_targets((8, 4)),
-        "id_prefix": "resnet18",
-    },
-]
+if TORCH_VERSION_AT_LEAST_1_9_0:
+    FIRSTORDER_SETTINGS += [
+        {
+            "input_fn": lambda: rand(8, 3, 21, 21),
+            "module_fn": lambda: convert_module_to_backpack(
+                resnet18(num_classes=4).eval()
+            ),
+            "loss_function_fn": lambda: MSELoss(),
+            "target_fn": lambda: regression_targets((8, 4)),
+            "id_prefix": "resnet18",
+        },
+    ]

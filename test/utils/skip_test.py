@@ -7,7 +7,7 @@ from pytest import skip
 from torch.nn import BatchNorm1d, BatchNorm2d, BatchNorm3d
 
 from backpack.custom_module.permute import Permute
-from backpack.utils import TORCH_VERSION_AT_LEAST_1_9_1
+from backpack.utils import TORCH_VERSION_AT_LEAST_1_9_0, TORCH_VERSION_AT_LEAST_1_9_1
 from backpack.utils.subsampling import get_batch_axis
 
 
@@ -84,3 +84,9 @@ def skip_no_param(problem: DerivativesTestProblem, param_str: str) -> None:
     has_param = getattr(problem.module, param_str, None) is not None
     if not has_param:
         skip(f"Test case has no {param_str} parameter.")
+
+
+def skip_pytorch_below_1_9_0() -> None:
+    """Skip test if pytorch version is below 1.9.0."""
+    if not TORCH_VERSION_AT_LEAST_1_9_0:
+        skip(f"Test needs PyTorch>=1.9.0")

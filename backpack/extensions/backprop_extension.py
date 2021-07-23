@@ -6,13 +6,16 @@ from typing import Callable, Dict, Tuple, Type
 
 import torch.nn
 from torch import Tensor
-from torch.fx import GraphModule
 from torch.nn import Module, Sequential
 
 from backpack.custom_module.branching import Branch, Parallel
 from backpack.custom_module.reduce_tuple import ReduceTuple
 from backpack.extensions.module_extension import ModuleExtension
+from backpack.utils import TORCH_VERSION_AT_LEAST_1_9_0
 from backpack.utils.hooks import apply_no_op
+
+if TORCH_VERSION_AT_LEAST_1_9_0:
+    from torch.fx import GraphModule
 
 FAIL_ERROR = "ERROR"
 FAIL_WARN = "WARN"
@@ -92,7 +95,10 @@ class BackpropExtension:
         if module_extension is None:
 
             if isinstance(
-                module, (GraphModule, Sequential, Branch, Parallel, ReduceTuple)
+                module,
+                (GraphModule, Sequential, Branch, Parallel, ReduceTuple)
+                if TORCH_VERSION_AT_LEAST_1_9_0
+                else (Sequential, Branch, Parallel, ReduceTuple),
             ):
                 return apply_no_op
 

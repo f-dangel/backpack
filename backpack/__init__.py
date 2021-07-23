@@ -8,7 +8,10 @@ from backpack.utils.hooks import no_op
 
 from . import extensions
 from .context import CTX
-from .custom_module.graph_utils import convert_module_to_backpack
+from .utils import TORCH_VERSION_AT_LEAST_1_9_0
+
+if TORCH_VERSION_AT_LEAST_1_9_0:
+    from .custom_module.graph_utils import convert_module_to_backpack
 
 
 class backpack:
@@ -193,8 +196,13 @@ def extend(module: torch.nn.Module, debug=False, use_converter=False):
         print("[DEBUG] Extending", module)
 
     if use_converter:
-        module = convert_module_to_backpack(module)
-        return extend(module)
+        if TORCH_VERSION_AT_LEAST_1_9_0:
+            module = convert_module_to_backpack(module)
+            return extend(module)
+        else:
+            raise NotImplementedError(
+                "The option use_converter=True is only available for Pytorch>=1.9.0."
+            )
 
     for child in module.children():
         extend(child, debug=debug)

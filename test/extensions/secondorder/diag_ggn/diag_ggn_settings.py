@@ -34,11 +34,14 @@ from torch.nn import (
     Sigmoid,
 )
 
-from backpack import convert_module_to_backpack
 from backpack.custom_module import branching
 from backpack.custom_module.branching import ActiveIdentity, Parallel
 from backpack.custom_module.permute import Permute
 from backpack.custom_module.reduce_tuple import ReduceTuple
+from backpack.utils import TORCH_VERSION_AT_LEAST_1_9_0
+
+if TORCH_VERSION_AT_LEAST_1_9_0:
+    from backpack import convert_module_to_backpack
 
 SHARED_SETTINGS = SECONDORDER_SETTINGS
 LOCAL_SETTINGS = []
@@ -211,19 +214,22 @@ LOCAL_SETTINGS += [
         "target_fn": lambda: classification_targets((4,), 5),
         "id_prefix": "nested-branching-convolution",
     },
-    {
-        "input_fn": lambda: ResNet1.input_test,
-        "module_fn": lambda: convert_module_to_backpack(ResNet1().eval()),
-        "loss_function_fn": lambda: ResNet1.loss_test,
-        "target_fn": lambda: ResNet1.target_test,
-        "id_prefix": "ResNet1",
-    },
-    {
-        "input_fn": lambda: rand(ResNet2.input_test),
-        "module_fn": lambda: convert_module_to_backpack(ResNet2().eval()),
-        "loss_function_fn": lambda: ResNet2.loss_test,
-        "target_fn": lambda: rand(ResNet2.target_test),
-        "id_prefix": "ResNet2",
-    },
 ]
+if TORCH_VERSION_AT_LEAST_1_9_0:
+    LOCAL_SETTINGS += [
+        {
+            "input_fn": lambda: ResNet1.input_test,
+            "module_fn": lambda: convert_module_to_backpack(ResNet1().eval()),
+            "loss_function_fn": lambda: ResNet1.loss_test,
+            "target_fn": lambda: ResNet1.target_test,
+            "id_prefix": "ResNet1",
+        },
+        {
+            "input_fn": lambda: rand(ResNet2.input_test),
+            "module_fn": lambda: convert_module_to_backpack(ResNet2().eval()),
+            "loss_function_fn": lambda: ResNet2.loss_test,
+            "target_fn": lambda: rand(ResNet2.target_test),
+            "id_prefix": "ResNet2",
+        },
+    ]
 DiagGGN_SETTINGS = SHARED_SETTINGS + LOCAL_SETTINGS
