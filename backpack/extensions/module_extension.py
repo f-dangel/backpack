@@ -157,7 +157,7 @@ class ModuleExtension:
                 )
             # TODO: discuss whether this can be avoided
             # occurs only in automated tests
-            except (NotImplementedError, RuntimeError):
+            except RuntimeError:
                 setattr(inp, ext.savefield, attach)
         else:
             setattr(inp, ext.savefield, attach)
