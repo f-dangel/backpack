@@ -1,4 +1,13 @@
+from __future__ import annotations
+
 import warnings
+from typing import TYPE_CHECKING, Tuple
+
+from torch import Tensor
+from torch.nn import Module
+
+if TYPE_CHECKING:
+    from backpack.extensions.backprop_extension import BackpropExtension
 
 
 class ModuleExtension:
@@ -64,6 +73,7 @@ class ModuleExtension:
         Fetch backpropagated quantities from module output, apply backpropagation
         rule, and attach the result to module input(s).
         """
+        self.check_hyperparameters_module_extension(ext, module, g_inp, g_out)
         inp = module.input0
         out = module.output
 
@@ -107,3 +117,22 @@ class ModuleExtension:
     @staticmethod
     def __save(value, extension, module, param):
         setattr(getattr(module, param), extension.savefield, value)
+
+    def check_hyperparameters_module_extension(
+        self,
+        ext: BackpropExtension,
+        module: Module,
+        g_inp: Tuple[Tensor],
+        g_out: Tuple[Tensor],
+    ) -> None:
+        """Check whether the current module is supported in the extension.
+
+        Child classes can override this method.
+
+        Args:
+            ext: current extension
+            module: module
+            g_inp: input gradients
+            g_out: output gradients
+        """
+        pass
