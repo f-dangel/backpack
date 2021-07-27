@@ -82,9 +82,7 @@ def test_param_mjp(
         print(f"testing derivative wrt {param_str}")
 
         V = 3
-        mat = rand_mat_like_output(V, problem, subsampling=subsampling).to(
-            problem.device
-        )
+        mat = rand_mat_like_output(V, problem, subsampling=subsampling)
 
         for save_memory in [True, False] if test_save_memory else [None]:
             with weight_jac_t_save_memory(
