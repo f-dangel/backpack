@@ -22,7 +22,7 @@ class FirstOrderBackpropExtension(BackpropExtension):
         savefield: str,
         module_exts: Dict[Type[Module], ModuleExtension],
         fail_mode: str = FAIL_WARN,
-    ):
+    ):  # noqa: D107
         super().__init__(savefield, module_exts, fail_mode=fail_mode)
 
     def expects_backpropagation_quantities(self) -> bool:  # noqa: D102
