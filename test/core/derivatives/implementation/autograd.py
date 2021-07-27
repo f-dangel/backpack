@@ -8,6 +8,7 @@ from torch import Tensor, stack, zeros_like
 from backpack.hessianfree.hvp import hessian_vector_product
 from backpack.hessianfree.lop import transposed_jacobian_vector_product
 from backpack.hessianfree.rop import jacobian_vector_product
+from backpack.utils.subsampling import get_batch_axis
 
 
 class AutogradDerivatives(DerivativesImplementation):
@@ -49,7 +50,7 @@ class AutogradDerivatives(DerivativesImplementation):
         sum_batch: bool,
         subsampling: List[int] = None,
     ) -> Tensor:  # noqa: D102
-        axis_batch = 0 if param_str in ("weight", "bias") else 1
+        axis_batch = get_batch_axis(self.problem.module)
         return stack(
             [
                 self._param_vjp(
