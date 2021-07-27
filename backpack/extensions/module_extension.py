@@ -29,23 +29,25 @@ class ModuleExtension:
 
         Args:
             params: List of module parameters that need special treatment.
-                for each param `p` in the list, instances of the extended module `m`
+                For each param `p` in the list, instances of the extended module `m`
                 need to have a field `m.p` and the class extending `ModuleExtension`
-                need to provide a method with the same signature as the `backprop`
+                need to provide a method with the same signature as the `backpropagate`
                 method.
                 The result of this method will be saved in the savefield of `m.p`.
 
         Raises:
             NotImplementedError: if child class doesn't have a method for each parameter
         """
-        if params is None:
-            params = []
-
-        self.__params = params
+        self.__params: List[str] = [] if params is None else params
 
         for param in self.__params:
             if hasattr(self, param) is False:
-                raise NotImplementedError
+                raise NotImplementedError(
+                    f"The module extension {self} is missing an implementation "
+                    f"of how to calculate the quantity for {param}. "
+                    f"This should be realized in a function "
+                    f"{param}(extension, module, g_inp, g_out, bpQuantities) -> Any."
+                )
 
     def backpropagate(
         self,
@@ -92,9 +94,9 @@ class ModuleExtension:
         """
         bp_quantity = self.__get_backproped_quantity(extension, module.output)
         if (
-            extension.expects_backpropagation_quantities() is True
+            extension.expects_backpropagation_quantities()
             and bp_quantity is None
-            and is_loss(module) is False
+            and not is_loss(module)
             and TORCH_VERSION_HIGHER_THAN_1_9_0
         ):
             raise AssertionError(
@@ -112,17 +114,15 @@ class ModuleExtension:
             bp_quantity = self.backpropagate(
                 extension, module, g_inp, g_out, bp_quantity
             )
-            self.__save_backprop_quantity(
-                extension,
-                module.input0,
-                bp_quantity,
-            )
+            self.__save_backprop_quantity(extension, module.input0, bp_quantity)
 
     @staticmethod
     def __get_backproped_quantity(
         extension: BackpropExtension, reference_tensor: Tensor
     ) -> Tensor or None:
         """Fetch backpropagated quantities attached to the module output.
+
+        The property reference_tensor.data_ptr() is used as a reference.
 
         Args:
             extension: current BackPACK extension
@@ -135,9 +135,7 @@ class ModuleExtension:
 
     @staticmethod
     def __save_backprop_quantity(
-        extension: BackpropExtension,
-        reference_tensor: Tensor,
-        bpQuantities: Any,
+        extension: BackpropExtension, reference_tensor: Tensor, bpQuantities: Any
     ) -> None:
         """Propagate back additional information by attaching it to the module input.
 
