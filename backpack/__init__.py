@@ -200,7 +200,7 @@ def hook_run_extensions(
     for backpack_extension in CTX.get_active_exts():
         if CTX.get_debug():
             print("[DEBUG] Running extension", backpack_extension, "on", module)
-        backpack_extension.apply(module, g_inp, g_out)
+        backpack_extension(module, g_inp, g_out)
 
     CTX.get_post_extension_hook()(module)
 

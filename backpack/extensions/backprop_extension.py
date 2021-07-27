@@ -4,14 +4,13 @@ from __future__ import annotations
 import abc
 import warnings
 from abc import ABC
-from typing import Callable, Dict, Tuple, Type
+from typing import Dict, Tuple, Type
 
 from torch import Tensor
 from torch.nn import Module
 
 from backpack.extensions.module_extension import ModuleExtension
 from backpack.extensions.saved_quantities import SavedQuantities
-from backpack.utils.hooks import no_op_apply
 
 FAIL_ERROR = "ERROR"
 FAIL_WARN = "WARNING"
@@ -89,9 +88,7 @@ class BackpropExtension(ABC):
             )
         self.__module_extensions[module] = extension
 
-    def __get_module_extension(
-        self, module: Module
-    ) -> Callable[[BackpropExtension, Module, Tuple[Tensor], Tuple[Tensor]], None]:
+    def __get_module_extension(self, module: Module) -> ModuleExtension or None:
         module_extension = self.__module_extensions.get(module.__class__)
 
         if module_extension is None:
@@ -110,11 +107,9 @@ class BackpropExtension(ABC):
                     )
                     break
 
-            return no_op_apply
+        return module_extension
 
-        return module_extension.apply
-
-    def apply(
+    def __call__(
         self,
         module: Module,
         g_inp: Tuple[Tensor],
@@ -128,7 +123,8 @@ class BackpropExtension(ABC):
             g_out: output gradient
         """
         module_extension = self.__get_module_extension(module)
-        module_extension(self, module, g_inp, g_out)
+        if module_extension is not None:
+            module_extension(self, module, g_inp, g_out)
 
     @abc.abstractmethod
     def expects_backpropagation_quantities(self) -> bool:

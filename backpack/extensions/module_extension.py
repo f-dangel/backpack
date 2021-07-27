@@ -69,7 +69,7 @@ class ModuleExtension:
         """
         warnings.warn("Backpropagate has not been overwritten")
 
-    def apply(
+    def __call__(
         self,
         extension: BackpropExtension,
         module: Module,
