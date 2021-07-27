@@ -23,9 +23,7 @@ class CTX:
         Args:
             active_exts: the extensions
         """
-        CTX.active_exts = tuple()
-        for act_ext in active_exts:
-            CTX.active_exts += (act_ext,)
+        CTX.active_exts = tuple(active_exts)
 
     @staticmethod
     def get_active_exts() -> Tuple[BackpropExtension]:
@@ -62,10 +60,7 @@ class CTX:
         Returns:
             whether at least one of the specified extensions is active
         """
-        for backpack_ext in CTX.get_active_exts():
-            if isinstance(backpack_ext, extension_classes):
-                return True
-        return False
+        return any(isinstance(ext, extension_classes) for ext in CTX.get_active_exts())
 
     @staticmethod
     def get_debug() -> bool:
@@ -77,7 +72,7 @@ class CTX:
         return CTX.debug
 
     @staticmethod
-    def set_debug(debug) -> None:
+    def set_debug(debug: bool) -> None:
         """Set debug mode.
 
         Args:
