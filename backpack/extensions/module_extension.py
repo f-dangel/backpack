@@ -31,7 +31,7 @@ class ModuleExtension:
             params: List of module parameters that need special treatment.
                 For each param `p` in the list, instances of the extended module `m`
                 need to have a field `m.p` and the class extending `ModuleExtension`
-                need to provide a method with the same signature as the `backpropagate`
+                needs to provide a method with the same signature as the `backpropagate`
                 method.
                 The result of this method will be saved in the savefield of `m.p`.
 
@@ -41,7 +41,7 @@ class ModuleExtension:
         self.__params: List[str] = [] if params is None else params
 
         for param in self.__params:
-            if hasattr(self, param) is False:
+            if not hasattr(self, param):
                 raise NotImplementedError(
                     f"The module extension {self} is missing an implementation "
                     f"of how to calculate the quantity for {param}. "
@@ -114,7 +114,7 @@ class ModuleExtension:
             bp_quantity = self.backpropagate(
                 extension, module, g_inp, g_out, bp_quantity
             )
-            self.__save_backprop_quantity(extension, module.input0, bp_quantity)
+            self.__save_backproped_quantity(extension, module.input0, bp_quantity)
 
     @staticmethod
     def __get_backproped_quantity(
@@ -134,7 +134,7 @@ class ModuleExtension:
         return extension.saved_quantities.retrieve_quantity(reference_tensor.data_ptr())
 
     @staticmethod
-    def __save_backprop_quantity(
+    def __save_backproped_quantity(
         extension: BackpropExtension, reference_tensor: Tensor, bpQuantities: Any
     ) -> None:
         """Propagate back additional information by attaching it to the module input.
@@ -149,22 +149,22 @@ class ModuleExtension:
         )
 
     @staticmethod
-    def __param_exists_and_requires_grad(module: Module, param: str) -> bool:
+    def __param_exists_and_requires_grad(module: Module, param_str: str) -> bool:
         """Whether the module has the parameter and it requires gradient.
 
         Args:
             module: current module
-            param: parameter name
+            param_str: parameter name
 
         Returns:
             whether the module has the parameter and it requires gradient
         """
-        param_exists = getattr(module, param) is not None
-        return param_exists and getattr(module, param).requires_grad
+        param_exists = getattr(module, param_str) is not None
+        return param_exists and getattr(module, param_str).requires_grad
 
     @staticmethod
     def __save_value_on_parameter(
-        value: Any, extension: BackpropExtension, module: Module, param: str
+        value: Any, extension: BackpropExtension, module: Module, param_str: str
     ) -> None:
         """Saves the value on the parameter of that module.
 
@@ -172,6 +172,6 @@ class ModuleExtension:
             value: The value that should be saved.
             extension: The current BackPACK extension.
             module: current module
-            param: parameter name
+            param_str: parameter name
         """
-        setattr(getattr(module, param), extension.savefield, value)
+        setattr(getattr(module, param_str), extension.savefield, value)
