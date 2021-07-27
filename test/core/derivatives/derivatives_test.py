@@ -77,27 +77,26 @@ def test_param_mjp(
     """
     skip_subsampling_conflict(problem, subsampling)
     test_save_memory: bool = "Conv" in request.node.callspec.id
+    V = 3
 
     for param_str, _ in problem.module.named_parameters():
         print(f"testing derivative wrt {param_str}")
-
-        V = 3
-        mat = rand_mat_like_output(V, problem, subsampling=subsampling)
-
         for save_memory in [True, False] if test_save_memory else [None]:
+            if test_save_memory:
+                print(f"testing with save_memory={save_memory}")
+
+            mat = rand_mat_like_output(V, problem, subsampling=subsampling)
             with weight_jac_t_save_memory(
                 save_memory=save_memory
             ) if test_save_memory else nullcontext():
-                if test_save_memory:
-                    print(f"testing with save_memory={save_memory}")
                 backpack_res = BackpackDerivatives(problem).param_mjp(
                     param_str, mat, sum_batch, subsampling=subsampling
                 )
-        autograd_res = AutogradDerivatives(problem).param_mjp(
-            param_str, mat, sum_batch, subsampling=subsampling
-        )
+            autograd_res = AutogradDerivatives(problem).param_mjp(
+                param_str, mat, sum_batch, subsampling=subsampling
+            )
 
-        check_sizes_and_values(autograd_res, backpack_res)
+            check_sizes_and_values(autograd_res, backpack_res)
 
 
 @mark.parametrize(
