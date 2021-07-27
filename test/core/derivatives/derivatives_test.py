@@ -97,7 +97,6 @@ def test_param_mjp(
             )
 
             check_sizes_and_values(autograd_res, backpack_res)
-            del mat, backpack_res, autograd_res
 
 
 @mark.parametrize(
