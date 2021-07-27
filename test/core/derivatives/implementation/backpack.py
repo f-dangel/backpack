@@ -31,10 +31,12 @@ class BackpackDerivatives(DerivativesImplementation):
             self.problem.module, None, None, mat
         )
 
-    def jac_t_mat_prod(self, mat):  # noqa: D102
+    def jac_t_mat_prod(
+        self, mat: Tensor, subsampling: List[int]
+    ) -> Tensor:  # noqa: D102
         self.store_forward_io()
         return self.problem.derivative.jac_t_mat_prod(
-            self.problem.module, None, None, mat
+            self.problem.module, None, None, mat, subsampling=subsampling
         )
 
     def param_mjp(

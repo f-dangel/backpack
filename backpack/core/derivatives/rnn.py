@@ -92,12 +92,23 @@ class RNNDerivatives(BaseParameterDerivatives):
         return a_jac_t_mat_prod
 
     def _jac_t_mat_prod(
-        self, module: RNN, g_inp: Tuple[Tensor], g_out: Tuple[Tensor], mat: Tensor
+        self,
+        module: RNN,
+        g_inp: Tuple[Tensor],
+        g_out: Tuple[Tensor],
+        mat: Tensor,
+        subsampling: List[int] = None,
     ) -> Tensor:
         self._check_parameters(module)
         return torch.einsum(
             "vtnh,hk->vtnk",
-            self._a_jac_t_mat_prod(module.output, module.weight_hh_l0, mat),
+            self._a_jac_t_mat_prod(
+                subsample(
+                    module.output, dim=get_batch_axis(module), subsampling=subsampling
+                ),
+                module.weight_hh_l0,
+                mat,
+            ),
             module.weight_ih_l0,
         )
 

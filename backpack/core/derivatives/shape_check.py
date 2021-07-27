@@ -70,9 +70,11 @@ def check_same_V_dim(mat1, mat2):
 
 
 def _check_like(mat, module, name, diff=1, *args, **kwargs):
-    if name == "output" and "subsampling" in kwargs.keys():
+    if name in ["output", "input0"] and "subsampling" in kwargs.keys():
         compare = subsample(
-            module.output, dim=get_batch_axis(module), subsampling=kwargs["subsampling"]
+            getattr(module, name),
+            dim=get_batch_axis(module),
+            subsampling=kwargs["subsampling"],
         )
     else:
         compare = getattr(module, name)
