@@ -66,7 +66,6 @@ class BatchGrad(FirstOrderBackpropExtension):
         """
         super().__init__(
             savefield="grad_batch",
-            fail_mode="WARNING",
             module_exts={
                 Linear: linear.BatchGradLinear(),
                 Conv1d: conv1d.BatchGradConv1d(),

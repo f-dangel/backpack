@@ -51,7 +51,6 @@ class SumGradSquared(FirstOrderBackpropExtension):
         """
         super().__init__(
             savefield="sum_grad_squared",
-            fail_mode="WARNING",
             module_exts={
                 Linear: linear.SGSLinear(),
                 Conv1d: conv1d.SGSConv1d(),

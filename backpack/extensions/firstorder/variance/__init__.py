@@ -51,7 +51,6 @@ class Variance(FirstOrderBackpropExtension):
         """
         super().__init__(
             savefield="variance",
-            fail_mode="WARNING",
             module_exts={
                 Linear: linear.VarianceLinear(),
                 Conv1d: conv1d.VarianceConv1d(),
