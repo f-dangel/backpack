@@ -215,10 +215,10 @@ def hook_run_extensions(
 
 
 def extend(module: Module, debug: bool = False) -> Module:
-    """Extends a ``module`` to make it BackPACK-ready.
+    """Recursively extend a ``module`` to make it BackPACK-ready.
 
-    If the ``module`` has children, e.g. for a ``torch.nn.Sequential``,
-    they will also be extended.
+    Modules that do not represent an operation in the computation graph (for instance
+    containers like ``Sequential``) will not explicitly be extended.
 
     Args:
         module: The module to extend.
@@ -233,9 +233,8 @@ def extend(module: Module, debug: bool = False) -> Module:
     for child in module.children():
         extend(child, debug=debug)
 
-    module_was_already_extended = getattr(module, "_backpack_extend", False)
-    if not module_was_already_extended:
-        CTX.add_hook_handle(module.register_forward_hook(hook_store_io))
+    already_extended = getattr(module, "_backpack_extend", False)
+    if not (already_extended or is_no_op(module)):
         _register_hooks(module)
         module._backpack_extend = True
 
@@ -243,10 +242,12 @@ def extend(module: Module, debug: bool = False) -> Module:
 
 
 def _register_hooks(module: Module) -> None:
-    if is_no_op(module):
-        return
+    """Install forward and backward hooks on a module."""
+    CTX.add_hook_handle(module.register_forward_hook(hook_store_io))
 
     if TORCH_VERSION_HIGHER_THAN_1_9_0:
-        CTX.add_hook_handle(module.register_full_backward_hook(hook_run_extensions))
+        register_backward_hook_fn = module.register_full_backward_hook
     else:
-        CTX.add_hook_handle(module.register_backward_hook(hook_run_extensions))
+        register_backward_hook_fn = module.register_backward_hook
+
+    CTX.add_hook_handle(register_backward_hook_fn(hook_run_extensions))
