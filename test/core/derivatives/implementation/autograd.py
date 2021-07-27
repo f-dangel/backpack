@@ -70,14 +70,13 @@ class AutogradDerivatives(DerivativesImplementation):
         sum_batch: bool,
         subsampling: List[int] = None,
     ) -> Tensor:  # noqa: D102
-        axis_batch = get_batch_axis(self.problem.module)
         return stack(
             [
                 self._param_vjp(
                     param_str,
                     vec,
                     sum_batch,
-                    axis_batch=axis_batch,
+                    axis_batch=get_batch_axis(self.problem.module),
                     subsampling=subsampling,
                 )
                 for vec in mat
