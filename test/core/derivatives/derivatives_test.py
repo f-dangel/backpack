@@ -75,7 +75,7 @@ def test_param_mjp(
         subsampling: subsampling indices
         request: problem request
     """
-    _skip_if_subsampling_conflict(problem, subsampling)
+    skip_subsampling_conflict(problem, subsampling)
     test_save_memory: bool = "Conv" in request.node.callspec.id
 
     for param_str, _ in problem.module.named_parameters():
@@ -382,21 +382,6 @@ def problem(request) -> DerivativesTestProblem:
     case.set_up()
     yield case
     case.tear_down()
-
-
-def _skip_if_subsampling_conflict(
-    problem: DerivativesTestProblem, subsampling: Union[List[int], None]
-) -> None:
-    """Skip if some samples in subsampling are not contained in input.
-
-    Args:
-        problem: Test case.
-        subsampling: Indices of active samples.
-    """
-    N = problem.input_shape[get_batch_axis(problem.module)]
-    enough_samples = subsampling is None or N >= max(subsampling)
-    if not enough_samples:
-        skip("Not enough samples.")
 
 
 @fixture
