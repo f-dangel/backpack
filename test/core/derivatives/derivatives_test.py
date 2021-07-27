@@ -60,9 +60,7 @@ SUBSAMPLING_IDS = [f"subsampling={s}".replace(" ", "") for s in SUBSAMPLINGS]
 
 
 @mark.parametrize("subsampling", SUBSAMPLINGS, ids=SUBSAMPLING_IDS)
-@mark.parametrize(
-    "sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"]
-)
+@mark.parametrize("sum_batch", [True, False], ids=["sum_batch=True", "sum_batch=False"])
 def test_param_mjp(
     problem: DerivativesTestProblem,
     sum_batch: bool,
