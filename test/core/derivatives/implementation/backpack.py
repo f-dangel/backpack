@@ -3,8 +3,7 @@ from test.core.derivatives.implementation.base import DerivativesImplementation
 from test.utils import chunk_sizes
 from typing import List
 
-import torch
-from torch import Tensor
+from torch import Tensor, einsum, zeros
 
 from backpack.utils.subsampling import subsample
 
@@ -200,14 +199,14 @@ class BackpackDerivatives(DerivativesImplementation):
         else:
             raise ValueError("Only 2D inputs are currently supported.")
 
-        return torch.einsum(equation, sqrt, sqrt)
+        return einsum(equation, sqrt, sqrt)
 
     def _embed_sample_hessians(
         self, individual_hessians: Tensor, input: Tensor
     ) -> Tensor:
         """Embed Hessians w.r.t. individual samples into Hessian w.r.t. all samples."""
         hessian_shape = (*input.shape, *input.shape)
-        hessian = torch.zeros(hessian_shape, device=input.device)
+        hessian = zeros(hessian_shape, device=input.device)
 
         for idx in range(input.shape[0]):
             if input.dim() == 2:
