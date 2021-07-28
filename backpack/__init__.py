@@ -195,11 +195,14 @@ def hook_run_extensions(
         g_inp: input gradients
         g_out: output gradients
     """
+    debug = CTX.get_debug()
     for backpack_extension in CTX.get_active_exts():
-        if CTX.get_debug():
+        if debug:
             print("[DEBUG] Running extension", backpack_extension, "on", module)
         backpack_extension(module, g_inp, g_out)
 
+    if debug:
+        print("[DEBUG] Running extension hook on", module)
     CTX.get_extension_hook()(module)
 
     if not (
