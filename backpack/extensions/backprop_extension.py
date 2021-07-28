@@ -60,7 +60,7 @@ class BackpropExtension(ABC):
         self.saved_quantities: SavedQuantities = SavedQuantities()
         self.savefield: str = savefield
         self.__module_extensions: Dict[Type[Module], ModuleExtension] = module_exts
-        self.__fail_mode: str = fail_mode
+        self._fail_mode: str = fail_mode
 
     def set_module_extension(
         self,
@@ -92,13 +92,13 @@ class BackpropExtension(ABC):
         module_extension = self.__module_extensions.get(module.__class__)
 
         if module_extension is None:
-            if self.__fail_mode is FAIL_ERROR:
+            if self._fail_mode is FAIL_ERROR:
                 raise NotImplementedError(
                     f"Extension saving to {self.savefield} "
                     "does not have an extension for "
                     f"Module {module.__class__}"
                 )
-            elif self.__fail_mode == FAIL_WARN:
+            elif self._fail_mode == FAIL_WARN:
                 for _ in module.parameters():
                     warnings.warn(
                         f"Extension saving to {self.savefield} does not have an "
