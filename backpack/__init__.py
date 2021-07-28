@@ -240,7 +240,11 @@ def extend(module: Module, debug: bool = False) -> Module:
 
 
 def _register_hooks(module: Module) -> None:
-    """Install forward and backward hooks on a module."""
+    """Install forward and backward hooks on a module.
+
+    Args:
+          module: module that is going to be extended
+    """
     CTX.add_hook_handle(module.register_forward_hook(hook_store_io))
 
     if TORCH_VERSION_HIGHER_THAN_1_9_0:
