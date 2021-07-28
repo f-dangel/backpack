@@ -69,7 +69,7 @@ class backpack:
         """Setup backpack environment."""
         self.old_CTX = CTX.get_active_exts()
         self.old_debug = CTX.get_debug()
-        self.old_extension_hook = CTX.get_post_extension_hook()
+        self.old_extension_hook = CTX.get_extension_hook()
         CTX.set_active_exts(self.exts)
         CTX.set_debug(self.debug)
         CTX.set_extension_hook(self.extension_hook)
@@ -200,7 +200,7 @@ def hook_run_extensions(
             print("[DEBUG] Running extension", backpack_extension, "on", module)
         backpack_extension(module, g_inp, g_out)
 
-    CTX.get_post_extension_hook()(module)
+    CTX.get_extension_hook()(module)
 
     if not (
         CTX.is_extension_active(

@@ -81,8 +81,8 @@ class CTX:
         CTX.debug = debug
 
     @staticmethod
-    def get_post_extension_hook() -> Callable[[Module], None]:
-        """Return the current post extension hook to be run after all other extensions.
+    def get_extension_hook() -> Callable[[Module], None]:
+        """Return the current extension hook to be run after all other extensions.
 
         Returns:
             current extension hook
