@@ -149,10 +149,6 @@ class ModuleExtension:
         retain_grad_is_on = getattr(module.output, "retains_grad", False)
         # inp_is_out = id(module.input0) == id(module.output)
         should_retain_grad = is_a_leaf or retain_grad_is_on  # or inp_is_out
-        print(f"module: {module}")
-        print(f"is_a_leaf={is_a_leaf}")
-        print(f"retain_grad_is_on={retain_grad_is_on}")
-        # print(f"inp_is_out={inp_is_out}")
         return should_retain_grad
 
     @staticmethod
