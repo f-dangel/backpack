@@ -234,10 +234,11 @@ def extend(module: Module, debug: bool = False) -> Module:
     for child in module.children():
         extend(child, debug=debug)
 
-    already_extended = getattr(module, "_backpack_extend", False)
+    extended_flag = "_backpack_extend"
+    already_extended = getattr(module, extended_flag, False)
     if not (already_extended or is_no_op(module)):
         _register_hooks(module)
-        module._backpack_extend = True
+        setattr(module, extended_flag, True)
 
     return module
 
