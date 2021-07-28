@@ -687,7 +687,6 @@ class BaseLossDerivatives(BaseDerivatives, ABC):
         g_out: Tuple[Tensor],
         subsampling: List[int] = None,
     ) -> Tensor:
-        """Internal implementation of the loss Hessian's symmetric factorization."""
         raise NotImplementedError
 
     # TODO Add shape check
@@ -734,7 +733,6 @@ class BaseLossDerivatives(BaseDerivatives, ABC):
         mc_samples: int = 1,
         subsampling=None,
     ) -> Tensor:
-        """Internal implementation of symmetric Hessian factorization via MC."""
         raise NotImplementedError
 
     @shape_check.make_hessian_mat_prod_accept_vectors

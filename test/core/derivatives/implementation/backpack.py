@@ -189,7 +189,7 @@ class BackpackDerivatives(DerivativesImplementation):
             individual full matrix
 
         Raises:
-            ValueError: if input is not 3d
+            ValueError: if input is not 2d
         """
         equation = None
 
@@ -204,7 +204,18 @@ class BackpackDerivatives(DerivativesImplementation):
     def _embed_sample_hessians(
         self, individual_hessians: Tensor, input: Tensor
     ) -> Tensor:
-        """Embed Hessians w.r.t. individual samples into Hessian w.r.t. all samples."""
+        """Embed Hessians w.r.t. individual samples into Hessian w.r.t. all samples.
+
+        Args:
+            individual_hessians: Hessians w.r.t. individual samples in the input.
+            input: Inputs for the individual Hessians.
+
+        Returns:
+            Hessian that contains the individual Hessians as diagonal blocks.
+
+        Raises:
+            ValueError: if input is not 2d
+        """
         hessian_shape = (*input.shape, *input.shape)
         hessian = zeros(hessian_shape, device=input.device)
 

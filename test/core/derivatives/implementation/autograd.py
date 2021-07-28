@@ -329,6 +329,11 @@ class AutogradDerivatives(DerivativesImplementation):
 
         If ``subsampling`` is set to ``None``, leaves the Hessian unchanged.
 
+        Args:
+            hessian: The Hessian w.r.t. the module input.
+            input: Module input.
+            subsampling: List of active samples. Default of ``None`` uses all samples.
+
         Returns:
             Sub-sampled Hessian of shape ``[N, *, N, *]`` where ``N`` denotes the
             number of sub-samples, and ``*`` is the input feature shape.
