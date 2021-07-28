@@ -12,6 +12,7 @@ from torch.nn import CrossEntropyLoss, Linear, Module, Sequential
 from backpack import backpack, extend, extensions
 from backpack.extensions import BatchGrad, DiagGGNExact
 from backpack.extensions.backprop_extension import FAIL_ERROR, BackpropExtension
+from backpack.utils import TORCH_VERSION_AT_LEAST_1_8_0
 
 DEVICES = get_available_devices()
 DEVICES_ID = [str(dev) for dev in DEVICES]
@@ -89,7 +90,9 @@ def test_extension_hook_multiple_parameter_visits(
             params_visited[id(p)] += 1
 
     if problem_string == CUSTOM_CONTAINER and extension._fail_mode == FAIL_ERROR:
-        with raises(NotImplementedError):
+        with raises(NotImplementedError) if TORCH_VERSION_AT_LEAST_1_8_0 else raises(
+            RuntimeError
+        ):
             with backpack(extension, extension_hook=count_visits, debug=True):
                 loss.backward()
         return

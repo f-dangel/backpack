@@ -93,6 +93,8 @@ class BackpropExtension(ABC):
 
         if module_extension is None:
             if self._fail_mode is FAIL_ERROR:
+                # this Error gets converted into a RuntimeError for torch<1.8.0
+                # TODO: check: maybe it is torch<1.7.0
                 raise NotImplementedError(
                     f"Extension saving to {self.savefield} "
                     "does not have an extension for "
