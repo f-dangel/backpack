@@ -217,7 +217,7 @@ class BackpackDerivatives(DerivativesImplementation):
             ValueError: if input is not 2d
         """
         hessian_shape = (*input.shape, *input.shape)
-        hessian = zeros(hessian_shape, device=input.device)
+        hessian = zeros(hessian_shape, device=input.device, dtype=input.dtype)
 
         for idx in range(input.shape[0]):
             if input.dim() == 2:
