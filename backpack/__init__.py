@@ -69,7 +69,7 @@ class backpack:
         """Setup backpack environment."""
         self.old_CTX = CTX.get_active_exts()
         self.old_debug = CTX.get_debug()
-        self.old_extension_hook = CTX.get_post_extension_hook()
+        self.old_extension_hook = CTX.get_extension_hook()
         CTX.set_active_exts(self.exts)
         CTX.set_debug(self.debug)
         CTX.set_extension_hook(self.extension_hook)
@@ -195,12 +195,15 @@ def hook_run_extensions(
         g_inp: input gradients
         g_out: output gradients
     """
+    debug = CTX.get_debug()
     for backpack_extension in CTX.get_active_exts():
-        if CTX.get_debug():
+        if debug:
             print("[DEBUG] Running extension", backpack_extension, "on", module)
         backpack_extension(module, g_inp, g_out)
 
-    CTX.get_post_extension_hook()(module)
+    if debug:
+        print("[DEBUG] Running extension hook on", module)
+    CTX.get_extension_hook()(module)
 
     if not (
         CTX.is_extension_active(
@@ -231,10 +234,11 @@ def extend(module: Module, debug: bool = False) -> Module:
     for child in module.children():
         extend(child, debug=debug)
 
-    already_extended = getattr(module, "_backpack_extend", False)
+    extended_flag = "_backpack_extend"
+    already_extended = getattr(module, extended_flag, False)
     if not (already_extended or is_no_op(module)):
         _register_hooks(module)
-        module._backpack_extend = True
+        setattr(module, extended_flag, True)
 
     return module
 
