@@ -5,7 +5,7 @@ from torch import Size, Tensor, einsum
 from torch.nn import Linear
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
-from backpack.utils import TORCH_VERSION, VERSION_1_9_0
+from backpack.utils import TORCH_VERSION_AT_LEAST_1_9_0
 from backpack.utils.subsampling import subsample
 
 
@@ -144,7 +144,7 @@ class LinearDerivatives(BaseParameterDerivatives):
         """
         d_weight = subsample(module.input0, subsampling=subsampling)
 
-        if TORCH_VERSION >= VERSION_1_9_0:
+        if TORCH_VERSION_AT_LEAST_1_9_0:
             equation = f"vn...o,n...i->v{'' if sum_batch else 'n'}oi"
         # TODO Remove else-branch after deprecating torch<1.9.0
         else:
