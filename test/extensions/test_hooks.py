@@ -5,9 +5,9 @@ iterate over ``module.parameters()``.
 """
 from test.core.derivatives.utils import classification_targets, get_available_devices
 
-import torch
-from pytest import fixture, mark, raises, skip
-from torch.nn import Linear, Module, Sequential
+from pytest import fixture, mark, raises
+from torch import manual_seed, rand
+from torch.nn import CrossEntropyLoss, Linear, Module, Sequential
 
 from backpack import backpack, extend, extensions
 from backpack.extensions import BatchGrad, DiagGGNExact
@@ -30,11 +30,11 @@ def device(request):
 def problem(device, request):
     """Return extended nested sequential with loss from a forward pass."""
     problem_string = request.param
-    torch.manual_seed(0)
+    manual_seed(0)
 
     if problem_string == NESTED_SEQUENTIAL:
         B = 2
-        X = torch.rand(B, 4).to(device)
+        X = rand(B, 4).to(device)
         y = classification_targets((B,), 2).to(device)
 
         model = Sequential(
@@ -57,7 +57,7 @@ def problem(device, request):
                 return x
 
         B = 2
-        X = torch.rand(B, 4).to(device)
+        X = rand(B, 4).to(device)
         y = classification_targets((B,), 2).to(device)
 
         model = _MyCustomModule().to(device)
@@ -67,7 +67,7 @@ def problem(device, request):
         )
 
     model = extend(model)
-    lossfunc = extend(torch.nn.CrossEntropyLoss(reduction="mean"))
+    lossfunc = extend(CrossEntropyLoss(reduction="mean"))
     loss = lossfunc(model(X), y)
     yield model, loss, problem_string
 
