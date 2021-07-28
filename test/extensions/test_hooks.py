@@ -139,7 +139,9 @@ def test_extension_hook_param_before_savefield_exists(problem):
 
         assert len(params_without_grad_batch) == 0
     elif problem_string == CUSTOM_CONTAINER:
-        with raises(AssertionError):
+        with raises(AssertionError) if TORCH_VERSION_AT_LEAST_1_8_0 else raises(
+            RuntimeError
+        ):
             with backpack(
                 extensions.BatchGrad(), extension_hook=check_grad_batch, debug=True
             ):
