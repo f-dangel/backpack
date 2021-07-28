@@ -117,8 +117,7 @@ def test_extension_hook_multiple_parameter_visits(
 
 def test_extension_hook_param_before_savefield_exists(problem):
     """Extension hooks iterating over parameters may get called before BackPACK."""
-    skip("Test does not work yet")  # TODO implement
-    _, loss = problem
+    _, loss, problem_string = problem
 
     params_without_grad_batch = []
 
@@ -129,11 +128,19 @@ def test_extension_hook_param_before_savefield_exists(problem):
                 params_without_grad_batch.append(id(p))
                 raise AssertionError(f"Param {id(p)} has no 'grad_batch' attribute")
 
-    # AssertionError is caught inside BackPACK and will raise a RuntimeError
-    with raises(RuntimeError):
+    if problem_string == NESTED_SEQUENTIAL:
         with backpack(
             extensions.BatchGrad(), extension_hook=check_grad_batch, debug=True
         ):
             loss.backward()
 
-    assert len(params_without_grad_batch) > 0
+        assert len(params_without_grad_batch) == 0
+    elif problem_string == CUSTOM_CONTAINER:
+        with raises(AssertionError):
+            with backpack(
+                extensions.BatchGrad(), extension_hook=check_grad_batch, debug=True
+            ):
+                loss.backward()
+        assert len(params_without_grad_batch) > 0
+    else:
+        raise NotImplementedError(f"unknown problem_string={problem_string}")
