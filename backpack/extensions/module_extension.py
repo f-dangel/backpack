@@ -110,7 +110,7 @@ class ModuleExtension:
                 extValue = extFunc(extension, module, g_inp, g_out, bp_quantity)
                 self.__save_value_on_parameter(extValue, extension, module, param)
 
-        if self._should_backpropagate(extension, module):
+        if self.__should_backpropagate(extension, module):
             bp_quantity = self.backpropagate(
                 extension, module, g_inp, g_out, bp_quantity
             )
