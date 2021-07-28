@@ -110,11 +110,25 @@ class ModuleExtension:
                 extValue = extFunc(extension, module, g_inp, g_out, bp_quantity)
                 self.__save_value_on_parameter(extValue, extension, module, param)
 
-        if extension.expects_backpropagation_quantities():
+        if self._should_backpropagate(extension, module):
             bp_quantity = self.backpropagate(
                 extension, module, g_inp, g_out, bp_quantity
             )
             self.__save_backproped_quantity(extension, module.input0, bp_quantity)
+
+    @staticmethod
+    def __should_backpropagate(extension: BackpropExtension, module: Module) -> bool:
+        """Determines whether the current extension should perform a backpropagation.
+
+        Args:
+            extension: current extension
+            module: current module
+
+        Returns:
+            whether a backpropagation should be performed
+        """
+        input_requires_grad: bool = module.input0.requires_grad
+        return input_requires_grad and extension.expects_backpropagation_quantities()
 
     @staticmethod
     def __get_backproped_quantity(
