@@ -191,15 +191,11 @@ class BackpackDerivatives(DerivativesImplementation):
         Raises:
             ValueError: if input is not 2d
         """
-        equation = None
-
         # TODO improve readability
         if sqrt.dim() == 3:
-            equation = "vni,vnj->nij"
+            return einsum("vni,vnj->nij", sqrt, sqrt)
         else:
             raise ValueError("Only 2D inputs are currently supported.")
-
-        return einsum(equation, sqrt, sqrt)
 
     def _embed_sample_hessians(
         self, individual_hessians: Tensor, input: Tensor
