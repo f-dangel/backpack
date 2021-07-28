@@ -30,13 +30,17 @@ class SavedQuantities:
         else:
             self._saved_quantities[key] = quantity
 
-    def retrieve_quantity(self, key: int) -> Union[Tensor, None]:
+    def retrieve_quantity(self, key: int, delete_old: bool) -> Union[Tensor, None]:
         """Returns the saved quantity.
 
         Args:
             key: id of grad_output[0]
+            delete_old: whether to delete the old quantity
 
         Returns:
             the saved quantity, None if it does not exist
         """
-        return self._saved_quantities.pop(key, None)
+        get_value = (
+            self._saved_quantities.pop if delete_old else self._saved_quantities.get
+        )
+        return get_value(key, None)

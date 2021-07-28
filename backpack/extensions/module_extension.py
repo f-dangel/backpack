@@ -92,7 +92,10 @@ class ModuleExtension:
         Raises:
             AssertionError: if there is no saved quantity although extension expects one
         """
-        bp_quantity = self.__get_backproped_quantity(extension, module.output)
+        delete_old_quantities = not self.__should_retain_backproped_quantities(module)
+        bp_quantity = self.__get_backproped_quantity(
+            extension, module.output, delete_old_quantities
+        )
         if (
             extension.expects_backpropagation_quantities()
             and bp_quantity is None
@@ -131,8 +134,32 @@ class ModuleExtension:
         return input_requires_grad and extension.expects_backpropagation_quantities()
 
     @staticmethod
+    def __should_retain_backproped_quantities(module: Module) -> bool:
+        """Whether the backpropagation quantities should be kept.
+
+        This is old code inherited and not tested.
+
+        Args:
+            module: current module
+
+        Returns:
+            whether backpropagation quantities should be kept
+        """
+        is_a_leaf = module.output.grad_fn is None
+        retain_grad_is_on = getattr(module.output, "retains_grad", False)
+        # inp_is_out = id(module.input0) == id(module.output)
+        should_retain_grad = is_a_leaf or retain_grad_is_on  # or inp_is_out
+        print(f"module: {module}")
+        print(f"is_a_leaf={is_a_leaf}")
+        print(f"retain_grad_is_on={retain_grad_is_on}")
+        # print(f"inp_is_out={inp_is_out}")
+        return should_retain_grad
+
+    @staticmethod
     def __get_backproped_quantity(
-        extension: BackpropExtension, reference_tensor: Tensor
+        extension: BackpropExtension,
+        reference_tensor: Tensor,
+        delete_old: bool,
     ) -> Tensor or None:
         """Fetch backpropagated quantities attached to the module output.
 
@@ -141,11 +168,14 @@ class ModuleExtension:
         Args:
             extension: current BackPACK extension
             reference_tensor: the output Tensor of the current module
+            delete_old: whether to delete the old backpropagated quantity
 
         Returns:
             the backpropagation quantity
         """
-        return extension.saved_quantities.retrieve_quantity(reference_tensor.data_ptr())
+        return extension.saved_quantities.retrieve_quantity(
+            reference_tensor.data_ptr(), delete_old
+        )
 
     @staticmethod
     def __save_backproped_quantity(
