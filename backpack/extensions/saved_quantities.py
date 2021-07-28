@@ -40,7 +40,3 @@ class SavedQuantities:
             the saved quantity, None if it does not exist
         """
         return self._saved_quantities.pop(key, None)
-
-    def clear(self) -> None:
-        """Clear saved quantities."""
-        self._saved_quantities.clear()

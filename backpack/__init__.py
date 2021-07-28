@@ -87,8 +87,6 @@ class backpack:
             __exc_value: exception value
             __traceback: exception traceback
         """
-        for backprop_extension in CTX.get_active_exts():
-            backprop_extension.clear()
         CTX.set_active_exts(self.old_CTX)
         CTX.set_debug(self.old_debug)
         CTX.set_extension_hook(self.old_extension_hook)

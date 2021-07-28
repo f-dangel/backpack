@@ -134,7 +134,3 @@ class BackpropExtension(ABC):
             Whether the extension uses additional backpropagation quantities.
         """
         return
-
-    def clear(self) -> None:
-        """Clears backpropagation quantities."""
-        self.saved_quantities.clear()
