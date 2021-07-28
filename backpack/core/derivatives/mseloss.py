@@ -3,7 +3,7 @@
 from math import sqrt
 from typing import List, Tuple
 
-from torch import Tensor, eye, normal
+from torch import Tensor, eye, normal, ones
 from torch.nn import MSELoss
 
 from backpack.core.derivatives.basederivatives import BaseLossDerivatives
@@ -27,16 +27,16 @@ class MSELossDerivatives(BaseLossDerivatives):
     ) -> Tensor:  # noqa: D102
         self.check_input_dims(module)
 
-        N, D = module.input0.shape
+        input0: Tensor = module.input0
+        N, D = input0.shape
         N_active = N if subsampling is None else len(subsampling)
-        sqrt_H = (
-            (sqrt(2) * eye(D, device=module.input0.device))
-            .unsqueeze(1)
-            .repeat(1, N_active, 1)
-        )
 
+        scale = sqrt(2)
         if module.reduction == "mean":
-            sqrt_H /= sqrt(module.input0.numel())
+            scale /= sqrt(input0.numel())
+
+        sqrt_H_diag = scale * ones(D, device=input0.device, dtype=input0.dtype)
+        sqrt_H = sqrt_H_diag.diag().unsqueeze(1).expand(-1, N_active, -1)
 
         return sqrt_H
 
@@ -50,15 +50,20 @@ class MSELossDerivatives(BaseLossDerivatives):
     ) -> Tensor:
         self.check_input_dims(module)
 
-        N, D = module.input0.shape
+        input0: Tensor = module.input0
+        N, D = input0.shape
         N_active = N if subsampling is None else len(subsampling)
         samples = normal(
-            0, 1, size=[mc_samples, N_active, D], device=module.input0.device
+            0,
+            1,
+            size=[mc_samples, N_active, D],
+            device=input0.device,
+            dtype=input0.dtype,
         )
         samples *= sqrt(2) / sqrt(mc_samples)
 
         if module.reduction == "mean":
-            samples /= sqrt(module.input0.numel())
+            samples /= sqrt(input0.numel())
 
         return samples
 
