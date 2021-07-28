@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, List, Tuple
 from torch import Tensor
 from torch.nn import Module
 
-from backpack.utils import TORCH_VERSION_HIGHER_THAN_1_9_0
+from backpack.utils import TORCH_VERSION_AT_LEAST_1_9_0
 from backpack.utils.module_classification import is_loss
 
 if TYPE_CHECKING:
@@ -97,7 +97,7 @@ class ModuleExtension:
             extension.expects_backpropagation_quantities()
             and bp_quantity is None
             and not is_loss(module)
-            and TORCH_VERSION_HIGHER_THAN_1_9_0
+            and TORCH_VERSION_AT_LEAST_1_9_0
         ):
             raise AssertionError(
                 "BackPACK extension expects a backpropagation quantity but it is None. "
