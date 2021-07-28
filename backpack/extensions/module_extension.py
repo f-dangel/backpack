@@ -181,11 +181,12 @@ class ModuleExtension:
     def __save_backproped_quantity(
         extension: BackpropExtension, reference_tensor: Tensor, bpQuantities: Any
     ) -> None:
-        """Propagate back additional information by attaching it to the module input.
+        """Save additional information backpropagated for a tensor.
 
         Args:
             extension: current BackPACK extension
-            reference_tensor: reference tensor on which to save
+            reference_tensor: reference tensor for which additional information
+                is backpropagated.
             bpQuantities: backpropagation quantities that should be saved
         """
         extension.saved_quantities.save_quantity(
