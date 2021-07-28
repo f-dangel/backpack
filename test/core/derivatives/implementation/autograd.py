@@ -3,7 +3,7 @@ from test.core.derivatives.implementation.base import DerivativesImplementation
 from typing import List
 
 import torch
-from torch import Tensor, cat, stack, zeros_like
+from torch import Tensor, cat, stack, zeros, zeros_like
 
 from backpack.hessianfree.hvp import hessian_vector_product
 from backpack.hessianfree.lop import transposed_jacobian_vector_product
@@ -309,14 +309,56 @@ class AutogradDerivatives(DerivativesImplementation):
 
         return True
 
-    def input_hessian(self) -> Tensor:
+    def input_hessian(self, subsampling: List[int] = None) -> Tensor:
         """Compute the Hessian of the module output w.r.t. the input.
+
+        Args:
+            subsampling: Indices of active samples. ``None`` uses all samples.
 
         Returns:
             hessian
         """
         input, output, _ = self.problem.forward_pass(input_requires_grad=True)
-        return self._hessian(output, input)
+        hessian = self._hessian(output, input)
+        return self._subsample_input_hessian(hessian, input, subsampling=subsampling)
+
+    @staticmethod
+    def _subsample_input_hessian(
+        hessian: Tensor, input: Tensor, subsampling: List[int] = None
+    ) -> Tensor:
+        """Slice sub-samples out of Hessian w.r.t the full input.
+
+        If ``subsampling`` is set to ``None``, leaves the Hessian unchanged.
+
+        Returns:
+            Sub-sampled Hessian of shape ``[N, *, N, *]`` where ``N`` denotes the
+            number of sub-samples, and ``*`` is the input feature shape.
+        """
+        N, D_shape = input.shape[0], input.shape[1:]
+        D = input.numel() // N
+
+        subsampled_hessian = hessian.reshape(N, D, N, D)[subsampling, :, :, :][
+            :, :, subsampling, :
+        ]
+
+        has_duplicates = subsampling is not None and len(set(subsampling)) != len(
+            subsampling
+        )
+        if has_duplicates:
+            # For duplicates in `subsampling`, the above slicing is not sufficient.
+            # and off-diagonal blocks need to be zeroed. E.g. if subsampling is [0, 0]
+            # then the sliced input Hessian has non-zero off-diagonal blocks (1, 0) and
+            # (0, 1), which should be zero as the samples are considered independent.
+            for idx1, sample1 in enumerate(subsampling[:-1]):
+                for idx2, sample2 in enumerate(subsampling[idx1 + 1 :], start=idx1 + 1):
+                    if sample1 == sample2:
+                        subsampled_hessian[idx1, :, idx2, :] = 0
+                        subsampled_hessian[idx2, :, idx1, :] = 0
+
+        N_active = N if subsampling is None else len(subsampling)
+        out_shape = [N_active, *D_shape, N_active, *D_shape]
+
+        return subsampled_hessian.reshape(out_shape)
 
     def sum_hessian(self) -> Tensor:
         """Compute the Hessian of a loss module w.r.t. its input.

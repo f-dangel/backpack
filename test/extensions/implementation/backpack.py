@@ -6,6 +6,7 @@ from test.extensions.implementation.hooks import (
     SumGradSquaredHook,
 )
 from test.extensions.problem import ExtensionsTestProblem
+from test.utils import chunk_sizes
 from typing import List
 
 from torch import Tensor, cat, einsum
@@ -108,7 +109,7 @@ class BackpackExtensions(ExtensionsImplementation):
         Returns:
             Parameter-wise MC-approximation of the GGN diagonal.
         """
-        chunk_samples = self.chunk_sizes(mc_samples, chunks)
+        chunk_samples = chunk_sizes(mc_samples, chunks)
         chunk_weights = [samples / mc_samples for samples in chunk_samples]
 
         diag_ggn_mc = None
@@ -137,7 +138,7 @@ class BackpackExtensions(ExtensionsImplementation):
         Returns:
             Parameter-wise MC-approximation of the per-sample GGN diagonals.
         """
-        chunk_samples = self.chunk_sizes(mc_samples, chunks)
+        chunk_samples = chunk_sizes(mc_samples, chunks)
         chunk_weights = [samples / mc_samples for samples in chunk_samples]
 
         diag_ggn_mc_batch = None
@@ -155,30 +156,6 @@ class BackpackExtensions(ExtensionsImplementation):
                     diag_ggn_mc_batch[idx] += chunk_diag_ggn_mc_batch[idx]
 
         return diag_ggn_mc_batch
-
-    @staticmethod
-    def chunk_sizes(total_size: int, num_chunks: int) -> List[int]:
-        """Return list containing the sizes of chunks.
-
-        Args:
-            total_size: Total computation work.
-            num_chunks: Maximum number of chunks the work will be split into.
-
-        Returns:
-            List of chunks with split work.
-        """
-        chunk_size = max(total_size // num_chunks, 1)
-
-        if chunk_size == 1:
-            sizes = total_size * [chunk_size]
-        else:
-            equal, rest = divmod(total_size, chunk_size)
-            sizes = equal * [chunk_size]
-
-            if rest != 0:
-                sizes.append(rest)
-
-        return sizes
 
     def diag_h(self) -> List[Tensor]:  # noqa:D102
         with backpack(new_ext.DiagHessian()):
@@ -239,7 +216,7 @@ class BackpackExtensions(ExtensionsImplementation):
         return self.problem.collect_data("sqrt_ggn_mc")
 
     def ggn_mc(self, mc_samples: int, chunks: int = 1) -> Tensor:  # noqa:D102
-        samples = self.chunk_sizes(mc_samples, chunks)
+        samples = chunk_sizes(mc_samples, chunks)
         weights = [samples / mc_samples for samples in samples]
 
         return sum(
