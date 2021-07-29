@@ -2,7 +2,7 @@
 from typing import List
 
 from torch import Tensor
-from torch.nn import LSTM, RNN, Module
+from torch.nn import LSTM, RNN, Module, Sequential
 
 
 def subsample(tensor: Tensor, dim: int = 0, subsampling: List[int] = None) -> Tensor:
@@ -32,18 +32,30 @@ def subsample(tensor: Tensor, dim: int = 0, subsampling: List[int] = None) -> Te
 
 
 def get_batch_axis(module: Module) -> int:
-    """Return the batch axis assumed by the module.
+    """Return the batch axis assumed by a network.
 
     Args:
-        module: A module.
+        module: A module or neural network.
 
     Returns:
-        Batch axis
+        Batch axis.
+
+    Raises:
+        ValueError: If axis are inconsistent among layers.
     """
+    batch_axes = set()
+
     if isinstance(module, (RNN, LSTM)):
-        if module.batch_first:
-            return 0
-        else:
-            return 1
+        batch_axes.add(0 if module.batch_first else 1)
+    elif isinstance(module, Sequential):
+        pass
     else:
-        return 0
+        batch_axes.add(0)
+
+    for child in module.children():
+        batch_axes.add(get_batch_axis(child))
+
+    if len(batch_axes) != 1:
+        raise ValueError(f"Multiple/No batch axes ({batch_axes}) detected in {module}.")
+
+    return batch_axes.pop()
