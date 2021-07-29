@@ -72,15 +72,3 @@ def skip_subsampling_conflict(
     enough_samples = subsampling is None or N > max(subsampling)
     if not enough_samples:
         skip("Not enough samples.")
-
-
-def skip_no_param(problem: DerivativesTestProblem, param_str: str) -> None:
-    """Skip if test case does not contain the parameter.
-
-    Args:
-        problem: Test case.
-        param_str: Parameter name.
-    """
-    has_param = getattr(problem.module, param_str, None) is not None
-    if not has_param:
-        skip(f"Test case has no {param_str} parameter.")

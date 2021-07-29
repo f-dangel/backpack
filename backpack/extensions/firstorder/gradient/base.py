@@ -35,11 +35,11 @@ class GradBaseModule(FirstOrderModuleExtension):
                 setattr(self, param_str, self._make_param_function(param_str))
         super().__init__(params=params)
 
-    def _make_param_function(self, param):
+    def _make_param_function(self, param_str):
         """Creates a function that calculates gradient wrt param.
 
         Args:
-            param(str): name of parameter
+            param_str: name of parameter
 
         Returns:
             function: function that calculates gradient wrt param
@@ -58,8 +58,8 @@ class GradBaseModule(FirstOrderModuleExtension):
             Returns:
                 torch.Tensor: gradient of the batch, similar to autograd
             """
-            return getattr(self.derivatives, f"{param}_jac_t_mat_prod")(
-                module, g_inp, g_out, g_out[0], sum_batch=True
+            return self.derivatives.param_mjp(
+                param_str, module, g_inp, g_out, g_out[0], sum_batch=True
             )
 
         return param_function

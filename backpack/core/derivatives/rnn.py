@@ -47,6 +47,9 @@ class RNNDerivatives(BaseParameterDerivatives):
         if module.bidirectional is not False:
             raise NotImplementedError("only bidirectional = False is supported")
 
+    def hessian_is_zero(self, module: RNN) -> bool:  # noqa: D102
+        return False
+
     @staticmethod
     def _a_jac_t_mat_prod(
         output: Tensor,
