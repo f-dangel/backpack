@@ -11,11 +11,11 @@ def test_graph_clear() -> None:
 
     More specifically, test that there are no saved quantities left over.
     """
-    in_dim, out_dim = 5, 6
+    batch_size, in_dim, out_dim = 4, 5, 6
     model = extend(
         Sequential(Linear(in_dim, out_dim), ReLU(), Linear(out_dim, out_dim))
     )
-    inputs = rand(4, in_dim)
+    inputs = rand(batch_size, in_dim)
     extension = DiagGGNExact()
     outputs = model(inputs)
     loss = extend(MSELoss())(outputs, rand_like(outputs))
