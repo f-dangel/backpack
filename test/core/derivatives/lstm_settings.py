@@ -22,6 +22,10 @@ LSTM_SETTINGS = []
 ###############################################################################
 LSTM_SETTINGS += [
     {
+        "module_fn": lambda: torch.nn.LSTM(input_size=4, hidden_size=3, num_layers=1),
+        "input_fn": lambda: torch.rand(size=(5, 3, 4)),
+    },
+    {
         "module_fn": lambda: torch.nn.LSTM(input_size=5, hidden_size=3, num_layers=1),
         "input_fn": lambda: torch.rand(size=(10, 8, 5)),
     },
