@@ -13,7 +13,8 @@ Optional entries:
     "seed" (int): seed for the random number for torch.rand
 """
 
-import torch
+from torch import rand
+from torch.nn import LSTM
 
 LSTM_SETTINGS = []
 
@@ -22,11 +23,11 @@ LSTM_SETTINGS = []
 ###############################################################################
 LSTM_SETTINGS += [
     {
-        "module_fn": lambda: torch.nn.LSTM(input_size=4, hidden_size=3, num_layers=1),
-        "input_fn": lambda: torch.rand(size=(5, 3, 4)),
+        "module_fn": lambda: LSTM(input_size=4, hidden_size=3, num_layers=1),
+        "input_fn": lambda: rand(size=(5, 3, 4)),
     },
     {
-        "module_fn": lambda: torch.nn.LSTM(input_size=5, hidden_size=3, num_layers=1),
-        "input_fn": lambda: torch.rand(size=(10, 8, 5)),
+        "module_fn": lambda: LSTM(input_size=5, hidden_size=3, num_layers=1),
+        "input_fn": lambda: rand(size=(10, 8, 5)),
     },
 ]
