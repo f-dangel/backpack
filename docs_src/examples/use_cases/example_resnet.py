@@ -19,7 +19,7 @@ DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 # %%
 # Read-the-docs has limited memory. Therefore, we use a smaller custom example.
 # Flip the switch to use resnet18.
-use_resnet18 = False
+use_resnet18 = True
 
 
 class MyFirstResNet(torch.nn.Module):
@@ -54,7 +54,7 @@ def get_resnet18():
 
 def get_inputs():
     inputs = (
-        rand(64, 3, 224, 224, device=DEVICE)
+        rand(4, 3, 7, 7, device=DEVICE)  # (128, 3, 224, 224)
         if use_resnet18
         else load_one_batch_mnist()[0]
     )
