@@ -4,7 +4,7 @@ from __future__ import annotations
 import abc
 import warnings
 from abc import ABC
-from typing import Dict, Tuple, Type
+from typing import Dict, Tuple, Type, Union
 
 from torch import Tensor
 from torch.nn import Module
@@ -63,10 +63,7 @@ class BackpropExtension(ABC):
         self._fail_mode: str = fail_mode
 
     def set_module_extension(
-        self,
-        module: Type[Module],
-        extension: ModuleExtension,
-        overwrite: bool = False,
+        self, module: Type[Module], extension: ModuleExtension, overwrite: bool = False
     ) -> None:
         """Adds a module mapping to module_extensions.
 
@@ -88,7 +85,7 @@ class BackpropExtension(ABC):
             )
         self.__module_extensions[module] = extension
 
-    def __get_module_extension(self, module: Module) -> ModuleExtension or None:
+    def __get_module_extension(self, module: Module) -> Union[ModuleExtension, None]:
         module_extension = self.__module_extensions.get(module.__class__)
 
         if module_extension is None:
@@ -111,10 +108,7 @@ class BackpropExtension(ABC):
         return module_extension
 
     def __call__(
-        self,
-        module: Module,
-        g_inp: Tuple[Tensor],
-        g_out: Tuple[Tensor],
+        self, module: Module, g_inp: Tuple[Tensor], g_out: Tuple[Tensor]
     ) -> None:
         """Applies backpropagation.
 
