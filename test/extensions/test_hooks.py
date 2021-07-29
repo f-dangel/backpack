@@ -10,7 +10,7 @@ from pytest import fixture, mark, raises
 from torch import Tensor, manual_seed, rand
 from torch.nn import CrossEntropyLoss, Linear, Module, Sequential
 
-from backpack import backpack, extend, extensions
+from backpack import backpack, extend
 from backpack.extensions import BatchGrad, DiagGGNExact
 from backpack.extensions.backprop_extension import FAIL_ERROR, BackpropExtension
 from backpack.utils import exception_inside_backward_pass
@@ -53,17 +53,17 @@ def problem(device, request) -> Tuple[Module, Tensor, str]:
     problem_string = request.param
     manual_seed(0)
 
-    if problem_string == NESTED_SEQUENTIAL:
-        B = 2
-        X = rand(B, 4).to(device)
-        y = classification_targets((B,), 2).to(device)
+    B = 2
+    X = rand(B, 4).to(device)
+    y = classification_targets((B,), 2).to(device)
 
+    if problem_string == NESTED_SEQUENTIAL:
         model = Sequential(
             Linear(4, 3, bias=False),
             Sequential(
                 Linear(3, 2, bias=False),
             ),
-        ).to(device)
+        )
     elif problem_string == CUSTOM_CONTAINER:
 
         class _MyCustomModule(Module):
@@ -77,18 +77,14 @@ def problem(device, request) -> Tuple[Module, Tensor, str]:
                 x = self.linear2(x)
                 return x
 
-        B = 2
-        X = rand(B, 4).to(device)
-        y = classification_targets((B,), 2).to(device)
-
-        model = _MyCustomModule().to(device)
+        model = _MyCustomModule()
     else:
         raise NotImplementedError(
             f"problem={problem_string} but no test setting for this."
         )
 
-    model = extend(model)
-    lossfunc = extend(CrossEntropyLoss(reduction="mean"))
+    model = extend(model.to(device))
+    lossfunc = extend(CrossEntropyLoss(reduction="mean").to(device))
     loss = lossfunc(model(X), y)
     yield model, loss, problem_string
 
@@ -143,12 +139,8 @@ def test_extension_hook_multiple_parameter_visits(
             AssertionError: if a parameter has been visited more than once
         """
         for param_id, visits in params_visited.items():
-            if visits == 0:
-                raise ValueError(f"Hook never visited param {param_id}")
-            elif visits == 1:
-                pass
-            else:
-                raise AssertionError(f"Hook visited param {param_id} {visits} times ")
+            if visits != 1:
+                raise AssertionError(f"Hook visited param {param_id} {visits}≠1 times")
 
     if problem_string == NESTED_SEQUENTIAL:
         check_all_parameters_visited_once()
@@ -193,17 +185,13 @@ def test_extension_hook_param_before_savefield_exists(problem):
                 raise AssertionError(f"Param {id(p)} has no 'grad_batch' attribute")
 
     if problem_string == NESTED_SEQUENTIAL:
-        with backpack(
-            extensions.BatchGrad(), extension_hook=check_grad_batch, debug=True
-        ):
+        with backpack(BatchGrad(), extension_hook=check_grad_batch, debug=True):
             loss.backward()
 
         assert len(params_without_grad_batch) == 0
     elif problem_string == CUSTOM_CONTAINER:
         with raises(exception_inside_backward_pass(AssertionError)):
-            with backpack(
-                extensions.BatchGrad(), extension_hook=check_grad_batch, debug=True
-            ):
+            with backpack(BatchGrad(), extension_hook=check_grad_batch, debug=True):
                 loss.backward()
         assert len(params_without_grad_batch) > 0
     else:
