@@ -2,8 +2,7 @@
 from test.core.derivatives.implementation.base import DerivativesImplementation
 from typing import List
 
-import torch
-from torch import Tensor, cat, stack, zeros_like
+from torch import Tensor, allclose, backends, cat, stack, zeros, zeros_like
 
 from backpack.hessianfree.hvp import hessian_vector_product
 from backpack.hessianfree.lop import transposed_jacobian_vector_product
@@ -33,7 +32,7 @@ class AutogradDerivatives(DerivativesImplementation):
             # A RuntimeError is thrown for RNNs on CUDA,
             # because PyTorch does not support double-backwards pass for them.
             # This is the recommended workaround.
-            with torch.backends.cudnn.flags(enabled=False):
+            with backends.cudnn.flags(enabled=False):
                 return stack([self.jac_vec_prod(vec) for vec in mat])
 
     def jac_t_vec_prod(self, vec: Tensor, subsampling=None) -> Tensor:  # noqa: D102
@@ -205,7 +204,7 @@ class AutogradDerivatives(DerivativesImplementation):
                     input_requires_grad=True, sample_idx=sample_idx
                 )
 
-                result = torch.zeros(sample.numel(), mat.size(1), device=sample.device)
+                result = zeros(sample.numel(), mat.size(1), device=sample.device)
 
                 for col in range(mat.size(1)):
                     column = mat[:, col].reshape(output.shape)
@@ -225,7 +224,7 @@ class AutogradDerivatives(DerivativesImplementation):
         N = self.problem.input.shape[0]
         input_features = self.problem.input.shape.numel() // N
 
-        result = torch.zeros(input_features, input_features).to(self.problem.device)
+        result = zeros(input_features, input_features).to(self.problem.device)
 
         for n in range(N):
             result += _sample_jac_t_mat_jac_prod(n, mat)
@@ -252,11 +251,11 @@ class AutogradDerivatives(DerivativesImplementation):
         vectorized_shape = (x.numel(), x.numel())
         final_shape = (*x.shape, *x.shape)
 
-        hessian_vec_x = torch.zeros(vectorized_shape).to(loss.device)
+        hessian_vec_x = zeros(vectorized_shape).to(loss.device)
 
         num_cols = hessian_vec_x.shape[1]
         for column_idx in range(num_cols):
-            unit = torch.zeros(num_cols).to(loss.device)
+            unit = zeros(num_cols).to(loss.device)
             unit[column_idx] = 1.0
 
             unit = unit.view_as(x)
@@ -294,7 +293,7 @@ class AutogradDerivatives(DerivativesImplementation):
             try:
                 yield self._hessian(t, x)
             except (RuntimeError, AttributeError):
-                yield torch.zeros(*x.shape, *x.shape, device=x.device, dtype=x.dtype)
+                yield zeros(*x.shape, *x.shape, device=x.device, dtype=x.dtype)
 
     def hessian_is_zero(self) -> bool:  # noqa: D102
         input, output, _ = self.problem.forward_pass(input_requires_grad=True)
@@ -304,19 +303,66 @@ class AutogradDerivatives(DerivativesImplementation):
             if zero is None:
                 zero = zeros_like(hessian)
 
-            if not torch.allclose(hessian, zero):
+            if not allclose(hessian, zero):
                 return False
 
         return True
 
-    def input_hessian(self) -> Tensor:
+    def input_hessian(self, subsampling: List[int] = None) -> Tensor:
         """Compute the Hessian of the module output w.r.t. the input.
+
+        Args:
+            subsampling: Indices of active samples. ``None`` uses all samples.
 
         Returns:
             hessian
         """
         input, output, _ = self.problem.forward_pass(input_requires_grad=True)
-        return self._hessian(output, input)
+        hessian = self._hessian(output, input)
+        return self._subsample_input_hessian(hessian, input, subsampling=subsampling)
+
+    @staticmethod
+    def _subsample_input_hessian(
+        hessian: Tensor, input: Tensor, subsampling: List[int] = None
+    ) -> Tensor:
+        """Slice sub-samples out of Hessian w.r.t the full input.
+
+        If ``subsampling`` is set to ``None``, leaves the Hessian unchanged.
+
+        Args:
+            hessian: The Hessian w.r.t. the module input.
+            input: Module input.
+            subsampling: List of active samples. Default of ``None`` uses all samples.
+
+        Returns:
+            Sub-sampled Hessian of shape ``[N, *, N, *]`` where ``N`` denotes the
+            number of sub-samples, and ``*`` is the input feature shape.
+        """
+        N, D_shape = input.shape[0], input.shape[1:]
+        D = input.numel() // N
+
+        subsampled_hessian = hessian.reshape(N, D, N, D)[subsampling, :, :, :][
+            :, :, subsampling, :
+        ]
+
+        has_duplicates = subsampling is not None and len(set(subsampling)) != len(
+            subsampling
+        )
+        if has_duplicates:
+            # For duplicates in `subsampling`, the above slicing is not sufficient.
+            # and off-diagonal blocks need to be zeroed. E.g. if subsampling is [0, 0]
+            # then the sliced input Hessian has non-zero off-diagonal blocks (1, 0) and
+            # (0, 1), which should be zero as the samples are considered independent.
+            for idx1, sample1 in enumerate(subsampling[:-1]):
+                for idx2, sample2 in enumerate(subsampling[idx1 + 1 :], start=idx1 + 1):
+                    if sample1 == sample2:
+                        subsampled_hessian[idx1, :, idx2, :] = 0
+                        subsampled_hessian[idx2, :, idx1, :] = 0
+
+        N_active = N if subsampling is None else len(subsampling)
+        out_shape = [N_active, *D_shape, N_active, *D_shape]
+
+        return subsampled_hessian.reshape(out_shape)
 
     def sum_hessian(self) -> Tensor:
         """Compute the Hessian of a loss module w.r.t. its input.
@@ -351,9 +397,9 @@ class AutogradDerivatives(DerivativesImplementation):
         N = input.shape[0]
         num_features = input.numel() // N
 
-        sum_hessian = torch.zeros(num_features, num_features, device=input.device)
+        sum_hessian = zeros(num_features, num_features, device=input.device)
 
-        hessian_different_samples = torch.zeros(
+        hessian_different_samples = zeros(
             num_features, num_features, device=input.device
         )
         for n_1 in range(N):
@@ -364,6 +410,6 @@ class AutogradDerivatives(DerivativesImplementation):
                     sum_hessian += block
 
                 else:
-                    assert torch.allclose(block, hessian_different_samples)
+                    assert allclose(block, hessian_different_samples)
 
         return sum_hessian

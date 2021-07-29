@@ -400,66 +400,90 @@ def test_bias_jac_mat_prod(problem: DerivativesTestProblem, V: int = 3) -> None:
     problem.tear_down()
 
 
+@mark.parametrize("subsampling", SUBSAMPLINGS, ids=SUBSAMPLING_IDS)
 @mark.parametrize("problem", LOSS_PROBLEMS, ids=LOSS_IDS)
-def test_sqrt_hessian_squared_equals_hessian(problem):
+def test_sqrt_hessian_squared_equals_hessian(
+    problem: DerivativesTestProblem, subsampling: Union[List[int], None]
+) -> None:
     """Test the sqrt decomposition of the input Hessian.
 
     Args:
-        problem (DerivativesProblem): Problem for derivative test.
+        problem: Test case.
+        subsampling: Indices of active samples.
 
     Compares the Hessian to reconstruction from individual Hessian sqrt.
     """
     problem.set_up()
+    skip_subsampling_conflict(problem, subsampling)
 
-    backpack_res = BackpackDerivatives(problem).input_hessian_via_sqrt_hessian()
-    autograd_res = AutogradDerivatives(problem).input_hessian()
+    backpack_res = BackpackDerivatives(problem).input_hessian_via_sqrt_hessian(
+        subsampling=subsampling
+    )
+    autograd_res = AutogradDerivatives(problem).input_hessian(subsampling=subsampling)
 
     check_sizes_and_values(autograd_res, backpack_res)
     problem.tear_down()
 
 
+@mark.parametrize("subsampling", SUBSAMPLINGS, ids=SUBSAMPLING_IDS)
 @mark.parametrize("problem", LOSS_FAIL_PROBLEMS, ids=LOSS_FAIL_IDS)
-def test_sqrt_hessian_should_fail(problem):
-    """Test sqrt_hessian. Should fail.
+def test_sqrt_hessian_should_fail(
+    problem: DerivativesTestProblem, subsampling: Union[List[int], None]
+) -> None:
+    """Test that sqrt_hessian fails.
 
     Args:
-        problem: test problem
+        problem: Test case.
+        subsampling: Indices of active samples.
     """
     with raises(ValueError):
-        test_sqrt_hessian_squared_equals_hessian(problem)
+        test_sqrt_hessian_squared_equals_hessian(problem, subsampling)
 
 
+@mark.parametrize("subsampling", SUBSAMPLINGS, ids=SUBSAMPLING_IDS)
 @mark.parametrize("problem", LOSS_PROBLEMS, ids=LOSS_IDS)
-def test_sqrt_hessian_sampled_squared_approximates_hessian(problem, mc_samples=100000):
+def test_sqrt_hessian_sampled_squared_approximates_hessian(
+    problem: DerivativesTestProblem,
+    subsampling: Union[List[int], None],
+    mc_samples: int = 1000000,
+    chunks: int = 10,
+) -> None:
     """Test the MC-sampled sqrt decomposition of the input Hessian.
 
-    Args:
-        problem (DerivativesProblem): Problem for derivative test.
-        mc_samples: number of samples. Defaults to 100000.
-
     Compares the Hessian to reconstruction from individual Hessian MC-sampled sqrt.
+
+    Args:
+        problem: Test case.
+        subsampling: Indices of active samples.
+        mc_samples: number of samples. Defaults to 1000000.
+        chunks: Number of passes the MC samples will be processed sequentially.
     """
     problem.set_up()
+    skip_subsampling_conflict(problem, subsampling)
 
     backpack_res = BackpackDerivatives(problem).input_hessian_via_sqrt_hessian(
-        mc_samples=mc_samples
+        mc_samples=mc_samples, chunks=chunks, subsampling=subsampling
     )
-    autograd_res = AutogradDerivatives(problem).input_hessian()
+    autograd_res = AutogradDerivatives(problem).input_hessian(subsampling=subsampling)
 
-    RTOL, ATOL = 1e-2, 2e-2
+    RTOL, ATOL = 1e-2, 7e-3
     check_sizes_and_values(autograd_res, backpack_res, rtol=RTOL, atol=ATOL)
     problem.tear_down()
 
 
+@mark.parametrize("subsampling", SUBSAMPLINGS, ids=SUBSAMPLING_IDS)
 @mark.parametrize("problem", LOSS_FAIL_PROBLEMS, ids=LOSS_FAIL_IDS)
-def test_sqrt_hessian_sampled_should_fail(problem):
-    """Test sqrt_hessian. Should fail.
+def test_sqrt_hessian_sampled_should_fail(
+    problem: DerivativesTestProblem, subsampling: Union[List[int], None]
+) -> None:
+    """Test that sqrt_hessian_samples fails.
 
     Args:
-        problem: test problem
+        problem: Test case.
+        subsampling: Indices of active samples.
     """
     with raises(ValueError):
-        test_sqrt_hessian_sampled_squared_approximates_hessian(problem)
+        test_sqrt_hessian_sampled_squared_approximates_hessian(problem, subsampling)
 
 
 @mark.parametrize("problem", LOSS_PROBLEMS, ids=LOSS_IDS)

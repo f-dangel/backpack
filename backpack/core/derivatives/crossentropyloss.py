@@ -1,11 +1,14 @@
 """Partial derivatives for cross-entropy loss."""
 from math import sqrt
+from typing import List, Tuple
 
-from torch import diag, diag_embed, einsum, multinomial, ones_like, softmax
+from torch import Tensor, diag, diag_embed, einsum, multinomial, ones_like, softmax
 from torch import sqrt as torchsqrt
+from torch.nn import CrossEntropyLoss
 from torch.nn.functional import one_hot
 
 from backpack.core.derivatives.basederivatives import BaseLossDerivatives
+from backpack.utils.subsampling import subsample
 
 
 class CrossEntropyLossDerivatives(BaseLossDerivatives):
@@ -15,10 +18,16 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
     and negative log-likelihood.
     """
 
-    def _sqrt_hessian(self, module, g_inp, g_out):
+    def _sqrt_hessian(
+        self,
+        module: CrossEntropyLoss,
+        g_inp: Tuple[Tensor],
+        g_out: Tuple[Tensor],
+        subsampling: List[int] = None,
+    ) -> Tensor:  # noqa: D102
         self._check_2nd_order_parameters(module)
 
-        probs = self._get_probs(module)
+        probs = self._get_probs(module, subsampling=subsampling)
         tau = torchsqrt(probs)
         V_dim, C_dim = 0, 2
         Id = diag_embed(ones_like(probs), dim1=V_dim, dim2=C_dim)
@@ -31,13 +40,20 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
 
         return sqrt_H
 
-    def _sqrt_hessian_sampled(self, module, g_inp, g_out, mc_samples=1):
+    def _sqrt_hessian_sampled(
+        self,
+        module: CrossEntropyLoss,
+        g_inp: Tuple[Tensor],
+        g_out: Tuple[Tensor],
+        mc_samples: int = 1,
+        subsampling: List[int] = None,
+    ) -> Tensor:  # noqa: D102
         self._check_2nd_order_parameters(module)
 
         M = mc_samples
         C = module.input0.shape[1]
 
-        probs = self._get_probs(module)
+        probs = self._get_probs(module, subsampling=subsampling)
         V_dim = 0
         probs_unsqueezed = probs.unsqueeze(V_dim).repeat(M, 1, 1)
 
@@ -88,8 +104,21 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
         """Return whether cross-entropy loss Hessian is positive semi-definite."""
         return True
 
-    def _get_probs(self, module):
-        return softmax(module.input0, dim=1)
+    def _get_probs(
+        self, module: CrossEntropyLoss, subsampling: List[int] = None
+    ) -> Tensor:
+        """Compute the softmax probabilities from the module input.
+
+        Args:
+            module: cross-entropy loss with I/O.
+            subsampling: Indices of samples to be considered. Default of ``None`` uses
+                the full mini-batch.
+
+        Returns:
+            Softmax probabilites
+        """
+        input0 = subsample(module.input0, subsampling=subsampling)
+        return softmax(input0, dim=1)
 
     def _check_2nd_order_parameters(self, module):
         """Verify that the parameters are supported by 2nd-order quantities.

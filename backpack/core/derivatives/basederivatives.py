@@ -651,23 +651,41 @@ class BaseLossDerivatives(BaseDerivatives, ABC):
 
     # TODO Add shape check
     def sqrt_hessian(
-        self, module: Module, g_inp: Tuple[Tensor], g_out: Tuple[Tensor]
+        self,
+        module: Module,
+        g_inp: Tuple[Tensor],
+        g_out: Tuple[Tensor],
+        subsampling: List[int] = None,
     ) -> Tensor:
         """Symmetric factorization ('sqrt') of the loss Hessian.
 
+        The Hessian factorization is returned in format ``Hs = [D, N, D]``, where
+        ``Hs[:, n, :]`` is the Hessian factorization for the ``n``th sample, i.e.
+        ``Hs[:, n, :]ᵀ Hs[:, n, :]`` is the Hessian w.r.t. to the ``n``th sample.
+
         Args:
-            module: module to perform derivatives on
-            g_inp: input gradients
-            g_out: output gradients
+            module: Loss layer whose factorized Hessian will be computed.
+            g_inp: Gradients w.r.t. module input.
+            g_out: Gradients w.r.t. module output.
+            subsampling: Indices of data samples to be considered. Default of ``None``
+                uses all data in the mini-batch.
 
         Returns:
-            square root of hessian
+            Symmetric factorization of the loss Hessian for each sample. If the input
+            to the loss has shape ``[N, D]``, this is a tensor of shape ``[D, N, D]``;
+            if used with sub-sampling, ``N`` is replaced by ``len(subsampling)``.
+            For fixed ``n``, squaring the matrix implied by the slice ``[:, n, :]``
+            results in the loss Hessian w.r.t. to sample ``n``.
         """
         self._check_2nd_order_make_sense(module, g_out)
-        return self._sqrt_hessian(module, g_inp, g_out)
+        return self._sqrt_hessian(module, g_inp, g_out, subsampling=subsampling)
 
     def _sqrt_hessian(
-        self, module: Module, g_inp: Tuple[Tensor], g_out: Tuple[Tensor]
+        self,
+        module: Module,
+        g_inp: Tuple[Tensor],
+        g_out: Tuple[Tensor],
+        subsampling: List[int] = None,
     ) -> Tensor:
         raise NotImplementedError
 
@@ -678,20 +696,34 @@ class BaseLossDerivatives(BaseDerivatives, ABC):
         g_inp: Tuple[Tensor],
         g_out: Tuple[Tensor],
         mc_samples: int = 1,
+        subsampling: List[int] = None,
     ) -> Tensor:
-        """Monte-Carlo sampled symmetric factorization of the loss Hessian.
+        """A Monte-Carlo sampled symmetric factorization of the loss Hessian.
+
+        The Hessian factorization is returned in format ``Hs = [M, N, D]``, where
+        ``Hs[:, n, :]`` approximates the Hessian factorization for the ``n``th sample,
+        i.e. ``Hs[:, n, :]ᵀ Hs[:, n, :]ᵀ`` approximates the Hessian w.r.t. to sample
+        ``n``.
 
         Args:
-            module: module to perform derivatives on
-            g_inp: input gradients
-            g_out: output gradients
-            mc_samples: number of monte carlo samples. Defaults to 1.
+            module: Loss layer whose factorized Hessian will be computed.
+            g_inp: Gradients w.r.t. module input.
+            g_out: Gradients w.r.t. module output.
+            mc_samples: Number of samples used for MC approximation.
+            subsampling: Indices of data samples to be considered. Default of ``None``
+                uses all data in the mini-batch.
 
         Returns:
-            square root of hessian
+            Symmetric factorization of the loss Hessian for each sample. If the input
+            to the loss has shape ``[N, D]``, this is a tensor of shape ``[M, N, D]``
+            when using ``M`` MC samples; if used with sub-sampling, ``N`` is replaced
+            by ``len(subsampling)``. For fixed ``n``, squaring the matrix implied by the
+            slice ``[:, n, :]`` approximates the loss Hessian w.r.t. to sample ``n``.
         """
         self._check_2nd_order_make_sense(module, g_out)
-        return self._sqrt_hessian_sampled(module, g_inp, g_out, mc_samples=mc_samples)
+        return self._sqrt_hessian_sampled(
+            module, g_inp, g_out, mc_samples=mc_samples, subsampling=subsampling
+        )
 
     def _sqrt_hessian_sampled(
         self,
@@ -699,6 +731,7 @@ class BaseLossDerivatives(BaseDerivatives, ABC):
         g_inp: Tuple[Tensor],
         g_out: Tuple[Tensor],
         mc_samples: int = 1,
+        subsampling=None,
     ) -> Tensor:
         raise NotImplementedError
 
