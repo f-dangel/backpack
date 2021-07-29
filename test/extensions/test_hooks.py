@@ -4,9 +4,10 @@ These tests aim at demonstrating the pitfalls one may run into when using hooks 
 iterate over ``module.parameters()``.
 """
 from test.core.derivatives.utils import classification_targets, get_available_devices
+from typing import Tuple
 
 from pytest import fixture, mark, raises
-from torch import manual_seed, rand
+from torch import Tensor, manual_seed, rand
 from torch.nn import CrossEntropyLoss, Linear, Module, Sequential
 
 from backpack import backpack, extend, extensions
@@ -24,12 +25,31 @@ problem_list = [NESTED_SEQUENTIAL, CUSTOM_CONTAINER]
 
 @fixture(params=DEVICES, ids=DEVICES_ID)
 def device(request):
+    """Yields the available device for the test.
+
+    Args:
+        request: pytest request
+
+    Yields:
+        an available device
+    """
     yield request.param
 
 
 @fixture(params=problem_list, ids=problem_list)
-def problem(device, request):
-    """Return extended nested sequential with loss from a forward pass."""
+def problem(device, request) -> Tuple[Module, Tensor, str]:
+    """Return extended nested sequential with loss from a forward pass.
+
+    Args:
+        device: available device
+        request: pytest request
+
+    Yields:
+        model, loss and problem_string
+
+    Raises:
+        NotImplementedError: if the problem_string is unknown
+    """
     problem_string = request.param
     manual_seed(0)
 
@@ -79,13 +99,31 @@ def problem(device, request):
 def test_extension_hook_multiple_parameter_visits(
     problem, extension: BackpropExtension
 ):
-    """Extension hooks iterating over parameters may traverse them more than once."""
+    """Tests whether each parameter is visited exactly once.
+
+    For those cases where parameters are visited more than once (e.g. Custom containers),
+    it tests that an error is raised.
+
+    Furthermore, it is tested whether first order extensions run fine in either case,
+    and second order extensions raise an error in the case of custom containers.
+
+    Args:
+        problem: test problem, consisting of model, loss, and problem_string
+        extension: first or second order extension to test
+
+    Raises:
+        NotImplementedError: if the problem_string is unknown
+    """
     model, loss, problem_string = problem
 
     params_visited = {id(p): 0 for p in model.parameters()}
 
     def count_visits(module):
-        """Increase counter in ``params_visited`` for all parameters in ``module``."""
+        """Increase counter in ``params_visited`` for all parameters in ``module``.
+
+        Args:
+            module: the module of which the parameter visits are counted
+        """
         for p in module.parameters():
             params_visited[id(p)] += 1
 
@@ -98,7 +136,12 @@ def test_extension_hook_multiple_parameter_visits(
         loss.backward()
 
     def check_all_parameters_visited_once():
-        """Raise ``AssertionError`` if a parameter has been visited more than once."""
+        """Checks whether all parameters have been visited exactly once.
+
+        Raises:
+            ValueError: if a parameter has not been visited at all
+            AssertionError: if a parameter has been visited more than once
+        """
         for param_id, visits in params_visited.items():
             if visits == 0:
                 raise ValueError(f"Hook never visited param {param_id}")
@@ -117,13 +160,33 @@ def test_extension_hook_multiple_parameter_visits(
 
 
 def test_extension_hook_param_before_savefield_exists(problem):
-    """Extension hooks iterating over parameters may get called before BackPACK."""
+    """Extension hooks iterating over parameters may get called before BackPACK.
+
+    This leads to the case, that the BackPACK quantities might not be calculated yet.
+    Thus, derived quantities cannot be calculated.
+
+    Sequential containers just work fine.
+    Custom containers crash.
+
+    Args:
+        problem: problem consisting of model, loss, and problem_string
+
+    Raises:
+        NotImplementedError: if problem_string is unknown
+    """
     _, loss, problem_string = problem
 
     params_without_grad_batch = []
 
     def check_grad_batch(module):
-        """Raise ``AssertionError`` if one parameter misses ``'grad_batch'``."""
+        """Check whether the module has a grad_batch attribute.
+
+        Args:
+            module: the module to check
+
+        Raises:
+            AssertionError: if a parameter does not have grad_batch attribute.
+        """
         for p in module.parameters():
             if not hasattr(p, "grad_batch"):
                 params_without_grad_batch.append(id(p))

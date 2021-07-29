@@ -56,6 +56,8 @@ test/extensions/automated_settings.py
 test/extensions/problem.py
 test/extensions/utils.py
 test/extensions/test_backprop_extension.py
+test/extensions/test_hooks.py
+test/extensions/graph_clear_test.py
 test/extensions/firstorder/firstorder_settings.py
 test/extensions/firstorder/variance/
 test/extensions/firstorder/batch_grad/batch_grad_settings.py
