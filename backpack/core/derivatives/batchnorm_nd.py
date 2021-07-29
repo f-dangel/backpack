@@ -1,6 +1,5 @@
 """Contains derivatives for BatchNorm."""
 from typing import List, Tuple, Union
-from warnings import warn
 
 from torch import Size, Tensor, einsum
 from torch.nn import BatchNorm1d, BatchNorm2d, BatchNorm3d
@@ -146,7 +145,6 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
         sum_batch: bool = True,
         subsampling: List[int] = None,
     ) -> Tensor:
-        self._maybe_warn_no_batch_summation(sum_batch)
         x_hat, _ = self._get_normalized_input_and_var(module)
         x_hat = subsample(x_hat, subsampling=subsampling)
 
@@ -184,7 +182,6 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
         sum_batch: bool = True,
         subsampling: List[int] = None,
     ) -> Tensor:
-        self._maybe_warn_no_batch_summation(sum_batch)
         axis_sum: Tuple[int] = self._get_free_axes(module, with_batch_axis=sum_batch)
         return mat.sum(dim=axis_sum) if axis_sum else mat
 
@@ -323,16 +320,3 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
         for n in range(self._get_n_axis(module)):
             free_axes.append(index_batch + n + 2)
         return tuple(free_axes)
-
-    @staticmethod
-    def _maybe_warn_no_batch_summation(sum_batch: bool) -> None:
-        """Warn that Jacobians w.r.t. single components are not per-sample gradients.
-
-        Args:
-            sum_batch: Whether to sum out the batch dimension.
-        """
-        if not sum_batch:
-            warn(
-                "BatchNorm batch summation disabled."
-                "This may not compute meaningful quantities"
-            )
