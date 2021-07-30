@@ -23,21 +23,27 @@ backpack/extensions/firstorder/base.py
 backpack/extensions/firstorder/gradient/base.py
 backpack/extensions/firstorder/gradient/rnn.py
 backpack/extensions/firstorder/gradient/__init__.py
+backpack/extensions/firstorder/gradient/batchnorm_nd.py
 backpack/extensions/firstorder/batch_grad/batch_grad_base.py
 backpack/extensions/firstorder/batch_grad/rnn.py
 backpack/extensions/firstorder/batch_grad/__init__.py
+backpack/extensions/firstorder/batch_grad/batchnorm_nd.py
 backpack/extensions/firstorder/variance/variance_base.py
 backpack/extensions/firstorder/variance/rnn.py
 backpack/extensions/firstorder/variance/__init__.py
+backpack/extensions/firstorder/variance/batchnorm_nd.py
 backpack/extensions/firstorder/sum_grad_squared/sgs_base.py
 backpack/extensions/firstorder/sum_grad_squared/rnn.py
 backpack/extensions/firstorder/sum_grad_squared/__init__.py
+backpack/extensions/firstorder/sum_grad_squared/batchnorm_nd.py
 backpack/extensions/firstorder/batch_l2_grad/
 backpack/extensions/secondorder/__init__.py
 backpack/extensions/secondorder/diag_ggn/__init__.py
 backpack/extensions/secondorder/diag_ggn/diag_ggn_base.py
 backpack/extensions/secondorder/diag_ggn/rnn.py
 backpack/extensions/secondorder/diag_ggn/permute.py
+backpack/extensions/secondorder/diag_ggn/batchnorm_nd.py
+backpack/extensions/secondorder/diag_ggn/adaptive_avg_pool_nd.py
 backpack/extensions/secondorder/diag_hessian/__init__.py
 backpack/extensions/secondorder/diag_hessian/conv1d.py
 backpack/extensions/secondorder/diag_hessian/conv2d.py
@@ -48,6 +54,7 @@ backpack/hessianfree/ggnvp.py
 
 backpack/utils/linear.py
 backpack/utils/subsampling.py
+backpack/utils/errors.py
 backpack/utils/__init__.py
 backpack/utils/module_classification.py
 backpack/utils/hooks.py
@@ -79,3 +86,6 @@ test/core/derivatives/permute_settings.py
 test/core/derivatives/lstm_settings.py
 test/core/derivatives/pooling_adaptive_settings.py
 test/core/derivatives/batch_norm_settings.py
+test/utils/evaluation_mode.py
+test/utils/skip_test.py
+test/utils/__init__.py

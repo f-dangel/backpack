@@ -179,6 +179,9 @@ class LSTMDerivatives(BaseParameterDerivatives):
             )
         return IFGO_prod
 
+    def hessian_is_zero(self, module: LSTM) -> bool:  # noqa: D102
+        return False
+
     def _jac_mat_prod(
         self,
         module: LSTM,
@@ -275,11 +278,18 @@ class LSTMDerivatives(BaseParameterDerivatives):
         return H_prod
 
     def _jac_t_mat_prod(
-        self, module: LSTM, g_inp: Tuple[Tensor], g_out: Tuple[Tensor], mat: Tensor
+        self,
+        module: LSTM,
+        g_inp: Tuple[Tensor],
+        g_out: Tuple[Tensor],
+        mat: Tensor,
+        subsampling: List[int] = None,
     ) -> Tensor:
         self._check_parameters(module)
 
-        IFGO_prod: Tensor = self._ifgo_jac_t_mat_prod(module, mat)
+        IFGO_prod: Tensor = self._ifgo_jac_t_mat_prod(
+            module, mat, subsampling=subsampling
+        )
 
         X_prod: Tensor = einsum(
             "vtnh,hi->vtni",

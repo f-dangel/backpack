@@ -42,7 +42,7 @@ class DiagGGNBaseModule(MatToJacMat):
         super().__init__(derivatives, params=params)
 
     def _make_param_method(
-        self, param: str, sum_batch: bool
+        self, param_str: str, sum_batch: bool
     ) -> Callable[
         [ModuleExtension, Module, Tuple[Tensor], Tuple[Tensor], Tensor], Tensor
     ]:
@@ -67,8 +67,8 @@ class DiagGGNBaseModule(MatToJacMat):
             """
             axis: Tuple[int] = (0, 1) if sum_batch else (0,)
             return (
-                getattr(self.derivatives, f"{param}_jac_t_mat_prod")(
-                    module, grad_inp, grad_out, backproped, sum_batch=False
+                self.derivatives.param_mjp(
+                    param_str, module, grad_inp, grad_out, backproped, sum_batch=False
                 )
                 ** 2
             ).sum(axis=axis)

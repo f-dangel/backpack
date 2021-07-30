@@ -12,9 +12,15 @@ from torch.nn import (
     ELU,
     RNN,
     SELU,
+    AdaptiveAvgPool1d,
+    AdaptiveAvgPool2d,
+    AdaptiveAvgPool3d,
     AvgPool1d,
     AvgPool2d,
     AvgPool3d,
+    BatchNorm1d,
+    BatchNorm2d,
+    BatchNorm3d,
     Conv1d,
     Conv2d,
     Conv3d,
@@ -43,6 +49,8 @@ from backpack.extensions.secondorder.hbp import LossHessianStrategy
 
 from . import (
     activations,
+    adaptive_avg_pool_nd,
+    batchnorm_nd,
     conv1d,
     conv2d,
     conv3d,
@@ -116,6 +124,12 @@ class DiagGGN(SecondOrderBackpropExtension):
                 SELU: activations.DiagGGNSELU(),
                 RNN: rnn.DiagGGNRNN(),
                 Permute: permute.DiagGGNPermute(),
+                AdaptiveAvgPool1d: adaptive_avg_pool_nd.DiagGGNAdaptiveAvgPoolNd(1),
+                AdaptiveAvgPool2d: adaptive_avg_pool_nd.DiagGGNAdaptiveAvgPoolNd(2),
+                AdaptiveAvgPool3d: adaptive_avg_pool_nd.DiagGGNAdaptiveAvgPoolNd(3),
+                BatchNorm1d: batchnorm_nd.DiagGGNBatchNormNd(),
+                BatchNorm2d: batchnorm_nd.DiagGGNBatchNormNd(),
+                BatchNorm3d: batchnorm_nd.DiagGGNBatchNormNd(),
             },
         )
 
@@ -223,6 +237,12 @@ class BatchDiagGGN(SecondOrderBackpropExtension):
                 SELU: activations.DiagGGNSELU(),
                 RNN: rnn.BatchDiagGGNRNN(),
                 Permute: permute.DiagGGNPermute(),
+                AdaptiveAvgPool1d: adaptive_avg_pool_nd.DiagGGNAdaptiveAvgPoolNd(1),
+                AdaptiveAvgPool2d: adaptive_avg_pool_nd.DiagGGNAdaptiveAvgPoolNd(2),
+                AdaptiveAvgPool3d: adaptive_avg_pool_nd.DiagGGNAdaptiveAvgPoolNd(3),
+                BatchNorm1d: batchnorm_nd.BatchDiagGGNBatchNormNd(),
+                BatchNorm2d: batchnorm_nd.BatchDiagGGNBatchNormNd(),
+                BatchNorm3d: batchnorm_nd.BatchDiagGGNBatchNormNd(),
             },
         )
 

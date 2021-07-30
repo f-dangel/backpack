@@ -32,7 +32,12 @@ class LinearDerivatives(BaseParameterDerivatives):
         return True
 
     def _jac_t_mat_prod(
-        self, module: Linear, g_inp: Tuple[Tensor], g_out: Tuple[Tensor], mat: Tensor
+        self,
+        module: Linear,
+        g_inp: Tuple[Tensor],
+        g_out: Tuple[Tensor],
+        mat: Tensor,
+        subsampling: List[int] = None,
     ) -> Tensor:
         """Batch-apply transposed Jacobian of the output w.r.t. the input.
 
@@ -42,13 +47,16 @@ class LinearDerivatives(BaseParameterDerivatives):
             g_out: Gradients w.r.t. module output. Not required by the implementation.
             mat: Batch of ``V`` vectors of same shape as the layer output
                 (``[N, *, out_features]``) to which the transposed output-input Jacobian
-                is applied. Has shape ``[V, N, *, out_features]``.
+                is applied. Has shape ``[V, N, *, out_features]``; but if used with
+                sub-sampling, ``N`` is replaced by ``len(subsampling)``.
+            subsampling: Indices of active samples. ``None`` means all samples.
 
         Returns:
             Batched transposed Jacobian vector products. Has shape
-            ``[V, N, *, in_features]``.
+            ``[V, N, *, in_features]``. If used with sub-sampling, ``N`` is replaced
+            by ``len(subsampling)``.
         """
-        return einsum("oi,vn...o->vn...i", module.weight, mat)
+        return einsum("vn...o,oi->vn...i", mat, module.weight)
 
     def _jac_mat_prod(
         self, module: Linear, g_inp: Tuple[Tensor], g_out: Tuple[Tensor], mat: Tensor

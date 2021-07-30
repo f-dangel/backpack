@@ -7,6 +7,7 @@ TORCH_VERSION = packaging.version.parse(get_distribution("torch").version)
 TORCH_VERSION_AT_LEAST_1_7_0 = TORCH_VERSION >= packaging.version.parse("1.7.0")
 TORCH_VERSION_AT_LEAST_1_8_0 = TORCH_VERSION >= packaging.version.parse("1.8.0")
 TORCH_VERSION_AT_LEAST_1_9_0 = TORCH_VERSION >= packaging.version.parse("1.9.0")
+TORCH_VERSION_AT_LEAST_1_9_1 = TORCH_VERSION >= packaging.version.parse("1.9.1")
 FULL_BACKWARD_HOOK: bool = TORCH_VERSION_AT_LEAST_1_9_0
 
 

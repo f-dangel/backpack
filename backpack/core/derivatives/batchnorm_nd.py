@@ -90,10 +90,17 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
         g_inp: Tuple[Tensor],
         g_out: Tuple[Tensor],
         mat: Tensor,
+        subsampling: List[int] = None,
     ) -> Tensor:
         self._check_parameters(module)
         N: int = self._get_n_axis(module)
         if module.training:
+
+            if subsampling is not None:
+                raise NotImplementedError(
+                    "BatchNorm VJP sub-sampling is not defined in train mode."
+                )
+
             denominator: int = self._get_denominator(module)
             x_hat, var = self._get_normalized_input_and_var(module)
             ivar = 1.0 / (var + module.eps).sqrt()

@@ -54,16 +54,27 @@ def check_shape(mat: Tensor, like: Tensor, diff: int = 1) -> None:
         )
 
 
-def _check_same_V_dim(mat1, mat2):
+def check_same_V_dim(mat1, mat2):
+    """Check whether V dim (first dim) matches.
+
+    Args:
+        mat1: first tensor
+        mat2: second tensor
+
+    Raises:
+        RuntimeError: if V dim (first dim) doesn't match
+    """
     V1, V2 = mat1.shape[0], mat2.shape[0]
     if V1 != V2:
         raise RuntimeError("Number of vectors changed. Got {} and {}".format(V1, V2))
 
 
 def _check_like(mat, module, name, diff=1, *args, **kwargs):
-    if name == "output" and "subsampling" in kwargs.keys():
+    if name in ["output", "input0"] and "subsampling" in kwargs.keys():
         compare = subsample(
-            module.output, dim=get_batch_axis(module), subsampling=kwargs["subsampling"]
+            getattr(module, name),
+            dim=get_batch_axis(module),
+            subsampling=kwargs["subsampling"],
         )
     else:
         compare = getattr(module, name)
@@ -71,9 +82,19 @@ def _check_like(mat, module, name, diff=1, *args, **kwargs):
     return check_shape(mat, compare, diff=diff)
 
 
-def _check_like_with_sum_batch(mat, module, name, sum_batch=True, *args, **kwargs):
+def check_like_with_sum_batch(mat, module, name, sum_batch=True, *args, **kwargs):
+    """Checks shape, considers sum_batch.
+
+    Args:
+        mat: matrix to multiply
+        module: module
+        name: parameter to operate on: module.name
+        sum_batch: whether to consider with or without sum
+        *args: ignored
+        **kwargs: ignored
+    """
     diff = 1 if sum_batch else 2
-    return check_shape(mat, getattr(module, name), diff=diff)
+    check_shape(mat, getattr(module, name), diff=diff)
 
 
 def _same_dim_as(mat, module, name, *args, **kwargs):
@@ -131,15 +152,6 @@ jac_t_mat_prod_accept_vectors = functools.partial(
     vec_criterion=same_dim_as_output,
 )
 
-weight_jac_t_mat_prod_accept_vectors = functools.partial(
-    _mat_prod_accept_vectors,
-    vec_criterion=same_dim_as_output,
-)
-bias_jac_t_mat_prod_accept_vectors = functools.partial(
-    _mat_prod_accept_vectors,
-    vec_criterion=same_dim_as_output,
-)
-
 jac_mat_prod_accept_vectors = functools.partial(
     _mat_prod_accept_vectors,
     vec_criterion=same_dim_as_input,
@@ -179,7 +191,7 @@ def mat_prod_check_shapes(
         in_check(mat, module, *args, **kwargs)
         mat_out = mat_prod(self, module, g_inp, g_out, mat, *args, **kwargs)
         out_check(mat_out, module, *args, **kwargs)
-        _check_same_V_dim(mat_out, mat)
+        check_same_V_dim(mat_out, mat)
 
         return mat_out
 
@@ -191,21 +203,6 @@ shape_like_output = functools.partial(_check_like, name="output")
 shape_like_input = functools.partial(_check_like, name="input0")
 shape_like_weight = functools.partial(_check_like, name="weight")
 shape_like_bias = functools.partial(_check_like, name="bias")
-shape_like_weight_with_sum_batch = functools.partial(
-    _check_like_with_sum_batch, name="weight"
-)
-shape_like_bias_with_sum_batch = functools.partial(
-    _check_like_with_sum_batch, name="bias"
-)
-shape_like_bias_rnn_with_sum_batch = functools.partial(
-    _check_like_with_sum_batch, name="bias_ih_l0"
-)
-shape_like_weight_ih_with_sum_batch = functools.partial(
-    _check_like_with_sum_batch, name="weight_ih_l0"
-)
-shape_like_weight_hh_with_sum_batch = functools.partial(
-    _check_like_with_sum_batch, name="weight_hh_l0"
-)
 
 # decorators for shape checking
 jac_mat_prod_check_shapes = functools.partial(
@@ -222,33 +219,6 @@ bias_jac_mat_prod_check_shapes = functools.partial(
 
 jac_t_mat_prod_check_shapes = functools.partial(
     mat_prod_check_shapes, in_check=shape_like_output, out_check=shape_like_input
-)
-
-
-weight_jac_t_mat_prod_check_shapes = functools.partial(
-    mat_prod_check_shapes,
-    in_check=shape_like_output,
-    out_check=shape_like_weight_with_sum_batch,
-)
-bias_jac_t_mat_prod_check_shapes = functools.partial(
-    mat_prod_check_shapes,
-    in_check=shape_like_output,
-    out_check=shape_like_bias_with_sum_batch,
-)
-bias_rnn_jac_t_mat_prod_check_shapes = functools.partial(
-    mat_prod_check_shapes,
-    in_check=shape_like_output,
-    out_check=shape_like_bias_rnn_with_sum_batch,
-)
-weight_ih_jac_t_mat_prod_check_shapes = functools.partial(
-    mat_prod_check_shapes,
-    in_check=shape_like_output,
-    out_check=shape_like_weight_ih_with_sum_batch,
-)
-weight_hh_jac_t_mat_prod_check_shapes = functools.partial(
-    mat_prod_check_shapes,
-    in_check=shape_like_output,
-    out_check=shape_like_weight_hh_with_sum_batch,
 )
 
 ###############################################################################
@@ -325,3 +295,36 @@ def make_hessian_mat_prod_check_shapes(
         return _new_hessian_mat_prod
 
     return _wrapped_make_hessian_mat_prod
+
+
+def param_mjp_accept_vectors(mat_prod: Callable[..., Tensor]) -> Callable[..., Tensor]:
+    """Add support for vectors to matrix products.
+
+    vec_criterion(mat, module) returns if mat is a vector.
+
+    Args:
+        mat_prod: Function that processes multiple vectors in format of a matrix.
+
+    Returns:
+        Wrapped ``mat_prod`` function that processes multiple vectors in format of
+        a matrix, and supports vector-shaped inputs which are internally converted
+        to the correct format.
+        Preserves format of input:
+            If the input format is a vector, the output format is a vector.
+            If the input format is a matrix, the output format is a matrix.
+    """
+
+    @functools.wraps(mat_prod)
+    def _wrapped_mat_prod_accept_vectors(
+        self, param_str, module, g_inp, g_out, mat, *args, **kwargs
+    ):
+        is_vec = same_dim_as_output(mat, module)
+        mat_in = mat if not is_vec else _add_V_dim(mat)
+        mat_out = mat_prod(
+            self, param_str, module, g_inp, g_out, mat_in, *args, **kwargs
+        )
+        mat_out = mat_out if not is_vec else _remove_V_dim(mat_out)
+
+        return mat_out
+
+    return _wrapped_mat_prod_accept_vectors

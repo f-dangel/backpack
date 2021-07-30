@@ -2,12 +2,12 @@
 from test.core.derivatives.implementation.base import DerivativesImplementation
 from typing import List
 
-import torch
-from torch import Tensor, stack, zeros_like
+from torch import Tensor, allclose, backends, cat, stack, zeros, zeros_like
 
 from backpack.hessianfree.hvp import hessian_vector_product
 from backpack.hessianfree.lop import transposed_jacobian_vector_product
 from backpack.hessianfree.rop import jacobian_vector_product
+from backpack.utils.subsampling import get_batch_axis, subsample
 
 
 class AutogradDerivatives(DerivativesImplementation):
@@ -32,51 +32,57 @@ class AutogradDerivatives(DerivativesImplementation):
             # A RuntimeError is thrown for RNNs on CUDA,
             # because PyTorch does not support double-backwards pass for them.
             # This is the recommended workaround.
-            with torch.backends.cudnn.flags(enabled=False):
+            with backends.cudnn.flags(enabled=False):
                 return stack([self.jac_vec_prod(vec) for vec in mat])
 
-    def jac_t_vec_prod(self, vec):  # noqa: D102
+    def jac_t_vec_prod(self, vec: Tensor, subsampling=None) -> Tensor:  # noqa: D102
         input, output, _ = self.problem.forward_pass(input_requires_grad=True)
-        return transposed_jacobian_vector_product(output, input, vec)[0]
 
-    def jac_t_mat_prod(self, mat):  # noqa: D102
-        return stack([self.jac_t_vec_prod(vec) for vec in mat])
+        if subsampling is None:
+            return transposed_jacobian_vector_product(output, input, vec)[0]
+        else:
+            # for each sample, multiply by full input Jacobian, slice out result:
+            # ( (∂ output[n] / ∂ input)ᵀ v[n] )[n]
+            batch_axis = get_batch_axis(self.problem.module)
+            output = subsample(output, dim=batch_axis, subsampling=subsampling)
+            output = output.split(1, dim=batch_axis)
+            vec = vec.split(1, dim=batch_axis)
 
-    def weight_jac_t_mat_prod(self, mat, sum_batch, subsampling=None):  # noqa: D102
-        return self.param_jac_t_mat_prod(
-            "weight", mat, sum_batch, subsampling=subsampling
+            vjps: List[Tensor] = []
+
+            for sample_idx, out, v in zip(subsampling, output, vec):
+                vjp = transposed_jacobian_vector_product(out, input, v)[0]
+                vjp = subsample(vjp, dim=batch_axis, subsampling=[sample_idx])
+                vjps.append(vjp)
+
+            return cat(vjps, dim=batch_axis)
+
+    def jac_t_mat_prod(
+        self, mat: Tensor, subsampling: List[int] = None
+    ) -> Tensor:  # noqa: D102
+        return stack([self.jac_t_vec_prod(vec, subsampling=subsampling) for vec in mat])
+
+    def param_mjp(
+        self,
+        param_str: str,
+        mat: Tensor,
+        sum_batch: bool,
+        subsampling: List[int] = None,
+    ) -> Tensor:  # noqa: D102
+        return stack(
+            [
+                self._param_vjp(
+                    param_str,
+                    vec,
+                    sum_batch,
+                    axis_batch=get_batch_axis(self.problem.module),
+                    subsampling=subsampling,
+                )
+                for vec in mat
+            ]
         )
 
-    def bias_jac_t_mat_prod(self, mat, sum_batch, subsampling=None):  # noqa: D102
-        return self.param_jac_t_mat_prod(
-            "bias", mat, sum_batch, subsampling=subsampling
-        )
-
-    def bias_ih_l0_jac_t_mat_prod(self, mat, sum_batch, subsampling=None):  # noqa: D102
-        return self.param_jac_t_mat_prod(
-            "bias_ih_l0", mat, sum_batch, axis_batch=1, subsampling=subsampling
-        )
-
-    def bias_hh_l0_jac_t_mat_prod(self, mat, sum_batch, subsampling=None):  # noqa: D102
-        return self.param_jac_t_mat_prod(
-            "bias_ih_l0", mat, sum_batch, axis_batch=1, subsampling=subsampling
-        )
-
-    def weight_ih_l0_jac_t_mat_prod(
-        self, mat, sum_batch, subsampling=None
-    ):  # noqa: D102
-        return self.param_jac_t_mat_prod(
-            "weight_ih_l0", mat, sum_batch, axis_batch=1, subsampling=subsampling
-        )
-
-    def weight_hh_l0_jac_t_mat_prod(
-        self, mat, sum_batch, subsampling=None
-    ):  # noqa: D102
-        return self.param_jac_t_mat_prod(
-            "weight_hh_l0", mat, sum_batch, axis_batch=1, subsampling=subsampling
-        )
-
-    def param_jac_t_vec_prod(
+    def _param_vjp(
         self,
         name: str,
         vec: Tensor,
@@ -114,35 +120,6 @@ class AutogradDerivatives(DerivativesImplementation):
             jac_t_sample_prods = jac_t_sample_prods.sum(0)
 
         return jac_t_sample_prods
-
-    def param_jac_t_mat_prod(
-        self,
-        name: str,
-        mat: Tensor,
-        sum_batch: bool,
-        axis_batch: int = 0,
-        subsampling: List[int] = None,
-    ) -> Tensor:
-        """Compute the product of jac_t and the given matrix.
-
-        Args:
-            name: name of parameter for derivative
-            mat: matrix which to multiply
-            sum_batch: whether to sum along batch axis
-            axis_batch: Batch axis, counted without the first axis. Defaults to 0.
-            subsampling: Indices of active samples. Default: ``None`` (all).
-
-        Returns:
-            product of jac_t and mat
-        """
-        return stack(
-            [
-                self.param_jac_t_vec_prod(
-                    name, vec, sum_batch, axis_batch=axis_batch, subsampling=subsampling
-                )
-                for vec in mat
-            ]
-        )
 
     def weight_jac_mat_prod(self, mat) -> Tensor:
         """Product of jacobian and matrix.
@@ -184,7 +161,7 @@ class AutogradDerivatives(DerivativesImplementation):
                     input_requires_grad=True, sample_idx=sample_idx
                 )
 
-                result = torch.zeros(sample.numel(), mat.size(1), device=sample.device)
+                result = zeros(sample.numel(), mat.size(1), device=sample.device)
 
                 for col in range(mat.size(1)):
                     column = mat[:, col].reshape(output.shape)
@@ -204,7 +181,7 @@ class AutogradDerivatives(DerivativesImplementation):
         N = self.problem.input.shape[0]
         input_features = self.problem.input.shape.numel() // N
 
-        result = torch.zeros(input_features, input_features).to(self.problem.device)
+        result = zeros(input_features, input_features).to(self.problem.device)
 
         for n in range(N):
             result += _sample_jac_t_mat_jac_prod(n, mat)
@@ -231,11 +208,11 @@ class AutogradDerivatives(DerivativesImplementation):
         vectorized_shape = (x.numel(), x.numel())
         final_shape = (*x.shape, *x.shape)
 
-        hessian_vec_x = torch.zeros(vectorized_shape).to(loss.device)
+        hessian_vec_x = zeros(vectorized_shape).to(loss.device)
 
         num_cols = hessian_vec_x.shape[1]
         for column_idx in range(num_cols):
-            unit = torch.zeros(num_cols).to(loss.device)
+            unit = zeros(num_cols).to(loss.device)
             unit[column_idx] = 1.0
 
             unit = unit.view_as(x)
@@ -273,7 +250,7 @@ class AutogradDerivatives(DerivativesImplementation):
             try:
                 yield self._hessian(t, x)
             except (RuntimeError, AttributeError):
-                yield torch.zeros(*x.shape, *x.shape, device=x.device, dtype=x.dtype)
+                yield zeros(*x.shape, *x.shape, device=x.device, dtype=x.dtype)
 
     def hessian_is_zero(self) -> bool:  # noqa: D102
         input, output, _ = self.problem.forward_pass(input_requires_grad=True)
@@ -283,19 +260,66 @@ class AutogradDerivatives(DerivativesImplementation):
             if zero is None:
                 zero = zeros_like(hessian)
 
-            if not torch.allclose(hessian, zero):
+            if not allclose(hessian, zero):
                 return False
 
         return True
 
-    def input_hessian(self) -> Tensor:
+    def input_hessian(self, subsampling: List[int] = None) -> Tensor:
         """Compute the Hessian of the module output w.r.t. the input.
+
+        Args:
+            subsampling: Indices of active samples. ``None`` uses all samples.
 
         Returns:
             hessian
         """
         input, output, _ = self.problem.forward_pass(input_requires_grad=True)
-        return self._hessian(output, input)
+        hessian = self._hessian(output, input)
+        return self._subsample_input_hessian(hessian, input, subsampling=subsampling)
+
+    @staticmethod
+    def _subsample_input_hessian(
+        hessian: Tensor, input: Tensor, subsampling: List[int] = None
+    ) -> Tensor:
+        """Slice sub-samples out of Hessian w.r.t the full input.
+
+        If ``subsampling`` is set to ``None``, leaves the Hessian unchanged.
+
+        Args:
+            hessian: The Hessian w.r.t. the module input.
+            input: Module input.
+            subsampling: List of active samples. Default of ``None`` uses all samples.
+
+        Returns:
+            Sub-sampled Hessian of shape ``[N, *, N, *]`` where ``N`` denotes the
+            number of sub-samples, and ``*`` is the input feature shape.
+        """
+        N, D_shape = input.shape[0], input.shape[1:]
+        D = input.numel() // N
+
+        subsampled_hessian = hessian.reshape(N, D, N, D)[subsampling, :, :, :][
+            :, :, subsampling, :
+        ]
+
+        has_duplicates = subsampling is not None and len(set(subsampling)) != len(
+            subsampling
+        )
+        if has_duplicates:
+            # For duplicates in `subsampling`, the above slicing is not sufficient.
+            # and off-diagonal blocks need to be zeroed. E.g. if subsampling is [0, 0]
+            # then the sliced input Hessian has non-zero off-diagonal blocks (1, 0) and
+            # (0, 1), which should be zero as the samples are considered independent.
+            for idx1, sample1 in enumerate(subsampling[:-1]):
+                for idx2, sample2 in enumerate(subsampling[idx1 + 1 :], start=idx1 + 1):
+                    if sample1 == sample2:
+                        subsampled_hessian[idx1, :, idx2, :] = 0
+                        subsampled_hessian[idx2, :, idx1, :] = 0
+
+        N_active = N if subsampling is None else len(subsampling)
+        out_shape = [N_active, *D_shape, N_active, *D_shape]
+
+        return subsampled_hessian.reshape(out_shape)
 
     def sum_hessian(self) -> Tensor:
         """Compute the Hessian of a loss module w.r.t. its input.
@@ -330,9 +354,9 @@ class AutogradDerivatives(DerivativesImplementation):
         N = input.shape[0]
         num_features = input.numel() // N
 
-        sum_hessian = torch.zeros(num_features, num_features, device=input.device)
+        sum_hessian = zeros(num_features, num_features, device=input.device)
 
-        hessian_different_samples = torch.zeros(
+        hessian_different_samples = zeros(
             num_features, num_features, device=input.device
         )
         for n_1 in range(N):
@@ -343,6 +367,6 @@ class AutogradDerivatives(DerivativesImplementation):
                     sum_hessian += block
 
                 else:
-                    assert torch.allclose(block, hessian_different_samples)
+                    assert allclose(block, hessian_different_samples)
 
         return sum_hessian
