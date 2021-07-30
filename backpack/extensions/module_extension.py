@@ -5,7 +5,7 @@ import warnings
 from typing import TYPE_CHECKING, Any, List, Tuple
 
 from torch import Tensor
-from torch.nn import Module
+from torch.nn import Flatten, Module
 
 from backpack.utils import TORCH_VERSION_AT_LEAST_1_9_0
 from backpack.utils.module_classification import is_loss
@@ -100,12 +100,14 @@ class ModuleExtension:
             extension.expects_backpropagation_quantities()
             and bp_quantity is None
             and not is_loss(module)
-            and TORCH_VERSION_AT_LEAST_1_9_0
         ):
-            raise AssertionError(
-                "BackPACK extension expects a backpropagation quantity but it is None. "
-                f"Module: {module}, Extension: {extension}."
-            )
+            if not TORCH_VERSION_AT_LEAST_1_9_0 and isinstance(module, Flatten):
+                return
+            else:
+                raise AssertionError(
+                    "BackPACK extension expects a backpropagation quantity but it is None. "
+                    f"Module: {module}, Extension: {extension}."
+                )
 
         for param in self.__params:
             if self.__param_exists_and_requires_grad(module, param):
