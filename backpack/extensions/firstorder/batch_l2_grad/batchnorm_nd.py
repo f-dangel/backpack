@@ -11,6 +11,6 @@ class BatchL2BatchNorm(BatchL2Base):
         """Initialization."""
         super().__init__(["weight", "bias"], BatchNormNdDerivatives())
 
-    def __call__(self, ext, module, g_inp, g_out):
+    def __call__(self, ext, module, g_inp, g_out):  # noqa: D102
         batch_norm_raise_error_if_train(module)
         super().__call__(ext, module, g_inp, g_out)
