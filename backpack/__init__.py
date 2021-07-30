@@ -12,7 +12,7 @@ from backpack.utils.hooks import no_op
 
 from . import extensions
 from .context import CTX
-from .utils import TORCH_VERSION_AT_LEAST_1_9_0
+from .utils import FULL_BACKWARD_HOOK
 from .utils.module_classification import is_no_op
 
 
@@ -251,7 +251,7 @@ def _register_hooks(module: Module) -> None:
     """
     CTX.add_hook_handle(module.register_forward_hook(hook_store_io))
 
-    if TORCH_VERSION_AT_LEAST_1_9_0:
+    if FULL_BACKWARD_HOOK:
         register_backward_hook_fn = module.register_full_backward_hook
     else:
         register_backward_hook_fn = module.register_backward_hook
