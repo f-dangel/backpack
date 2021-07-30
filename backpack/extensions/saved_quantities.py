@@ -15,7 +15,9 @@ class SavedQuantities:
         """Saves the quantity under the specified key.
 
         Args:
-            key: id of grad_input[0]
+            key: data_ptr() of reference tensor.
+                For torch>=1.9.0 the reference tensor is grad_input[0].
+                For older versions the reference tensor is module.input0.
             quantity: tensor to save
 
         Raises:
@@ -34,7 +36,9 @@ class SavedQuantities:
         """Returns the saved quantity.
 
         Args:
-            key: id of grad_output[0]
+            key: data_ptr() of reference tensor.
+                For torch>=1.9.0 the reference tensor is grad_output[0].
+                For older versions the reference tensor is module.output.
             delete_old: whether to delete the old quantity
 
         Returns:
