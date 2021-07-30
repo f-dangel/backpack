@@ -14,6 +14,6 @@ class GradBatchNormNd(GradBaseModule):
             derivatives=BatchNormNdDerivatives(), params=["bias", "weight"]
         )
 
-    def apply(self, ext, module, g_inp, g_out):  # noqa: D102
+    def __call__(self, ext, module, g_inp, g_out):
         batch_norm_raise_error_if_train(module)
-        super().apply(ext, module, g_inp, g_out)
+        super().__call__(ext, module, g_inp, g_out)

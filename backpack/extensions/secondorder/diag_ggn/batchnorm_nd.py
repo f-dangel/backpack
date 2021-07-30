@@ -11,9 +11,9 @@ class DiagGGNBatchNormNd(DiagGGNBaseModule):
         """Initialization."""
         super().__init__(BatchNormNdDerivatives(), ["weight", "bias"], sum_batch=True)
 
-    def apply(self, ext, module, g_inp, g_out):  # noqa: D102
+    def __call__(self, ext, module, g_inp, g_out):
         batch_norm_raise_error_if_train(module)
-        super().apply(ext, module, g_inp, g_out)
+        super().__call__(ext, module, g_inp, g_out)
 
 
 class BatchDiagGGNBatchNormNd(DiagGGNBaseModule):
@@ -23,6 +23,6 @@ class BatchDiagGGNBatchNormNd(DiagGGNBaseModule):
         """Initialization."""
         super().__init__(BatchNormNdDerivatives(), ["weight", "bias"], sum_batch=False)
 
-    def apply(self, ext, module, g_inp, g_out):  # noqa: D102
+    def __call__(self, ext, module, g_inp, g_out):
         batch_norm_raise_error_if_train(module)
-        super().apply(ext, module, g_inp, g_out)
+        super().__call__(ext, module, g_inp, g_out)
