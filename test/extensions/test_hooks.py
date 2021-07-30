@@ -135,8 +135,7 @@ def test_extension_hook_multiple_parameter_visits(
         """Checks whether all parameters have been visited exactly once.
 
         Raises:
-            ValueError: if a parameter has not been visited at all
-            AssertionError: if a parameter has been visited more than once
+            AssertionError: if a parameter hasn't been visited exactly once
         """
         for param_id, visits in params_visited.items():
             if visits != 1:
