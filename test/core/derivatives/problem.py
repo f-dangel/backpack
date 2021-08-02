@@ -1,15 +1,12 @@
 """Convert problem settings."""
 
 import copy
-from test.core.derivatives.utils import (
-    derivative_cls_for,
-    get_available_devices,
-    is_loss,
-)
+from test.core.derivatives.utils import derivative_cls_for, get_available_devices
 
 import torch
 
 from backpack import extend
+from backpack.utils.module_classification import is_loss
 
 
 def make_test_problems(settings):

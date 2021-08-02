@@ -17,6 +17,7 @@ from backpack.custom_module.branching import ActiveIdentity, SumModule
 from backpack.custom_module.scale_module import ScaleModule
 from backpack.extensions.backprop_extension import BackpropExtension
 from backpack.extensions.curvature import Curvature
+from backpack.extensions.secondorder.base import SecondOrderBackpropExtension
 from backpack.extensions.secondorder.hbp.hbp_options import (
     BackpropStrategy,
     ExpectationApproximation,
@@ -36,7 +37,7 @@ from . import (
 )
 
 
-class HBP(BackpropExtension):
+class HBP(SecondOrderBackpropExtension):
     def __init__(
         self,
         curv_type,

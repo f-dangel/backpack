@@ -31,9 +31,8 @@ BATCH_NORM_SETTINGS = [
         "input_fn": lambda: rand(size=(5, 7, 3, 4)),
     },
     {
-        "module_fn": lambda: BatchNorm3d(num_features=7),
-        "input_fn": lambda: rand(size=(5, 7, 3, 4, 2)),
-        "seed": 1,
+        "module_fn": lambda: BatchNorm3d(num_features=3),
+        "input_fn": lambda: rand(size=(5, 3, 3, 4, 2)),
     },
     {
         "module_fn": lambda: initialize_batch_norm_eval(BatchNorm1d(num_features=7)),

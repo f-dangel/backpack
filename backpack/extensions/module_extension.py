@@ -1,11 +1,14 @@
-"""Contains base class for extending torch.nn.Module."""
+"""Contains base class for BackPACK module extensions."""
 from __future__ import annotations
 
-import warnings
 from typing import TYPE_CHECKING, Any, List, Tuple
+from warnings import warn
 
 from torch import Tensor
-from torch.nn import Module
+from torch.nn import Flatten, Module
+
+from backpack.utils import FULL_BACKWARD_HOOK
+from backpack.utils.module_classification import is_loss
 
 if TYPE_CHECKING:
     from backpack import BackpropExtension
@@ -26,80 +29,111 @@ class ModuleExtension:
 
         Args:
             params: List of module parameters that need special treatment.
-                for each param `p` in the list, instances of the extended module `m`
+                For each param `p` in the list, instances of the extended module `m`
                 need to have a field `m.p` and the class extending `ModuleExtension`
-                need to provide a method with the same signature as the `backprop`
+                needs to provide a method with the same signature as the `backpropagate`
                 method.
                 The result of this method will be saved in the savefield of `m.p`.
 
         Raises:
-            NotImplementedError: if for one of the parameters, the function named
-                after the parameter does not exist
+            NotImplementedError: if child class doesn't have a method for each parameter
         """
-        if params is None:
-            params = []
-
-        self.__params: List[str] = params
+        self.__params: List[str] = [] if params is None else params
 
         for param in self.__params:
-            extFunc = getattr(self, param, None)
-            if extFunc is None:
-                raise NotImplementedError
+            if not hasattr(self, param):
+                raise NotImplementedError(
+                    f"The module extension {self} is missing an implementation "
+                    f"of how to calculate the quantity for {param}. "
+                    f"This should be realized in a function "
+                    f"{param}(extension, module, g_inp, g_out, bpQuantities) -> Any."
+                )
 
     def backpropagate(
         self,
-        ext: BackpropExtension,
+        extension: BackpropExtension,
         module: Module,
         g_inp: Tuple[Tensor],
         g_out: Tuple[Tensor],
         bpQuantities: Any,
     ) -> Any:
-        """Backpropagate additional information through the graph.
+        """Backpropagation of additional information through the graph.
 
         Args:
-            ext: Instance of the extension currently running
+            extension: Instance of the extension currently running
             module: Instance of the extended module
             g_inp: Gradient of the loss w.r.t. the inputs
             g_out: Gradient of the loss w.r.t. the output
             bpQuantities: Quantities backpropagated w.r.t. the output
 
-        # noqa: DAR202
-        Returns:
+        Returns
             Quantities backpropagated w.r.t. the input
         """
-        warnings.warn("Backpropagate has not been overwritten")
+        warn("Backpropagate has not been overwritten")
 
-    def apply(
+    def __call__(
         self,
-        ext: BackpropExtension,
+        extension: BackpropExtension,
         module: Module,
         g_inp: Tuple[Tensor],
         g_out: Tuple[Tensor],
     ) -> None:
-        """Apply module extension operations.
+        """Apply all actions required by the extension.
 
         Fetch backpropagated quantities from module output, apply backpropagation
-        rule, and attach the result to module input(s).
+        rule, and store as backpropagated quantities for the module input(s).
 
         Args:
-            ext: extension currently running
-            module: extended module
+            extension: current backpropagation extension
+            module: current module
             g_inp: input gradients
             g_out: output gradients
-        """
-        out: Tensor = module.output
 
-        bpQuantities = self.__backproped_quantities(ext, out)
+        Raises:
+            AssertionError: if there is no saved quantity although extension expects one,
+                or if a backpropagated quantity is expected, but there is None and the old
+                backward hook is used and the module is not a Flatten no op.
+        """
+        delete_old_quantities = not self.__should_retain_backproped_quantities(module)
+        bp_quantity = self.__get_backproped_quantity(
+            extension, module.output, delete_old_quantities
+        )
+        if (
+            extension.expects_backpropagation_quantities()
+            and bp_quantity is None
+            and not is_loss(module)
+        ):
+            if not FULL_BACKWARD_HOOK and isinstance(module, Flatten):
+                # Flatten layers whose input is already flat do not add a node to the
+                # graph. This leads to unintuitive order of backward hook execution:
+                # https://discuss.pytorch.org/t/backward-hooks-changing-order-of-execution-in-nn-sequential/12447/4. # noqa: B950
+                # Skip everything below if this scenario is encountered.
+                no_op = module.input0.shape == module.output.shape
+                if not no_op:
+                    raise AssertionError(
+                        "Expected no op Flatten module. Got "
+                        + f"{module.input0.shape} -> {module.output.shape}"
+                    )
+                return
+            else:
+                raise AssertionError(
+                    "BackPACK extension expects a backpropagation quantity but it is None. "
+                    f"Module: {module}, Extension: {extension}."
+                )
 
         for param in self.__params:
             if self.__param_exists_and_requires_grad(module, param):
                 extFunc = getattr(self, param)
-                extValue = extFunc(ext, module, g_inp, g_out, bpQuantities)
-                self.__save(extValue, ext, module, param)
+                extValue = extFunc(extension, module, g_inp, g_out, bp_quantity)
+                self.__save_value_on_parameter(extValue, extension, module, param)
 
-        bpQuantities = self.backpropagate(ext, module, g_inp, g_out, bpQuantities)
-
-        i = 0
+        if self.__should_backpropagate(extension, module):
+            bp_quantity = self.backpropagate(
+                extension, module, g_inp, g_out, bp_quantity
+            )
+            self.__save_backproped_quantity(extension, module.input0, bp_quantity)
+        # TODO check how to merge
+        """i = 0
         module_inputs: Tuple[Tensor] = (module.input0,)
         while True:
             i += 1
@@ -112,38 +146,79 @@ class ModuleExtension:
 
         # distribute backproped quantities to all inputs
         for module_inp in module_inputs:
-            self.__backprop_quantities(ext, module_inp, out, bpQuantities)
+            self.__backprop_quantities(ext, module_inp, out, bpQuantities)"""
 
     @staticmethod
-    def __backproped_quantities(ext: BackpropExtension, out: Tensor) -> Any:
-        """Fetch backpropagated quantities attached to the module output.
+    def __should_backpropagate(extension: BackpropExtension, module: Module) -> bool:
+        """Determines whether the current extension should perform a backpropagation.
 
         Args:
-            ext: extension currently running
-            out: output tensor of current module
+            extension: current extension
+            module: current module
 
         Returns:
-            saved quantity from backpropagation, retrieved as property of out
+            whether a backpropagation should be performed
         """
-        return getattr(out, ext.savefield, None)
+        input_requires_grad: bool = module.input0.requires_grad
+        return input_requires_grad and extension.expects_backpropagation_quantities()
 
     @staticmethod
-    def __backprop_quantities(
-        ext: BackpropExtension, inp: Tensor, out: Tensor, bpQuantities: Any
-    ) -> None:
-        """Propagate back additional information by attaching it to the module input.
+    def __should_retain_backproped_quantities(module: Module) -> bool:
+        """Whether the backpropagation quantities should be kept.
 
-        When the computation graph has branches, multiple quantities will be
-        backpropagated to the same input. In this case, a rule for how this information
-        should be accumulated must be specified.
+        This is old code inherited and not tested.
 
         Args:
-            ext: extension currently running
-            inp: input0 of current module
-            out: output of current module
-            bpQuantities: backpropagation quantities
+            module: current module
+
+        Returns:
+            whether backpropagation quantities should be kept
         """
-        attach = bpQuantities
+        is_a_leaf = module.output.grad_fn is None
+        retain_grad_is_on = getattr(module.output, "retains_grad", False)
+        # inp_is_out = id(module.input0) == id(module.output)
+        should_retain_grad = is_a_leaf or retain_grad_is_on  # or inp_is_out
+        return should_retain_grad
+
+    @staticmethod
+    def __get_backproped_quantity(
+        extension: BackpropExtension,
+        reference_tensor: Tensor,
+        delete_old: bool,
+    ) -> Tensor or None:
+        """Fetch backpropagated quantities attached to the module output.
+
+        The property reference_tensor.data_ptr() is used as a reference.
+
+        Args:
+            extension: current BackPACK extension
+            reference_tensor: the output Tensor of the current module
+            delete_old: whether to delete the old backpropagated quantity
+
+        Returns:
+            the backpropagation quantity
+        """
+        return extension.saved_quantities.retrieve_quantity(
+            reference_tensor.data_ptr(), delete_old
+        )
+
+    @staticmethod
+    def __save_backproped_quantity(
+        extension: BackpropExtension, reference_tensor: Tensor, bpQuantities: Any
+    ) -> None:
+        """Save additional information backpropagated for a tensor.
+
+        Args:
+            extension: current BackPACK extension
+            reference_tensor: reference tensor for which additional information
+                is backpropagated.
+            bpQuantities: backpropagation quantities that should be saved
+        """
+        extension.saved_quantities.save_quantity(
+            reference_tensor.data_ptr(), bpQuantities
+        )
+        # TODO check how to merge
+        """attach = bpQuantities
 
         # is True for branch points
         if hasattr(inp, ext.savefield):
@@ -160,55 +235,32 @@ class ModuleExtension:
             except RuntimeError:
                 setattr(inp, ext.savefield, attach)
         else:
-            setattr(inp, ext.savefield, attach)
-
-        ModuleExtension.__maybe_delete_received_bpQuantities(ext, inp, out)
+            setattr(inp, ext.savefield, attach)"""
 
     @staticmethod
-    def __maybe_delete_received_bpQuantities(
-        ext: BackpropExtension, inp: Tensor, out: Tensor
-    ) -> None:
-        """Delete additional backprop info attached to a module output if possible.
+    def __param_exists_and_requires_grad(module: Module, param_str: str) -> bool:
+        """Whether the module has the parameter and it requires gradient.
 
         Args:
-            ext: extension currently running
-            inp: input0 of current module
-            out: output of current module
-        """
-        is_a_leaf = out.grad_fn is None
-        retain_grad_is_on = getattr(out, "retains_grad", False)
-        inp_is_out = id(inp) == id(out)
-
-        should_retain_grad = is_a_leaf or retain_grad_is_on or inp_is_out
-
-        if not should_retain_grad:
-            if hasattr(out, ext.savefield):
-                delattr(out, ext.savefield)
-
-    @staticmethod
-    def __param_exists_and_requires_grad(module: Module, param: str) -> bool:
-        """Determines whether parameter exists and requires gradient.
-
-        Args:
-            module: module
-            param: parameter name
+            module: current module
+            param_str: parameter name
 
         Returns:
-            whether param exists and requires grad
+            whether the module has the parameter and it requires gradient
         """
-        param_exists = getattr(module, param) is not None
-        return param_exists and getattr(module, param).requires_grad
+        param_exists = getattr(module, param_str) is not None
+        return param_exists and getattr(module, param_str).requires_grad
 
     @staticmethod
-    def __save(
-        value: Any, extension: BackpropExtension, module: Module, param: str
+    def __save_value_on_parameter(
+        value: Any, extension: BackpropExtension, module: Module, param_str: str
     ) -> None:
-        """Save some value on the parameter of the module.
+        """Saves the value on the parameter of that module.
 
         Args:
-            value: The value to be saved
-            extension: The current extension, determines save_field name
-            module: the module which has the parameter
-            param: parameter name, on this param the value is saved
+            value: The value that should be saved.
+            extension: The current BackPACK extension.
+            module: current module
+            param_str: parameter name
         """
-        setattr(getattr(module, param), extension.savefield, value)
+        setattr(getattr(module, param_str), extension.savefield, value)

@@ -53,7 +53,7 @@ class MyFirstResNet(torch.nn.Module):
     def forward(self, x):
         residual = self.shortcut(x)
         x = self.conv2(F.relu(self.conv1(x)))
-        x += residual
+        x = x + residual  # don't use: x += residual
         x = x.view(x.size(0), -1)
         x = self.linear1(x)
         return x
