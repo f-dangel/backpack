@@ -27,11 +27,15 @@ loss_function = extend(MSELoss())
 #
 # The network has to be in evaluation mode, because there are BatchNorm layers involved.
 # For these, individual gradients can be computed but are not well-defined.
+#
+# The converter is used for sole reason that in-place functions are not allowed.
+# In ResNets, especially x += residual should be x = x + residual instead (torch>=1.9.0).
+# If your network does conform to this you don't need to use use_converter=True.
 resnet18 = model.eval()
-resnet18 = extend(resnet18)
+resnet18 = extend(resnet18, use_converter=True)
 
 # %%
-# First order extensions work out of the box.
+# First order extensions work out of the box (apart from in-place functions).
 outputs = resnet18(inputs)
 loss = loss_function(outputs, rand_like(outputs))
 with backpack(BatchGrad()):
