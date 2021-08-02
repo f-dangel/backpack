@@ -46,9 +46,8 @@ from torch.nn import (
 
 from backpack.custom_module.branching import ActiveIdentity, SumModule
 from backpack.custom_module.permute import Permute
-from backpack.extensions.secondorder.base import SecondOrderBackpropExtension
 from backpack.custom_module.scale_module import ScaleModule
-from backpack.extensions.backprop_extension import BackpropExtension
+from backpack.extensions.secondorder.base import SecondOrderBackpropExtension
 from backpack.extensions.secondorder.hbp import LossHessianStrategy
 
 from . import (

@@ -127,13 +127,7 @@ class ModuleExtension:
                 extValue = extFunc(extension, module, g_inp, g_out, bp_quantity)
                 self.__save_value_on_parameter(extValue, extension, module, param)
 
-        if self.__should_backpropagate(extension, module):
-            bp_quantity = self.backpropagate(
-                extension, module, g_inp, g_out, bp_quantity
-            )
-            self.__save_backproped_quantity(extension, module.input0, bp_quantity)
-        # TODO check how to merge
-        """i = 0
+        i = 0
         module_inputs: Tuple[Tensor] = (module.input0,)
         while True:
             i += 1
@@ -143,23 +137,31 @@ class ModuleExtension:
             else:
                 break
         del i
-
-        # distribute backproped quantities to all inputs
-        for module_inp in module_inputs:
-            self.__backprop_quantities(ext, module_inp, out, bpQuantities)"""
+        if self.__should_backpropagate(extension, module_inputs):
+            bp_quantity = self.backpropagate(
+                extension, module, g_inp, g_out, bp_quantity
+            )
+            # TODO backprop only those that require grad
+            # distribute backproped quantities to all inputs
+            for module_inp in module_inputs:
+                self.__save_backproped_quantity(extension, module_inp, bp_quantity)
 
     @staticmethod
-    def __should_backpropagate(extension: BackpropExtension, module: Module) -> bool:
+    def __should_backpropagate(
+        extension: BackpropExtension, module_inputs: Tuple[Tensor]
+    ) -> bool:
         """Determines whether the current extension should perform a backpropagation.
 
         Args:
             extension: current extension
-            module: current module
+            module_inputs: current module
 
         Returns:
             whether a backpropagation should be performed
         """
-        input_requires_grad: bool = module.input0.requires_grad
+        input_requires_grad: bool = any(
+            module_inp.requires_grad for module_inp in module_inputs
+        )
         return input_requires_grad and extension.expects_backpropagation_quantities()
 
     @staticmethod
@@ -215,27 +217,10 @@ class ModuleExtension:
             bpQuantities: backpropagation quantities that should be saved
         """
         extension.saved_quantities.save_quantity(
-            reference_tensor.data_ptr(), bpQuantities
+            reference_tensor.data_ptr(),
+            bpQuantities,
+            extension.accumulate_backpropagated_quantities,
         )
-        # TODO check how to merge
-        """attach = bpQuantities
-
-        # is True for branch points
-        if hasattr(inp, ext.savefield):
-            try:
-                setattr(
-                    inp,
-                    ext.savefield,
-                    ext.accumulate_backpropagated_quantities(
-                        getattr(inp, ext.savefield), attach
-                    ),
-                )
-            # TODO: discuss whether this can be avoided
-            # occurs only in automated tests
-            except RuntimeError:
-                setattr(inp, ext.savefield, attach)
-        else:
-            setattr(inp, ext.savefield, attach)"""
 
     @staticmethod
     def __param_exists_and_requires_grad(module: Module, param_str: str) -> bool:

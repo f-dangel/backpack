@@ -1,7 +1,7 @@
 """Test branching with modules."""
 
 # TODO Integrate into extensions/secondorder/diag_ggn after making branching work
-
+from contextlib import nullcontext
 from test.automated_test import check_sizes_and_values
 from test.core.derivatives.utils import classification_targets
 
@@ -13,6 +13,7 @@ from torch.nn.utils.convert_parameters import parameters_to_vector
 from backpack import backpack, extend, extensions
 from backpack.custom_module.branching import ActiveIdentity, Parallel
 from backpack.hessianfree.ggnvp import ggn_vector_product
+from backpack.utils import FULL_BACKWARD_HOOK, exception_inside_backward_pass
 from backpack.utils.convert_parameters import vector_to_parameter_list
 
 
@@ -158,7 +159,10 @@ def test_diag_ggn_exact_active_identity(setup_fn):
 
 @pytest.mark.parametrize("setup_fn", SETUPS, ids=SETUPS_IDS)
 def test_diag_ggn_exact_nn_Identity_fails(setup_fn):
-    """``torch.nn.Identity`` does not create a node and messes up backward hooks."""
+    """``torch.nn.Identity`` does not create a node and messes up backward hooks.
+
+    However, it works fine if using full backward hook.
+    """
     X, y, model, loss_function = setup_fn(active_identity=False)
 
     autograd_result = autograd_diag_ggn_exact(X, y, model, loss_function)
@@ -167,7 +171,9 @@ def test_diag_ggn_exact_nn_Identity_fails(setup_fn):
 
     # TODO discuss what happens here
     # locally raises AttributeError, github CI raises RuntimeError
-    with pytest.raises((AttributeError, RuntimeError)):
+    with nullcontext() if FULL_BACKWARD_HOOK else pytest.raises(
+        exception_inside_backward_pass(AttributeError)
+    ):
         backpack_result = backpack_diag_ggn_exact(X, y, model, loss_function)
 
         check_sizes_and_values(autograd_result, backpack_result)

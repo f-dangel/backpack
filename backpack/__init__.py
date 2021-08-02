@@ -12,9 +12,8 @@ from backpack.utils.hooks import no_op
 
 from . import extensions
 from .context import CTX
-from .utils import FULL_BACKWARD_HOOK
+from .utils import FULL_BACKWARD_HOOK, TORCH_VERSION_AT_LEAST_1_9_0
 from .utils.module_classification import is_no_op
-from .utils import TORCH_VERSION_AT_LEAST_1_9_0
 
 if TORCH_VERSION_AT_LEAST_1_9_0:
     from .custom_module.graph_utils import convert_module_to_backpack
@@ -233,6 +232,9 @@ def extend(module: torch.nn.Module, debug=False, use_converter=False):
 
     Returns:
         Extended module.
+
+    Raises:
+        NotImplementedError: if trying to use converter without torch>=1.9.0
     """
     if debug:
         print("[DEBUG] Extending", module)
