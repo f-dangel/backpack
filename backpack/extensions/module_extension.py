@@ -127,42 +127,40 @@ class ModuleExtension:
                 extValue = extFunc(extension, module, g_inp, g_out, bp_quantity)
                 self.__save_value_on_parameter(extValue, extension, module, param)
 
-        i = 0
-        module_inputs: Tuple[Tensor] = (module.input0,)
-        while True:
-            i += 1
-            if hasattr(module, f"input{i}"):
-                # TODO discuss: check for input{i}.requires_grad == True
-                module_inputs += (getattr(module, f"input{i}"),)
-            else:
-                break
-        del i
-        if self.__should_backpropagate(extension, module_inputs):
+        module_inputs = self.__should_backpropagate(extension, module)
+        if module_inputs:
             bp_quantity = self.backpropagate(
                 extension, module, g_inp, g_out, bp_quantity
             )
-            # TODO backprop only those that require grad
-            # distribute backproped quantities to all inputs
             for module_inp in module_inputs:
                 self.__save_backproped_quantity(extension, module_inp, bp_quantity)
 
     @staticmethod
     def __should_backpropagate(
-        extension: BackpropExtension, module_inputs: Tuple[Tensor]
-    ) -> bool:
-        """Determines whether the current extension should perform a backpropagation.
+        extension: BackpropExtension, module: Module
+    ) -> Tuple[Tensor]:
+        """Returns the inputs one which a backpropagation should be performed.
 
         Args:
             extension: current extension
-            module_inputs: current module
+            module: current module
 
         Returns:
-            whether a backpropagation should be performed
+            the inputs which need a backpropagation quantity
         """
-        input_requires_grad: bool = any(
-            module_inp.requires_grad for module_inp in module_inputs
-        )
-        return input_requires_grad and extension.expects_backpropagation_quantities()
+        if not extension.expects_backpropagation_quantities():
+            return tuple()
+        else:
+            module_inputs: Tuple[Tensor] = tuple()
+            i = 0
+            while True:
+                if hasattr(module, f"input{i}"):
+                    if getattr(module, f"input{i}").requires_grad:
+                        module_inputs += (getattr(module, f"input{i}"),)
+                else:
+                    break
+                i += 1
+            return module_inputs
 
     @staticmethod
     def __should_retain_backproped_quantities(module: Module) -> bool:
