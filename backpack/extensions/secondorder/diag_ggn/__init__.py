@@ -44,7 +44,7 @@ from torch.nn import (
 )
 
 from backpack.custom_module.permute import Permute
-from backpack.extensions.backprop_extension import BackpropExtension
+from backpack.extensions.secondorder.base import SecondOrderBackpropExtension
 from backpack.extensions.secondorder.hbp import LossHessianStrategy
 
 from . import (
@@ -68,7 +68,7 @@ from . import (
 )
 
 
-class DiagGGN(BackpropExtension):
+class DiagGGN(SecondOrderBackpropExtension):
     """Base class for diagonal generalized Gauss-Newton/Fisher matrix."""
 
     VALID_LOSS_HESSIAN_STRATEGIES = [
@@ -182,7 +182,7 @@ class DiagGGNMC(DiagGGN):
         return self._mc_samples
 
 
-class BatchDiagGGN(BackpropExtension):
+class BatchDiagGGN(SecondOrderBackpropExtension):
     """Base class for batched diagonal generalized Gauss-Newton/Fisher matrix."""
 
     VALID_LOSS_HESSIAN_STRATEGIES = [

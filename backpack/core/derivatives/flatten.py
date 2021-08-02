@@ -32,13 +32,3 @@ class FlattenDerivatives(BaseDerivatives):
         mat: Tensor,
     ) -> Tensor:
         return self.reshape_like_output(mat, module)
-
-    def is_no_op(self, module):
-        """Does flatten add an operation to the computational graph.
-
-        If the input is already flattened, no operation will be added for
-        the `Flatten` layer. This can lead to an intuitive order of backward
-        hook execution, see the discussion at https://discuss.pytorch.org/t/
-        backward-hooks-changing-order-of-execution-in-nn-sequential/12447/4 .
-        """
-        return tuple(module.input0.shape) == tuple(module.output.shape)

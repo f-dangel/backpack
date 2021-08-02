@@ -28,7 +28,7 @@ from torch.nn import (
     ZeroPad2d,
 )
 
-from backpack.extensions.backprop_extension import BackpropExtension
+from backpack.extensions.secondorder.base import SecondOrderBackpropExtension
 from backpack.extensions.secondorder.hbp import LossHessianStrategy
 from backpack.extensions.secondorder.sqrt_ggn import (
     activations,
@@ -43,7 +43,7 @@ from backpack.extensions.secondorder.sqrt_ggn import (
 )
 
 
-class SqrtGGN(BackpropExtension):
+class SqrtGGN(SecondOrderBackpropExtension):
     """Base class for extensions that compute the GGN/Fisher matrix square root."""
 
     def __init__(self, loss_hessian_strategy: str, savefield: str):

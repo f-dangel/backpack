@@ -1,4 +1,4 @@
-"""Post extension hooks to compact BackPACK quantities during backpropagation."""
+"""Extension hooks to compact BackPACK quantities during backpropagation."""
 
 
 class ExtensionHookManager:
