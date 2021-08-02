@@ -172,7 +172,7 @@ def test_diag_ggn_exact_nn_Identity_fails(setup_fn):
     # TODO discuss what happens here
     # locally raises AttributeError, github CI raises RuntimeError
     with nullcontext() if FULL_BACKWARD_HOOK else pytest.raises(
-        exception_inside_backward_pass(AttributeError)
+        exception_inside_backward_pass(AssertionError)
     ):
         backpack_result = backpack_diag_ggn_exact(X, y, model, loss_function)
 
