@@ -1,8 +1,8 @@
 """Contains base class for BackPACK module extensions."""
 from __future__ import annotations
 
-import warnings
 from typing import TYPE_CHECKING, Any, List, Tuple
+from warnings import warn
 
 from torch import Tensor
 from torch.nn import Flatten, Module
@@ -69,7 +69,7 @@ class ModuleExtension:
         Returns
             Quantities backpropagated w.r.t. the input
         """
-        warnings.warn("Backpropagate has not been overwritten")
+        warn("Backpropagate has not been overwritten")
 
     def __call__(
         self,
@@ -81,7 +81,7 @@ class ModuleExtension:
         """Apply all actions required by the extension.
 
         Fetch backpropagated quantities from module output, apply backpropagation
-        rule, and attach the result to module input(s).
+        rule, and store as backpropagated quantities for the module input(s).
 
         Args:
             extension: current backpropagation extension
