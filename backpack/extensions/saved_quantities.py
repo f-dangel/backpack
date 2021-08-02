@@ -15,9 +15,7 @@ class SavedQuantities:
         """Saves the quantity under the specified key.
 
         Args:
-            key: data_ptr() of reference tensor.
-                For torch>=1.9.0 the reference tensor is grad_input[0].
-                For older versions the reference tensor is module.input0.
+            key: data_ptr() of reference tensor (module.input0).
             quantity: tensor to save
 
         Raises:
