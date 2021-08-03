@@ -19,8 +19,8 @@ def model_and_input() -> Tuple[Module, Tensor]:
         model and input
     """
     skip_pytorch_below_1_9_0()
-    resnet18 = torchvision.models.resnet18(num_classes=10).eval()
-    yield extend(resnet18, use_converter=True), rand(8, 3, 21, 21, requires_grad=True)
+    resnet18 = torchvision.models.resnet18(num_classes=4).eval()
+    yield extend(resnet18, use_converter=True), rand(2, 3, 7, 7, requires_grad=True)
     del resnet18
 
 

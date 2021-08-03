@@ -292,12 +292,12 @@ FIRSTORDER_SETTINGS += [
 if TORCH_VERSION_AT_LEAST_1_9_0:
     FIRSTORDER_SETTINGS += [
         {
-            "input_fn": lambda: rand(8, 3, 21, 21),
+            "input_fn": lambda: rand(2, 3, 7, 7),
             "module_fn": lambda: convert_module_to_backpack(
                 resnet18(num_classes=4).eval()
             ),
             "loss_function_fn": lambda: MSELoss(),
-            "target_fn": lambda: regression_targets((8, 4)),
+            "target_fn": lambda: regression_targets((2, 4)),
             "id_prefix": "resnet18",
         },
     ]

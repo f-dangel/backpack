@@ -1,10 +1,11 @@
-"""Test branching with modules.
+"""This test demonstrates the custom modules in backpack for branching/ResNets.
 
-This is especially useful for torch<1.9.0.
-For torch>=1.9.0 there is a convenient option use_converter=True in extend().
+For torch < 1.9.0 (no full backward hook), this test is important,
+since those fail without ActiveIdentity.
+For torch>=1.9.0 (full backward hook), all tests pass.
+Additionally, for torch>=1.9.0 there is a convenient option use_converter=True in extend().
+As soon as torch version is bumped to 1.9.0 this test can be deleted.
 """
-
-# TODO Integrate into extensions/secondorder/diag_ggn after making branching work
 from contextlib import nullcontext
 from test.automated_test import check_sizes_and_values
 from test.core.derivatives.utils import classification_targets

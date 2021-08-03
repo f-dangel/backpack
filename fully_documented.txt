@@ -94,4 +94,3 @@ test/utils/evaluation_mode.py
 test/utils/skip_test.py
 test/utils/__init__.py
 test/resnet/
-test/test_branching.py

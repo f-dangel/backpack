@@ -139,8 +139,6 @@ LOCAL_SETTINGS += [
 ###############################################################################
 #                               Branched models                               #
 ###############################################################################
-# TODO Integrate with LOCAL_SETTINGS after integrating branching with the extensions
-# DiagGGNMC, BatchDiagGGNExact
 LOCAL_SETTINGS += [
     {
         "input_fn": lambda: rand(3, 10),
@@ -215,6 +213,9 @@ LOCAL_SETTINGS += [
         "id_prefix": "nested-branching-convolution",
     },
 ]
+###############################################################################
+#                      Branched models - converter                            #
+###############################################################################
 if TORCH_VERSION_AT_LEAST_1_9_0:
     LOCAL_SETTINGS += [
         {
