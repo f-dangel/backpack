@@ -20,7 +20,7 @@ def subsample(tensor: Tensor, dim: int = 0, subsampling: List[int] = None) -> Te
         Tensor of same rank that is sub-sampled along the dimension.
 
     Raises:
-        NotImplementedError: If dimension differs from ``0`` or ``1``.
+        NotImplementedError: If dimension differs from ``0, 1, 2``.
     """
     if subsampling is None:
         return tensor
@@ -29,8 +29,10 @@ def subsample(tensor: Tensor, dim: int = 0, subsampling: List[int] = None) -> Te
             return tensor[subsampling]
         elif dim == 1:
             return tensor[:, subsampling]
+        elif dim == 2:
+            return tensor[:, :, subsampling]
         else:
-            raise NotImplementedError(f"Only supports dim = 0,1. Got {dim}.")
+            raise NotImplementedError(f"Only supports dim = 0,1,2. Got {dim}.")
 
 
 def get_batch_axis(module: Module, io_str: str) -> int:
