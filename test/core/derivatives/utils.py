@@ -44,18 +44,6 @@ def derivative_cls_for(module_cls: Type[Module]) -> Type[BaseDerivatives]:
         )
 
 
-def is_loss(module: Module) -> bool:
-    """Return whether `module` is a `torch` loss function.
-
-    Args:
-        module: A PyTorch module.
-
-    Returns:
-        Whether `module` is a loss function.
-    """
-    return isinstance(module, torch.nn.modules.loss._Loss)
-
-
 def classification_targets(size: Tuple[int, ...], num_classes: int) -> Tensor:
     """Create random targets for classes 0, ..., `num_classes - 1`.
 

@@ -16,7 +16,7 @@ from torch.nn import (
     Linear,
 )
 
-from backpack.extensions.backprop_extension import BackpropExtension
+from backpack.extensions.firstorder.base import FirstOrderBackpropExtension
 
 from . import (
     batchnorm_nd,
@@ -31,7 +31,7 @@ from . import (
 )
 
 
-class SumGradSquared(BackpropExtension):
+class SumGradSquared(FirstOrderBackpropExtension):
     """The sum of individual-gradients-squared, or second moment of the gradient.
 
     Stores the output in ``sum_grad_squared``. Same dimension as the gradient.
@@ -55,7 +55,6 @@ class SumGradSquared(BackpropExtension):
         """
         super().__init__(
             savefield="sum_grad_squared",
-            fail_mode="WARNING",
             module_exts={
                 Linear: linear.SGSLinear(),
                 Conv1d: conv1d.SGSConv1d(),

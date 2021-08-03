@@ -16,7 +16,7 @@ from torch.nn import (
     Linear,
 )
 
-from backpack.extensions.backprop_extension import BackpropExtension
+from backpack.extensions.firstorder.base import FirstOrderBackpropExtension
 
 from . import (
     batchnorm_nd,
@@ -31,7 +31,7 @@ from . import (
 )
 
 
-class Variance(BackpropExtension):
+class Variance(FirstOrderBackpropExtension):
     """Estimates the variance of the gradient using the samples in the minibatch.
 
     Stores the output in ``variance``. Same dimension as the gradient.
@@ -55,7 +55,6 @@ class Variance(BackpropExtension):
         """
         super().__init__(
             savefield="variance",
-            fail_mode="WARNING",
             module_exts={
                 Linear: linear.VarianceLinear(),
                 Conv1d: conv1d.VarianceConv1d(),
