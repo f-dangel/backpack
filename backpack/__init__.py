@@ -1,22 +1,22 @@
 """BackPACK."""
-import inspect
+from inspect import isclass
 from types import TracebackType
 from typing import Callable, Optional, Tuple, Type, Union
 
-import torch
-from torch import Tensor
+from torch import Tensor, is_grad_enabled
 from torch.nn import Module
 
+from backpack import extensions
+from backpack.context import CTX
 from backpack.extensions.backprop_extension import BackpropExtension
+from backpack.utils import FULL_BACKWARD_HOOK, TORCH_VERSION_AT_LEAST_1_9_0
 from backpack.utils.hooks import no_op
-
-from . import extensions
-from .context import CTX
-from .utils import FULL_BACKWARD_HOOK, TORCH_VERSION_AT_LEAST_1_9_0
-from .utils.module_classification import is_no_op
+from backpack.utils.module_classification import is_no_op
 
 if TORCH_VERSION_AT_LEAST_1_9_0:
-    from .custom_module.graph_utils import convert_module_to_backpack
+    from torch.fx import GraphModule
+
+    from backpack.custom_module.graph_utils import convert_module_to_backpack
 
 
 class backpack:
@@ -50,7 +50,7 @@ class backpack:
         """
         for ext in exts:
             if not isinstance(ext, BackpropExtension):
-                if inspect.isclass(ext) and issubclass(ext, BackpropExtension):
+                if isclass(ext) and issubclass(ext, BackpropExtension):
                     raise ValueError(
                         "backpack expect instances of BackpropExtension,"
                         + " but received a class instead [{}].".format(ext)
@@ -160,8 +160,7 @@ def hook_store_io(
         input: List of input tensors
         output: result of module(input)
     """
-    if disable.should_store_io() and torch.is_grad_enabled():
-
+    if disable.should_store_io() and is_grad_enabled():
         for i in range(len(input)):
             setattr(module, "input{}".format(i), input[i])
         if isinstance(output, tuple):
@@ -171,7 +170,7 @@ def hook_store_io(
             module.output = output
 
 
-def memory_cleanup(module) -> None:
+def memory_cleanup(module: Module) -> None:
     """Remove I/O stored by backpack during the forward pass.
 
     Deletes the attributes created by `hook_store_io`.
@@ -219,7 +218,7 @@ def hook_run_extensions(
         memory_cleanup(module)
 
 
-def extend(module: torch.nn.Module, debug=False, use_converter=False):
+def extend(module: Module, debug: bool = False, use_converter: bool = False) -> Module:
     """Recursively extend a ``module`` to make it BackPACK-ready.
 
     Modules that do not represent an operation in the computation graph (for instance
@@ -241,7 +240,7 @@ def extend(module: torch.nn.Module, debug=False, use_converter=False):
 
     if use_converter:
         if TORCH_VERSION_AT_LEAST_1_9_0:
-            module = convert_module_to_backpack(module)
+            module: GraphModule = convert_module_to_backpack(module)
             return extend(module)
         else:
             raise NotImplementedError(
