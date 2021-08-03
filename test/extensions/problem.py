@@ -150,7 +150,6 @@ class ExtensionsTestProblem:
         else:
             batch_axis_in = get_batch_axis(self.model, "input0")
             batch_axis_out = get_batch_axis(self.model, "output")
-            assert batch_axis_in == batch_axis_out
             target = subsample(
                 self.target, dim=batch_axis_out, subsampling=[sample_idx]
             )
