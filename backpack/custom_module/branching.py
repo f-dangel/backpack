@@ -1,18 +1,10 @@
 """Emulating branching with modules."""
-
 from typing import Any, OrderedDict, Tuple, Union
 
-import torch
-
-# for marking information backpropagated by PyTorch's autograd
 from torch import Tensor
 from torch.nn import Module
 
 from backpack.custom_module.scale_module import ScaleModule
-
-BRANCH_POINT_FIELD = "_backpack_branch_point"
-MERGE_POINT_FIELD = "_backpack_merge_point"
-MARKER = True
 
 
 class ActiveIdentity(ScaleModule):
@@ -23,7 +15,7 @@ class ActiveIdentity(ScaleModule):
         super().__init__(weight=1.0)
 
 
-class Branch(torch.nn.Module):
+class Branch(Module):
     """Module used by BackPACK to handle branching in the computation graph.
 
           ↗ module1 → output1
@@ -62,13 +54,12 @@ class Branch(torch.nn.Module):
         return tuple(module(input) for module in self.children())
 
 
-class SumModule(torch.nn.Module):
+class SumModule(Module):
     """Module used by BackPACK to handle branch merges in the computation graph.
 
     module 1 ↘
     module 2 → SumModule (sum)
     ...      ↗
-
     """
 
     def forward(self, *input: Tensor) -> Tensor:
@@ -88,7 +79,7 @@ class SumModule(torch.nn.Module):
         return sum(input)
 
 
-class Parallel(torch.nn.Module):
+class Parallel(Module):
     """Feed the same input through a parallel sequence of modules. Sum the results.
 
     Used by BackPACK to emulate branched computations.

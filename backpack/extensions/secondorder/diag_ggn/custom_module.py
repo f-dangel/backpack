@@ -8,16 +8,6 @@ class DiagGGNScaleModule(DiagGGNBaseModule):
         super().__init__(derivatives=ScaleModuleDerivatives())
 
 
-class BatchDiagGGNScaleModule(DiagGGNBaseModule):
-    def __init__(self):
-        super().__init__(derivatives=ScaleModuleDerivatives())
-
-
 class DiagGGNSumModule(DiagGGNBaseModule):
-    def __init__(self):
-        super().__init__(derivatives=SumModuleDerivatives())
-
-
-class BatchDiagGGNSumModule(DiagGGNBaseModule):
     def __init__(self):
         super().__init__(derivatives=SumModuleDerivatives())

@@ -31,9 +31,7 @@ def is_no_op(module: Module) -> bool:
     Returns:
         whether module is no operation
     """
-    return isinstance(
-        module,
-        (GraphModule, Sequential, Branch, Parallel, ReduceTuple)
-        if TORCH_VERSION_AT_LEAST_1_9_0
-        else (Sequential, Branch, Parallel, ReduceTuple),
-    )
+    no_op_modules = (Sequential, Branch, Parallel, ReduceTuple)
+    if TORCH_VERSION_AT_LEAST_1_9_0:
+        no_op_modules += (GraphModule,)
+    return isinstance(module, no_op_modules)

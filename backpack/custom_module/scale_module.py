@@ -1,26 +1,27 @@
 """Contains ScaleModule."""
-import torch
+from torch import Tensor
+from torch.nn import Module
 
 
-class ScaleModule(torch.nn.Module):
-    """Scale Module scales the input by a constant.."""
+class ScaleModule(Module):
+    """Scale Module scales the input by a constant."""
 
-    def __init__(self, weight=1.0):
+    def __init__(self, weight: float = 1.0):
         """Store scalar weight.
 
         Args:
-            weight(float, optional): Initial value for weight. Defaults to 2.0.
+            weight: Initial value for weight. Defaults to 1.0.
         """
         super().__init__()
-        self.weight = weight
+        self.weight: float = weight
 
-    def forward(self, input):
+    def forward(self, input: Tensor) -> Tensor:
         """Defines forward pass.
 
         Args:
-            input(torch.Tensor): input
+            input: input
 
         Returns:
-            torch.Tensor: product of input and weight
+            product of input and weight
         """
         return input * self.weight

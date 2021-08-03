@@ -1,3 +1,4 @@
+from torch import Tensor
 from torch.nn import (
     AvgPool2d,
     Conv2d,
@@ -84,7 +85,9 @@ class HBP(SecondOrderBackpropExtension):
     def get_ea_strategy(self):
         return self.ea_strategy
 
-    def accumulate_backpropagated_quantities(self, existing, other):
+    def accumulate_backpropagated_quantities(
+        self, existing: Tensor, other: Tensor
+    ) -> Tensor:  # noqa: D102
         return existing + other
 
 

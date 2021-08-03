@@ -14,13 +14,7 @@ class BackPackTracer(Tracer):
     """This custom tracer recognizes BackPACK custom modules."""
 
     def is_leaf_module(self, m, module_qualified_name):  # noqa: D102
-        if isinstance(m, ScaleModule):
-            return True
-        elif isinstance(m, SumModule):
-            return True
-        elif isinstance(m, Branch):
-            return True
-        elif isinstance(m, ActiveIdentity):
+        if isinstance(m, (ScaleModule, SumModule, Branch, ActiveIdentity)):
             return True
         else:
             return super().is_leaf_module(m, module_qualified_name)

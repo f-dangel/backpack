@@ -8,6 +8,7 @@ BatchDiagGGN(BackpropExtension)
 BatchDiagGGNExact(BatchDiagGGN)
 BatchDiagGGNMC(BatchDiagGGN)
 """
+from torch import Tensor
 from torch.nn import (
     ELU,
     RNN,
@@ -141,16 +142,9 @@ class DiagGGN(SecondOrderBackpropExtension):
             },
         )
 
-    def accumulate_backpropagated_quantities(self, existing, other):
-        """Sums existing and other.
-
-        Args:
-            existing: .
-            other: .
-
-        Returns:
-            sum
-        """
+    def accumulate_backpropagated_quantities(
+        self, existing: Tensor, other: Tensor
+    ) -> Tensor:  # noqa: D102
         return existing + other
 
 
@@ -270,16 +264,9 @@ class BatchDiagGGN(SecondOrderBackpropExtension):
             },
         )
 
-    def accumulate_backpropagated_quantities(self, existing, other):
-        """Sums existing and other.
-
-        Args:
-            existing: .
-            other: .
-
-        Returns:
-            sum
-        """
+    def accumulate_backpropagated_quantities(
+        self, existing: Tensor, other: Tensor
+    ) -> Tensor:  # noqa: D102
         return existing + other
 
 

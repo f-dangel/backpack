@@ -139,7 +139,7 @@ class ModuleExtension:
     def __should_backpropagate(
         extension: BackpropExtension, module: Module
     ) -> Tuple[Tensor]:
-        """Returns the inputs one which a backpropagation should be performed.
+        """Returns the inputs on which a backpropagation should be performed.
 
         Args:
             extension: current extension
