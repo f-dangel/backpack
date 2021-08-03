@@ -1,13 +1,26 @@
-"""Test branching with modules."""
+"""Test branching with modules.
+
+This is especially useful for torch<1.9.0.
+For torch>=1.9.0 there is a convenient option use_converter=True in extend().
+"""
 
 # TODO Integrate into extensions/secondorder/diag_ggn after making branching work
 from contextlib import nullcontext
 from test.automated_test import check_sizes_and_values
 from test.core.derivatives.utils import classification_targets
+from typing import Callable, Tuple
 
-import pytest
-import torch
-from torch.nn import CrossEntropyLoss, Identity, Linear, ReLU, Sequential, Sigmoid
+from pytest import mark, raises
+from torch import Tensor, cat, manual_seed, rand, zeros
+from torch.nn import (
+    CrossEntropyLoss,
+    Identity,
+    Linear,
+    Module,
+    ReLU,
+    Sequential,
+    Sigmoid,
+)
 from torch.nn.utils.convert_parameters import parameters_to_vector
 
 from backpack import backpack, extend, extensions
@@ -17,17 +30,22 @@ from backpack.utils import FULL_BACKWARD_HOOK, exception_inside_backward_pass
 from backpack.utils.convert_parameters import vector_to_parameter_list
 
 
-def setup(apply_extend=False, active_identity=True):
+def setup(
+    apply_extend: bool = False, active_identity: bool = True
+) -> Tuple[Tensor, Tensor, Module, Module]:
     """Set seed. Generate and return inputs, labels, model and loss function.
 
     A simple ResNet using the ``Branch`` and ``SumModule`` modules to handle branching.
 
     Args:
-        active_identity (bool): Whether the identity function should create a new node
+        active_identity: Whether the identity function should create a new node
             in the computation graph.
-        apply_extend (bool): Whether model and loss function should be extended.
+        apply_extend: Whether model and loss function should be extended.
+
+    Returns:
+        X, y, model, loss_function
     """
-    torch.manual_seed(0)
+    manual_seed(0)
 
     N = 7
 
@@ -35,7 +53,7 @@ def setup(apply_extend=False, active_identity=True):
     hidden_features = 10
     out_features = 3
 
-    X = torch.rand((N, in_features))
+    X = rand((N, in_features))
     y = classification_targets((N,), out_features)
 
     identity = ActiveIdentity() if active_identity else Identity()
@@ -61,18 +79,23 @@ def setup(apply_extend=False, active_identity=True):
     return X, y, model, loss_function
 
 
-def setup_convenient(apply_extend=False, active_identity=True):
+def setup_convenient(
+    apply_extend: bool = False, active_identity: bool = True
+) -> Tuple[Tensor, Tensor, Module, Module]:
     """Set seed. Generate and return inputs, labels, model and loss function.
 
     A simple ResNet using the ``Parallel`` convenience module around the ``Branch`` and
     ``SumModule`` modules to handle branching.
 
     Args:
-        active_identity (bool): Whether the identity function should create a new node
+        active_identity: Whether the identity function should create a new node
             in the computation graph.
-        apply_extend (bool): Whether model and loss function should be extended.
+        apply_extend: Whether model and loss function should be extended.
+
+    Returns:
+        X, y, model, loss_function
     """
-    torch.manual_seed(0)
+    manual_seed(0)
 
     N = 7
 
@@ -80,7 +103,7 @@ def setup_convenient(apply_extend=False, active_identity=True):
     hidden_features = 10
     out_features = 3
 
-    X = torch.rand((N, in_features))
+    X = rand((N, in_features))
     y = classification_targets((N,), out_features)
 
     identity = ActiveIdentity() if active_identity else Identity()
@@ -106,18 +129,30 @@ def setup_convenient(apply_extend=False, active_identity=True):
     return X, y, model, loss_function
 
 
-def autograd_diag_ggn_exact(X, y, model, loss_function):
-    """Compute the generalized Gauss-Newton diagonal via autodiff."""
+def autograd_diag_ggn_exact(
+    X: Tensor, y: Tensor, model: Module, loss_function: Module
+) -> Tensor:
+    """Compute the generalized Gauss-Newton diagonal via autodiff.
+
+    Args:
+        X: data
+        y: target
+        model: model
+        loss_function: loss function
+
+    Returns:
+        diag_ggn
+    """
     D = sum(p.numel() for p in model.parameters())
 
     outputs = model(X)
     loss = loss_function(outputs, y)
 
-    ggn_diag = torch.zeros(D)
+    ggn_diag = zeros(D)
 
     # compute GGN columns by GGNVPs with one-hot vectors
     for d in range(D):
-        e_d = torch.zeros(D)
+        e_d = zeros(D)
         e_d[d] = 1.0
         e_d_list = vector_to_parameter_list(e_d, model.parameters())
 
@@ -128,24 +163,40 @@ def autograd_diag_ggn_exact(X, y, model, loss_function):
     return ggn_diag
 
 
-def backpack_diag_ggn_exact(X, y, model, loss_function):
-    """Compute the generalized Gauss-Newton diagonal via BackPACK."""
+def backpack_diag_ggn_exact(
+    X: Tensor, y: Tensor, model: Module, loss_function: Module
+) -> Tensor:
+    """Compute the generalized Gauss-Newton diagonal via BackPACK.
+
+    Args:
+        X: data
+        y: target
+        model: model
+        loss_function: loss function
+
+    Returns:
+        diag_ggn_exact
+    """
     outputs = model(X)
     loss = loss_function(outputs, y)
 
     with backpack(extensions.DiagGGNExact(), debug=True):
         loss.backward()
 
-    return torch.cat([p.diag_ggn_exact.flatten() for p in model.parameters()])
+    return cat([p.diag_ggn_exact.flatten() for p in model.parameters()])
 
 
 SETUPS = [setup, setup_convenient]
 SETUPS_IDS = ["simple-resnet", "simple-resnet-convenient"]
 
 
-@pytest.mark.parametrize("setup_fn", SETUPS, ids=SETUPS_IDS)
-def test_diag_ggn_exact_active_identity(setup_fn):
-    """Compare diagonal GGN of a ResNet."""
+@mark.parametrize("setup_fn", SETUPS, ids=SETUPS_IDS)
+def test_diag_ggn_exact_active_identity(setup_fn: Callable) -> None:
+    """Compare diagonal GGN of a ResNet.
+
+    Args:
+        setup_fn: setup function
+    """
     X, y, model, loss_function = setup_fn()
 
     autograd_result = autograd_diag_ggn_exact(X, y, model, loss_function)
@@ -157,11 +208,14 @@ def test_diag_ggn_exact_active_identity(setup_fn):
     check_sizes_and_values(autograd_result, backpack_result)
 
 
-@pytest.mark.parametrize("setup_fn", SETUPS, ids=SETUPS_IDS)
-def test_diag_ggn_exact_nn_Identity_fails(setup_fn):
+@mark.parametrize("setup_fn", SETUPS, ids=SETUPS_IDS)
+def test_diag_ggn_exact_nn_identity_fails(setup_fn: Callable) -> None:
     """``torch.nn.Identity`` does not create a node and messes up backward hooks.
 
-    However, it works fine if using full backward hook.
+    However, it works fine if using full backward hook. (torch >= 1.9.0)
+
+    Args:
+        setup_fn: setup function
     """
     X, y, model, loss_function = setup_fn(active_identity=False)
 
@@ -169,9 +223,7 @@ def test_diag_ggn_exact_nn_Identity_fails(setup_fn):
 
     X, y, model, loss_function = setup_fn(apply_extend=True, active_identity=False)
 
-    # TODO discuss what happens here
-    # locally raises AttributeError, github CI raises RuntimeError
-    with nullcontext() if FULL_BACKWARD_HOOK else pytest.raises(
+    with nullcontext() if FULL_BACKWARD_HOOK else raises(
         exception_inside_backward_pass(AssertionError)
     ):
         backpack_result = backpack_diag_ggn_exact(X, y, model, loss_function)

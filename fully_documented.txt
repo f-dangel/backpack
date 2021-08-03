@@ -13,6 +13,8 @@ backpack/core/derivatives/lstm.py
 backpack/core/derivatives/linear.py
 backpack/core/derivatives/adaptive_avg_pool_nd.py
 backpack/core/derivatives/batchnorm_nd.py
+backpack/core/derivatives/scale_module.py
+backpack/core/derivatives/sum_module.py
 
 backpack/extensions/__init__.py
 backpack/extensions/backprop_extension.py
@@ -44,11 +46,13 @@ backpack/extensions/secondorder/diag_ggn/rnn.py
 backpack/extensions/secondorder/diag_ggn/permute.py
 backpack/extensions/secondorder/diag_ggn/batchnorm_nd.py
 backpack/extensions/secondorder/diag_ggn/adaptive_avg_pool_nd.py
+backpack/extensions/secondorder/diag_ggn/custom_module.py
 backpack/extensions/secondorder/diag_hessian/__init__.py
 backpack/extensions/secondorder/diag_hessian/conv1d.py
 backpack/extensions/secondorder/diag_hessian/conv2d.py
 backpack/extensions/secondorder/diag_hessian/conv3d.py
 backpack/extensions/secondorder/sqrt_ggn/
+backpack/extensions/secondorder/hbp/custom_module.py
 
 backpack/hessianfree/ggnvp.py
 
@@ -90,3 +94,4 @@ test/utils/evaluation_mode.py
 test/utils/skip_test.py
 test/utils/__init__.py
 test/resnet/
+test/test_branching.py
