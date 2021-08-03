@@ -43,7 +43,7 @@ class AutogradDerivatives(DerivativesImplementation):
         else:
             # for each sample, multiply by full input Jacobian, slice out result:
             # ( (∂ output[n] / ∂ input)ᵀ v[n] )[n]
-            batch_axis = get_batch_axis(self.problem.module)
+            batch_axis = get_batch_axis(self.problem.module, "output")
             output = subsample(output, dim=batch_axis, subsampling=subsampling)
             output = output.split(1, dim=batch_axis)
             vec = vec.split(1, dim=batch_axis)
@@ -75,7 +75,7 @@ class AutogradDerivatives(DerivativesImplementation):
                     param_str,
                     vec,
                     sum_batch,
-                    axis_batch=get_batch_axis(self.problem.module),
+                    axis_batch=get_batch_axis(self.problem.module, "output"),
                     subsampling=subsampling,
                 )
                 for vec in mat

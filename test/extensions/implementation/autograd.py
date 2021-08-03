@@ -17,7 +17,7 @@ class AutogradExtensions(ExtensionsImplementation):
     def batch_grad(
         self, subsampling: Union[List[int], None]
     ) -> List[Tensor]:  # noqa: D102
-        N = self.problem.input.shape[get_batch_axis(self.problem.model)]
+        N = self.problem.input.shape[get_batch_axis(self.problem.model, "input0")]
         samples = list(range(N)) if subsampling is None else subsampling
 
         loss_list = zeros(N)
