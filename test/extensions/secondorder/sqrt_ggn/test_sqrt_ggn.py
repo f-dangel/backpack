@@ -104,10 +104,14 @@ def test_ggn_mc(
     skip_subsampling_conflict(small_problem, subsampling)
 
     autograd_res = AutogradExtensions(small_problem).ggn(subsampling=subsampling)
-    atol, rtol = 5e-2, 1e-2
-    mc_samples, chunks = 300000, 30
+    atol, rtol = 5e-3, 5e-3
+    mc_samples, chunks = 150000, 15
     backpack_res = BackpackExtensions(small_problem).ggn_mc(
         mc_samples, chunks=chunks, subsampling=subsampling
     )
+
+    # compare normalized entries ∈ [-1; 1] (easier to tune atol)
+    max_val = max(autograd_res.abs().max(), backpack_res.abs().max())
+    autograd_res, backpack_res = autograd_res / max_val, backpack_res / max_val
 
     check_sizes_and_values(autograd_res, backpack_res, atol=atol, rtol=rtol)
