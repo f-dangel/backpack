@@ -93,8 +93,8 @@ class SqrtGGN(SecondOrderBackpropExtension):
                 ELU: activations.SqrtGGNELU(),
                 SELU: activations.SqrtGGNSELU(),
             },
+            subsampling=subsampling,
         )
-        self._subsampling = subsampling
 
     def get_loss_hessian_strategy(self) -> str:
         """Return the strategy used to represent the backpropagated loss Hessian.
@@ -103,15 +103,6 @@ class SqrtGGN(SecondOrderBackpropExtension):
             Loss Hessian strategy.
         """
         return self.loss_hessian_strategy
-
-    def get_subsampling(self) -> Union[List[int], None]:
-        """Return indices of samples whose GGN/Fisher matrix square roots are evaluated.
-
-        Returns:
-            Indices of samples considered by the computation. ``None`` signifies that
-            the full mini-batch is used.
-        """
-        return self._subsampling
 
 
 class SqrtGGNExact(SqrtGGN):
