@@ -1,13 +1,13 @@
 """Skip specific tests."""
 
 from test.core.derivatives.problem import DerivativesTestProblem
+from test.extensions.problem import ExtensionsTestProblem
 from typing import List, Union
 
 from pytest import skip
 from torch.nn import BatchNorm1d, BatchNorm2d, BatchNorm3d
 
 from backpack.utils import TORCH_VERSION_AT_LEAST_1_9_1
-from backpack.utils.subsampling import get_batch_axis
 
 
 def skip_adaptive_avg_pool3d_cuda(request) -> None:
@@ -44,7 +44,8 @@ def skip_batch_norm_train_mode_with_subsampling(
 
 
 def skip_subsampling_conflict(
-    problem: DerivativesTestProblem, subsampling: Union[List[int], None]
+    problem: Union[DerivativesTestProblem, ExtensionsTestProblem],
+    subsampling: Union[List[int], None],
 ) -> None:
     """Skip if some samples in subsampling are not contained in input.
 
@@ -52,7 +53,7 @@ def skip_subsampling_conflict(
         problem: Test case.
         subsampling: Indices of active samples.
     """
-    N = problem.input_shape[get_batch_axis(problem.module, "input0")]
+    N = problem.get_batch_size()
     enough_samples = subsampling is None or N > max(subsampling)
     if not enough_samples:
         skip("Not enough samples.")

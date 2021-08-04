@@ -187,3 +187,11 @@ class DerivativesTestProblem:
     def has_bias(self):
         module = self.make_module()
         return hasattr(module, "bias") and module.bias is not None
+
+    def get_batch_size(self) -> int:
+        """Return the mini-batch size.
+
+        Returns:
+            Mini-batch size.
+        """
+        return self.input.shape[get_batch_axis(self.module, "input0")]

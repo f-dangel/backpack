@@ -233,3 +233,11 @@ class ExtensionsTestProblem:
                     )
 
         return data
+
+    def get_batch_size(self) -> int:
+        """Return the mini-batch size.
+
+        Returns:
+            Mini-batch size.
+        """
+        return self.input.shape[get_batch_axis(self.model, "input0")]
