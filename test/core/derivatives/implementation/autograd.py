@@ -159,7 +159,7 @@ class AutogradDerivatives(DerivativesImplementation):
 
             def _sample_jac_t_mat_prod(sample_idx, mat):
                 sample, output, _ = self.problem.forward_pass(
-                    input_requires_grad=True, sample_idx=sample_idx
+                    input_requires_grad=True, subsampling=[sample_idx]
                 )
 
                 result = zeros(sample.numel(), mat.size(1), device=sample.device)

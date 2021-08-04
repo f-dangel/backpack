@@ -2,7 +2,7 @@
 
 import copy
 from test.core.derivatives.utils import derivative_cls_for, get_available_devices
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 
 import torch
 from torch import Tensor
@@ -142,19 +142,20 @@ class DerivativesTestProblem:
         return is_loss(self.make_module())
 
     def forward_pass(
-        self, input_requires_grad: bool = False, sample_idx: int = None
+        self, input_requires_grad: bool = False, subsampling: List[int] = None
     ) -> Tuple[Tensor, Tensor, Dict[str, Tensor]]:
         """Do a forward pass. Return input, output, and parameters."""
         input: Tensor = self.input.clone().detach()
-        if sample_idx is not None:
+
+        if subsampling is not None:
             batch_axis_in = get_batch_axis(self.module, "input0")
-            input = subsample(input, dim=batch_axis_in, subsampling=[sample_idx])
+            input = subsample(input, dim=batch_axis_in, subsampling=subsampling)
 
         if input_requires_grad:
             input.requires_grad = True
 
         if self.is_loss():
-            assert sample_idx is None
+            assert subsampling is None
             output: Tensor = self.module(input, self.target)
         else:
             output: Tensor = self.module(input)

@@ -8,7 +8,6 @@ from torch.nn.utils.convert_parameters import parameters_to_vector
 from backpack.hessianfree.ggnvp import ggn_vector_product
 from backpack.hessianfree.rop import R_op
 from backpack.utils.convert_parameters import vector_to_parameter_list
-from backpack.utils.subsampling import get_batch_axis
 
 
 class AutogradExtensions(ExtensionsImplementation):
@@ -17,24 +16,20 @@ class AutogradExtensions(ExtensionsImplementation):
     def batch_grad(
         self, subsampling: Union[List[int], None]
     ) -> List[Tensor]:  # noqa: D102
-        N = self.problem.input.shape[get_batch_axis(self.problem.model, "input0")]
+        N = self.problem.get_batch_size()
         samples = list(range(N)) if subsampling is None else subsampling
 
-        loss_list = zeros(N)
         gradients_list = []
         for b in range(N):
-            _, _, loss = self.problem.forward_pass(sample_idx=b)
+            _, _, loss = self.problem.forward_pass(subsampling=[b])
             gradients = autograd.grad(loss, self.problem.trainable_parameters())
             gradients_list.append(gradients)
-            loss_list[b] = loss
-
-        _, _, batch_loss = self.problem.forward_pass()
-        factor = self.problem.get_reduction_factor(batch_loss, loss_list)
 
         batch_grads = [
             zeros(len(samples), *p.size()).to(self.problem.device)
             for p in self.problem.trainable_parameters()
         ]
+        factor = self.problem.compute_reduction_factor()
 
         for out_idx, sample in enumerate(samples):
             for param_idx, sample_g in enumerate(gradients_list[sample]):
@@ -85,18 +80,15 @@ class AutogradExtensions(ExtensionsImplementation):
                 return self._diag_ggn_exact_batch()
 
     def _diag_ggn_exact_batch(self):
-        batch_size = self.problem.input.shape[0]
-        _, _, batch_loss = self.problem.forward_pass()
-        loss_list = zeros(batch_size, device=self.problem.device)
-
         # batch_diag_ggn has entries [sample_idx][param_idx]
         batch_diag_ggn = []
-        for b in range(batch_size):
-            _, output, loss = self.problem.forward_pass(sample_idx=b)
+        for b in range(self.problem.get_batch_size()):
+            _, output, loss = self.problem.forward_pass(subsampling=[b])
             diag_ggn = self._get_diag_ggn(loss, output)
             batch_diag_ggn.append(diag_ggn)
-            loss_list[b] = loss
-        factor = self.problem.get_reduction_factor(batch_loss, loss_list)
+
+        factor = self.problem.compute_reduction_factor()
+
         # params_batch_diag_ggn has entries [param_idx][sample_idx]
         params_batch_diag_ggn = list(zip(*batch_diag_ggn))
         return [stack(param) * factor for param in params_batch_diag_ggn]
@@ -129,17 +121,14 @@ class AutogradExtensions(ExtensionsImplementation):
         return self._get_diag_h(loss)
 
     def diag_h_batch(self) -> List[Tensor]:  # noqa: D102
-        batch_size = self.problem.input.shape[0]
-        _, _, batch_loss = self.problem.forward_pass()
-        loss_list = zeros(batch_size, device=self.problem.device)
-
         batch_diag_h = []
-        for b in range(batch_size):
-            _, _, loss = self.problem.forward_pass(sample_idx=b)
-            loss_list[b] = loss
+        for b in range(self.problem.get_batch_size()):
+            _, _, loss = self.problem.forward_pass(subsampling=[b])
             diag_h = self._get_diag_h(loss)
             batch_diag_h.append(diag_h)
-        factor = self.problem.get_reduction_factor(batch_loss, loss_list)
+
+        factor = self.problem.compute_reduction_factor()
+
         params_batch_diag_h = list(zip(*batch_diag_h))
         return [stack(param) * factor for param in params_batch_diag_h]
 
