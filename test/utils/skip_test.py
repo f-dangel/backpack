@@ -6,7 +6,6 @@ from typing import List, Union
 from pytest import skip
 from torch.nn import BatchNorm1d, BatchNorm2d, BatchNorm3d
 
-from backpack.custom_module.permute import Permute
 from backpack.utils import TORCH_VERSION_AT_LEAST_1_9_1
 from backpack.utils.subsampling import get_batch_axis
 
@@ -28,21 +27,6 @@ def skip_adaptive_avg_pool3d_cuda(request) -> None:
                 "Skip test because AdaptiveAvgPool3d does not work on cuda. "
                 "Is fixed in torch 1.9.1."
             )
-
-
-def skip_permute_with_subsampling(
-    problem: DerivativesTestProblem, subsampling: Union[List[int], None]
-) -> None:
-    """Skip Permute module when sub-sampling is turned on.
-
-    Permute does not assume a batch axis.
-
-    Args:
-        problem: Test case.
-        subsampling: Indices of active samples.
-    """
-    if isinstance(problem.module, Permute) and subsampling is not None:
-        skip(f"Skipping Permute with sub-sampling: {subsampling}")
 
 
 def skip_batch_norm_train_mode_with_subsampling(
@@ -68,7 +52,7 @@ def skip_subsampling_conflict(
         problem: Test case.
         subsampling: Indices of active samples.
     """
-    N = problem.input_shape[get_batch_axis(problem.module)]
+    N = problem.input_shape[get_batch_axis(problem.module, "input0")]
     enough_samples = subsampling is None or N > max(subsampling)
     if not enough_samples:
         skip("Not enough samples.")

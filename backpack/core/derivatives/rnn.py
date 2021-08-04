@@ -104,7 +104,9 @@ class RNNDerivatives(BaseParameterDerivatives):
             "vtnh,hk->vtnk",
             self._a_jac_t_mat_prod(
                 subsample(
-                    module.output, dim=get_batch_axis(module), subsampling=subsampling
+                    module.output,
+                    dim=get_batch_axis(module, "input0"),
+                    subsampling=subsampling,
                 ),
                 module.weight_hh_l0,
                 mat,
@@ -171,7 +173,9 @@ class RNNDerivatives(BaseParameterDerivatives):
             dim: int = 1
         return self._a_jac_t_mat_prod(
             subsample(
-                module.output, dim=get_batch_axis(module), subsampling=subsampling
+                module.output,
+                dim=get_batch_axis(module, "input0"),
+                subsampling=subsampling,
             ),
             module.weight_hh_l0,
             mat,
@@ -226,7 +230,7 @@ class RNNDerivatives(BaseParameterDerivatives):
             product
         """
         self._check_parameters(module)
-        N_axis = get_batch_axis(module)
+        N_axis = get_batch_axis(module, "input0")
         return einsum(
             "vtnh,tnj->" + ("vhj" if sum_batch else "vnhj"),
             self._a_jac_t_mat_prod(
@@ -260,7 +264,7 @@ class RNNDerivatives(BaseParameterDerivatives):
             product
         """
         self._check_parameters(module)
-        N_axis = get_batch_axis(module)
+        N_axis = get_batch_axis(module, "input0")
         N: int = mat.shape[N_axis + 1]
         H: int = mat.shape[3]
         output = subsample(module.output, dim=N_axis, subsampling=subsampling)

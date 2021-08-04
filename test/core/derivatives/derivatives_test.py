@@ -20,7 +20,6 @@ from test.core.derivatives.settings import SETTINGS
 from test.utils.skip_test import (
     skip_adaptive_avg_pool3d_cuda,
     skip_batch_norm_train_mode_with_subsampling,
-    skip_permute_with_subsampling,
     skip_subsampling_conflict,
 )
 from typing import List, Union
@@ -144,7 +143,6 @@ def test_jac_t_mat_prod(
     skip_adaptive_avg_pool3d_cuda(request)
 
     problem.set_up()
-    skip_permute_with_subsampling(problem, subsampling)
     skip_batch_norm_train_mode_with_subsampling(problem, subsampling)
     skip_subsampling_conflict(problem, subsampling)
     mat = rand_mat_like_output(V, problem, subsampling=subsampling)
@@ -187,7 +185,7 @@ def rand_mat_like_output(
     subsample_shape = list(problem.output_shape)
 
     if subsampling is not None:
-        N_axis = get_batch_axis(problem.module)
+        N_axis = get_batch_axis(problem.module, "output")
         subsample_shape[N_axis] = len(subsampling)
 
     return rand(V, *subsample_shape, device=problem.device)

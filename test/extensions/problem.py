@@ -2,12 +2,14 @@
 
 import copy
 from test.core.derivatives.utils import get_available_devices
-from typing import Any, Iterator, List
+from typing import Any, Iterator, List, Tuple
 
 import torch
+from torch import Tensor
 from torch.nn.parameter import Parameter
 
 from backpack import extend
+from backpack.utils.subsampling import get_batch_axis, subsample
 
 
 def make_test_problems(settings):
@@ -130,26 +132,28 @@ class ExtensionsTestProblem:
             ).replace(" ", "")
         )
 
-    def forward_pass(self, sample_idx=None):
+    def forward_pass(self, sample_idx: int = None) -> Tuple[Tensor, Tensor, Tensor]:
         """Do a forward pass. Return input, output, and parameters.
 
         The forward pass is performed on the selected index.
         If the index is None, then the forward pass is calculated for the whole batch.
 
         Args:
-            sample_idx (int, optional): Index of the sample to select.
-                Defaults to None.
+            sample_idx: Index of the sample to select. Defaults to ``None``.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-                input, output, loss, each with batch axis first
+            input, output, loss, each with batch axis first
         """
         if sample_idx is None:
             input = self.input.clone()
             target = self.target.clone()
         else:
-            target = self.target.split(1, dim=0)[sample_idx]
-            input = self.input.split(1, dim=0)[sample_idx]
+            batch_axis_in = get_batch_axis(self.model, "input0")
+            batch_axis_out = get_batch_axis(self.model, "output")
+            target = subsample(
+                self.target, dim=batch_axis_out, subsampling=[sample_idx]
+            )
+            input = subsample(self.input, dim=batch_axis_in, subsampling=[sample_idx])
 
         output = self.model(input)
 

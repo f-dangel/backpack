@@ -17,7 +17,7 @@ def skip_if_subsampling_conflict(
         problem: Test case.
         subsampling: Indices of active samples.
     """
-    N = problem.input.shape[get_batch_axis(problem.model)]
+    N = problem.input.shape[get_batch_axis(problem.model, "input0")]
     enough_samples = subsampling is None or N > max(subsampling)
     if not enough_samples:
         skip(f"Not enough samples: N={N}, subsampling={subsampling}")
