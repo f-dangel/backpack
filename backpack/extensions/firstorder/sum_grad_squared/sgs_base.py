@@ -64,8 +64,8 @@ class SGSBase(FirstOrderModuleExtension):
                 sum_grad_squared
             """
             return (
-                getattr(self.derivatives, f"{param_str}_jac_t_mat_prod")(
-                    module, g_inp, g_out, g_out[0], sum_batch=False
+                self.derivatives.param_mjp(
+                    param_str, module, g_inp, g_out, g_out[0], sum_batch=False
                 )
                 ** 2
             ).sum(self.N_axis)

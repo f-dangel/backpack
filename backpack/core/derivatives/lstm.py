@@ -5,7 +5,7 @@ from torch import Tensor, cat, einsum, sigmoid, tanh, zeros
 from torch.nn import LSTM
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
-from backpack.utils import TORCH_VERSION, VERSION_1_8_0
+from backpack.utils import TORCH_VERSION_AT_LEAST_1_8_0
 from backpack.utils.subsampling import get_batch_axis, subsample
 
 
@@ -49,7 +49,7 @@ class LSTMDerivatives(BaseParameterDerivatives):
             raise NotImplementedError("only dropout = 0 is supported")
         if module.bidirectional is not False:
             raise NotImplementedError("only bidirectional = False is supported")
-        if TORCH_VERSION >= VERSION_1_8_0:
+        if TORCH_VERSION_AT_LEAST_1_8_0:
             if module.proj_size != 0:
                 raise NotImplementedError("only proj_size = 0 is supported")
 
@@ -86,7 +86,7 @@ class LSTMDerivatives(BaseParameterDerivatives):
         c_tanh: Tensor = zeros(T, N, H, device=mat.device, dtype=mat.dtype)
         h: Tensor = zeros(T, N, H, device=mat.device, dtype=mat.dtype)
 
-        N_axis = get_batch_axis(module)
+        N_axis = get_batch_axis(module, "input0")
         input0 = subsample(module.input0, dim=N_axis, subsampling=subsampling)
         output = subsample(module.output, dim=N_axis, subsampling=subsampling)
 
@@ -178,6 +178,9 @@ class LSTMDerivatives(BaseParameterDerivatives):
                 ifgo[t, :, H0:H1] * (1 - ifgo[t, :, H2:H3] ** 2),
             )
         return IFGO_prod
+
+    def hessian_is_zero(self, module: LSTM) -> bool:  # noqa: D102
+        return False
 
     def _jac_mat_prod(
         self,
@@ -344,7 +347,9 @@ class LSTMDerivatives(BaseParameterDerivatives):
             f"vtnh,tni->v{'' if sum_batch else 'n'}hi",
             IFGO_prod,
             subsample(
-                module.input0, dim=get_batch_axis(module), subsampling=subsampling
+                module.input0,
+                dim=get_batch_axis(module, "input0"),
+                subsampling=subsampling,
             ),
         )
 
@@ -374,7 +379,7 @@ class LSTMDerivatives(BaseParameterDerivatives):
                     zeros(1, N, H, device=mat.device, dtype=mat.dtype),
                     subsample(
                         module.output,
-                        dim=get_batch_axis(module),
+                        dim=get_batch_axis(module, "input0"),
                         subsampling=subsampling,
                     )[0:-1],
                 ],

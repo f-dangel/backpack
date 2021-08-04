@@ -2,5 +2,10 @@
 
 
 def no_op(*args, **kwargs):
-    """Placeholder function that accepts arbitrary input and does nothing."""
-    return None
+    """Placeholder function that accepts arbitrary input and does nothing.
+
+    Args:
+        *args: anything
+        **kwargs: anything
+    """
+    pass

@@ -225,7 +225,7 @@ for i in range(num_curves):
 
     plt.semilogx(
         V_list,
-        trace_estimates,
+        [trace_estimate.cpu() for trace_estimate in trace_estimates],
         linestyle="--",
         color="orange",
         label="Hutchinson" if i == 0 else None,

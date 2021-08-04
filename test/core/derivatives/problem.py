@@ -1,15 +1,15 @@
 """Convert problem settings."""
 
 import copy
-from test.core.derivatives.utils import (
-    derivative_cls_for,
-    get_available_devices,
-    is_loss,
-)
+from test.core.derivatives.utils import derivative_cls_for, get_available_devices
+from typing import Dict, Tuple
 
 import torch
+from torch import Tensor
 
 from backpack import extend
+from backpack.utils.module_classification import is_loss
+from backpack.utils.subsampling import get_batch_axis, subsample
 
 
 def make_test_problems(settings):
@@ -141,25 +141,27 @@ class DerivativesTestProblem:
     def is_loss(self):
         return is_loss(self.make_module())
 
-    def forward_pass(self, input_requires_grad=False, sample_idx=None):
+    def forward_pass(
+        self, input_requires_grad: bool = False, sample_idx: int = None
+    ) -> Tuple[Tensor, Tensor, Dict[str, Tensor]]:
         """Do a forward pass. Return input, output, and parameters."""
-        if sample_idx is None:
-            input = self.input.clone().detach()
-        else:
-            input = self.input.clone()[sample_idx, :].unsqueeze(0).detach()
+        input: Tensor = self.input.clone().detach()
+        if sample_idx is not None:
+            batch_axis_in = get_batch_axis(self.module, "input0")
+            input = subsample(input, dim=batch_axis_in, subsampling=[sample_idx])
 
         if input_requires_grad:
             input.requires_grad = True
 
         if self.is_loss():
             assert sample_idx is None
-            output = self.module(input, self.target)
+            output: Tensor = self.module(input, self.target)
         else:
-            output = self.module(input)
+            output: Tensor = self.module(input)
 
         if isinstance(output, tuple):
             # is true for RNN,GRU,LSTM which return tuple (output, ...)
-            output = output[0]
+            output: Tensor = output[0]
 
         return input, output, dict(self.module.named_parameters())
 

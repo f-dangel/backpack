@@ -13,8 +13,8 @@ from torch.nn import (
     ZeroPad2d,
 )
 
-from backpack.extensions.backprop_extension import BackpropExtension
 from backpack.extensions.curvature import Curvature
+from backpack.extensions.secondorder.base import SecondOrderBackpropExtension
 from backpack.extensions.secondorder.hbp.hbp_options import (
     BackpropStrategy,
     ExpectationApproximation,
@@ -24,7 +24,7 @@ from backpack.extensions.secondorder.hbp.hbp_options import (
 from . import activations, conv2d, dropout, flatten, linear, losses, padding, pooling
 
 
-class HBP(BackpropExtension):
+class HBP(SecondOrderBackpropExtension):
     def __init__(
         self,
         curv_type,

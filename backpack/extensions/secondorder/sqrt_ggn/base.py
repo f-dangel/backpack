@@ -67,13 +67,8 @@ class SqrtGGNBaseModule(MatToJacMat):
             Returns:
                 GGN/Fisher matrix square root.
             """
-            return getattr(self.derivatives, f"{param_str}_jac_t_mat_prod")(
-                module,
-                g_inp,
-                g_out,
-                backproped,
-                sum_batch=False,
-                subsampling=ext.get_subsampling(),
+            return self.derivatives.param_mjp(
+                param_str, module, g_inp, g_out, backproped, sum_batch=False
             )
 
         return param_function
