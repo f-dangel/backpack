@@ -5,10 +5,15 @@ from test.extensions.implementation.autograd import AutogradExtensions
 from test.extensions.implementation.backpack import BackpackExtensions
 from test.extensions.problem import ExtensionsTestProblem, make_test_problems
 from test.extensions.secondorder.secondorder_settings import SECONDORDER_SETTINGS
+from test.utils.skip_test import skip_subsampling_conflict
+from typing import List, Union
 
 from pytest import fixture, mark, skip
 
 PROBLEMS = make_test_problems(SECONDORDER_SETTINGS)
+
+SUBSAMPLINGS = [None, [0, 0], [2, 0]]
+SUBSAMPLING_IDS = [f"subsampling={s}".replace(" ", "") for s in SUBSAMPLINGS]
 
 
 @fixture(params=PROBLEMS, ids=lambda p: p.make_id())
@@ -48,14 +53,20 @@ def small_problem(
         skip(f"Model has too many parameters: {num_params} > {max_num_params}")
 
 
-def test_ggn_exact(small_problem: ExtensionsTestProblem):
+@mark.parametrize("subsampling", SUBSAMPLINGS, ids=SUBSAMPLING_IDS)
+def test_ggn_exact(
+    small_problem: ExtensionsTestProblem, subsampling: Union[List[int], None]
+) -> None:
     """Compare exact GGN from BackPACK's matrix square root with autograd.
 
     Args:
         small_problem: Test case with small network whose GGN can be evaluated.
+        subsampling: Indices of active samples. ``None`` uses the full mini-batch.
     """
-    autograd_res = AutogradExtensions(small_problem).ggn()
-    backpack_res = BackpackExtensions(small_problem).ggn()
+    skip_subsampling_conflict(small_problem, subsampling)
+
+    autograd_res = AutogradExtensions(small_problem).ggn(subsampling=subsampling)
+    backpack_res = BackpackExtensions(small_problem).ggn(subsampling=subsampling)
 
     check_sizes_and_values(autograd_res, backpack_res)
 

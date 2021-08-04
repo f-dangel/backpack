@@ -187,16 +187,20 @@ class BackpackExtensions(ExtensionsImplementation):
             loss.backward()
         return self.problem.collect_data("diag_h_batch")
 
-    def ggn(self) -> Tensor:  # noqa:D102
-        return self._square_sqrt_ggn(self.sqrt_ggn())
+    def ggn(self, subsampling: List[int] = None) -> Tensor:  # noqa:D102
+        return self._square_sqrt_ggn(self.sqrt_ggn(subsampling=subsampling))
 
-    def sqrt_ggn(self) -> List[Tensor]:
+    def sqrt_ggn(self, subsampling: List[int] = None) -> List[Tensor]:
         """Compute the matrix square root of the exact generalized Gauss-Newton.
+
+        Args:
+            subsampling: Indices of active samples. Defaults to ``None`` (use all
+                samples in the mini-batch).
 
         Returns:
             Parameter-wise matrix square root of the exact GGN.
         """
-        with backpack(new_ext.SqrtGGNExact()):
+        with backpack(new_ext.SqrtGGNExact(subsampling=subsampling)):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
         return self.problem.collect_data("sqrt_ggn_exact")

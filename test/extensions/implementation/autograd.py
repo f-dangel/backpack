@@ -1,4 +1,5 @@
 """Autograd implementation of BackPACK's extensions."""
+from math import isclose
 from test.extensions.implementation.base import ExtensionsImplementation
 from typing import Iterator, List, Union
 
@@ -132,9 +133,17 @@ class AutogradExtensions(ExtensionsImplementation):
         params_batch_diag_h = list(zip(*batch_diag_h))
         return [stack(param) * factor for param in params_batch_diag_h]
 
-    def ggn(self) -> Tensor:  # noqa: D102
-        _, output, loss = self.problem.forward_pass()
-        return stack(list(self._ggn_columns(loss, output)), dim=1)
+    def ggn(self, subsampling: List[int] = None) -> Tensor:  # noqa: D102
+        _, output, loss = self.problem.forward_pass(subsampling=subsampling)
+        ggn = stack(list(self._ggn_columns(loss, output)), dim=1)
+
+        # correct normalization constant for 'mean' reduction
+        if subsampling is not None:
+            factor = self.problem.compute_reduction_factor()
+            if not isclose(factor, 1.0):
+                ggn *= len(subsampling) * factor
+
+        return ggn
 
     def _ggn_columns(self, loss: Tensor, output: Tensor) -> Iterator[Tensor]:
         params = list(self.problem.trainable_parameters())
