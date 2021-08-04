@@ -71,7 +71,10 @@ def test_ggn_exact(
     check_sizes_and_values(autograd_res, backpack_res)
 
 
-def test_sqrt_ggn_mc_integration(small_problem: ExtensionsTestProblem):
+@mark.parametrize("subsampling", SUBSAMPLINGS, ids=SUBSAMPLING_IDS)
+def test_sqrt_ggn_mc_integration(
+    small_problem: ExtensionsTestProblem, subsampling: Union[List[int], None]
+) -> None:
     """Check if MC-approximated GGN matrix square root code executes.
 
     Note:
@@ -82,20 +85,28 @@ def test_sqrt_ggn_mc_integration(small_problem: ExtensionsTestProblem):
 
     Args:
         small_problem: Test case with small network whose GGN can be evaluated.
+        subsampling: Indices of active samples. ``None`` uses the full mini-batch.
     """
-    BackpackExtensions(small_problem).sqrt_ggn_mc(mc_samples=1)
+    skip_subsampling_conflict(small_problem, subsampling)
+    BackpackExtensions(small_problem).sqrt_ggn_mc(mc_samples=1, subsampling=subsampling)
 
 
-@mark.montecarlo
-def test_ggn_mc(small_problem: ExtensionsTestProblem):
-    """Compare MC-approximated GGN from BackpACK's with exact version from autograd.
+@mark.parametrize("subsampling", SUBSAMPLINGS, ids=SUBSAMPLING_IDS)
+def test_ggn_mc(
+    small_problem: ExtensionsTestProblem, subsampling: Union[List[int], None]
+) -> None:
+    """Compare MC-approximated GGN from BackPACK with exact version from autograd.
 
     Args:
         small_problem: Test case with small network whose GGN can be evaluated.
     """
-    autograd_res = AutogradExtensions(small_problem).ggn()
+    skip_subsampling_conflict(small_problem, subsampling)
+
+    autograd_res = AutogradExtensions(small_problem).ggn(subsampling=subsampling)
     atol, rtol = 5e-2, 1e-2
     mc_samples, chunks = 300000, 30
-    backpack_res = BackpackExtensions(small_problem).ggn_mc(mc_samples, chunks=chunks)
+    backpack_res = BackpackExtensions(small_problem).ggn_mc(
+        mc_samples, chunks=chunks, subsampling=subsampling
+    )
 
     check_sizes_and_values(autograd_res, backpack_res, atol=atol, rtol=rtol)

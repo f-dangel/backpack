@@ -131,13 +131,16 @@ class ExtensionsImplementation(ABC):
         return
 
     @abstractmethod
-    def ggn_mc(self, mc_samples: int, chunks: int = 1) -> Tensor:
+    def ggn_mc(
+        self, mc_samples: int, chunks: int = 1, subsampling: List[int] = None
+    ) -> Tensor:
         """Compute the MC-approximation of the GGN in chunks of MC samples.
 
         Args:
             mc_samples: Number of Monte-Carlo samples.
             chunks: Number of sequential portions to split the computation.
                 Default: ``1`` (no sequential split).
+            subsampling: Indices of active samples. Default: ``None`` (all).
 
         Returns:
             Matrix representation of the Monte-Carlo approximated GGN.
