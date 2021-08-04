@@ -1,5 +1,6 @@
 """Tests BackPACK's ``SqrtGGNExact`` and ``SqrtGGNMC`` extension."""
 
+from math import isclose
 from test.automated_test import check_sizes_and_values
 from test.extensions.implementation.autograd import AutogradExtensions
 from test.extensions.implementation.backpack import BackpackExtensions
@@ -112,6 +113,9 @@ def test_ggn_mc(
 
     # compare normalized entries ∈ [-1; 1] (easier to tune atol)
     max_val = max(autograd_res.abs().max(), backpack_res.abs().max())
-    autograd_res, backpack_res = autograd_res / max_val, backpack_res / max_val
+    # NOTE: The GGN can be exactly zero; e.g. if a ReLU after all parameters zeroes
+    # its input, its Jacobian is thus zero and will cancel the backpropagated GGN
+    if not isclose(max_val, 0):
+        autograd_res, backpack_res = autograd_res / max_val, backpack_res / max_val
 
     check_sizes_and_values(autograd_res, backpack_res, atol=atol, rtol=rtol)
