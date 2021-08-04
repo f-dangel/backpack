@@ -99,6 +99,7 @@ def test_ggn_mc(
 
     Args:
         small_problem: Test case with small network whose GGN can be evaluated.
+        subsampling: Indices of active samples. ``None`` uses the full mini-batch.
     """
     skip_subsampling_conflict(small_problem, subsampling)
 
