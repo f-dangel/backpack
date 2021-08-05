@@ -74,6 +74,7 @@ def test_sqrt_ggn_mc_integration(
     BackpackExtensions(problem).sqrt_ggn_mc(mc_samples=1, subsampling=subsampling)
 
 
+@mark.montecarlo
 @mark.parametrize("subsampling", SUBSAMPLINGS, ids=SUBSAMPLING_IDS)
 def test_ggn_mc(
     problem: ExtensionsTestProblem, subsampling: Union[List[int], None]

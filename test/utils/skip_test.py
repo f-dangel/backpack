@@ -62,7 +62,7 @@ def skip_subsampling_conflict(
 def skip_large_parameters(
     problem: ExtensionsTestProblem, max_num_params: int = 1000
 ) -> None:
-    """Skip architectures with too many parameters whose GGN is expensive to evaluate.
+    """Skip architectures with too many parameters.
 
     Args:
         problem: Test case.
