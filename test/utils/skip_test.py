@@ -57,3 +57,17 @@ def skip_subsampling_conflict(
     enough_samples = subsampling is None or N > max(subsampling)
     if not enough_samples:
         skip("Not enough samples.")
+
+
+def skip_large_parameters(
+    problem: ExtensionsTestProblem, max_num_params: int = 1000
+) -> None:
+    """Skip architectures with too many parameters whose GGN is expensive to evaluate.
+
+    Args:
+        problem: Test case.
+        max_num_params: Maximum number of model parameters. Default: ``1000``.
+    """
+    num_params = sum(p.numel() for p in problem.trainable_parameters())
+    if num_params > max_num_params:
+        skip(f"Model has too many parameters: {num_params} > {max_num_params}")
