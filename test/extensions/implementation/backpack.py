@@ -187,40 +187,52 @@ class BackpackExtensions(ExtensionsImplementation):
             loss.backward()
         return self.problem.collect_data("diag_h_batch")
 
-    def ggn(self) -> Tensor:  # noqa:D102
-        return self._square_sqrt_ggn(self.sqrt_ggn())
+    def ggn(self, subsampling: List[int] = None) -> Tensor:  # noqa:D102
+        return self._square_sqrt_ggn(self.sqrt_ggn(subsampling=subsampling))
 
-    def sqrt_ggn(self) -> List[Tensor]:
+    def sqrt_ggn(self, subsampling: List[int] = None) -> List[Tensor]:
         """Compute the matrix square root of the exact generalized Gauss-Newton.
+
+        Args:
+            subsampling: Indices of active samples. Defaults to ``None`` (use all
+                samples in the mini-batch).
 
         Returns:
             Parameter-wise matrix square root of the exact GGN.
         """
-        with backpack(new_ext.SqrtGGNExact()):
+        with backpack(new_ext.SqrtGGNExact(subsampling=subsampling)):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
         return self.problem.collect_data("sqrt_ggn_exact")
 
-    def sqrt_ggn_mc(self, mc_samples: int) -> List[Tensor]:
+    def sqrt_ggn_mc(
+        self, mc_samples: int, subsampling: List[int] = None
+    ) -> List[Tensor]:
         """Compute the approximate matrix square root of the generalized Gauss-Newton.
 
         Args:
             mc_samples: Number of Monte-Carlo samples.
+            subsampling: Indices of active samples. Defaults to ``None`` (use all
+                samples in the mini-batch).
 
         Returns:
             Parameter-wise approximate matrix square root of the exact GGN.
         """
-        with backpack(new_ext.SqrtGGNMC(mc_samples=mc_samples)):
+        with backpack(
+            new_ext.SqrtGGNMC(mc_samples=mc_samples, subsampling=subsampling)
+        ):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
         return self.problem.collect_data("sqrt_ggn_mc")
 
-    def ggn_mc(self, mc_samples: int, chunks: int = 1) -> Tensor:  # noqa:D102
+    def ggn_mc(
+        self, mc_samples: int, chunks: int = 1, subsampling: List[int] = None
+    ) -> Tensor:  # noqa:D102
         samples = chunk_sizes(mc_samples, chunks)
         weights = [samples / mc_samples for samples in samples]
 
         return sum(
-            w * self._square_sqrt_ggn(self.sqrt_ggn_mc(s))
+            w * self._square_sqrt_ggn(self.sqrt_ggn_mc(s, subsampling=subsampling))
             for w, s in zip(weights, samples)
         )
 
