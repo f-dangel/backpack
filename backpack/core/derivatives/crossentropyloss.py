@@ -1,7 +1,8 @@
 """Partial derivatives for cross-entropy loss."""
 from math import sqrt
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
+from einops import rearrange
 from torch import Tensor, diag, diag_embed, einsum, multinomial, ones_like, softmax
 from torch import sqrt as torchsqrt
 from torch.nn import CrossEntropyLoss
@@ -18,6 +19,31 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
     and negative log-likelihood.
     """
 
+    def _rearrange_input(
+        self, probs: Tensor
+    ) -> Tuple[Tensor, int, str, Dict[str, int]]:
+        # if the input has additional axes: n c d1 d2 -> (n d1 d2) c
+        input_dim = probs.dim()
+        if input_dim >= 3:
+            str_d_dims: str = str.join("", [f"d{i} " for i in range(input_dim - 2)])
+            d_info: Dict[str, int] = {}
+            for i in range(input_dim - 2):
+                d_info[f"d{i}"] = probs.shape[2 + i]
+            probs = rearrange(probs, f"n c {str_d_dims} -> (n {str_d_dims}) c")
+        else:
+            str_d_dims = ""
+            d_info = {}
+        return probs, input_dim, str_d_dims, d_info
+
+    def _rearrange_output(
+        self, sqrt_H: Tensor, input_dim, str_d_dims, d_info
+    ) -> Tensor:
+        if input_dim >= 3:
+            sqrt_H = rearrange(
+                sqrt_H, f"c1 (n {str_d_dims}) c2 -> c1 n c2 {str_d_dims}", **d_info
+            )
+        return sqrt_H
+
     def _sqrt_hessian(
         self,
         module: CrossEntropyLoss,
@@ -28,6 +54,8 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
         self._check_2nd_order_parameters(module)
 
         probs = self._get_probs(module, subsampling=subsampling)
+        probs, input_dim, str_d_dims, d_info = self._rearrange_input(probs)
+
         tau = torchsqrt(probs)
         V_dim, C_dim = 0, 2
         Id = diag_embed(ones_like(probs), dim1=V_dim, dim2=C_dim)
@@ -35,9 +63,10 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
         sqrt_H = einsum("nc,vnc->vnc", tau, Id_tautau)
 
         if module.reduction == "mean":
-            N = module.input0.shape[0]
+            N = probs.size()[0]
             sqrt_H /= sqrt(N)
 
+        sqrt_H = self._rearrange_output(sqrt_H, input_dim, str_d_dims, d_info)
         return sqrt_H
 
     def _sqrt_hessian_sampled(
@@ -54,6 +83,8 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
         C = module.input0.shape[1]
 
         probs = self._get_probs(module, subsampling=subsampling)
+        probs, input_dim, str_d_dims, d_info = self._rearrange_input(probs)
+
         V_dim = 0
         probs_unsqueezed = probs.unsqueeze(V_dim).repeat(M, 1, 1)
 
@@ -64,23 +95,27 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
         sqrt_mc_h = (probs_unsqueezed - classes) / sqrt(M)
 
         if module.reduction == "mean":
-            N = module.input0.shape[0]
+            N = probs.size()[0]
             sqrt_mc_h /= sqrt(N)
 
+        sqrt_mc_h = self._rearrange_output(sqrt_mc_h, input_dim, str_d_dims, d_info)
         return sqrt_mc_h
 
     def _sum_hessian(self, module, g_inp, g_out):
         self._check_2nd_order_parameters(module)
 
         probs = self._get_probs(module)
+        probs, input_dim, str_d_dims, d_info = self._rearrange_input(probs)
         sum_H = diag(probs.sum(0)) - einsum("bi,bj->ij", (probs, probs))
 
         if module.reduction == "mean":
-            N = module.input0.shape[0]
+            N = probs.size()[0]
             sum_H /= N
 
         return sum_H
 
+    # TODO: discuss whether rearrange should also be applied in this function
+    # TODO: discuss why this has no test in test_derivatives.py
     def _make_hessian_mat_prod(self, module, g_inp, g_out):
         """Multiplication of the input Hessian with a matrix."""
         self._check_2nd_order_parameters(module)
@@ -117,6 +152,8 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
         Returns:
             Softmax probabilites
         """
+        # TODO question: does this imply the assumption that it is always
+        # loss(model(x), y) and not loss(y, model(x)) ???
         input0 = subsample(module.input0, subsampling=subsampling)
         return softmax(input0, dim=1)
 

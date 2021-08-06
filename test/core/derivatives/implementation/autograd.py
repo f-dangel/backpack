@@ -2,6 +2,7 @@
 from test.core.derivatives.implementation.base import DerivativesImplementation
 from typing import List
 
+from einops import rearrange
 from torch import Tensor, allclose, backends, cat, stack, zeros, zeros_like
 
 from backpack.hessianfree.hvp import hessian_vector_product
@@ -341,15 +342,19 @@ class AutogradDerivatives(DerivativesImplementation):
 
         Returns:
             sum of hessians
-
-        Raises:
-            ValueError: if input is not 2d
         """
         input = self.problem.input
-        num_axes = len(input.shape)
 
-        if num_axes != 2:
-            raise ValueError("Only 2D inputs are currently supported.")
+        # rearrange if there are additional axes: n d_dims -> (n d_dims)
+        num_axes = len(input.shape)
+        if num_axes > 2:
+            str_d_dims = str.join("", [f"d{i} " for i in range(num_axes - 2)])
+            str_e_dims = str_d_dims.replace("d", "e")
+            hessian = rearrange(
+                hessian,
+                f"n0 c0 {str_d_dims} n1 c1 {str_e_dims} -> (n0 {str_d_dims}) c0 (n1 {str_e_dims}) c1",  # noqa: B950
+            )
+            input = rearrange(input, f"n c {str_d_dims} -> (n {str_d_dims}) c")
 
         N = input.shape[0]
         num_features = input.numel() // N

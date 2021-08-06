@@ -1,7 +1,8 @@
 """Contains derivative calculation with BackPACK."""
+from itertools import product as itertools_product
 from test.core.derivatives.implementation.base import DerivativesImplementation
 from test.utils import chunk_sizes
-from typing import List
+from typing import Iterable, List, Tuple
 
 from torch import Tensor, einsum, zeros
 
@@ -140,10 +141,10 @@ class BackpackDerivatives(DerivativesImplementation):
             ValueError: if input is not 2d
         """
         # TODO improve readability
-        if sqrt.dim() == 3:
-            return einsum("vni,vnj->nij", sqrt, sqrt)
+        if sqrt.dim() >= 3:
+            return einsum("vni..., vnj...->n...ij", sqrt, sqrt)
         else:
-            raise ValueError("Only 2D inputs are currently supported.")
+            raise ValueError("Input must have at least 2 dimensions.")
 
     def _embed_sample_hessians(
         self, individual_hessians: Tensor, input: Tensor
@@ -163,10 +164,17 @@ class BackpackDerivatives(DerivativesImplementation):
         hessian_shape = (*input.shape, *input.shape)
         hessian = zeros(hessian_shape, device=input.device, dtype=input.dtype)
 
-        for idx in range(input.shape[0]):
-            if input.dim() == 2:
-                hessian[idx, :, idx, :] = individual_hessians[idx]
-            else:
-                raise ValueError("Only 2D inputs are currently supported.")
-
+        if input.dim() >= 2:
+            ranges: Tuple[Iterable, ...] = tuple(
+                [range(input.shape[2 + i]) for i in range(input.dim() - 2)]
+            )
+            for index_n in range(input.shape[0]):
+                index_additional_axes: Tuple[int]
+                for index_additional_axes in itertools_product(*ranges):
+                    selection = ((index_n, slice(None)) + index_additional_axes) * 2
+                    hessian[selection] = individual_hessians[
+                        (index_n,) + index_additional_axes
+                    ]
+        else:
+            raise ValueError("Input must have at least 2 dimensions.")
         return hessian
