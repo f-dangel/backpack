@@ -9,7 +9,6 @@ from backpack.extensions.secondorder.hbp import LossHessianStrategy
 class DiagGGNLoss(DiagGGNBaseModule):
     def backpropagate(self, ext, module, grad_inp, grad_out, backproped):
         hess_func = self.make_loss_hessian_func(ext)
-
         return hess_func(module, grad_inp, grad_out)
 
     def make_loss_hessian_func(self, ext):
@@ -21,7 +20,6 @@ class DiagGGNLoss(DiagGGNBaseModule):
         elif loss_hessian_strategy == LossHessianStrategy.SAMPLING:
             mc_samples = ext.get_num_mc_samples()
             return partial(self.derivatives.sqrt_hessian_sampled, mc_samples=mc_samples)
-
         else:
             raise ValueError(
                 "Unknown hessian strategy {}".format(loss_hessian_strategy)
