@@ -1,6 +1,6 @@
 """Partial derivatives for cross-entropy loss."""
 from math import sqrt
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 
 from einops import rearrange
 from torch import Tensor, diag, diag_embed, einsum, multinomial, ones_like, softmax
@@ -63,8 +63,7 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
         sqrt_H = einsum("nc,vnc->vnc", tau, Id_tautau)
 
         if module.reduction == "mean":
-            N = probs.size()[0]
-            sqrt_H /= sqrt(N)
+            sqrt_H = self._divide_by_sqrt_n(sqrt_H, module, probs, subsampling)
 
         sqrt_H = self._rearrange_output(sqrt_H, input_dim, str_d_dims, d_info)
         return sqrt_H
@@ -95,8 +94,7 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
         sqrt_mc_h = (probs_unsqueezed - classes) / sqrt(M)
 
         if module.reduction == "mean":
-            N = probs.size()[0]
-            sqrt_mc_h /= sqrt(N)
+            sqrt_mc_h = self._divide_by_sqrt_n(sqrt_mc_h, module, probs, subsampling)
 
         sqrt_mc_h = self._rearrange_output(sqrt_mc_h, input_dim, str_d_dims, d_info)
         return sqrt_mc_h
@@ -109,8 +107,7 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
         sum_H = diag(probs.sum(0)) - einsum("bi,bj->ij", (probs, probs))
 
         if module.reduction == "mean":
-            N = probs.size()[0]
-            sum_H /= N
+            sum_H = self._divide_by_sqrt_n(sum_H, module, probs, subsampling=None)
 
         return sum_H
 
@@ -180,3 +177,30 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
                     implemented_weight, module.weight
                 )
             )
+
+    @staticmethod
+    def _divide_by_sqrt_n(
+        tensor: Tensor,
+        module: CrossEntropyLoss,
+        probs: Tensor,
+        subsampling: Union[List[int], None],
+    ) -> Tensor:
+        """Divide by square root of batch size.
+
+        Useful if reduction is "mean".
+
+        Args:
+            tensor: the tensor to divide
+            module: module, used to determine batch size from input0
+            probs: rearranged probabilities, used to determine batch_size*d_1*d_2*...
+            subsampling: subsampling list, used to determine number of samples
+
+        Returns:
+            divided tensor
+        """
+        N = probs.size()[0]
+        if subsampling is not None:
+            N *= module.input0.size()[0] / len(subsampling)
+
+        tensor /= sqrt(N)
+        return tensor
