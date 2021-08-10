@@ -86,7 +86,7 @@ class LSTMDerivatives(BaseParameterDerivatives):
         c_tanh: Tensor = zeros(T, N, H, device=mat.device, dtype=mat.dtype)
         h: Tensor = zeros(T, N, H, device=mat.device, dtype=mat.dtype)
 
-        N_axis = get_batch_axis(module)
+        N_axis = get_batch_axis(module, "input0")
         input0 = subsample(module.input0, dim=N_axis, subsampling=subsampling)
         output = subsample(module.output, dim=N_axis, subsampling=subsampling)
 
@@ -347,7 +347,9 @@ class LSTMDerivatives(BaseParameterDerivatives):
             f"vtnh,tni->v{'' if sum_batch else 'n'}hi",
             IFGO_prod,
             subsample(
-                module.input0, dim=get_batch_axis(module), subsampling=subsampling
+                module.input0,
+                dim=get_batch_axis(module, "input0"),
+                subsampling=subsampling,
             ),
         )
 
@@ -377,7 +379,7 @@ class LSTMDerivatives(BaseParameterDerivatives):
                     zeros(1, N, H, device=mat.device, dtype=mat.dtype),
                     subsample(
                         module.output,
-                        dim=get_batch_axis(module),
+                        dim=get_batch_axis(module, "input0"),
                         subsampling=subsampling,
                     )[0:-1],
                 ],

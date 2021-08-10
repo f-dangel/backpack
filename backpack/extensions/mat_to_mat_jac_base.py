@@ -5,6 +5,7 @@ from torch import Tensor
 from torch.nn import Module
 
 from backpack.core.derivatives.basederivatives import BaseDerivatives
+from backpack.extensions.backprop_extension import BackpropExtension
 from backpack.extensions.module_extension import ModuleExtension
 
 
@@ -23,7 +24,7 @@ class MatToJacMat(ModuleExtension):
 
     def backpropagate(
         self,
-        ext: ModuleExtension,
+        ext: BackpropExtension,
         module: Module,
         grad_inp: Tuple[Tensor],
         grad_out: Tuple[Tensor],
@@ -32,7 +33,7 @@ class MatToJacMat(ModuleExtension):
         """Propagates second order information back.
 
         Args:
-            ext: extension
+            ext: BackPACK extension
             module: module through which to perform backpropagation
             grad_inp: input gradients
             grad_out: output gradients
@@ -41,12 +42,16 @@ class MatToJacMat(ModuleExtension):
         Returns:
             derivative wrt input
         """
+        subsampling = ext.get_subsampling()
+
         if isinstance(backproped, list):
             return [
-                self.derivatives.jac_t_mat_prod(module, grad_inp, grad_out, M)
+                self.derivatives.jac_t_mat_prod(
+                    module, grad_inp, grad_out, M, subsampling=subsampling
+                )
                 for M in backproped
             ]
         else:
             return self.derivatives.jac_t_mat_prod(
-                module, grad_inp, grad_out, backproped
+                module, grad_inp, grad_out, backproped, subsampling=subsampling
             )

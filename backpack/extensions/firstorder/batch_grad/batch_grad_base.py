@@ -85,7 +85,9 @@ class BatchGradBase(FirstOrderModuleExtension):
                 g_inp,
                 g_out,
                 subsample(
-                    g_out[0], dim=get_batch_axis(module), subsampling=subsampling
+                    g_out[0],
+                    dim=get_batch_axis(module, "output"),
+                    subsampling=subsampling,
                 ),
                 sum_batch=False,
                 subsampling=subsampling,

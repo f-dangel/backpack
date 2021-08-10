@@ -1,5 +1,7 @@
 """Defines base class and extensions for computing the GGN/Fisher matrix square root."""
 
+from typing import List, Union
+
 from torch.nn import (
     ELU,
     SELU,
@@ -46,13 +48,19 @@ from backpack.extensions.secondorder.sqrt_ggn import (
 class SqrtGGN(SecondOrderBackpropExtension):
     """Base class for extensions that compute the GGN/Fisher matrix square root."""
 
-    def __init__(self, loss_hessian_strategy: str, savefield: str):
+    def __init__(
+        self,
+        loss_hessian_strategy: str,
+        savefield: str,
+        subsampling: Union[List[int], None],
+    ):
         """Store approximation for backpropagated object and where to save the result.
 
         Args:
             loss_hessian_strategy: Which approximation is used for the backpropagated
                 loss Hessian. Must be ``'exact'`` or ``'sampling'``.
             savefield: Attribute under which the quantity is saved in a parameter.
+            subsampling: Indices of active samples. ``None`` uses the full mini-batch.
         """
         self.loss_hessian_strategy = loss_hessian_strategy
         super().__init__(
@@ -85,6 +93,7 @@ class SqrtGGN(SecondOrderBackpropExtension):
                 ELU: activations.SqrtGGNELU(),
                 SELU: activations.SqrtGGNSELU(),
             },
+            subsampling=subsampling,
         )
 
     def get_loss_hessian_strategy(self) -> str:
@@ -103,7 +112,8 @@ class SqrtGGNExact(SqrtGGN):
 
     Stores the output in :code:`sqrt_ggn_exact`, has shape ``[C, N, param.shape]``,
     where ``C`` is the model output dimension (number of classes for classification
-    problems) and ``N`` is the batch size.
+    problems) and ``N`` is the batch size. If sub-sampling is enabled, ``N`` is
+    replaced by the number of active samples, ``len(subsampling)``.
 
     For a faster but less precise alternative, see
     :py:meth:`backpack.extensions.SqrtGGNMC`.
@@ -116,9 +126,14 @@ class SqrtGGNExact(SqrtGGN):
         is the GGN/Fisher's matrix square root, i.e. ``G = V Vᵀ``.
     """
 
-    def __init__(self):
-        """Use exact loss Hessian and set savefield to ``sqrt_ggn_exact``."""
-        super().__init__(LossHessianStrategy.EXACT, "sqrt_ggn_exact")
+    def __init__(self, subsampling: List[int] = None):
+        """Use exact loss Hessian, store results under ``sqrt_ggn_exact``.
+
+        Args:
+            subsampling: Indices of active samples. Defaults to ``None`` (use all
+                samples in the mini-batch).
+        """
+        super().__init__(LossHessianStrategy.EXACT, "sqrt_ggn_exact", subsampling)
 
 
 class SqrtGGNMC(SqrtGGN):
@@ -129,6 +144,8 @@ class SqrtGGNMC(SqrtGGN):
 
     Stores the output in :code:`sqrt_ggn_mc`, has shape ``[M, N, param.shape]``,
     where ``M`` is the number of Monte-Carlo samples and ``N`` is the batch size.
+    If sub-sampling is enabled, ``N`` is replaced by the number of active samples,
+    ``len(subsampling)``.
 
     For a more precise but slower alternative, see
     :py:meth:`backpack.extensions.SqrtGGNExact`.
@@ -141,14 +158,16 @@ class SqrtGGNMC(SqrtGGN):
         is the approximate GGN/Fisher's matrix square root, i.e. ``G ≈ V Vᵀ``.
     """
 
-    def __init__(self, mc_samples: int = 1):
+    def __init__(self, mc_samples: int = 1, subsampling: List[int] = None):
         """Approximate loss Hessian via MC and set savefield to ``sqrt_ggn_mc``.
 
         Args:
             mc_samples: Number of Monte-Carlo samples. Default: ``1``.
+            subsampling: Indices of active samples. Defaults to ``None`` (use all
+                samples in the mini-batch).
         """
         self._mc_samples = mc_samples
-        super().__init__(LossHessianStrategy.SAMPLING, "sqrt_ggn_mc")
+        super().__init__(LossHessianStrategy.SAMPLING, "sqrt_ggn_mc", subsampling)
 
     def get_num_mc_samples(self) -> int:
         """Return the number of MC samples used to approximate the loss Hessian.
