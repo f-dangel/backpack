@@ -1,6 +1,6 @@
 """Partial derivatives for cross-entropy loss."""
 from math import sqrt
-from typing import Dict, List, Tuple, Union
+from typing import Callable, Dict, List, Tuple, Union
 
 from einops import rearrange
 from torch import Tensor, diag, diag_embed, einsum, multinomial, ones_like, softmax
@@ -99,40 +99,44 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
         sqrt_mc_h = self._rearrange_output(sqrt_mc_h, input_dim, str_d_dims, d_info)
         return sqrt_mc_h
 
-    def _sum_hessian(self, module, g_inp, g_out):
+    def _sum_hessian(
+        self, module: CrossEntropyLoss, g_inp: Tuple[Tensor], g_out: Tuple[Tensor]
+    ) -> Tensor:
         self._check_2nd_order_parameters(module)
 
         probs = self._get_probs(module)
         probs, input_dim, str_d_dims, d_info = self._rearrange_input(probs)
-        sum_H = diag(probs.sum(0)) - einsum("bi,bj->ij", (probs, probs))
+        sum_H = diag(probs.sum(0)) - einsum("bi,bj->ij", probs, probs)
 
         if module.reduction == "mean":
             sum_H /= self._get_number_of_samples(module, probs, subsampling=None)
 
         return sum_H
 
-    # TODO: discuss whether rearrange should also be applied in this function
-    # TODO: discuss why this has no test in test_derivatives.py
-    def _make_hessian_mat_prod(self, module, g_inp, g_out):
+    # TODO: double-check this method since it's not tested
+    def _make_hessian_mat_prod(
+        self, module: CrossEntropyLoss, g_inp: Tuple[Tensor], g_out: Tuple[Tensor]
+    ) -> Callable[[Tensor], Tensor]:
         """Multiplication of the input Hessian with a matrix."""
         self._check_2nd_order_parameters(module)
 
         probs = self._get_probs(module)
+        probs, input_dim, str_d_dims, d_info = self._rearrange_input(probs)
 
         def hessian_mat_prod(mat):
-            Hmat = einsum("bi,cbi->cbi", (probs, mat)) - einsum(
-                "bi,bj,cbj->cbi", (probs, probs, mat)
+            Hmat = einsum("bi,cbi->cbi", probs, mat) - einsum(
+                "bi,bj,cbj->cbi", probs, probs, mat
             )
 
             if module.reduction == "mean":
-                N = module.input0.shape[0]
-                Hmat /= N
+                Hmat /= self._get_number_of_samples(module, probs, subsampling=None)
 
+            Hmat = self._rearrange_output(Hmat, input_dim, str_d_dims, d_info)
             return Hmat
 
         return hessian_mat_prod
 
-    def hessian_is_psd(self):
+    def hessian_is_psd(self) -> bool:
         """Return whether cross-entropy loss Hessian is positive semi-definite."""
         return True
 
@@ -152,7 +156,7 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
         input0 = subsample(module.input0, subsampling=subsampling)
         return softmax(input0, dim=1)
 
-    def _check_2nd_order_parameters(self, module):
+    def _check_2nd_order_parameters(self, module: CrossEntropyLoss) -> None:
         """Verify that the parameters are supported by 2nd-order quantities.
 
         Attributes:
