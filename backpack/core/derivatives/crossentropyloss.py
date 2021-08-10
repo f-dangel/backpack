@@ -19,42 +19,17 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
     and negative log-likelihood.
     """
 
-    def _rearrange_input(
-        self, probs: Tensor
-    ) -> Tuple[Tensor, int, str, Dict[str, int]]:
-        # if the input has additional axes: n c d1 d2 -> (n d1 d2) c
-        input_dim = probs.dim()
-        if input_dim >= 3:
-            str_d_dims: str = str.join("", [f"d{i} " for i in range(input_dim - 2)])
-            d_info: Dict[str, int] = {}
-            for i in range(input_dim - 2):
-                d_info[f"d{i}"] = probs.shape[2 + i]
-            probs = rearrange(probs, f"n c {str_d_dims} -> (n {str_d_dims}) c")
-        else:
-            str_d_dims = ""
-            d_info = {}
-        return probs, input_dim, str_d_dims, d_info
-
-    def _rearrange_output(
-        self, sqrt_H: Tensor, input_dim, str_d_dims, d_info
-    ) -> Tensor:
-        if input_dim >= 3:
-            sqrt_H = rearrange(
-                sqrt_H, f"c1 (n {str_d_dims}) c2 -> c1 n c2 {str_d_dims}", **d_info
-            )
-        return sqrt_H
-
     def _sqrt_hessian(
         self,
         module: CrossEntropyLoss,
         g_inp: Tuple[Tensor],
         g_out: Tuple[Tensor],
         subsampling: List[int] = None,
-    ) -> Tensor:  # noqa: D102
+    ) -> Tensor:
         self._check_2nd_order_parameters(module)
 
         probs = self._get_probs(module, subsampling=subsampling)
-        probs, input_dim, str_d_dims, d_info = self._rearrange_input(probs)
+        probs, *rearrange_info = self._rearrange_input(probs)
 
         tau = torchsqrt(probs)
         V_dim, C_dim = 0, 2
@@ -65,7 +40,7 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
         if module.reduction == "mean":
             sqrt_H /= sqrt(self._get_number_of_samples(module, probs, subsampling))
 
-        sqrt_H = self._rearrange_output(sqrt_H, input_dim, str_d_dims, d_info)
+        sqrt_H = self._rearrange_output(sqrt_H, *rearrange_info)
         return sqrt_H
 
     def _sqrt_hessian_sampled(
@@ -75,14 +50,14 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
         g_out: Tuple[Tensor],
         mc_samples: int = 1,
         subsampling: List[int] = None,
-    ) -> Tensor:  # noqa: D102
+    ) -> Tensor:
         self._check_2nd_order_parameters(module)
 
         M = mc_samples
         C = module.input0.shape[1]
 
         probs = self._get_probs(module, subsampling=subsampling)
-        probs, input_dim, str_d_dims, d_info = self._rearrange_input(probs)
+        probs, *rearrange_info = self._rearrange_input(probs)
 
         V_dim = 0
         probs_unsqueezed = probs.unsqueeze(V_dim).repeat(M, 1, 1)
@@ -96,7 +71,7 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
         if module.reduction == "mean":
             sqrt_mc_h /= sqrt(self._get_number_of_samples(module, probs, subsampling))
 
-        sqrt_mc_h = self._rearrange_output(sqrt_mc_h, input_dim, str_d_dims, d_info)
+        sqrt_mc_h = self._rearrange_output(sqrt_mc_h, *rearrange_info)
         return sqrt_mc_h
 
     def _sum_hessian(
@@ -105,7 +80,7 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
         self._check_2nd_order_parameters(module)
 
         probs = self._get_probs(module)
-        probs, input_dim, str_d_dims, d_info = self._rearrange_input(probs)
+        probs, *_ = self._rearrange_input(probs)
         sum_H = diag(probs.sum(0)) - einsum("bi,bj->ij", probs, probs)
 
         if module.reduction == "mean":
@@ -117,11 +92,10 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
     def _make_hessian_mat_prod(
         self, module: CrossEntropyLoss, g_inp: Tuple[Tensor], g_out: Tuple[Tensor]
     ) -> Callable[[Tensor], Tensor]:
-        """Multiplication of the input Hessian with a matrix."""
         self._check_2nd_order_parameters(module)
 
         probs = self._get_probs(module)
-        probs, input_dim, str_d_dims, d_info = self._rearrange_input(probs)
+        probs, *rearrange_info = self._rearrange_input(probs)
 
         def hessian_mat_prod(mat):
             Hmat = einsum("bi,cbi->cbi", probs, mat) - einsum(
@@ -131,18 +105,21 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
             if module.reduction == "mean":
                 Hmat /= self._get_number_of_samples(module, probs, subsampling=None)
 
-            Hmat = self._rearrange_output(Hmat, input_dim, str_d_dims, d_info)
+            Hmat = self._rearrange_output(Hmat, *rearrange_info)
             return Hmat
 
         return hessian_mat_prod
 
     def hessian_is_psd(self) -> bool:
-        """Return whether cross-entropy loss Hessian is positive semi-definite."""
+        """Return whether cross-entropy loss Hessian is positive semi-definite.
+
+        Returns:
+            True
+        """
         return True
 
-    def _get_probs(
-        self, module: CrossEntropyLoss, subsampling: List[int] = None
-    ) -> Tensor:
+    @staticmethod
+    def _get_probs(module: CrossEntropyLoss, subsampling: List[int] = None) -> Tensor:
         """Compute the softmax probabilities from the module input.
 
         Args:
@@ -159,8 +136,8 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
     def _check_2nd_order_parameters(self, module: CrossEntropyLoss) -> None:
         """Verify that the parameters are supported by 2nd-order quantities.
 
-        Attributes:
-            module (torch.nn.CrossEntropyLoss): Extended CrossEntropyLoss module
+        Args:
+            module: Extended CrossEntropyLoss module
 
         Raises:
             NotImplementedError: If module's setting is not implemented.
@@ -181,6 +158,55 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
                     implemented_weight, module.weight
                 )
             )
+
+    @staticmethod
+    def _rearrange_input(probs: Tensor) -> Tuple[Tensor, int, str, Dict[str, int]]:
+        """Rearranges the input if it has additional axes.
+
+        If the input has additional axes: n c d1 d2 -> (n d1 d2) c
+
+        Args:
+            probs: the tensor to rearrange
+
+        Returns:
+            a tuple containing
+                - probs: the rearranged tensor
+                - input_dim: the number of input dimensions
+                - str_d_dims: a string representation of the additional dimensions
+                - d_info: a dictionary encoding the size of the additional dimensions
+        """
+        input_dim = probs.dim()
+        if input_dim >= 3:
+            str_d_dims: str = str.join("", [f"d{i} " for i in range(input_dim - 2)])
+            d_info: Dict[str, int] = {}
+            for i in range(input_dim - 2):
+                d_info[f"d{i}"] = probs.shape[2 + i]
+            probs = rearrange(probs, f"n c {str_d_dims} -> (n {str_d_dims}) c")
+        else:
+            str_d_dims = ""
+            d_info = {}
+        return probs, input_dim, str_d_dims, d_info
+
+    @staticmethod
+    def _rearrange_output(tensor: Tensor, input_dim, str_d_dims, d_info) -> Tensor:
+        """Rearrange the output. Used together with rearrange_input.
+
+        If input_dim>=3: rearrange c1 (n d1 d2) c2 -> c1 n c2 d1 d2
+
+        Args:
+            tensor: the tensor to rearrange
+            input_dim: the number of input dimensions
+            str_d_dims: a string representation of the additional dimensions
+            d_info: a dictionary encoding the size of the additional dimensions
+
+        Returns:
+            the rearranged tensor
+        """
+        if input_dim >= 3:
+            tensor = rearrange(
+                tensor, f"c1 (n {str_d_dims}) c2 -> c1 n c2 {str_d_dims}", **d_info
+            )
+        return tensor
 
     @staticmethod
     def _get_number_of_samples(
