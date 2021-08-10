@@ -152,8 +152,6 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
         Returns:
             Softmax probabilites
         """
-        # TODO question: does this imply the assumption that it is always
-        # loss(model(x), y) and not loss(y, model(x)) ???
         input0 = subsample(module.input0, subsampling=subsampling)
         return softmax(input0, dim=1)
 
