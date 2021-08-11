@@ -16,7 +16,7 @@ from torchvision.models.resnet import BasicBlock, conv1x1
 
 
 class ResNet1(Module):
-    """Small ResNet from Katharina."""
+    """Small ResNet."""
 
     def __init__(self, in_dim: int = 2, out_dim: int = 10):
         """Initialization.
