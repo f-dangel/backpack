@@ -45,13 +45,20 @@ class SqrtGGNBaseLossModule(SqrtGGNBaseModule):
             NotImplementedError: For invalid strategies to represent the loss Hessian.
         """
         loss_hessian_strategy = ext.get_loss_hessian_strategy()
+        subsampling = ext.get_subsampling()
 
         if loss_hessian_strategy == LossHessianStrategy.EXACT:
-            return self.derivatives.sqrt_hessian(module, grad_inp, grad_out)
+            return self.derivatives.sqrt_hessian(
+                module, grad_inp, grad_out, subsampling=subsampling
+            )
         elif loss_hessian_strategy == LossHessianStrategy.SAMPLING:
             mc_samples = ext.get_num_mc_samples()
             return self.derivatives.sqrt_hessian_sampled(
-                module, grad_inp, grad_out, mc_samples=mc_samples
+                module,
+                grad_inp,
+                grad_out,
+                mc_samples=mc_samples,
+                subsampling=subsampling,
             )
         else:
             raise NotImplementedError(

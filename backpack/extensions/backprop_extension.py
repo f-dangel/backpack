@@ -4,7 +4,7 @@ from __future__ import annotations
 import abc
 import warnings
 from abc import ABC
-from typing import Any, Dict, Tuple, Type, Union
+from typing import Any, Dict, List, Tuple, Type, Union
 
 from torch import Tensor
 from torch.nn import Module
@@ -39,6 +39,7 @@ class BackpropExtension(ABC):
         savefield: str,
         module_exts: Dict[Type[Module], ModuleExtension],
         fail_mode: str = FAIL_ERROR,
+        subsampling: List[int] = None,
     ):
         """Initializes parameters.
 
@@ -51,6 +52,9 @@ class BackpropExtension(ABC):
                 - "WARN": raise a UserWarning
                 - "SILENT": skip the module silently
                 Defaults to FAIL_ERROR = "ERROR"
+            subsampling: Indices of active mini-batch samples. ``None`` means
+                all samples in the mini-batch will be considered by the extension.
+                Defaults to ``None``.
 
         Raises:
             AssertionError: if fail_mode is not valid
@@ -61,6 +65,7 @@ class BackpropExtension(ABC):
         self.savefield: str = savefield
         self.__module_extensions: Dict[Type[Module], ModuleExtension] = module_exts
         self._fail_mode: str = fail_mode
+        self._subsampling = subsampling
 
     def set_module_extension(
         self, module: Type[Module], extension: ModuleExtension, overwrite: bool = False
@@ -129,6 +134,15 @@ class BackpropExtension(ABC):
             Whether the extension uses additional backpropagation quantities.
         """
         return
+
+    def get_subsampling(self) -> Union[List[int], None]:
+        """Return indices of active mini-batch samples.
+
+        Returns:
+            Indices of samples considered by the extension. ``None`` signifies that
+            the full mini-batch is used.
+        """
+        return self._subsampling
 
     def accumulate_backpropagated_quantities(self, existing: Any, other: Any) -> Any:
         """Specify how to accumulate info that is backpropagated to the same node.

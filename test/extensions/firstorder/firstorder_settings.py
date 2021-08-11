@@ -265,10 +265,10 @@ FIRSTORDER_SETTINGS += [
     {
         "input_fn": lambda: rand(8, 5, 6),
         "module_fn": lambda: Sequential(
-            Permute(1, 0, 2),
+            Permute(1, 0, 2, batch_axis=0),
             RNN(input_size=6, hidden_size=3),
             ReduceTuple(index=0),
-            Permute(1, 2, 0),
+            Permute(1, 2, 0, batch_axis=1),
         ),
         "loss_function_fn": lambda: CrossEntropyLoss(reduction="mean"),
         "target_fn": lambda: classification_targets((8, 5), 3),
@@ -276,10 +276,10 @@ FIRSTORDER_SETTINGS += [
     {
         "input_fn": lambda: rand(8, 5, 6),
         "module_fn": lambda: Sequential(
-            Permute(1, 0, 2),
+            Permute(1, 0, 2, batch_axis=0),
             RNN(input_size=6, hidden_size=3),
             ReduceTuple(index=0),
-            Permute(1, 2, 0),
+            Permute(1, 2, 0, batch_axis=1),
             Flatten(),
         ),
         "loss_function_fn": lambda: MSELoss(),

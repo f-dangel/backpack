@@ -1,5 +1,5 @@
 """Base class for first order extensions."""
-from typing import Dict, Type
+from typing import Dict, List, Type
 
 from torch.nn import Module
 
@@ -19,8 +19,11 @@ class FirstOrderBackpropExtension(BackpropExtension):
         savefield: str,
         module_exts: Dict[Type[Module], ModuleExtension],
         fail_mode: str = FAIL_WARN,
+        subsampling: List[int] = None,
     ):  # noqa: D107
-        super().__init__(savefield, module_exts, fail_mode=fail_mode)
+        super().__init__(
+            savefield, module_exts, fail_mode=fail_mode, subsampling=subsampling
+        )
 
     def expects_backpropagation_quantities(self) -> bool:  # noqa: D102
         return False

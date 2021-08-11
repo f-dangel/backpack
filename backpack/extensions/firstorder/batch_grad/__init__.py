@@ -2,7 +2,7 @@
 
 It defines the module extension for each module.
 """
-from typing import List, Union
+from typing import List
 
 from torch.nn import (
     RNN,
@@ -81,14 +81,5 @@ class BatchGrad(FirstOrderBackpropExtension):
                 BatchNorm3d: batchnorm_nd.BatchGradBatchNormNd(),
                 RNN: rnn.BatchGradRNN(),
             },
+            subsampling=subsampling,
         )
-        self._subsampling = subsampling
-
-    def get_subsampling(self) -> Union[List[int], None]:
-        """Get the indices of samples for which individual gradients are requested.
-
-        Returns:
-            List of indices containing the active samples in the mini-batch. ``None``
-            means all samples will be considered.
-        """
-        return self._subsampling

@@ -289,7 +289,7 @@ class BaseDerivatives(ABC):
         """
         shape = list(module.input0.shape)
         if subsampling is not None:
-            shape[get_batch_axis(module)] = len(subsampling)
+            shape[get_batch_axis(module, "input0")] = len(subsampling)
 
         return cls._reshape_like(mat, shape)
 

@@ -73,7 +73,7 @@ def _check_like(mat, module, name, diff=1, *args, **kwargs):
     if name in ["output", "input0"] and "subsampling" in kwargs.keys():
         compare = subsample(
             getattr(module, name),
-            dim=get_batch_axis(module),
+            dim=get_batch_axis(module, name),
             subsampling=kwargs["subsampling"],
         )
     else:

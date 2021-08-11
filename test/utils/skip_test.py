@@ -1,6 +1,7 @@
 """Skip specific tests."""
 
 from test.core.derivatives.problem import DerivativesTestProblem
+from test.extensions.problem import ExtensionsTestProblem
 from typing import List, Union
 
 from pytest import skip
@@ -30,21 +31,6 @@ def skip_adaptive_avg_pool3d_cuda(request) -> None:
             )
 
 
-def skip_permute_with_subsampling(
-    problem: DerivativesTestProblem, subsampling: Union[List[int], None]
-) -> None:
-    """Skip Permute module when sub-sampling is turned on.
-
-    Permute does not assume a batch axis.
-
-    Args:
-        problem: Test case.
-        subsampling: Indices of active samples.
-    """
-    if isinstance(problem.module, Permute) and subsampling is not None:
-        skip(f"Skipping Permute with sub-sampling: {subsampling}")
-
-
 def skip_batch_norm_train_mode_with_subsampling(
     problem: DerivativesTestProblem, subsampling: Union[List[int], None]
 ) -> None:
@@ -60,7 +46,8 @@ def skip_batch_norm_train_mode_with_subsampling(
 
 
 def skip_subsampling_conflict(
-    problem: DerivativesTestProblem, subsampling: Union[List[int], None]
+    problem: Union[DerivativesTestProblem, ExtensionsTestProblem],
+    subsampling: Union[List[int], None],
 ) -> None:
     """Skip if some samples in subsampling are not contained in input.
 
@@ -68,25 +55,27 @@ def skip_subsampling_conflict(
         problem: Test case.
         subsampling: Indices of active samples.
     """
-    N = problem.input_shape[get_batch_axis(problem.module)]
+    N = problem.get_batch_size()
     enough_samples = subsampling is None or N > max(subsampling)
     if not enough_samples:
         skip("Not enough samples.")
-
-
-def skip_no_param(problem: DerivativesTestProblem, param_str: str) -> None:
-    """Skip if test case does not contain the parameter.
-
-    Args:
-        problem: Test case.
-        param_str: Parameter name.
-    """
-    has_param = getattr(problem.module, param_str, None) is not None
-    if not has_param:
-        skip(f"Test case has no {param_str} parameter.")
 
 
 def skip_pytorch_below_1_9_0() -> None:
     """Skip test if pytorch version is below 1.9.0."""
     if not TORCH_VERSION_AT_LEAST_1_9_0:
         skip("Test needs PyTorch>=1.9.0")
+
+
+def skip_large_parameters(
+    problem: ExtensionsTestProblem, max_num_params: int = 1000
+) -> None:
+    """Skip architectures with too many parameters.
+
+    Args:
+        problem: Test case.
+        max_num_params: Maximum number of model parameters. Default: ``1000``.
+    """
+    num_params = sum(p.numel() for p in problem.trainable_parameters())
+    if num_params > max_num_params:
+        skip(f"Model has too many parameters: {num_params} > {max_num_params}")
