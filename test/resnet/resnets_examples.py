@@ -52,7 +52,7 @@ class ResNet1(Module):
 
 
 class ResNet2(Module):
-    """Small ResNet replicating resnet18 but a lot smaller."""
+    """Replicates resnet18 but a lot smaller."""
 
     num_classes: int = 3
     batch_size: int = 2
@@ -113,21 +113,20 @@ class ResNet2(Module):
                 norm_layer(planes * block.expansion),
             )
 
-        layers = []
-        layers.append(
+        layers = [
             block(self.inplanes, planes, stride, downsample, 1, 64, 1, norm_layer)
-        )
+        ]
         self.inplanes = planes * block.expansion
-        for _ in range(1, blocks):
-            layers.append(
-                block(
-                    self.inplanes,
-                    planes,
-                    groups=1,
-                    base_width=64,
-                    dilation=1,
-                    norm_layer=norm_layer,
-                )
+        layers += [
+            block(
+                self.inplanes,
+                planes,
+                groups=1,
+                base_width=64,
+                dilation=1,
+                norm_layer=norm_layer,
             )
+            for _ in range(1, blocks)
+        ]
 
         return Sequential(*layers)
