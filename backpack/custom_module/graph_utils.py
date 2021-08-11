@@ -10,10 +10,12 @@ from backpack.custom_module.scale_module import ScaleModule
 from backpack.utils import TORCH_VERSION_AT_LEAST_1_9_0
 
 
-class BackPackTracer(Tracer):
-    """This custom tracer recognizes BackPACK custom modules."""
+class BackpackTracer(Tracer):
+    """Tracer that recognizes BackPACK's custom modules as 'leaf modules'."""
 
-    def is_leaf_module(self, m, module_qualified_name):  # noqa: D102
+    def is_leaf_module(
+        self, m: Module, module_qualified_name: str
+    ) -> bool:  # noqa: D102
         if isinstance(m, (ScaleModule, SumModule, Branch, ActiveIdentity)):
             return True
         else:
@@ -26,12 +28,12 @@ def print_table(module: Module) -> None:
     Args:
         module: module to analyze
     """
-    graph_resnet18 = BackPackTracer().trace(module)
+    graph_resnet18 = BackpackTracer().trace(module)
     graph_resnet18.print_tabular()
 
 
 def convert_module_to_backpack(module: Module) -> GraphModule:
-    """Converts all modules to backpack-compatible modules.
+    """Convert all modules to BackPACK-compatible modules.
 
     Transformations:
     - mul -> ScaleModule
@@ -67,7 +69,7 @@ def convert_module_to_backpack(module: Module) -> GraphModule:
 def _transform_mul_to_scale_module(module: Module) -> GraphModule:
     print("\tBegin transformation: <built-in function mul> -> ScaleModule")
     counter: int = 0
-    graph: Graph = BackPackTracer().trace(module)
+    graph: Graph = BackpackTracer().trace(module)
     for node in graph.nodes:
         if node.op == "call_function":
             if str(node.target) == "<built-in function mul>":
@@ -88,7 +90,7 @@ def _transform_mul_to_scale_module(module: Module) -> GraphModule:
 def _transform_add_to_sum_module(module: Module) -> GraphModule:
     print("\tBegin transformation: <built-in function add> -> SumModule")
     counter: int = 0
-    graph: Graph = BackPackTracer().trace(module)
+    graph: Graph = BackpackTracer().trace(module)
     for node in graph.nodes:
         if node.op == "call_function":
             if str(node.target) == "<built-in function add>":
@@ -105,7 +107,7 @@ def _transform_add_to_sum_module(module: Module) -> GraphModule:
 def _transform_flatten_to_module(module: Module) -> GraphModule:
     print("\tBegin transformation: <built-in method flatten> -> Flatten")
     counter: int = 0
-    graph: Graph = BackPackTracer().trace(module)
+    graph: Graph = BackpackTracer().trace(module)
     for node in graph.nodes:
         if node.op == "call_function":
             if "<built-in method flatten" in str(node.target):
@@ -146,7 +148,7 @@ def _transform_inplace_to_normal(
 def _transform_remove_duplicates(module: Module, max_depth: int = 100) -> GraphModule:
     print("\tBegin transformation: remove duplicates")
     counter = 0
-    graph: Graph = BackPackTracer().trace(module)
+    graph: Graph = BackpackTracer().trace(module)
     targets: Set[str] = set()
     for node in graph.nodes:
         if node.target in targets:
