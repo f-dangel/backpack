@@ -4,7 +4,7 @@ from __future__ import annotations
 import abc
 import warnings
 from abc import ABC
-from typing import Dict, Tuple, Type, Union
+from typing import Any, Dict, Tuple, Type, Union
 
 from torch import Tensor
 from torch.nn import Module
@@ -130,19 +130,19 @@ class BackpropExtension(ABC):
         """
         return
 
-    # TODO: discuss whether this is necessary or always existing+other
-    def accumulate_backpropagated_quantities(self, existing, other):
+    def accumulate_backpropagated_quantities(self, existing: Any, other: Any) -> Any:
         """Specify how to accumulate info that is backpropagated to the same node.
 
         Must be implemented by second-order extensions to function on computation
         graphs with branching.
 
-        For instance, ``DiagGGN`` extensions must sum their quantities, while
-        ``curvmatprod`` extensions must accumulate functions to a sum of functions.
+        For instance,
+        - ``DiagGGN`` extensions must sum their backpropagated tensor quantities.
+        - ``curvmatprod`` extensions must chain functions to sums of functions.
 
         Args:
-            existing: already existing backpropagated quantity
-            other: new backpropagated quantity
+            existing: Backpropagated quantity
+            other: Other backpropagated quantity
 
         Raises:
             NotImplementedError: if not overwritten
