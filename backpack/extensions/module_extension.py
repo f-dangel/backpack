@@ -148,19 +148,17 @@ class ModuleExtension:
         Returns:
             the inputs which need a backpropagation quantity
         """
-        if not extension.expects_backpropagation_quantities():
-            return tuple()
-        else:
-            module_inputs: Tuple[Tensor] = tuple()
+        module_inputs: Tuple[Tensor, ...] = ()
+
+        if extension.expects_backpropagation_quantities():
             i = 0
-            while True:
-                if hasattr(module, f"input{i}"):
-                    if getattr(module, f"input{i}").requires_grad:
-                        module_inputs += (getattr(module, f"input{i}"),)
-                else:
-                    break
+            while hasattr(module, f"input{i}"):
+                input = getattr(module, f"input{i}")
+                if input.requires_grad:
+                    module_inputs += (input,)
                 i += 1
-            return module_inputs
+
+        return module_inputs
 
     @staticmethod
     def __should_retain_backproped_quantities(module: Module) -> bool:
