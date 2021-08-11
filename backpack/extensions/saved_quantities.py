@@ -19,8 +19,7 @@ class SavedQuantities:
     ) -> None:
         """Saves the quantity under the specified key.
 
-        If the there is already an entry under the given key,
-        the quantities are accumulated.
+        Accumulate quantities which already have an entry.
 
         Args:
             key: data_ptr() of reference tensor (module.input0).
@@ -28,12 +27,12 @@ class SavedQuantities:
             accumulation_function: function defining how to accumulate quantity
         """
         if key in self._saved_quantities:
-            # if exists: accumulate quantities (ResNet)
-            self._saved_quantities[key] = accumulation_function(
-                self.retrieve_quantity(key, delete_old=True), quantity
-            )
+            existing = self.retrieve_quantity(key, delete_old=True)
+            save_value = accumulation_function(existing, quantity)
         else:
-            self._saved_quantities[key] = quantity
+            save_value = quantity
+
+        self._saved_quantities[key] = save_value
 
     def retrieve_quantity(self, key: int, delete_old: bool) -> Union[Tensor, None]:
         """Returns the saved quantity.
