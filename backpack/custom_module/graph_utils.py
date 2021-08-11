@@ -44,7 +44,7 @@ def convert_module_to_backpack(module: Module) -> GraphModule:
         module: module to convert
 
     Returns:
-        backpack compatible module
+        BackPACK-compatible module
 
     Raises:
         NotImplementedError: if not torch >= 1.9.0
@@ -54,7 +54,7 @@ def convert_module_to_backpack(module: Module) -> GraphModule:
             "Conversion is only possible for torch >= 1.9.0. This is because these "
             "functions use functionality such as torch.nn.Module.get_submodule"
         )
-    print("\nMake module BackPACK compatible...")
+    print("\nMake module BackPACK-compatible...")
     module_new = _transform_mul_to_scale_module(module)
     module_new = _transform_flatten_to_module(module_new)
     module_new = _transform_add_to_sum_module(module_new)
@@ -67,19 +67,16 @@ def convert_module_to_backpack(module: Module) -> GraphModule:
 
 
 def _transform_mul_to_scale_module(module: Module) -> GraphModule:
-    print("\tBegin transformation: <built-in function mul> -> ScaleModule")
+    target = "<built-in function mul>"
+    print(f"\tBegin transformation: {target} -> ScaleModule")
     counter: int = 0
     graph: Graph = BackpackTracer().trace(module)
+
     for node in graph.nodes:
-        if node.op == "call_function":
-            if str(node.target) == "<built-in function mul>":
-                _change_node_to_module(
-                    node,
-                    "scale_module",
-                    module,
-                    ScaleModule(node.args[1]),
-                    (node.args[0],),
-                )
+        if node.op == "call_function" and str(node.target) == target:
+            _change_node_to_module(
+                node, "scale_module", module, ScaleModule(node.args[1]), (node.args[0],)
+            )
             counter += 1
 
     graph.lint()
@@ -88,16 +85,15 @@ def _transform_mul_to_scale_module(module: Module) -> GraphModule:
 
 
 def _transform_add_to_sum_module(module: Module) -> GraphModule:
-    print("\tBegin transformation: <built-in function add> -> SumModule")
+    target = "<built-in function add>"
+    print(f"\tBegin transformation: {target} -> SumModule")
     counter: int = 0
     graph: Graph = BackpackTracer().trace(module)
+
     for node in graph.nodes:
-        if node.op == "call_function":
-            if str(node.target) == "<built-in function add>":
-                _change_node_to_module(
-                    node, "sum_module", module, SumModule(), node.args
-                )
-                counter += 1
+        if node.op == "call_function" and str(node.target) == target:
+            _change_node_to_module(node, "sum_module", module, SumModule(), node.args)
+            counter += 1
 
     graph.lint()
     print(f"\tSummations transformed: {counter}")
@@ -105,22 +101,23 @@ def _transform_add_to_sum_module(module: Module) -> GraphModule:
 
 
 def _transform_flatten_to_module(module: Module) -> GraphModule:
-    print("\tBegin transformation: <built-in method flatten> -> Flatten")
+    target = "<built-in method flatten>"
+    print(f"\tBegin transformation: {target} -> Flatten")
     counter: int = 0
     graph: Graph = BackpackTracer().trace(module)
+
     for node in graph.nodes:
-        if node.op == "call_function":
-            if "<built-in method flatten" in str(node.target):
-                start_dim = node.args[1] if len(node.args) > 1 else 1
-                end_dim = node.args[2] if len(node.args) > 2 else -1
-                _change_node_to_module(
-                    node,
-                    "flatten",
-                    module,
-                    Flatten(start_dim, end_dim),
-                    (node.args[0],),
-                )
-                counter += 1
+        if node.op == "call_function" and target in str(node.target):
+            start_dim = node.args[1] if len(node.args) > 1 else 1
+            end_dim = node.args[2] if len(node.args) > 2 else -1
+            _change_node_to_module(
+                node,
+                "flatten",
+                module,
+                Flatten(start_dim, end_dim),
+                (node.args[0],),
+            )
+            counter += 1
 
     graph.lint()
     print(f"\tFlatten transformed: {counter}")
@@ -141,7 +138,7 @@ def _transform_inplace_to_normal(
 
     if initialize_recursion:
         print(f"\tIn-place changed: {_transform_inplace_to_normal.counter}")
-        delattr(_transform_inplace_to_normal, "counter")
+        del _transform_inplace_to_normal.counter
     return module
 
 
@@ -150,14 +147,15 @@ def _transform_remove_duplicates(module: Module, max_depth: int = 100) -> GraphM
     counter = 0
     graph: Graph = BackpackTracer().trace(module)
     targets: Set[str] = set()
+
     for node in graph.nodes:
         if node.target in targets:
             original_module = module.get_submodule(node.target)
             for _ in original_module.parameters():
                 raise NotImplementedError(
-                    f"Transformation not successful, because a cycle was detected. "
+                    "Transformation not successful, because a cycle was detected. "
                     f"There is a module={original_module} with target={node.target} "
-                    f"that is used twice. This detected module has parameters."
+                    "that is used twice. This detected module has parameters."
                 )
             new_module = deepcopy(original_module)
             for i in range(max_depth):
