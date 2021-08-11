@@ -113,4 +113,4 @@ class Parallel(Module):
         Returns:
             Merged results from forward pass of each branch
         """
-        return self.merge(self.branch(input))
+        return self.merge(*self.branch(input))
