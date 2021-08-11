@@ -101,7 +101,7 @@ def _transform_add_to_sum_module(module: Module) -> GraphModule:
 
 
 def _transform_flatten_to_module(module: Module) -> GraphModule:
-    target = "<built-in method flatten>"
+    target = "<built-in method flatten"
     print(f"\tBegin transformation: {target} -> Flatten")
     counter: int = 0
     graph: Graph = BackpackTracer().trace(module)
