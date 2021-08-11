@@ -21,17 +21,13 @@ class Branch(Module):
           ↗ module1 → output1
     input → module2 → output2
           ↘ ...     → ...
-
-    Args:
-        modules (torch.nn.Module): Sequence of modules. Input will be fed
-            through every of these modules.
     """
 
     def __init__(self, *args: Union[OrderedDict[str, Module], Module]):
         """Use interface of ``torch.nn.Sequential``. Modules are parallel sequence.
 
         Args:
-            args: either a dictionary of Modules or a Tuple of Modules
+            args: either an ordered dictionary of modules or a tuple of modules
         """
         super().__init__()
 
@@ -42,8 +38,8 @@ class Branch(Module):
             for idx, module in enumerate(args):
                 self.add_module(str(idx), module)
 
-    def forward(self, input: Tensor) -> Tuple[Any]:
-        """Feed one input through each child module.
+    def forward(self, input: Tensor) -> Tuple[Any, ...]:
+        """Feed input through each child module.
 
         Args:
             input: input tensor
@@ -87,7 +83,6 @@ class Parallel(Module):
            ↗ module 1 ↘
     Branch → module 2 → SumModule (sum)
            ↘  ...     ↗
-
     """
 
     def __init__(
@@ -98,7 +93,7 @@ class Parallel(Module):
         """Use interface of ``torch.nn.Sequential``. Modules are parallel sequence.
 
         Args:
-            args: either dictionary of modules or tuple of modules
+            args: either ordered dictionary of modules or tuple of modules
             merge_module: The module used for merging.
                 Defaults to None, which means SumModule() is used.
         """
@@ -114,8 +109,6 @@ class Parallel(Module):
             input: module input
 
         Returns:
-            result after results are merged again
+            Merged results from forward pass of each branch
         """
-        out = self.branch(input)
-        out = self.merge(*out)
-        return out
+        return self.merge(self.branch(input))
