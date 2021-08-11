@@ -1,10 +1,12 @@
-"""This test demonstrates the custom modules in backpack for branching/ResNets.
+"""This test demonstrates the custom modules in BackPACK for branching/ResNets.
 
-For torch < 1.9.0 (no full backward hook), this test is important,
-since those fail without ActiveIdentity.
+It is important for torch < 1.9.0 (no full backward hook), as the test fails without
+ActiveIdentity (wrong execution order in backward hook).
 For torch>=1.9.0 (full backward hook), all tests pass.
+
 Additionally, for torch>=1.9.0 there is a convenient option use_converter=True in extend().
-As soon as torch version is bumped to 1.9.0 this test can be deleted.
+
+TODO Delete after supporting torch >= 1.9.0 (full backward hook and converter).
 """
 from contextlib import nullcontext
 from test.automated_test import check_sizes_and_values
@@ -50,8 +52,8 @@ def setup(
 
     N = 7
 
-    in_features = 20
-    hidden_features = 10
+    in_features = 10
+    hidden_features = 5
     out_features = 3
 
     X = rand((N, in_features))
@@ -100,8 +102,8 @@ def setup_convenient(
 
     N = 7
 
-    in_features = 20
-    hidden_features = 10
+    in_features = 10
+    hidden_features = 5
     out_features = 3
 
     X = rand((N, in_features))
@@ -193,17 +195,15 @@ SETUPS_IDS = ["simple-resnet", "simple-resnet-convenient"]
 
 @mark.parametrize("setup_fn", SETUPS, ids=SETUPS_IDS)
 def test_diag_ggn_exact_active_identity(setup_fn: Callable) -> None:
-    """Compare diagonal GGN of a ResNet.
+    """Compare BackPACK's diagonal GGN of a ResNet with autograd.
 
     Args:
         setup_fn: setup function
     """
     X, y, model, loss_function = setup_fn()
-
     autograd_result = autograd_diag_ggn_exact(X, y, model, loss_function)
 
     X, y, model, loss_function = setup_fn(apply_extend=True)
-
     backpack_result = backpack_diag_ggn_exact(X, y, model, loss_function)
 
     check_sizes_and_values(autograd_result, backpack_result)
@@ -219,11 +219,9 @@ def test_diag_ggn_exact_nn_identity_fails(setup_fn: Callable) -> None:
         setup_fn: setup function
     """
     X, y, model, loss_function = setup_fn(active_identity=False)
-
     autograd_result = autograd_diag_ggn_exact(X, y, model, loss_function)
 
     X, y, model, loss_function = setup_fn(apply_extend=True, active_identity=False)
-
     with nullcontext() if FULL_BACKWARD_HOOK else raises(
         exception_inside_backward_pass(AssertionError)
     ):
