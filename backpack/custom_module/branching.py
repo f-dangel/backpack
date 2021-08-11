@@ -90,7 +90,9 @@ class Parallel(Module):
         *args: Union[OrderedDict[str, Module], Module],
         merge_module: Module = None,
     ):
-        """Use interface of ``torch.nn.Sequential``. Modules are parallel sequence.
+        """Same as ``torch.nn.Sequential, but modules are a parallel sequence.
+
+        Use interface of ``torch.nn.Sequential``.
 
         Args:
             args: either ordered dictionary of modules or tuple of modules
