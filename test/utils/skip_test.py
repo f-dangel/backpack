@@ -7,9 +7,7 @@ from typing import List, Union
 from pytest import skip
 from torch.nn import BatchNorm1d, BatchNorm2d, BatchNorm3d
 
-from backpack.custom_module.permute import Permute
 from backpack.utils import TORCH_VERSION_AT_LEAST_1_9_0, TORCH_VERSION_AT_LEAST_1_9_1
-from backpack.utils.subsampling import get_batch_axis
 
 
 def skip_adaptive_avg_pool3d_cuda(request) -> None:
