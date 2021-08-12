@@ -68,11 +68,18 @@ class SumModule(Module):
             sum of all inputs
 
         Raises:
-            ValueError: if input is no tuple
+            AssertionError: if input is no tuple of matching tensors
         """
         if not isinstance(input, tuple):
-            raise ValueError(f"Expecting tuple as input. Got {input.__class__}")
-        return sum(input)
+            raise AssertionError(f"Expecting tuple as input. Got {input.__class__}")
+        elif not all(isinstance(inp, Tensor) for inp in input):
+            raise AssertionError(
+                f"Expecting tuple of tensors, but received ({[inp.__class__ for inp in input]})"
+            )
+        elif not all(input[0].shape == input[i].shape for i in range(1, len(input))):
+            raise AssertionError(f"Shapes don't match: {[inp.shape for inp in input]}.")
+        else:
+            return sum(input)
 
 
 class Parallel(Module):
