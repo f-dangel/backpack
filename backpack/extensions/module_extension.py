@@ -127,7 +127,7 @@ class ModuleExtension:
                 extValue = extFunc(extension, module, g_inp, g_out, bp_quantity)
                 self.__save_value_on_parameter(extValue, extension, module, param)
 
-        module_inputs = self.__should_backpropagate(extension, module)
+        module_inputs = self.__get_inputs_for_backpropagation(extension, module)
         if module_inputs:
             bp_quantity = self.backpropagate(
                 extension, module, g_inp, g_out, bp_quantity
@@ -136,7 +136,7 @@ class ModuleExtension:
                 self.__save_backproped_quantity(extension, module_inp, bp_quantity)
 
     @staticmethod
-    def __should_backpropagate(
+    def __get_inputs_for_backpropagation(
         extension: BackpropExtension, module: Module
     ) -> Tuple[Tensor]:
         """Returns the inputs on which a backpropagation should be performed.
