@@ -28,8 +28,8 @@ def print_table(module: Module) -> None:
     Args:
         module: module to analyze
     """
-    graph_resnet18 = BackpackTracer().trace(module)
-    graph_resnet18.print_tabular()
+    graph = BackpackTracer().trace(module)
+    graph.print_tabular()
 
 
 def convert_module_to_backpack(module: Module) -> GraphModule:
