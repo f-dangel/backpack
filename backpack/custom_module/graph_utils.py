@@ -158,10 +158,10 @@ def _transform_remove_duplicates(module: GraphModule, debug: bool) -> GraphModul
         print("\tBegin transformation: remove duplicates")
     counter = 0
     graph: Graph = BackpackTracer().trace(module)
-    targets: Set[str] = set()
+    targets_visited: Set[str] = set()
 
     for node in graph.nodes:
-        if node.target in targets:
+        if node.target in targets_visited:
             original_module = module.get_submodule(node.target)
             for _ in original_module.parameters():
                 raise NotImplementedError(
@@ -174,7 +174,7 @@ def _transform_remove_duplicates(module: GraphModule, debug: bool) -> GraphModul
             module.add_submodule(new_target, new_module)
             node.target = new_target
         else:
-            targets.add(node.target)
+            targets_visited.add(node.target)
 
     graph.lint()
     if debug:
