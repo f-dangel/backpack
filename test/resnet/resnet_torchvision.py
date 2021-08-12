@@ -2,22 +2,23 @@
 from test.utils.skip_test import skip_pytorch_below_1_9_0
 from typing import Tuple
 
-import pytest
 import torchvision.models
-from torch import Tensor, allclose, rand, rand_like
+from pytest import fixture
+from torch import Tensor, allclose, manual_seed, rand, rand_like
 from torch.nn import Module, MSELoss
 
 from backpack import backpack, extend
 from backpack.extensions import DiagGGNExact
 
 
-@pytest.fixture
+@fixture
 def model_and_input() -> Tuple[Module, Tensor]:
     """Yield ResNet model and an input to it.
 
     Yields:
         model and input
     """
+    manual_seed(0)
     skip_pytorch_below_1_9_0()
     resnet18 = torchvision.models.resnet18(num_classes=4).eval()
     yield resnet18, rand(2, 3, 7, 7, requires_grad=True)
