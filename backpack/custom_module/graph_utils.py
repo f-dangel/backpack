@@ -189,6 +189,19 @@ def _change_node_to_module(
     new_module: Module,
     args: tuple,
 ) -> None:
+    """Helper function to change an existing node to a module.
+
+    The new module is registered in the base_module as a submodule.
+    The attribute name is based on name{int}.
+    The attributes of the node are changed so they point onto the new module.
+
+    Args:
+        node: existing node
+        name: proposed name, real name is name{int}
+        base_module: the module that should get new_module as a child
+        new_module: the new module to register on the node and base_module
+        args: arguments of the new node
+    """
     new_name = _get_free_name(base_module, name)
     node.op = "call_module"
     node.target = new_name
