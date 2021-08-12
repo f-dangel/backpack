@@ -60,7 +60,7 @@ def convert_module_to_backpack(module: Module, debug: bool) -> GraphModule:
     module_new = _transform_mul_to_scale_module(module, debug)
     module_new = _transform_flatten_to_module(module_new, debug)
     module_new = _transform_add_to_sum_module(module_new, debug)
-    module_new = _transform_inplace_to_normal(module_new, debug)
+    _transform_inplace_to_normal(module_new, debug)
     module_new = _transform_remove_duplicates(module_new, debug)
     if debug:
         print("\tDelete unused modules.")
@@ -136,7 +136,7 @@ def _transform_flatten_to_module(module: Module, debug: bool) -> GraphModule:
 
 def _transform_inplace_to_normal(
     module: Module, debug: bool, initialize_recursion: bool = True
-) -> Module:
+) -> None:
     if initialize_recursion:
         if debug:
             print("\tBegin transformation: in-place -> standard")
@@ -151,12 +151,9 @@ def _transform_inplace_to_normal(
         if debug:
             print(f"\tIn-place changed: {_transform_inplace_to_normal.counter}")
         del _transform_inplace_to_normal.counter
-    return module
 
 
-def _transform_remove_duplicates(
-    module: Module, debug: bool, max_depth: int = 100
-) -> GraphModule:
+def _transform_remove_duplicates(module: GraphModule, debug: bool) -> GraphModule:
     if debug:
         print("\tBegin transformation: remove duplicates")
     counter = 0
@@ -173,15 +170,9 @@ def _transform_remove_duplicates(
                     "that is used twice. This detected module has parameters."
                 )
             new_module = deepcopy(original_module)
-            for i in range(max_depth):
-                target = f"{node.target}{i}"
-                try:
-                    module.get_submodule(target)
-                except AttributeError:
-                    module.add_submodule(target, new_module)
-                    node.target = target
-                    counter += 1
-                    break
+            new_target = _get_free_name(module, node.target)
+            module.add_submodule(new_target, new_module)
+            node.target = new_target
         else:
             targets.add(node.target)
 
@@ -198,20 +189,27 @@ def _change_node_to_module(
     new_module: Module,
     args: tuple,
 ) -> None:
-    max_depth = 100
-    for i in range(max_depth):
-        new_name = f"{name}_{i + 1}"
-        if hasattr(base_module, new_name):
-            continue
-        else:
-            break
-    name = new_name
-    if hasattr(base_module, name):
-        raise NotImplementedError(
-            f"There already exists a module named {name} in {base_module}. "
-            f"Consider increasing max_depth={max_depth} in the module naming space."
-        )
+    new_name = _get_free_name(base_module, name)
     node.op = "call_module"
-    node.target = name
+    node.target = new_name
     node.args = args
-    setattr(base_module, name, new_module)
+    setattr(base_module, new_name, new_module)
+
+
+def _get_free_name(module: Module, initial_name: str) -> str:
+    def _has_target(target: str) -> bool:
+        try:
+            module.get_submodule(target)
+            return True
+        except AttributeError:
+            return False
+
+    counter = 0
+    while _has_target(f"{initial_name}{counter}"):
+        counter += 1
+    if hasattr(module, f"{initial_name}{counter}"):
+        raise AssertionError(
+            f"Unable to find a free name for registering a new module."
+            f"module={module} already has an attribute named {initial_name}{counter}."
+        )
+    return f"{initial_name}{counter}"
