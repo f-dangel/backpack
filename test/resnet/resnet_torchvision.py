@@ -28,6 +28,11 @@ def model_and_input() -> Tuple[Module, Tensor]:
 def test_network_diag_ggn(model_and_input):
     """Test whether the given module can compute diag_ggn.
 
+    This test is placed here, because some models are too big to run with PyTorch.
+    Thus, a diag_ggn comparison with PyTorch is impossible.
+    This test just checks whether it runs on BackPACK without errors.
+    Additionally, it checks whether the forward pass is identical to the original model.
+
     Args:
         model_and_input: module to test
     """
