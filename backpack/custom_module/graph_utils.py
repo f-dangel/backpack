@@ -79,8 +79,15 @@ def _transform_mul_to_scale_module(module: Module, debug: bool) -> GraphModule:
 
     for node in graph.nodes:
         if node.op == "call_function" and str(node.target) == target:
+            assert len(node.args) == 2
+            index_weight = 0 if isinstance(node.args[0], float) else 1
+            assert isinstance(node.args[index_weight], float)
             _change_node_to_module(
-                node, "scale_module", module, ScaleModule(node.args[1]), (node.args[0],)
+                node,
+                "scale_module",
+                module,
+                ScaleModule(node.args[index_weight]),
+                (node.args[1 - index_weight],),
             )
             counter += 1
 
