@@ -220,7 +220,7 @@ if TORCH_VERSION_AT_LEAST_1_9_0:
     LOCAL_SETTINGS += [
         {
             "input_fn": lambda: ResNet1.input_test,
-            "module_fn": lambda: convert_module_to_backpack(ResNet1().eval(), True),
+            "module_fn": lambda: convert_module_to_backpack(ResNet1(), True),
             "loss_function_fn": lambda: ResNet1.loss_test,
             "target_fn": lambda: ResNet1.target_test,
             "id_prefix": "ResNet1",
