@@ -145,7 +145,7 @@ def _transform_inplace_to_normal(
         module.inplace = False
         _transform_inplace_to_normal.counter += 1
     for child_module in module.children():
-        _transform_inplace_to_normal(child_module, initialize_recursion=False)
+        _transform_inplace_to_normal(child_module, debug, initialize_recursion=False)
 
     if initialize_recursion:
         if debug:
