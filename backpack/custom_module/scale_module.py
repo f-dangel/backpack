@@ -11,8 +11,12 @@ class ScaleModule(Module):
 
         Args:
             weight: Initial value for weight. Defaults to 1.0.
+
+        Raises:
+            AssertionError: if weight is no float
         """
         super().__init__()
+        assert isinstance(weight, float)
         self.weight: float = weight
 
     def forward(self, input: Tensor) -> Tensor:
@@ -24,4 +28,5 @@ class ScaleModule(Module):
         Returns:
             product of input and weight
         """
+        assert isinstance(input, Tensor)
         return input * self.weight
