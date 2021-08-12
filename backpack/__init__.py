@@ -240,7 +240,7 @@ def extend(module: Module, debug: bool = False, use_converter: bool = False) -> 
 
     if use_converter:
         if TORCH_VERSION_AT_LEAST_1_9_0:
-            module: GraphModule = convert_module_to_backpack(module)
+            module: GraphModule = convert_module_to_backpack(module, debug)
             return extend(module)
         else:
             raise NotImplementedError(

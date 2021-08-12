@@ -32,7 +32,7 @@ def print_table(module: Module) -> None:
     graph.print_tabular()
 
 
-def convert_module_to_backpack(module: Module) -> GraphModule:
+def convert_module_to_backpack(module: Module, debug: bool) -> GraphModule:
     """Convert all modules to BackPACK-compatible modules.
 
     Transformations:
@@ -42,6 +42,7 @@ def convert_module_to_backpack(module: Module) -> GraphModule:
 
     Args:
         module: module to convert
+        debug: if True prints to command line
 
     Returns:
         BackPACK-compatible module
@@ -54,21 +55,25 @@ def convert_module_to_backpack(module: Module) -> GraphModule:
             "Conversion is only possible for torch >= 1.9.0. This is because these "
             "functions use functionality such as torch.nn.Module.get_submodule"
         )
-    print("\nMake module BackPACK-compatible...")
-    module_new = _transform_mul_to_scale_module(module)
-    module_new = _transform_flatten_to_module(module_new)
-    module_new = _transform_add_to_sum_module(module_new)
-    module_new = _transform_inplace_to_normal(module_new)
-    module_new = _transform_remove_duplicates(module_new)
-    print("\tDelete unused modules.")
+    if debug:
+        print("\nMake module BackPACK-compatible...")
+    module_new = _transform_mul_to_scale_module(module, debug)
+    module_new = _transform_flatten_to_module(module_new, debug)
+    module_new = _transform_add_to_sum_module(module_new, debug)
+    module_new = _transform_inplace_to_normal(module_new, debug)
+    module_new = _transform_remove_duplicates(module_new, debug)
+    if debug:
+        print("\tDelete unused modules.")
     module_new.delete_all_unused_submodules()
-    print("Finished transformation.\n")
+    if debug:
+        print("Finished transformation.\n")
     return module_new
 
 
-def _transform_mul_to_scale_module(module: Module) -> GraphModule:
+def _transform_mul_to_scale_module(module: Module, debug: bool) -> GraphModule:
     target = "<built-in function mul>"
-    print(f"\tBegin transformation: {target} -> ScaleModule")
+    if debug:
+        print(f"\tBegin transformation: {target} -> ScaleModule")
     counter: int = 0
     graph: Graph = BackpackTracer().trace(module)
 
@@ -80,13 +85,15 @@ def _transform_mul_to_scale_module(module: Module) -> GraphModule:
             counter += 1
 
     graph.lint()
-    print(f"\tMultiplications transformed: {counter}")
+    if debug:
+        print(f"\tMultiplications transformed: {counter}")
     return GraphModule(module, graph)
 
 
-def _transform_add_to_sum_module(module: Module) -> GraphModule:
+def _transform_add_to_sum_module(module: Module, debug: bool) -> GraphModule:
     target = "<built-in function add>"
-    print(f"\tBegin transformation: {target} -> SumModule")
+    if debug:
+        print(f"\tBegin transformation: {target} -> SumModule")
     counter: int = 0
     graph: Graph = BackpackTracer().trace(module)
 
@@ -96,13 +103,15 @@ def _transform_add_to_sum_module(module: Module) -> GraphModule:
             counter += 1
 
     graph.lint()
-    print(f"\tSummations transformed: {counter}")
+    if debug:
+        print(f"\tSummations transformed: {counter}")
     return GraphModule(module, graph)
 
 
-def _transform_flatten_to_module(module: Module) -> GraphModule:
+def _transform_flatten_to_module(module: Module, debug: bool) -> GraphModule:
     target = "<built-in method flatten"
-    print(f"\tBegin transformation: {target} -> Flatten")
+    if debug:
+        print(f"\tBegin transformation: {target} -> Flatten")
     counter: int = 0
     graph: Graph = BackpackTracer().trace(module)
 
@@ -120,15 +129,17 @@ def _transform_flatten_to_module(module: Module) -> GraphModule:
             counter += 1
 
     graph.lint()
-    print(f"\tFlatten transformed: {counter}")
+    if debug:
+        print(f"\tFlatten transformed: {counter}")
     return GraphModule(module, graph)
 
 
 def _transform_inplace_to_normal(
-    module: Module, initialize_recursion: bool = True
+    module: Module, debug: bool, initialize_recursion: bool = True
 ) -> Module:
     if initialize_recursion:
-        print("\tBegin transformation: in-place -> standard")
+        if debug:
+            print("\tBegin transformation: in-place -> standard")
         _transform_inplace_to_normal.counter = 0
     if hasattr(module, "inplace") and module.inplace:
         module.inplace = False
@@ -137,13 +148,17 @@ def _transform_inplace_to_normal(
         _transform_inplace_to_normal(child_module, initialize_recursion=False)
 
     if initialize_recursion:
-        print(f"\tIn-place changed: {_transform_inplace_to_normal.counter}")
+        if debug:
+            print(f"\tIn-place changed: {_transform_inplace_to_normal.counter}")
         del _transform_inplace_to_normal.counter
     return module
 
 
-def _transform_remove_duplicates(module: Module, max_depth: int = 100) -> GraphModule:
-    print("\tBegin transformation: remove duplicates")
+def _transform_remove_duplicates(
+    module: Module, debug: bool, max_depth: int = 100
+) -> GraphModule:
+    if debug:
+        print("\tBegin transformation: remove duplicates")
     counter = 0
     graph: Graph = BackpackTracer().trace(module)
     targets: Set[str] = set()
@@ -171,7 +186,8 @@ def _transform_remove_duplicates(module: Module, max_depth: int = 100) -> GraphM
             targets.add(node.target)
 
     graph.lint()
-    print(f"\tDuplicates removed: {counter}")
+    if debug:
+        print(f"\tDuplicates removed: {counter}")
     return GraphModule(module, graph)
 
 

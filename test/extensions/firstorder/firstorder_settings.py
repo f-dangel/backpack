@@ -294,7 +294,7 @@ if TORCH_VERSION_AT_LEAST_1_9_0:
         {
             "input_fn": lambda: rand(2, 3, 7, 7),
             "module_fn": lambda: convert_module_to_backpack(
-                resnet18(num_classes=4).eval()
+                resnet18(num_classes=4).eval(), True
             ),
             "loss_function_fn": lambda: MSELoss(),
             "target_fn": lambda: regression_targets((2, 4)),
