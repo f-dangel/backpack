@@ -89,6 +89,8 @@ test/core/derivatives/permute_settings.py
 test/core/derivatives/lstm_settings.py
 test/core/derivatives/pooling_adaptive_settings.py
 test/core/derivatives/batch_norm_settings.py
+test/core/derivatives/sum_module_settings.py
+test/core/derivatives/scale_module_settings.py
 test/utils/evaluation_mode.py
 test/utils/skip_test.py
 test/utils/__init__.py

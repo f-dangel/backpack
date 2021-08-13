@@ -16,7 +16,9 @@ from test.core.derivatives.lstm_settings import LSTM_SETTINGS
 from test.core.derivatives.permute_settings import PERMUTE_SETTINGS
 from test.core.derivatives.problem import DerivativesTestProblem, make_test_problems
 from test.core.derivatives.rnn_settings import RNN_SETTINGS as RNN_SETTINGS
+from test.core.derivatives.scale_module_settings import SCALE_MODULE_SETTINGS
 from test.core.derivatives.settings import SETTINGS
+from test.core.derivatives.sum_module_settings import SUM_MODULE_SETTINGS
 from test.utils.skip_test import (
     skip_adaptive_avg_pool3d_cuda,
     skip_batch_norm_train_mode_with_subsampling,
@@ -53,6 +55,12 @@ PERMUTE_IDS = [problem.make_id() for problem in PERMUTE_PROBLEMS]
 
 BATCH_NORM_PROBLEMS = make_test_problems(BATCH_NORM_SETTINGS)
 BATCH_NORM_IDS = [problem.make_id() for problem in BATCH_NORM_PROBLEMS]
+
+SCALE_MODULE_PROBLEMS = make_test_problems(SCALE_MODULE_SETTINGS)
+SCALE_MODULE_IDS = [problem.make_id() for problem in SCALE_MODULE_PROBLEMS]
+
+SUM_MODULE_PROBLEMS = make_test_problems(SUM_MODULE_SETTINGS)
+SUM_MODULE_IDS = [problem.make_id() for problem in SUM_MODULE_PROBLEMS]
 
 SUBSAMPLINGS = [None, [0, 0], [2, 0]]
 SUBSAMPLING_IDS = [f"subsampling={s}".replace(" ", "") for s in SUBSAMPLINGS]
@@ -123,8 +131,18 @@ def test_jac_mat_prod(problem: DerivativesTestProblem, V: int = 3) -> None:
 @mark.parametrize("subsampling", SUBSAMPLINGS, ids=SUBSAMPLING_IDS)
 @mark.parametrize(
     "problem",
-    NO_LOSS_PROBLEMS + RNN_PROBLEMS + PERMUTE_PROBLEMS + BATCH_NORM_PROBLEMS,
-    ids=NO_LOSS_IDS + RNN_IDS + PERMUTE_IDS + BATCH_NORM_IDS,
+    NO_LOSS_PROBLEMS
+    + RNN_PROBLEMS
+    + PERMUTE_PROBLEMS
+    + BATCH_NORM_PROBLEMS
+    + SCALE_MODULE_PROBLEMS
+    + SUM_MODULE_PROBLEMS,
+    ids=NO_LOSS_IDS
+    + RNN_IDS
+    + PERMUTE_IDS
+    + BATCH_NORM_IDS
+    + SCALE_MODULE_IDS
+    + SUM_MODULE_IDS,
 )
 def test_jac_t_mat_prod(
     problem: DerivativesTestProblem,
