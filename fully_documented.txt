@@ -94,6 +94,6 @@ test/core/derivatives/scale_module_settings.py
 test/utils/evaluation_mode.py
 test/utils/skip_test.py
 test/utils/__init__.py
-test/resnet/
+test/converter/
 test/utils/test_subsampling.py
 test/custom_module/

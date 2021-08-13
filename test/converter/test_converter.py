@@ -1,28 +1,40 @@
-"""Test whether torchvision is extendable with graph utils."""
+"""Tests converter.
+
+- whether converted network is equivalent to original network
+- whether DiagGGN runs without errors on new network
+"""
+from test.converter.converter_cases import CONVERTER_MODULES, ConverterModule
 from test.utils.skip_test import skip_pytorch_below_1_9_0
 from typing import Tuple
 
-import torchvision.models
 from pytest import fixture
-from torch import Tensor, allclose, manual_seed, rand, rand_like
+from torch import Tensor, allclose, manual_seed, rand_like
 from torch.nn import Module, MSELoss
 
 from backpack import backpack, extend
 from backpack.extensions import DiagGGNExact
 
 
-@fixture
-def model_and_input() -> Tuple[Module, Tensor]:
+@fixture(
+    params=CONVERTER_MODULES,
+    ids=[str(model_class) for model_class in CONVERTER_MODULES],
+)
+def model_and_input(request) -> Tuple[Module, Tensor]:
     """Yield ResNet model and an input to it.
+
+    Args:
+        request: pytest request
 
     Yields:
         model and input
     """
     manual_seed(0)
     skip_pytorch_below_1_9_0()
-    resnet18 = torchvision.models.resnet18(num_classes=4).eval()
-    yield resnet18, rand(2, 3, 7, 7, requires_grad=True)
-    del resnet18
+    model: ConverterModule = request.param()
+    inputs: Tensor = model.input_fn()
+    inputs.requires_grad = True
+    yield model, inputs
+    del model
 
 
 def test_network_diag_ggn(model_and_input):
@@ -39,7 +51,7 @@ def test_network_diag_ggn(model_and_input):
     model_original, x = model_and_input
     result_compare = model_original(x)
 
-    model_extended = extend(model_original, use_converter=True)
+    model_extended = extend(model_original, use_converter=True, debug=True)
     result = model_extended(x)
 
     assert allclose(result, result_compare, atol=1e-3)
