@@ -9,11 +9,11 @@ Includes
 Shared settings are taken from `test.extensions.secondorder.secondorder_settings`.
 Additional local cases can be defined here through ``LOCAL_SETTINGS``.
 """
-from test.core.derivatives.utils import regression_targets
+from test.core.derivatives.utils import classification_targets, regression_targets
 from test.extensions.secondorder.secondorder_settings import SECONDORDER_SETTINGS
 from test.utils.evaluation_mode import initialize_training_false_recursive
 
-from torch import rand
+from torch import rand, randint
 from torch.nn import (
     RNN,
     AdaptiveAvgPool1d,
@@ -22,6 +22,8 @@ from torch.nn import (
     BatchNorm1d,
     BatchNorm2d,
     BatchNorm3d,
+    CrossEntropyLoss,
+    Embedding,
     Flatten,
     Linear,
     MSELoss,
@@ -125,4 +127,30 @@ LOCAL_SETTINGS += [
         "target_fn": lambda: regression_targets((3, 4 * 1 * 3 * 3)),
     },
 ]
+###############################################################################
+#                               Embedding                                     #
+###############################################################################
+LOCAL_SETTINGS += [
+    {
+        "input_fn": lambda: randint(0, 5, (6,)),
+        "module_fn": lambda: Sequential(
+            Embedding(5, 3),
+            Linear(3, 4),
+        ),
+        "loss_function_fn": lambda: CrossEntropyLoss(reduction="mean"),
+        "target_fn": lambda: classification_targets((6,), 4),
+    },
+    {
+        "input_fn": lambda: randint(0, 3, (3, 2, 2)),
+        "module_fn": lambda: Sequential(
+            Embedding(3, 2),
+            Flatten(),
+        ),
+        "loss_function_fn": lambda: CrossEntropyLoss(reduction="mean"),
+        "target_fn": lambda: classification_targets((3,), 2 * 2),
+        "seed": 1,
+    },
+]
+
+
 DiagGGN_SETTINGS = SHARED_SETTINGS + LOCAL_SETTINGS
