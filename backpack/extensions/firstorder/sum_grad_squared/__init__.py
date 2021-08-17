@@ -13,6 +13,7 @@ from torch.nn import (
     ConvTranspose1d,
     ConvTranspose2d,
     ConvTranspose3d,
+    Embedding,
     Linear,
 )
 
@@ -26,6 +27,7 @@ from . import (
     convtranspose1d,
     convtranspose2d,
     convtranspose3d,
+    embedding,
     linear,
     rnn,
 )
@@ -67,5 +69,6 @@ class SumGradSquared(FirstOrderBackpropExtension):
                 BatchNorm1d: batchnorm_nd.SGSBatchNormNd(),
                 BatchNorm2d: batchnorm_nd.SGSBatchNormNd(),
                 BatchNorm3d: batchnorm_nd.SGSBatchNormNd(),
+                Embedding: embedding.SGSEmbedding(),
             },
         )
