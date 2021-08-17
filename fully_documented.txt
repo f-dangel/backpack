@@ -13,6 +13,7 @@ backpack/core/derivatives/lstm.py
 backpack/core/derivatives/linear.py
 backpack/core/derivatives/adaptive_avg_pool_nd.py
 backpack/core/derivatives/batchnorm_nd.py
+backpack/core/derivatives/embedding.py
 
 backpack/extensions/__init__.py
 backpack/extensions/backprop_extension.py
