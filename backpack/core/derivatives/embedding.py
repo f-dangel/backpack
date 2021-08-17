@@ -1,10 +1,11 @@
 """Derivatives for Embedding."""
 from typing import List, Tuple
 
-from torch import Tensor, einsum, zeros
+from torch import Tensor, einsum, flatten, zeros
 from torch.nn import Embedding
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
+from backpack.utils import TORCH_VERSION_AT_LEAST_1_9_0
 from backpack.utils.subsampling import subsample
 
 
@@ -46,11 +47,15 @@ class EmbeddingDerivatives(BaseParameterDerivatives):
         delta = zeros(module.num_embeddings, *input0.shape, device=mat.device)
         for s in range(module.num_embeddings):
             delta[s] = input0 == s
-        return einsum(
-            f"sn...,vn...h->v{'' if sum_batch else 'n'}sh",
-            delta,
-            mat,
-        )
+        if TORCH_VERSION_AT_LEAST_1_9_0:
+            equation = f"sn...,vn...h->v{'' if sum_batch else 'n'}sh"
+        elif delta.dim() >= 3:
+            equation = f"snx,vnxh->v{'' if sum_batch else 'n'}sh"
+            delta = flatten(delta, start_dim=2, end_dim=-1)
+            mat = flatten(mat, start_dim=2, end_dim=-2)
+        else:
+            equation = f"sn,vnh->v{'' if sum_batch else 'n'}sh"
+        return einsum(equation, delta, mat)
 
     def _check_parameters(self, module: Embedding) -> None:
         if module.padding_idx is not None:
@@ -61,3 +66,6 @@ class EmbeddingDerivatives(BaseParameterDerivatives):
             raise NotImplementedError("Only scale_grad_by_freq=False supported.")
         elif module.sparse:  # TODO sparse might be supported -> test
             raise NotImplementedError("Only sparse=False supported.")
+
+    def hessian_is_zero(self, module: Embedding) -> bool:  # noqa: D102
+        return False  # TODO discuss
