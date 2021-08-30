@@ -205,7 +205,10 @@ def hook_run_extensions(
         print("[DEBUG] Running extension hook on", module)
     CTX.get_extension_hook()(module)
 
-    if not (
+    # could be made more precise to check for backward/grad
+    fr = [f[0] for f in inspect.stack() if "/torch/autograd/" in f.filename][-1]
+    retain_graph = inspect.getargvalues(fr).locals["retain_graph"]
+    if not retain_graph and not (
         CTX.is_extension_active(
             extensions.curvmatprod.HMP,
             extensions.curvmatprod.GGNMP,
