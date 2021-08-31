@@ -46,7 +46,7 @@ from torchvision.models import resnet18
 
 from backpack import backpack, extend
 from backpack.custom_module.branching import ActiveIdentity, Parallel, SumModule
-from backpack.custom_module.graph_utils import print_table
+from backpack.custom_module.graph_utils import BackpackTracer
 from backpack.extensions import BatchGrad, DiagGGNExact
 from backpack.utils.examples import autograd_diag_ggn_exact, load_one_batch_mnist
 
@@ -226,30 +226,87 @@ for idx, element in zip(idx_to_compare, diag_ggn_exact_to_compare):
 # %%
 # Any ResNet with BackPACK's converter
 # -------------
-# For more complex architectures, e.g. resnet18 from torchvision,
-# BackPACK has a converter function.
-# It creates a torch.fx.GraphModule and converts all known schemes to a BackPACK
-# compatible module.
-# Whether the graph consists exclusively of modules can be checked in the table.
+# If you are not building a ResNet through custom modules but for instance want to
+# use a prominent ResNet from :py:mod:`torchvision.models`, BackPACK offers a converter.
+# It analyzes the model and tries to turn it into a compatible architecture. The result
+# is a :py:class:`torch.fx.GraphModule` that exclusively consists of modules.
 #
-# Resnet18 has to be in evaluation mode, because there are BatchNorm layers involved.
-# For these, individual gradients can be computed but are not well-defined.
+# Here, we demo the converter on :py:class:`resnet18 <torchvision.models.resnet18>`.
 #
-# Here, we use a limited number of classes, because the DiagGGN extension memory usage
-# scales with it. In theory, it should work with more classes, but the current
-# implementation is not memory efficient enough.
-model = resnet18(num_classes=5).to(DEVICE).eval()
+# .. note::
+#
+#    :py:class:`resnet18 <torchvision.models.resnet18>` has to be in evaluation mode,
+#    because it contains batch normalization layers that are not supported in train
+#    mode by the second-order extension used in this example.
+#
+# Let's create the model, and convert it in the call to :py:func:`extend <backpack.extend>`:
+
 loss_function = extend(MSELoss())
+model = resnet18(num_classes=5).to(DEVICE).eval()
+
+# use BackPACK's converter to extend the model (turned off by default)
 model = extend(model, use_converter=True)
+
+# %%
+# To get an understanding what happened we can inspect the model's graph with the
+# following helper function:
+
+
+def print_table(module: Module) -> None:
+    """Prints a table of the module.
+
+    Args:
+        module: module to analyze
+    """
+    graph = BackpackTracer().trace(module)
+    graph.print_tabular()
+
+
 print_table(model)
 
 # %%
-# If successful, first and second order quantities can be computed.
-inputs = rand(4, 3, 7, 7, device=DEVICE)  # (128, 3, 224, 224)
-output = model(inputs)
-loss = loss_function(output, rand_like(output))
+# Admittedly, the converted :py:class:`resnet18 <torchvision.models.resnet18>`'s graph
+# is quite large. Note however that it fully consists of modules (indicated by
+# ``call_module`` in the first table column) such that BackPACK's hooks can
+# successfully backpropagate additional information for its second-order extensions
+# (first-order extensions work, too).
+#
+# Let's verify that second-order extensions are working:
+
+x = rand(4, 3, 7, 7, device=DEVICE)  # (128, 3, 224, 224)
+output = model(x)
+y = rand_like(output)
+
+loss = loss_function(output, y)
 
 with backpack(DiagGGNExact()):
     loss.backward()
+
 for name, parameter in model.named_parameters():
     print(f"{name}'s diag_ggn_exact: {parameter.diag_ggn_exact.shape}")
+
+diag_ggn_exact_vector = cat([p.diag_ggn_exact.flatten() for p in model.parameters()])
+
+# %%
+# Comparison with :py:mod:`torch.autograd`:
+#
+# .. note::
+#
+#    Computing the full GGN diagonal with PyTorch's built-in automatic differentiation
+#    can be slow, depending on the number of parameters. To reduce run time, we only
+#    compare some elements of the diagonal.
+
+num_params = sum(p.numel() for p in model.parameters())
+num_to_compare = 10
+idx_to_compare = linspace(0, num_params - 1, num_to_compare, device=DEVICE).int()
+
+diag_ggn_exact_to_compare = autograd_diag_ggn_exact(
+    x, y, model, loss_function, idx=idx_to_compare
+)
+
+print("Do the exact GGN diagonals match?")
+for idx, element in zip(idx_to_compare, diag_ggn_exact_to_compare):
+    match = allclose(element, diag_ggn_exact_vector[idx], atol=1e-7)
+    print(f"Diagonal entry {idx:>8}: {match}")
+    if not match:
+        raise AssertionError("Exact GGN diagonals don't match!")

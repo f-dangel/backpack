@@ -22,16 +22,6 @@ class BackpackTracer(Tracer):
             return super().is_leaf_module(m, module_qualified_name)
 
 
-def print_table(module: Module) -> None:
-    """Prints a table of the module.
-
-    Args:
-        module: module to analyze
-    """
-    graph = BackpackTracer().trace(module)
-    graph.print_tabular()
-
-
 def convert_module_to_backpack(module: Module, debug: bool) -> GraphModule:
     """Convert all modules to BackPACK-compatible modules.
 
