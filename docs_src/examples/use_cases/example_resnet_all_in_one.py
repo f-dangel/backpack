@@ -8,14 +8,14 @@
 #    by defining its forward pass. Trainable parameters must be in modules known to
 #    BackPACK (e.g. :class:`torch.nn.Conv2d`, :class:`torch.nn.Linear`).
 #
-# 2. :ref:`Custom ResNet using BackPACK custom modules`: (Works for first- and second-
+# 2. :ref:`Custom ResNet with BackPACK custom modules`: (Works for first- and second-
 #    order extensions) Build your ResNet with custom modules provided by BackPACK
 #    without overwriting the forward pass. This approach is useful if you want to
 #    understand how BackPACK handles ResNets, or if you think building a container
 #    module that implicitly defines the forward pass is more elegant than coding up
 #    a forward pass.
 #
-# 3. :ref:`Any ResNet using BackPACK's converter`: (Works for first- and second-order
+# 3. :ref:`Any ResNet with BackPACK's converter`: (Works for first- and second-order
 #    extensions) Convert your model into a BackPACK-compatible architecture.
 #
 # .. note::
@@ -29,7 +29,7 @@
 # %%
 # Let's get the imports out of the way.
 
-from torch import allclose, cuda, device, rand, rand_like
+from torch import allclose, cat, cuda, device, linspace, manual_seed, rand, rand_like
 from torch.nn import (
     Conv2d,
     CrossEntropyLoss,
@@ -48,8 +48,9 @@ from backpack import backpack, extend
 from backpack.custom_module.branching import ActiveIdentity, Parallel, SumModule
 from backpack.custom_module.graph_utils import print_table
 from backpack.extensions import BatchGrad, DiagGGNExact
-from backpack.utils.examples import load_one_batch_mnist
+from backpack.utils.examples import autograd_diag_ggn_exact, load_one_batch_mnist
 
+manual_seed(0)
 DEVICE = device("cuda:0" if cuda.is_available() else "cpu")
 x, y = load_one_batch_mnist(batch_size=32)
 x, y = x.to(DEVICE), y.to(DEVICE)
@@ -132,52 +133,98 @@ for name, parameter in model.named_parameters():
         raise AssertionError("Individual gradients don't match!")
 
 # %%
-# Custom ResNet using BackPACK custom modules
+# Custom ResNet with BackPACK custom modules
 # -------------
-# For second order extensions, every single node in the computation graph needs
-# to be extended by BackPACK.
-# This is why BackPACK offers custom modules to be used in ResNets:
+# Second-order extensions only work if every node in the computation graph is an
+# ``nn`` module that can be extended by BackPACK. The above ResNet class
+# :py:class:`MyFirstResNet<MyFirstResNet>` does not satisfy these conditions, because
+# it implements the skip connection via :py:func:`torch.add` while overwriting the
+# :py:meth:`forward() <torch.nn.Module.forward>` method.
 #
-# :py:class:`Parallel<backpack.branching.Parallel>` is similar to
-# :py:class:`torch.nn.Sequential` being a container for a sequence of modules.
+# To build ResNets without overwriting the forward pass, BackPACK offers custom modules:
 #
-# :py:class:`SumModule<backpack.branching.SumModule>`, which is internally used as the default
-# aggregation function in :py:class:`Parallel<backpack.branching.Parallel>`.
+# - :py:class:`Parallel<backpack.branching.Parallel>` is similar to
+#   :py:class:`torch.nn.Sequential`, but implements a container for a parallel sequence
+#   of modules (followed by an aggregation module), rather than a sequential one.
 #
-# :py:class:`ActiveIdentity<backpack.branching.ActiveIdentity>`, which acts like
-# PyTorch's identity, but fixes the backward hook execution order by inserting a new
-# node into the graph during a forward pass.
-# For PyTorch >= 1.9.0 it is possible to use :py:class:`Identity` instead.
+# - :py:class:`SumModule<backpack.branching.SumModule>` is the module that takes the
+#   role of :py:func:`torch.add` in the previous example. It sums up multiple inputs.
+#   We will use it to merge the skip connection.
+#
+# - :py:class:`ActiveIdentity<backpack.branching.ActiveIdentity>` acts like
+#   PyTorch's identity, but fixes the backward hook execution order by inserting a new
+#   node into the graph during a forward pass (for details see
+#   `this discussion <https://discuss.pytorch.org/t/backward-hooks-changing-order-of-
+#   execution-in-nn-sequential/12447>`_).
+#   The problem is fixed for ``torch >= 1.9.0``, where it's safe to use
+#   :py:class:`Identity <torch.nn.Identity>`. If you are on ``torch < 1.9.0``, you
+#   have to use :py:class:`ActiveIdentity<backpack.branching.ActiveIdentity>`.
+#
+# With the above modules, we can build a simple ResNet as a container that implicitly
+# defines the forward pass:
 C_in = 1
 C_hid = 2
 input_dim = (28, 28)
 output_dim = 10
 
-model = extend(
-    Sequential(
-        Conv2d(C_in, C_hid, kernel_size=3, stride=1, padding=1),
-        ReLU(),
-        Parallel(
-            ActiveIdentity(),
-            Sequential(
-                Conv2d(C_hid, C_hid, kernel_size=3, stride=1, padding=1),
-                ReLU(),
-            ),
-            merge_module=SumModule(),
+model = Sequential(
+    Conv2d(C_in, C_hid, kernel_size=3, stride=1, padding=1),
+    ReLU(),
+    Parallel(  # skip connection with ReLU-activated convolution
+        ActiveIdentity(),
+        Sequential(
+            Conv2d(C_hid, C_hid, kernel_size=3, stride=1, padding=1),
+            ReLU(),
         ),
-        Flatten(),
-        Linear(input_dim[0] * input_dim[1] * C_hid, output_dim),
-    )
-).to(DEVICE)
+        merge_module=SumModule(),
+    ),
+    Flatten(),
+    Linear(input_dim[0] * input_dim[1] * C_hid, output_dim),
+)
+
+model = extend(model.to(DEVICE))
 loss_function = extend(CrossEntropyLoss(reduction="mean")).to(DEVICE)
+
+
+# %%
+# This ResNets supports BackPACK's second-order extensions:
+
 loss = loss_function(model(x), y)
+
 with backpack(DiagGGNExact()):
     loss.backward()
+
 for name, parameter in model.named_parameters():
     print(f"{name}'s diag_ggn_exact: {parameter.diag_ggn_exact.shape}")
 
+diag_ggn_exact_vector = cat([p.diag_ggn_exact.flatten() for p in model.parameters()])
+
 # %%
-# Any ResNet using BackPACK's converter
+# Comparison with :py:mod:`torch.autograd`:
+#
+# .. note::
+#
+#    Computing the full GGN diagonal with PyTorch's built-in automatic differentiation
+#    can be slow, depending on the number of parameters. To reduce run time, we only
+#    compare some elements of the diagonal.
+
+num_params = sum(p.numel() for p in model.parameters())
+num_to_compare = 10
+idx_to_compare = linspace(0, num_params - 1, num_to_compare, device=DEVICE).int()
+
+diag_ggn_exact_to_compare = autograd_diag_ggn_exact(
+    x, y, model, loss_function, idx=idx_to_compare
+)
+
+print("Do the exact GGN diagonals match?")
+for idx, element in zip(idx_to_compare, diag_ggn_exact_to_compare):
+    match = allclose(element, diag_ggn_exact_vector[idx], atol=1e-7)
+    print(f"Diagonal entry {idx:>6}: {match}")
+    if not match:
+        raise AssertionError("Exact GGN diagonals don't match!")
+
+# %%
+# Any ResNet with BackPACK's converter
 # -------------
 # For more complex architectures, e.g. resnet18 from torchvision,
 # BackPACK has a converter function.
