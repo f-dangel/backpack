@@ -109,7 +109,7 @@ class DerivativesTestProblem:
     def make_input(self):
         inputs = self.input_fn()
         if isinstance(inputs, tuple):
-            return tuple([input.to(self.device) for input in inputs])
+            return tuple(input.to(self.device) for input in inputs)
         else:
             return inputs.to(self.device)
 
