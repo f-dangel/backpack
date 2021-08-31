@@ -97,14 +97,14 @@ class Parallel(Module):
         *args: Union[OrderedDict[str, Module], Module],
         merge_module: Module = None,
     ):
-        """Same as ``torch.nn.Sequential, but modules are a parallel sequence.
+        """Like ``torch.nn.Sequential``, but defines a parallel module sequence.
 
         Use interface of ``torch.nn.Sequential``.
 
         Args:
             args: either ordered dictionary of modules or tuple of modules
-            merge_module: The module used for merging.
-                Defaults to None, which means SumModule() is used.
+            merge_module: The module used for merging. Defaults to ``None``, which
+                means ``SumModule()`` is used.
         """
         super().__init__()
 
