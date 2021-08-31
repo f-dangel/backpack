@@ -46,9 +46,9 @@ from torchvision.models import resnet18
 
 from backpack.custom_module.permute import Permute
 from backpack.custom_module.reduce_tuple import ReduceTuple
-from backpack.utils import TORCH_VERSION_AT_LEAST_1_9_0
+from backpack.utils import CONVERTER_AVAILABLE
 
-if TORCH_VERSION_AT_LEAST_1_9_0:
+if CONVERTER_AVAILABLE:
     from backpack import convert_module_to_backpack
 
 FIRSTORDER_SETTINGS = []
@@ -289,7 +289,7 @@ FIRSTORDER_SETTINGS += [
 ###############################################################################
 #                     test setting: torchvision resnet                        #
 ###############################################################################
-if TORCH_VERSION_AT_LEAST_1_9_0:
+if CONVERTER_AVAILABLE:
     FIRSTORDER_SETTINGS += [
         {
             "input_fn": lambda: rand(2, 3, 7, 7),

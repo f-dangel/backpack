@@ -38,9 +38,9 @@ from backpack.custom_module import branching
 from backpack.custom_module.branching import ActiveIdentity, Parallel
 from backpack.custom_module.permute import Permute
 from backpack.custom_module.reduce_tuple import ReduceTuple
-from backpack.utils import TORCH_VERSION_AT_LEAST_1_9_0
+from backpack.utils import CONVERTER_AVAILABLE
 
-if TORCH_VERSION_AT_LEAST_1_9_0:
+if CONVERTER_AVAILABLE:
     from backpack import convert_module_to_backpack
 
 SHARED_SETTINGS = SECONDORDER_SETTINGS
@@ -216,7 +216,7 @@ LOCAL_SETTINGS += [
 ###############################################################################
 #                      Branched models - converter                            #
 ###############################################################################
-if TORCH_VERSION_AT_LEAST_1_9_0:
+if CONVERTER_AVAILABLE:
     LOCAL_SETTINGS += [
         {
             "input_fn": lambda: ResNet1.input_test,

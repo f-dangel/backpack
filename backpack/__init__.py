@@ -9,11 +9,11 @@ from torch.nn import Module
 from backpack import extensions
 from backpack.context import CTX
 from backpack.extensions.backprop_extension import BackpropExtension
-from backpack.utils import FULL_BACKWARD_HOOK, TORCH_VERSION_AT_LEAST_1_9_0
+from backpack.utils import CONVERTER_AVAILABLE, FULL_BACKWARD_HOOK
 from backpack.utils.hooks import no_op
 from backpack.utils.module_classification import is_no_op
 
-if TORCH_VERSION_AT_LEAST_1_9_0:
+if CONVERTER_AVAILABLE:
     from torch.fx import GraphModule
 
     from backpack.custom_module.graph_utils import convert_module_to_backpack
@@ -233,19 +233,17 @@ def extend(module: Module, debug: bool = False, use_converter: bool = False) -> 
         Extended module.
 
     Raises:
-        NotImplementedError: if trying to use converter without torch>=1.9.0
+        RuntimeError: if trying to use converter without torch>=1.9.0
     """
     if debug:
         print("[DEBUG] Extending", module)
 
     if use_converter:
-        if TORCH_VERSION_AT_LEAST_1_9_0:
-            module: GraphModule = convert_module_to_backpack(module, debug)
-            return extend(module)
-        else:
-            raise NotImplementedError(
-                "The option use_converter=True is only available for Pytorch>=1.9.0."
-            )
+        if not CONVERTER_AVAILABLE:
+            raise RuntimeError("use_converter=True is only available for torch>=1.9.0.")
+
+        module: GraphModule = convert_module_to_backpack(module, debug)
+        return extend(module)
 
     for child in module.children():
         extend(child, debug=debug)
