@@ -26,7 +26,7 @@ class backpack:
         self,
         *exts: BackpropExtension,
         extension_hook: Callable[[Module], None] = None,
-        debug: bool = False
+        debug: bool = False,
     ):
         """Activate BackPACK extensions.
 
@@ -52,14 +52,14 @@ class backpack:
             if not isinstance(ext, BackpropExtension):
                 if isclass(ext) and issubclass(ext, BackpropExtension):
                     raise ValueError(
-                        "backpack expect instances of BackpropExtension,"
-                        + " but received a class instead [{}].".format(ext)
+                        "backpack expects instances of BackpropExtension,"
+                        + f" but received a class instead [{ext}]."
                         + " Instantiate it before passing it to backpack."
                     )
                 else:
                     raise ValueError(
                         "backpack expects instances of BackpropExtension,"
-                        + " but received [{}].".format(ext)
+                        + f" but received [{ext}]."
                     )
 
         self.exts: Tuple[BackpropExtension, ...] = exts
