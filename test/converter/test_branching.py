@@ -14,7 +14,7 @@ from test.core.derivatives.utils import classification_targets
 from typing import Callable, Tuple
 
 from pytest import mark, raises
-from torch import Tensor, cat, manual_seed, rand, zeros
+from torch import Tensor, cat, manual_seed, rand
 from torch.nn import (
     CrossEntropyLoss,
     Identity,
@@ -24,13 +24,11 @@ from torch.nn import (
     Sequential,
     Sigmoid,
 )
-from torch.nn.utils.convert_parameters import parameters_to_vector
 
 from backpack import backpack, extend, extensions
 from backpack.custom_module.branching import ActiveIdentity, Parallel
-from backpack.hessianfree.ggnvp import ggn_vector_product
 from backpack.utils import FULL_BACKWARD_HOOK, exception_inside_backward_pass
-from backpack.utils.convert_parameters import vector_to_parameter_list
+from backpack.utils.examples import autograd_diag_ggn_exact
 
 
 def setup(
@@ -130,40 +128,6 @@ def setup_convenient(
         loss_function = extend(loss_function, debug=True)
 
     return X, y, model, loss_function
-
-
-def autograd_diag_ggn_exact(
-    X: Tensor, y: Tensor, model: Module, loss_function: Module
-) -> Tensor:
-    """Compute the generalized Gauss-Newton diagonal via autodiff.
-
-    Args:
-        X: data
-        y: target
-        model: model
-        loss_function: loss function
-
-    Returns:
-        diag_ggn
-    """
-    D = sum(p.numel() for p in model.parameters())
-
-    outputs = model(X)
-    loss = loss_function(outputs, y)
-
-    ggn_diag = zeros(D)
-
-    # compute GGN columns by GGNVPs with one-hot vectors
-    for d in range(D):
-        e_d = zeros(D)
-        e_d[d] = 1.0
-        e_d_list = vector_to_parameter_list(e_d, model.parameters())
-
-        ggn_d_list = ggn_vector_product(loss, outputs, model, e_d_list)
-
-        ggn_diag[d] = parameters_to_vector(ggn_d_list)[d]
-
-    return ggn_diag
 
 
 def backpack_diag_ggn_exact(
