@@ -1,45 +1,59 @@
 """Utility functions for examples."""
 from typing import Iterator, List, Tuple
 
-import torch
-import torchvision
 from torch import Tensor, stack, zeros
 from torch.nn import Module
 from torch.nn.utils.convert_parameters import parameters_to_vector
+from torch.utils.data import DataLoader, Dataset
+from torchvision.datasets import MNIST
+from torchvision.transforms import Compose, Normalize, ToTensor
 
 from backpack.hessianfree.ggnvp import ggn_vector_product
 from backpack.utils.convert_parameters import vector_to_parameter_list
 
 
-def load_mnist_dataset():
-    """Download and normalize MNIST training data."""
-    mnist_dataset = torchvision.datasets.MNIST(
+def load_mnist_dataset() -> Dataset:
+    """Download and normalize MNIST training data.
+
+    Returns:
+        Normalized MNIST dataset
+    """
+    return MNIST(
         root="./data",
         train=True,
-        transform=torchvision.transforms.Compose(
-            [
-                torchvision.transforms.ToTensor(),
-                torchvision.transforms.Normalize((0.1307,), (0.3081,)),
-            ]
-        ),
+        transform=Compose([ToTensor(), Normalize((0.1307,), (0.3081,))]),
         download=True,
     )
-    return mnist_dataset
 
 
-def get_mnist_dataloader(batch_size=64, shuffle=True):
-    """Returns a dataloader for MNIST"""
-    return torch.utils.data.dataloader.DataLoader(
-        load_mnist_dataset(),
-        batch_size=batch_size,
-        shuffle=shuffle,
-    )
+def get_mnist_dataloader(batch_size: int = 64, shuffle: bool = True) -> DataLoader:
+    """Returns a dataloader for MNIST.
+
+    Args:
+        batch_size: Mini-batch size. Default: ``64``.
+        shuffle: Randomly shuffle the data. Default: ``True``.
+
+    Returns:
+        MNIST dataloader
+    """
+    return DataLoader(load_mnist_dataset(), batch_size=batch_size, shuffle=shuffle)
 
 
-def load_one_batch_mnist(batch_size=64, shuffle=True):
-    """Return a single batch (inputs, labels) of MNIST data."""
+def load_one_batch_mnist(
+    batch_size: int = 64, shuffle: bool = True
+) -> Tuple[Tensor, Tensor]:
+    """Return a single mini-batch (inputs, labels) from MNIST.
+
+    Args:
+        batch_size: Mini-batch size. Default: ``64``.
+        shuffle: Randomly shuffle the data. Default: ``True``.
+
+    Returns:
+        A single batch (inputs, labels) from MNIST.
+    """
     dataloader = get_mnist_dataloader(batch_size, shuffle)
     X, y = next(iter(dataloader))
+
     return X, y
 
 

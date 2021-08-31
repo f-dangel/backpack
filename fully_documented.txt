@@ -61,6 +61,7 @@ backpack/utils/errors.py
 backpack/utils/__init__.py
 backpack/utils/module_classification.py
 backpack/utils/hooks.py
+backpack/utils/examples.py
 
 test/extensions/automated_settings.py
 test/extensions/problem.py
