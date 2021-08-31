@@ -24,6 +24,7 @@ from test.utils.evaluation_mode import initialize_training_false_recursive
 
 from torch import device, rand
 from torch.nn import (
+    LSTM,
     RNN,
     BatchNorm1d,
     BatchNorm2d,
@@ -279,5 +280,15 @@ FIRSTORDER_SETTINGS += [
         ),
         "loss_function_fn": lambda: MSELoss(),
         "target_fn": lambda: regression_targets((8, 3 * 5)),
+    },
+    {
+        "input_fn": lambda: rand(4, 5, 3),
+        "module_fn": lambda: Sequential(
+            LSTM(3, 4, batch_first=True),
+            ReduceTuple(index=0),
+            Flatten(),
+        ),
+        "loss_function_fn": lambda: CrossEntropyLoss(),
+        "target_fn": lambda: classification_targets((4,), 20),
     },
 ]

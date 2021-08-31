@@ -10,6 +10,7 @@ BatchDiagGGNMC(BatchDiagGGN)
 """
 from torch.nn import (
     ELU,
+    LSTM,
     RNN,
     SELU,
     AdaptiveAvgPool1d,
@@ -123,6 +124,7 @@ class DiagGGN(SecondOrderBackpropExtension):
                 ELU: activations.DiagGGNELU(),
                 SELU: activations.DiagGGNSELU(),
                 RNN: rnn.DiagGGNRNN(),
+                LSTM: rnn.DiagGGNLSTM(),
                 Permute: permute.DiagGGNPermute(),
                 AdaptiveAvgPool1d: adaptive_avg_pool_nd.DiagGGNAdaptiveAvgPoolNd(1),
                 AdaptiveAvgPool2d: adaptive_avg_pool_nd.DiagGGNAdaptiveAvgPoolNd(2),
@@ -236,6 +238,7 @@ class BatchDiagGGN(SecondOrderBackpropExtension):
                 ELU: activations.DiagGGNELU(),
                 SELU: activations.DiagGGNSELU(),
                 RNN: rnn.BatchDiagGGNRNN(),
+                LSTM: rnn.BatchDiagGGNLSTM(),
                 Permute: permute.DiagGGNPermute(),
                 AdaptiveAvgPool1d: adaptive_avg_pool_nd.DiagGGNAdaptiveAvgPoolNd(1),
                 AdaptiveAvgPool2d: adaptive_avg_pool_nd.DiagGGNAdaptiveAvgPoolNd(2),

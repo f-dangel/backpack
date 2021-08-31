@@ -46,7 +46,7 @@ class VarianceBaseModule(FirstOrderModuleExtension):
         return avg_gsquared - avgg_squared
 
     @staticmethod
-    def _get_axis_batch() -> int:
+    def _get_axis_batch(module: Module) -> int:
         return 0
 
     def _make_param_function(
@@ -83,7 +83,7 @@ class VarianceBaseModule(FirstOrderModuleExtension):
             return self._variance_from(
                 getattr(self.grad_ext, param)(ext, module, g_inp, g_out, bpQuantities),
                 getattr(self.sgs_ext, param)(ext, module, g_inp, g_out, bpQuantities),
-                g_out[0].shape[self._get_axis_batch()],
+                g_out[0].shape[self._get_axis_batch(module)],
             )
 
         return param_function
