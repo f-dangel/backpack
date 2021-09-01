@@ -105,6 +105,20 @@ class ResNet2(Module):
         return x
 
     def _make_layer(self, block, planes, blocks, stride=1):
+        """Creates a concatenation of blocks in the ResNet.
+
+        This function is similar to the one in torchvision/resnets.
+        https://pytorch.org/vision/0.8/_modules/torchvision/models/resnet.html
+
+        Args:
+            block: basic block to use (with one skip connection)
+            planes: number of parallel planes
+            blocks: number of sequential blocks
+            stride: factor between input and output planes
+
+        Returns:
+            a sequence of blocks
+        """
         norm_layer = BatchNorm2d
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion:
