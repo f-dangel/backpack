@@ -8,11 +8,12 @@ from test.utils.skip_test import skip_pytorch_below_1_9_0
 from typing import Tuple
 
 from pytest import fixture
-from torch import Tensor, allclose, manual_seed, rand_like
+from torch import Tensor, allclose, cat, int32, linspace, manual_seed, rand_like
 from torch.nn import Module, MSELoss
 
 from backpack import backpack, extend
 from backpack.extensions import DiagGGNExact
+from backpack.utils.examples import autograd_diag_ggn_exact
 
 
 @fixture(
@@ -44,19 +45,27 @@ def test_network_diag_ggn(model_and_input):
     Thus, a diag_ggn comparison with PyTorch is impossible.
     This test just checks whether it runs on BackPACK without errors.
     Additionally, it checks whether the forward pass is identical to the original model.
+    Finally, a small number of elements of DiagGGN are compared.
 
     Args:
         model_and_input: module to test
     """
     model_original, x = model_and_input
     result_compare = model_original(x)
+    y = rand_like(result_compare)
+    num_params = sum(p.numel() for p in model_original.parameters())
+    num_to_compare = 10
+    idx_to_compare = linspace(0, num_params - 1, num_to_compare, dtype=int32)
+    diag_ggn_exact_to_compare = autograd_diag_ggn_exact(
+        x, y, model_original, MSELoss(), idx=idx_to_compare
+    )
 
     model_extended = extend(model_original, use_converter=True, debug=True)
     result = model_extended(x)
 
     assert allclose(result, result_compare, atol=1e-3)
 
-    loss = extend(MSELoss())(result, rand_like(result))
+    loss = extend(MSELoss())(result, y)
 
     with backpack(DiagGGNExact()):
         loss.backward()
@@ -64,3 +73,10 @@ def test_network_diag_ggn(model_and_input):
         print(name)
         print(param.grad.shape)
         print(param.diag_ggn_exact.shape)
+
+    diag_ggn_exact_vector = cat(
+        [p.diag_ggn_exact.flatten() for p in model_extended.parameters()]
+    )
+    print("Do the exact GGN diagonals match?")
+    for idx, element in zip(idx_to_compare, diag_ggn_exact_to_compare):
+        assert allclose(element, diag_ggn_exact_vector[idx], atol=1e-7)
