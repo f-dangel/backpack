@@ -29,7 +29,17 @@
 # %%
 # Let's get the imports out of the way.
 
-from torch import allclose, cat, cuda, device, linspace, manual_seed, rand, rand_like
+from torch import (
+    allclose,
+    cat,
+    cuda,
+    device,
+    int32,
+    linspace,
+    manual_seed,
+    rand,
+    rand_like,
+)
 from torch.nn import (
     Conv2d,
     CrossEntropyLoss,
@@ -210,7 +220,7 @@ diag_ggn_exact_vector = cat([p.diag_ggn_exact.flatten() for p in model.parameter
 
 num_params = sum(p.numel() for p in model.parameters())
 num_to_compare = 10
-idx_to_compare = linspace(0, num_params - 1, num_to_compare, device=DEVICE).int()
+idx_to_compare = linspace(0, num_params - 1, num_to_compare, device=DEVICE, dtype=int32)
 
 diag_ggn_exact_to_compare = autograd_diag_ggn_exact(
     x, y, model, loss_function, idx=idx_to_compare
@@ -298,7 +308,7 @@ diag_ggn_exact_vector = cat([p.diag_ggn_exact.flatten() for p in model.parameter
 
 num_params = sum(p.numel() for p in model.parameters())
 num_to_compare = 10
-idx_to_compare = linspace(0, num_params - 1, num_to_compare, device=DEVICE).int()
+idx_to_compare = linspace(0, num_params - 1, num_to_compare, device=DEVICE, dtype=int32)
 
 diag_ggn_exact_to_compare = autograd_diag_ggn_exact(
     x, y, model, loss_function, idx=idx_to_compare
