@@ -23,7 +23,8 @@ class backpack:
         self,
         *exts: BackpropExtension,
         extension_hook: Callable[[Module], None] = None,
-        debug: bool = False
+        debug: bool = False,
+        grad_exists_behaviour: str = CTX.GRAD_EXISTS_OVERWRITE,
     ):
         """Activate BackPACK extensions.
 
@@ -36,6 +37,9 @@ class backpack:
                 all BackPACK extensions have run. Takes a ``torch.nn.Module`` and returns
                 ``None``. Default: ``None`` (no operation will be performed).
             debug: Print debug messages during the backward pass. Default: ``False``.
+            grad_exists_behaviour: defines the behaviour of what should happen if a
+                parameter already has the savefield of the active extensions defined.
+                Defaults to 'overwrite'.
 
         .. note::
             extension_hook can be used to reduce memory overhead if the goal is to compute
@@ -64,15 +68,28 @@ class backpack:
         self.extension_hook: Callable[[Module], None] = (
             no_op if extension_hook is None else extension_hook
         )
+        allowed_behaviours = [
+            CTX.GRAD_EXISTS_ERROR,
+            CTX.GRAD_EXISTS_APPEND,
+            CTX.GRAD_EXISTS_SUM,
+            CTX.GRAD_EXISTS_OVERWRITE,
+        ]
+        assert grad_exists_behaviour in allowed_behaviours, (
+            f"grad_exists_behaviour must be one of {allowed_behaviours} "
+            f"but is {grad_exists_behaviour}"
+        )
+        self.grad_exists_behaviour = grad_exists_behaviour
 
     def __enter__(self):
         """Setup backpack environment."""
         self.old_CTX = CTX.get_active_exts()
         self.old_debug = CTX.get_debug()
         self.old_extension_hook = CTX.get_extension_hook()
+        self.old_grad_exists_behaviour = CTX.get_grad_exists_behaviour()
         CTX.set_active_exts(self.exts)
         CTX.set_debug(self.debug)
         CTX.set_extension_hook(self.extension_hook)
+        CTX.set_grad_exists_behaviour(self.grad_exists_behaviour)
 
     def __exit__(
         self,
@@ -90,6 +107,7 @@ class backpack:
         CTX.set_active_exts(self.old_CTX)
         CTX.set_debug(self.old_debug)
         CTX.set_extension_hook(self.old_extension_hook)
+        CTX.set_grad_exists_behaviour(self.old_grad_exists_behaviour)
 
 
 class disable:

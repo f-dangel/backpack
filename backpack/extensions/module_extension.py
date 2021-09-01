@@ -7,6 +7,7 @@ from warnings import warn
 from torch import Tensor
 from torch.nn import Flatten, Module
 
+from backpack.context import CTX
 from backpack.utils import FULL_BACKWARD_HOOK
 from backpack.utils.module_classification import is_loss
 
@@ -228,5 +229,26 @@ class ModuleExtension:
             extension: The current BackPACK extension.
             module: current module
             param_str: parameter name
+
+        Raises:
+            RuntimeError: if the attribute already exists and error mode
+            NotImplementedError: if the behaviour is not implemented
         """
-        setattr(getattr(module, param_str), extension.savefield, value)
+        if CTX.get_grad_exists_behaviour() == CTX.GRAD_EXISTS_ERROR:
+            if hasattr(getattr(module, param_str), extension.savefield):
+                raise RuntimeError(
+                    f"{module}'s parameter {param_str} already has an "
+                    f"attribute {extension.savefield}."
+                )
+            else:
+                setattr(getattr(module, param_str), extension.savefield, value)
+        elif CTX.get_grad_exists_behaviour() == CTX.GRAD_EXISTS_OVERWRITE:
+            setattr(getattr(module, param_str), extension.savefield, value)
+        elif CTX.get_grad_exists_behaviour() == CTX.GRAD_EXISTS_SUM:
+            raise NotImplementedError(
+                "Summing up the values on parameters is not implemented."
+            )
+        elif CTX.get_grad_exists_behaviour() == CTX.GRAD_EXISTS_APPEND:
+            raise NotImplementedError(
+                "Appending the values on parameters is not implemented."
+            )
