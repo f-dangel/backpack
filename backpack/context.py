@@ -1,11 +1,15 @@
 """Context class for BackPACK."""
-from typing import Callable, Iterable, List, Tuple, Type
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Callable, Iterable, List, Tuple, Type
 
 from torch.nn import Module
 from torch.utils.hooks import RemovableHandle
 
-from backpack.extensions.backprop_extension import BackpropExtension
 from backpack.utils.hooks import no_op
+
+if TYPE_CHECKING:
+    from backpack.extensions.backprop_extension import BackpropExtension
 
 
 class CTX:
@@ -15,6 +19,11 @@ class CTX:
     debug: bool = False
     extension_hook: Callable[[Module], None] = no_op
     hook_handles: List[RemovableHandle] = []
+    GRAD_EXISTS_ERROR = "error"
+    GRAD_EXISTS_SUM = "sum"
+    GRAD_EXISTS_OVERWRITE = "overwrite"
+    GRAD_EXISTS_APPEND = "append"
+    grad_exists_behaviour: str = GRAD_EXISTS_ERROR
 
     @staticmethod
     def set_active_exts(active_exts: Iterable[BackpropExtension]) -> None:
@@ -97,3 +106,21 @@ class CTX:
             extension_hook: the extension hook to run after all other extensions
         """
         CTX.extension_hook = extension_hook
+
+    @staticmethod
+    def get_grad_exists_behaviour() -> str:
+        """Get the current grad_exists_behaviour.
+
+        Returns:
+            grad_exists_behaviour
+        """
+        return CTX.grad_exists_behaviour
+
+    @staticmethod
+    def set_grad_exists_behaviour(grad_exists_behaviour: str) -> None:
+        """Set grad_exists_behaviour.
+
+        Args:
+            grad_exists_behaviour: the grad_exists_behaviour to set
+        """
+        CTX.grad_exists_behaviour = grad_exists_behaviour
