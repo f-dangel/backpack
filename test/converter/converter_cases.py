@@ -12,7 +12,7 @@ from typing import List, Type
 
 from torch import Tensor, flatten, rand
 from torch.nn import Linear, Module, ReLU
-from torchvision.models import resnet18
+from torchvision.models import resnet18, wide_resnet50_2
 
 
 class ConverterModule(Module, abc.ABC):
@@ -41,6 +41,18 @@ class _ResNet18(ConverterModule):
 
     def forward(self, x):
         return self.resnet18(x)
+
+    def input_fn(self) -> Tensor:
+        return rand(2, 3, 7, 7)
+
+
+class _WideResNet50(ConverterModule):
+    def __init__(self):
+        super().__init__()
+        self.wide_resnet50_2 = wide_resnet50_2(num_classes=4).eval()
+
+    def forward(self, x):
+        return self.wide_resnet50_2(x)
 
     def input_fn(self) -> Tensor:
         return rand(2, 3, 7, 7)
@@ -143,6 +155,7 @@ class _Add(ConverterModule):
 
 CONVERTER_MODULES += [
     _ResNet18,
+    _WideResNet50,
     _InplaceActivation,
     _MultipleUsages,
     _FlattenNetwork,
