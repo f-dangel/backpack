@@ -3,7 +3,8 @@ from pytest import raises
 from torch import rand, randint
 from torch.nn import CrossEntropyLoss, Linear, Module, Sequential
 
-from backpack import extend
+from backpack import backpack, extend
+from backpack.extensions import BatchGrad
 
 
 def test_retain_graph():
@@ -21,16 +22,21 @@ def test_retain_graph():
 
     # after a backward pass with retain_graph=True graph is not clear
     loss = loss_fn(model(rand(8, 4)), randint(5, (8,)))
-    loss.backward(retain_graph=True)
+    with backpack(retain_graph=True):
+        loss.backward(retain_graph=True)
     with raises(AssertionError):
         _clear_input_output(model)
 
     # doing several backward passes with retain_graph=True
     for _ in range(3):
-        loss.backward(retain_graph=True)
+        with backpack(retain_graph=True):
+            loss.backward(retain_graph=True)
+    with raises(AssertionError):
+        _clear_input_output(model)
 
     # finally doing a normal backward pass that verifies graph is clear again
-    loss.backward()
+    with backpack(BatchGrad()):
+        loss.backward()
     _clear_input_output(model)
 
 
