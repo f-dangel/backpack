@@ -15,6 +15,7 @@ class CTX:
     debug: bool = False
     extension_hook: Callable[[Module], None] = no_op
     hook_handles: List[RemovableHandle] = []
+    retain_graph: bool = False
 
     @staticmethod
     def set_active_exts(active_exts: Iterable[BackpropExtension]) -> None:
@@ -97,3 +98,21 @@ class CTX:
             extension_hook: the extension hook to run after all other extensions
         """
         CTX.extension_hook = extension_hook
+
+    @staticmethod
+    def set_retain_graph(retain_graph: bool) -> None:
+        """Set retain_graph.
+
+        Args:
+            retain_graph: new value for retain_graph
+        """
+        CTX.retain_graph = retain_graph
+
+    @staticmethod
+    def get_retain_graph() -> bool:
+        """Get retain_graph.
+
+        Returns:
+            retain_graph
+        """
+        return CTX.retain_graph
