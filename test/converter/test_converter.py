@@ -35,14 +35,14 @@ def model_and_input(request) -> Tuple[Module, Tensor]:
     inputs: Tensor = model.input_fn()
     inputs.requires_grad = True
     yield model, inputs
-    del model
+    del model, inputs
 
 
 def test_network_diag_ggn(model_and_input):
     """Test whether the given module can compute diag_ggn.
 
     This test is placed here, because some models are too big to run with PyTorch.
-    Thus, a diag_ggn comparison with PyTorch is impossible.
+    Thus, a full diag_ggn comparison with PyTorch is impossible.
     This test just checks whether it runs on BackPACK without errors.
     Additionally, it checks whether the forward pass is identical to the original model.
     Finally, a small number of elements of DiagGGN are compared.
@@ -51,8 +51,9 @@ def test_network_diag_ggn(model_and_input):
         model_and_input: module to test
     """
     model_original, x = model_and_input
-    result_compare = model_original(x)
-    y = rand_like(result_compare)
+    output_compare = model_original(x)
+    y = rand_like(output_compare)
+
     num_params = sum(p.numel() for p in model_original.parameters())
     num_to_compare = 10
     idx_to_compare = linspace(0, num_params - 1, num_to_compare, dtype=int32)
@@ -61,11 +62,11 @@ def test_network_diag_ggn(model_and_input):
     )
 
     model_extended = extend(model_original, use_converter=True, debug=True)
-    result = model_extended(x)
+    output = model_extended(x)
 
-    assert allclose(result, result_compare, atol=1e-5)
+    assert allclose(output, output_compare)
 
-    loss = extend(MSELoss())(result, y)
+    loss = extend(MSELoss())(output, y)
 
     with backpack(DiagGGNExact()):
         loss.backward()
@@ -73,6 +74,6 @@ def test_network_diag_ggn(model_and_input):
     diag_ggn_exact_vector = cat(
         [p.diag_ggn_exact.flatten() for p in model_extended.parameters()]
     )
-    print("Do the exact GGN diagonals match?")
+
     for idx, element in zip(idx_to_compare, diag_ggn_exact_to_compare):
         assert allclose(element, diag_ggn_exact_vector[idx])

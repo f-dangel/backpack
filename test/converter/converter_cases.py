@@ -18,9 +18,6 @@ from torchvision.models import resnet18, wide_resnet50_2
 class ConverterModule(Module, abc.ABC):
     """Interface class for test modules for converter."""
 
-    def __init__(self):  # noqa: D107
-        super().__init__()
-
     @abc.abstractmethod
     def input_fn(self) -> Tensor:
         """Generate a fitting input for the module.
