@@ -64,26 +64,30 @@ def _transform_mul_to_scale_module(module: Module, debug: bool) -> GraphModule:
     target = "<built-in function mul>"
     if debug:
         print(f"\tBegin transformation: {target} -> ScaleModule")
-    counter: int = 0
-    graph: Graph = BackpackTracer().trace(module)
 
-    for node in graph.nodes:
-        if node.op == "call_function" and str(node.target) == target:
-            assert len(node.args) == 2
-            index_weight = 0 if isinstance(node.args[0], float) else 1
-            assert isinstance(node.args[index_weight], float)
-            _change_node_to_module(
-                node,
-                "scale_module",
-                module,
-                ScaleModule(node.args[index_weight]),
-                (node.args[1 - index_weight],),
-            )
-            counter += 1
+    graph: Graph = BackpackTracer().trace(module)
+    nodes = [
+        n for n in graph.nodes if n.op == "call_function" and str(n.target) == target
+    ]
+
+    for node in nodes:
+        assert len(node.args) == 2
+        index_weight = 0 if isinstance(node.args[0], float) else 1
+        assert isinstance(node.args[index_weight], float)
+
+        _change_node_to_module(
+            node,
+            "scale_module",
+            module,
+            ScaleModule(node.args[index_weight]),
+            (node.args[1 - index_weight],),
+        )
 
     graph.lint()
+
     if debug:
-        print(f"\tMultiplications transformed: {counter}")
+        print(f"\tMultiplications transformed: {len(nodes)}")
+
     return GraphModule(module, graph)
 
 
@@ -91,17 +95,20 @@ def _transform_add_to_sum_module(module: Module, debug: bool) -> GraphModule:
     target = "<built-in function add>"
     if debug:
         print(f"\tBegin transformation: {target} -> SumModule")
-    counter: int = 0
-    graph: Graph = BackpackTracer().trace(module)
 
-    for node in graph.nodes:
-        if node.op == "call_function" and str(node.target) == target:
-            _change_node_to_module(node, "sum_module", module, SumModule(), node.args)
-            counter += 1
+    graph: Graph = BackpackTracer().trace(module)
+    nodes = [
+        n for n in graph.nodes if n.op == "call_function" and str(n.target) == target
+    ]
+
+    for node in nodes:
+        _change_node_to_module(node, "sum_module", module, SumModule(), node.args)
 
     graph.lint()
+
     if debug:
-        print(f"\tSummations transformed: {counter}")
+        print(f"\tSummations transformed: {len(nodes)}")
+
     return GraphModule(module, graph)
 
 
@@ -109,25 +116,28 @@ def _transform_flatten_to_module(module: Module, debug: bool) -> GraphModule:
     target = "<built-in method flatten"
     if debug:
         print(f"\tBegin transformation: {target} -> Flatten")
-    counter: int = 0
-    graph: Graph = BackpackTracer().trace(module)
 
-    for node in graph.nodes:
-        if node.op == "call_function" and target in str(node.target):
-            start_dim = node.args[1] if len(node.args) > 1 else 1
-            end_dim = node.args[2] if len(node.args) > 2 else -1
-            _change_node_to_module(
-                node,
-                "flatten",
-                module,
-                Flatten(start_dim, end_dim),
-                (node.args[0],),
-            )
-            counter += 1
+    graph: Graph = BackpackTracer().trace(module)
+    nodes = [
+        n for n in graph.nodes if n.op == "call_function" and target in str(n.target)
+    ]
+
+    for node in nodes:
+        start_dim = node.args[1] if len(node.args) > 1 else 1
+        end_dim = node.args[2] if len(node.args) > 2 else -1
+        _change_node_to_module(
+            node,
+            "flatten",
+            module,
+            Flatten(start_dim, end_dim),
+            (node.args[0],),
+        )
 
     graph.lint()
+
     if debug:
-        print(f"\tFlatten transformed: {counter}")
+        print(f"\tFlatten transformed: {len(nodes)}")
+
     return GraphModule(module, graph)
 
 
