@@ -239,7 +239,7 @@ class ModuleExtension:
         g_inp: Tuple[Tensor],
         g_out: Tuple[Tensor],
     ) -> None:
-        """Check whether the current module is supported in the extension.
+        """Check whether the current module is supported by the extension.
 
         Child classes can override this method.
 
