@@ -80,6 +80,8 @@ x, y = x.to(DEVICE), y.to(DEVICE)
 #    Using in-place operations is not compatible with PyTorch's
 #    :meth:`torch.nn.Module.register_full_backward_hook`. Therefore,
 #    always use :code:`x = x + residual` instead of :code:`x += residual`.
+
+
 class MyFirstResNet(Module):
     def __init__(self, C_in=1, C_hid=5, input_dim=(28, 28), output_dim=10):
         """Instantiate submodules that are used in the forward pass."""
@@ -106,13 +108,13 @@ class MyFirstResNet(Module):
 model = extend(MyFirstResNet()).to(DEVICE)
 
 # %%
-# Using :py:class:`BatchGrad <backpack.extensions.BatchGrad>` in a
-# :py:class:`with backpack(...) <backpack.backpack>` block,
-# we can access the individual gradients for each sample.
-#
 # The loss does not need to be extended in this case either, as it does not
 # have model parameters and BackPACK does not need to know about it for
 # first-order extensions. This also means you can use any custom loss function.
+#
+# Using :py:class:`BatchGrad <backpack.extensions.BatchGrad>` in a
+# :py:class:`with backpack(...) <backpack.backpack>` block,
+# we can access the individual gradients for each sample.
 
 loss = cross_entropy(model(x), y, reduction="sum")
 
@@ -172,6 +174,7 @@ for name, parameter in model.named_parameters():
 #
 # With the above modules, we can build a simple ResNet as a container that implicitly
 # defines the forward pass:
+
 C_in = 1
 C_hid = 2
 input_dim = (28, 28)
