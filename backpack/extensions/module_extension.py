@@ -94,6 +94,7 @@ class ModuleExtension:
                 or if a backpropagated quantity is expected, but there is None and the old
                 backward hook is used and the module is not a Flatten no op.
         """
+        self.check_hyperparameters_module_extension(extension, module, g_inp, g_out)
         delete_old_quantities = not self.__should_retain_backproped_quantities(module)
         bp_quantity = self.__get_backproped_quantity(
             extension, module.output, delete_old_quantities
@@ -245,3 +246,22 @@ class ModuleExtension:
             param_str: parameter name
         """
         setattr(getattr(module, param_str), extension.savefield, value)
+
+    def check_hyperparameters_module_extension(
+        self,
+        ext: BackpropExtension,
+        module: Module,
+        g_inp: Tuple[Tensor],
+        g_out: Tuple[Tensor],
+    ) -> None:
+        """Check whether the current module is supported by the extension.
+
+        Child classes can override this method.
+
+        Args:
+            ext: current extension
+            module: module
+            g_inp: input gradients
+            g_out: output gradients
+        """
+        pass
