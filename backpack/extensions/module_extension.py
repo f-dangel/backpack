@@ -127,25 +127,38 @@ class ModuleExtension:
                 extValue = extFunc(extension, module, g_inp, g_out, bp_quantity)
                 self.__save_value_on_parameter(extValue, extension, module, param)
 
-        if self.__should_backpropagate(extension, module):
+        module_inputs = self.__get_inputs_for_backpropagation(extension, module)
+        if module_inputs:
             bp_quantity = self.backpropagate(
                 extension, module, g_inp, g_out, bp_quantity
             )
-            self.__save_backproped_quantity(extension, module.input0, bp_quantity)
+            for module_inp in module_inputs:
+                self.__save_backproped_quantity(extension, module_inp, bp_quantity)
 
     @staticmethod
-    def __should_backpropagate(extension: BackpropExtension, module: Module) -> bool:
-        """Determines whether the current extension should perform a backpropagation.
+    def __get_inputs_for_backpropagation(
+        extension: BackpropExtension, module: Module
+    ) -> Tuple[Tensor]:
+        """Returns the inputs on which a backpropagation should be performed.
 
         Args:
             extension: current extension
             module: current module
 
         Returns:
-            whether a backpropagation should be performed
+            the inputs which need a backpropagation quantity
         """
-        input_requires_grad: bool = module.input0.requires_grad
-        return input_requires_grad and extension.expects_backpropagation_quantities()
+        module_inputs: Tuple[Tensor, ...] = ()
+
+        if extension.expects_backpropagation_quantities():
+            i = 0
+            while hasattr(module, f"input{i}"):
+                input = getattr(module, f"input{i}")
+                if input.requires_grad:
+                    module_inputs += (input,)
+                i += 1
+
+        return module_inputs
 
     @staticmethod
     def __should_retain_backproped_quantities(module: Module) -> bool:
@@ -200,7 +213,9 @@ class ModuleExtension:
             bpQuantities: backpropagation quantities that should be saved
         """
         extension.saved_quantities.save_quantity(
-            reference_tensor.data_ptr(), bpQuantities
+            reference_tensor.data_ptr(),
+            bpQuantities,
+            extension.accumulate_backpropagated_quantities,
         )
 
     @staticmethod

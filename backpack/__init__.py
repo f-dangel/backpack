@@ -1,19 +1,22 @@
 """BackPACK."""
-import inspect
+from inspect import isclass
 from types import TracebackType
 from typing import Callable, Optional, Tuple, Type, Union
 
-import torch
-from torch import Tensor
+from torch import Tensor, is_grad_enabled
 from torch.nn import Module
 
+from backpack import extensions
+from backpack.context import CTX
 from backpack.extensions.backprop_extension import BackpropExtension
+from backpack.utils import CONVERTER_AVAILABLE, FULL_BACKWARD_HOOK
 from backpack.utils.hooks import no_op
+from backpack.utils.module_classification import is_no_op
 
-from . import extensions
-from .context import CTX
-from .utils import FULL_BACKWARD_HOOK
-from .utils.module_classification import is_no_op
+if CONVERTER_AVAILABLE:
+    from torch.fx import GraphModule
+
+    from backpack.custom_module.graph_utils import convert_module_to_backpack
 
 
 class backpack:
@@ -23,7 +26,7 @@ class backpack:
         self,
         *exts: BackpropExtension,
         extension_hook: Callable[[Module], None] = None,
-        debug: bool = False
+        debug: bool = False,
     ):
         """Activate BackPACK extensions.
 
@@ -47,16 +50,16 @@ class backpack:
         """
         for ext in exts:
             if not isinstance(ext, BackpropExtension):
-                if inspect.isclass(ext) and issubclass(ext, BackpropExtension):
+                if isclass(ext) and issubclass(ext, BackpropExtension):
                     raise ValueError(
-                        "backpack expect instances of BackpropExtension,"
-                        + " but received a class instead [{}].".format(ext)
+                        "backpack expects instances of BackpropExtension,"
+                        + f" but received a class instead [{ext}]."
                         + " Instantiate it before passing it to backpack."
                     )
                 else:
                     raise ValueError(
                         "backpack expects instances of BackpropExtension,"
-                        + " but received [{}].".format(ext)
+                        + f" but received [{ext}]."
                     )
 
         self.exts: Tuple[BackpropExtension, ...] = exts
@@ -157,7 +160,7 @@ def hook_store_io(
         input: List of input tensors
         output: result of module(input)
     """
-    if disable.should_store_io() and torch.is_grad_enabled():
+    if disable.should_store_io() and is_grad_enabled():
         for i in range(len(input)):
             setattr(module, "input{}".format(i), input[i])
         if isinstance(output, tuple):
@@ -167,7 +170,7 @@ def hook_store_io(
             module.output = output
 
 
-def memory_cleanup(module) -> None:
+def memory_cleanup(module: Module) -> None:
     """Remove I/O stored by backpack during the forward pass.
 
     Deletes the attributes created by `hook_store_io`.
@@ -215,7 +218,7 @@ def hook_run_extensions(
         memory_cleanup(module)
 
 
-def extend(module: Module, debug: bool = False) -> Module:
+def extend(module: Module, debug: bool = False, use_converter: bool = False) -> Module:
     """Recursively extend a ``module`` to make it BackPACK-ready.
 
     Modules that do not represent an operation in the computation graph (for instance
@@ -224,12 +227,23 @@ def extend(module: Module, debug: bool = False) -> Module:
     Args:
         module: The module to extend.
         debug: Print debug messages during the extension. Default: ``False``.
+        use_converter: Try converting the module to a BackPACK-compatible network.
 
     Returns:
         Extended module.
+
+    Raises:
+        RuntimeError: if trying to use converter without torch>=1.9.0
     """
     if debug:
         print("[DEBUG] Extending", module)
+
+    if use_converter:
+        if not CONVERTER_AVAILABLE:
+            raise RuntimeError("use_converter=True is only available for torch>=1.9.0.")
+
+        module: GraphModule = convert_module_to_backpack(module, debug)
+        return extend(module)
 
     for child in module.children():
         extend(child, debug=debug)
