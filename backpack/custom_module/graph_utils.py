@@ -1,6 +1,5 @@
 """Transformation tools to make graph BackPACK compatible."""
 from copy import deepcopy
-from typing import Set
 
 from torch.fx import Graph, GraphModule, Node, Tracer
 from torch.nn import Flatten, Module
