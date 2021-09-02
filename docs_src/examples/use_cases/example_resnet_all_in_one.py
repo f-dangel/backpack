@@ -139,7 +139,7 @@ loss.backward()
 
 print("Do the individual gradients match?")
 for name, parameter in model.named_parameters():
-    match = allclose(parameter.grad_batch[sample_to_check], parameter.grad, atol=1e-7)
+    match = allclose(parameter.grad_batch[sample_to_check], parameter.grad, atol=1e-6)
     print(f"{name:>20}: {match}")
     if not match:
         raise AssertionError("Individual gradients don't match!")
@@ -231,7 +231,7 @@ diag_ggn_exact_to_compare = autograd_diag_ggn_exact(
 
 print("Do the exact GGN diagonals match?")
 for idx, element in zip(idx_to_compare, diag_ggn_exact_to_compare):
-    match = allclose(element, diag_ggn_exact_vector[idx], atol=1e-7)
+    match = allclose(element, diag_ggn_exact_vector[idx], atol=1e-6)
     print(f"Diagonal entry {idx:>6}: {match}")
     if not match:
         raise AssertionError("Exact GGN diagonals don't match!")
@@ -319,7 +319,7 @@ diag_ggn_exact_to_compare = autograd_diag_ggn_exact(
 
 print("Do the exact GGN diagonals match?")
 for idx, element in zip(idx_to_compare, diag_ggn_exact_to_compare):
-    match = allclose(element, diag_ggn_exact_vector[idx], atol=1e-7)
+    match = allclose(element, diag_ggn_exact_vector[idx], atol=1e-6)
     print(f"Diagonal entry {idx:>8}: {match}")
     if not match:
         raise AssertionError("Exact GGN diagonals don't match!")
