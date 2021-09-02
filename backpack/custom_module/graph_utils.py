@@ -174,7 +174,7 @@ def _transform_remove_duplicates(module: GraphModule, debug: bool) -> GraphModul
         target = node.target
         original_module = module.get_submodule(target)
 
-        if len(original_module.parameters()) > 0:
+        for _ in original_module.parameters():
             raise NotImplementedError(
                 f"Cycle with parameters detected: module {original_module} with target"
                 f" {target} has parameters and is used {targets.count(target)} times."
