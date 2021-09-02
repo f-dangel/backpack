@@ -1,6 +1,6 @@
 """Partial derivatives for cross-entropy loss."""
 from math import sqrt
-from typing import Callable, Dict, List, Tuple, Union
+from typing import Callable, Dict, List, Tuple
 
 from einops import rearrange
 from torch import Tensor, diag, diag_embed, einsum, multinomial, ones_like, softmax
@@ -38,7 +38,7 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
         sqrt_H = einsum("nc,vnc->vnc", tau, Id_tautau)
 
         if module.reduction == "mean":
-            sqrt_H /= sqrt(self._get_number_of_samples(module, probs, subsampling))
+            sqrt_H /= sqrt(self._get_mean_normalization(module.input0))
 
         sqrt_H = self._rearrange_output(sqrt_H, *rearrange_info)
         return sqrt_H
@@ -69,7 +69,7 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
         sqrt_mc_h = (probs_unsqueezed - classes) / sqrt(M)
 
         if module.reduction == "mean":
-            sqrt_mc_h /= sqrt(self._get_number_of_samples(module, probs, subsampling))
+            sqrt_mc_h /= sqrt(self._get_mean_normalization(module.input0))
 
         sqrt_mc_h = self._rearrange_output(sqrt_mc_h, *rearrange_info)
         return sqrt_mc_h
@@ -84,7 +84,7 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
         sum_H = diag(probs.sum(0)) - einsum("bi,bj->ij", probs, probs)
 
         if module.reduction == "mean":
-            sum_H /= self._get_number_of_samples(module, probs, subsampling=None)
+            sum_H /= self._get_mean_normalization(module.input0)
 
         return sum_H
 
@@ -209,24 +209,13 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
         return tensor
 
     @staticmethod
-    def _get_number_of_samples(
-        module: CrossEntropyLoss,
-        probs: Tensor,
-        subsampling: Union[List[int], None],
-    ) -> int:
-        """Get number of samples, including additional dimensions.
-
-        Useful if reduction is "mean" -> divide by this number.
+    def _get_mean_normalization(input: Tensor) -> int:
+        """Get normalization constant used with reduction='mean'.
 
         Args:
-            module: module, used to determine batch size from input0
-            probs: rearranged probabilities, used to determine batch_size*d_1*d_2*...
-            subsampling: subsampling list, used to determine number of samples
+            input: Input to the cross-entropy module.
 
         Returns:
-            number of samples
+            Divisor for mean reduction.
         """
-        N = probs.size()[0]
-        if subsampling is not None:
-            N *= module.input0.size()[0] / len(subsampling)
-        return N
+        return input.numel() // input.shape[1]
