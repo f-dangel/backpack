@@ -66,6 +66,16 @@ def convert_module_to_backpack(module: Module, debug: bool) -> GraphModule:
 
 
 def _check_backpack_compatible(module: Module, debug: bool) -> None:
+    """Checks whether the computation graph of the given module is BackPACK compatible.
+
+    More specifically, it checks whether all nodes are either input/output
+    or a call to a module. Subsequent checks if the module is extendable in BackPACK
+    have to be done by running the extension.
+
+    Args:
+        module: module to check
+        debug: whether to print debug messages
+    """
     if debug:
         print("\tChecking BackPACK compatibility.")
     graph: Graph = BackpackTracer().trace(module)
@@ -81,6 +91,18 @@ def _check_backpack_compatible(module: Module, debug: bool) -> None:
 
 
 def _transform_mul_to_scale_module(module: Module, debug: bool) -> GraphModule:
+    """Transforms multiplications of tensor with float to ScaleModule.
+
+    Args:
+        module: container module to transform
+        debug: whether to print debug messages
+
+    Returns:
+        equivalent transformed module
+
+    Raises:
+        RuntimeError: if a multiplication is found but node.args are not (float, Node)
+    """
     target = "<built-in function mul>"
     if debug:
         print(f"\tBegin transformation: {target} -> ScaleModule")
@@ -118,6 +140,15 @@ def _transform_mul_to_scale_module(module: Module, debug: bool) -> GraphModule:
 
 
 def _transform_add_to_sum_module(module: Module, debug: bool) -> GraphModule:
+    """Transforms summations of tensors to SumModule (useful in ResNets).
+
+    Args:
+        module: container module to transform
+        debug: whether to print debug messages
+
+    Returns:
+        equivalent transformed module
+    """
     target = "<built-in function add>"
     if debug:
         print(f"\tBegin transformation: {target} -> SumModule")
@@ -139,6 +170,15 @@ def _transform_add_to_sum_module(module: Module, debug: bool) -> GraphModule:
 
 
 def _transform_flatten_to_module(module: Module, debug: bool) -> GraphModule:
+    """Transforms PyTorch's flatten method to the nn.Flatten module.
+
+    Args:
+        module: container module to transform
+        debug: whether to print debug messages
+
+    Returns:
+        equivalent transformed module
+    """
     target = "<built-in method flatten"
     if debug:
         print(f"\tBegin transformation: {target} -> Flatten")
@@ -166,6 +206,13 @@ def _transform_flatten_to_module(module: Module, debug: bool) -> GraphModule:
 def _transform_inplace_to_normal(
     module: Module, debug: bool, initialize_recursion: bool = True
 ) -> None:
+    """Searches for in-place operations and changes them to standard operations.
+
+    Args:
+        module: container module to transform
+        debug: whether to print debug messages
+        initialize_recursion: whether this is the initial call to this function.
+    """
     if initialize_recursion:
         if debug:
             print("\tBegin transformation: in-place -> standard")
@@ -183,6 +230,21 @@ def _transform_inplace_to_normal(
 
 
 def _transform_remove_duplicates(module: GraphModule, debug: bool) -> GraphModule:
+    """Removes duplicate modules by creating a copy of the module.
+
+    This is necessary because BackPACK saves input/output which is overwritten
+    if the module is called multiple times.
+
+    Args:
+        module: container module to transform
+        debug: whether to print debug messages
+
+    Returns:
+        equivalent transformed module
+
+    Raises:
+        NotImplementedError: if a duplicate module has parameters
+    """
     if debug:
         print("\tBegin transformation: remove duplicates")
 
@@ -243,6 +305,19 @@ def _change_node_to_module(
 
 
 def _get_free_name(module: Module, initial_name: str) -> str:
+    """Find a free name in the modules naming space.
+
+    Args:
+        module: the parent module
+        initial_name: a name suggestion
+
+    Returns:
+        a string with the pattern {initial_name}{int} where module has no such attribute
+
+    Raises:
+        RuntimeError: if the module already has an attribute with the intended name
+    """
+
     def _has_target(target: str) -> bool:
         try:
             module.get_submodule(target)
