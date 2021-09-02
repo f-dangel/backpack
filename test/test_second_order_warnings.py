@@ -34,7 +34,7 @@ ext_2nd_order_name = [
 def dummy_cross_entropy(N=5):
     y_pred = torch.rand((N, 2))
     y_pred.requires_grad = True
-    y = classification_targets(N, 2)
+    y = classification_targets((N,), 2)
     loss_module = extend(CrossEntropyLoss())
     return loss_module(y_pred, y)
 
