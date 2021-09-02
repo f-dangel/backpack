@@ -1,5 +1,6 @@
 """Transformation tools to make graph BackPACK compatible."""
 from copy import deepcopy
+from warnings import warn
 
 from torch.fx import Graph, GraphModule, Node, Tracer
 from torch.nn import Flatten, Module
@@ -28,6 +29,10 @@ def convert_module_to_backpack(module: Module, debug: bool) -> GraphModule:
     - mul -> ScaleModule
     - add -> AddModule
     - flatten -> nn.Flatten
+    - inplace to normal
+    - remove duplicates
+    - delete unused modules
+    - check BackPACK compatible
 
     Args:
         module: module to convert
@@ -54,9 +59,25 @@ def convert_module_to_backpack(module: Module, debug: bool) -> GraphModule:
     if debug:
         print("\tDelete unused modules.")
     module_new.delete_all_unused_submodules()
+    _check_backpack_compatible(module_new, debug)
     if debug:
         print("Finished transformation.\n")
     return module_new
+
+
+def _check_backpack_compatible(module: Module, debug: bool) -> None:
+    if debug:
+        print("\tChecking BackPACK compatibility.")
+    graph: Graph = BackpackTracer().trace(module)
+    for node in graph.nodes:
+        if not (node.op in ["call_module", "placeholder", "output"]):
+            warn(
+                f"While checking for BackPACK compatibility, found a node in the "
+                f"computation graph that might not be BackPACK compatible. "
+                f"The node found has op={node.op}, target={node.target}."
+                f"This is an issue in computing second order quantities. "
+                f"Please file an issue on the BackPACK repository."
+            )
 
 
 def _transform_mul_to_scale_module(module: Module, debug: bool) -> GraphModule:
