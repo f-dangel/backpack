@@ -163,29 +163,33 @@ def _transform_inplace_to_normal(
 def _transform_remove_duplicates(module: GraphModule, debug: bool) -> GraphModule:
     if debug:
         print("\tBegin transformation: remove duplicates")
-    counter = 0
-    graph: Graph = BackpackTracer().trace(module)
-    targets_visited: Set[str] = set()
 
-    for node in graph.nodes:
-        if node.target in targets_visited:
-            original_module = module.get_submodule(node.target)
-            for _ in original_module.parameters():
-                raise NotImplementedError(
-                    "Transformation not successful, because a cycle was detected. "
-                    f"There is a module={original_module} with target={node.target} "
-                    "that is used twice. This detected module has parameters."
-                )
-            new_module = deepcopy(original_module)
-            new_target = _get_free_name(module, node.target)
-            module.add_submodule(new_target, new_module)
-            node.target = new_target
-        else:
-            targets_visited.add(node.target)
+    graph: Graph = BackpackTracer().trace(module)
+
+    targets = [n.target for n in graph.nodes]
+    duplicates = {t for t in targets if targets.count(t) > 1}
+    nodes = [n for n in graph.nodes if n.target in duplicates]
+
+    for node in nodes:
+        target = node.target
+        original_module = module.get_submodule(target)
+
+        if len(original_module.parameters()) > 0:
+            raise NotImplementedError(
+                f"Cycle with parameters detected: module {original_module} with target"
+                f" {target} has parameters and is used {targets.count(target)} times."
+            )
+
+        new_module = deepcopy(original_module)
+        new_target = _get_free_name(module, target)
+        module.add_submodule(new_target, new_module)
+        node.target = new_target
 
     graph.lint()
+
     if debug:
-        print(f"\tDuplicates removed: {counter}")
+        print(f"\tDuplicates removed: {len(nodes)}")
+
     return GraphModule(module, graph)
 
 
