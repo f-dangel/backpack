@@ -69,10 +69,6 @@ def test_network_diag_ggn(model_and_input):
 
     with backpack(DiagGGNExact()):
         loss.backward()
-    for name, param in model_extended.named_parameters():
-        print(name)
-        print(param.grad.shape)
-        print(param.diag_ggn_exact.shape)
 
     diag_ggn_exact_vector = cat(
         [p.diag_ggn_exact.flatten() for p in model_extended.parameters()]
