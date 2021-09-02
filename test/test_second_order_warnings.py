@@ -5,6 +5,8 @@ Failure cases include
 - using unsupported parameters of the loss
 """
 
+from test.core.derivatives.utils import classification_targets
+
 import pytest
 import torch
 from torch.nn import CrossEntropyLoss, MSELoss
@@ -27,11 +29,6 @@ ext_2nd_order_name = [
     "DiagGGNExact",
     "DiagGGNExactMC",
 ]
-
-
-def classification_targets(N, num_classes):
-    """Create random targets for classes 0, ..., `num_classes - 1`."""
-    return torch.randint(size=(N,), low=0, high=num_classes)
 
 
 def dummy_cross_entropy(N=5):
