@@ -107,11 +107,7 @@ class DerivativesTestProblem:
         return self.module_fn().to(self.device)
 
     def make_input(self):
-        inputs = self.input_fn()
-        if isinstance(inputs, tuple):
-            return tuple(input.to(self.device) for input in inputs)
-        else:
-            return inputs.to(self.device)
+        return self.input_fn().to(self.device)
 
     def make_target(self):
         target = self.target_fn()
@@ -124,8 +120,7 @@ class DerivativesTestProblem:
         return derivative_cls_for(module.__class__)()
 
     def make_input_shape(self):
-        inputs = self.make_input()
-        return (inputs[0] if isinstance(inputs, tuple) else inputs).shape
+        return self.make_input().shape
 
     def make_output_shape(self):
         module = self.make_module()
@@ -133,10 +128,7 @@ class DerivativesTestProblem:
         target = self.make_target()
 
         if target is None:
-            if isinstance(input, tuple):
-                output = module(*input)
-            else:
-                output = module(input)
+            output = module(input)
         else:
             output = module(input, target)
 
@@ -153,24 +145,20 @@ class DerivativesTestProblem:
         self, input_requires_grad: bool = False, subsampling: List[int] = None
     ) -> Tuple[Tensor, Tensor, Dict[str, Tensor]]:
         """Do a forward pass. Return input, output, and parameters."""
-        input: Tensor = self.input
+        input: Tensor = self.input.clone().detach()
 
         if subsampling is not None:
             batch_axis_in = get_batch_axis(self.module, "input0")
             input = subsample(input, dim=batch_axis_in, subsampling=subsampling)
 
         if input_requires_grad:
-            for inp in input if isinstance(input, tuple) else (input,):
-                inp.requires_grad = True
+            input.requires_grad = True
 
         if self.is_loss():
             assert subsampling is None
             output: Tensor = self.module(input, self.target)
         else:
-            if isinstance(input, tuple):
-                output: Tensor = self.module(*input)
-            else:
-                output: Tensor = self.module(input)
+            output: Tensor = self.module(input)
 
         if isinstance(output, tuple):
             # is true for RNN,GRU,LSTM which return tuple (output, ...)
@@ -207,6 +195,4 @@ class DerivativesTestProblem:
         Returns:
             Mini-batch size.
         """
-        return (self.input[0] if isinstance(self.input, tuple) else self.input).shape[
-            get_batch_axis(self.module, "input0")
-        ]
+        return self.input.shape[get_batch_axis(self.module, "input0")]
