@@ -169,7 +169,7 @@ for name, parameter in model.named_parameters():
 #    `this discussion <https://discuss.pytorch.org/t/backward-hooks-changing-order-of-
 #    execution-in-nn-sequential/12447>`_).
 #    The problem is fixed for ``torch >= 1.9.0``, where it's safe to use
-#    :py:class:`Identity <torch.nn.Identity>`. If you are on ``torch < 1.9.0``, you
+#    :py:class:`torch.nn.Identity`. If you are on ``torch < 1.9.0``, you
 #    have to use :py:class:`ActiveIdentity<backpack.branching.ActiveIdentity>`.
 #
 # With the above modules, we can build a simple ResNet as a container that implicitly
