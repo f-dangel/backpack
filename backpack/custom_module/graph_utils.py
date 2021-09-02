@@ -70,9 +70,17 @@ def _transform_mul_to_scale_module(module: Module, debug: bool) -> GraphModule:
     ]
 
     for node in nodes:
-        assert len(node.args) == 2
+        if not len(node.args) == 2:
+            raise RuntimeError(
+                f"BackPACK converter can only convert multiplications with exactly 2 "
+                f"arguments. But multiplication has arguments {node.args}."
+            )
         index_weight = 0 if isinstance(node.args[0], float) else 1
-        assert isinstance(node.args[index_weight], float)
+        if not isinstance(node.args[index_weight], float):
+            raise RuntimeError(
+                f"BackPACK converter expects for converting multiplications exactly "
+                f"one of the arguments to be a float, but received {node.args}."
+            )
 
         _change_node_to_module(
             node,
