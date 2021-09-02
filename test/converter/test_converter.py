@@ -63,7 +63,7 @@ def test_network_diag_ggn(model_and_input):
     model_extended = extend(model_original, use_converter=True, debug=True)
     result = model_extended(x)
 
-    assert allclose(result, result_compare, atol=1e-3)
+    assert allclose(result, result_compare, atol=1e-5)
 
     loss = extend(MSELoss())(result, y)
 
@@ -75,4 +75,4 @@ def test_network_diag_ggn(model_and_input):
     )
     print("Do the exact GGN diagonals match?")
     for idx, element in zip(idx_to_compare, diag_ggn_exact_to_compare):
-        assert allclose(element, diag_ggn_exact_vector[idx], atol=1e-7)
+        assert allclose(element, diag_ggn_exact_vector[idx])
