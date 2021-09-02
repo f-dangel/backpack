@@ -36,55 +36,6 @@ def setup(
 ) -> Tuple[Tensor, Tensor, Module, Module]:
     """Set seed. Generate and return inputs, labels, model and loss function.
 
-    A simple ResNet using the ``Branch`` and ``SumModule`` modules to handle branching.
-
-    Args:
-        active_identity: Whether the identity function should create a new node
-            in the computation graph.
-        apply_extend: Whether model and loss function should be extended.
-
-    Returns:
-        X, y, model, loss_function
-    """
-    manual_seed(0)
-
-    N = 7
-
-    in_features = 10
-    hidden_features = 5
-    out_features = 3
-
-    X = rand((N, in_features))
-    y = classification_targets((N,), out_features)
-
-    identity = ActiveIdentity() if active_identity else Identity()
-
-    model = Sequential(
-        Linear(in_features, hidden_features),
-        ReLU(),
-        # skip connection
-        Parallel(
-            identity,
-            Linear(hidden_features, hidden_features),
-        ),
-        # end of skip connection
-        Sigmoid(),
-        Linear(hidden_features, out_features),
-    )
-    loss_function = CrossEntropyLoss(reduction="mean")
-
-    if apply_extend:
-        model = extend(model, debug=True)
-        loss_function = extend(loss_function, debug=True)
-
-    return X, y, model, loss_function
-
-
-def setup_convenient(
-    apply_extend: bool = False, active_identity: bool = True
-) -> Tuple[Tensor, Tensor, Module, Module]:
-    """Set seed. Generate and return inputs, labels, model and loss function.
-
     A simple ResNet using the ``Parallel`` convenience module around the ``Branch`` and
     ``SumModule`` modules to handle branching.
 
@@ -153,8 +104,8 @@ def backpack_diag_ggn_exact(
     return cat([p.diag_ggn_exact.flatten() for p in model.parameters()])
 
 
-SETUPS = [setup, setup_convenient]
-SETUPS_IDS = ["simple-resnet", "simple-resnet-convenient"]
+SETUPS = [setup]
+SETUPS_IDS = ["simple-resnet"]
 
 
 @mark.parametrize("setup_fn", SETUPS, ids=SETUPS_IDS)

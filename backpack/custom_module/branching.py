@@ -15,7 +15,7 @@ class ActiveIdentity(ScaleModule):
         super().__init__(weight=1.0)
 
 
-class Branch(Module):
+class _Branch(Module):
     """Module used by BackPACK to handle branching in the computation graph.
 
           ↗ module1 → output1
@@ -108,7 +108,7 @@ class Parallel(Module):
         """
         super().__init__()
 
-        self.branch = Branch(*args)
+        self.branch = _Branch(*args)
         self.merge = SumModule() if merge_module is None else merge_module
 
     def forward(self, input: Tensor) -> Tensor:

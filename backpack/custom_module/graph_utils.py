@@ -4,7 +4,7 @@ from copy import deepcopy
 from torch.fx import Graph, GraphModule, Node, Tracer
 from torch.nn import Flatten, Module
 
-from backpack.custom_module.branching import ActiveIdentity, Branch, SumModule
+from backpack.custom_module.branching import ActiveIdentity, SumModule, _Branch
 from backpack.custom_module.scale_module import ScaleModule
 from backpack.utils import TORCH_VERSION_AT_LEAST_1_9_0
 
@@ -15,7 +15,7 @@ class BackpackTracer(Tracer):
     def is_leaf_module(
         self, m: Module, module_qualified_name: str
     ) -> bool:  # noqa: D102
-        if isinstance(m, (ScaleModule, SumModule, Branch, ActiveIdentity)):
+        if isinstance(m, (ScaleModule, SumModule, _Branch, ActiveIdentity)):
             return True
         else:
             return super().is_leaf_module(m, module_qualified_name)
