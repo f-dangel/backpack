@@ -155,22 +155,22 @@ for name, parameter in model.named_parameters():
 #
 # To build ResNets without overwriting the forward pass, BackPACK offers custom modules:
 #
-# - :py:class:`Parallel<backpack.branching.Parallel>` is similar to
-#   :py:class:`torch.nn.Sequential`, but implements a container for a parallel sequence
-#   of modules (followed by an aggregation module), rather than a sequential one.
+# 1. :py:class:`Parallel<backpack.branching.Parallel>` is similar to
+#    :py:class:`torch.nn.Sequential`, but implements a container for a parallel sequence
+#    of modules (followed by an aggregation module), rather than a sequential one.
 #
-# - :py:class:`SumModule<backpack.branching.SumModule>` is the module that takes the
-#   role of :py:func:`torch.add` in the previous example. It sums up multiple inputs.
-#   We will use it to merge the skip connection.
+# 2. :py:class:`SumModule<backpack.branching.SumModule>` is the module that takes the
+#    role of :py:func:`torch.add` in the previous example. It sums up multiple inputs.
+#    We will use it to merge the skip connection.
 #
-# - :py:class:`ActiveIdentity<backpack.branching.ActiveIdentity>` acts like
-#   PyTorch's identity, but fixes the backward hook execution order by inserting a new
-#   node into the graph during a forward pass (for details see
-#   `this discussion <https://discuss.pytorch.org/t/backward-hooks-changing-order-of-
-#   execution-in-nn-sequential/12447>`_).
-#   The problem is fixed for ``torch >= 1.9.0``, where it's safe to use
-#   :py:class:`Identity <torch.nn.Identity>`. If you are on ``torch < 1.9.0``, you
-#   have to use :py:class:`ActiveIdentity<backpack.branching.ActiveIdentity>`.
+# 3. :py:class:`ActiveIdentity<backpack.branching.ActiveIdentity>` acts like
+#    PyTorch's identity, but fixes the backward hook execution order by inserting a new
+#    node into the graph during a forward pass (for details see
+#    `this discussion <https://discuss.pytorch.org/t/backward-hooks-changing-order-of-
+#    execution-in-nn-sequential/12447>`_).
+#    The problem is fixed for ``torch >= 1.9.0``, where it's safe to use
+#    :py:class:`Identity <torch.nn.Identity>`. If you are on ``torch < 1.9.0``, you
+#    have to use :py:class:`ActiveIdentity<backpack.branching.ActiveIdentity>`.
 #
 # With the above modules, we can build a simple ResNet as a container that implicitly
 # defines the forward pass:
