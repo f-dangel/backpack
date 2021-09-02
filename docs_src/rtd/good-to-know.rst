@@ -74,16 +74,13 @@ for ResNets (see :ref:`this example <First order extensions with a ResNet>`).
 Not (yet) supported models
 ----------------------------------
 
-The second-order extensions for BackPACK don't support (yet) residual networks,
-and no extension support recurrent architectures.
-We're working on how to handle those, as well as adding more
-:ref:`layers <Supported models>`.
+The second-order extensions for BackPACK partially support residual and
+recurrent networks. We're working on how to handle those, as well as
+adding more :ref:`layers <Supported models>`.
 Along those lines, some things that will (most likely) not work with BackPACK,
 but that we're trying to build support for:
 
-- Reusing the same parameters or module multiple time in the computation graph.
+- Reusing the same parameters multiple times in the computation graph.
 
-  For second order extensions, this also holds for any module,
-  whether or not they have parameters.
   This sadly mean that BackPACK can't compute the individual gradients or
   second-order information of a L2-regularized loss, for example.
