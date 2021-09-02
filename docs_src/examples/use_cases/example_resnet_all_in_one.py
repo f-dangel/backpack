@@ -254,14 +254,14 @@ for idx, element in zip(idx_to_compare, diag_ggn_exact_to_compare):
 #
 # Let's create the model, and convert it in the call to :py:func:`extend <backpack.extend>`:
 
-loss_function = extend(MSELoss())
+loss_function = extend(MSELoss().to(DEVICE))
 model = resnet18(num_classes=5).to(DEVICE).eval()
 
 # use BackPACK's converter to extend the model (turned off by default)
 model = extend(model, use_converter=True)
 
 # %%
-# To get an understanding what happened we can inspect the model's graph with the
+# To get an understanding what happened, we can inspect the model's graph with the
 # following helper function:
 
 
