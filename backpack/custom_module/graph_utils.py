@@ -227,9 +227,12 @@ def _get_free_name(module: Module, initial_name: str) -> str:
     counter = 0
     while _has_target(f"{initial_name}{counter}"):
         counter += 1
-    if hasattr(module, f"{initial_name}{counter}"):
-        raise AssertionError(
+    name = f"{initial_name}{counter}"
+
+    if hasattr(module, name):
+        raise RuntimeError(
             f"Unable to find a free name for registering a new module."
-            f"module={module} already has an attribute named {initial_name}{counter}."
+            f"module={module} already has an attribute named {name}."
         )
-    return f"{initial_name}{counter}"
+
+    return name
