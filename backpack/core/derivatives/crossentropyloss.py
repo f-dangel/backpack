@@ -163,7 +163,8 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
     def _rearrange_input(probs: Tensor) -> Tuple[Tensor, int, str, Dict[str, int]]:
         """Rearranges the input if it has additional axes.
 
-        If the input has additional axes: n c d1 d2 -> (n d1 d2) c
+        Treat additional axes like the batch axis, i.e. if the input has additional
+        axes: n c d1 d2 -> (n d1 d2) c.
 
         Args:
             probs: the tensor to rearrange
@@ -176,15 +177,16 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
                 - d_info: a dictionary encoding the size of the additional dimensions
         """
         input_dim = probs.dim()
-        if input_dim >= 3:
-            str_d_dims: str = str.join("", [f"d{i} " for i in range(input_dim - 2)])
-            d_info: Dict[str, int] = {}
-            for i in range(input_dim - 2):
-                d_info[f"d{i}"] = probs.shape[2 + i]
-            probs = rearrange(probs, f"n c {str_d_dims} -> (n {str_d_dims}) c")
-        else:
-            str_d_dims = ""
-            d_info = {}
+        leading = 2
+        additional = input_dim - leading
+
+        str_d_dims: str = "".join(f"d{i} " for i in range(additional))
+        d_info: Dict[str, int] = {
+            f"d{i}": probs.shape[leading + i] for i in range(additional)
+        }
+
+        probs = rearrange(probs, f"n c {str_d_dims} -> (n {str_d_dims}) c")
+
         return probs, input_dim, str_d_dims, d_info
 
     @staticmethod
