@@ -70,16 +70,22 @@ def _transform_mul_to_scale_module(module: Module, debug: bool) -> GraphModule:
     ]
 
     for node in nodes:
-        assert len(node.args) == 2
-        index_weight = 0 if isinstance(node.args[0], float) else 1
-        assert isinstance(node.args[index_weight], float)
+        if len(node.args) != 2:
+            raise RuntimeError(f"Expecting 2 arguments, got {len(node.args)}.")
+
+        idx_weight = 0 if isinstance(node.args[0], float) else 1
+        idx_tensor = 1 - idx_weight
+
+        weight = node.args[idx_weight]
+        tensor = node.args[idx_tensor]
+
+        if not (isinstance(weight, float) and isinstance(tensor, Node)):
+            raise RuntimeError(
+                f"Expecting types [float, Node], got {[type(weight), type(tensor)]}."
+            )
 
         _change_node_to_module(
-            node,
-            "scale_module",
-            module,
-            ScaleModule(node.args[index_weight]),
-            (node.args[1 - index_weight],),
+            node, "scale_module", module, ScaleModule(weight), (tensor,)
         )
 
     graph.lint()
@@ -125,11 +131,7 @@ def _transform_flatten_to_module(module: Module, debug: bool) -> GraphModule:
         start_dim = node.args[1] if len(node.args) > 1 else 1
         end_dim = node.args[2] if len(node.args) > 2 else -1
         _change_node_to_module(
-            node,
-            "flatten",
-            module,
-            Flatten(start_dim, end_dim),
-            (node.args[0],),
+            node, "flatten", module, Flatten(start_dim, end_dim), (node.args[0],)
         )
 
     graph.lint()
