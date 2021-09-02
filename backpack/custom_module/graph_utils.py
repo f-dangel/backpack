@@ -80,13 +80,11 @@ def _check_backpack_compatible(module: Module, debug: bool) -> None:
         print("\tChecking BackPACK compatibility.")
     graph: Graph = BackpackTracer().trace(module)
     for node in graph.nodes:
-        if not (node.op in ["call_module", "placeholder", "output"]):
+        if node.op not in ["call_module", "placeholder", "output"]:
             warn(
-                f"While checking for BackPACK compatibility, found a node in the "
-                f"computation graph that might not be BackPACK compatible. "
-                f"The node found has op={node.op}, target={node.target}."
-                f"This is an issue in computing second order quantities. "
-                f"Please file an issue on the BackPACK repository."
+                f"Encountered node that may break second-order extensions: op={node.op}"
+                f", target={node.target}. If you encounter this problem, please open an"
+                " issue at https://github.com/f-dangel/backpack/issues."
             )
 
 
