@@ -29,7 +29,7 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
         self._check_2nd_order_parameters(module)
 
         probs = self._get_probs(module, subsampling=subsampling)
-        probs, *rearrange_info = self._rearrange_input(probs)
+        probs, *rearrange_info = self._merge_batch_and_additional(probs)
 
         tau = torchsqrt(probs)
         V_dim, C_dim = 0, 2
@@ -40,7 +40,7 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
         if module.reduction == "mean":
             sqrt_H /= sqrt(self._get_mean_normalization(module.input0))
 
-        sqrt_H = self._rearrange_output(sqrt_H, *rearrange_info)
+        sqrt_H = self._ungroup_batch_and_additional(sqrt_H, *rearrange_info)
         return sqrt_H
 
     def _sqrt_hessian_sampled(
@@ -57,7 +57,7 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
         C = module.input0.shape[1]
 
         probs = self._get_probs(module, subsampling=subsampling)
-        probs, *rearrange_info = self._rearrange_input(probs)
+        probs, *rearrange_info = self._merge_batch_and_additional(probs)
 
         V_dim = 0
         probs_unsqueezed = probs.unsqueeze(V_dim).repeat(M, 1, 1)
@@ -71,7 +71,7 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
         if module.reduction == "mean":
             sqrt_mc_h /= sqrt(self._get_mean_normalization(module.input0))
 
-        sqrt_mc_h = self._rearrange_output(sqrt_mc_h, *rearrange_info)
+        sqrt_mc_h = self._ungroup_batch_and_additional(sqrt_mc_h, *rearrange_info)
         return sqrt_mc_h
 
     def _sum_hessian(
@@ -80,7 +80,7 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
         self._check_2nd_order_parameters(module)
 
         probs = self._get_probs(module)
-        probs, *_ = self._rearrange_input(probs)
+        probs, *_ = self._merge_batch_and_additional(probs)
         sum_H = diag(probs.sum(0)) - einsum("bi,bj->ij", probs, probs)
 
         if module.reduction == "mean":
@@ -95,7 +95,7 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
         self._check_2nd_order_parameters(module)
 
         probs = self._get_probs(module)
-        probs, *rearrange_info = self._rearrange_input(probs)
+        probs, *rearrange_info = self._merge_batch_and_additional(probs)
 
         def hessian_mat_prod(mat):
             Hmat = einsum("bi,cbi->cbi", probs, mat) - einsum(
@@ -105,7 +105,7 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
             if module.reduction == "mean":
                 Hmat /= self._get_number_of_samples(module, probs, subsampling=None)
 
-            Hmat = self._rearrange_output(Hmat, *rearrange_info)
+            Hmat = self._ungroup_batch_and_additional(Hmat, *rearrange_info)
             return Hmat
 
         return hessian_mat_prod
@@ -160,11 +160,12 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
             )
 
     @staticmethod
-    def _rearrange_input(probs: Tensor) -> Tuple[Tensor, int, str, Dict[str, int]]:
+    def _merge_batch_and_additional(
+        probs: Tensor,
+    ) -> Tuple[Tensor, str, Dict[str, int]]:
         """Rearranges the input if it has additional axes.
 
-        Treat additional axes like the batch axis, i.e. if the input has additional
-        axes: n c d1 d2 -> (n d1 d2) c.
+        Treat additional axes like batch axis, i.e. group ``n c d1 d2 -> (n d1 d2) c``.
 
         Args:
             probs: the tensor to rearrange
@@ -172,13 +173,11 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
         Returns:
             a tuple containing
                 - probs: the rearranged tensor
-                - input_dim: the number of input dimensions
                 - str_d_dims: a string representation of the additional dimensions
                 - d_info: a dictionary encoding the size of the additional dimensions
         """
-        input_dim = probs.dim()
         leading = 2
-        additional = input_dim - leading
+        additional = probs.dim() - leading
 
         str_d_dims: str = "".join(f"d{i} " for i in range(additional))
         d_info: Dict[str, int] = {
@@ -187,28 +186,38 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
 
         probs = rearrange(probs, f"n c {str_d_dims} -> (n {str_d_dims}) c")
 
-        return probs, input_dim, str_d_dims, d_info
+        return probs, str_d_dims, d_info
 
     @staticmethod
-    def _rearrange_output(tensor: Tensor, input_dim, str_d_dims, d_info) -> Tensor:
-        """Rearrange the output. Used together with rearrange_input.
+    def _ungroup_batch_and_additional(
+        tensor: Tensor, str_d_dims, d_info, free_axis: int = 1
+    ) -> Tensor:
+        """Rearranges output if it has additional axes.
 
-        If input_dim>=3: rearrange c1 (n d1 d2) c2 -> c1 n c2 d1 d2
+        Used with group_batch_and_additional.
+
+        Undoes treating additional axes like batch axis and assumes an number of
+        additional free axes (``v``) were added, i.e. un-groups
+        ``v (n d1 d2) c -> v n c d1 d2``.
 
         Args:
             tensor: the tensor to rearrange
-            input_dim: the number of input dimensions
             str_d_dims: a string representation of the additional dimensions
             d_info: a dictionary encoding the size of the additional dimensions
+            free_axis: Number of free leading axes. Default: ``1``.
 
         Returns:
             the rearranged tensor
+
+        Raises:
+            NotImplementedError: If ``free_axis != 1``.
         """
-        if input_dim >= 3:
-            tensor = rearrange(
-                tensor, f"c1 (n {str_d_dims}) c2 -> c1 n c2 {str_d_dims}", **d_info
-            )
-        return tensor
+        if free_axis != 1:
+            raise NotImplementedError(f"Only supports free_axis=1. Got {free_axis}.")
+
+        return rearrange(
+            tensor, f"v (n {str_d_dims}) c -> v n c {str_d_dims}", **d_info
+        )
 
     @staticmethod
     def _get_mean_normalization(input: Tensor) -> int:
