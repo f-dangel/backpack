@@ -1,5 +1,4 @@
 """Contains VarianceRNN."""
-from torch.nn import LSTM, RNN
 
 from backpack.extensions.firstorder.gradient.rnn import GradLSTM, GradRNN
 from backpack.extensions.firstorder.sum_grad_squared.rnn import SGSLSTM, SGSRNN
@@ -17,10 +16,6 @@ class VarianceRNN(VarianceBaseModule):
             sgs_extension=SGSRNN(),
         )
 
-    @staticmethod
-    def _get_axis_batch(module: RNN) -> int:
-        return 0 if module.batch_first else 1
-
 
 class VarianceLSTM(VarianceBaseModule):
     """Extension for LSTM, calculating variance."""
@@ -32,7 +27,3 @@ class VarianceLSTM(VarianceBaseModule):
             grad_extension=GradLSTM(),
             sgs_extension=SGSLSTM(),
         )
-
-    @staticmethod
-    def _get_axis_batch(module: LSTM) -> int:
-        return 0 if module.batch_first else 1

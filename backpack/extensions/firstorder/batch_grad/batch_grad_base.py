@@ -79,16 +79,14 @@ class BatchGradBase(FirstOrderModuleExtension):
                 Scaled individual gradients
             """
             subsampling = ext.get_subsampling()
+            N_axis = get_batch_axis(module, "output")
+
             return self._derivatives.param_mjp(
                 param_str,
                 module,
                 g_inp,
                 g_out,
-                subsample(
-                    g_out[0],
-                    dim=get_batch_axis(module, "output"),
-                    subsampling=subsampling,
-                ),
+                subsample(g_out[0], dim=N_axis, subsampling=subsampling),
                 sum_batch=False,
                 subsampling=subsampling,
             )
