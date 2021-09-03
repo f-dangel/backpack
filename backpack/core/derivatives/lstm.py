@@ -72,10 +72,12 @@ class LSTMDerivatives(BaseParameterDerivatives):
             subsampling: Indices of active samples. Defaults to ``None`` (all samples).
 
         Returns:
-            ifgo, c, c_tanh
+            ifgo, c, c_tanh (all in format ``[T, N, ...]``)
         """
-        T: int = mat.shape[2 if module.batch_first else 1]
-        N: int = mat.shape[1 if module.batch_first else 2]
+        free_axis = 1
+        N_axis, T_axis = LSTMDerivatives._get_batch_and_time_axes(module)
+        T: int = mat.shape[T_axis + free_axis]
+        N: int = mat.shape[N_axis + free_axis]
         H: int = module.hidden_size
         H0: int = 0 * H
         H1: int = 1 * H
@@ -87,12 +89,13 @@ class LSTMDerivatives(BaseParameterDerivatives):
         c: Tensor = zeros(T, N, H, device=mat.device, dtype=mat.dtype)
         c_tanh: Tensor = zeros(T, N, H, device=mat.device, dtype=mat.dtype)
 
-        N_axis = get_batch_axis(module, "input0")
         input0 = subsample(module.input0, dim=N_axis, subsampling=subsampling)
         output = subsample(module.output, dim=N_axis, subsampling=subsampling)
+
+        # use [T, N, ...] format
         if module.batch_first:
-            input0 = transpose(input0, 0, 1)
-            output = transpose(output, 0, 1)
+            input0 = transpose(input0, N_axis, T_axis)
+            output = transpose(output, N_axis, T_axis)
 
         for t in range(T):
             ifgo[t] = (
@@ -117,9 +120,11 @@ class LSTMDerivatives(BaseParameterDerivatives):
     def _ifgo_jac_t_mat_prod(
         cls, module: LSTM, mat: Tensor, subsampling: List[int] = None
     ) -> Tensor:
+        free_axis = 1
+        N_axis, T_axis = cls._get_batch_and_time_axes(module)
         V: int = mat.shape[0]
-        T: int = mat.shape[2 if module.batch_first else 1]
-        N: int = mat.shape[1 if module.batch_first else 2]
+        T: int = mat.shape[T_axis + free_axis]
+        N: int = mat.shape[N_axis + free_axis]
         H: int = module.hidden_size
         H0: int = 0 * H
         H1: int = 1 * H
@@ -136,7 +141,7 @@ class LSTMDerivatives(BaseParameterDerivatives):
         IFGO_prod: Tensor = zeros(V, T, N, 4 * H, device=mat.device, dtype=mat.dtype)
         for t in reversed(range(T)):
             # jac_t_mat_prod until node h
-            H_prod_t[:] = mat[(slice(None),) * (2 if module.batch_first else 1) + (t,)]
+            H_prod_t[:] = mat[(slice(None),) * (T_axis + 1) + (t,)]
             if t != (T - 1):
                 H_prod_t += einsum(
                     "vnh,hg->vng", IFGO_prod[:, t + 1], module.weight_hh_l0
@@ -185,9 +190,11 @@ class LSTMDerivatives(BaseParameterDerivatives):
         mat: Tensor,
         sum_batch: bool = True,
     ) -> Tensor:
+        free_axis = 1
+        N_axis, T_axis = self._get_batch_and_time_axes(module)
         V: int = mat.shape[0]
-        T: int = mat.shape[2 if module.batch_first else 1]
-        N: int = mat.shape[1 if module.batch_first else 2]
+        T: int = mat.shape[T_axis + free_axis]
+        N: int = mat.shape[N_axis + free_axis]
         H: int = module.hidden_size
         H0: int = 0 * H
         H1: int = 1 * H
@@ -206,7 +213,7 @@ class LSTMDerivatives(BaseParameterDerivatives):
             IFGO_prod_t[:] = einsum(
                 "hi,vni->vnh",
                 module.weight_ih_l0,
-                mat[(slice(None),) * (2 if module.batch_first else 1) + (t,)],
+                mat[(slice(None),) * (T_axis + free_axis) + (t,)],
             )
             if t != 0:
                 IFGO_prod_t[:] += einsum(
@@ -248,7 +255,7 @@ class LSTMDerivatives(BaseParameterDerivatives):
             ) + einsum("vnh,nh->vnh", C_tanh_prod_t, ifgo[t, :, H3:H4])
 
         if module.batch_first:
-            H_prod = transpose(H_prod, 1, 2)
+            H_prod = transpose(H_prod, T_axis + free_axis, N_axis + free_axis)
 
         return H_prod
 
@@ -266,10 +273,11 @@ class LSTMDerivatives(BaseParameterDerivatives):
             module, mat, subsampling=subsampling
         )
 
+        N_axis = get_batch_axis(module, "input0")
+        batch_time_str = "nt" if N_axis == 0 else "tn"
+
         X_prod: Tensor = einsum(
-            f"vtnh,hi->v{'nt' if module.batch_first else 'tn'}i",
-            IFGO_prod,
-            module.weight_ih_l0,
+            f"vtnh,hi->v{batch_time_str}i", IFGO_prod, module.weight_ih_l0
         )
         return X_prod
 
@@ -318,14 +326,13 @@ class LSTMDerivatives(BaseParameterDerivatives):
             module, mat, subsampling=subsampling
         )
 
+        N_axis = get_batch_axis(module, "input0")
+        batch_time_str = "nt" if N_axis == 0 else "tn"
+
         return einsum(
-            f"vtnh,{'nt' if module.batch_first else 'tn'}i->v{'' if sum_batch else 'n'}hi",
+            f"vtnh,{batch_time_str}i->v{'' if sum_batch else 'n'}hi",
             IFGO_prod,
-            subsample(
-                module.input0,
-                dim=get_batch_axis(module, "input0"),
-                subsampling=subsampling,
-            ),
+            subsample(module.input0, dim=N_axis, subsampling=subsampling),
         )
 
     def _weight_hh_l0_jac_t_mat_prod(
@@ -339,12 +346,21 @@ class LSTMDerivatives(BaseParameterDerivatives):
     ) -> Tensor:
         self._check_parameters(module)
 
-        N: int = mat.shape[1 if module.batch_first else 2]
+        free_axis = 1
+        N_axis, T_axis = self._get_batch_and_time_axes(module)
+
+        N: int = mat.shape[N_axis + free_axis]
         H: int = module.hidden_size
 
         IFGO_prod: Tensor = self._ifgo_jac_t_mat_prod(
             module, mat, subsampling=subsampling
         )
+
+        subsampled_output = subsample(
+            module.output, dim=N_axis, subsampling=subsampling
+        )
+        if N_axis == 0:
+            subsampled_output = subsampled_output.transpose(N_axis, T_axis)
 
         return einsum(
             f"vtnh,tng->v{'' if sum_batch else 'n'}hg",
@@ -352,16 +368,23 @@ class LSTMDerivatives(BaseParameterDerivatives):
             cat(
                 [
                     zeros(1, N, H, device=mat.device, dtype=mat.dtype),
-                    (transpose if module.batch_first else lambda x, y, z: x)(
-                        subsample(
-                            module.output,
-                            dim=get_batch_axis(module, "input0"),
-                            subsampling=subsampling,
-                        ),
-                        0,
-                        1,
-                    )[0:-1],
+                    subsampled_output[0:-1],
                 ],
                 dim=0,
             ),
         )
+
+    @staticmethod
+    def _get_batch_and_time_axes(module: LSTM) -> Tuple[int, int]:
+        """Return axes interpreted by the module as batch and time axes of the input.
+
+        Args:
+            module: LSTM module.
+
+        Returns:
+            Batch axis and time axis.
+        """
+        N_axis = get_batch_axis(module, "input0")
+        T_axis = 1 if N_axis == 0 else 0
+
+        return N_axis, T_axis
