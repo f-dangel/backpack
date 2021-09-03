@@ -95,7 +95,10 @@ class BackpackDerivatives(DerivativesImplementation):
             subsampling: Indices of active samples. ``None`` uses all samples.
 
         Returns:
-            Hessian with respect to the input.
+            Hessian with respect to the input. Has shape
+            ``[N, A, B, ..., N, A, B, ...]`` where ``N`` is the batch size or number
+            of active samples when sub-sampling is used, and ``[A, B, ...]`` are the
+            input's feature dimensions.
         """
         self.store_forward_io()
 
@@ -128,23 +131,23 @@ class BackpackDerivatives(DerivativesImplementation):
     def hessian_is_zero(self) -> bool:  # noqa: D102
         return self.problem.derivative.hessian_is_zero(self.problem.module)
 
-    def _sample_hessians_from_sqrt(self, sqrt):
+    def _sample_hessians_from_sqrt(self, sqrt: Tensor) -> Tensor:
         """Convert individual matrix square root into individual full matrix.
 
         Args:
             sqrt: individual square root of hessian
 
         Returns:
-            individual full matrix
-
-        Raises:
-            ValueError: if input is not 2d
+            Individual Hessians of shape ``[N, A, B, ..., A, B, ...]`` where
+            ``input.shape[1:] = [A, B, ...]`` are the input feature dimensions
+            and ``N`` is the batch size.
         """
-        # TODO improve readability
-        if sqrt.dim() >= 3:
-            return einsum("vni..., vnj...->n...ij", sqrt, sqrt)
-        else:
-            raise ValueError("Input must have at least 2 dimensions.")
+        N, input_dims = sqrt.shape[1], sqrt.shape[2:]
+
+        sqrt_flat = sqrt.flatten(start_dim=2)
+        sample_hessians = einsum("vni, vnj->nij", sqrt_flat, sqrt_flat)
+
+        return sample_hessians.reshape(N, *input_dims, *input_dims)
 
     def _embed_sample_hessians(
         self, individual_hessians: Tensor, input: Tensor
@@ -153,28 +156,18 @@ class BackpackDerivatives(DerivativesImplementation):
 
         Args:
             individual_hessians: Hessians w.r.t. individual samples in the input.
-            input: Inputs for the individual Hessians.
+            input: Inputs for the for samples whose individual Hessians are passed.
+                Has shape ``[N, A, B, ...]`` where ``N`` is the number of active
+                samples and ``[A, B, ...]`` are the feature dimensions.
 
         Returns:
             Hessian that contains the individual Hessians as diagonal blocks.
-
-        Raises:
-            ValueError: if input is not 2d
+            Has shape ``[N, A, B, ..., N, A, B, ...]``.
         """
-        hessian_shape = (*input.shape, *input.shape)
-        hessian = zeros(hessian_shape, device=input.device, dtype=input.dtype)
+        N, D = input.shape[0], input.shape[1:].numel()
+        hessian = zeros(N, D, N, D, device=input.device, dtype=input.dtype)
 
-        if input.dim() >= 2:
-            ranges: Tuple[Iterable, ...] = tuple(
-                [range(input.shape[2 + i]) for i in range(input.dim() - 2)]
-            )
-            for index_n in range(input.shape[0]):
-                index_additional_axes: Tuple[int]
-                for index_additional_axes in itertools_product(*ranges):
-                    selection = ((index_n, slice(None)) + index_additional_axes) * 2
-                    hessian[selection] = individual_hessians[
-                        (index_n,) + index_additional_axes
-                    ]
-        else:
-            raise ValueError("Input must have at least 2 dimensions.")
-        return hessian
+        for n in range(N):
+            hessian[n, :, n, :] = individual_hessians[n].reshape(D, D)
+
+        return hessian.reshape(*input.shape, *input.shape)

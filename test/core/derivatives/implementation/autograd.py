@@ -274,7 +274,8 @@ class AutogradDerivatives(DerivativesImplementation):
             subsampling: Indices of active samples. ``None`` uses all samples.
 
         Returns:
-            hessian
+            Hessian with of shape ``[N, *, N, *]`` where ``N`` denotes the
+            number of sub-samples, and ``*`` is the input feature shape.
         """
         input, output, _ = self.problem.forward_pass(input_requires_grad=True)
         hessian = self._hessian(output, input)
