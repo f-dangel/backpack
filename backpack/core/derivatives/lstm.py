@@ -139,25 +139,17 @@ class LSTMDerivatives(BaseParameterDerivatives):
             H_prod_t[:] = mat[(slice(None),) * (2 if module.batch_first else 1) + (t,)]
             if t != (T - 1):
                 H_prod_t += einsum(
-                    "vnh,hg->vng",
-                    IFGO_prod[:, t + 1],
-                    module.weight_hh_l0,
+                    "vnh,hg->vng", IFGO_prod[:, t + 1], module.weight_hh_l0
                 )
 
             # C_prod_t = jac_t_mat_prod until node c
             if t != (T - 1):
                 C_prod_old[:] = C_prod_t
             C_prod_t[:] = einsum(
-                "vnh,nh->vnh",
-                H_prod_t,
-                ifgo[t, :, H3:H4] * (1 - c_tanh[t] ** 2),
+                "vnh,nh->vnh", H_prod_t, ifgo[t, :, H3:H4] * (1 - c_tanh[t] ** 2)
             )
             if t != (T - 1):
-                C_prod_t += einsum(
-                    "vnh,nh->vnh",
-                    C_prod_old,
-                    ifgo[t + 1, :, H1:H2],
-                )
+                C_prod_t += einsum("vnh,nh->vnh", C_prod_old, ifgo[t + 1, :, H1:H2])
 
             IFGO_prod[:, t, :, H3:H4] = einsum(
                 "vnh,nh->vnh",
@@ -218,9 +210,7 @@ class LSTMDerivatives(BaseParameterDerivatives):
             )
             if t != 0:
                 IFGO_prod_t[:] += einsum(
-                    "hg,vng->vnh",
-                    module.weight_hh_l0,
-                    H_prod[:, t - 1],
+                    "hg,vng->vnh", module.weight_hh_l0, H_prod[:, t - 1]
                 )
             IFGO_prod_t[:, :, H0:H2] = einsum(
                 "vnh,nh->vnh",
@@ -241,46 +231,26 @@ class LSTMDerivatives(BaseParameterDerivatives):
             # product until node c
             if t >= 1:
                 C_prod_old[:] = C_prod_t
-            C_prod_t[:] = (
-                einsum(
-                    "vnh,nh->vnh",
-                    IFGO_prod_t[:, :, H0:H1],
-                    ifgo[t, :, H2:H3],
-                )
-                + einsum("vnh,nh->vnh", IFGO_prod_t[:, :, H2:H3], ifgo[t, :, H0:H1])
-            )
+            C_prod_t[:] = einsum(
+                "vnh,nh->vnh", IFGO_prod_t[:, :, H0:H1], ifgo[t, :, H2:H3]
+            ) + einsum("vnh,nh->vnh", IFGO_prod_t[:, :, H2:H3], ifgo[t, :, H0:H1])
             if t >= 1:
                 C_prod_t += einsum(
-                    "vnh,nh->vnh",
-                    C_prod_old,
-                    ifgo[t, :, H1:H2],
-                ) + einsum(
-                    "vnh,nh->vnh",
-                    IFGO_prod_t[:, :, H1:H2],
-                    c[t - 1],
-                )
+                    "vnh,nh->vnh", C_prod_old, ifgo[t, :, H1:H2]
+                ) + einsum("vnh,nh->vnh", IFGO_prod_t[:, :, H1:H2], c[t - 1])
 
             # product until node c_tanh
-            C_tanh_prod_t[:] = einsum(
-                "vnh,nh->vnh",
-                C_prod_t,
-                1 - c_tanh[t] ** 2,
-            )
+            C_tanh_prod_t[:] = einsum("vnh,nh->vnh", C_prod_t, 1 - c_tanh[t] ** 2)
 
             # product until node h
             H_prod[:, t] = einsum(
-                "vnh,nh->vnh",
-                IFGO_prod_t[:, :, H3:H4],
-                c_tanh[t],
-            ) + einsum(
-                "vnh,nh->vnh",
-                C_tanh_prod_t,
-                ifgo[t, :, H3:H4],
-            )
+                "vnh,nh->vnh", IFGO_prod_t[:, :, H3:H4], c_tanh[t]
+            ) + einsum("vnh,nh->vnh", C_tanh_prod_t, ifgo[t, :, H3:H4])
+
         if module.batch_first:
-            return transpose(H_prod, 1, 2)
-        else:
-            return H_prod
+            H_prod = transpose(H_prod, 1, 2)
+
+        return H_prod
 
     def _jac_t_mat_prod(
         self,
