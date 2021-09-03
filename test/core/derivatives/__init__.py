@@ -21,6 +21,7 @@ from torch.nn import (
     ConvTranspose3d,
     CrossEntropyLoss,
     Dropout,
+    Identity,
     LeakyReLU,
     Linear,
     LogSigmoid,
@@ -63,11 +64,15 @@ from backpack.core.derivatives.mseloss import MSELossDerivatives
 from backpack.core.derivatives.permute import PermuteDerivatives
 from backpack.core.derivatives.relu import ReLUDerivatives
 from backpack.core.derivatives.rnn import RNNDerivatives
+from backpack.core.derivatives.scale_module import ScaleModuleDerivatives
 from backpack.core.derivatives.selu import SELUDerivatives
 from backpack.core.derivatives.sigmoid import SigmoidDerivatives
+from backpack.core.derivatives.sum_module import SumModuleDerivatives
 from backpack.core.derivatives.tanh import TanhDerivatives
 from backpack.core.derivatives.zeropad2d import ZeroPad2dDerivatives
+from backpack.custom_module.branching import ActiveIdentity, SumModule
 from backpack.custom_module.permute import Permute
+from backpack.custom_module.scale_module import ScaleModule
 
 derivatives_for = {
     Linear: LinearDerivatives,
@@ -103,4 +108,8 @@ derivatives_for = {
     BatchNorm1d: BatchNormNdDerivatives,
     BatchNorm2d: BatchNormNdDerivatives,
     BatchNorm3d: BatchNormNdDerivatives,
+    ScaleModule: ScaleModuleDerivatives,
+    ActiveIdentity: ScaleModuleDerivatives,
+    Identity: ScaleModuleDerivatives,
+    SumModule: SumModuleDerivatives,
 }
