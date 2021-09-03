@@ -28,8 +28,9 @@ class LSTMDerivatives(BaseParameterDerivatives):
     c[t] = f[t] c[t-1] + i[t] g[t]
     h[t] = o[t] tanh(c[t])
 
-    batch_first=True:
-    -> most tensors are still with time axis first, but input and output are treated
+    Note:
+        For ``batch_first=True``, most of the internal tensors (e.g. those from
+        the manual forward pass) are kept with time axis first.
     """
 
     @staticmethod
@@ -85,7 +86,6 @@ class LSTMDerivatives(BaseParameterDerivatives):
         ifgo: Tensor = zeros(T, N, 4 * H, device=mat.device, dtype=mat.dtype)
         c: Tensor = zeros(T, N, H, device=mat.device, dtype=mat.dtype)
         c_tanh: Tensor = zeros(T, N, H, device=mat.device, dtype=mat.dtype)
-        # h: Tensor = zeros(T, N, H, device=mat.device, dtype=mat.dtype) # for comparison
 
         N_axis = get_batch_axis(module, "input0")
         input0 = subsample(module.input0, dim=N_axis, subsampling=subsampling)
@@ -110,7 +110,6 @@ class LSTMDerivatives(BaseParameterDerivatives):
             if t != 0:
                 c[t] += ifgo[t, :, H1:H2] * c[t - 1]
             c_tanh[t] = tanh(c[t])
-            # h[t] = ifgo[t, :, H3:H4] * c_tanh[t]  # for comparison
 
         return ifgo, c, c_tanh
 
