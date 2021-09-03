@@ -88,7 +88,6 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
 
         return sum_H
 
-    # TODO: double-check this method since it's not tested
     def _make_hessian_mat_prod(
         self, module: CrossEntropyLoss, g_inp: Tuple[Tensor], g_out: Tuple[Tensor]
     ) -> Callable[[Tensor], Tensor]:
@@ -103,7 +102,7 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
             )
 
             if module.reduction == "mean":
-                Hmat /= self._get_number_of_samples(module, probs, subsampling=None)
+                Hmat /= self._get_mean_normalization(module.input0)
 
             Hmat = self._ungroup_batch_and_additional(Hmat, *rearrange_info)
             return Hmat
