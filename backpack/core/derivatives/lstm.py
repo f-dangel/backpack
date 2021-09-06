@@ -6,7 +6,7 @@ from torch.nn import LSTM
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 from backpack.utils import TORCH_VERSION_AT_LEAST_1_8_0
-from backpack.utils.subsampling import get_batch_axis, subsample
+from backpack.utils.subsampling import subsample
 
 
 class LSTMDerivatives(BaseParameterDerivatives):
@@ -75,7 +75,7 @@ class LSTMDerivatives(BaseParameterDerivatives):
             ifgo, c, c_tanh (all in format ``[T, N, ...]``)
         """
         free_axis = 1
-        N_axis, T_axis = LSTMDerivatives._get_batch_and_time_axes(module)
+        N_axis, T_axis = LSTMDerivatives.get_batch_and_time_axes(module)
         T: int = mat.shape[T_axis + free_axis]
         N: int = mat.shape[N_axis + free_axis]
         H: int = module.hidden_size
@@ -121,7 +121,7 @@ class LSTMDerivatives(BaseParameterDerivatives):
         cls, module: LSTM, mat: Tensor, subsampling: List[int] = None
     ) -> Tensor:
         free_axis = 1
-        N_axis, T_axis = cls._get_batch_and_time_axes(module)
+        N_axis, T_axis = cls.get_batch_and_time_axes(module)
         V: int = mat.shape[0]
         T: int = mat.shape[T_axis + free_axis]
         N: int = mat.shape[N_axis + free_axis]
@@ -191,7 +191,7 @@ class LSTMDerivatives(BaseParameterDerivatives):
         sum_batch: bool = True,
     ) -> Tensor:
         free_axis = 1
-        N_axis, T_axis = self._get_batch_and_time_axes(module)
+        N_axis, T_axis = self.get_batch_and_time_axes(module)
         V: int = mat.shape[0]
         T: int = mat.shape[T_axis + free_axis]
         N: int = mat.shape[N_axis + free_axis]
@@ -273,7 +273,7 @@ class LSTMDerivatives(BaseParameterDerivatives):
             module, mat, subsampling=subsampling
         )
 
-        N_axis = get_batch_axis(module, "input0")
+        N_axis, _ = self.get_batch_and_time_axes(module)
         batch_time_str = "nt" if N_axis == 0 else "tn"
 
         X_prod: Tensor = einsum(
@@ -326,7 +326,7 @@ class LSTMDerivatives(BaseParameterDerivatives):
             module, mat, subsampling=subsampling
         )
 
-        N_axis = get_batch_axis(module, "input0")
+        N_axis, _ = self.get_batch_and_time_axes(module)
         batch_time_str = "nt" if N_axis == 0 else "tn"
 
         return einsum(
@@ -347,7 +347,7 @@ class LSTMDerivatives(BaseParameterDerivatives):
         self._check_parameters(module)
 
         free_axis = 1
-        N_axis, T_axis = self._get_batch_and_time_axes(module)
+        N_axis, T_axis = self.get_batch_and_time_axes(module)
 
         N: int = mat.shape[N_axis + free_axis]
         H: int = module.hidden_size
@@ -375,7 +375,7 @@ class LSTMDerivatives(BaseParameterDerivatives):
         )
 
     @staticmethod
-    def _get_batch_and_time_axes(module: LSTM) -> Tuple[int, int]:
+    def get_batch_and_time_axes(module: LSTM) -> Tuple[int, int]:
         """Return axes interpreted by the module as batch and time axes of the input.
 
         Args:
@@ -384,7 +384,4 @@ class LSTMDerivatives(BaseParameterDerivatives):
         Returns:
             Batch axis and time axis.
         """
-        N_axis = get_batch_axis(module, "input0")
-        T_axis = 1 if N_axis == 0 else 0
-
-        return N_axis, T_axis
+        return (0, 1) if module.batch_first else (1, 0)
