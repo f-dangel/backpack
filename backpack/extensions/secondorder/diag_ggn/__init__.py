@@ -11,6 +11,7 @@ BatchDiagGGNMC(BatchDiagGGN)
 from torch import Tensor
 from torch.nn import (
     ELU,
+    LSTM,
     RNN,
     SELU,
     AdaptiveAvgPool1d,
@@ -132,6 +133,7 @@ class DiagGGN(SecondOrderBackpropExtension):
                 ScaleModule: custom_module.DiagGGNScaleModule(),
                 SumModule: custom_module.DiagGGNSumModule(),
                 RNN: rnn.DiagGGNRNN(),
+                LSTM: rnn.DiagGGNLSTM(),
                 Permute: permute.DiagGGNPermute(),
                 AdaptiveAvgPool1d: adaptive_avg_pool_nd.DiagGGNAdaptiveAvgPoolNd(1),
                 AdaptiveAvgPool2d: adaptive_avg_pool_nd.DiagGGNAdaptiveAvgPoolNd(2),
@@ -254,6 +256,7 @@ class BatchDiagGGN(SecondOrderBackpropExtension):
                 ScaleModule: custom_module.DiagGGNScaleModule(),
                 SumModule: custom_module.DiagGGNSumModule(),
                 RNN: rnn.BatchDiagGGNRNN(),
+                LSTM: rnn.BatchDiagGGNLSTM(),
                 Permute: permute.DiagGGNPermute(),
                 AdaptiveAvgPool1d: adaptive_avg_pool_nd.DiagGGNAdaptiveAvgPoolNd(1),
                 AdaptiveAvgPool2d: adaptive_avg_pool_nd.DiagGGNAdaptiveAvgPoolNd(2),
