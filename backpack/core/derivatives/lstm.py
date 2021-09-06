@@ -95,7 +95,7 @@ class LSTMDerivatives(BaseParameterDerivatives):
         # use [T, N, ...] format
         if module.batch_first:
             input0 = input0.transpose(N_axis, T_axis)
-            output = output.transpose(, N_axis, T_axis)
+            output = output.transpose(N_axis, T_axis)
 
         for t in range(T):
             ifgo[t] = (
