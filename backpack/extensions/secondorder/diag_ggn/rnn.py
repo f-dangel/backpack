@@ -29,7 +29,7 @@ class BatchDiagGGNRNN(DiagGGNBaseModule):
 
 
 class DiagGGNLSTM(DiagGGNBaseModule):
-    """Calculating diagonal of LSTM."""
+    """Calculating GGN diagonal of LSTM."""
 
     def __init__(self):
         """Initialize."""
