@@ -4,6 +4,7 @@ Defines the backpropagation extension.
 Within it, define the extension for each module.
 """
 from torch.nn import (
+    LSTM,
     RNN,
     BatchNorm1d,
     BatchNorm2d,
@@ -63,6 +64,7 @@ class BatchL2Grad(FirstOrderBackpropExtension):
                 ConvTranspose2d: convtransposend.BatchL2ConvTranspose2d(),
                 ConvTranspose3d: convtransposend.BatchL2ConvTranspose3d(),
                 RNN: rnn.BatchL2RNN(),
+                LSTM: rnn.BatchL2LSTM(),
                 BatchNorm1d: batchnorm_nd.BatchL2BatchNorm(),
                 BatchNorm2d: batchnorm_nd.BatchL2BatchNorm(),
                 BatchNorm3d: batchnorm_nd.BatchL2BatchNorm(),

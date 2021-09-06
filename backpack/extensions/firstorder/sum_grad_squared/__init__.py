@@ -3,6 +3,7 @@
 Defines module extension for each module.
 """
 from torch.nn import (
+    LSTM,
     RNN,
     BatchNorm1d,
     BatchNorm2d,
@@ -66,6 +67,7 @@ class SumGradSquared(FirstOrderBackpropExtension):
                 ConvTranspose2d: convtranspose2d.SGSConvTranspose2d(),
                 ConvTranspose3d: convtranspose3d.SGSConvTranspose3d(),
                 RNN: rnn.SGSRNN(),
+                LSTM: rnn.SGSLSTM(),
                 BatchNorm1d: batchnorm_nd.SGSBatchNormNd(),
                 BatchNorm2d: batchnorm_nd.SGSBatchNormNd(),
                 BatchNorm3d: batchnorm_nd.SGSBatchNormNd(),

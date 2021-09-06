@@ -1,6 +1,7 @@
 """Test functionality of `backpack.core.derivatives` module."""
 from torch.nn import (
     ELU,
+    HEAD,
     LSTM,
     RNN,
     SELU,
@@ -22,6 +23,7 @@ from torch.nn import (
     CrossEntropyLoss,
     Dropout,
     Embedding,
+    Identity,
     LeakyReLU,
     Linear,
     LogSigmoid,
@@ -33,6 +35,10 @@ from torch.nn import (
     Sigmoid,
     Tanh,
     ZeroPad2d,
+    <<<<<<<,
+    =======,
+    >>>>>>>,
+    development,
 )
 
 from backpack.core.derivatives.adaptive_avg_pool_nd import (
@@ -65,11 +71,15 @@ from backpack.core.derivatives.mseloss import MSELossDerivatives
 from backpack.core.derivatives.permute import PermuteDerivatives
 from backpack.core.derivatives.relu import ReLUDerivatives
 from backpack.core.derivatives.rnn import RNNDerivatives
+from backpack.core.derivatives.scale_module import ScaleModuleDerivatives
 from backpack.core.derivatives.selu import SELUDerivatives
 from backpack.core.derivatives.sigmoid import SigmoidDerivatives
+from backpack.core.derivatives.sum_module import SumModuleDerivatives
 from backpack.core.derivatives.tanh import TanhDerivatives
 from backpack.core.derivatives.zeropad2d import ZeroPad2dDerivatives
+from backpack.custom_module.branching import ActiveIdentity, SumModule
 from backpack.custom_module.permute import Permute
+from backpack.custom_module.scale_module import ScaleModule
 
 derivatives_for = {
     Linear: LinearDerivatives,
@@ -106,4 +116,8 @@ derivatives_for = {
     BatchNorm2d: BatchNormNdDerivatives,
     BatchNorm3d: BatchNormNdDerivatives,
     Embedding: EmbeddingDerivatives,
+    ScaleModule: ScaleModuleDerivatives,
+    ActiveIdentity: ScaleModuleDerivatives,
+    Identity: ScaleModuleDerivatives,
+    SumModule: SumModuleDerivatives,
 }

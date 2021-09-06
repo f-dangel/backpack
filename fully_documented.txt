@@ -14,6 +14,8 @@ backpack/core/derivatives/linear.py
 backpack/core/derivatives/adaptive_avg_pool_nd.py
 backpack/core/derivatives/batchnorm_nd.py
 backpack/core/derivatives/embedding.py
+backpack/core/derivatives/scale_module.py
+backpack/core/derivatives/sum_module.py
 
 backpack/extensions/__init__.py
 backpack/extensions/backprop_extension.py
@@ -50,6 +52,7 @@ backpack/extensions/secondorder/diag_ggn/permute.py
 backpack/extensions/secondorder/diag_ggn/batchnorm_nd.py
 backpack/extensions/secondorder/diag_ggn/adaptive_avg_pool_nd.py
 backpack/extensions/secondorder/diag_ggn/embedding.py
+backpack/extensions/secondorder/diag_ggn/custom_module.py
 backpack/extensions/secondorder/diag_hessian/__init__.py
 backpack/extensions/secondorder/diag_hessian/conv1d.py
 backpack/extensions/secondorder/diag_hessian/conv2d.py
@@ -64,6 +67,7 @@ backpack/utils/errors.py
 backpack/utils/__init__.py
 backpack/utils/module_classification.py
 backpack/utils/hooks.py
+backpack/utils/examples.py
 
 test/extensions/automated_settings.py
 test/extensions/problem.py
@@ -93,8 +97,10 @@ test/core/derivatives/lstm_settings.py
 test/core/derivatives/pooling_adaptive_settings.py
 test/core/derivatives/batch_norm_settings.py
 test/core/derivatives/embedding_settings.py
+test/core/derivatives/scale_module_settings.py
 test/utils/evaluation_mode.py
 test/utils/skip_test.py
 test/utils/__init__.py
+test/converter/
 test/utils/test_subsampling.py
 test/custom_module/

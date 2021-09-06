@@ -8,8 +8,10 @@ BatchDiagGGN(BackpropExtension)
 BatchDiagGGNExact(BatchDiagGGN)
 BatchDiagGGNMC(BatchDiagGGN)
 """
+from torch import Tensor
 from torch.nn import (
     ELU,
+    LSTM,
     RNN,
     SELU,
     AdaptiveAvgPool1d,
@@ -31,6 +33,7 @@ from torch.nn import (
     Dropout,
     Embedding,
     Flatten,
+    Identity,
     LeakyReLU,
     Linear,
     LogSigmoid,
@@ -44,7 +47,9 @@ from torch.nn import (
     ZeroPad2d,
 )
 
+from backpack.custom_module.branching import ActiveIdentity, SumModule
 from backpack.custom_module.permute import Permute
+from backpack.custom_module.scale_module import ScaleModule
 from backpack.extensions.secondorder.base import SecondOrderBackpropExtension
 from backpack.extensions.secondorder.hbp import LossHessianStrategy
 
@@ -58,6 +63,7 @@ from . import (
     convtranspose1d,
     convtranspose2d,
     convtranspose3d,
+    custom_module,
     dropout,
     embedding,
     flatten,
@@ -124,7 +130,12 @@ class DiagGGN(SecondOrderBackpropExtension):
                 LogSigmoid: activations.DiagGGNLogSigmoid(),
                 ELU: activations.DiagGGNELU(),
                 SELU: activations.DiagGGNSELU(),
+                Identity: custom_module.DiagGGNScaleModule(),
+                ActiveIdentity: custom_module.DiagGGNScaleModule(),
+                ScaleModule: custom_module.DiagGGNScaleModule(),
+                SumModule: custom_module.DiagGGNSumModule(),
                 RNN: rnn.DiagGGNRNN(),
+                LSTM: rnn.DiagGGNLSTM(),
                 Permute: permute.DiagGGNPermute(),
                 AdaptiveAvgPool1d: adaptive_avg_pool_nd.DiagGGNAdaptiveAvgPoolNd(1),
                 AdaptiveAvgPool2d: adaptive_avg_pool_nd.DiagGGNAdaptiveAvgPoolNd(2),
@@ -135,6 +146,11 @@ class DiagGGN(SecondOrderBackpropExtension):
                 Embedding: embedding.DiagGGNEmbedding(),
             },
         )
+
+    def accumulate_backpropagated_quantities(
+        self, existing: Tensor, other: Tensor
+    ) -> Tensor:  # noqa: D102
+        return existing + other
 
 
 class DiagGGNExact(DiagGGN):
@@ -238,7 +254,12 @@ class BatchDiagGGN(SecondOrderBackpropExtension):
                 LogSigmoid: activations.DiagGGNLogSigmoid(),
                 ELU: activations.DiagGGNELU(),
                 SELU: activations.DiagGGNSELU(),
+                Identity: custom_module.DiagGGNScaleModule(),
+                ActiveIdentity: custom_module.DiagGGNScaleModule(),
+                ScaleModule: custom_module.DiagGGNScaleModule(),
+                SumModule: custom_module.DiagGGNSumModule(),
                 RNN: rnn.BatchDiagGGNRNN(),
+                LSTM: rnn.BatchDiagGGNLSTM(),
                 Permute: permute.DiagGGNPermute(),
                 AdaptiveAvgPool1d: adaptive_avg_pool_nd.DiagGGNAdaptiveAvgPoolNd(1),
                 AdaptiveAvgPool2d: adaptive_avg_pool_nd.DiagGGNAdaptiveAvgPoolNd(2),
@@ -249,6 +270,11 @@ class BatchDiagGGN(SecondOrderBackpropExtension):
                 Embedding: embedding.BatchDiagGGNEmbedding(),
             },
         )
+
+    def accumulate_backpropagated_quantities(
+        self, existing: Tensor, other: Tensor
+    ) -> Tensor:  # noqa: D102
+        return existing + other
 
 
 class BatchDiagGGNExact(BatchDiagGGN):
