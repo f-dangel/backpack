@@ -1,7 +1,7 @@
 """Partial derivatives for nn.LSTM."""
 from typing import List, Tuple
 
-from torch import Tensor, cat, einsum, sigmoid, tanh, transpose, zeros
+from torch import Tensor, cat, einsum, sigmoid, tanh, zeros
 from torch.nn import LSTM
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
@@ -94,8 +94,8 @@ class LSTMDerivatives(BaseParameterDerivatives):
 
         # use [T, N, ...] format
         if module.batch_first:
-            input0 = transpose(input0, N_axis, T_axis)
-            output = transpose(output, N_axis, T_axis)
+            input0 = input0.transpose(N_axis, T_axis)
+            output = output.transpose(, N_axis, T_axis)
 
         for t in range(T):
             ifgo[t] = (
@@ -255,7 +255,7 @@ class LSTMDerivatives(BaseParameterDerivatives):
             ) + einsum("vnh,nh->vnh", C_tanh_prod_t, ifgo[t, :, H3:H4])
 
         if module.batch_first:
-            H_prod = transpose(H_prod, T_axis + free_axis, N_axis + free_axis)
+            H_prod = H_prod.transpose(T_axis + free_axis, N_axis + free_axis)
 
         return H_prod
 
