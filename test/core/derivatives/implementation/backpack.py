@@ -1,8 +1,7 @@
 """Contains derivative calculation with BackPACK."""
-from itertools import product as itertools_product
 from test.core.derivatives.implementation.base import DerivativesImplementation
 from test.utils import chunk_sizes
-from typing import Iterable, List, Tuple
+from typing import List
 
 from torch import Tensor, einsum, zeros
 
