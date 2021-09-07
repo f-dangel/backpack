@@ -37,17 +37,17 @@ LOSS_SETTINGS.append(example)
 
 
 LOSS_SETTINGS += [
-    # {
-    #     "module_fn": lambda: torch.nn.CrossEntropyLoss(reduction="mean"),
-    #     "input_fn": lambda: torch.rand(size=(2, 4, 3)),
-    #     "target_fn": lambda: classification_targets(size=(2, 3), num_classes=4),
-    # },
-    # {
-    #     "module_fn": lambda: torch.nn.CrossEntropyLoss(reduction="mean"),
-    #     "input_fn": lambda: torch.rand(size=(3, 4, 3, 2)),
-    #     "target_fn": lambda: classification_targets(size=(3, 3, 2), num_classes=4),
-    #     "id_prefix": "cross-entropy-additional",
-    # },
+    {
+        "module_fn": lambda: torch.nn.CrossEntropyLoss(reduction="mean"),
+        "input_fn": lambda: torch.rand(size=(2, 4, 3)),
+        "target_fn": lambda: classification_targets(size=(2, 3), num_classes=4),
+    },
+    {
+        "module_fn": lambda: torch.nn.CrossEntropyLoss(reduction="mean"),
+        "input_fn": lambda: torch.rand(size=(3, 4, 3, 2)),
+        "target_fn": lambda: classification_targets(size=(3, 3, 2), num_classes=4),
+        "id_prefix": "cross-entropy-additional",
+    },
     {
         "module_fn": lambda: torch.nn.CrossEntropyLoss(reduction="mean"),
         "input_fn": lambda: torch.rand(size=(2, 4)),

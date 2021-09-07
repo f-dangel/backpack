@@ -1,10 +1,12 @@
 """Partial derivatives for cross-entropy loss."""
+from itertools import product as itertools_product
 from math import sqrt
-from typing import Callable, Dict, List, Tuple
+from typing import Callable, Dict, Iterable, List, Tuple
 
 from einops import rearrange
 from torch import Tensor, diag, diag_embed, einsum, multinomial, ones_like, softmax
 from torch import sqrt as torchsqrt
+from torch import zeros
 from torch.nn import CrossEntropyLoss
 from torch.nn.functional import one_hot
 
@@ -41,6 +43,30 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
             sqrt_H /= sqrt(self._get_mean_normalization(module.input0))
 
         sqrt_H = self._ungroup_batch_and_additional(sqrt_H, *rearrange_info)
+        if sqrt_H.dim() >= 4:
+            result = zeros(
+                *module.input0.shape[1:],
+                module.input0.shape[0] if subsampling is None else len(subsampling),
+                *module.input0.shape[1:],
+            )
+            ranges: Tuple[Iterable, ...] = tuple(
+                [
+                    range(module.input0.shape[2 + i])
+                    for i in range(module.input0.dim() - 2)
+                ]
+            )
+
+            index_additional_axes: Tuple[int]
+            for index_additional_axes in itertools_product(*ranges):
+                selection_sqrt_H = (slice(None),) * 3 + index_additional_axes
+                selection_target = (
+                    (slice(None),)
+                    + index_additional_axes
+                    + (slice(None),) * 2
+                    + index_additional_axes
+                )
+                result[selection_target] = sqrt_H[selection_sqrt_H]
+            sqrt_H = result.flatten(0, module.input0.dim() - 2)
         return sqrt_H
 
     def _sqrt_hessian_sampled(
