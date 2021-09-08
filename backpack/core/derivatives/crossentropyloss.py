@@ -97,17 +97,15 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
         self._check_2nd_order_parameters(module)
 
         probs = self._get_probs(module)
-        probs, *rearrange_info = self._merge_batch_and_additional(probs)
 
         def hessian_mat_prod(mat):
-            Hmat = einsum("bi,cbi->cbi", probs, mat) - einsum(
-                "bi,bj,cbj->cbi", probs, probs, mat
+            Hmat = einsum("nc...,vnc...->vnc...", probs, mat) - einsum(
+                "nc...,nd...,vnd...->vnc...", probs, probs, mat
             )
 
             if module.reduction == "mean":
                 Hmat /= self._get_mean_normalization(module.input0)
 
-            Hmat = self._ungroup_batch_and_additional(Hmat, *rearrange_info)
             return Hmat
 
         return hessian_mat_prod
