@@ -2,7 +2,6 @@
 from test.core.derivatives.implementation.base import DerivativesImplementation
 from typing import List
 
-from einops import rearrange
 from torch import Tensor, allclose, backends, cat, stack, zeros, zeros_like
 
 from backpack.hessianfree.hvp import hessian_vector_product
@@ -347,32 +346,19 @@ class AutogradDerivatives(DerivativesImplementation):
         """
         input = self.problem.input
 
-        # rearrange if there are additional axes: n d_dims -> (n d_dims)
-        num_axes = len(input.shape)
-        if num_axes > 2:
-            str_d_dims = str.join("", [f"d{i} " for i in range(num_axes - 2)])
-            str_e_dims = str_d_dims.replace("d", "e")
-            hessian = rearrange(
-                hessian,
-                f"n0 c0 {str_d_dims} n1 c1 {str_e_dims} -> (n0 {str_d_dims}) c0 (n1 {str_e_dims}) c1",  # noqa: B950
-            )
-            input = rearrange(input, f"n c {str_d_dims} -> (n {str_d_dims}) c")
-
         N = input.shape[0]
-        num_features = input.numel() // N
+        shape_feature = input.shape[1:]
 
-        sum_hessian = zeros(num_features, num_features, device=input.device)
+        sum_hessian = zeros(*shape_feature, *shape_feature, device=input.device)
 
         hessian_different_samples = zeros(
-            num_features, num_features, device=input.device
+            *shape_feature, *shape_feature, device=input.device
         )
         for n_1 in range(N):
             for n_2 in range(N):
-                block = hessian[n_1, :, n_2, :]
-
+                block = hessian[(n_1,) + (slice(None),) * len(shape_feature) + (n_2,)]
                 if n_1 == n_2:
                     sum_hessian += block
-
                 else:
                     assert allclose(block, hessian_different_samples)
 
