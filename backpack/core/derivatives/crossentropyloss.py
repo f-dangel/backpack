@@ -4,6 +4,7 @@ from math import sqrt
 from typing import Callable, Dict, Iterable, List, Tuple, Union
 
 from einops import rearrange
+from numpy import prod
 from torch import Tensor, diag, diag_embed, einsum, eye, multinomial, ones_like, softmax
 from torch import sqrt as torchsqrt
 from torch import zeros
@@ -83,39 +84,26 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
         self._check_2nd_order_parameters(module)
 
         probs = self._get_probs(module)
+
         if probs.dim() == 2:
             diagonal = diag(probs.sum(0))
-        elif probs.dim() == 3:
-            diagonal = einsum(
-                "cx,cd,xy->cxdy",
-                probs.sum(0),
-                eye(probs.shape[1], probs.shape[1], device=probs.device),
-                eye(probs.shape[2], probs.shape[2], device=probs.device),
-            )
-        elif probs.dim() == 4:
-            diagonal = einsum(
-                "cxy,cd,xa,yb->cxydab",
-                probs.sum(0),
-                eye(probs.shape[1], probs.shape[1], device=probs.device),
-                eye(probs.shape[2], probs.shape[2], device=probs.device),
-                eye(probs.shape[3], probs.shape[3], device=probs.device),
-            )
-        if probs.dim() == 2:
             sum_H = diagonal - einsum("nc,nd->cd", probs, probs)
-        elif probs.dim() == 3:
-            sum_H = diagonal - einsum(
-                "ncx,ndy,xy->cxdy",
-                probs,
-                probs,
-                eye(probs.shape[2], probs.shape[2], device=probs.device),
+        else:
+            diagonal = diag(probs.sum(0).flatten()).reshape(
+                *probs.shape[1:], *probs.shape[1:]
             )
-        elif probs.dim() == 4:
-            sum_H = diagonal - einsum(
-                "ncxy,ndab,xa,yb->cxydab",
-                probs,
-                probs,
-                eye(probs.shape[2], probs.shape[2], device=probs.device),
-                eye(probs.shape[3], probs.shape[3], device=probs.device),
+            sum_H = (
+                diagonal
+                - einsum(
+                    "ncx,ndy,xy->cxdy",
+                    probs.flatten(2),
+                    probs.flatten(2),
+                    eye(
+                        prod(probs.shape[2:]),
+                        prod(probs.shape[2:]),
+                        device=probs.device,
+                    ),
+                ).reshape(*probs.shape[1:], *probs.shape[1:])
             )
 
         if module.reduction == "mean":
