@@ -28,7 +28,8 @@ class EmbeddingDerivatives(BaseParameterDerivatives):
         subsampling: List[int] = None,
     ) -> Tensor:
         raise NotImplementedError(
-            "The input to Embedding is discrete. "
+            "The input tensor to Embedding is of type long. However, in PyTorch, only "
+            "Tensors of floating point and complex dtype can require gradients. "
             "Therefore, a derivative wrt input is not defined."
         )
 
