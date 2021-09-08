@@ -377,3 +377,11 @@ class AutogradDerivatives(DerivativesImplementation):
                     assert allclose(block, hessian_different_samples)
 
         return sum_hessian
+
+    def hessian_mat_prod(self, mat: Tensor) -> Tensor:  # noqa: D102
+        input, output, _ = self.problem.forward_pass(input_requires_grad=True)
+        V = mat.shape[0]
+        hessian_mat_prod = zeros(V, *self.problem.input_shape, device=mat.device)
+        for v in range(V):
+            hessian_mat_prod[v] = hessian_vector_product(output, [input], [mat[v]])[0]
+        return hessian_mat_prod

@@ -170,3 +170,10 @@ class BackpackDerivatives(DerivativesImplementation):
             hessian[n, :, n, :] = individual_hessians[n].reshape(D, D)
 
         return hessian.reshape(*input.shape, *input.shape)
+
+    def hessian_mat_prod(self, mat: Tensor) -> Tensor:  # noqa: D102
+        self.store_forward_io()
+        make_hessian_mat_prod = self.problem.derivative.make_hessian_mat_prod(
+            self.problem.module, None, None
+        )
+        return make_hessian_mat_prod(mat)
