@@ -4,7 +4,6 @@ from math import sqrt
 from typing import Callable, Dict, Iterable, List, Tuple, Union
 
 from einops import rearrange
-from numpy import prod
 from torch import Tensor, diag, diag_embed, einsum, eye, multinomial, ones_like, softmax
 from torch import sqrt as torchsqrt
 from torch import zeros
@@ -99,8 +98,8 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
                     probs.flatten(2),
                     probs.flatten(2),
                     eye(
-                        prod(probs.shape[2:]),
-                        prod(probs.shape[2:]),
+                        probs.shape[2:].numel(),
+                        probs.shape[2:].numel(),
                         device=probs.device,
                     ),
                 ).reshape(*probs.shape[1:], *probs.shape[1:])
