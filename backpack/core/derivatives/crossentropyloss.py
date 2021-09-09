@@ -1,12 +1,10 @@
 """Partial derivatives for cross-entropy loss."""
-from itertools import product as itertools_product
 from math import sqrt
-from typing import Callable, Dict, Iterable, List, Tuple, Union
+from typing import Callable, Dict, List, Tuple
 
 from einops import rearrange
 from torch import Tensor, diag, diag_embed, einsum, eye, multinomial, ones_like, softmax
 from torch import sqrt as torchsqrt
-from torch import zeros
 from torch.nn import CrossEntropyLoss
 from torch.nn.functional import one_hot
 
@@ -43,7 +41,7 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
             sqrt_H /= sqrt(self._get_mean_normalization(module.input0))
 
         sqrt_H = self._ungroup_batch_and_additional(sqrt_H, *rearrange_info)
-        sqrt_H = self._expand_sqrt_h(sqrt_H, module, subsampling)
+        sqrt_H = self._expand_sqrt_h(sqrt_H)
         return sqrt_H
 
     def _sqrt_hessian_sampled(
@@ -239,49 +237,28 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
         )
 
     @staticmethod
-    def _expand_sqrt_h(
-        sqrt_h: Tensor, module: CrossEntropyLoss, subsampling: Union[None, List[int]]
-    ) -> Tensor:
+    def _expand_sqrt_h(sqrt_h: Tensor) -> Tensor:
         """Expands the square root hessian if CrossEntropyLoss has additional axes.
 
-        In the case of e.g. two additional axes, the input is [N,C,A,B].
+        In the case of e.g. two additional axes (A and B), the input is [N,C,A,B].
         In CrossEntropyLoss the additional axes are treated independently.
-        Therefore the intermediate result has shape [C,N,C,A,B].
+        Therefore, the intermediate result has shape [C,N,C,A,B].
         In subsequent calculations the additional axes are not independent anymore.
         The required shape for sqrt_h_full is then [C*A*B,N,C,A,B].
         Due to the independence, sqrt_h lives on the diagonal of sqrt_h_full.
 
         Args:
             sqrt_h: intermediate result, shape [C,N,C,A,B]
-            module: module, to extract input shape
-            subsampling: subsampling to determine length of batch axis
 
         Returns:
             sqrt_h_full, shape [C*A*B,N,C,A,B], sqrt_h on diagonal.
         """
-        n_standard_axes = 2
-        n_additional_axes = module.input0.dim() - n_standard_axes
-
-        if n_additional_axes > 0:
-            shape_input = module.input0.shape
-            N_samples = shape_input[0] if subsampling is None else len(subsampling)
-            sqrt_H_full = zeros(*shape_input[1:], N_samples, *shape_input[1:])
-            ranges_additional_axes: List[Iterable, ...] = [
-                range(shape_input[n_standard_axes + i])
-                for i in range(n_additional_axes)
-            ]
-            index_additional_axes: Tuple[int]
-            for index_additional_axes in itertools_product(*ranges_additional_axes):
-                selection_sqrt_H = (slice(None),) * 3 + index_additional_axes
-                selection_target = (
-                    (slice(None),)
-                    + index_additional_axes
-                    + (slice(None),) * 2
-                    + index_additional_axes
-                )
-                sqrt_H_full[selection_target] = sqrt_h[selection_sqrt_H]
-            return sqrt_H_full.flatten(0, n_additional_axes)
-        return sqrt_h
+        if sqrt_h.dim() > 3:
+            return diag_embed(sqrt_h.flatten(3), offset=0, dim1=1, dim2=4).reshape(
+                -1, *sqrt_h.shape[1:]
+            )
+        else:
+            return sqrt_h
 
     @staticmethod
     def _get_mean_normalization(input: Tensor) -> int:
