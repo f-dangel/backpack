@@ -144,7 +144,7 @@ class BackpackDerivatives(DerivativesImplementation):
         N, input_dims = sqrt.shape[1], sqrt.shape[2:]
 
         sqrt_flat = sqrt.flatten(start_dim=2)
-        sample_hessians = einsum("vni, vnj->nij", sqrt_flat, sqrt_flat)
+        sample_hessians = einsum("vni,vnj->nij", sqrt_flat, sqrt_flat)
 
         return sample_hessians.reshape(N, *input_dims, *input_dims)
 
@@ -156,8 +156,8 @@ class BackpackDerivatives(DerivativesImplementation):
         Args:
             individual_hessians: Hessians w.r.t. individual samples in the input.
             input: Inputs for the for samples whose individual Hessians are passed.
-                Has shape ``[N, A, B, ...]`` where ``N`` is the number of active
-                samples and ``[A, B, ...]`` are the feature dimensions.
+                Has shape ``[N, A, B, ..., A, B, ...]`` where ``N`` is the number of
+                active samples and ``[A, B, ...]`` are the feature dimensions.
 
         Returns:
             Hessian that contains the individual Hessians as diagonal blocks.
@@ -173,7 +173,7 @@ class BackpackDerivatives(DerivativesImplementation):
 
     def hessian_mat_prod(self, mat: Tensor) -> Tensor:  # noqa: D102
         self.store_forward_io()
-        make_hessian_mat_prod = self.problem.derivative.make_hessian_mat_prod(
+        hmp = self.problem.derivative.make_hessian_mat_prod(
             self.problem.module, None, None
         )
-        return make_hessian_mat_prod(mat)
+        return hmp(mat)
