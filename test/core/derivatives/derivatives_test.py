@@ -480,6 +480,8 @@ def test_make_hessian_mat_prod(problem: DerivativesTestProblem) -> None:
     """
     problem.set_up()
     mat = rand(4, *problem.input_shape, device=problem.device)
+
     autograd_res = AutogradDerivatives(problem).hessian_mat_prod(mat)
     backpack_res = BackpackDerivatives(problem).hessian_mat_prod(mat)
+
     check_sizes_and_values(backpack_res, autograd_res)
