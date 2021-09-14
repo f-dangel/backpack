@@ -86,22 +86,16 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
             diagonal = diag(probs.sum(0))
             sum_H = diagonal - einsum("nc,nd->cd", probs, probs)
         else:
-            diagonal = diag(probs.sum(0).flatten()).reshape(
-                *probs.shape[1:], *probs.shape[1:]
-            )
-            sum_H = (
-                diagonal
-                - einsum(
-                    "ncx,ndy,xy->cxdy",
-                    probs.flatten(2),
-                    probs.flatten(2),
-                    eye(
-                        probs.shape[2:].numel(),
-                        probs.shape[2:].numel(),
-                        device=probs.device,
-                    ),
-                ).reshape(*probs.shape[1:], *probs.shape[1:])
-            )
+            out_shape = (*probs.shape[1:], *probs.shape[1:])
+            additional = probs.shape[1:].numel()
+
+            probs = probs.flatten(2)
+            kron_delta = eye(additional, device=probs.device, dtype=probs.dtype)
+
+            diagonal = diag(probs.sum(0)).reshape(*out_shape)
+            sum_H = diagonal - einsum(
+                "ncx,ndy,xy->cxdy", probs, probs, kron_delta
+            ).reshape(out_shape)
 
         if module.reduction == "mean":
             sum_H /= self._get_mean_normalization(module.input0)
