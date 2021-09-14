@@ -273,7 +273,7 @@ class AutogradDerivatives(DerivativesImplementation):
             subsampling: Indices of active samples. ``None`` uses all samples.
 
         Returns:
-            Hessian with of shape ``[N, *, N, *]`` where ``N`` denotes the
+            Hessian of shape ``[N, *, N, *]`` where ``N`` denotes the
             number of sub-samples, and ``*`` is the input feature shape.
         """
         input, output, _ = self.problem.forward_pass(input_requires_grad=True)
@@ -339,30 +339,31 @@ class AutogradDerivatives(DerivativesImplementation):
         Assert second derivative w.r.t. different samples is zero.
 
         Args:
-            hessian: .
+            hessian: Hessian of the output w.r.t. the input. Has shape ``[N, *, N, *]``
+                where ``N`` is the number of active samples and ``*`` is the input's
+                feature shape.
 
         Returns:
-            sum of hessians
+            Sum of Hessians w.r.t. to individual samples. Has shape ``[*, *]``.
         """
         input = self.problem.input
-
         N = input.shape[0]
         shape_feature = input.shape[1:]
+        D = shape_feature.numel()
 
-        sum_hessian = zeros(*shape_feature, *shape_feature, device=input.device)
+        hessian = hessian.reshape(N, D, N, D)
+        sum_hessian = zeros(D, D, device=input.device, dtype=input.dtype)
 
-        hessian_different_samples = zeros(
-            *shape_feature, *shape_feature, device=input.device
-        )
+        hessian_different_samples = zeros(D, D, device=input.device, dtype=input.dtype)
         for n_1 in range(N):
             for n_2 in range(N):
-                block = hessian[(n_1,) + (slice(None),) * len(shape_feature) + (n_2,)]
+                block = hessian[n_1, :, n_2, :]
                 if n_1 == n_2:
                     sum_hessian += block
                 else:
                     assert allclose(block, hessian_different_samples)
 
-        return sum_hessian
+        return sum_hessian.reshape(*shape_feature, *shape_feature)
 
     def hessian_mat_prod(self, mat: Tensor) -> Tensor:  # noqa: D102
         input, output, _ = self.problem.forward_pass(input_requires_grad=True)
