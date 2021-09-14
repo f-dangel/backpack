@@ -87,12 +87,13 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
             sum_H = diagonal - einsum("nc,nd->cd", probs, probs)
         else:
             out_shape = (*probs.shape[1:], *probs.shape[1:])
-            additional = probs.shape[1:].numel()
+            additional = probs.shape[2:].numel()
+
+            diagonal = diag(probs.sum(0).flatten()).reshape(*out_shape)
 
             probs = probs.flatten(2)
             kron_delta = eye(additional, device=probs.device, dtype=probs.dtype)
 
-            diagonal = diag(probs.sum(0)).reshape(*out_shape)
             sum_H = diagonal - einsum(
                 "ncx,ndy,xy->cxdy", probs, probs, kron_delta
             ).reshape(out_shape)
@@ -110,7 +111,7 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
         probs = self._get_probs(module)
 
         def hessian_mat_prod(mat):
-            Hmat = einsum("nc...,vnc...->vnc...", probs, mat) - einsum(
+            Hmat = einsum("...,v...->v...", probs, mat) - einsum(
                 "nc...,nd...,vnd...->vnc...", probs, probs, mat
             )
 
