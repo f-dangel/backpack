@@ -12,6 +12,10 @@ from backpack.utils.subsampling import subsample
 class EmbeddingDerivatives(BaseParameterDerivatives):
     """Derivatives for Embedding.
 
+    These derivatives assume that the batch axis is at position 0.
+    This might be different if used in combination with an RNN module that has
+    batch_first=False. However, this mode is not supported in BackPACK.
+
     Index convention:
     v - free axis
     n - batch axis
