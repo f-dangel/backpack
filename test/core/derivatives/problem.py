@@ -5,7 +5,7 @@ from test.core.derivatives.utils import derivative_cls_for, get_available_device
 from typing import Dict, List, Tuple
 
 import torch
-from torch import Tensor, float32
+from torch import Tensor, long
 
 from backpack import extend
 from backpack.utils.module_classification import is_loss
@@ -152,7 +152,7 @@ class DerivativesTestProblem:
             input = subsample(input, dim=batch_axis_in, subsampling=subsampling)
 
         if input_requires_grad:
-            if input.dtype is float32:
+            if input.dtype is not long:
                 input.requires_grad = True
 
         if self.is_loss():
