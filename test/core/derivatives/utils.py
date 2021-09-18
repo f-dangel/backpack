@@ -37,11 +37,11 @@ def derivative_cls_for(module_cls: Type[Module]) -> Type[BaseDerivatives]:
     """
     try:
         return derivatives_for[module_cls]
-    except KeyError:
+    except KeyError as e:
         raise KeyError(
-            "No derivative available for {}".format(module_cls)
-            + "Known mappings:\n{}".format(derivatives_for)
-        )
+            f"No derivative available for {module_cls}"
+            + f"Known mappings:\n{derivatives_for}"
+        ) from e
 
 
 def classification_targets(size: Tuple[int, ...], num_classes: int) -> Tensor:
