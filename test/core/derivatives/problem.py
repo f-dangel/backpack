@@ -151,9 +151,8 @@ class DerivativesTestProblem:
             batch_axis_in = get_batch_axis(self.module, "input0")
             input = subsample(input, dim=batch_axis_in, subsampling=subsampling)
 
-        if input_requires_grad:
-            if input.dtype is not long:
-                input.requires_grad = True
+        if input_requires_grad and input.dtype is not long:
+            input.requires_grad = True
 
         if self.is_loss():
             assert subsampling is None

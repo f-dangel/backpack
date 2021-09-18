@@ -12,9 +12,8 @@ from backpack.utils.subsampling import subsample
 class EmbeddingDerivatives(BaseParameterDerivatives):
     """Derivatives for Embedding.
 
-    These derivatives assume that the batch axis is at position 0.
-    This might be different if used in combination with an RNN module that has
-    batch_first=False. However, this mode is not supported in BackPACK.
+    Note:
+        These derivatives assume the batch axis to be at position 0.
 
     Index convention:
     v - free axis
@@ -32,9 +31,8 @@ class EmbeddingDerivatives(BaseParameterDerivatives):
         subsampling: List[int] = None,
     ) -> Tensor:
         raise NotImplementedError(
-            "The input tensor to Embedding is of type long. However, in PyTorch, only "
-            "Tensors of floating point and complex dtype can require gradients. "
-            "Therefore, a derivative wrt input is not defined."
+            "Derivative w.r.t. input not defined: Input to Embedding has type long."
+            " But only float and complex dtypes can require gradients in PyTorch."
         )
 
     def _weight_jac_t_mat_prod(
