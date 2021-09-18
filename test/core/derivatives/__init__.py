@@ -1,7 +1,6 @@
 """Test functionality of `backpack.core.derivatives` module."""
 from torch.nn import (
     ELU,
-    HEAD,
     LSTM,
     RNN,
     SELU,
@@ -35,10 +34,6 @@ from torch.nn import (
     Sigmoid,
     Tanh,
     ZeroPad2d,
-    <<<<<<<,
-    =======,
-    >>>>>>>,
-    development,
 )
 
 from backpack.core.derivatives.adaptive_avg_pool_nd import (
