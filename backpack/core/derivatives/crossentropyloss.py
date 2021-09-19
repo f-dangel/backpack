@@ -42,18 +42,6 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
 
         sqrt_H = self._ungroup_batch_and_additional(sqrt_H, *rearrange_info)
         sqrt_H = self._expand_sqrt_h(sqrt_H)
-
-        input0 = module.input0
-        C = input0.shape[1]
-        K = input0.shape[2:].numel()
-        assert sqrt_H.shape[0] == C * K
-        assert (
-            sqrt_H.shape[1] == len(subsampling)
-            if subsampling is not None
-            else input0.shape[0]
-        )
-        assert sqrt_H.shape[2:] == input0.shape[1:]
-
         return sqrt_H
 
     def _sqrt_hessian_sampled(
@@ -85,16 +73,6 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
             sqrt_mc_h /= sqrt(self._get_mean_normalization(module.input0))
 
         sqrt_mc_h = self._ungroup_batch_and_additional(sqrt_mc_h, *rearrange_info)
-
-        assert sqrt_mc_h.shape[0] == mc_samples
-        input0 = module.input0
-        assert (
-            sqrt_mc_h.shape[1] == len(subsampling)
-            if subsampling is not None
-            else input0.shape[0]
-        )
-        assert sqrt_mc_h.shape[2:] == input0.shape[1:]
-
         return sqrt_mc_h
 
     def _sum_hessian(
