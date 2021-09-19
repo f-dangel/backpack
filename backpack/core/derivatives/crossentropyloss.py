@@ -89,7 +89,7 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
             out_shape = (*probs.shape[1:], *probs.shape[1:])
             additional = probs.shape[2:].numel()
 
-            diagonal = diag(probs.sum(0).flatten()).reshape(*out_shape)
+            diagonal = diag(probs.sum(0).flatten()).reshape(out_shape)
 
             probs = probs.flatten(2)
             kron_delta = eye(additional, device=probs.device, dtype=probs.dtype)
