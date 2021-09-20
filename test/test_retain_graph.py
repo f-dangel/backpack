@@ -18,7 +18,9 @@ def test_retain_graph():
     loss_fn = extend(CrossEntropyLoss())
 
     # after a forward pass graph is not clear
-    loss = loss_fn(model(rand(8, 4)), randint(5, (8,)))
+    inputs = rand(8, 4)
+    labels = randint(5, (8,))
+    loss = loss_fn(model(inputs), labels)
     with raises(AssertionError):
         _check_no_io(model)
 
@@ -27,7 +29,7 @@ def test_retain_graph():
     _check_no_io(model)
 
     # after a backward pass with retain_graph=True graph is not clear
-    loss = loss_fn(model(rand(8, 4)), randint(5, (8,)))
+    loss = loss_fn(model(inputs), labels)
     with backpack(retain_graph=True):
         loss.backward(retain_graph=True)
     with raises(AssertionError):
