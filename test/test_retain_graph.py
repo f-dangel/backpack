@@ -45,12 +45,10 @@ def test_retain_graph():
     _clear_input_output(model)
 
 
-def _clear_input_output(parent_module: Module) -> bool:
-    if list(parent_module.children()):
-        return all([_clear_input_output(module) for module in parent_module.children()])
-    elif hasattr(parent_module, "input0") or hasattr(parent_module, "output"):
+def _clear_input_output(parent_module: Module) -> None:
+    for module in parent_module.children():
+        _clear_input_output(module)
+    if hasattr(parent_module, "input0") or hasattr(parent_module, "output"):
         raise AssertionError(
             f"graph should be clear, but {parent_module} has input0 or output."
         )
-    else:
-        return True
