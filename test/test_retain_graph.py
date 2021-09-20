@@ -19,33 +19,33 @@ def test_retain_graph():
     # after a forward pass graph is not clear
     loss = loss_fn(model(rand(8, 4)), randint(5, (8,)))
     with raises(AssertionError):
-        _clear_input_output(model)
+        _check_no_io(model)
 
     # after a normal backward pass graph should be clear
     loss.backward()
-    _clear_input_output(model)
+    _check_no_io(model)
 
     # after a backward pass with retain_graph=True graph is not clear
     loss = loss_fn(model(rand(8, 4)), randint(5, (8,)))
     with backpack(retain_graph=True):
         loss.backward(retain_graph=True)
     with raises(AssertionError):
-        _clear_input_output(model)
+        _check_no_io(model)
 
     # doing several backward passes with retain_graph=True
     for _ in range(3):
         with backpack(retain_graph=True):
             loss.backward(retain_graph=True)
     with raises(AssertionError):
-        _clear_input_output(model)
+        _check_no_io(model)
 
     # finally doing a normal backward pass that verifies graph is clear again
     with backpack(BatchGrad()):
         loss.backward()
-    _clear_input_output(model)
+    _check_no_io(model)
 
 
-def _clear_input_output(parent_module: Module) -> None:
+def _check_no_io(parent_module: Module) -> None:
     """Checks whether the module is clear of any BackPACK inputs and outputs.
 
     Args:
@@ -55,7 +55,7 @@ def _clear_input_output(parent_module: Module) -> None:
         AssertionError: if the module or any child module has BackPACK inputs or outputs.
     """
     for module in parent_module.children():
-        _clear_input_output(module)
+        _check_no_io(module)
     if hasattr(parent_module, "input0") or hasattr(parent_module, "output"):
         raise AssertionError(
             f"graph should be clear, but {parent_module} has input0 or output."
