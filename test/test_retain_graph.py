@@ -1,6 +1,6 @@
 """Test autograd functionality like retain_graph."""
 from pytest import raises
-from torch import rand, randint
+from torch import manual_seed, rand, randint
 from torch.nn import CrossEntropyLoss, Linear, Module, Sequential
 
 from backpack import backpack, extend
@@ -13,6 +13,7 @@ def test_retain_graph():
     Does several forward and backward passes.
     In between, it is tested whether BackPACK quantities are present or not.
     """
+    manual_seed(0)
     model = extend(Sequential(Linear(4, 6), Linear(6, 5)))
     loss_fn = extend(CrossEntropyLoss())
 
