@@ -213,11 +213,14 @@ def hook_run_extensions(
         print("[DEBUG] Running extension hook on", module)
     CTX.get_extension_hook()(module)
 
-    if not CTX.get_retain_graph() and not (
-        CTX.is_extension_active(
-            extensions.curvmatprod.HMP,
-            extensions.curvmatprod.GGNMP,
-            extensions.curvmatprod.PCHMP,
+    if not (
+        CTX.get_retain_graph()
+        or (
+            CTX.is_extension_active(
+                extensions.curvmatprod.HMP,
+                extensions.curvmatprod.GGNMP,
+                extensions.curvmatprod.PCHMP,
+            )
         )
     ):
         memory_cleanup(module)
