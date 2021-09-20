@@ -24,6 +24,7 @@ from test.utils.evaluation_mode import initialize_training_false_recursive
 
 from torch import device, rand
 from torch.nn import (
+    LSTM,
     RNN,
     BatchNorm1d,
     BatchNorm2d,
@@ -42,9 +43,14 @@ from torch.nn import (
     Sequential,
     Sigmoid,
 )
+from torchvision.models import resnet18
 
 from backpack.custom_module.permute import Permute
 from backpack.custom_module.reduce_tuple import ReduceTuple
+from backpack.utils import CONVERTER_AVAILABLE
+
+if CONVERTER_AVAILABLE:
+    from backpack import convert_module_to_backpack
 
 FIRSTORDER_SETTINGS = []
 
@@ -280,4 +286,29 @@ FIRSTORDER_SETTINGS += [
         "loss_function_fn": lambda: MSELoss(),
         "target_fn": lambda: regression_targets((8, 3 * 5)),
     },
+    {
+        "input_fn": lambda: rand(4, 5, 3),
+        "module_fn": lambda: Sequential(
+            LSTM(3, 4, batch_first=True),
+            ReduceTuple(index=0),
+            Flatten(),
+        ),
+        "loss_function_fn": lambda: CrossEntropyLoss(),
+        "target_fn": lambda: classification_targets((4,), 20),
+    },
 ]
+###############################################################################
+#                     test setting: torchvision resnet                        #
+###############################################################################
+if CONVERTER_AVAILABLE:
+    FIRSTORDER_SETTINGS += [
+        {
+            "input_fn": lambda: rand(2, 3, 7, 7),
+            "module_fn": lambda: convert_module_to_backpack(
+                resnet18(num_classes=4).eval(), True
+            ),
+            "loss_function_fn": lambda: MSELoss(),
+            "target_fn": lambda: regression_targets((2, 4)),
+            "id_prefix": "resnet18",
+        },
+    ]

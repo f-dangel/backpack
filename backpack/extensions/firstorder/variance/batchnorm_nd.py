@@ -1,4 +1,10 @@
 """Variance extension for BatchNorm."""
+from typing import Tuple, Union
+
+from torch import Tensor
+from torch.nn import BatchNorm1d, BatchNorm2d, BatchNorm3d
+
+from backpack.extensions.backprop_extension import BackpropExtension
 from backpack.extensions.firstorder.gradient.batchnorm_nd import GradBatchNormNd
 from backpack.extensions.firstorder.sum_grad_squared.batchnorm_nd import SGSBatchNormNd
 from backpack.extensions.firstorder.variance.variance_base import VarianceBaseModule
@@ -12,6 +18,11 @@ class VarianceBatchNormNd(VarianceBaseModule):
         """Initialization."""
         super().__init__(["weight", "bias"], GradBatchNormNd(), SGSBatchNormNd())
 
-    def __call__(self, ext, module, g_inp, g_out):  # noqa: D102
+    def check_hyperparameters_module_extension(
+        self,
+        ext: BackpropExtension,
+        module: Union[BatchNorm1d, BatchNorm2d, BatchNorm3d],
+        g_inp: Tuple[Tensor],
+        g_out: Tuple[Tensor],
+    ) -> None:  # noqa: D102
         batch_norm_raise_error_if_train(module)
-        super().__call__(ext, module, g_inp, g_out)

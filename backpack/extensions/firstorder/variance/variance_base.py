@@ -7,6 +7,7 @@ from torch import Tensor
 from torch.nn import Module
 
 from backpack.extensions.firstorder.base import FirstOrderModuleExtension
+from backpack.utils.subsampling import get_batch_axis
 
 if TYPE_CHECKING:
     from backpack.extensions import Variance
@@ -45,10 +46,6 @@ class VarianceBaseModule(FirstOrderModuleExtension):
         avg_gsquared = sgs / N
         return avg_gsquared - avgg_squared
 
-    @staticmethod
-    def _get_axis_batch() -> int:
-        return 0
-
     def _make_param_function(
         self, param: str
     ) -> Callable[[Variance, Module, Tuple[Tensor], Tuple[Tensor], None], Tensor]:
@@ -83,7 +80,7 @@ class VarianceBaseModule(FirstOrderModuleExtension):
             return self._variance_from(
                 getattr(self.grad_ext, param)(ext, module, g_inp, g_out, bpQuantities),
                 getattr(self.sgs_ext, param)(ext, module, g_inp, g_out, bpQuantities),
-                g_out[0].shape[self._get_axis_batch()],
+                g_out[0].shape[get_batch_axis(module, "output")],
             )
 
         return param_function

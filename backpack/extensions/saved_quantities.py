@@ -1,5 +1,5 @@
 """Class for saving backpropagation quantities."""
-from typing import Dict, Union
+from typing import Any, Callable, Dict, Union
 
 from torch import Tensor
 
@@ -11,24 +11,28 @@ class SavedQuantities:
         """Initialization."""
         self._saved_quantities: Dict[int, Tensor] = {}
 
-    def save_quantity(self, key: int, quantity: Tensor) -> None:
+    def save_quantity(
+        self,
+        key: int,
+        quantity: Tensor,
+        accumulation_function: Callable[[Any, Any], Any],
+    ) -> None:
         """Saves the quantity under the specified key.
+
+        Accumulate quantities which already have an entry.
 
         Args:
             key: data_ptr() of reference tensor (module.input0).
             quantity: tensor to save
-
-        Raises:
-            NotImplementedError: if the key already exists
+            accumulation_function: function defining how to accumulate quantity
         """
         if key in self._saved_quantities:
-            # TODO if exists: accumulate quantities (ResNet)
-            raise NotImplementedError(
-                "Quantity with given key already exists. Multiple backpropagated "
-                "quantities like in ResNets are not supported yet."
-            )
+            existing = self.retrieve_quantity(key, delete_old=True)
+            save_value = accumulation_function(existing, quantity)
         else:
-            self._saved_quantities[key] = quantity
+            save_value = quantity
+
+        self._saved_quantities[key] = save_value
 
     def retrieve_quantity(self, key: int, delete_old: bool) -> Union[Tensor, None]:
         """Returns the saved quantity.
