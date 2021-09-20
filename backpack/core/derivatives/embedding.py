@@ -67,8 +67,8 @@ class EmbeddingDerivatives(BaseParameterDerivatives):
             raise NotImplementedError("Only max_norm=None supported.")
         elif module.scale_grad_by_freq:
             raise NotImplementedError("Only scale_grad_by_freq=False supported.")
-        elif module.sparse:  # TODO sparse might be supported -> test
+        elif module.sparse:
             raise NotImplementedError("Only sparse=False supported.")
 
     def hessian_is_zero(self, module: Embedding) -> bool:  # noqa: D102
-        return False  # TODO discuss
+        return False
