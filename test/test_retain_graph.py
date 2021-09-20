@@ -46,6 +46,14 @@ def test_retain_graph():
 
 
 def _clear_input_output(parent_module: Module) -> None:
+    """Checks whether the module is clear of any BackPACK inputs and outputs.
+
+    Args:
+        parent_module: The module to test
+
+    Raises:
+        AssertionError: if the module or any child module has BackPACK inputs or outputs.
+    """
     for module in parent_module.children():
         _clear_input_output(module)
     if hasattr(parent_module, "input0") or hasattr(parent_module, "output"):
