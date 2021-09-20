@@ -16,6 +16,7 @@ from test.utils.evaluation_mode import initialize_training_false_recursive
 
 from torch import rand
 from torch.nn import (
+    LSTM,
     RNN,
     AdaptiveAvgPool1d,
     AdaptiveAvgPool2d,
@@ -61,6 +62,16 @@ LOCAL_SETTINGS += [
         ),
         "loss_function_fn": lambda: MSELoss(),
         "target_fn": lambda: regression_targets((8, 3 * 5)),
+    },
+    {
+        "input_fn": lambda: rand(4, 3, 5),
+        "module_fn": lambda: Sequential(
+            LSTM(input_size=5, hidden_size=4, batch_first=True),
+            ReduceTuple(index=0),
+            Flatten(),
+        ),
+        "loss_function_fn": lambda: CrossEntropyLoss(),
+        "target_fn": lambda: classification_targets((4,), 4 * 3),
     },
     {
         "input_fn": lambda: rand(5, 8, 6),  # TODO (8, 5, 6)

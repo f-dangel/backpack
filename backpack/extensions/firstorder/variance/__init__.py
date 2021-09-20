@@ -3,6 +3,7 @@
 Defines module extension for each module.
 """
 from torch.nn import (
+    LSTM,
     RNN,
     BatchNorm1d,
     BatchNorm2d,
@@ -64,6 +65,7 @@ class Variance(FirstOrderBackpropExtension):
                 ConvTranspose2d: convtranspose2d.VarianceConvTranspose2d(),
                 ConvTranspose3d: convtranspose3d.VarianceConvTranspose3d(),
                 RNN: rnn.VarianceRNN(),
+                LSTM: rnn.VarianceLSTM(),
                 BatchNorm1d: batchnorm_nd.VarianceBatchNormNd(),
                 BatchNorm2d: batchnorm_nd.VarianceBatchNormNd(),
                 BatchNorm3d: batchnorm_nd.VarianceBatchNormNd(),
