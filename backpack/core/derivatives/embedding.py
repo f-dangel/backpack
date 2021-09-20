@@ -1,7 +1,7 @@
 """Derivatives for Embedding."""
 from typing import List, Tuple
 
-from torch import Tensor, einsum, flatten, zeros
+from torch import Tensor, einsum, zeros
 from torch.nn import Embedding
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
@@ -54,8 +54,8 @@ class EmbeddingDerivatives(BaseParameterDerivatives):
             equation = f"sn...,vn...h->v{'' if sum_batch else 'n'}sh"
         elif delta.dim() >= 3:
             equation = f"snx,vnxh->v{'' if sum_batch else 'n'}sh"
-            delta = flatten(delta, start_dim=2, end_dim=-1)
-            mat = flatten(mat, start_dim=2, end_dim=-2)
+            delta = delta.flatten(start_dim=2, end_dim=-1)
+            mat = mat.flatten(start_dim=2, end_dim=-2)
         else:
             equation = f"sn,vnh->v{'' if sum_batch else 'n'}sh"
         return einsum(equation, delta, mat)
