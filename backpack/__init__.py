@@ -39,7 +39,7 @@ class backpack:
             debug: Print debug messages during the backward pass. Default: ``False``.
             retain_graph: Determines whether BackPack quantities should be kept for an
                 additional backward pass. Usually, must have same value
-                as the argument ``retain_graph`` in ``backward()``.
+                as the argument ``retain_graph`` in ``backward()``. Default: ``False``.
 
         .. note::
             extension_hook can be used to reduce memory overhead if the goal is to compute
