@@ -8,6 +8,11 @@ from backpack.extensions import BatchGrad
 
 
 def test_retain_graph():
+    """Tests whether retain_graph works as expected.
+
+    Does several forward and backward passes.
+    In between, it is tested whether BackPACK quantities are present or not.
+    """
     model = extend(Sequential(Linear(4, 6), Linear(6, 5)))
     loss_fn = extend(CrossEntropyLoss())
 

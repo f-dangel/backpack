@@ -91,3 +91,4 @@ test/utils/skip_test.py
 test/utils/__init__.py
 test/utils/test_subsampling.py
 test/custom_module/
+test/test_retain_graph.py
