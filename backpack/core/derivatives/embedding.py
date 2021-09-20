@@ -52,12 +52,10 @@ class EmbeddingDerivatives(BaseParameterDerivatives):
             delta[s] = input0 == s
         if TORCH_VERSION_AT_LEAST_1_9_0:
             equation = f"sn...,vn...h->v{'' if sum_batch else 'n'}sh"
-        elif delta.dim() >= 3:
+        else:
             equation = f"snx,vnxh->v{'' if sum_batch else 'n'}sh"
             delta = delta.flatten(start_dim=2, end_dim=-1)
             mat = mat.flatten(start_dim=2, end_dim=-2)
-        else:
-            equation = f"sn,vnh->v{'' if sum_batch else 'n'}sh"
         return einsum(equation, delta, mat)
 
     def _check_parameters(self, module: Embedding) -> None:
