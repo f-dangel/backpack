@@ -48,18 +48,18 @@ def test_retain_graph():
     _check_no_io(model)
 
 
-def _check_no_io(parent_module: Module) -> None:
+def _check_no_io(module: Module) -> None:
     """Checks whether the module is clear of any BackPACK inputs and outputs.
 
     Args:
-        parent_module: The module to test
+        module: The module to test
 
     Raises:
         AssertionError: if the module or any child module has BackPACK inputs or outputs.
     """
-    for module in parent_module.children():
-        _check_no_io(module)
-    if hasattr(parent_module, "input0") or hasattr(parent_module, "output"):
-        raise AssertionError(
-            f"graph should be clear, but {parent_module} has input0 or output."
-        )
+    for child_module in module.children():
+        _check_no_io(child_module)
+
+    io_strs = ["input0", "output"]
+    if any(hasattr(module, io) for io in io_strs):
+        raise AssertionError(f"IO should be clear, but {module} has one of {io_strs}.")
