@@ -1,134 +1,106 @@
 """Individual Hessian-Vector-Product and retain_graph
 ======================================================
 """
-# %%
-# imports
+from typing import List
+
 import torch
-from torch import nn
-from torch.autograd import grad
+from torch import Tensor, nn, zeros
+from torch.nn import Module
 
 from backpack import backpack, extend
 from backpack.extensions import BatchGrad
+from backpack.hessianfree.hvp import hessian_vector_product
 from backpack.utils.examples import load_one_batch_mnist
 
-BATCH_SIZE = 32
-DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-torch.manual_seed(0)
 
-
-# %%
-# Let's define a function that calculates individual hessian_vector products.
-# This function was provided by Haonan Wang (github: haonan3) in #213.
-def batch_hvp(model, loss, params_list, batch_grad_list):
-    if len(params_list) != len(batch_grad_list):
-        raise (ValueError("w and v must have the same length."))
+def batch_hvp(
+    model: Module, loss_func: Module, x: Tensor, y: Tensor, v_list: List[Tensor]
+) -> List[Tensor]:
+    """Compute individual Hessian-vector products."""
+    param_list = [p for p in model.parameters() if p.requires_grad]
+    model.zero_grad()
 
     with backpack(retain_graph=True):
-        one_sample_grad_list = grad(
-            loss, params_list, retain_graph=True, create_graph=True
-        )
+        loss = loss_func(model(x), y)
+        loss.backward(retain_graph=True, create_graph=True)
 
-    elemwise_products = 0.0
-    for grad_elem, v_elem in zip(one_sample_grad_list, batch_grad_list):
-        sum_over_dims = []
-        for i in range(len(v_elem.shape)):
-            sum_over_dims.append(i)
-        sum_over_dims = tuple(sum_over_dims[1:])
-        elemwise_products += torch.sum(
-            grad_elem.unsqueeze(0) * v_elem.detach(), sum_over_dims
-        )
+    dot_product = sum((v * p.grad).flatten().sum() for v, p in zip(v_list, param_list))
 
     with backpack(BatchGrad()):
-        elemwise_products.backward()  # problem: has no attribute 'input0'
-        return_grads = [p.grad_batch for p in model.parameters() if p.requires_grad]
+        dot_product.backward()
 
-    return return_grads
+    return [p.grad_batch for p in param_list]
 
 
-# %%
-# create the model and do one forward pass
-def make_model():
+def batch_hvp_for_loop(
+    model: Module, loss_func: Module, x: Tensor, y: Tensor, v_list: List[Tensor]
+) -> List[Tensor]:
+    """Compute individual Hessian-vector products with autograd."""
+    param_list = [p for p in model.parameters() if p.requires_grad]
+    N = x.shape[0]
+    batch_hvp = [zeros(N, *p.shape, dtype=p.dtype, device=p.device) for p in param_list]
+
+    for n in range(N):
+        x_n, y_n = x[[n]], y[[n]]
+        loss_n = loss_func(model(x_n), y_n)
+
+        hvp_n = hessian_vector_product(loss_n, param_list, v_list)
+
+        for param_idx, param_hvp_n in enumerate(hvp_n):
+            batch_hvp[param_idx][n] = param_hvp_n
+
+    return batch_hvp
+
+
+def make_working_model():
+    return nn.Sequential(nn.Flatten(), nn.Linear(784, 10))
+
+
+def make_failing_model():
     return nn.Sequential(
-        nn.Conv2d(1, 10, 5, 1),
-        nn.Sigmoid(),
-        nn.MaxPool2d(2, 2),
-        nn.Conv2d(10, 20, 5, 1),
-        nn.Sigmoid(),
-        nn.MaxPool2d(2, 2),
-        nn.Flatten(),
-        nn.Linear(4 * 4 * 20, 50),
-        nn.Sigmoid(),
-        nn.Linear(50, 10),
+        nn.Flatten(), nn.Linear(784, 10, bias=True), nn.Linear(10, 10, bias=True)
     )
 
 
-model = make_model().to(DEVICE)
-loss_function = torch.nn.CrossEntropyLoss().to(DEVICE)
-model = extend(model)
-loss_function = extend(loss_function)
+def compare_batch_hvp(model_fn, print_mismatches: bool = False):
+    """Check whether results of ``batch_hvp`` and ``batch_hvp_for_loop`` match."""
+    N = 1
+    DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    torch.manual_seed(0)
 
-x, y = load_one_batch_mnist(BATCH_SIZE)
-x, y = x.to(DEVICE), y.to(DEVICE)
-loss = loss_function(model(x), y)
+    model = extend(model_fn().to(DEVICE))
+    loss_function = extend(nn.CrossEntropyLoss(reduction="sum").to(DEVICE))
 
-# %%
-# Create a random vector and apply the batch_hvp function.
-params_list = list(model.parameters())
-batch_grad_list = [torch.rand(1, *param.shape, device=DEVICE) for param in params_list]
+    x, y = load_one_batch_mnist(N)
+    x, y = x.to(DEVICE), y.to(DEVICE)
 
-batch_hvp = batch_hvp(model, loss, params_list, batch_grad_list)
+    v_list = [torch.rand_like(p) for p in model.parameters() if p.requires_grad]
 
-print("\nresult")
-for result in batch_hvp:
-    print(result.shape)
+    ihvp = batch_hvp(model, loss_function, x, y, v_list)
+    ihvp_for_loop = batch_hvp_for_loop(model, loss_function, x, y, v_list)
 
+    fail = False
 
-# %%
-# Compare the result with the for-loop version
-def batch_hvp_for_loop(model, loss, params_list, batch_grad_list):
-    if len(params_list) != len(batch_grad_list):
-        raise (ValueError("w and v must have the same length."))
+    for result, result_compare in zip(ihvp, ihvp_for_loop):
+        rtol = 1e-3
+        atol = 1e-5
+        match = torch.allclose(result, result_compare, rtol=rtol, atol=atol)
+        print(f"IHVPs match: {match}")
 
-    one_sample_grad_list = grad(loss, params_list, retain_graph=True, create_graph=True)
+        if match is False:
+            fail = True
 
-    elemwise_products = 0
-    for grad_elem, v_elem in zip(one_sample_grad_list, batch_grad_list):
-        sum_over_dims = []
-        for i in range(len(v_elem.shape)):
-            sum_over_dims.append(i)
-        sum_over_dims = tuple(sum_over_dims[1:])
-        elemwise_products += torch.sum(
-            grad_elem.unsqueeze(0) * v_elem.detach(), sum_over_dims
-        )
+        if match is False and print_mismatches:
+            for el1, el2 in zip(result.flatten(), result_compare.flatten()):
+                if not torch.allclose(el1, el2, rtol=rtol, atol=atol):
+                    print(f"{el1} versus {el2}")
 
-    # The for-loop version
-    grad_cache = []
-    for i in range(elemwise_products.shape[0]):
-        elemwise_products[i].backward(retain_graph=True)
-        grad_cache.append(
-            [p.grad.clone() for p in model.parameters() if p.requires_grad]
-        )
-    grad_cache = list(zip(*grad_cache))
-    return_grads = []
-    for l_id in range(len(grad_cache)):
-        return_grads.append(
-            torch.cat([g.unsqueeze(0) for g in grad_cache[l_id]], dim=0)
-        )
-
-    return return_grads
+    if fail:
+        raise Exception("At least one IHVP does not match.")
 
 
-model.zero_grad()
-loss = loss_function(model(x), y)
-batch_hvp_for_loop = batch_hvp_for_loop(model, loss, params_list, batch_grad_list)
-
-print("\nresult for loop")
-for result, result_compare in zip(batch_hvp, batch_hvp_for_loop):
-    match = torch.allclose(result.sum(0).unsqueeze(0), result_compare, atol=1e-3)
-    print(match)
-    if match is False:
-        print(result.shape)
-        print(result_compare.shape)
-        # print(result[:, 0, 0, 0, :].sum(0))
-        # print(result_compare[0, 0, 0, 0, :])
-        # raise AssertionError("Results don't match.")
+if __name__ == "__main__":
+    print("\nWorking model (parameters appear once in graph)")
+    compare_batch_hvp(make_working_model)
+    print("\nFailing model (weight of 2nd layer appears multiple times in graph)")
+    compare_batch_hvp(make_failing_model)
