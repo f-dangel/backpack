@@ -4,7 +4,6 @@ from typing import Callable, Dict, List, Tuple
 
 from einops import rearrange
 from torch import Tensor, diag, diag_embed, einsum, eye, multinomial, ones_like, softmax
-from torch import sqrt as torchsqrt
 from torch.nn import CrossEntropyLoss
 from torch.nn.functional import one_hot
 
@@ -31,7 +30,7 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
         probs = self._get_probs(module, subsampling=subsampling)
         probs, *rearrange_info = self._merge_batch_and_additional(probs)
 
-        tau = torchsqrt(probs)
+        tau = probs.sqrt()
         V_dim, C_dim = 0, 2
         Id = diag_embed(ones_like(probs), dim1=V_dim, dim2=C_dim)
         Id_tautau = Id - einsum("nv,nc->vnc", tau, tau)
