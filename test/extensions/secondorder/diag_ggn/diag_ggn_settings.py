@@ -14,7 +14,7 @@ from test.core.derivatives.utils import classification_targets, regression_targe
 from test.extensions.secondorder.secondorder_settings import SECONDORDER_SETTINGS
 from test.utils.evaluation_mode import initialize_training_false_recursive
 
-from torch import rand
+from torch import rand, randint
 from torch.nn import (
     LSTM,
     RNN,
@@ -26,6 +26,7 @@ from torch.nn import (
     BatchNorm3d,
     Conv2d,
     CrossEntropyLoss,
+    Embedding,
     Flatten,
     Linear,
     MaxPool2d,
@@ -160,6 +161,32 @@ LOCAL_SETTINGS += [
     },
 ]
 ###############################################################################
+#                               Embedding                                     #
+###############################################################################
+LOCAL_SETTINGS += [
+    {
+        "input_fn": lambda: randint(0, 5, (6,)),
+        "module_fn": lambda: Sequential(
+            Embedding(5, 3),
+            Linear(3, 4),
+        ),
+        "loss_function_fn": lambda: CrossEntropyLoss(reduction="mean"),
+        "target_fn": lambda: classification_targets((6,), 4),
+    },
+    {
+        "input_fn": lambda: randint(0, 3, (3, 2, 2)),
+        "module_fn": lambda: Sequential(
+            Embedding(3, 2),
+            Flatten(),
+        ),
+        "loss_function_fn": lambda: CrossEntropyLoss(reduction="mean"),
+        "target_fn": lambda: classification_targets((3,), 2 * 2),
+        "seed": 1,
+    },
+]
+
+
+###############################################################################
 #                               Branched models                               #
 ###############################################################################
 LOCAL_SETTINGS += [
@@ -236,6 +263,7 @@ LOCAL_SETTINGS += [
         "id_prefix": "nested-branching-convolution",
     },
 ]
+
 ###############################################################################
 #                      Branched models - converter                            #
 ###############################################################################
@@ -256,4 +284,5 @@ if CONVERTER_AVAILABLE:
             "id_prefix": "ResNet2",
         },
     ]
+
 DiagGGN_SETTINGS = SHARED_SETTINGS + LOCAL_SETTINGS
