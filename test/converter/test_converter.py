@@ -34,7 +34,6 @@ def model_and_input(request) -> Tuple[Module, Tensor, Module]:
     skip_pytorch_below_1_9_0()
     model: ConverterModule = request.param()
     inputs: Tensor = model.input_fn()
-    inputs.requires_grad = True
     loss_fn: Module = model.loss_fn()
     yield model, inputs, loss_fn
     del model, inputs, loss_fn
@@ -53,6 +52,7 @@ def test_network_diag_ggn(model_and_input):
         model_and_input: module to test
     """
     model_original, x, loss_fn = model_and_input
+    model_original = model_original.eval()
     output_compare = model_original(x)
     if isinstance(loss_fn, MSELoss):
         y = rand_like(output_compare)
@@ -85,4 +85,4 @@ def test_network_diag_ggn(model_and_input):
     )
 
     for idx, element in zip(idx_to_compare, diag_ggn_exact_to_compare):
-        assert allclose(element, diag_ggn_exact_vector[idx])
+        assert allclose(element, diag_ggn_exact_vector[idx], atol=1e-5)

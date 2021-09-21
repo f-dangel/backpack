@@ -225,6 +225,9 @@ class _TolstoiCharRNN(ConverterModule):
     def input_fn(self) -> Tensor:
         return randint(0, self.vocab_size, (8, 15))
 
+    def loss_fn(self) -> Module:
+        return CrossEntropyLoss()
+
 
 CONVERTER_MODULES += [
     _ResNet18,
