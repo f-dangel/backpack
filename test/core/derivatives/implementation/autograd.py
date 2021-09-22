@@ -273,7 +273,8 @@ class AutogradDerivatives(DerivativesImplementation):
             subsampling: Indices of active samples. ``None`` uses all samples.
 
         Returns:
-            hessian
+            Hessian of shape ``[N, *, N, *]`` where ``N`` denotes the
+            number of sub-samples, and ``*`` is the input feature shape.
         """
         input, output, _ = self.problem.forward_pass(input_requires_grad=True)
         hessian = self._hessian(output, input)
@@ -338,36 +339,33 @@ class AutogradDerivatives(DerivativesImplementation):
         Assert second derivative w.r.t. different samples is zero.
 
         Args:
-            hessian: .
+            hessian: Hessian of the output w.r.t. the input. Has shape ``[N, *, N, *]``
+                where ``N`` is the number of active samples and ``*`` is the input's
+                feature shape.
 
         Returns:
-            sum of hessians
-
-        Raises:
-            ValueError: if input is not 2d
+            Sum of Hessians w.r.t. to individual samples. Has shape ``[*, *]``.
         """
         input = self.problem.input
-        num_axes = len(input.shape)
-
-        if num_axes != 2:
-            raise ValueError("Only 2D inputs are currently supported.")
-
         N = input.shape[0]
-        num_features = input.numel() // N
+        shape_feature = input.shape[1:]
+        D = shape_feature.numel()
 
-        sum_hessian = zeros(num_features, num_features, device=input.device)
+        hessian = hessian.reshape(N, D, N, D)
+        sum_hessian = zeros(D, D, device=input.device, dtype=input.dtype)
 
-        hessian_different_samples = zeros(
-            num_features, num_features, device=input.device
-        )
+        hessian_different_samples = zeros(D, D, device=input.device, dtype=input.dtype)
         for n_1 in range(N):
             for n_2 in range(N):
                 block = hessian[n_1, :, n_2, :]
-
                 if n_1 == n_2:
                     sum_hessian += block
-
                 else:
                     assert allclose(block, hessian_different_samples)
 
-        return sum_hessian
+        return sum_hessian.reshape(*shape_feature, *shape_feature)
+
+    def hessian_mat_prod(self, mat: Tensor) -> Tensor:  # noqa: D102
+        input, output, _ = self.problem.forward_pass(input_requires_grad=True)
+
+        return stack([hessian_vector_product(output, [input], [vec])[0] for vec in mat])

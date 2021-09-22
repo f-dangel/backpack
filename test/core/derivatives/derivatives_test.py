@@ -469,3 +469,19 @@ def test_hessian_is_zero(no_loss_problem: DerivativesTestProblem) -> None:
         )
     else:
         assert backpack_res == autograd_res
+
+
+@mark.parametrize("problem", LOSS_PROBLEMS, ids=LOSS_IDS)
+def test_make_hessian_mat_prod(problem: DerivativesTestProblem) -> None:
+    """Test hessian_mat_prod.
+
+    Args:
+        problem: test problem
+    """
+    problem.set_up()
+    mat = rand(4, *problem.input_shape, device=problem.device)
+
+    autograd_res = AutogradDerivatives(problem).hessian_mat_prod(mat)
+    backpack_res = BackpackDerivatives(problem).hessian_mat_prod(mat)
+
+    check_sizes_and_values(backpack_res, autograd_res)
