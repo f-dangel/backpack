@@ -39,7 +39,7 @@ def derivative_cls_for(module_cls: Type[Module]) -> Type[BaseDerivatives]:
         return derivatives_for[module_cls]
     except KeyError as e:
         raise KeyError(
-            f"No derivative available for {module_cls}"
+            f"No derivative available for {module_cls}. "
             + f"Known mappings:\n{derivatives_for}"
         ) from e
 

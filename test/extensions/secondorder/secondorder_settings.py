@@ -301,3 +301,16 @@ LINEAR_ADDITIONAL_DIMENSIONS_SETTINGS = [
 ]
 
 SECONDORDER_SETTINGS += LINEAR_ADDITIONAL_DIMENSIONS_SETTINGS
+
+###############################################################################
+#                         test setting: CrossEntropyLoss                      #
+###############################################################################
+SECONDORDER_SETTINGS += [
+    {
+        "input_fn": lambda: rand(3, 4, 2, 3, 5),
+        "module_fn": lambda: Sequential(Linear(5, 3), ReLU(), Linear(3, 2)),
+        "loss_function_fn": lambda: CrossEntropyLoss(reduction="sum"),
+        "target_fn": lambda: classification_targets((3, 2, 3, 2), 4),
+        "id_prefix": "multi-d-CrossEntropyLoss",
+    },
+]

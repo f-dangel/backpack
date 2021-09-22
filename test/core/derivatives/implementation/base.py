@@ -117,3 +117,15 @@ class DerivativesImplementation(ABC):
             `True`, if Hessian is zero, else `False`.
         """
         raise NotImplementedError
+
+    @abstractmethod
+    def hessian_mat_prod(self, mat: Tensor) -> Tensor:
+        """Product of hessian with matrix mat.
+
+        Args:
+            mat: matrix to multiply
+
+        Returns:
+            product
+        """
+        raise NotImplementedError
