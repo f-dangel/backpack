@@ -16,6 +16,7 @@ from torch.nn import (
     ConvTranspose3d,
     CrossEntropyLoss,
     Dropout,
+    Embedding,
     Flatten,
     LeakyReLU,
     Linear,
@@ -37,6 +38,7 @@ from backpack.extensions.secondorder.sqrt_ggn import (
     convnd,
     convtransposend,
     dropout,
+    embedding,
     flatten,
     linear,
     losses,
@@ -92,6 +94,7 @@ class SqrtGGN(SecondOrderBackpropExtension):
                 LogSigmoid: activations.SqrtGGNLogSigmoid(),
                 ELU: activations.SqrtGGNELU(),
                 SELU: activations.SqrtGGNSELU(),
+                Embedding: embedding.SqrtGGNEmbedding(),
             },
             subsampling=subsampling,
         )

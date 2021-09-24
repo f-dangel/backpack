@@ -5,13 +5,13 @@ from test.automated_test import check_sizes_and_values
 from test.extensions.implementation.autograd import AutogradExtensions
 from test.extensions.implementation.backpack import BackpackExtensions
 from test.extensions.problem import ExtensionsTestProblem, make_test_problems
-from test.extensions.secondorder.secondorder_settings import SECONDORDER_SETTINGS
+from test.extensions.secondorder.sqrt_ggn.sqrt_ggn_settings import SQRT_GGN_SETTINGS
 from test.utils.skip_test import skip_large_parameters, skip_subsampling_conflict
 from typing import List, Union
 
 from pytest import fixture, mark
 
-PROBLEMS = make_test_problems(SECONDORDER_SETTINGS)
+PROBLEMS = make_test_problems(SQRT_GGN_SETTINGS)
 
 SUBSAMPLINGS = [None, [0, 0], [2, 0]]
 SUBSAMPLING_IDS = [f"subsampling={s}".replace(" ", "") for s in SUBSAMPLINGS]
