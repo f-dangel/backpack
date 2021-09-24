@@ -181,7 +181,7 @@ LOCAL_SETTINGS += [
         ),
         "loss_function_fn": lambda: CrossEntropyLoss(reduction="mean"),
         "target_fn": lambda: classification_targets((3,), 2 * 2),
-        "seed": 1,
+        "seed": 2,
     },
 ]
 
