@@ -16,6 +16,7 @@ from torch.nn import (
     ConvTranspose1d,
     ConvTranspose2d,
     ConvTranspose3d,
+    Embedding,
     Linear,
 )
 
@@ -29,6 +30,7 @@ from . import (
     conv_transpose1d,
     conv_transpose2d,
     conv_transpose3d,
+    embedding,
     linear,
     rnn,
 )
@@ -82,6 +84,7 @@ class BatchGrad(FirstOrderBackpropExtension):
                 BatchNorm3d: batchnorm_nd.BatchGradBatchNormNd(),
                 RNN: rnn.BatchGradRNN(),
                 LSTM: rnn.BatchGradLSTM(),
+                Embedding: embedding.BatchGradEmbedding(),
             },
             subsampling=subsampling,
         )

@@ -9,6 +9,7 @@
 from contextlib import nullcontext
 from test.automated_test import check_sizes_and_values
 from test.core.derivatives.batch_norm_settings import BATCH_NORM_SETTINGS
+from test.core.derivatives.embedding_settings import EMBEDDING_SETTINGS
 from test.core.derivatives.implementation.autograd import AutogradDerivatives
 from test.core.derivatives.implementation.backpack import BackpackDerivatives
 from test.core.derivatives.loss_settings import LOSS_FAIL_SETTINGS
@@ -54,6 +55,9 @@ PERMUTE_IDS = [problem.make_id() for problem in PERMUTE_PROBLEMS]
 
 BATCH_NORM_PROBLEMS = make_test_problems(BATCH_NORM_SETTINGS)
 BATCH_NORM_IDS = [problem.make_id() for problem in BATCH_NORM_PROBLEMS]
+
+EMBEDDING_PROBLEMS = make_test_problems(EMBEDDING_SETTINGS)
+EMBEDDING_IDS = [problem.make_id() for problem in EMBEDDING_PROBLEMS]
 
 SCALE_MODULE_PROBLEMS = make_test_problems(SCALE_MODULE_SETTINGS)
 SCALE_MODULE_IDS = [problem.make_id() for problem in SCALE_MODULE_PROBLEMS]
@@ -394,7 +398,8 @@ def test_ea_jac_t_mat_jac_prod(problem: DerivativesTestProblem, request) -> None
 
 
 @fixture(
-    params=PROBLEMS + BATCH_NORM_PROBLEMS + RNN_PROBLEMS, ids=lambda p: p.make_id()
+    params=PROBLEMS + BATCH_NORM_PROBLEMS + RNN_PROBLEMS + EMBEDDING_PROBLEMS,
+    ids=lambda p: p.make_id(),
 )
 def problem(request) -> DerivativesTestProblem:
     """Set seed, create tested layer and data. Finally clean up.

@@ -14,6 +14,7 @@ from torch.nn import (
     ConvTranspose1d,
     ConvTranspose2d,
     ConvTranspose3d,
+    Embedding,
     Linear,
 )
 
@@ -27,6 +28,7 @@ from . import (
     convtranspose1d,
     convtranspose2d,
     convtranspose3d,
+    embedding,
     linear,
     rnn,
 )
@@ -69,5 +71,6 @@ class Variance(FirstOrderBackpropExtension):
                 BatchNorm1d: batchnorm_nd.VarianceBatchNormNd(),
                 BatchNorm2d: batchnorm_nd.VarianceBatchNormNd(),
                 BatchNorm3d: batchnorm_nd.VarianceBatchNormNd(),
+                Embedding: embedding.VarianceEmbedding(),
             },
         )
