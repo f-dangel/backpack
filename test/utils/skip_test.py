@@ -7,7 +7,7 @@ from typing import List, Union
 from pytest import skip
 from torch.nn import BatchNorm1d, BatchNorm2d, BatchNorm3d
 
-from backpack.utils import TORCH_VERSION_AT_LEAST_1_9_0, TORCH_VERSION_AT_LEAST_1_9_1
+from backpack.utils import ADAPTIVE_AVG_POOL_BUG, TORCH_VERSION_AT_LEAST_1_9_0
 
 
 def skip_adaptive_avg_pool3d_cuda(request) -> None:
@@ -16,16 +16,14 @@ def skip_adaptive_avg_pool3d_cuda(request) -> None:
     Args:
         request: problem request
     """
-    if TORCH_VERSION_AT_LEAST_1_9_1:
-        pass
-    else:
+    if ADAPTIVE_AVG_POOL_BUG:
         if all(
             string in request.node.callspec.id
             for string in ["AdaptiveAvgPool3d", "cuda"]
         ):
             skip(
                 "Skip test because AdaptiveAvgPool3d does not work on cuda. "
-                "Is fixed in torch 1.9.1."
+                "Should be fixed in torch 2.0."
             )
 
 
