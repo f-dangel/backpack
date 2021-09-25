@@ -13,8 +13,8 @@ backpack/core/derivatives/lstm.py
 backpack/core/derivatives/linear.py
 backpack/core/derivatives/adaptive_avg_pool_nd.py
 backpack/core/derivatives/batchnorm_nd.py
-backpack/core/derivatives/crossentropyloss.py
 backpack/core/derivatives/embedding.py
+backpack/core/derivatives/crossentropyloss.py
 backpack/core/derivatives/scale_module.py
 backpack/core/derivatives/sum_module.py
 
