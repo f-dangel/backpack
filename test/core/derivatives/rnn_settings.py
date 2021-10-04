@@ -24,4 +24,10 @@ RNN_SETTINGS = [
         "module_fn": lambda: torch.nn.RNN(input_size=4, hidden_size=2),
         "input_fn": lambda: torch.rand(size=(1, 1, 4)),
     },
+    {
+        "module_fn": lambda: torch.nn.RNN(
+            input_size=4, hidden_size=3, batch_first=True
+        ),
+        "input_fn": lambda: torch.rand(size=(3, 5, 4)),
+    },
 ]
