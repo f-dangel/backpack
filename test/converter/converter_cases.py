@@ -19,7 +19,7 @@ from torch.nn import (
     Linear,
     Module,
     MSELoss,
-    ReLU,
+    ReLU, RNN,
 )
 from torchvision.models import resnet18, wide_resnet50_2
 
@@ -269,6 +269,43 @@ class _TolstoiCharRNN(ConverterModule):
         return CrossEntropyLoss()
 
 
+class _Tolstoi_RNN_version(ConverterModule):
+    def __init__(self):
+        super(_Tolstoi_RNN_version, self).__init__()
+        self.hidden_dim = 128
+        self.num_layers = 2
+        self.seq_len = 50
+        self.vocab_size = 83
+
+        self.embedding = Embedding(
+            num_embeddings=self.vocab_size, embedding_dim=self.hidden_dim
+        )
+        self.dropout = Dropout(p=0.2)
+        self.rnn = RNN(
+            input_size=self.hidden_dim,
+            hidden_size=self.hidden_dim,
+            num_layers=self.num_layers,
+            dropout=0.36,
+            batch_first=True,
+        )
+        self.dense = Linear(in_features=self.hidden_dim, out_features=self.vocab_size)
+
+    def forward(self, x):
+        x = self.embedding(x)
+        x = self.dropout(x)
+        x, new_state = self.rnn(x)
+        x = self.dropout(x)
+        output = self.dense(x)
+        output = output.permute(0, 2, 1)
+        return output
+
+    def input_fn(self) -> Tensor:
+        return randint(0, self.vocab_size, (8, 15))
+
+    def loss_fn(self) -> Module:
+        return CrossEntropyLoss()
+
+
 CONVERTER_MODULES += [
     _ResNet18,
     _WideResNet50,
@@ -280,4 +317,5 @@ CONVERTER_MODULES += [
     _Permute,
     _Transpose,
     _TolstoiCharRNN,
+    _Tolstoi_RNN_version,
 ]
