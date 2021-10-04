@@ -63,7 +63,7 @@ def test_network_diag_ggn(model_and_input):
             (output_compare.shape[0], *output_compare.shape[2:]),
         )
 
-    num_params = sum(p.numel() for p in model_original.parameters())
+    num_params = sum(p.numel() for p in model_original.parameters() if p.requires_grad)
     num_to_compare = 10
     idx_to_compare = linspace(0, num_params - 1, num_to_compare, dtype=int32)
     diag_ggn_exact_to_compare = autograd_diag_ggn_exact(
@@ -81,7 +81,11 @@ def test_network_diag_ggn(model_and_input):
         loss.backward()
 
     diag_ggn_exact_vector = cat(
-        [p.diag_ggn_exact.flatten() for p in model_extended.parameters()]
+        [
+            p.diag_ggn_exact.flatten()
+            for p in model_extended.parameters()
+            if p.requires_grad
+        ]
     )
 
     for idx, element in zip(idx_to_compare, diag_ggn_exact_to_compare):

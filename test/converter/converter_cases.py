@@ -10,7 +10,7 @@ Network with add operation
 import abc
 from typing import List, Type
 
-from torch import Tensor, flatten, rand, randint, transpose
+from torch import Tensor, flatten, rand, randint, transpose, zeros_like
 from torch.nn import (
     LSTM,
     CrossEntropyLoss,
@@ -240,9 +240,17 @@ class _TolstoiCharRNN(ConverterModule):
             input_size=self.hidden_dim,
             hidden_size=self.hidden_dim,
             num_layers=self.num_layers,
-            dropout=0.2,
+            dropout=0.36,
             batch_first=True,
         )
+        self.lstm.bias_ih_l0.data = zeros_like(
+            self.lstm.bias_ih_l0, device=self.lstm.bias_ih_l0.device
+        )
+        self.lstm.bias_ih_l1.data = zeros_like(
+            self.lstm.bias_ih_l1, device=self.lstm.bias_ih_l0.device
+        )
+        self.lstm.bias_ih_l0.requires_grad = False
+        self.lstm.bias_ih_l1.requires_grad = False
         self.dense = Linear(in_features=self.hidden_dim, out_features=self.vocab_size)
 
     def forward(self, x):
