@@ -149,6 +149,7 @@ class _Multiply(ConverterModule):
         x = x * 2.5
         x = self.linear(x)
         x = 0.5 * x
+        x = x.multiply(3.1415)
         return x
 
     def input_fn(self) -> Tensor:
@@ -171,6 +172,7 @@ class _Add(ConverterModule):
         x2 = self.linear2(x)
         x = x1 + x2
         x = self.relu(x)
+        x = x.add(x2)
         return x
 
     def input_fn(self) -> Tensor:

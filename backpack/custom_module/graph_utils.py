@@ -114,16 +114,24 @@ def _transform_mul_to_scale_module(module: Module, debug: bool) -> GraphModule:
     Raises:
         RuntimeError: if a multiplication is found but node.args are not (float, Node)
     """
-    target = "<built-in function mul>"
+    target_function = "<built-in function mul>"
+    target_method = "multiply"
     if debug:
-        print(f"\tBegin transformation: {target} -> ScaleModule")
+        print(f"\tBegin transformation: {target_function} -> ScaleModule")
 
     graph: Graph = BackpackTracer().trace(module)
-    nodes = [
-        n for n in graph.nodes if n.op == "call_function" and str(n.target) == target
+    nodes_function = [
+        n
+        for n in graph.nodes
+        if n.op == "call_function" and str(n.target) == target_function
+    ]
+    nodes_method = [
+        n
+        for n in graph.nodes
+        if n.op == "call_method" and str(n.target) == target_method
     ]
 
-    for node in nodes:
+    for node in nodes_function:
         if len(node.args) != 2:
             raise RuntimeError(f"Expecting 2 arguments, got {len(node.args)}.")
 
@@ -141,11 +149,16 @@ def _transform_mul_to_scale_module(module: Module, debug: bool) -> GraphModule:
         _change_node_to_module(
             node, "scale_module", module, ScaleModule(weight), (tensor,)
         )
+    for node in nodes_method:
+        print(node.args)
+        _change_node_to_module(
+            node, "scale_module", module, ScaleModule(node.args[1]), (node.args[0],)
+        )
 
     graph.lint()
 
     if debug:
-        print(f"\tMultiplications transformed: {len(nodes)}")
+        print(f"\tMultiplications transformed: {len(nodes_function)+len(nodes_method)}")
 
     return GraphModule(module, graph)
 
@@ -160,13 +173,21 @@ def _transform_add_to_sum_module(module: Module, debug: bool) -> GraphModule:
     Returns:
         equivalent transformed module
     """
-    target = "<built-in function add>"
+    target_function = "<built-in function add>"
+    target_method = "add"
     if debug:
-        print(f"\tBegin transformation: {target} -> SumModule")
+        print(f"\tBegin transformation: {target_function} -> SumModule")
 
     graph: Graph = BackpackTracer().trace(module)
     nodes = [
-        n for n in graph.nodes if n.op == "call_function" and str(n.target) == target
+        n
+        for n in graph.nodes
+        if n.op == "call_function" and str(n.target) == target_function
+    ]
+    nodes += [
+        n
+        for n in graph.nodes
+        if n.op == "call_method" and str(n.target) == target_method
     ]
 
     for node in nodes:
