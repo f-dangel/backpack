@@ -10,7 +10,7 @@ Network with add operation
 import abc
 from typing import List, Type
 
-from torch import Tensor, flatten, rand, randint
+from torch import Tensor, flatten, rand, randint, transpose
 from torch.nn import (
     LSTM,
     CrossEntropyLoss,
@@ -185,11 +185,36 @@ class _Permute(ConverterModule):
         self.in_dim = 3
         out_dim = 2
         self.linear = Linear(self.in_dim, out_dim)
+        self.linear2 = Linear(5, out_dim)
 
     def forward(self, x):
         x = self.linear(x)
         x = x.permute(0, 2, 1)
+        x = self.linear2(x)
         x = permute(x, (0, 2, 1))
+        return x
+
+    def input_fn(self) -> Tensor:
+        return rand(3, 5, self.in_dim)
+
+    def loss_fn(self) -> Module:
+        return CrossEntropyLoss()
+
+
+class _Transpose(ConverterModule):
+    def __init__(self):
+        super().__init__()
+        self.in_dim = 3
+        out_dim = 2
+        out_dim2 = 3
+        self.linear = Linear(self.in_dim, out_dim)
+        self.linear2 = Linear(5, out_dim2)
+
+    def forward(self, x):
+        x = self.linear(x)
+        x = x.transpose(1, 2)
+        x = self.linear2(x)
+        x = transpose(x, 1, 2)
         return x
 
     def input_fn(self) -> Tensor:
@@ -245,5 +270,6 @@ CONVERTER_MODULES += [
     _Multiply,
     _Add,
     _Permute,
+    _Transpose,
     _TolstoiCharRNN,
 ]

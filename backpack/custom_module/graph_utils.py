@@ -65,7 +65,7 @@ def convert_module_to_backpack(module: Module, debug: bool) -> GraphModule:
     module_new = _transform_add_to_sum_module(module_new, debug)
     module_new = _transform_get_item_to_module(module_new, debug)
     module_new = _transform_permute_to_module(module_new, debug)
-    # TODO convert transpose similar to permute
+    module_new = _transform_transpose_to_module(module_new, debug)
     module_new = _transform_lstm(module_new, debug)
     _transform_inplace_to_normal(module_new, debug)
     module_new = _transform_remove_duplicates(module_new, debug)
@@ -289,6 +289,42 @@ def _transform_permute_to_module(module: Module, debug: bool) -> GraphModule:
                 (node.args[0],),
             )
             counter += 1
+
+    graph.lint()
+    if debug:
+        print(f"\tPermute transformed: {counter}")
+    return GraphModule(module, graph)
+
+
+def _transform_transpose_to_module(module: Module, debug: bool) -> GraphModule:
+    target_function = "<built-in method transpose"
+    target_method = "transpose"
+    if debug:
+        print(f"\tBegin transformation: {target_method} -> Permute")
+    counter: int = 0
+    graph: Graph = BackpackTracer().trace(module)
+
+    nodes = [
+        n
+        for n in graph.nodes
+        if n.op == "call_function" and target_function in str(n.target)
+    ]
+    nodes += [
+        n
+        for n in graph.nodes
+        if n.op == "call_method" and target_method == str(n.target)
+    ]
+
+    for node in nodes:
+        print(node.args)
+        _change_node_to_module(
+            node,
+            "permute",
+            module,
+            Permute(*node.args[1:], init_transpose=True),
+            (node.args[0],),
+        )
+        counter += 1
 
     graph.lint()
     if debug:
