@@ -120,17 +120,22 @@ class _MultipleUsages(ConverterModule):
 class _FlattenNetwork(ConverterModule):
     def __init__(self):
         super().__init__()
-        self.in_dim = 4
+        self.in_dim = (2, 2, 4)
         out_dim = 3
-        self.linear = Linear(self.in_dim, out_dim)
+        self.linear = Linear(self.in_dim[2], out_dim)
+        self.linear2 = Linear(self.in_dim[1] * out_dim, out_dim)
 
     def forward(self, x):
         x = self.linear(x)
-        x = flatten(x, 1)
+        x = flatten(x, 2)  # built-in function flatten
+        x = self.linear2(x)
+        x = x.flatten(
+            1,
+        )  # method flatten
         return x
 
     def input_fn(self) -> Tensor:
-        return rand(3, 2, 2, self.in_dim)
+        return rand(3, *self.in_dim)
 
 
 class _Multiply(ConverterModule):

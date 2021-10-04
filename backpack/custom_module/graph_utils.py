@@ -61,7 +61,7 @@ def convert_module_to_backpack(module: Module, debug: bool) -> GraphModule:
     if debug:
         print("\nMake module BackPACK-compatible...")
     module_new = _transform_mul_to_scale_module(module, debug)
-    module_new = _transform_flatten_to_module(module_new, debug)  # TODO allow function
+    module_new = _transform_flatten_to_module(module_new, debug)
     module_new = _transform_add_to_sum_module(module_new, debug)
     module_new = _transform_get_item_to_module(module_new, debug)
     module_new = _transform_permute_to_module(module_new, debug)
@@ -190,17 +190,25 @@ def _transform_flatten_to_module(module: Module, debug: bool) -> GraphModule:
     Returns:
         equivalent transformed module
     """
-    target = "<built-in method flatten"
+    target_function = "<built-in method flatten"
+    target_method = "flatten"
     if debug:
-        print(f"\tBegin transformation: {target} -> Flatten")
+        print(f"\tBegin transformation: {target_function} -> Flatten")
 
     graph: Graph = BackpackTracer().trace(module)
     nodes = [
-        n for n in graph.nodes if n.op == "call_function" and target in str(n.target)
+        n
+        for n in graph.nodes
+        if n.op == "call_function" and target_function in str(n.target)
+    ]
+    nodes += [
+        n
+        for n in graph.nodes
+        if n.op == "call_method" and target_method in str(n.target)
     ]
 
     for node in nodes:
-        start_dim = node.args[1] if len(node.args) > 1 else 1
+        start_dim = node.args[1] if len(node.args) > 1 else 0
         end_dim = node.args[2] if len(node.args) > 2 else -1
         _change_node_to_module(
             node, "flatten", module, Flatten(start_dim, end_dim), (node.args[0],)
@@ -209,7 +217,7 @@ def _transform_flatten_to_module(module: Module, debug: bool) -> GraphModule:
     graph.lint()
 
     if debug:
-        print(f"\tFlatten transformed: {len(nodes)}")
+        print(f"\tFlatten functions transformed: {len(nodes)}")
 
     return GraphModule(module, graph)
 
