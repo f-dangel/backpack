@@ -4,7 +4,7 @@ from typing import Tuple, Union
 from warnings import warn
 
 from torch.fx import Graph, GraphModule, Node, Tracer
-from torch.nn import LSTM, Dropout, Flatten, Module, Sequential, RNN
+from torch.nn import LSTM, RNN, Dropout, Flatten, Module, Sequential
 
 from backpack.custom_module.branching import ActiveIdentity, SumModule, _Branch
 from backpack.custom_module.permute import Permute
@@ -339,7 +339,9 @@ def _transform_lstm_rnn(module: Module, debug: bool) -> GraphModule:
     graph: Graph = BackpackTracer().trace(module)
 
     for node in graph.nodes:
-        if node.op == "call_module" and isinstance(module.get_submodule(node.target), (RNN, LSTM)):
+        if node.op == "call_module" and isinstance(
+            module.get_submodule(node.target), (RNN, LSTM)
+        ):
             lstm_module: Union[RNN, LSTM] = module.get_submodule(node.target)
             if lstm_module.num_layers > 1:
                 if len(node.args) > 1:
@@ -375,14 +377,14 @@ def _make_rnn_backpack(module: Union[RNN, LSTM]) -> Module:
     rnn_class = type(module)
     rnn_module_replace = Sequential()
     for layer in range(module.num_layers):
-        lstm_layer = rnn_class(
+        rnn_layer = rnn_class(
             input_size if layer == 0 else hidden_size,
             hidden_size,
             batch_first=batch_first,
         )
         for param_str in ["weight_ih_l", "weight_hh_l", "bias_ih_l", "bias_hh_l"]:
-            setattr(lstm_layer, f"{param_str}0", getattr(module, f"{param_str}{layer}"))
-        rnn_module_replace.add_module(f"lstm_{layer}", lstm_layer)
+            setattr(rnn_layer, f"{param_str}0", getattr(module, f"{param_str}{layer}"))
+        rnn_module_replace.add_module(f"lstm_{layer}", rnn_layer)
         if layer != (module.num_layers - 1):
             rnn_module_replace.add_module(f"reduce_tuple_{layer}", ReduceTuple())
             if dropout != 0:
