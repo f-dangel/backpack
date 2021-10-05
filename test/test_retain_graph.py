@@ -1,6 +1,8 @@
 """Test autograd functionality like retain_graph."""
+from test.automated_test import check_sizes_and_values
+
 from pytest import raises
-from torch import manual_seed, rand, randint
+from torch import autograd, manual_seed, ones_like, rand, randint, randn, zeros
 from torch.nn import CrossEntropyLoss, Linear, Module, Sequential
 
 from backpack import backpack, extend
@@ -63,3 +65,33 @@ def _check_no_io(module: Module) -> None:
     io_strs = ["input0", "output"]
     if any(hasattr(module, io) for io in io_strs):
         raise AssertionError(f"IO should be clear, but {module} has one of {io_strs}.")
+
+
+def test_for_loop_replace() -> None:
+    """Application of retain_graph: replace an outer for-loop.
+
+    This test is based on issue #220 opened by Romain3Ch216.
+    """
+    B = 20
+    M = 10
+    h = 2
+
+    x = randn(B, h)
+    fc = Linear(h, M)
+    fc = extend(fc)
+    A = fc(x)
+
+    grad_autograd = zeros(B, M, *fc.weight.shape)
+    for b in range(B):
+        for m in range(M):
+            with backpack(retain_graph=True):
+                grads = autograd.grad(A[b, m], fc.weight, retain_graph=True)
+            grad_autograd[b, m] = grads[0]
+
+    grad_backpack = zeros(B, M, *fc.weight.shape)
+    for i in range(M):
+        with backpack(BatchGrad(), retain_graph=True):
+            A[:, i].backward(ones_like(A[:, i]), retain_graph=True)
+        grad_backpack[:, i] = fc.weight.grad_batch
+
+    check_sizes_and_values(grad_backpack, grad_autograd)
