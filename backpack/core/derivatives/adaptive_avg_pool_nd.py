@@ -6,7 +6,7 @@ from torch import Size
 from torch.nn import AdaptiveAvgPool1d, AdaptiveAvgPool2d, AdaptiveAvgPool3d
 
 from backpack.core.derivatives.avgpoolnd import AvgPoolNDDerivatives
-from backpack.utils import TORCH_VERSION_AT_LEAST_1_9_1
+from backpack.utils import ADAPTIVE_AVG_POOL_BUG
 
 
 class AdaptiveAvgPoolNDDerivatives(AvgPoolNDDerivatives):
@@ -28,11 +28,7 @@ class AdaptiveAvgPoolNDDerivatives(AvgPoolNDDerivatives):
         Raises:
             NotImplementedError: if the given shapes do not match
         """
-        if (
-            TORCH_VERSION_AT_LEAST_1_9_1 is False
-            and module.input0.is_cuda
-            and (self.N == 3)
-        ):
+        if ADAPTIVE_AVG_POOL_BUG and module.input0.is_cuda and (self.N == 3):
             warn(
                 "Be careful when computing gradients of AdaptiveAvgPool3d. "
                 "There is a bug using autograd.grad on cuda with AdaptiveAvgPool3d. "
