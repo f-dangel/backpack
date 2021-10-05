@@ -273,7 +273,6 @@ class _TolstoiCharRNN(ConverterModule):
 class _TolstoiRNNVersion(_TolstoiCharRNN):
     def __init__(self):
         super(_TolstoiRNNVersion, self).__init__()
-        del self.lstm
         self.lstm = RNN(
             input_size=self.hidden_dim,
             hidden_size=self.hidden_dim,
@@ -300,5 +299,5 @@ CONVERTER_MODULES += [
     _Permute,
     _Transpose,
     _TolstoiCharRNN,
-    # _TolstoiRNNVersion,  TODO activate
+    _TolstoiRNNVersion,
 ]

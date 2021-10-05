@@ -1,7 +1,7 @@
 """Partial derivatives for the dropout layer."""
 from typing import List, Tuple
 
-from torch import Tensor, eq
+from torch import Tensor, eq, ones_like
 from torch.nn import Dropout
 
 from backpack.core.derivatives.elementwise import ElementwiseDerivatives
@@ -20,7 +20,11 @@ class DropoutDerivatives(ElementwiseDerivatives):
         g_out: Tuple[Tensor],
         subsampling: List[int] = None,
     ) -> Tensor:
-        output = subsample(module.output, subsampling=subsampling)
-        scaling = 1 / (1 - module.p)
-        mask = 1 - eq(output, 0.0).to(output.dtype)
-        return mask * scaling
+        if module.training:
+            output = subsample(module.output, subsampling=subsampling)
+            scaling = 1 / (1 - module.p)
+            mask = 1 - eq(output, 0.0).to(output.dtype)
+            return mask * scaling
+        else:
+            output = subsample(module.output, subsampling=subsampling)
+            return ones_like(output)
