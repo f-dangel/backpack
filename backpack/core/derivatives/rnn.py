@@ -79,16 +79,17 @@ class RNNDerivatives(BaseParameterDerivatives):
             output = output.transpose(N_axis, T_axis)
         a_jac_t_mat_prod: Tensor = zeros(V, T, N, H, device=mat.device)
         for t in reversed(range(T)):
+            mat_select_t = (slice(None),) * (T_axis + free_axis) + (t,)
             if t == (T - 1):
                 a_jac_t_mat_prod[:, t, ...] = einsum(
                     "vnh,nh->vnh",
-                    mat[(slice(None),) * (T_axis + free_axis) + (t,)],
+                    mat[mat_select_t],
                     1 - output[t, ...] ** 2,
                 )
             else:
                 a_jac_t_mat_prod[:, t, ...] = einsum(
                     "vnh,nh->vnh",
-                    mat[(slice(None),) * (T_axis + free_axis) + (t,)]
+                    mat[mat_select_t]
                     + einsum(
                         "vng,gh->vnh",
                         a_jac_t_mat_prod[:, t + 1, ...],
@@ -135,12 +136,13 @@ class RNNDerivatives(BaseParameterDerivatives):
             output = module.output
         _jac_mat_prod: Tensor = torch.zeros(V, T, N, H, device=mat.device)
         for t in range(T):
+            mat_select_t = (slice(None),) * (T_axis + free_axis) + (t,)
             if t == 0:
                 _jac_mat_prod[:, t, ...] = einsum(
                     "nh,hi,vni->vnh",
                     1 - output[t, ...] ** 2,
                     module.weight_ih_l0,
-                    mat[(slice(None),) * (T_axis + free_axis) + (t,)],
+                    mat[mat_select_t],
                 )
             else:
                 _jac_mat_prod[:, t, ...] = einsum(
@@ -149,7 +151,7 @@ class RNNDerivatives(BaseParameterDerivatives):
                     einsum(
                         "hi,vni->vnh",
                         module.weight_ih_l0,
-                        mat[(slice(None),) * (T_axis + free_axis) + (t,)],
+                        mat[mat_select_t],
                     )
                     + einsum(
                         "hk,vnk->vnh",
@@ -286,19 +288,18 @@ class RNNDerivatives(BaseParameterDerivatives):
         N: int = mat.shape[N_axis + 1]
         H: int = mat.shape[3]
         output = subsample(module.output, dim=N_axis, subsampling=subsampling)
+        shape_single_step = (N, 1, H) if module.batch_first else (1, N, H)
+        output_shifted = cat(
+            [
+                zeros(shape_single_step, device=mat.device, dtype=mat.dtype),
+                output[(slice(None),) * T_axis + (slice(0, -1),)],
+            ],
+            dim=T_axis,
+        )
         return einsum(
-            f"vtnh,{'nt' if module.batch_first else 'tn'}k->"
-            + ("vhk" if sum_batch else "vnhk"),
+            f"vtnh,{'nt' if module.batch_first else 'tn'}k->v{'' if sum_batch else 'n'}hk",
             self._a_jac_t_mat_prod(module, module.weight_hh_l0, mat, subsampling),
-            cat(
-                [
-                    zeros(N, 1, H, device=mat.device, dtype=mat.dtype)
-                    if module.batch_first
-                    else zeros(1, N, H, device=mat.device, dtype=mat.dtype),
-                    output[(slice(None),) * T_axis + (slice(0, -1),)],
-                ],
-                dim=T_axis,
-            ),
+            output_shifted,
         )
 
     @staticmethod

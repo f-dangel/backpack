@@ -9,8 +9,17 @@ from backpack.utils.subsampling import subsample
 
 
 class DropoutDerivatives(ElementwiseDerivatives):
+    """Derivatives for the Dropout module."""
+
     def hessian_is_zero(self, module: Dropout) -> bool:
-        """``Dropout''(x) = 0``."""
+        """``Dropout''(x) = 0``.
+
+        Args:
+            module: dropout module
+
+        Returns:
+            whether hessian is zero
+        """
         return True
 
     def df(
@@ -19,12 +28,11 @@ class DropoutDerivatives(ElementwiseDerivatives):
         g_inp: Tuple[Tensor],
         g_out: Tuple[Tensor],
         subsampling: List[int] = None,
-    ) -> Tensor:
+    ) -> Tensor:  # noqa: D102
+        output = subsample(module.output, subsampling=subsampling)
         if module.training:
-            output = subsample(module.output, subsampling=subsampling)
             scaling = 1 / (1 - module.p)
             mask = 1 - eq(output, 0.0).to(output.dtype)
             return mask * scaling
         else:
-            output = subsample(module.output, subsampling=subsampling)
             return ones_like(output)
