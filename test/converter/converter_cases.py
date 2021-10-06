@@ -130,9 +130,7 @@ class _FlattenNetwork(ConverterModule):
         x = self.linear(x)
         x = flatten(x, 2)  # built-in function flatten
         x = self.linear2(x)
-        x = x.flatten(
-            1,
-        )  # method flatten
+        x = x.flatten(1)  # method flatten
         return x
 
     def input_fn(self) -> Tensor:
@@ -147,10 +145,10 @@ class _Multiply(ConverterModule):
         self.linear = Linear(self.in_dim, out_dim)
 
     def forward(self, x):
-        x = x * 2.5
+        x = x * 2.5  # built-in method multiply (Tensor-float)
         x = self.linear(x)
-        x = 0.5 * x
-        x = x.multiply(3.1415)
+        x = 0.5 * x  # built-in method multiply (float-Tensor)
+        x = x.multiply(3.1415)  # method multiply
         return x
 
     def input_fn(self) -> Tensor:
@@ -171,9 +169,9 @@ class _Add(ConverterModule):
         x = self.linear(x)
         x1 = self.linear1(x)
         x2 = self.linear2(x)
-        x = x1 + x2
+        x = x1 + x2  # built-in method add
         x = self.relu(x)
-        x = x.add(x2)
+        x = x.add(x2)  # method add
         return x
 
     def input_fn(self) -> Tensor:
@@ -190,9 +188,9 @@ class _Permute(ConverterModule):
 
     def forward(self, x):
         x = self.linear(x)
-        x = x.permute(0, 2, 1)
+        x = x.permute(0, 2, 1)  # method permute
         x = self.linear2(x)
-        x = permute(x, (0, 2, 1))
+        x = permute(x, (0, 2, 1))  # function permute
         return x
 
     def input_fn(self) -> Tensor:
@@ -213,9 +211,9 @@ class _Transpose(ConverterModule):
 
     def forward(self, x):
         x = self.linear(x)
-        x = x.transpose(1, 2)
+        x = x.transpose(1, 2)  # method transpose
         x = self.linear2(x)
-        x = transpose(x, 1, 2)
+        x = transpose(x, 1, 2)  # function transpose
         return x
 
     def input_fn(self) -> Tensor:
