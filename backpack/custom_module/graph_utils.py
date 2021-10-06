@@ -150,7 +150,6 @@ def _transform_mul_to_scale_module(module: Module, debug: bool) -> GraphModule:
             node, "scale_module", module, ScaleModule(weight), (tensor,)
         )
     for node in nodes_method:
-        print(node.args)
         _change_node_to_module(
             node, "scale_module", module, ScaleModule(node.args[1]), (node.args[0],)
         )
@@ -247,23 +246,23 @@ def _transform_get_item_to_module(module: Module, debug: bool) -> GraphModule:
     target = "<built-in function getitem>"
     if debug:
         print(f"\tBegin transformation: {target} -> ReduceTuple")
-    counter: int = 0
     graph: Graph = BackpackTracer().trace(module)
 
-    for node in graph.nodes:
-        if node.op == "call_function" and target in str(node.target):
-            _change_node_to_module(
-                node,
-                "reduce_tuple",
-                module,
-                ReduceTuple(index=node.args[1]),
-                (node.args[0],),
-            )
-            counter += 1
+    nodes = [
+        n for n in graph.nodes if n.op == "call_function" and target in str(n.target)
+    ]
+    for node in nodes:
+        _change_node_to_module(
+            node,
+            "reduce_tuple",
+            module,
+            ReduceTuple(index=node.args[1]),
+            (node.args[0],),
+        )
 
     graph.lint()
     if debug:
-        print(f"\tReduceTuple transformed: {counter}")
+        print(f"\tReduceTuple transformed: {len(nodes)}")
     return GraphModule(module, graph)
 
 
@@ -272,27 +271,27 @@ def _transform_permute_to_module(module: Module, debug: bool) -> GraphModule:
     target2 = "<built-in method permute"
     if debug:
         print(f"\tBegin transformation: {target1}|{target2} -> Permute")
-    counter: int = 0
     graph: Graph = BackpackTracer().trace(module)
 
-    for node in graph.nodes:
-        if (node.op == "call_function" and target2 in str(node.target)) or (
-            node.op == "call_method" and target1 == str(node.target)
-        ):
-            _change_node_to_module(
-                node,
-                "permute",
-                module,
-                Permute(*node.args[1])
-                if len(node.args) == 2
-                else Permute(*node.args[1:]),
-                (node.args[0],),
-            )
-            counter += 1
+    nodes = [
+        n
+        for n in graph.nodes
+        if (n.op == "call_function" and target2 in str(n.target))
+        or (n.op == "call_method" and target1 == str(n.target))
+    ]
+
+    for node in nodes:
+        _change_node_to_module(
+            node,
+            "permute",
+            module,
+            Permute(*node.args[1]) if len(node.args) == 2 else Permute(*node.args[1:]),
+            (node.args[0],),
+        )
 
     graph.lint()
     if debug:
-        print(f"\tPermute transformed: {counter}")
+        print(f"\tPermute transformed: {len(nodes)}")
     return GraphModule(module, graph)
 
 
@@ -301,7 +300,6 @@ def _transform_transpose_to_module(module: Module, debug: bool) -> GraphModule:
     target_method = "transpose"
     if debug:
         print(f"\tBegin transformation: {target_method} -> Permute")
-    counter: int = 0
     graph: Graph = BackpackTracer().trace(module)
 
     nodes = [
@@ -316,7 +314,6 @@ def _transform_transpose_to_module(module: Module, debug: bool) -> GraphModule:
     ]
 
     for node in nodes:
-        print(node.args)
         _change_node_to_module(
             node,
             "permute",
@@ -324,11 +321,10 @@ def _transform_transpose_to_module(module: Module, debug: bool) -> GraphModule:
             Permute(*node.args[1:], init_transpose=True),
             (node.args[0],),
         )
-        counter += 1
 
     graph.lint()
     if debug:
-        print(f"\tPermute transformed: {counter}")
+        print(f"\tPermute transformed: {len(nodes)}")
     return GraphModule(module, graph)
 
 
@@ -338,19 +334,22 @@ def _transform_lstm_rnn(module: Module, debug: bool) -> GraphModule:
     counter: int = 0
     graph: Graph = BackpackTracer().trace(module)
 
-    for node in graph.nodes:
-        if node.op == "call_module" and isinstance(
-            module.get_submodule(node.target), (RNN, LSTM)
-        ):
-            lstm_module: Union[RNN, LSTM] = module.get_submodule(node.target)
-            if lstm_module.num_layers > 1:
-                if len(node.args) > 1:
-                    raise NotImplementedError(
-                        "For conversion, LSTM input must not have hidden states."
-                    )
-                lstm_module_replace = _make_rnn_backpack(lstm_module)
-                module.add_module(node.target, lstm_module_replace)
-                counter += 1
+    nodes = [
+        n
+        for n in graph.nodes
+        if n.op == "call_module"
+        and isinstance(module.get_submodule(n.target), (RNN, LSTM))
+    ]
+    for node in nodes:
+        lstm_module: Union[RNN, LSTM] = module.get_submodule(node.target)
+        if lstm_module.num_layers > 1:
+            if len(node.args) > 1:
+                raise NotImplementedError(
+                    "For conversion, LSTM/RNN input must not have hidden states."
+                )
+            lstm_module_replace = _make_rnn_backpack(lstm_module)
+            module.add_module(node.target, lstm_module_replace)
+            counter += 1
 
     graph.lint()
     if debug:
@@ -359,6 +358,17 @@ def _transform_lstm_rnn(module: Module, debug: bool) -> GraphModule:
 
 
 def _rnn_hyperparams(module: Union[RNN, LSTM]) -> Tuple[int, int, float, bool]:
+    """Determines the hyperparameters for RNN/LSTM conversion.
+
+    Args:
+        module: module to convert
+
+    Returns:
+        input_size, hidden_size, dropout, batch_first
+
+    Raises:
+        NotImplementedError: if any hyperparameter has a forbidden value
+    """
     if module.bias is not True:
         raise NotImplementedError("only bias = True is supported")
     if module.bidirectional is not False:
@@ -373,6 +383,18 @@ def _rnn_hyperparams(module: Union[RNN, LSTM]) -> Tuple[int, int, float, bool]:
 
 
 def _make_rnn_backpack(module: Union[RNN, LSTM]) -> Module:
+    """Creates an equivalent module to the multi-layer RNN/LSTM.
+
+    Converts multi-layer RNN/LSTM to Sequential with single-layer RNN/LSTM.
+    If dropout probability is nonzero, creates intermediate dropout layers.
+    Finally, copies training mode.
+
+    Args:
+        module: RNN/LSTM module to convert
+
+    Returns:
+        equivalent Sequential module
+    """
     input_size, hidden_size, dropout, batch_first = _rnn_hyperparams(module)
     rnn_class = type(module)
     rnn_module_replace = Sequential()
