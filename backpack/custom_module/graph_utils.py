@@ -331,7 +331,6 @@ def _transform_transpose_to_module(module: Module, debug: bool) -> GraphModule:
 def _transform_lstm_rnn(module: Module, debug: bool) -> GraphModule:
     if debug:
         print("\tBegin transformation: LSTM, RNN")
-    counter: int = 0
     graph: Graph = BackpackTracer().trace(module)
 
     nodes = [
@@ -339,21 +338,19 @@ def _transform_lstm_rnn(module: Module, debug: bool) -> GraphModule:
         for n in graph.nodes
         if n.op == "call_module"
         and isinstance(module.get_submodule(n.target), (RNN, LSTM))
+        and module.get_submodule(n.target).num_layers > 1
     ]
     for node in nodes:
-        lstm_module: Union[RNN, LSTM] = module.get_submodule(node.target)
-        if lstm_module.num_layers > 1:
-            if len(node.args) > 1:
-                raise NotImplementedError(
-                    "For conversion, LSTM/RNN input must not have hidden states."
-                )
-            lstm_module_replace = _make_rnn_backpack(lstm_module)
-            module.add_module(node.target, lstm_module_replace)
-            counter += 1
+        if len(node.args) > 1:
+            raise NotImplementedError(
+                "For conversion, LSTM/RNN input must not have hidden states."
+            )
+        lstm_module_replace = _make_rnn_backpack(module.get_submodule(node.target))
+        module.add_module(node.target, lstm_module_replace)
 
     graph.lint()
     if debug:
-        print(f"\tRNNs, LSTMs transformed: {counter}")
+        print(f"\tRNNs, LSTMs transformed: {len(nodes)}")
     return GraphModule(module, graph)
 
 
