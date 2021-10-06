@@ -11,6 +11,11 @@ class Permute(Module):
     def __init__(self, *dims: Any, init_transpose: bool = False, batch_axis: int = 0):
         """Initialization.
 
+        This module supports two variants: permutation and transposition.
+        If transposition should be used, a tuple (axis1, axis2) should be provided and
+        init_transpose must be True.
+        Internally, this is converted to a permutation in the first forward pass.
+
         Args:
             dims: The desired ordering of dimensions.
             init_transpose: If transpose parameters are provided. Default: False.
