@@ -72,6 +72,7 @@ def test_for_loop_replace() -> None:
 
     This test is based on issue #220 opened by Romain3Ch216.
     """
+    manual_seed(0)
     B = 5
     M = 3
     h = 2
