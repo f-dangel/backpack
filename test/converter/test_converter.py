@@ -4,13 +4,13 @@
 - whether DiagGGN runs without errors on new network
 """
 from test.converter.converter_cases import CONVERTER_MODULES, ConverterModule
+from test.core.derivatives.utils import classification_targets, regression_targets
 from test.utils.skip_test import skip_pytorch_below_1_9_0
 from typing import Tuple
 
-import torch
 from pytest import fixture
-from torch import Tensor, allclose, cat, int32, linspace, manual_seed, rand_like
-from torch.nn import Module, MSELoss
+from torch import Tensor, allclose, cat, int32, linspace, manual_seed
+from torch.nn import CrossEntropyLoss, Module, MSELoss
 
 from backpack import backpack, extend
 from backpack.extensions import DiagGGNExact
@@ -50,18 +50,22 @@ def test_network_diag_ggn(model_and_input):
 
     Args:
         model_and_input: module to test
+
+    Raises:
+        NotImplementedError: if loss_fn is not MSELoss or CrossEntropyLoss
     """
     model_original, x, loss_fn = model_and_input
     model_original = model_original.eval()
     output_compare = model_original(x)
     if isinstance(loss_fn, MSELoss):
-        y = rand_like(output_compare)
-    else:
-        y = torch.randint(
-            0,
-            output_compare.shape[1],
+        y = regression_targets(output_compare.shape)
+    elif isinstance(loss_fn, CrossEntropyLoss):
+        y = classification_targets(
             (output_compare.shape[0], *output_compare.shape[2:]),
+            output_compare.shape[1],
         )
+    else:
+        raise NotImplementedError(f"test cannot handle loss_fn = {type(loss_fn)}")
 
     num_params = sum(p.numel() for p in model_original.parameters() if p.requires_grad)
     num_to_compare = 10

@@ -181,12 +181,8 @@ def _transform_add_to_sum_module(module: Module, debug: bool) -> GraphModule:
     nodes = [
         n
         for n in graph.nodes
-        if n.op == "call_function" and str(n.target) == target_function
-    ]
-    nodes += [
-        n
-        for n in graph.nodes
-        if n.op == "call_method" and str(n.target) == target_method
+        if (n.op == "call_function" and str(n.target) == target_function)
+        or (n.op == "call_method" and str(n.target) == target_method)
     ]
 
     for node in nodes:
@@ -219,12 +215,8 @@ def _transform_flatten_to_module(module: Module, debug: bool) -> GraphModule:
     nodes = [
         n
         for n in graph.nodes
-        if n.op == "call_function" and target_function in str(n.target)
-    ]
-    nodes += [
-        n
-        for n in graph.nodes
-        if n.op == "call_method" and target_method in str(n.target)
+        if (n.op == "call_function" and target_function in str(n.target))
+        or (n.op == "call_method" and target_method == str(n.target))
     ]
 
     for node in nodes:
@@ -249,7 +241,7 @@ def _transform_get_item_to_module(module: Module, debug: bool) -> GraphModule:
     graph: Graph = BackpackTracer().trace(module)
 
     nodes = [
-        n for n in graph.nodes if n.op == "call_function" and target in str(n.target)
+        n for n in graph.nodes if n.op == "call_function" and target == str(n.target)
     ]
     for node in nodes:
         _change_node_to_module(
@@ -305,12 +297,8 @@ def _transform_transpose_to_module(module: Module, debug: bool) -> GraphModule:
     nodes = [
         n
         for n in graph.nodes
-        if n.op == "call_function" and target_function in str(n.target)
-    ]
-    nodes += [
-        n
-        for n in graph.nodes
-        if n.op == "call_method" and target_method == str(n.target)
+        if (n.op == "call_function" and target_function in str(n.target))
+        or (n.op == "call_method" and target_method == str(n.target))
     ]
 
     for node in nodes:

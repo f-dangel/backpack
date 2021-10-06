@@ -79,17 +79,17 @@ class RNNDerivatives(BaseParameterDerivatives):
             output = output.transpose(N_axis, T_axis)
         a_jac_t_mat_prod: Tensor = zeros(V, T, N, H, device=mat.device)
         for t in reversed(range(T)):
-            mat_select_t = (slice(None),) * (T_axis + free_axis) + (t,)
+            mat_t = mat[(slice(None),) * (T_axis + free_axis) + (t,)]
             if t == (T - 1):
                 a_jac_t_mat_prod[:, t, ...] = einsum(
                     "vnh,nh->vnh",
-                    mat[mat_select_t],
+                    mat_t,
                     1 - output[t, ...] ** 2,
                 )
             else:
                 a_jac_t_mat_prod[:, t, ...] = einsum(
                     "vnh,nh->vnh",
-                    mat[mat_select_t]
+                    mat_t
                     + einsum(
                         "vng,gh->vnh",
                         a_jac_t_mat_prod[:, t + 1, ...],
@@ -136,13 +136,13 @@ class RNNDerivatives(BaseParameterDerivatives):
             output = module.output
         _jac_mat_prod: Tensor = torch.zeros(V, T, N, H, device=mat.device)
         for t in range(T):
-            mat_select_t = (slice(None),) * (T_axis + free_axis) + (t,)
+            mat_t = mat[(slice(None),) * (T_axis + free_axis) + (t,)]
             if t == 0:
                 _jac_mat_prod[:, t, ...] = einsum(
                     "nh,hi,vni->vnh",
                     1 - output[t, ...] ** 2,
                     module.weight_ih_l0,
-                    mat[mat_select_t],
+                    mat_t,
                 )
             else:
                 _jac_mat_prod[:, t, ...] = einsum(
@@ -151,7 +151,7 @@ class RNNDerivatives(BaseParameterDerivatives):
                     einsum(
                         "hi,vni->vnh",
                         module.weight_ih_l0,
-                        mat[mat_select_t],
+                        mat_t,
                     )
                     + einsum(
                         "hk,vnk->vnh",
@@ -250,8 +250,7 @@ class RNNDerivatives(BaseParameterDerivatives):
         self._check_parameters(module)
         N_axis, _ = self.get_batch_and_time_axes(module)
         return einsum(
-            f"vtnh,{'nt' if module.batch_first else 'tn'}j->"
-            + ("vhj" if sum_batch else "vnhj"),
+            f"vtnh,{'nt' if module.batch_first else 'tn'}j->v{'' if sum_batch else 'n'}hj",
             self._a_jac_t_mat_prod(
                 module,
                 module.weight_hh_l0,

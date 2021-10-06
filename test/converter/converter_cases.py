@@ -181,10 +181,10 @@ class _Add(ConverterModule):
 class _Permute(ConverterModule):
     def __init__(self):
         super().__init__()
-        self.in_dim = 3
+        self.in_dim = (5, 3)
         out_dim = 2
-        self.linear = Linear(self.in_dim, out_dim)
-        self.linear2 = Linear(5, out_dim)
+        self.linear = Linear(self.in_dim[-1], out_dim)
+        self.linear2 = Linear(self.in_dim[-2], out_dim)
 
     def forward(self, x):
         x = self.linear(x)
@@ -194,7 +194,7 @@ class _Permute(ConverterModule):
         return x
 
     def input_fn(self) -> Tensor:
-        return rand(3, 5, self.in_dim)
+        return rand(3, *self.in_dim)
 
     def loss_fn(self) -> Module:
         return CrossEntropyLoss()
@@ -203,11 +203,11 @@ class _Permute(ConverterModule):
 class _Transpose(ConverterModule):
     def __init__(self):
         super().__init__()
-        self.in_dim = 3
+        self.in_dim = (5, 3)
         out_dim = 2
         out_dim2 = 3
-        self.linear = Linear(self.in_dim, out_dim)
-        self.linear2 = Linear(5, out_dim2)
+        self.linear = Linear(self.in_dim[-1], out_dim)
+        self.linear2 = Linear(self.in_dim[-2], out_dim2)
 
     def forward(self, x):
         x = self.linear(x)
@@ -217,7 +217,7 @@ class _Transpose(ConverterModule):
         return x
 
     def input_fn(self) -> Tensor:
-        return rand(3, 5, self.in_dim)
+        return rand(3, *self.in_dim)
 
     def loss_fn(self) -> Module:
         return CrossEntropyLoss()
@@ -242,12 +242,8 @@ class _TolstoiCharRNN(ConverterModule):
             dropout=0.36,
             batch_first=True,
         )
-        self.lstm.bias_ih_l0.data = zeros_like(
-            self.lstm.bias_ih_l0, device=self.lstm.bias_ih_l0.device
-        )
-        self.lstm.bias_ih_l1.data = zeros_like(
-            self.lstm.bias_ih_l1, device=self.lstm.bias_ih_l0.device
-        )
+        self.lstm.bias_ih_l0.data = zeros_like(self.lstm.bias_ih_l0)
+        self.lstm.bias_ih_l1.data = zeros_like(self.lstm.bias_ih_l1)
         self.lstm.bias_ih_l0.requires_grad = False
         self.lstm.bias_ih_l1.requires_grad = False
         self.dense = Linear(in_features=self.hidden_dim, out_features=self.vocab_size)
