@@ -105,3 +105,4 @@ test/utils/__init__.py
 test/converter/
 test/utils/test_subsampling.py
 test/custom_module/
+test/test_retain_graph.py

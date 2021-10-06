@@ -27,6 +27,7 @@ class backpack:
         *exts: BackpropExtension,
         extension_hook: Callable[[Module], None] = None,
         debug: bool = False,
+        retain_graph: bool = False,
     ):
         """Activate BackPACK extensions.
 
@@ -39,6 +40,9 @@ class backpack:
                 all BackPACK extensions have run. Takes a ``torch.nn.Module`` and returns
                 ``None``. Default: ``None`` (no operation will be performed).
             debug: Print debug messages during the backward pass. Default: ``False``.
+            retain_graph: Determines whether BackPack IO should be kept for additional
+                backward passes. Should have same value as the argument ``retain_graph``
+                in ``backward()``. Default: ``False``.
 
         .. note::
             extension_hook can be used to reduce memory overhead if the goal is to compute
@@ -67,15 +71,18 @@ class backpack:
         self.extension_hook: Callable[[Module], None] = (
             no_op if extension_hook is None else extension_hook
         )
+        self.retain_graph = retain_graph
 
     def __enter__(self):
         """Setup backpack environment."""
         self.old_CTX = CTX.get_active_exts()
         self.old_debug = CTX.get_debug()
         self.old_extension_hook = CTX.get_extension_hook()
+        self.old_retain_graph = CTX.get_retain_graph()
         CTX.set_active_exts(self.exts)
         CTX.set_debug(self.debug)
         CTX.set_extension_hook(self.extension_hook)
+        CTX.set_retain_graph(self.retain_graph)
 
     def __exit__(
         self,
@@ -93,6 +100,7 @@ class backpack:
         CTX.set_active_exts(self.old_CTX)
         CTX.set_debug(self.old_debug)
         CTX.set_extension_hook(self.old_extension_hook)
+        CTX.set_retain_graph(self.old_retain_graph)
 
 
 class disable:
@@ -209,10 +217,13 @@ def hook_run_extensions(
     CTX.get_extension_hook()(module)
 
     if not (
-        CTX.is_extension_active(
-            extensions.curvmatprod.HMP,
-            extensions.curvmatprod.GGNMP,
-            extensions.curvmatprod.PCHMP,
+        CTX.get_retain_graph()
+        or (
+            CTX.is_extension_active(
+                extensions.curvmatprod.HMP,
+                extensions.curvmatprod.GGNMP,
+                extensions.curvmatprod.PCHMP,
+            )
         )
     ):
         memory_cleanup(module)
