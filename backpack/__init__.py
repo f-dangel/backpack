@@ -40,9 +40,9 @@ class backpack:
                 all BackPACK extensions have run. Takes a ``torch.nn.Module`` and returns
                 ``None``. Default: ``None`` (no operation will be performed).
             debug: Print debug messages during the backward pass. Default: ``False``.
-            retain_graph: Determines whether BackPack quantities should be kept for an
-                additional backward pass. Usually, must have same value
-                as the argument ``retain_graph`` in ``backward()``. Default: ``False``.
+            retain_graph: Determines whether BackPack IO should be kept for additional
+                backward passes. Should have same value as the argument ``retain_graph``
+                in ``backward()``. Default: ``False``.
 
         .. note::
             extension_hook can be used to reduce memory overhead if the goal is to compute

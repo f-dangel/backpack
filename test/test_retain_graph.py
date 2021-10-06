@@ -71,6 +71,8 @@ def test_for_loop_replace() -> None:
     """Application of retain_graph: replace an outer for-loop.
 
     This test is based on issue #220 opened by Romain3Ch216.
+    It computes per-component individual gradients of a tensor-valued output
+    with a for loop over components, rather than over samples and components.
     """
     manual_seed(0)
     B = 5
