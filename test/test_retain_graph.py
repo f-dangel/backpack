@@ -72,13 +72,12 @@ def test_for_loop_replace() -> None:
 
     This test is based on issue #220 opened by Romain3Ch216.
     """
-    B = 20
-    M = 10
+    B = 5
+    M = 3
     h = 2
 
     x = randn(B, h)
-    fc = Linear(h, M)
-    fc = extend(fc)
+    fc = extend(Linear(h, M))
     A = fc(x)
 
     grad_autograd = zeros(B, M, *fc.weight.shape)
