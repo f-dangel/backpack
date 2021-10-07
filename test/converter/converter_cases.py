@@ -80,9 +80,10 @@ class _WideResNet50(ConverterModule):
 
 class _InplaceActivation(ConverterModule):
     def __init__(self):
+        super().__init__()
+        self.batch_size = 3
         self.in_dim = 3
         out_dim = 2
-        super().__init__()
         self.linear = Linear(self.in_dim, out_dim)
         self.relu = ReLU(inplace=True)
         self.linear2 = Linear(out_dim, out_dim)
@@ -94,12 +95,13 @@ class _InplaceActivation(ConverterModule):
         return x
 
     def input_fn(self) -> Tensor:
-        return rand(3, self.in_dim)
+        return rand(self.batch_size, self.in_dim)
 
 
 class _MultipleUsages(ConverterModule):
     def __init__(self):
         super().__init__()
+        self.batch_size = 3
         self.in_dim = 3
         out_dim = 2
         self.linear = Linear(self.in_dim, out_dim)
@@ -115,12 +117,13 @@ class _MultipleUsages(ConverterModule):
         return x
 
     def input_fn(self) -> Tensor:
-        return rand(3, self.in_dim)
+        return rand(self.batch_size, self.in_dim)
 
 
 class _FlattenNetwork(ConverterModule):
     def __init__(self):
         super().__init__()
+        self.batch_size = 3
         self.in_dim = (2, 2, 4)
         out_dim = 3
         self.linear = Linear(self.in_dim[2], out_dim)
@@ -134,12 +137,13 @@ class _FlattenNetwork(ConverterModule):
         return x
 
     def input_fn(self) -> Tensor:
-        return rand(3, *self.in_dim)
+        return rand(self.batch_size, *self.in_dim)
 
 
 class _Multiply(ConverterModule):
     def __init__(self):
         super().__init__()
+        self.batch_size = 2
         self.in_dim = 4
         out_dim = 3
         self.linear = Linear(self.in_dim, out_dim)
@@ -152,12 +156,13 @@ class _Multiply(ConverterModule):
         return x
 
     def input_fn(self) -> Tensor:
-        return rand(2, self.in_dim)
+        return rand(self.batch_size, self.in_dim)
 
 
 class _Add(ConverterModule):
     def __init__(self):
         super().__init__()
+        self.batch_size = 3
         self.in_dim = 3
         out_dim = 2
         self.linear = Linear(self.in_dim, self.in_dim)
@@ -175,12 +180,13 @@ class _Add(ConverterModule):
         return x
 
     def input_fn(self) -> Tensor:
-        return rand(3, self.in_dim)
+        return rand(self.batch_size, self.in_dim)
 
 
 class _Permute(ConverterModule):
     def __init__(self):
         super().__init__()
+        self.batch_size = 3
         self.in_dim = (5, 3)
         out_dim = 2
         self.linear = Linear(self.in_dim[-1], out_dim)
@@ -194,7 +200,7 @@ class _Permute(ConverterModule):
         return x
 
     def input_fn(self) -> Tensor:
-        return rand(3, *self.in_dim)
+        return rand(self.batch_size, *self.in_dim)
 
     def loss_fn(self) -> Module:
         return CrossEntropyLoss()
@@ -203,6 +209,7 @@ class _Permute(ConverterModule):
 class _Transpose(ConverterModule):
     def __init__(self):
         super().__init__()
+        self.batch_size = 3
         self.in_dim = (5, 3)
         out_dim = 2
         out_dim2 = 3
@@ -217,7 +224,7 @@ class _Transpose(ConverterModule):
         return x
 
     def input_fn(self) -> Tensor:
-        return rand(3, *self.in_dim)
+        return rand(self.batch_size, *self.in_dim)
 
     def loss_fn(self) -> Module:
         return CrossEntropyLoss()
@@ -226,6 +233,7 @@ class _Transpose(ConverterModule):
 class _TolstoiCharRNN(ConverterModule):
     def __init__(self):
         super(_TolstoiCharRNN, self).__init__()
+        self.batch_size = 8
         self.hidden_dim = 64
         self.num_layers = 2
         self.seq_len = 15
@@ -258,7 +266,7 @@ class _TolstoiCharRNN(ConverterModule):
         return output
 
     def input_fn(self) -> Tensor:
-        return randint(0, self.vocab_size, (8, self.seq_len))
+        return randint(0, self.vocab_size, (self.batch_size, self.seq_len))
 
     def loss_fn(self) -> Module:
         return CrossEntropyLoss()
@@ -274,12 +282,6 @@ class _TolstoiRNNVersion(_TolstoiCharRNN):
             dropout=0.36,
             batch_first=True,
         )
-
-    def input_fn(self) -> Tensor:
-        return randint(0, self.vocab_size, (8, self.seq_len))
-
-    def loss_fn(self) -> Module:
-        return CrossEntropyLoss()
 
 
 CONVERTER_MODULES += [
