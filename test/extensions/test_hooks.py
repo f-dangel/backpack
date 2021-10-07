@@ -13,7 +13,6 @@ from torch.nn import CrossEntropyLoss, Linear, Module, Sequential
 from backpack import backpack, extend
 from backpack.extensions import BatchGrad, DiagGGNExact
 from backpack.extensions.backprop_extension import FAIL_ERROR, BackpropExtension
-from backpack.utils import exception_inside_backward_pass
 
 DEVICES = get_available_devices()
 DEVICES_ID = [str(dev) for dev in DEVICES]
@@ -124,7 +123,7 @@ def test_extension_hook_multiple_parameter_visits(
             params_visited[id(p)] += 1
 
     if problem_string == CUSTOM_CONTAINER and extension._fail_mode == FAIL_ERROR:
-        with raises(exception_inside_backward_pass(NotImplementedError)):
+        with raises(NotImplementedError):
             with backpack(extension, extension_hook=count_visits, debug=True):
                 loss.backward()
         return
@@ -189,7 +188,7 @@ def test_extension_hook_param_before_savefield_exists(problem):
 
         assert len(params_without_grad_batch) == 0
     elif problem_string == CUSTOM_CONTAINER:
-        with raises(exception_inside_backward_pass(AssertionError)):
+        with raises(AssertionError):
             with backpack(BatchGrad(), extension_hook=check_grad_batch, debug=True):
                 loss.backward()
         assert len(params_without_grad_batch) > 0

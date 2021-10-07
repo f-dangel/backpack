@@ -27,7 +27,7 @@ from torch.nn import (
 
 from backpack import backpack, extend, extensions
 from backpack.custom_module.branching import ActiveIdentity, Parallel
-from backpack.utils import FULL_BACKWARD_HOOK, exception_inside_backward_pass
+from backpack.utils import FULL_BACKWARD_HOOK
 from backpack.utils.examples import autograd_diag_ggn_exact
 
 
@@ -137,9 +137,7 @@ def test_diag_ggn_exact_nn_identity_fails(setup_fn: Callable) -> None:
     autograd_result = autograd_diag_ggn_exact(X, y, model, loss_function)
 
     X, y, model, loss_function = setup_fn(apply_extend=True, active_identity=False)
-    with nullcontext() if FULL_BACKWARD_HOOK else raises(
-        exception_inside_backward_pass(AssertionError)
-    ):
+    with nullcontext() if FULL_BACKWARD_HOOK else raises(AssertionError):
         backpack_result = backpack_diag_ggn_exact(X, y, model, loss_function)
 
         check_sizes_and_values(autograd_result, backpack_result)
