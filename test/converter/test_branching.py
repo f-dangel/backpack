@@ -8,12 +8,11 @@ Additionally, for torch>=1.9.0 there is a convenient option use_converter=True i
 
 TODO Delete after supporting torch >= 1.9.0 (full backward hook and converter).
 """
-from contextlib import nullcontext
 from test.automated_test import check_sizes_and_values
 from test.core.derivatives.utils import classification_targets
 from typing import Callable, Tuple
 
-from pytest import mark, raises
+from pytest import mark
 from torch import Tensor, cat, manual_seed, rand
 from torch.nn import (
     CrossEntropyLoss,
@@ -27,7 +26,6 @@ from torch.nn import (
 
 from backpack import backpack, extend, extensions
 from backpack.custom_module.branching import ActiveIdentity, Parallel
-from backpack.utils import FULL_BACKWARD_HOOK
 from backpack.utils.examples import autograd_diag_ggn_exact
 
 
@@ -137,7 +135,6 @@ def test_diag_ggn_exact_nn_identity_fails(setup_fn: Callable) -> None:
     autograd_result = autograd_diag_ggn_exact(X, y, model, loss_function)
 
     X, y, model, loss_function = setup_fn(apply_extend=True, active_identity=False)
-    with nullcontext() if FULL_BACKWARD_HOOK else raises(AssertionError):
-        backpack_result = backpack_diag_ggn_exact(X, y, model, loss_function)
+    backpack_result = backpack_diag_ggn_exact(X, y, model, loss_function)
 
-        check_sizes_and_values(autograd_result, backpack_result)
+    check_sizes_and_values(autograd_result, backpack_result)

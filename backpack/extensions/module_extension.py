@@ -5,9 +5,8 @@ from typing import TYPE_CHECKING, Any, List, Tuple
 from warnings import warn
 
 from torch import Tensor
-from torch.nn import Flatten, Module
+from torch.nn import Module
 
-from backpack.utils import FULL_BACKWARD_HOOK
 from backpack.utils.module_classification import is_loss
 
 if TYPE_CHECKING:
@@ -104,23 +103,10 @@ class ModuleExtension:
             and bp_quantity is None
             and not is_loss(module)
         ):
-            if not FULL_BACKWARD_HOOK and isinstance(module, Flatten):
-                # Flatten layers whose input is already flat do not add a node to the
-                # graph. This leads to unintuitive order of backward hook execution:
-                # https://discuss.pytorch.org/t/backward-hooks-changing-order-of-execution-in-nn-sequential/12447/4. # noqa: B950
-                # Skip everything below if this scenario is encountered.
-                no_op = module.input0.shape == module.output.shape
-                if not no_op:
-                    raise AssertionError(
-                        "Expected no op Flatten module. Got "
-                        + f"{module.input0.shape} -> {module.output.shape}"
-                    )
-                return
-            else:
-                raise AssertionError(
-                    "BackPACK extension expects a backpropagation quantity but it is None. "
-                    f"Module: {module}, Extension: {extension}."
-                )
+            raise AssertionError(
+                "BackPACK extension expects a backpropagation quantity but it is None. "
+                f"Module: {module}, Extension: {extension}."
+            )
 
         for param in self.__params:
             if self.__param_exists_and_requires_grad(module, param):

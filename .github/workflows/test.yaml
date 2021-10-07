@@ -19,8 +19,8 @@ jobs:
 
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9]
-        pytorch-version: [1.8.0, 1.9.0]
+        python-version: [3.7, 3.8, 3.9, 3.10]
+        pytorch-version: [1.9.0, 1.9.1]
     steps:
     - uses: actions/checkout@v1
     - uses: actions/setup-python@v1
