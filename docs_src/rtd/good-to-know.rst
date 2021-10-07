@@ -79,3 +79,5 @@ more :ref:`layers <Supported models>`. Along those lines, some things that will
   sadly means that BackPACK can't compute the individual gradients or
   second-order information of an L2-regularized loss or architectures that use
   parameters multiple times.
+- **Some exotic hyperparameters are not fully supported:** Feature requests on
+  the repository are welcome.
