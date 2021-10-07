@@ -8,16 +8,23 @@ from torch.nn import Module
 class Permute(Module):
     """Module to permute a tensor."""
 
-    def __init__(self, *dims: Any, batch_axis: int = 0):
+    def __init__(self, *dims: Any, init_transpose: bool = False, batch_axis: int = 0):
         """Initialization.
+
+        This module supports two variants: permutation and transposition.
+        If transposition should be used, a tuple (axis1, axis2) should be provided and
+        init_transpose must be True.
+        Internally, this is converted to a permutation in the first forward pass.
 
         Args:
             dims: The desired ordering of dimensions.
+            init_transpose: If transpose parameters are provided. Default: False.
             batch_axis: Which axis assumed to be the batch axis in a forward pass.
                 Defaults to ``0``.
         """
         super().__init__()
         self.dims = dims
+        self.init_transpose = init_transpose
         self.batch_axis = batch_axis
 
     def forward(self, input: Tensor) -> Tensor:
@@ -29,7 +36,21 @@ class Permute(Module):
         Returns:
             view with new ordering
         """
+        self._convert_transpose_to_permute(input)
         return input.permute(self.dims)
+
+    def _convert_transpose_to_permute(self, input: Tensor):
+        """Converts the parameters of transpose to a permutation.
+
+        Args:
+            input: input tensor. Used to determine number of dimensions.
+        """
+        if self.init_transpose:
+            permutation = list(range(input.dim()))
+            permutation[self.dims[0]] = self.dims[1]
+            permutation[self.dims[1]] = self.dims[0]
+            self.dims = tuple(permutation)
+            self.init_transpose = False
 
     def get_batch_axis(self, io_str: str) -> int:
         """Return the batch axis assumed by the module.

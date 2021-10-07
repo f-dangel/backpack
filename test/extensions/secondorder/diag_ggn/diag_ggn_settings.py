@@ -75,11 +75,10 @@ LOCAL_SETTINGS += [
         "target_fn": lambda: classification_targets((4,), 4 * 3),
     },
     {
-        "input_fn": lambda: rand(5, 8, 6),  # TODO (8, 5, 6)
+        "input_fn": lambda: rand(8, 5, 6),
         "module_fn": lambda: Sequential(
-            RNN(input_size=6, hidden_size=3),  # TODO batch_first=True
+            RNN(input_size=6, hidden_size=3, batch_first=True),
             ReduceTuple(index=0),
-            Permute(1, 0, 2, batch_axis=1),  # TODO remove
             Linear(3, 3),
             Permute(0, 2, 1, batch_axis=0),
         ),

@@ -239,6 +239,8 @@ def extend(module: Module, debug: bool = False, use_converter: bool = False) -> 
         module: The module to extend.
         debug: Print debug messages during the extension. Default: ``False``.
         use_converter: Try converting the module to a BackPACK-compatible network.
+            The converter might alter the model, e.g. order of parameters.
+            Default: ``False``.
 
     Returns:
         Extended module.

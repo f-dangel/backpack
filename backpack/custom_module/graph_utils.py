@@ -1,11 +1,14 @@
 """Transformation tools to make graph BackPACK compatible."""
 from copy import deepcopy
+from typing import Tuple, Union
 from warnings import warn
 
 from torch.fx import Graph, GraphModule, Node, Tracer
-from torch.nn import Flatten, Module
+from torch.nn import LSTM, RNN, Dropout, Flatten, Module, Sequential
 
 from backpack.custom_module.branching import ActiveIdentity, SumModule, _Branch
+from backpack.custom_module.permute import Permute
+from backpack.custom_module.reduce_tuple import ReduceTuple
 from backpack.custom_module.scale_module import ScaleModule
 from backpack.utils import TORCH_VERSION_AT_LEAST_1_9_0
 
@@ -16,7 +19,9 @@ class BackpackTracer(Tracer):
     def is_leaf_module(
         self, m: Module, module_qualified_name: str
     ) -> bool:  # noqa: D102
-        if isinstance(m, (ScaleModule, SumModule, _Branch, ActiveIdentity)):
+        if isinstance(
+            m, (ScaleModule, SumModule, _Branch, ActiveIdentity, ReduceTuple, Permute)
+        ):
             return True
         else:
             return super().is_leaf_module(m, module_qualified_name)
@@ -29,7 +34,11 @@ def convert_module_to_backpack(module: Module, debug: bool) -> GraphModule:
     - mul -> ScaleModule
     - add -> AddModule
     - flatten -> nn.Flatten
-    - inplace to normal
+    - getitem -> ReduceTuple
+    - permute -> Permute
+    - transpose -> Transpose
+    - LSTM: split multiple layers
+    - inplace -> normal
     - remove duplicates
     - delete unused modules
     - check BackPACK compatible
@@ -54,6 +63,10 @@ def convert_module_to_backpack(module: Module, debug: bool) -> GraphModule:
     module_new = _transform_mul_to_scale_module(module, debug)
     module_new = _transform_flatten_to_module(module_new, debug)
     module_new = _transform_add_to_sum_module(module_new, debug)
+    module_new = _transform_get_item_to_module(module_new, debug)
+    module_new = _transform_permute_to_module(module_new, debug)
+    module_new = _transform_transpose_to_module(module_new, debug)
+    module_new = _transform_lstm_rnn(module_new, debug)
     _transform_inplace_to_normal(module_new, debug)
     module_new = _transform_remove_duplicates(module_new, debug)
     if debug:
@@ -101,16 +114,24 @@ def _transform_mul_to_scale_module(module: Module, debug: bool) -> GraphModule:
     Raises:
         RuntimeError: if a multiplication is found but node.args are not (float, Node)
     """
-    target = "<built-in function mul>"
+    target_function = "<built-in function mul>"
+    target_method = "multiply"
     if debug:
-        print(f"\tBegin transformation: {target} -> ScaleModule")
+        print(f"\tBegin transformation: {target_function} -> ScaleModule")
 
     graph: Graph = BackpackTracer().trace(module)
-    nodes = [
-        n for n in graph.nodes if n.op == "call_function" and str(n.target) == target
+    nodes_function = [
+        n
+        for n in graph.nodes
+        if n.op == "call_function" and str(n.target) == target_function
+    ]
+    nodes_method = [
+        n
+        for n in graph.nodes
+        if n.op == "call_method" and str(n.target) == target_method
     ]
 
-    for node in nodes:
+    for node in nodes_function:
         if len(node.args) != 2:
             raise RuntimeError(f"Expecting 2 arguments, got {len(node.args)}.")
 
@@ -128,11 +149,15 @@ def _transform_mul_to_scale_module(module: Module, debug: bool) -> GraphModule:
         _change_node_to_module(
             node, "scale_module", module, ScaleModule(weight), (tensor,)
         )
+    for node in nodes_method:
+        _change_node_to_module(
+            node, "scale_module", module, ScaleModule(node.args[1]), (node.args[0],)
+        )
 
     graph.lint()
 
     if debug:
-        print(f"\tMultiplications transformed: {len(nodes)}")
+        print(f"\tMultiplications transformed: {len(nodes_function)+len(nodes_method)}")
 
     return GraphModule(module, graph)
 
@@ -147,13 +172,17 @@ def _transform_add_to_sum_module(module: Module, debug: bool) -> GraphModule:
     Returns:
         equivalent transformed module
     """
-    target = "<built-in function add>"
+    target_function = "<built-in function add>"
+    target_method = "add"
     if debug:
-        print(f"\tBegin transformation: {target} -> SumModule")
+        print(f"\tBegin transformation: {target_function} -> SumModule")
 
     graph: Graph = BackpackTracer().trace(module)
     nodes = [
-        n for n in graph.nodes if n.op == "call_function" and str(n.target) == target
+        n
+        for n in graph.nodes
+        if (n.op == "call_function" and str(n.target) == target_function)
+        or (n.op == "call_method" and str(n.target) == target_method)
     ]
 
     for node in nodes:
@@ -177,17 +206,21 @@ def _transform_flatten_to_module(module: Module, debug: bool) -> GraphModule:
     Returns:
         equivalent transformed module
     """
-    target = "<built-in method flatten"
+    target_function = "<built-in method flatten"
+    target_method = "flatten"
     if debug:
-        print(f"\tBegin transformation: {target} -> Flatten")
+        print(f"\tBegin transformation: {target_function} -> Flatten")
 
     graph: Graph = BackpackTracer().trace(module)
     nodes = [
-        n for n in graph.nodes if n.op == "call_function" and target in str(n.target)
+        n
+        for n in graph.nodes
+        if (n.op == "call_function" and target_function in str(n.target))
+        or (n.op == "call_method" and target_method == str(n.target))
     ]
 
     for node in nodes:
-        start_dim = node.args[1] if len(node.args) > 1 else 1
+        start_dim = node.args[1] if len(node.args) > 1 else 0
         end_dim = node.args[2] if len(node.args) > 2 else -1
         _change_node_to_module(
             node, "flatten", module, Flatten(start_dim, end_dim), (node.args[0],)
@@ -196,9 +229,223 @@ def _transform_flatten_to_module(module: Module, debug: bool) -> GraphModule:
     graph.lint()
 
     if debug:
-        print(f"\tFlatten transformed: {len(nodes)}")
+        print(f"\tFlatten functions transformed: {len(nodes)}")
 
     return GraphModule(module, graph)
+
+
+def _transform_get_item_to_module(module: Module, debug: bool) -> GraphModule:
+    """Transforms the built-in getitem function to ReduceTuple module.
+
+    This function is usually used to reduce the tuple output of RNNs.
+
+    Args:
+        module: container module to transform
+        debug: whether to print debug messages
+
+    Returns:
+        equivalent transformed module
+    """
+    target = "<built-in function getitem>"
+    if debug:
+        print(f"\tBegin transformation: {target} -> ReduceTuple")
+    graph: Graph = BackpackTracer().trace(module)
+
+    nodes = [
+        n for n in graph.nodes if n.op == "call_function" and target == str(n.target)
+    ]
+    for node in nodes:
+        _change_node_to_module(
+            node,
+            "reduce_tuple",
+            module,
+            ReduceTuple(index=node.args[1]),
+            (node.args[0],),
+        )
+
+    graph.lint()
+    if debug:
+        print(f"\tReduceTuple transformed: {len(nodes)}")
+    return GraphModule(module, graph)
+
+
+def _transform_permute_to_module(module: Module, debug: bool) -> GraphModule:
+    """Transforms permute function or method to Permute module.
+
+    Args:
+        module: container module to transform
+        debug: whether to print debug messages
+
+    Returns:
+        equivalent transformed module
+    """
+    target1 = "permute"
+    target2 = "<built-in method permute"
+    if debug:
+        print(f"\tBegin transformation: {target1}|{target2} -> Permute")
+    graph: Graph = BackpackTracer().trace(module)
+
+    nodes = [
+        n
+        for n in graph.nodes
+        if (n.op == "call_function" and target2 in str(n.target))
+        or (n.op == "call_method" and target1 == str(n.target))
+    ]
+
+    for node in nodes:
+        _change_node_to_module(
+            node,
+            "permute",
+            module,
+            Permute(*node.args[1]) if len(node.args) == 2 else Permute(*node.args[1:]),
+            (node.args[0],),
+        )
+
+    graph.lint()
+    if debug:
+        print(f"\tPermute transformed: {len(nodes)}")
+    return GraphModule(module, graph)
+
+
+def _transform_transpose_to_module(module: Module, debug: bool) -> GraphModule:
+    """Transforms transpose function or method to Permute module.
+
+    The Permute module is initialized with transpose parameters and computes
+    the permutation on its first forward pass.
+
+    Args:
+        module: container module to transform
+        debug: whether to print debug messages
+
+    Returns:
+        equivalent transformed module
+    """
+    target_function = "<built-in method transpose"
+    target_method = "transpose"
+    if debug:
+        print(f"\tBegin transformation: {target_method} -> Permute")
+    graph: Graph = BackpackTracer().trace(module)
+
+    nodes = [
+        n
+        for n in graph.nodes
+        if (n.op == "call_function" and target_function in str(n.target))
+        or (n.op == "call_method" and target_method == str(n.target))
+    ]
+
+    for node in nodes:
+        _change_node_to_module(
+            node,
+            "permute",
+            module,
+            Permute(*node.args[1:], init_transpose=True),
+            (node.args[0],),
+        )
+
+    graph.lint()
+    if debug:
+        print(f"\tPermute transformed: {len(nodes)}")
+    return GraphModule(module, graph)
+
+
+def _transform_lstm_rnn(module: Module, debug: bool) -> GraphModule:
+    """Transforms multi-layer RNN/LSTM to Sequential of single-layer RNN/LSTM.
+
+    Converts multi-layer RNN/LSTM to Sequential with single-layer RNN/LSTM.
+    If dropout probability is nonzero, creates intermediate dropout layers.
+    Finally, copies training mode.
+
+    Args:
+        module: container module to transform
+        debug: whether to print debug messages
+
+    Returns:
+        equivalent transformed module
+
+    Raises:
+        NotImplementedError: if initial hidden state is used in forward pass
+    """
+    if debug:
+        print("\tBegin transformation: LSTM, RNN")
+    graph: Graph = BackpackTracer().trace(module)
+
+    nodes = [
+        n
+        for n in graph.nodes
+        if n.op == "call_module"
+        and isinstance(module.get_submodule(n.target), (RNN, LSTM))
+        and module.get_submodule(n.target).num_layers > 1
+    ]
+    for node in nodes:
+        if len(node.args) > 1:
+            raise NotImplementedError(
+                "For conversion, LSTM/RNN input must not have hidden states."
+            )
+        lstm_module_replace = _make_rnn_backpack(module.get_submodule(node.target))
+        module.add_module(node.target, lstm_module_replace)
+
+    graph.lint()
+    if debug:
+        print(f"\tRNNs, LSTMs transformed: {len(nodes)}")
+    return GraphModule(module, graph)
+
+
+def _rnn_hyperparams(module: Union[RNN, LSTM]) -> Tuple[int, int, float, bool]:
+    """Determines the hyperparameters for RNN/LSTM conversion.
+
+    Args:
+        module: module to convert
+
+    Returns:
+        input_size, hidden_size, dropout, batch_first
+
+    Raises:
+        NotImplementedError: if any hyperparameter has a forbidden value
+    """
+    if module.bias is not True:
+        raise NotImplementedError("only bias = True is supported")
+    if module.bidirectional is not False:
+        raise NotImplementedError("only bidirectional = False is supported")
+    if isinstance(module, RNN):
+        if module.nonlinearity != "tanh":
+            raise NotImplementedError("only nonlinearity = 'tanh' is supported")
+    elif isinstance(module, LSTM):
+        if module.proj_size != 0:
+            raise NotImplementedError("only proj_size = 0 is supported")
+    return module.input_size, module.hidden_size, module.dropout, module.batch_first
+
+
+def _make_rnn_backpack(module: Union[RNN, LSTM]) -> Module:
+    """Creates an equivalent module to the multi-layer RNN/LSTM.
+
+    Converts multi-layer RNN/LSTM to Sequential with single-layer RNN/LSTM.
+    If dropout probability is nonzero, creates intermediate dropout layers.
+    Finally, copies training mode.
+
+    Args:
+        module: RNN/LSTM module to convert
+
+    Returns:
+        equivalent Sequential module
+    """
+    input_size, hidden_size, dropout, batch_first = _rnn_hyperparams(module)
+    rnn_class = type(module)
+    rnn_module_replace = Sequential()
+    for layer in range(module.num_layers):
+        rnn_layer = rnn_class(
+            input_size if layer == 0 else hidden_size,
+            hidden_size,
+            batch_first=batch_first,
+        )
+        for param_str in ["weight_ih_l", "weight_hh_l", "bias_ih_l", "bias_hh_l"]:
+            setattr(rnn_layer, f"{param_str}0", getattr(module, f"{param_str}{layer}"))
+        rnn_module_replace.add_module(f"lstm_{layer}", rnn_layer)
+        if layer != (module.num_layers - 1):
+            rnn_module_replace.add_module(f"reduce_tuple_{layer}", ReduceTuple())
+            if dropout != 0:
+                rnn_module_replace.add_module(f"dropout_{layer}", Dropout(dropout))
+    rnn_module_replace.train(module.training)
+    return rnn_module_replace
 
 
 def _transform_inplace_to_normal(
