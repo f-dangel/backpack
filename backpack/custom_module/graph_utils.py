@@ -235,6 +235,17 @@ def _transform_flatten_to_module(module: Module, debug: bool) -> GraphModule:
 
 
 def _transform_get_item_to_module(module: Module, debug: bool) -> GraphModule:
+    """Transforms the built-in getitem function to ReduceTuple module.
+
+    This function is usually used to reduce the tuple output of RNNs.
+
+    Args:
+        module: container module to transform
+        debug: whether to print debug messages
+
+    Returns:
+        equivalent transformed module
+    """
     target = "<built-in function getitem>"
     if debug:
         print(f"\tBegin transformation: {target} -> ReduceTuple")
@@ -259,6 +270,15 @@ def _transform_get_item_to_module(module: Module, debug: bool) -> GraphModule:
 
 
 def _transform_permute_to_module(module: Module, debug: bool) -> GraphModule:
+    """Transforms permute function or method to Permute module.
+
+    Args:
+        module: container module to transform
+        debug: whether to print debug messages
+
+    Returns:
+        equivalent transformed module
+    """
     target1 = "permute"
     target2 = "<built-in method permute"
     if debug:
@@ -288,6 +308,18 @@ def _transform_permute_to_module(module: Module, debug: bool) -> GraphModule:
 
 
 def _transform_transpose_to_module(module: Module, debug: bool) -> GraphModule:
+    """Transforms transpose function or method to Permute module.
+
+    The Permute module is initialized with transpose parameters and computes
+    the permutation on its first forward pass.
+
+    Args:
+        module: container module to transform
+        debug: whether to print debug messages
+
+    Returns:
+        equivalent transformed module
+    """
     target_function = "<built-in method transpose"
     target_method = "transpose"
     if debug:
@@ -317,6 +349,22 @@ def _transform_transpose_to_module(module: Module, debug: bool) -> GraphModule:
 
 
 def _transform_lstm_rnn(module: Module, debug: bool) -> GraphModule:
+    """Transforms multi-layer RNN/LSTM to Sequential of single-layer RNN/LSTM.
+
+    Converts multi-layer RNN/LSTM to Sequential with single-layer RNN/LSTM.
+    If dropout probability is nonzero, creates intermediate dropout layers.
+    Finally, copies training mode.
+
+    Args:
+        module: container module to transform
+        debug: whether to print debug messages
+
+    Returns:
+        equivalent transformed module
+
+    Raises:
+        NotImplementedError: if initial hidden state is used in forward pass
+    """
     if debug:
         print("\tBegin transformation: LSTM, RNN")
     graph: Graph = BackpackTracer().trace(module)
