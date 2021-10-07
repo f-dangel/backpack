@@ -5,7 +5,6 @@ from torch import Tensor, cat, einsum, sigmoid, tanh, zeros
 from torch.nn import LSTM
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
-from backpack.utils import TORCH_VERSION_AT_LEAST_1_8_0
 from backpack.utils.subsampling import subsample
 
 
@@ -51,9 +50,8 @@ class LSTMDerivatives(BaseParameterDerivatives):
             raise NotImplementedError("only dropout = 0 is supported")
         if module.bidirectional is not False:
             raise NotImplementedError("only bidirectional = False is supported")
-        if TORCH_VERSION_AT_LEAST_1_8_0:
-            if module.proj_size != 0:
-                raise NotImplementedError("only proj_size = 0 is supported")
+        if module.proj_size != 0:
+            raise NotImplementedError("only proj_size = 0 is supported")
 
     @staticmethod
     def _forward_pass(
