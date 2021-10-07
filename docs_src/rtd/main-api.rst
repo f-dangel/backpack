@@ -66,5 +66,6 @@ and the :ref:`Supported models`.
 -----
 
 .. autofunction:: backpack.extend
-.. autofunction:: backpack.backpack
+.. autoclass:: backpack.backpack
+   :members: __init__
 .. autofunction:: backpack.disable

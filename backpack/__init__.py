@@ -20,7 +20,7 @@ if CONVERTER_AVAILABLE:
 
 
 class backpack:
-    """Activate BackPACK extensions."""
+    """Context manager to activate BackPACK extensions."""
 
     def __init__(
         self,
