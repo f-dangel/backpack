@@ -212,22 +212,6 @@ class LinearDerivatives(BaseParameterDerivatives):
         equation = f"vn...o->v{'' if sum_batch else 'n'}o"
         return einsum(equation, mat)
 
-    # TODO Remove after deprecating torch<1.9.0
-    @classmethod
-    def _has_additional_dims(cls, module: Linear) -> bool:
-        """Return whether the input to a linear layer has additional (>1) dimensions.
-
-        The input to a linear layer may have shape ``[N, *, out_features]``.
-        It has additional dimensions if ``*`` is non-empty.
-
-        Args:
-            module: Linear layer.
-
-        Returns:
-            Whether the input has hidden dimensions.
-        """
-        return len(cls._get_additional_dims(module)) != 0
-
     @staticmethod
     def _get_additional_dims(module: Linear) -> Size:
         """Return the shape of additional dimensions in the input to a linear layer.
