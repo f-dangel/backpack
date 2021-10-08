@@ -259,24 +259,6 @@ LOCAL_SETTINGS += [
         "target_fn": lambda: classification_targets((4,), 5),
         "id_prefix": "nested-branching-convolution",
     },
-    {
-        "input_fn": lambda: rand((7, 10)),
-        "module_fn": lambda: Sequential(
-            Linear(10, 5),
-            ReLU(),
-            # skip connection
-            Parallel(
-                Identity(),
-                Linear(5, 5),
-            ),
-            # end of skip connection
-            Sigmoid(),
-            Linear(5, 3),
-        ),
-        "loss_function_fn": lambda: CrossEntropyLoss(reduction="mean"),
-        "target_fn": lambda: classification_targets((7,), 3),
-        "id_prefix": "old-branching-test",
-    },
 ]
 
 ###############################################################################
