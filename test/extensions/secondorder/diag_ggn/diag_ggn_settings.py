@@ -28,6 +28,7 @@ from torch.nn import (
     CrossEntropyLoss,
     Embedding,
     Flatten,
+    Identity,
     Linear,
     MaxPool2d,
     MSELoss,
@@ -36,14 +37,11 @@ from torch.nn import (
     Sigmoid,
 )
 
+from backpack import convert_module_to_backpack
 from backpack.custom_module import branching
-from backpack.custom_module.branching import ActiveIdentity, Parallel
+from backpack.custom_module.branching import Parallel
 from backpack.custom_module.permute import Permute
 from backpack.custom_module.reduce_tuple import ReduceTuple
-from backpack.utils import CONVERTER_AVAILABLE
-
-if CONVERTER_AVAILABLE:
-    from backpack import convert_module_to_backpack
 
 SHARED_SETTINGS = SECONDORDER_SETTINGS
 LOCAL_SETTINGS = []
@@ -196,7 +194,7 @@ LOCAL_SETTINGS += [
             ReLU(),
             # skip connection
             Parallel(
-                ActiveIdentity(),
+                Identity(),
                 Linear(5, 5),
             ),
             # end of skip connection
@@ -214,7 +212,7 @@ LOCAL_SETTINGS += [
             ReLU(),
             # skip connection
             Parallel(
-                ActiveIdentity(),
+                Identity(),
                 Sequential(
                     Conv2d(3, 5, kernel_size=3, stride=1, padding=1),
                     ReLU(),
@@ -237,13 +235,13 @@ LOCAL_SETTINGS += [
             ReLU(),
             # skip connection
             Parallel(
-                ActiveIdentity(),
+                Identity(),
                 Sequential(
                     Conv2d(2, 4, kernel_size=3, stride=1, padding=1),
                     Sigmoid(),
                     Conv2d(4, 2, kernel_size=3, stride=1, padding=1),
                     branching.Parallel(
-                        branching.ActiveIdentity(),
+                        Identity(),
                         Sequential(
                             Conv2d(2, 4, kernel_size=3, stride=1, padding=1),
                             ReLU(),
@@ -266,22 +264,21 @@ LOCAL_SETTINGS += [
 ###############################################################################
 #                      Branched models - converter                            #
 ###############################################################################
-if CONVERTER_AVAILABLE:
-    LOCAL_SETTINGS += [
-        {
-            "input_fn": lambda: ResNet1.input_test,
-            "module_fn": lambda: convert_module_to_backpack(ResNet1(), True),
-            "loss_function_fn": lambda: ResNet1.loss_test,
-            "target_fn": lambda: ResNet1.target_test,
-            "id_prefix": "ResNet1",
-        },
-        {
-            "input_fn": lambda: rand(ResNet2.input_test),
-            "module_fn": lambda: convert_module_to_backpack(ResNet2().eval(), True),
-            "loss_function_fn": lambda: ResNet2.loss_test,
-            "target_fn": lambda: rand(ResNet2.target_test),
-            "id_prefix": "ResNet2",
-        },
-    ]
+LOCAL_SETTINGS += [
+    {
+        "input_fn": lambda: ResNet1.input_test,
+        "module_fn": lambda: convert_module_to_backpack(ResNet1(), True),
+        "loss_function_fn": lambda: ResNet1.loss_test,
+        "target_fn": lambda: ResNet1.target_test,
+        "id_prefix": "ResNet1",
+    },
+    {
+        "input_fn": lambda: rand(ResNet2.input_test),
+        "module_fn": lambda: convert_module_to_backpack(ResNet2().eval(), True),
+        "loss_function_fn": lambda: ResNet2.loss_test,
+        "target_fn": lambda: rand(ResNet2.target_test),
+        "id_prefix": "ResNet2",
+    },
+]
 
 DiagGGN_SETTINGS = SHARED_SETTINGS + LOCAL_SETTINGS

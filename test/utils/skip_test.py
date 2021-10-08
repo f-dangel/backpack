@@ -7,7 +7,7 @@ from typing import List, Union
 from pytest import skip
 from torch.nn import BatchNorm1d, BatchNorm2d, BatchNorm3d
 
-from backpack.utils import ADAPTIVE_AVG_POOL_BUG, TORCH_VERSION_AT_LEAST_1_9_0
+from backpack.utils import ADAPTIVE_AVG_POOL_BUG
 
 
 def skip_adaptive_avg_pool3d_cuda(request) -> None:
@@ -55,12 +55,6 @@ def skip_subsampling_conflict(
     enough_samples = subsampling is None or N > max(subsampling)
     if not enough_samples:
         skip("Not enough samples.")
-
-
-def skip_pytorch_below_1_9_0() -> None:
-    """Skip test if pytorch version is below 1.9.0."""
-    if not TORCH_VERSION_AT_LEAST_1_9_0:
-        skip("Test needs PyTorch>=1.9.0")
 
 
 def skip_large_parameters(

@@ -6,8 +6,6 @@ from test.extensions.secondorder.hbp.kfra_settings import NOT_SUPPORTED_SETTINGS
 
 import pytest
 
-from backpack.utils import exception_inside_backward_pass
-
 NOT_SUPPORTED_PROBLEMS = make_test_problems(NOT_SUPPORTED_SETTINGS)
 NOT_SUPPORTED_IDS = [problem.make_id() for problem in NOT_SUPPORTED_PROBLEMS]
 
@@ -21,7 +19,7 @@ def test_kfra_not_supported(problem):
     """
     problem.set_up()
 
-    with pytest.raises(exception_inside_backward_pass(NotImplementedError)):
+    with pytest.raises(NotImplementedError):
         BackpackExtensions(problem).kfra()
 
     problem.tear_down()

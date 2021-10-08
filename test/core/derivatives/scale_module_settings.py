@@ -2,7 +2,6 @@
 from torch import rand
 from torch.nn import Identity
 
-from backpack.custom_module.branching import ActiveIdentity
 from backpack.custom_module.scale_module import ScaleModule
 
 SCALE_MODULE_SETTINGS = [
@@ -17,10 +16,6 @@ SCALE_MODULE_SETTINGS = [
     {
         "module_fn": lambda: ScaleModule(5.7),
         "input_fn": lambda: rand(2, 3),
-    },
-    {
-        "module_fn": lambda: ActiveIdentity(),
-        "input_fn": lambda: rand(3, 2, 4),
     },
     {
         "module_fn": lambda: Identity(),

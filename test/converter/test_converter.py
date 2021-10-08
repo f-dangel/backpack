@@ -5,7 +5,6 @@
 """
 from test.converter.converter_cases import CONVERTER_MODULES, ConverterModule
 from test.core.derivatives.utils import classification_targets, regression_targets
-from test.utils.skip_test import skip_pytorch_below_1_9_0
 from typing import Tuple
 
 from pytest import fixture
@@ -31,7 +30,6 @@ def model_and_input(request) -> Tuple[Module, Tensor, Module]:
         model and input and loss function
     """
     manual_seed(0)
-    skip_pytorch_below_1_9_0()
     model: ConverterModule = request.param()
     inputs: Tensor = model.input_fn()
     loss_fn: Module = model.loss_fn()

@@ -6,11 +6,10 @@ from warnings import warn
 from torch.fx import Graph, GraphModule, Node, Tracer
 from torch.nn import LSTM, RNN, Dropout, Flatten, Module, Sequential
 
-from backpack.custom_module.branching import ActiveIdentity, SumModule, _Branch
+from backpack.custom_module.branching import SumModule, _Branch
 from backpack.custom_module.permute import Permute
 from backpack.custom_module.reduce_tuple import ReduceTuple
 from backpack.custom_module.scale_module import ScaleModule
-from backpack.utils import TORCH_VERSION_AT_LEAST_1_9_0
 
 
 class BackpackTracer(Tracer):
@@ -19,9 +18,7 @@ class BackpackTracer(Tracer):
     def is_leaf_module(
         self, m: Module, module_qualified_name: str
     ) -> bool:  # noqa: D102
-        if isinstance(
-            m, (ScaleModule, SumModule, _Branch, ActiveIdentity, ReduceTuple, Permute)
-        ):
+        if isinstance(m, (ScaleModule, SumModule, _Branch, ReduceTuple, Permute)):
             return True
         else:
             return super().is_leaf_module(m, module_qualified_name)
@@ -49,15 +46,7 @@ def convert_module_to_backpack(module: Module, debug: bool) -> GraphModule:
 
     Returns:
         BackPACK-compatible module
-
-    Raises:
-        NotImplementedError: if not torch >= 1.9.0
     """
-    if TORCH_VERSION_AT_LEAST_1_9_0 is False:
-        raise NotImplementedError(
-            "Conversion is only possible for torch >= 1.9.0. This is because these "
-            "functions use functionality such as torch.nn.Module.get_submodule"
-        )
     if debug:
         print("\nMake module BackPACK-compatible...")
     module_new = _transform_mul_to_scale_module(module, debug)

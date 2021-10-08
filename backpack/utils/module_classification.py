@@ -1,13 +1,10 @@
 """Contains util function for classification of modules."""
+from torch.fx import GraphModule
 from torch.nn import Module, Sequential
 from torch.nn.modules.loss import _Loss
 
 from backpack.custom_module.branching import Parallel, _Branch
 from backpack.custom_module.reduce_tuple import ReduceTuple
-from backpack.utils import TORCH_VERSION_AT_LEAST_1_9_0
-
-if TORCH_VERSION_AT_LEAST_1_9_0:
-    from torch.fx import GraphModule
 
 
 def is_loss(module: Module) -> bool:
@@ -31,7 +28,5 @@ def is_no_op(module: Module) -> bool:
     Returns:
         whether module is no operation
     """
-    no_op_modules = (Sequential, _Branch, Parallel, ReduceTuple)
-    if TORCH_VERSION_AT_LEAST_1_9_0:
-        no_op_modules += (GraphModule,)
+    no_op_modules = (Sequential, _Branch, Parallel, ReduceTuple, GraphModule)
     return isinstance(module, no_op_modules)
