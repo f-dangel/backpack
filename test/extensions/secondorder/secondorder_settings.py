@@ -233,21 +233,6 @@ GROUP_CONV_SETTINGS = [
 
 SECONDORDER_SETTINGS += GROUP_CONV_SETTINGS
 
-SECONDORDER_SETTINGS += [
-    {
-        # Flatten layer does not add a node in the PyTorch computation graph.
-        # Thus, the backward hook will be called at an unexpected stage.
-        # The register_full_backward_hook ensures the execution order is correct -> ok.
-        # The register_backward_hook has above problem and therefore needs to skip execution.
-        # This is done in the `backward` function or in the `__call__` of ModuleExtension.
-        "input_fn": lambda: rand(3, 5),
-        "module_fn": lambda: Sequential(Linear(5, 4), Flatten(), Linear(4, 2)),
-        "loss_function_fn": lambda: CrossEntropyLoss(reduction="mean"),
-        "target_fn": lambda: classification_targets((3,), 2),
-        "id_prefix": "flatten-no-op",
-    },
-]
-
 # linear with additional dimension
 LINEAR_ADDITIONAL_DIMENSIONS_SETTINGS = [
     # regression
