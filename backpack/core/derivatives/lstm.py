@@ -28,9 +28,9 @@ class LSTMDerivatives(BaseParameterDerivatives):
     c[t] = f[t] c[t-1] + i[t] g[t]
     h[t] = o[t] tanh(c[t])
 
-    Note:
-        For ``batch_first=True``, most of the internal tensors (e.g. those from
-        the manual forward pass) are kept with time axis first.
+    In general, we assume that it is batch axis first
+    and the order of axis is (V, N, T, H).
+    However, sometimes (because efficiency/old code) the order is (V, T, N, H).
     """
 
     @staticmethod
@@ -76,8 +76,7 @@ class LSTMDerivatives(BaseParameterDerivatives):
         Returns:
             ifgo, c, c_tanh (all in format ``[T, N, ...]``)
         """
-        T: int = mat.shape[2]
-        N: int = mat.shape[1]
+        _, N, T, _ = mat.shape
         H: int = module.hidden_size
         H0: int = 0 * H
         H1: int = 1 * H
@@ -92,19 +91,14 @@ class LSTMDerivatives(BaseParameterDerivatives):
         input0 = subsample(module.input0, dim=0, subsampling=subsampling)
         output = subsample(module.output, dim=0, subsampling=subsampling)
 
-        # use [T, N, ...] format
-        if module.batch_first:
-            input0 = input0.transpose(0, 1)
-            output = output.transpose(0, 1)
-
         for t in range(T):
             ifgo[t] = (
-                einsum("hi,ni->nh", module.weight_ih_l0, input0[t])
+                einsum("hi,ni->nh", module.weight_ih_l0, input0[:, t])
                 + module.bias_ih_l0
                 + module.bias_hh_l0
             )
             if t != 0:
-                ifgo[t] += einsum("hg,ng->nh", module.weight_hh_l0, output[t - 1])
+                ifgo[t] += einsum("hg,ng->nh", module.weight_hh_l0, output[:, t - 1])
             ifgo[t, :, H0:H1] = sigmoid(ifgo[t, :, H0:H1])
             ifgo[t, :, H1:H2] = sigmoid(ifgo[t, :, H1:H2])
             ifgo[t, :, H2:H3] = tanh(ifgo[t, :, H2:H3])
@@ -120,10 +114,7 @@ class LSTMDerivatives(BaseParameterDerivatives):
     def _ifgo_jac_t_mat_prod(
         cls, module: LSTM, mat: Tensor, subsampling: List[int] = None
     ) -> Tensor:
-        V: int = mat.shape[0]
-        T: int = mat.shape[2]
-        N: int = mat.shape[1]
-        H: int = module.hidden_size
+        V, N, T, H = mat.shape
         H0: int = 0 * H
         H1: int = 1 * H
         H2: int = 2 * H
@@ -188,9 +179,7 @@ class LSTMDerivatives(BaseParameterDerivatives):
         mat: Tensor,
         sum_batch: bool = True,
     ) -> Tensor:
-        V: int = mat.shape[0]
-        T: int = mat.shape[2]
-        N: int = mat.shape[1]
+        V, N, T, _ = mat.shape
         H: int = module.hidden_size
         H0: int = 0 * H
         H1: int = 1 * H
@@ -199,7 +188,7 @@ class LSTMDerivatives(BaseParameterDerivatives):
         H4: int = 4 * H
 
         ifgo, c, c_tanh = self._forward_pass(module, mat)
-        H_prod: Tensor = zeros(V, T, N, H, device=mat.device, dtype=mat.dtype)
+        H_prod: Tensor = zeros(V, N, T, H, device=mat.device, dtype=mat.dtype)
         C_prod_t: Tensor = zeros(V, N, H, device=mat.device, dtype=mat.dtype)
         C_prod_old: Tensor = zeros(V, N, H, device=mat.device, dtype=mat.dtype)
         C_tanh_prod_t: Tensor = zeros(V, N, H, device=mat.device, dtype=mat.dtype)
@@ -213,7 +202,7 @@ class LSTMDerivatives(BaseParameterDerivatives):
             )
             if t != 0:
                 IFGO_prod_t[:] += einsum(
-                    "hg,vng->vnh", module.weight_hh_l0, H_prod[:, t - 1]
+                    "hg,vng->vnh", module.weight_hh_l0, H_prod[:, :, t - 1]
                 )
             IFGO_prod_t[:, :, H0:H2] = einsum(
                 "vnh,nh->vnh",
@@ -246,11 +235,9 @@ class LSTMDerivatives(BaseParameterDerivatives):
             C_tanh_prod_t[:] = einsum("vnh,nh->vnh", C_prod_t, 1 - c_tanh[t] ** 2)
 
             # product until node h
-            H_prod[:, t] = einsum(
+            H_prod[:, :, t] = einsum(
                 "vnh,nh->vnh", IFGO_prod_t[:, :, H3:H4], c_tanh[t]
             ) + einsum("vnh,nh->vnh", C_tanh_prod_t, ifgo[t, :, H3:H4])
-
-        H_prod = H_prod.transpose(1, 2)  # batch axis first
 
         return H_prod
 
@@ -330,25 +317,20 @@ class LSTMDerivatives(BaseParameterDerivatives):
         subsampling: List[int] = None,
     ) -> Tensor:
         self._check_parameters(module)
-
-        N: int = mat.shape[1]
-        H: int = module.hidden_size
-
+        _, N, _, H = mat.shape
         IFGO_prod: Tensor = self._ifgo_jac_t_mat_prod(
             module, mat, subsampling=subsampling
         )
 
         subsampled_output = subsample(module.output, dim=0, subsampling=subsampling)
-        subsampled_output = subsampled_output.transpose(0, 1)  # batch first
-
         return einsum(
-            f"vtnh,tng->v{'' if sum_batch else 'n'}hg",
+            f"vtnh,ntg->v{'' if sum_batch else 'n'}hg",
             IFGO_prod,
             cat(
                 [
-                    zeros(1, N, H, device=mat.device, dtype=mat.dtype),
-                    subsampled_output[0:-1],
+                    zeros(N, 1, H, device=mat.device, dtype=mat.dtype),
+                    subsampled_output[:, 0:-1],
                 ],
-                dim=0,
+                dim=1,
             ),
         )
