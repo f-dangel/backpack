@@ -69,8 +69,6 @@ class ElementwiseDerivatives(BaseDerivatives):
             g_inp ([torch.Tensor]): Gradients of the module w.r.t. its inputs.
             g_out ([torch.Tensor]): Gradients of the module w.r.t. its outputs.
         """
-        self._no_inplace(module)
-
         return self.d2f(module, g_inp, g_out) * g_out[0]
 
     def hessian_is_diagonal(self, module):
@@ -89,19 +87,13 @@ class ElementwiseDerivatives(BaseDerivatives):
         mat: Tensor,
         subsampling: List[int] = None,
     ) -> Tensor:
-        self._no_inplace(module)
-
         df_elementwise = self.df(module, g_inp, g_out, subsampling=subsampling)
         return einsum("...,v...->v...", df_elementwise, mat)
 
     def _jac_mat_prod(self, module, g_inp, g_out, mat):
-        self._no_inplace(module)
-
         return self.jac_t_mat_prod(module, g_inp, g_out, mat)
 
     def ea_jac_t_mat_jac_prod(self, module, g_inp, g_out, mat):
-        self._no_inplace(module)
-
         N = module.input0.size(0)
         df_flat = self.df(module, g_inp, g_out).reshape(N, -1)
         return einsum("ni,nj,ij->ij", df_flat, df_flat, mat) / N
@@ -109,26 +101,3 @@ class ElementwiseDerivatives(BaseDerivatives):
     def _residual_mat_prod(self, module, g_inp, g_out, mat):
         residual = self.d2f(module, g_inp, g_out) * g_out[0]
         return einsum("...,v...->v...", residual, mat)
-
-    # TODO Deprecate after supporting torch >= 1.8.0 and full_backward_hook
-    @staticmethod
-    def _no_inplace(module: Module):
-        """Do not support inplace modification.
-
-        Jacobians/Hessians might be computed using the modified input instead
-        of the original.
-
-        Args:
-            module: Elementwise activation module.
-
-        Raises:
-            NotImplementedError: If `module` has inplace option enabled.
-
-        Todo:
-            - Write tests to investigate what happens with `inplace=True`.
-        """
-        has_inplace_option = hasattr(module, "inplace")
-
-        if has_inplace_option:
-            if module.inplace is True:
-                raise NotImplementedError("Inplace not supported in {}.".format(module))
