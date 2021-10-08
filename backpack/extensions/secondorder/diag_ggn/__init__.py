@@ -47,7 +47,7 @@ from torch.nn import (
     ZeroPad2d,
 )
 
-from backpack.custom_module.branching import ActiveIdentity, SumModule
+from backpack.custom_module.branching import SumModule
 from backpack.custom_module.permute import Permute
 from backpack.custom_module.scale_module import ScaleModule
 from backpack.extensions.secondorder.base import SecondOrderBackpropExtension
@@ -131,7 +131,6 @@ class DiagGGN(SecondOrderBackpropExtension):
                 ELU: activations.DiagGGNELU(),
                 SELU: activations.DiagGGNSELU(),
                 Identity: custom_module.DiagGGNScaleModule(),
-                ActiveIdentity: custom_module.DiagGGNScaleModule(),
                 ScaleModule: custom_module.DiagGGNScaleModule(),
                 SumModule: custom_module.DiagGGNSumModule(),
                 RNN: rnn.DiagGGNRNN(),
@@ -255,7 +254,6 @@ class BatchDiagGGN(SecondOrderBackpropExtension):
                 ELU: activations.DiagGGNELU(),
                 SELU: activations.DiagGGNSELU(),
                 Identity: custom_module.DiagGGNScaleModule(),
-                ActiveIdentity: custom_module.DiagGGNScaleModule(),
                 ScaleModule: custom_module.DiagGGNScaleModule(),
                 SumModule: custom_module.DiagGGNSumModule(),
                 RNN: rnn.BatchDiagGGNRNN(),

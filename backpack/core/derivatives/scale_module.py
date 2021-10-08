@@ -1,4 +1,4 @@
-"""Derivatives of ScaleModule (implies ActiveIdentity and Identity)."""
+"""Derivatives of ScaleModule (implies Identity)."""
 from typing import List, Tuple, Union
 
 from torch import Tensor
@@ -9,7 +9,7 @@ from backpack.custom_module.scale_module import ScaleModule
 
 
 class ScaleModuleDerivatives(BaseDerivatives):
-    """Derivatives of ScaleModule (implies ActiveIdentity and Identity)."""
+    """Derivatives of ScaleModule (implies Identity)."""
 
     def _jac_t_mat_prod(
         self,

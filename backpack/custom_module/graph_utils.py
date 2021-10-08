@@ -6,7 +6,7 @@ from warnings import warn
 from torch.fx import Graph, GraphModule, Node, Tracer
 from torch.nn import LSTM, RNN, Dropout, Flatten, Module, Sequential
 
-from backpack.custom_module.branching import ActiveIdentity, SumModule, _Branch
+from backpack.custom_module.branching import SumModule, _Branch
 from backpack.custom_module.permute import Permute
 from backpack.custom_module.reduce_tuple import ReduceTuple
 from backpack.custom_module.scale_module import ScaleModule
@@ -18,9 +18,7 @@ class BackpackTracer(Tracer):
     def is_leaf_module(
         self, m: Module, module_qualified_name: str
     ) -> bool:  # noqa: D102
-        if isinstance(
-            m, (ScaleModule, SumModule, _Branch, ActiveIdentity, ReduceTuple, Permute)
-        ):
+        if isinstance(m, (ScaleModule, SumModule, _Branch, ReduceTuple, Permute)):
             return True
         else:
             return super().is_leaf_module(m, module_qualified_name)

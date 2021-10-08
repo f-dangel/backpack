@@ -28,6 +28,7 @@ from torch.nn import (
     CrossEntropyLoss,
     Embedding,
     Flatten,
+    Identity,
     Linear,
     MaxPool2d,
     MSELoss,
@@ -38,7 +39,7 @@ from torch.nn import (
 
 from backpack import convert_module_to_backpack
 from backpack.custom_module import branching
-from backpack.custom_module.branching import ActiveIdentity, Parallel
+from backpack.custom_module.branching import Parallel
 from backpack.custom_module.permute import Permute
 from backpack.custom_module.reduce_tuple import ReduceTuple
 
@@ -193,7 +194,7 @@ LOCAL_SETTINGS += [
             ReLU(),
             # skip connection
             Parallel(
-                ActiveIdentity(),
+                Identity(),
                 Linear(5, 5),
             ),
             # end of skip connection
@@ -211,7 +212,7 @@ LOCAL_SETTINGS += [
             ReLU(),
             # skip connection
             Parallel(
-                ActiveIdentity(),
+                Identity(),
                 Sequential(
                     Conv2d(3, 5, kernel_size=3, stride=1, padding=1),
                     ReLU(),
@@ -234,13 +235,13 @@ LOCAL_SETTINGS += [
             ReLU(),
             # skip connection
             Parallel(
-                ActiveIdentity(),
+                Identity(),
                 Sequential(
                     Conv2d(2, 4, kernel_size=3, stride=1, padding=1),
                     Sigmoid(),
                     Conv2d(4, 2, kernel_size=3, stride=1, padding=1),
                     branching.Parallel(
-                        branching.ActiveIdentity(),
+                        Identity(),
                         Sequential(
                             Conv2d(2, 4, kernel_size=3, stride=1, padding=1),
                             ReLU(),
@@ -257,6 +258,24 @@ LOCAL_SETTINGS += [
         "loss_function_fn": lambda: CrossEntropyLoss(),
         "target_fn": lambda: classification_targets((4,), 5),
         "id_prefix": "nested-branching-convolution",
+    },
+    {
+        "input_fn": lambda: rand((7, 10)),
+        "module_fn": lambda: Sequential(
+            Linear(10, 5),
+            ReLU(),
+            # skip connection
+            Parallel(
+                Identity(),
+                Linear(5, 5),
+            ),
+            # end of skip connection
+            Sigmoid(),
+            Linear(5, 3),
+        ),
+        "loss_function_fn": lambda: CrossEntropyLoss(reduction="mean"),
+        "target_fn": lambda: classification_targets((7,), 3),
+        "id_prefix": "old-branching-test",
     },
 ]
 

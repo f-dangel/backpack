@@ -72,7 +72,7 @@ from backpack.core.derivatives.sigmoid import SigmoidDerivatives
 from backpack.core.derivatives.sum_module import SumModuleDerivatives
 from backpack.core.derivatives.tanh import TanhDerivatives
 from backpack.core.derivatives.zeropad2d import ZeroPad2dDerivatives
-from backpack.custom_module.branching import ActiveIdentity, SumModule
+from backpack.custom_module.branching import SumModule
 from backpack.custom_module.permute import Permute
 from backpack.custom_module.scale_module import ScaleModule
 
@@ -112,7 +112,6 @@ derivatives_for = {
     BatchNorm3d: BatchNormNdDerivatives,
     Embedding: EmbeddingDerivatives,
     ScaleModule: ScaleModuleDerivatives,
-    ActiveIdentity: ScaleModuleDerivatives,
     Identity: ScaleModuleDerivatives,
     SumModule: SumModuleDerivatives,
 }
