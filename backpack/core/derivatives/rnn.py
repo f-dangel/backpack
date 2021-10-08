@@ -15,6 +15,8 @@ class RNNDerivatives(BaseParameterDerivatives):
     a_t = W_ih x_t + b_ih + W_hh h_{t-1} + b_hh
     h_t = tanh(a_t)
 
+    We assume that it is always batch axis first.
+
     Index conventions:
     ------------------
     * t: Sequence dimension
@@ -69,33 +71,26 @@ class RNNDerivatives(BaseParameterDerivatives):
         Returns:
             jacobian vector product wrt a
         """
-        V: int = mat.shape[0]
-        N: int = mat.shape[1]
-        T: int = mat.shape[2]
-        H: int = mat.shape[3]
+        V, N, T, H = mat.shape
         output = subsample(module.output, dim=0, subsampling=subsampling)
-        # use [T, N, ...] format
-        if module.batch_first:
-            output = output.transpose(0, 1)
         a_jac_t_mat_prod: Tensor = zeros(V, T, N, H, device=mat.device)
         for t in reversed(range(T)):
-            mat_t = mat[:, :, t]
             if t == (T - 1):
                 a_jac_t_mat_prod[:, t, ...] = einsum(
                     "vnh,nh->vnh",
-                    mat_t,
-                    1 - output[t, ...] ** 2,
+                    mat[:, :, t],
+                    1 - output[:, t] ** 2,
                 )
             else:
                 a_jac_t_mat_prod[:, t, ...] = einsum(
                     "vnh,nh->vnh",
-                    mat_t
+                    mat[:, :, t]
                     + einsum(
                         "vng,gh->vnh",
                         a_jac_t_mat_prod[:, t + 1, ...],
                         weight_hh_l0,
                     ),
-                    1 - output[t, ...] ** 2,
+                    1 - output[:, t] ** 2,
                 )
         return a_jac_t_mat_prod
 
@@ -123,37 +118,33 @@ class RNNDerivatives(BaseParameterDerivatives):
         self, module: RNN, g_inp: Tuple[Tensor], g_out: Tuple[Tensor], mat: Tensor
     ) -> Tensor:
         self._check_parameters(module)
-        V: int = mat.shape[0]
-        N: int = mat.shape[1]
-        T: int = mat.shape[2]
         H: int = module.hidden_size
-        output = module.output.transpose(0, 1)  # batch first
-        _jac_mat_prod: Tensor = torch.zeros(V, T, N, H, device=mat.device)
+        V, N, T, _ = mat.shape
+        _jac_mat_prod: Tensor = torch.zeros(V, N, T, H, device=mat.device)
         for t in range(T):
-            mat_t = mat[:, :, t]
             if t == 0:
-                _jac_mat_prod[:, t, ...] = einsum(
+                _jac_mat_prod[:, :, t] = einsum(
                     "nh,hi,vni->vnh",
-                    1 - output[t, ...] ** 2,
+                    1 - module.output[:, t] ** 2,
                     module.weight_ih_l0,
-                    mat_t,
+                    mat[:, :, t],
                 )
             else:
-                _jac_mat_prod[:, t, ...] = einsum(
+                _jac_mat_prod[:, :, t] = einsum(
                     "nh,vnh->vnh",
-                    1 - output[t, ...] ** 2,
+                    1 - module.output[:, t] ** 2,
                     einsum(
                         "hi,vni->vnh",
                         module.weight_ih_l0,
-                        mat_t,
+                        mat[:, :, t],
                     )
                     + einsum(
                         "hk,vnk->vnh",
                         module.weight_hh_l0,
-                        _jac_mat_prod[:, t - 1, ...],
+                        _jac_mat_prod[:, :, t - 1],
                     ),
                 )
-        return _jac_mat_prod.transpose(1, 2)
+        return _jac_mat_prod
 
     def _bias_ih_l0_jac_t_mat_prod(
         self,
