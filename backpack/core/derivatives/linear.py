@@ -5,7 +5,6 @@ from torch import Size, Tensor, einsum
 from torch.nn import Linear
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
-from backpack.utils import TORCH_VERSION_AT_LEAST_1_9_0
 from backpack.utils.subsampling import subsample
 
 
@@ -152,17 +151,7 @@ class LinearDerivatives(BaseParameterDerivatives):
         """
         d_weight = subsample(module.input0, subsampling=subsampling)
 
-        if TORCH_VERSION_AT_LEAST_1_9_0:
-            equation = f"vn...o,n...i->v{'' if sum_batch else 'n'}oi"
-        # TODO Remove else-branch after deprecating torch<1.9.0
-        else:
-            if self._has_additional_dims(module):
-                d_weight = d_weight.flatten(start_dim=1, end_dim=-2)
-                mat = mat.flatten(start_dim=2, end_dim=-2)
-                equation = f"vnao,nai->v{'' if sum_batch else 'n'}oi"
-            else:
-                equation = f"vno,ni->v{'' if sum_batch else 'n'}oi"
-
+        equation = f"vn...o,n...i->v{'' if sum_batch else 'n'}oi"
         return einsum(equation, mat, d_weight)
 
     def _bias_jac_mat_prod(
@@ -222,22 +211,6 @@ class LinearDerivatives(BaseParameterDerivatives):
         """
         equation = f"vn...o->v{'' if sum_batch else 'n'}o"
         return einsum(equation, mat)
-
-    # TODO Remove after deprecating torch<1.9.0
-    @classmethod
-    def _has_additional_dims(cls, module: Linear) -> bool:
-        """Return whether the input to a linear layer has additional (>1) dimensions.
-
-        The input to a linear layer may have shape ``[N, *, out_features]``.
-        It has additional dimensions if ``*`` is non-empty.
-
-        Args:
-            module: Linear layer.
-
-        Returns:
-            Whether the input has hidden dimensions.
-        """
-        return len(cls._get_additional_dims(module)) != 0
 
     @staticmethod
     def _get_additional_dims(module: Linear) -> Size:

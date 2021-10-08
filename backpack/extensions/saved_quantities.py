@@ -38,9 +38,7 @@ class SavedQuantities:
         """Returns the saved quantity.
 
         Args:
-            key: data_ptr() of reference tensor.
-                For torch>=1.9.0 the reference tensor is grad_output[0].
-                For older versions the reference tensor is module.output.
+            key: data_ptr() of module.output.
             delete_old: whether to delete the old quantity
 
         Returns:

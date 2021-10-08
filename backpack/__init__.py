@@ -4,19 +4,15 @@ from types import TracebackType
 from typing import Callable, Optional, Tuple, Type, Union
 
 from torch import Tensor, is_grad_enabled
+from torch.fx import GraphModule
 from torch.nn import Module
 
 from backpack import extensions
 from backpack.context import CTX
+from backpack.custom_module.graph_utils import convert_module_to_backpack
 from backpack.extensions.backprop_extension import BackpropExtension
-from backpack.utils import CONVERTER_AVAILABLE, FULL_BACKWARD_HOOK
 from backpack.utils.hooks import no_op
 from backpack.utils.module_classification import is_no_op
-
-if CONVERTER_AVAILABLE:
-    from torch.fx import GraphModule
-
-    from backpack.custom_module.graph_utils import convert_module_to_backpack
 
 
 class backpack:
@@ -244,17 +240,11 @@ def extend(module: Module, debug: bool = False, use_converter: bool = False) -> 
 
     Returns:
         Extended module.
-
-    Raises:
-        RuntimeError: if trying to use converter without torch>=1.9.0
     """
     if debug:
         print("[DEBUG] Extending", module)
 
     if use_converter:
-        if not CONVERTER_AVAILABLE:
-            raise RuntimeError("use_converter=True is only available for torch>=1.9.0.")
-
         module: GraphModule = convert_module_to_backpack(module, debug)
         return extend(module)
 
@@ -277,10 +267,4 @@ def _register_hooks(module: Module) -> None:
           module: module that is going to be extended
     """
     CTX.add_hook_handle(module.register_forward_hook(hook_store_io))
-
-    if FULL_BACKWARD_HOOK:
-        register_backward_hook_fn = module.register_full_backward_hook
-    else:
-        register_backward_hook_fn = module.register_backward_hook
-
-    CTX.add_hook_handle(register_backward_hook_fn(hook_run_extensions))
+    CTX.add_hook_handle(module.register_full_backward_hook(hook_run_extensions))

@@ -4,16 +4,6 @@ from typing import Any, OrderedDict, Tuple, Union
 from torch import Tensor
 from torch.nn import Module
 
-from backpack.custom_module.scale_module import ScaleModule
-
-
-class ActiveIdentity(ScaleModule):
-    """Like ``torch.nn.Identity``, but creates a new node in the computation graph."""
-
-    def __init__(self):
-        """Initialization with weight=1.0."""
-        super().__init__(weight=1.0)
-
 
 class _Branch(Module):
     """Module used by BackPACK to handle branching in the computation graph.

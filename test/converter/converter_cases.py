@@ -10,7 +10,7 @@ Network with add operation
 import abc
 from typing import List, Type
 
-from torch import Tensor, flatten, rand, randint, transpose, zeros_like
+from torch import Tensor, flatten, permute, rand, randint, transpose, zeros_like
 from torch.nn import (
     LSTM,
     RNN,
@@ -23,11 +23,6 @@ from torch.nn import (
     ReLU,
 )
 from torchvision.models import resnet18, wide_resnet50_2
-
-from backpack.utils import TORCH_VERSION_AT_LEAST_1_9_0
-
-if TORCH_VERSION_AT_LEAST_1_9_0:
-    from torch import permute
 
 
 class ConverterModule(Module, abc.ABC):

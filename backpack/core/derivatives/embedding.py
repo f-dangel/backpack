@@ -5,7 +5,6 @@ from torch import Tensor, einsum, zeros
 from torch.nn import Embedding
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
-from backpack.utils import TORCH_VERSION_AT_LEAST_1_9_0
 from backpack.utils.subsampling import subsample
 
 
@@ -50,14 +49,7 @@ class EmbeddingDerivatives(BaseParameterDerivatives):
         delta = zeros(module.num_embeddings, *input0.shape, device=mat.device)
         for s in range(module.num_embeddings):
             delta[s] = input0 == s
-        if TORCH_VERSION_AT_LEAST_1_9_0:
-            equation = f"sn...,vn...h->v{'' if sum_batch else 'n'}sh"
-        elif delta.dim() == 2:
-            equation = f"sn,vnh->v{'' if sum_batch else 'n'}sh"
-        else:
-            equation = f"snx,vnxh->v{'' if sum_batch else 'n'}sh"
-            delta = delta.flatten(start_dim=2, end_dim=-1)
-            mat = mat.flatten(start_dim=2, end_dim=-2)
+        equation = f"sn...,vn...h->v{'' if sum_batch else 'n'}sh"
         return einsum(equation, delta, mat)
 
     def _check_parameters(self, module: Embedding) -> None:
