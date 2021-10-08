@@ -23,11 +23,11 @@ PERMUTE_SETTINGS = [
         "input_fn": lambda: torch.rand(size=(1, 2, 3)),
     },
     {
-        "module_fn": lambda: Permute(2, 0, 1),
+        "module_fn": lambda: Permute(0, 2, 1),
         "input_fn": lambda: torch.rand(size=(4, 3, 2)),
     },
     {
-        "module_fn": lambda: Permute(3, 1, 0, 2),
+        "module_fn": lambda: Permute(0, 3, 1, 2),
         "input_fn": lambda: torch.rand(size=(5, 4, 3, 2)),
     },
 ]

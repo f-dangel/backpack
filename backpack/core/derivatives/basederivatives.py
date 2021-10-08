@@ -7,7 +7,6 @@ from torch import Tensor
 from torch.nn import Module
 
 from backpack.core.derivatives import shape_check
-from backpack.utils.subsampling import get_batch_axis
 
 
 class BaseDerivatives(ABC):
@@ -289,7 +288,7 @@ class BaseDerivatives(ABC):
         """
         shape = list(module.input0.shape)
         if subsampling is not None:
-            shape[get_batch_axis(module, "input0")] = len(subsampling)
+            shape[0] = len(subsampling)
 
         return cls._reshape_like(mat, shape)
 

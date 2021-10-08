@@ -8,7 +8,7 @@ from torch.nn import Module
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 from backpack.extensions.firstorder.base import FirstOrderModuleExtension
-from backpack.utils.subsampling import get_batch_axis, subsample
+from backpack.utils.subsampling import subsample
 
 if TYPE_CHECKING:
     from backpack.extensions.firstorder import BatchGrad
@@ -79,14 +79,14 @@ class BatchGradBase(FirstOrderModuleExtension):
                 Scaled individual gradients
             """
             subsampling = ext.get_subsampling()
-            N_axis = get_batch_axis(module, "output")
+            batch_axis = 0
 
             return self._derivatives.param_mjp(
                 param_str,
                 module,
                 g_inp,
                 g_out,
-                subsample(g_out[0], dim=N_axis, subsampling=subsampling),
+                subsample(g_out[0], dim=batch_axis, subsampling=subsampling),
                 sum_batch=False,
                 subsampling=subsampling,
             )

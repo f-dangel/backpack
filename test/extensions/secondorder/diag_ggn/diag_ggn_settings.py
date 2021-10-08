@@ -55,10 +55,9 @@ LOCAL_SETTINGS += [
     {
         "input_fn": lambda: rand(8, 5, 6),
         "module_fn": lambda: Sequential(
-            Permute(1, 0, 2, batch_axis=0),
-            RNN(input_size=6, hidden_size=3),
+            RNN(input_size=6, hidden_size=3, batch_first=True),
             ReduceTuple(index=0),
-            Permute(1, 2, 0, batch_axis=1),
+            Permute(0, 2, 1),
             Flatten(),
         ),
         "loss_function_fn": lambda: MSELoss(),
@@ -80,7 +79,7 @@ LOCAL_SETTINGS += [
             RNN(input_size=6, hidden_size=3, batch_first=True),
             ReduceTuple(index=0),
             Linear(3, 3),
-            Permute(0, 2, 1, batch_axis=0),
+            Permute(0, 2, 1),
         ),
         "loss_function_fn": lambda: CrossEntropyLoss(),
         "target_fn": lambda: classification_targets((8, 5), 3),

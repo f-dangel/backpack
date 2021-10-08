@@ -42,7 +42,10 @@ class LSTMDerivatives(BaseParameterDerivatives):
 
         Raises:
             NotImplementedError: If any parameter of module does not match expectation
+            ValueError: If batch axis is not first
         """
+        if not module.batch_first:
+            raise ValueError("Batch axis must be first.")
         if module.num_layers != 1:
             raise NotImplementedError("only num_layers = 1 is supported")
         if module.bias is not True:

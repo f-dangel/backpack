@@ -9,7 +9,7 @@ from torch import Tensor
 from torch.nn.parameter import Parameter
 
 from backpack import extend
-from backpack.utils.subsampling import get_batch_axis, subsample
+from backpack.utils.subsampling import subsample
 
 
 def make_test_problems(settings):
@@ -149,11 +149,9 @@ class ExtensionsTestProblem:
         target = self.target.clone()
 
         if subsampling is not None:
-            batch_axis_in = get_batch_axis(self.model, "input0")
-            input = subsample(self.input, dim=batch_axis_in, subsampling=subsampling)
-
-            batch_axis_out = get_batch_axis(self.model, "output")
-            target = subsample(self.target, dim=batch_axis_out, subsampling=subsampling)
+            batch_axis = 0
+            input = subsample(self.input, dim=batch_axis, subsampling=subsampling)
+            target = subsample(self.target, dim=batch_axis, subsampling=subsampling)
 
         output = self.model(input)
         loss = self.loss_function(output, target)
@@ -243,7 +241,7 @@ class ExtensionsTestProblem:
         Returns:
             Mini-batch size.
         """
-        return self.input.shape[get_batch_axis(self.model, "input0")]
+        return self.input.shape[0]
 
     def compute_reduction_factor(self) -> float:
         """Compute loss function's reduction factor for aggregating per-sample losses.
