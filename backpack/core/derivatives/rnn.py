@@ -260,8 +260,7 @@ class RNNDerivatives(BaseParameterDerivatives):
             product
         """
         self._check_parameters(module)
-        N: int = mat.shape[1]
-        H: int = mat.shape[3]
+        _, N, _, H = mat.shape
         output = subsample(module.output, dim=0, subsampling=subsampling)
         single_step = zeros(N, 1, H, device=mat.device, dtype=mat.dtype)
         output_shifted = cat([single_step, output[:, :-1]], dim=1)
