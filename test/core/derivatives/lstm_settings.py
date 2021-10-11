@@ -23,10 +23,6 @@ LSTM_SETTINGS = []
 ###############################################################################
 LSTM_SETTINGS += [
     {
-        "module_fn": lambda: LSTM(input_size=5, hidden_size=3, batch_first=True),
-        "input_fn": lambda: rand(size=(8, 10, 5)),
-    },
-    {
         "module_fn": lambda: LSTM(input_size=4, hidden_size=3, batch_first=True),
         "input_fn": lambda: rand(size=(3, 5, 4)),
     },
