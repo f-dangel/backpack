@@ -73,21 +73,21 @@ class RNNDerivatives(BaseParameterDerivatives):
         """
         V, N, T, H = mat.shape
         output = subsample(module.output, dim=0, subsampling=subsampling)
-        a_jac_t_mat_prod: Tensor = zeros(V, T, N, H, device=mat.device)
+        a_jac_t_mat_prod: Tensor = zeros(V, N, T, H, device=mat.device)
         for t in reversed(range(T)):
             if t == (T - 1):
-                a_jac_t_mat_prod[:, t, ...] = einsum(
+                a_jac_t_mat_prod[:, :, t] = einsum(
                     "vnh,nh->vnh",
                     mat[:, :, t],
                     1 - output[:, t] ** 2,
                 )
             else:
-                a_jac_t_mat_prod[:, t, ...] = einsum(
+                a_jac_t_mat_prod[:, :, t] = einsum(
                     "vnh,nh->vnh",
                     mat[:, :, t]
                     + einsum(
                         "vng,gh->vnh",
-                        a_jac_t_mat_prod[:, t + 1, ...],
+                        a_jac_t_mat_prod[:, :, t + 1],
                         weight_hh_l0,
                     ),
                     1 - output[:, t] ** 2,
@@ -104,7 +104,7 @@ class RNNDerivatives(BaseParameterDerivatives):
     ) -> Tensor:
         self._check_parameters(module)
         return torch.einsum(
-            f"vtnh,hk->v{'nt' if module.batch_first else 'tn'}k",
+            f"vnth,hk->v{'nt' if module.batch_first else 'tn'}k",
             self._a_jac_t_mat_prod(
                 module,
                 module.weight_hh_l0,
@@ -172,7 +172,7 @@ class RNNDerivatives(BaseParameterDerivatives):
         if sum_batch:
             dim: List[int] = [1, 2]
         else:
-            dim: int = 1
+            dim: int = 2
         return self._a_jac_t_mat_prod(
             module,
             module.weight_hh_l0,
@@ -230,7 +230,7 @@ class RNNDerivatives(BaseParameterDerivatives):
         """
         self._check_parameters(module)
         return einsum(
-            f"vtnh,ntj->v{'' if sum_batch else 'n'}hj",
+            f"vnth,ntj->v{'' if sum_batch else 'n'}hj",
             self._a_jac_t_mat_prod(
                 module,
                 module.weight_hh_l0,
@@ -275,7 +275,7 @@ class RNNDerivatives(BaseParameterDerivatives):
             dim=1,
         )
         return einsum(
-            f"vtnh,ntk->v{'' if sum_batch else 'n'}hk",
+            f"vnth,ntk->v{'' if sum_batch else 'n'}hk",
             self._a_jac_t_mat_prod(module, module.weight_hh_l0, mat, subsampling),
             output_shifted,
         )
