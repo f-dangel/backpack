@@ -1,5 +1,6 @@
 """Tests for `backpack.__init__.py`."""
 
+from contextlib import nullcontext
 from test import pytorch_current_memory_usage
 from test.core.derivatives.utils import classification_targets, get_available_devices
 
@@ -10,21 +11,6 @@ from backpack import disable, extend
 
 DEVICES = get_available_devices()
 DEVICES_ID = [str(dev) for dev in DEVICES]
-
-
-# TODO Use contextlib.nullcontext after dropping Python 3.6 support
-class nullcontext:
-    """Empty context.
-
-    ``contextlib.nullcontext`` is available from Python 3.7 onwards.
-    The tests are also executed on Python 3.6.
-    """
-
-    def __enter__(self):
-        pass
-
-    def __exit__(self, type, value, traceback):
-        pass
 
 
 def test_no_io():

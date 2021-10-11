@@ -19,7 +19,7 @@ and a backward pass over each sample individually.
 This is slow, but can be used to check that the values returned by BackPACK
 match what you expect them to be.
 
-While we test many a use-case and try to write solid code, unexpected
+While we test many use-cases and try to write solid code, unexpected
 behavior (such as some listed on this page) or bugs are not impossible.
 We recommend that you check that the outputs match your expectations,
 especially if you're using non-default values on slightly more unusual parameters
@@ -55,35 +55,29 @@ are not affected by :py:meth:`zero_grad() <torch.nn.Module.zero_grad>`.
 
 The :ref:`intro example <How to use BackPACK>` shows how to make a model
 using a :py:class:`torch.nn.Sequential` module
-and how to :py:func:`extend() <backpack.extend>` the model and the loss function,
-but this setup is only really necessary for
-:ref:`second order quantities <Second order extensions>`.
+and how to :py:func:`extend() <backpack.extend>` the model and the loss function.
+But extending everything is only really necessary for
+:ref:`Second order quantities <Second order extensions>`.
 For those, BackPACK needs to know about the structure of the whole network
-to propagate additional information.
+to backpropagate additional information.
 
-:ref:`First order extensions <First order extensions>` are more flexible,
-and the only :py:class:`torch.nn.Module` that need to be extended
-are modules with parameters, to extract more information,
-as the gradients are already propagated by PyTorch.
-For every operations that is not parametrized, you can use standard operations
-from the :std:doc:`torch.nn.functional <nn.functional>` module or standard
-tensor operations. This makes it possible to use first order extensions
-for ResNets (see :ref:`this example <First order extensions with a ResNet>`).
-
+Because :ref:`First order extensions <First order extensions>` don't
+backpropagate additional information, they are more flexible and only require
+every parameterized :py:class:`torch.nn.Module` be extended. For any
+unparameterized operation, you can use standard operations from the
+:std:doc:`torch.nn.functional <nn.functional>` module or standard tensor
+operations.
 
 Not (yet) supported models
 ----------------------------------
 
-The second-order extensions for BackPACK don't support (yet) residual networks,
-and no extension support recurrent architectures.
-We're working on how to handle those, as well as adding more
-:ref:`layers <Supported models>`.
-Along those lines, some things that will (most likely) not work with BackPACK,
-but that we're trying to build support for:
+We're working on handling more complex computation graphs, as well as adding
+more :ref:`layers <Supported models>`. Along those lines, some things that will
+(most likely) **not** work with BackPACK are:
 
-- Reusing the same parameters or module multiple time in the computation graph.
-
-  For second order extensions, this also holds for any module,
-  whether or not they have parameters.
-  This sadly mean that BackPACK can't compute the individual gradients or
-  second-order information of a L2-regularized loss, for example.
+- **Reusing the same parameters multiple times in the computation graph:** This
+  sadly means that BackPACK can't compute the individual gradients or
+  second-order information of an L2-regularized loss or architectures that use
+  parameters multiple times.
+- **Some exotic hyperparameters are not fully supported:** Feature requests on
+  the repository are welcome.

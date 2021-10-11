@@ -6,6 +6,108 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2021-11-12
+
+This release ships many new features. Some rely on recent PyTorch functionality.
+We now require `torch>=1.9.0`.
+
+**Highlights:**
+
+- *ResNets & RNNs:* Thanks to [@schaefertim](https://github.com/schaefertim) for
+  bringing basic support for RNNs
+  ([#16](https://github.com/f-dangel/backpack/issues/16),
+  [tutorial](https://docs.backpack.pt/en/1.4.0/use_cases/example_rnn.html#sphx-glr-use-cases-example-rnn-py)) and
+  ResNets ([#14](https://github.com/f-dangel/backpack/issues/14),
+  [tutorial](https://docs.backpack.pt/en/1.4.0/use_cases/example_resnet_all_in_one.html#sphx-glr-use-cases-example-resnet-all-in-one-py))
+- *`SqrtGGN{Exact,MC}` extension:* Symmetric factorization of the generalized
+  Gauss-Newton/Fisher (see
+  [arXiv:2106.02624](https://arxiv.org/abs/2106.02624))
+- *Sub-sampling:* Allows for restricting BackPACK extensions to a sub-set of
+  samples in the mini-batch
+  ([#12](https://github.com/f-dangel/backpack/issues/12),
+   [tutorial](https://docs.backpack.pt/en/1.4.0/use_cases/example_subsampling.html#sphx-glr-use-cases-example-subsampling-py))
+
+### Added/New
+- Converter functionality for basic support of ResNets and RNNs
+  [[PR1](https://github.com/f-dangel/backpack/pull/202),
+   [PR2](https://github.com/f-dangel/backpack/pull/221),
+   [PR3](https://github.com/f-dangel/backpack/pull/229)]
+- New extensions:
+    - `SqrtGGNExact`: Symmetric factorization of the exact GGN/Fisher
+      [[PR](https://github.com/f-dangel/backpack/pull/180)]
+    - `SqrtGGNMC`: Symmetric factorization of the MC-approximated GGN/Fisher
+      [[PR](https://github.com/f-dangel/backpack/pull/182)]
+- Module support:
+    - `Linear`: Support additional (more than 2) input dimensions
+      [[PR1](https://github.com/f-dangel/backpack/pull/185),
+       [PR2](https://github.com/f-dangel/backpack/pull/186)]
+    - `BatchNormNd`: Distinguish evaluation and training mode, support
+      first-order extensions and `DiagGGN{Exact,MC}`
+      [[#160](https://github.com/f-dangel/backpack/issues/160),
+      [PR1](https://github.com/f-dangel/backpack/pull/179),
+      [PR2](https://github.com/f-dangel/backpack/pull/201)]
+    - `AdaptiveAvgPoolND`: Support first-order extensions and
+      `DiagGGN{Exact,MC}`
+      [[PR](https://github.com/f-dangel/backpack/pull/201)]
+    - `RNN`: Support first-order extensions and `DiagGGN{MC,Exact}`
+      [[PR1](https://github.com/f-dangel/backpack/pull/159)
+       [PR2](https://github.com/f-dangel/backpack/pull/158)
+       [PR3](https://github.com/f-dangel/backpack/pull/156)]
+    - `LSTM`: Support first-order extensions and `DiagGGN{MC,Exact}`
+      [[PR](https://github.com/f-dangel/backpack/pull/215)]
+    - `CrossEntropyLoss`: Support additional (more than 2) input dimensions.
+      [[PR](https://github.com/f-dangel/backpack/pull/211)]
+    - `Embedding`: Support first-order extensions and `DiagGGN{MC,Exact}`
+      [[PR](https://github.com/f-dangel/backpack/pull/216)]
+- Mini-batch sub-sampling
+  - `BatchGrad`
+    [[PR1](https://github.com/f-dangel/backpack/pull/200),
+     [PR2](https://github.com/f-dangel/backpack/pull/210)]
+  - `SqrtGGN{Exact,MC}`
+    [[PR](https://github.com/f-dangel/backpack/pull/200)]
+- `retain_graph` option for `backpack` context
+  [[PR](https://github.com/f-dangel/backpack/pull/217)]
+- Assume batch axis always first
+  [[PR](https://github.com/f-dangel/backpack/pull/227)]
+
+### Fixed/Removed
+- Deprecate `python3.6`, require at least `python3.7`
+  [[PR](https://github.com/f-dangel/backpack/pull/190)]
+
+### Internal
+- Use `full_backward_hook` for `torch>=1.9.0`
+  [[PR](https://github.com/f-dangel/backpack/pull/194)]
+- Core
+    - Implement derivatives for `LSTM`
+      [[PR](https://github.com/f-dangel/backpack/pull/169)]
+    - Implement derivatives for `AdaptiveAvgPoolNd`
+      [[PR](https://github.com/f-dangel/backpack/pull/165)]
+    - Sub-sampling
+      - `weight_jac_t_mat_prod`
+        [[PR](https://github.com/f-dangel/backpack/pull/195)]
+      - `bias_jac_t_mat_prod`
+        [[PR](https://github.com/f-dangel/backpack/pull/196)]
+      - `*_jac_t_mat_prod` of `RNN` and `LSTM` parameters
+        [[PR](https://github.com/f-dangel/backpack/pull/197)]
+      - `jac_t_mat_prod`
+        [[PR](https://github.com/f-dangel/backpack/pull/205)]
+      - Hessian square root decomposition (exact and MC)
+        [[PR](https://github.com/f-dangel/backpack/pull/207)]
+    - Refactor: Share code for `*_jac_t_mat_prod`
+      [[PR](https://github.com/f-dangel/backpack/pull/203)]
+- Extensions
+    - Refactor `BatchL2Grad`, introducing a base class
+      [[PR](https://github.com/f-dangel/backpack/pull/175)]
+    - Automate parameter functions for `BatchGrad` and `Grad`
+      [[PR](https://github.com/f-dangel/backpack/pull/150)]
+    - Introduce interface to check module hyperparameters
+      [[PR](https://github.com/f-dangel/backpack/pull/206)]
+- Tests
+    - Check if module Hessian is zero
+      [[PR](https://github.com/f-dangel/backpack/pull/183)]
+    - Reduce run time
+      [[PR](https://github.com/f-dangel/backpack/pull/199)]
+
 ## [1.3.0] - 2021-06-16
 
 Thanks to [@sbharadwajj](https://github.com/sbharadwajj)
@@ -234,7 +336,8 @@ co-authoring many PRs shipped in this release.
 
 Initial release
 
-[Unreleased]: https://github.com/f-dangel/backpack/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/f-dangel/backpack/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/f-dangel/backpack/compare/1.4.0...1.3.0
 [1.3.0]: https://github.com/f-dangel/backpack/compare/1.3.0...1.2.0
 [1.2.0]: https://github.com/f-dangel/backpack/compare/1.2.0...1.1.1
 [1.1.1]: https://github.com/f-dangel/backpack/compare/1.1.0...1.1.1

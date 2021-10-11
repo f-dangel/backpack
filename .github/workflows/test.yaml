@@ -9,27 +9,28 @@ on:
       - development
       - master
       - release
-    
 
 jobs:
   tests:
-    name: "Python ${{ matrix.python-version }}"
+    name: "py${{ matrix.python-version }} torch${{  matrix.pytorch-version}}"
     runs-on: ubuntu-latest
     env:
-      USING_COVERAGE: '3.6,3.8'
+      USING_COVERAGE: '3.7,3.9'
 
     strategy:
       matrix:
-        python-version: ["3.6", "3.7", "3.8"]      
+        python-version: [3.7, 3.8, 3.9]
+        pytorch-version: [1.9.0, 1.9.1]
     steps:
     - uses: actions/checkout@v1
     - uses: actions/setup-python@v1
       with:
-        python-version: "${{ matrix.python-version }}"
+        python-version: ${{ matrix.python-version }}
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
         make install-test
+        pip install torch==${{ matrix.pytorch-version }} torchvision
     - name: Run test
       if: contains('refs/heads/master refs/heads/development refs/heads/release', github.ref)
       run: |

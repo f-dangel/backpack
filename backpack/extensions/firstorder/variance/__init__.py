@@ -1,27 +1,40 @@
+"""Defines backpropagation extension for variance: Variance.
+
+Defines module extension for each module.
+"""
 from torch.nn import (
+    LSTM,
+    RNN,
+    BatchNorm1d,
+    BatchNorm2d,
+    BatchNorm3d,
     Conv1d,
     Conv2d,
     Conv3d,
     ConvTranspose1d,
     ConvTranspose2d,
     ConvTranspose3d,
+    Embedding,
     Linear,
 )
 
-from backpack.extensions.backprop_extension import BackpropExtension
+from backpack.extensions.firstorder.base import FirstOrderBackpropExtension
 
 from . import (
+    batchnorm_nd,
     conv1d,
     conv2d,
     conv3d,
     convtranspose1d,
     convtranspose2d,
     convtranspose3d,
+    embedding,
     linear,
+    rnn,
 )
 
 
-class Variance(BackpropExtension):
+class Variance(FirstOrderBackpropExtension):
     """Estimates the variance of the gradient using the samples in the minibatch.
 
     Stores the output in ``variance``. Same dimension as the gradient.
@@ -39,9 +52,12 @@ class Variance(BackpropExtension):
     """
 
     def __init__(self):
+        """Initialization.
+
+        Defines module extension for each module.
+        """
         super().__init__(
             savefield="variance",
-            fail_mode="WARNING",
             module_exts={
                 Linear: linear.VarianceLinear(),
                 Conv1d: conv1d.VarianceConv1d(),
@@ -50,5 +66,11 @@ class Variance(BackpropExtension):
                 ConvTranspose1d: convtranspose1d.VarianceConvTranspose1d(),
                 ConvTranspose2d: convtranspose2d.VarianceConvTranspose2d(),
                 ConvTranspose3d: convtranspose3d.VarianceConvTranspose3d(),
+                RNN: rnn.VarianceRNN(),
+                LSTM: rnn.VarianceLSTM(),
+                BatchNorm1d: batchnorm_nd.VarianceBatchNormNd(),
+                BatchNorm2d: batchnorm_nd.VarianceBatchNormNd(),
+                BatchNorm3d: batchnorm_nd.VarianceBatchNormNd(),
+                Embedding: embedding.VarianceEmbedding(),
             },
         )

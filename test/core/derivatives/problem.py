@@ -1,15 +1,15 @@
 """Convert problem settings."""
 
 import copy
-from test.core.derivatives.utils import (
-    derivative_cls_for,
-    get_available_devices,
-    is_loss,
-)
+from test.core.derivatives.utils import derivative_cls_for, get_available_devices
+from typing import Dict, List, Tuple
 
 import torch
+from torch import Tensor, long
 
 from backpack import extend
+from backpack.utils.module_classification import is_loss
+from backpack.utils.subsampling import subsample
 
 
 def make_test_problems(settings):
@@ -132,26 +132,37 @@ class DerivativesTestProblem:
         else:
             output = module(input, target)
 
+        if isinstance(output, tuple):
+            # is true for RNN,GRU,LSTM which return tuple (output, ...)
+            output = output[0]
+
         return output.shape
 
     def is_loss(self):
         return is_loss(self.make_module())
 
-    def forward_pass(self, input_requires_grad=False, sample_idx=None):
+    def forward_pass(
+        self, input_requires_grad: bool = False, subsampling: List[int] = None
+    ) -> Tuple[Tensor, Tensor, Dict[str, Tensor]]:
         """Do a forward pass. Return input, output, and parameters."""
-        if sample_idx is None:
-            input = self.input.clone().detach()
-        else:
-            input = self.input.clone()[sample_idx, :].unsqueeze(0).detach()
+        input: Tensor = self.input.clone().detach()
 
-        if input_requires_grad:
+        if subsampling is not None:
+            batch_axis = 0
+            input = subsample(input, dim=batch_axis, subsampling=subsampling)
+
+        if input_requires_grad and input.dtype is not long:
             input.requires_grad = True
 
         if self.is_loss():
-            assert sample_idx is None
-            output = self.module(input, self.target)
+            assert subsampling is None
+            output: Tensor = self.module(input, self.target)
         else:
-            output = self.module(input)
+            output: Tensor = self.module(input)
+
+        if isinstance(output, tuple):
+            # is true for RNN,GRU,LSTM which return tuple (output, ...)
+            output: Tensor = output[0]
 
         return input, output, dict(self.module.named_parameters())
 
@@ -177,3 +188,11 @@ class DerivativesTestProblem:
     def has_bias(self):
         module = self.make_module()
         return hasattr(module, "bias") and module.bias is not None
+
+    def get_batch_size(self) -> int:
+        """Return the mini-batch size.
+
+        Returns:
+            Mini-batch size.
+        """
+        return self.input.shape[0]

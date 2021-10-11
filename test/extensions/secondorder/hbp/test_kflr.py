@@ -19,7 +19,7 @@ def test_kflr_not_supported(problem):
     """
     problem.set_up()
 
-    with pytest.raises(NotImplementedError):
+    with pytest.raises(RuntimeError):
         BackpackExtensions(problem).kflr()
 
     problem.tear_down()

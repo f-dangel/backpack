@@ -1,27 +1,40 @@
+"""Contains backpropagation extension for sum_grad_squared: SumGradSquared.
+
+Defines module extension for each module.
+"""
 from torch.nn import (
+    LSTM,
+    RNN,
+    BatchNorm1d,
+    BatchNorm2d,
+    BatchNorm3d,
     Conv1d,
     Conv2d,
     Conv3d,
     ConvTranspose1d,
     ConvTranspose2d,
     ConvTranspose3d,
+    Embedding,
     Linear,
 )
 
-from backpack.extensions.backprop_extension import BackpropExtension
+from backpack.extensions.firstorder.base import FirstOrderBackpropExtension
 
 from . import (
+    batchnorm_nd,
     conv1d,
     conv2d,
     conv3d,
     convtranspose1d,
     convtranspose2d,
     convtranspose3d,
+    embedding,
     linear,
+    rnn,
 )
 
 
-class SumGradSquared(BackpropExtension):
+class SumGradSquared(FirstOrderBackpropExtension):
     """The sum of individual-gradients-squared, or second moment of the gradient.
 
     Stores the output in ``sum_grad_squared``. Same dimension as the gradient.
@@ -39,9 +52,12 @@ class SumGradSquared(BackpropExtension):
     """
 
     def __init__(self):
+        """Initialization.
+
+        Defines module extension for each module.
+        """
         super().__init__(
             savefield="sum_grad_squared",
-            fail_mode="WARNING",
             module_exts={
                 Linear: linear.SGSLinear(),
                 Conv1d: conv1d.SGSConv1d(),
@@ -50,5 +66,11 @@ class SumGradSquared(BackpropExtension):
                 ConvTranspose1d: convtranspose1d.SGSConvTranspose1d(),
                 ConvTranspose2d: convtranspose2d.SGSConvTranspose2d(),
                 ConvTranspose3d: convtranspose3d.SGSConvTranspose3d(),
+                RNN: rnn.SGSRNN(),
+                LSTM: rnn.SGSLSTM(),
+                BatchNorm1d: batchnorm_nd.SGSBatchNormNd(),
+                BatchNorm2d: batchnorm_nd.SGSBatchNormNd(),
+                BatchNorm3d: batchnorm_nd.SGSBatchNormNd(),
+                Embedding: embedding.SGSEmbedding(),
             },
         )

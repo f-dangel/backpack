@@ -1,11 +1,11 @@
-from backpack.core.derivatives.batchnorm1d import BatchNorm1dDerivatives
+from backpack.core.derivatives.batchnorm_nd import BatchNormNdDerivatives
 from backpack.extensions.curvmatprod.hmp.hmpbase import HMPBase
 
 
 class HMPBatchNorm1d(HMPBase):
     def __init__(self):
         super().__init__(
-            derivatives=BatchNorm1dDerivatives(), params=["weight", "bias"]
+            derivatives=BatchNormNdDerivatives(), params=["weight", "bias"]
         )
 
     def weight(self, ext, module, g_inp, g_out, backproped):
@@ -14,9 +14,7 @@ class HMPBatchNorm1d(HMPBase):
         def weight_hmp(mat):
             result = self.derivatives.weight_jac_mat_prod(module, g_inp, g_out, mat)
             result = h_out_mat_prod(result)
-            result = self.derivatives.weight_jac_t_mat_prod(
-                module, g_inp, g_out, result
-            )
+            result = self.derivatives.param_mjp("weight", module, g_inp, g_out, result)
 
             return result
 
@@ -28,7 +26,7 @@ class HMPBatchNorm1d(HMPBase):
         def bias_hmp(mat):
             result = self.derivatives.bias_jac_mat_prod(module, g_inp, g_out, mat)
             result = h_out_mat_prod(result)
-            result = self.derivatives.bias_jac_t_mat_prod(module, g_inp, g_out, result)
+            result = self.derivatives.param_mjp("bias", module, g_inp, g_out, result)
 
             return result
 

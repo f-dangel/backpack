@@ -1,11 +1,11 @@
 from functools import partial
+from test.core.derivatives import derivatives_for
 
 import pytest
 import torch
 from torch import allclose
 from torch.nn import Dropout, ReLU, Sigmoid, Tanh
 
-from backpack.core.derivatives import derivatives_for
 from backpack.hessianfree.lop import transposed_jacobian_vector_product
 from backpack.hessianfree.rop import jacobian_vector_product
 
@@ -130,7 +130,7 @@ def bp_jtv_weight_func(module, vin):
     def f():
         r = (
             derivatives_for[module.__class__]()
-            .weight_jac_t_mat_prod(module, None, None, vin)
+            .param_mjp("weight", module, None, None, vin)
             .contiguous()
         )
         if vin.is_cuda:
@@ -160,7 +160,7 @@ def bp_jtv_bias_func(module, vin):
     def f():
         r = (
             derivatives_for[module.__class__]()
-            .bias_jac_t_mat_prod(module, None, None, vin.unsqueeze(2))
+            .param_mjp("bias", module, None, None, vin.unsqueeze(2))
             .contiguous()
         )
         if vin.is_cuda:

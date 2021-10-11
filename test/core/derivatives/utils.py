@@ -1,8 +1,12 @@
-"""Utility functions to test `backpack.core.derivatives`"""
+"""Utility functions to test `backpack.core.derivatives`."""
+from test.core.derivatives import derivatives_for
+from typing import Tuple, Type
 
 import torch
+from torch import Tensor
+from torch.nn import Module
 
-from backpack.core.derivatives import derivatives_for
+from backpack.core.derivatives.basederivatives import BaseDerivatives
 
 
 def get_available_devices():
@@ -19,42 +23,47 @@ def get_available_devices():
     return devices
 
 
-def derivative_cls_for(module_cls):
+def derivative_cls_for(module_cls: Type[Module]) -> Type[BaseDerivatives]:
     """Return the associated derivative class for a module.
 
     Args:
-        module_cls (torch.nn.Module): Layer class.
+        module_cls: Layer class.
 
     Returns:
-        backpack.core.derivatives.Derivatives: Class implementing the
-            derivatives for `module_cls`.
+        Class implementing the derivatives for `module_cls`.
+
+    Raises:
+        KeyError: if derivative for module is missing
     """
     try:
         return derivatives_for[module_cls]
-    except KeyError:
+    except KeyError as e:
         raise KeyError(
-            "No derivative available for {}".format(module_cls)
-            + "Known mappings:\n{}".format(derivatives_for)
-        )
+            f"No derivative available for {module_cls}. "
+            + f"Known mappings:\n{derivatives_for}"
+        ) from e
 
 
-def is_loss(module):
-    """Return whether `module` is a `torch` loss function.
+def classification_targets(size: Tuple[int, ...], num_classes: int) -> Tensor:
+    """Create random targets for classes 0, ..., `num_classes - 1`.
 
     Args:
-        module (torch.nn.Module): A PyTorch module.
+        size: shape of targets
+        num_classes: number of classes
 
     Returns:
-        bool: Whether `module` is a loss function.
+        classification targets
     """
-    return isinstance(module, torch.nn.modules.loss._Loss)
-
-
-def classification_targets(size, num_classes):
-    """Create random targets for classes 0, ..., `num_classes - 1`."""
     return torch.randint(size=size, low=0, high=num_classes)
 
 
-def regression_targets(size):
-    """Create random targets for regression."""
+def regression_targets(size: Tuple[int, ...]) -> Tensor:
+    """Create random targets for regression.
+
+    Args:
+        size: shape of targets
+
+    Returns:
+        regression targets
+    """
     return torch.rand(size=size)

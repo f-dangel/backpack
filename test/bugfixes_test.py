@@ -4,6 +4,7 @@ import pytest
 import torch
 
 import backpack
+from backpack.core.derivatives.convnd import weight_jac_t_save_memory
 
 
 def parameters_issue_30():
@@ -31,7 +32,12 @@ def parameters_issue_30():
 
 
 @pytest.mark.parametrize("params", **parameters_issue_30())
-def test_convolutions_stride_issue_30(params):
+@pytest.mark.parametrize(
+    "save_memory",
+    [True, False],
+    ids=["save_memory=True", "save_memory=False"],
+)
+def test_convolutions_stride_issue_30(params, save_memory):
     """
     https://github.com/f-dangel/backpack/issues/30
 
@@ -51,7 +57,9 @@ def test_convolutions_stride_issue_30(params):
     backpack.extend(mod)
     x = torch.randn(size=(params["N"], params["C_in"], params["W"], params["H"]))
 
-    with backpack.backpack(backpack.extensions.BatchGrad()):
+    with weight_jac_t_save_memory(save_memory), backpack.backpack(
+        backpack.extensions.BatchGrad()
+    ):
         loss = torch.sum(mod(x))
         loss.backward()
 

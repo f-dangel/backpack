@@ -16,7 +16,7 @@ from torch.nn import (
     ZeroPad2d,
 )
 
-from backpack.extensions.backprop_extension import BackpropExtension
+from backpack.extensions.secondorder.base import SecondOrderBackpropExtension
 
 from . import (
     activations,
@@ -31,7 +31,7 @@ from . import (
 )
 
 
-class HMP(BackpropExtension):
+class HMP(SecondOrderBackpropExtension):
     """Matrix-free multiplication with the block-diagonal Hessian.
 
     Stores the multiplication function in :code:`hmp`.

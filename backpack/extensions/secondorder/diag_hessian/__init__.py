@@ -31,7 +31,7 @@ from torch.nn import (
     ZeroPad2d,
 )
 
-from backpack.extensions.backprop_extension import BackpropExtension
+from backpack.extensions.secondorder.base import SecondOrderBackpropExtension
 
 from . import (
     activations,
@@ -50,7 +50,7 @@ from . import (
 )
 
 
-class DiagHessian(BackpropExtension):
+class DiagHessian(SecondOrderBackpropExtension):
     """BackPACK extension that computes the Hessian diagonal.
 
     Stores the output in :code:`diag_h`, has the same dimensions as the gradient.
@@ -96,7 +96,7 @@ class DiagHessian(BackpropExtension):
         )
 
 
-class BatchDiagHessian(BackpropExtension):
+class BatchDiagHessian(SecondOrderBackpropExtension):
     """BackPACK extensions that computes the per-sample (individual) Hessian diagonal.
 
     Stores the output in ``diag_h_batch`` as a ``[N x ...]`` tensor,
