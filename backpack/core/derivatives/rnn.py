@@ -77,9 +77,7 @@ class RNNDerivatives(BaseParameterDerivatives):
         for t in reversed(range(T)):
             if t == (T - 1):
                 a_jac_t_mat_prod[:, :, t] = einsum(
-                    "vnh,nh->vnh",
-                    mat[:, :, t],
-                    1 - output[:, t] ** 2,
+                    "vnh,nh->vnh", mat[:, :, t], 1 - output[:, t] ** 2
                 )
             else:
                 a_jac_t_mat_prod[:, :, t] = einsum(
