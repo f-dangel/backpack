@@ -322,14 +322,9 @@ class LSTMDerivatives(BaseParameterDerivatives):
         )
 
         subsampled_output = subsample(module.output, dim=0, subsampling=subsampling)
+        single_step = zeros(N, 1, H, device=mat.device, dtype=mat.dtype)
         return einsum(
             f"vnth,ntg->v{'' if sum_batch else 'n'}hg",
             IFGO_prod,
-            cat(
-                [
-                    zeros(N, 1, H, device=mat.device, dtype=mat.dtype),
-                    subsampled_output[:, :-1],
-                ],
-                dim=1,
-            ),
+            cat([single_step, subsampled_output[:, :-1]], dim=1),
         )
