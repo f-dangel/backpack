@@ -28,7 +28,6 @@ import torch
 from torch import (
     allclose,
     cat,
-    cuda,
     device,
     int32,
     linspace,
@@ -46,17 +45,17 @@ from backpack.extensions import BatchGrad, DiagGGNExact
 from backpack.utils.examples import autograd_diag_ggn_exact
 
 manual_seed(0)
-DEVICE = device("cuda:0" if cuda.is_available() else "cpu")
-DEVICE = device("cpu")  # BackPACK works perfectly fine on cuda, but autograd does not
+DEVICE = device("cpu")  # Verification via autograd only works on CPU
 
 
 # %%
-# Define Tolstoi Char RNN from DeepOBS.
+# For this demo, we will use the Tolstoi Char RNN from
+# `DeepOBS <https://github.com/fsschneider/DeepOBS>`_.
 # This network is trained on Leo Tolstoi's War and Peace
 # and learns to predict the next character.
 class TolstoiCharRNN(nn.Module):
     def __init__(self):
-        super(TolstoiCharRNN, self).__init__()
+        super().__init__()
         self.batch_size = 8
         self.hidden_dim = 64
         self.num_layers = 2
@@ -86,10 +85,10 @@ class TolstoiCharRNN(nn.Module):
     def forward(self, x):
         x = self.embedding(x)
         x = self.dropout(x)
-        x, new_state = self.lstm(x)
+        x, _ = self.lstm(x)  # last return values are hidden states
         x = self.dropout(x)
         output = self.dense(x)
-        output = output.permute(0, 2, 1)
+        output = output.permute(0, 2, 1)  # [N, T, C] → [N, C, T]
         return output
 
     def input_target_fn(self):
@@ -108,17 +107,23 @@ class TolstoiCharRNN(nn.Module):
         return nn.CrossEntropyLoss().to(DEVICE)
 
 
+manual_seed(1)
 tolstoi_char_rnn = TolstoiCharRNN().to(DEVICE).eval()
 loss_function = extend(tolstoi_char_rnn.loss_fn())
 x, y = tolstoi_char_rnn.input_target_fn()
 # %%
+# Note that instead of the real data set, we will feed synthetic data to the network for
+# simplicity. We also use the network in evaluation mode. This disables the
+# :py:class:`Dropout <torch.nn.Dropout>` layers and allows double-checking our results
+# via :py:mod:`torch.autograd`.
+#
 # Custom RNN with BackPACK custom modules
 # -------------
 # Second-order extensions only work if every node in the computation graph is an
 # ``nn`` module that can be extended by BackPACK. The above RNN
 # :py:class:`TolstoiCharRNN<TolstoiCharRNN>` does not satisfy these conditions, because
-# it has a multi-layer :py:class:`torch.nn.LSTM` and implicitly uses the getitem
-# and :py:meth:`permute() <torch.Tensor.permute>`
+# it has a multi-layer :py:class:`torch.nn.LSTM` and implicitly uses the
+# :py:func:`getitem` (for unpacking) and :py:meth:`permute() <torch.Tensor.permute>`
 # functions in the :py:meth:`forward() <torch.nn.Module.forward>` method.
 #
 # To build RNN without overwriting the forward pass, BackPACK offers custom modules:
@@ -129,7 +134,8 @@ x, y = tolstoi_char_rnn.input_target_fn()
 #
 # With the above modules, we can build a simple RNN as a container that implicitly
 # defines the forward pass:
-tolstoi_char_rnn_equivalent = nn.Sequential(
+manual_seed(1)  # same seed as used to initialize `tolstoi_char_rnn`
+tolstoi_char_rnn_custom = nn.Sequential(
     nn.Embedding(tolstoi_char_rnn.vocab_size, tolstoi_char_rnn.hidden_dim),
     nn.Dropout(p=0.2),
     nn.LSTM(tolstoi_char_rnn.hidden_dim, tolstoi_char_rnn.hidden_dim, batch_first=True),
@@ -141,60 +147,81 @@ tolstoi_char_rnn_equivalent = nn.Sequential(
     nn.Linear(tolstoi_char_rnn.hidden_dim, tolstoi_char_rnn.vocab_size),
     Permute(0, 2, 1),
 )
+tolstoi_char_rnn_custom.eval().to(DEVICE)
 
-tolstoi_char_rnn_equivalent.eval().to(DEVICE)
-tolstoi_char_rnn_equivalent = extend(tolstoi_char_rnn_equivalent)
-loss = loss_function(tolstoi_char_rnn_equivalent(x), y)
+# %%
+# Let's check that both models have the same forward pass.
+for name, p in tolstoi_char_rnn_custom.named_parameters():
+    if "bias_ih_l" in name:
+        # deactivate redundant bias
+        p.data = zeros_like(p.data)
+        p.requires_grad = False
+
+match = allclose(tolstoi_char_rnn_custom(x), tolstoi_char_rnn(x))
+print(f"Forward pass of custom model matches TolstoiCharRNN? {match}")
+
+if not match:
+    raise AssertionError("Forward passes don't match.")
+
+# %%
+# We can :py:func:`extend <backpack.extend>` our model and the loss function to
+# compute BackPACK extensions.
+
+tolstoi_char_rnn_custom = extend(tolstoi_char_rnn_custom)
+loss = loss_function(tolstoi_char_rnn_custom(x), y)
+
 with backpack(BatchGrad(), DiagGGNExact()):
     loss.backward()
 
-for name, parameter in tolstoi_char_rnn_equivalent.named_parameters():
-    print(
-        name,
-        parameter.shape,
-        parameter.grad_batch.shape,
-        parameter.diag_ggn_exact.shape,
-    )
+for name, param in tolstoi_char_rnn_custom.named_parameters():
+    if param.requires_grad:
+        print(
+            name,
+            param.shape,
+            param.grad_batch.shape,
+            param.diag_ggn_exact.shape,
+        )
 
 # %%
-# Comparison with :py:mod:`torch.autograd`:
+# Comparison of the GGN diagonal extension with :py:mod:`torch.autograd`:
 #
 # .. note::
 #
 #    Computing the full GGN diagonal with PyTorch's built-in automatic differentiation
 #    can be slow, depending on the number of parameters. To reduce run time, we only
 #    compare some elements of the diagonal.
-diag_ggn_exact_vector = cat(
-    [p.diag_ggn_exact.flatten() for p in tolstoi_char_rnn_equivalent.parameters()]
-)
+trainable_params = [p for p in tolstoi_char_rnn_custom.parameters() if p.requires_grad]
 
-num_params = sum(p.numel() for p in tolstoi_char_rnn_equivalent.parameters())
+diag_ggn_exact_vector = cat([p.diag_ggn_exact.flatten() for p in trainable_params])
+
+num_params = sum(p.numel() for p in trainable_params)
 num_to_compare = 10
 idx_to_compare = linspace(0, num_params - 1, num_to_compare, device=DEVICE, dtype=int32)
 
-with torch.backends.cudnn.flags(enabled=False):
-    diag_ggn_exact_to_compare = autograd_diag_ggn_exact(
-        x, y, tolstoi_char_rnn_equivalent, loss_function, idx=idx_to_compare
-    )
+diag_ggn_exact_to_compare = autograd_diag_ggn_exact(
+    x, y, tolstoi_char_rnn_custom, loss_function, idx=idx_to_compare
+)
 
 print("Do the exact GGN diagonals match?")
 for idx, element in zip(idx_to_compare, diag_ggn_exact_to_compare):
-    match = allclose(element, diag_ggn_exact_vector[idx], atol=1e-10)
-    print(f"Diagonal entry {idx:>8}: {match}:\t{element}, {diag_ggn_exact_vector[idx]}")
+    match = allclose(element, diag_ggn_exact_vector[idx])
+    print(
+        f"Diagonal entry {idx:>8}: {match}:"
+        + f"\t{element:.5e}, {diag_ggn_exact_vector[idx]:.5e}"
+    )
     if not match:
         raise AssertionError("Exact GGN diagonals don't match!")
 
 # %%
 # RNN with BackPACK's converter
 # -------------
-# If you are not building a RNN through custom modules but for instance want to
+# If you are not building an RNN through custom modules but for instance want to
 # directly use the Tolstoi Char RNN, BackPACK offers a converter.
 # It analyzes the model and tries to turn it into a compatible architecture. The result
 # is a :py:class:`torch.fx.GraphModule` that exclusively consists of modules.
 #
-# Here, we demo the converter on above Tolstoi Char RNN.
-#
-# Let's convert it in the call to :py:func:`extend <backpack.extend>`:
+# Here, we demonstrate the converter on the above Tolstoi Char RNN. Let's convert it
+# while :py:func:`extend <backpack.extend>`-ing the model:
 
 # use BackPACK's converter to extend the model (turned off by default)
 tolstoi_char_rnn = extend(tolstoi_char_rnn, use_converter=True)
@@ -222,7 +249,18 @@ print_table(tolstoi_char_rnn)
 # successfully backpropagate additional information for its second-order extensions
 # (first-order extensions work, too).
 #
-# Let's verify that second-order extensions are working:
+# First, let's compare the forward pass with the custom module from the previous
+# section to make sure the converter worked fine:
+
+match = allclose(tolstoi_char_rnn_custom(x), tolstoi_char_rnn(x))
+print(f"Forward pass of extended TolstoiCharRNN matches custom model? {match}")
+
+if not match:
+    raise AssertionError("Forward passes don't match.")
+
+# %%
+#
+# Now let's verify that second-order extensions (GGN diagonal) are working:
 output = tolstoi_char_rnn(x)
 loss = loss_function(output, y)
 
@@ -242,7 +280,7 @@ diag_ggn_exact_vector = cat(
 )
 
 # %%
-# Comparison with :py:mod:`torch.autograd`:
+# Finally, we compare BackPACK's GGN diagonal with :py:mod:`torch.autograd`:
 #
 # .. note::
 #
@@ -254,14 +292,16 @@ num_params = sum(p.numel() for p in tolstoi_char_rnn.parameters() if p.requires_
 num_to_compare = 10
 idx_to_compare = linspace(0, num_params - 1, num_to_compare, device=DEVICE, dtype=int32)
 
-with torch.backends.cudnn.flags(enabled=False):
-    diag_ggn_exact_to_compare = autograd_diag_ggn_exact(
-        x, y, tolstoi_char_rnn, loss_function, idx=idx_to_compare
-    )
+diag_ggn_exact_to_compare = autograd_diag_ggn_exact(
+    x, y, tolstoi_char_rnn, loss_function, idx=idx_to_compare
+)
 
 print("Do the exact GGN diagonals match?")
 for idx, element in zip(idx_to_compare, diag_ggn_exact_to_compare):
-    match = allclose(element, diag_ggn_exact_vector[idx], atol=1e-10)
-    print(f"Diagonal entry {idx:>8}: {match}:\t{element}, {diag_ggn_exact_vector[idx]}")
+    match = allclose(element, diag_ggn_exact_vector[idx])
+    print(
+        f"Diagonal entry {idx:>8}: {match}:"
+        + f"\t{element:.5e}, {diag_ggn_exact_vector[idx]:.5e}"
+    )
     if not match:
         raise AssertionError("Exact GGN diagonals don't match!")
