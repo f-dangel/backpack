@@ -8,16 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.4.0] - 2021-11-12
 
-This release ships many new features (highlights and details below).
-Some rely on recent PyTorch functionality. We now require `torch>=1.9.0`.
+This release ships many new features. Some rely on recent PyTorch functionality.
+We now require `torch>=1.9.0`.
 
 **Highlights:**
 
 - *ResNets & RNNs:* Thanks to [@schaefertim](https://github.com/schaefertim) for
   bringing basic support for RNNs
-  ([#16](https://github.com/f-dangel/backpack/issues/16)) and ResNets
-  ([#14](https://github.com/f-dangel/backpack/issues/14), [ResNet
-  tutorial](https://docs.backpack.pt/en/1.4.0/use_cases/example_resnet_all_in_one.html#sphx-glr-use-cases-example-resnet-all-in-one-py))
+  ([#16](https://github.com/f-dangel/backpack/issues/16),
+  [tutorial](https://docs.backpack.pt/en/1.4.0/use_cases/example_rnn.html#sphx-glr-use-cases-example-rnn-py)) and
+  ResNets ([#14](https://github.com/f-dangel/backpack/issues/14),
+  [tutorial](https://docs.backpack.pt/en/1.4.0/use_cases/example_resnet_all_in_one.html#sphx-glr-use-cases-example-resnet-all-in-one-py))
 - *`SqrtGGN{Exact,MC}` extension:* Symmetric factorization of the generalized
   Gauss-Newton/Fisher (see
   [arXiv:2106.02624](https://arxiv.org/abs/2106.02624))
@@ -29,7 +30,8 @@ Some rely on recent PyTorch functionality. We now require `torch>=1.9.0`.
 ### Added/New
 - Converter functionality for basic support of ResNets and RNNs
   [[PR1](https://github.com/f-dangel/backpack/pull/202),
-   [PR2](https://github.com/f-dangel/backpack/pull/221)]
+   [PR2](https://github.com/f-dangel/backpack/pull/221),
+   [PR3](https://github.com/f-dangel/backpack/pull/229)]
 - New extensions:
     - `SqrtGGNExact`: Symmetric factorization of the exact GGN/Fisher
       [[PR](https://github.com/f-dangel/backpack/pull/180)]
@@ -65,9 +67,11 @@ Some rely on recent PyTorch functionality. We now require `torch>=1.9.0`.
     [[PR](https://github.com/f-dangel/backpack/pull/200)]
 - `retain_graph` option for `backpack` context
   [[PR](https://github.com/f-dangel/backpack/pull/217)]
+- Assume batch axis always first
+  [[PR](https://github.com/f-dangel/backpack/pull/227)]
 
 ### Fixed/Removed
-- Deprecate =python3.6=, require at least =python3.7=
+- Deprecate `python3.6`, require at least `python3.7`
   [[PR](https://github.com/f-dangel/backpack/pull/190)]
 
 ### Internal
