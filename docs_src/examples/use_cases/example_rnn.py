@@ -24,7 +24,6 @@
 
 # %%
 # Let's get the imports out of the way.
-import torch
 from torch import (
     allclose,
     cat,
