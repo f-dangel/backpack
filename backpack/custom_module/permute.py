@@ -8,7 +8,7 @@ from torch.nn import Module
 class Permute(Module):
     """Module to permute a tensor."""
 
-    def __init__(self, *dims: Any, init_transpose: bool = False, batch_axis: int = 0):
+    def __init__(self, *dims: Any, init_transpose: bool = False):
         """Initialization.
 
         This module supports two variants: permutation and transposition.
@@ -19,13 +19,11 @@ class Permute(Module):
         Args:
             dims: The desired ordering of dimensions.
             init_transpose: If transpose parameters are provided. Default: False.
-            batch_axis: Which axis assumed to be the batch axis in a forward pass.
-                Defaults to ``0``.
         """
         super().__init__()
         self.dims = dims
         self.init_transpose = init_transpose
-        self.batch_axis = batch_axis
+        self._enforce_batch_axis_first()
 
     def forward(self, input: Tensor) -> Tensor:
         """Permutes the input tensor.
@@ -52,22 +50,13 @@ class Permute(Module):
             self.dims = tuple(permutation)
             self.init_transpose = False
 
-    def get_batch_axis(self, io_str: str) -> int:
-        """Return the batch axis assumed by the module.
-
-        Args:
-            io_str: Name of the tensor. Must be ``'input0'`` or ``'output'``.
-
-        Returns:
-            Batch axis
-
-        Raises:
-            ValueError: For invalid IO names.
-        """
-        if io_str == "input0":
-            return self.batch_axis
-        elif io_str == "output":
-            return self.dims.index(self.batch_axis)
+    def _enforce_batch_axis_first(self) -> None:
+        batch_first = False
+        if self.init_transpose:
+            if 0 not in self.dims:
+                batch_first = True
         else:
-            valid_io_strs = ["input0", "output"]
-            raise ValueError(f"io_str must be in {valid_io_strs}, got {io_str}.")
+            if self.dims[0] == 0:
+                batch_first = True
+        if not batch_first:
+            raise ValueError("Permute: Batch axis must be left unchanged!")

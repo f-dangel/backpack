@@ -31,7 +31,6 @@ from pytest import fixture, mark, raises, skip
 from torch import Tensor, rand
 
 from backpack.core.derivatives.convnd import weight_jac_t_save_memory
-from backpack.utils.subsampling import get_batch_axis
 
 PROBLEMS = make_test_problems(SETTINGS)
 IDS = [problem.make_id() for problem in PROBLEMS]
@@ -197,8 +196,7 @@ def rand_mat_like_output(
     subsample_shape = list(problem.output_shape)
 
     if subsampling is not None:
-        N_axis = get_batch_axis(problem.module, "output")
-        subsample_shape[N_axis] = len(subsampling)
+        subsample_shape[0] = len(subsampling)
 
     return rand(V, *subsample_shape, device=problem.device)
 

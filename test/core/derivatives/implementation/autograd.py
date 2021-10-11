@@ -7,7 +7,7 @@ from torch import Tensor, allclose, backends, cat, stack, zeros, zeros_like
 from backpack.hessianfree.hvp import hessian_vector_product
 from backpack.hessianfree.lop import transposed_jacobian_vector_product
 from backpack.hessianfree.rop import jacobian_vector_product
-from backpack.utils.subsampling import get_batch_axis, subsample
+from backpack.utils.subsampling import subsample
 
 
 class AutogradDerivatives(DerivativesImplementation):
@@ -43,20 +43,18 @@ class AutogradDerivatives(DerivativesImplementation):
         else:
             # for each sample, multiply by full input Jacobian, slice out result:
             # ( (∂ output[n] / ∂ input)ᵀ v[n] )[n]
-            batch_axis_out = get_batch_axis(self.problem.module, "output")
-            output = subsample(output, dim=batch_axis_out, subsampling=subsampling)
-            output = output.split(1, dim=batch_axis_out)
-            vec = vec.split(1, dim=batch_axis_out)
+            batch_axis = 0
+            output = subsample(output, dim=batch_axis, subsampling=subsampling)
+            output = output.split(1, dim=batch_axis)
+            vec = vec.split(1, dim=batch_axis)
 
-            batch_axis_in = get_batch_axis(self.problem.module, "input0")
             vjps: List[Tensor] = []
-
             for sample_idx, out, v in zip(subsampling, output, vec):
                 vjp = transposed_jacobian_vector_product(out, input, v)[0]
-                vjp = subsample(vjp, dim=batch_axis_in, subsampling=[sample_idx])
+                vjp = subsample(vjp, dim=batch_axis, subsampling=[sample_idx])
                 vjps.append(vjp)
 
-            return cat(vjps, dim=batch_axis_in)
+            return cat(vjps, dim=batch_axis)
 
     def jac_t_mat_prod(
         self, mat: Tensor, subsampling: List[int] = None
@@ -76,7 +74,7 @@ class AutogradDerivatives(DerivativesImplementation):
                     param_str,
                     vec,
                     sum_batch,
-                    axis_batch=get_batch_axis(self.problem.module, "output"),
+                    axis_batch=0,
                     subsampling=subsampling,
                 )
                 for vec in mat

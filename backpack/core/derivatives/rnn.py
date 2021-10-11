@@ -1,7 +1,6 @@
 """Partial derivatives for the torch.nn.RNN layer."""
 from typing import List, Tuple
 
-import torch
 from torch import Tensor, cat, einsum, zeros
 from torch.nn import RNN
 
@@ -14,6 +13,8 @@ class RNNDerivatives(BaseParameterDerivatives):
 
     a_t = W_ih x_t + b_ih + W_hh h_{t-1} + b_hh
     h_t = tanh(a_t)
+
+    We assume that it is always batch axis first.
 
     Index conventions:
     ------------------
@@ -34,6 +35,8 @@ class RNNDerivatives(BaseParameterDerivatives):
         Raises:
             NotImplementedError: If any parameter of module does not match expectation
         """
+        if not module.batch_first:
+            raise NotImplementedError("Batch axis must be first.")
         if module.num_layers > 1:
             raise NotImplementedError("only num_layers = 1 is supported")
         if not module.nonlinearity == "tanh":
@@ -67,35 +70,24 @@ class RNNDerivatives(BaseParameterDerivatives):
         Returns:
             jacobian vector product wrt a
         """
-        free_axis = 1
-        N_axis, T_axis = cls.get_batch_and_time_axes(module)
-        V: int = mat.shape[0]
-        N: int = mat.shape[N_axis + free_axis]
-        T: int = mat.shape[T_axis + free_axis]
-        H: int = mat.shape[3]
-        output = subsample(module.output, dim=N_axis, subsampling=subsampling)
-        # use [T, N, ...] format
-        if module.batch_first:
-            output = output.transpose(N_axis, T_axis)
-        a_jac_t_mat_prod: Tensor = zeros(V, T, N, H, device=mat.device)
+        V, N, T, H = mat.shape
+        output = subsample(module.output, dim=0, subsampling=subsampling)
+        a_jac_t_mat_prod: Tensor = zeros(V, N, T, H, device=mat.device, dtype=mat.dtype)
         for t in reversed(range(T)):
-            mat_t = mat[(slice(None),) * (T_axis + free_axis) + (t,)]
             if t == (T - 1):
-                a_jac_t_mat_prod[:, t, ...] = einsum(
-                    "vnh,nh->vnh",
-                    mat_t,
-                    1 - output[t, ...] ** 2,
+                a_jac_t_mat_prod[:, :, t] = einsum(
+                    "vnh,nh->vnh", mat[:, :, t], 1 - output[:, t] ** 2
                 )
             else:
-                a_jac_t_mat_prod[:, t, ...] = einsum(
+                a_jac_t_mat_prod[:, :, t] = einsum(
                     "vnh,nh->vnh",
-                    mat_t
+                    mat[:, :, t]
                     + einsum(
                         "vng,gh->vnh",
-                        a_jac_t_mat_prod[:, t + 1, ...],
+                        a_jac_t_mat_prod[:, :, t + 1],
                         weight_hh_l0,
                     ),
-                    1 - output[t, ...] ** 2,
+                    1 - output[:, t] ** 2,
                 )
         return a_jac_t_mat_prod
 
@@ -108,8 +100,8 @@ class RNNDerivatives(BaseParameterDerivatives):
         subsampling: List[int] = None,
     ) -> Tensor:
         self._check_parameters(module)
-        return torch.einsum(
-            f"vtnh,hk->v{'nt' if module.batch_first else 'tn'}k",
+        return einsum(
+            f"vnth,hk->v{'nt' if module.batch_first else 'tn'}k",
             self._a_jac_t_mat_prod(
                 module,
                 module.weight_hh_l0,
@@ -123,47 +115,33 @@ class RNNDerivatives(BaseParameterDerivatives):
         self, module: RNN, g_inp: Tuple[Tensor], g_out: Tuple[Tensor], mat: Tensor
     ) -> Tensor:
         self._check_parameters(module)
-        free_axis = 1
-        N_axis, T_axis = self.get_batch_and_time_axes(module)
-        V: int = mat.shape[0]
-        N: int = mat.shape[N_axis + free_axis]
-        T: int = mat.shape[T_axis + free_axis]
         H: int = module.hidden_size
-        # use [T, N, ...] format
-        if module.batch_first:
-            output = module.output.transpose(N_axis, T_axis)
-        else:
-            output = module.output
-        _jac_mat_prod: Tensor = torch.zeros(V, T, N, H, device=mat.device)
+        V, N, T, _ = mat.shape
+        _jac_mat_prod: Tensor = zeros(V, N, T, H, device=mat.device, dtype=mat.dtype)
         for t in range(T):
-            mat_t = mat[(slice(None),) * (T_axis + free_axis) + (t,)]
             if t == 0:
-                _jac_mat_prod[:, t, ...] = einsum(
+                _jac_mat_prod[:, :, t] = einsum(
                     "nh,hi,vni->vnh",
-                    1 - output[t, ...] ** 2,
+                    1 - module.output[:, t] ** 2,
                     module.weight_ih_l0,
-                    mat_t,
+                    mat[:, :, t],
                 )
             else:
-                _jac_mat_prod[:, t, ...] = einsum(
+                _jac_mat_prod[:, :, t] = einsum(
                     "nh,vnh->vnh",
-                    1 - output[t, ...] ** 2,
+                    1 - module.output[:, t] ** 2,
                     einsum(
                         "hi,vni->vnh",
                         module.weight_ih_l0,
-                        mat_t,
+                        mat[:, :, t],
                     )
                     + einsum(
                         "hk,vnk->vnh",
                         module.weight_hh_l0,
-                        _jac_mat_prod[:, t - 1, ...],
+                        _jac_mat_prod[:, :, t - 1],
                     ),
                 )
-        return (
-            _jac_mat_prod.transpose(N_axis + free_axis, T_axis + free_axis)
-            if module.batch_first
-            else _jac_mat_prod
-        )
+        return _jac_mat_prod
 
     def _bias_ih_l0_jac_t_mat_prod(
         self,
@@ -191,7 +169,7 @@ class RNNDerivatives(BaseParameterDerivatives):
         if sum_batch:
             dim: List[int] = [1, 2]
         else:
-            dim: int = 1
+            dim: int = 2
         return self._a_jac_t_mat_prod(
             module,
             module.weight_hh_l0,
@@ -248,16 +226,10 @@ class RNNDerivatives(BaseParameterDerivatives):
             product
         """
         self._check_parameters(module)
-        N_axis, _ = self.get_batch_and_time_axes(module)
         return einsum(
-            f"vtnh,{'nt' if module.batch_first else 'tn'}j->v{'' if sum_batch else 'n'}hj",
-            self._a_jac_t_mat_prod(
-                module,
-                module.weight_hh_l0,
-                mat,
-                subsampling,
-            ),
-            subsample(module.input0, dim=N_axis, subsampling=subsampling),
+            f"vnth,ntj->v{'' if sum_batch else 'n'}hj",
+            self._a_jac_t_mat_prod(module, module.weight_hh_l0, mat, subsampling),
+            subsample(module.input0, dim=0, subsampling=subsampling),
         )
 
     def _weight_hh_l0_jac_t_mat_prod(
@@ -283,32 +255,12 @@ class RNNDerivatives(BaseParameterDerivatives):
             product
         """
         self._check_parameters(module)
-        N_axis, T_axis = self.get_batch_and_time_axes(module)
-        N: int = mat.shape[N_axis + 1]
-        H: int = mat.shape[3]
-        output = subsample(module.output, dim=N_axis, subsampling=subsampling)
-        shape_single_step = (N, 1, H) if module.batch_first else (1, N, H)
-        output_shifted = cat(
-            [
-                zeros(shape_single_step, device=mat.device, dtype=mat.dtype),
-                output[(slice(None),) * T_axis + (slice(0, -1),)],
-            ],
-            dim=T_axis,
-        )
+        _, N, _, H = mat.shape
+        output = subsample(module.output, dim=0, subsampling=subsampling)
+        single_step = zeros(N, 1, H, device=mat.device, dtype=mat.dtype)
+        output_shifted = cat([single_step, output[:, :-1]], dim=1)
         return einsum(
-            f"vtnh,{'nt' if module.batch_first else 'tn'}k->v{'' if sum_batch else 'n'}hk",
+            f"vnth,ntk->v{'' if sum_batch else 'n'}hk",
             self._a_jac_t_mat_prod(module, module.weight_hh_l0, mat, subsampling),
             output_shifted,
         )
-
-    @staticmethod
-    def get_batch_and_time_axes(module: RNN) -> Tuple[int, int]:
-        """Return axes interpreted by the module as batch and time axes of the input.
-
-        Args:
-            module: RNN module.
-
-        Returns:
-            Batch axis and time axis.
-        """
-        return (0, 1) if module.batch_first else (1, 0)

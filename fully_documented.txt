@@ -107,3 +107,4 @@ test/converter/
 test/utils/test_subsampling.py
 test/custom_module/
 test/test_retain_graph.py
+test/test_batch_first.py

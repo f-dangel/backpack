@@ -9,7 +9,7 @@ from torch import Tensor, long
 
 from backpack import extend
 from backpack.utils.module_classification import is_loss
-from backpack.utils.subsampling import get_batch_axis, subsample
+from backpack.utils.subsampling import subsample
 
 
 def make_test_problems(settings):
@@ -148,8 +148,8 @@ class DerivativesTestProblem:
         input: Tensor = self.input.clone().detach()
 
         if subsampling is not None:
-            batch_axis_in = get_batch_axis(self.module, "input0")
-            input = subsample(input, dim=batch_axis_in, subsampling=subsampling)
+            batch_axis = 0
+            input = subsample(input, dim=batch_axis, subsampling=subsampling)
 
         if input_requires_grad and input.dtype is not long:
             input.requires_grad = True
@@ -195,4 +195,4 @@ class DerivativesTestProblem:
         Returns:
             Mini-batch size.
         """
-        return self.input.shape[get_batch_axis(self.module, "input0")]
+        return self.input.shape[0]

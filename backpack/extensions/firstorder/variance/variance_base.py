@@ -7,7 +7,6 @@ from torch import Tensor
 from torch.nn import Module
 
 from backpack.extensions.firstorder.base import FirstOrderModuleExtension
-from backpack.utils.subsampling import get_batch_axis
 
 if TYPE_CHECKING:
     from backpack.extensions import Variance
@@ -80,7 +79,7 @@ class VarianceBaseModule(FirstOrderModuleExtension):
             return self._variance_from(
                 getattr(self.grad_ext, param)(ext, module, g_inp, g_out, bpQuantities),
                 getattr(self.sgs_ext, param)(ext, module, g_inp, g_out, bpQuantities),
-                g_out[0].shape[get_batch_axis(module, "output")],
+                g_out[0].shape[0],
             )
 
         return param_function
