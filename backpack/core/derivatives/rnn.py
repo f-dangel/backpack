@@ -1,7 +1,6 @@
 """Partial derivatives for the torch.nn.RNN layer."""
 from typing import List, Tuple
 
-import torch
 from torch import Tensor, cat, einsum, zeros
 from torch.nn import RNN
 
@@ -101,7 +100,7 @@ class RNNDerivatives(BaseParameterDerivatives):
         subsampling: List[int] = None,
     ) -> Tensor:
         self._check_parameters(module)
-        return torch.einsum(
+        return einsum(
             f"vnth,hk->v{'nt' if module.batch_first else 'tn'}k",
             self._a_jac_t_mat_prod(
                 module,
@@ -118,9 +117,7 @@ class RNNDerivatives(BaseParameterDerivatives):
         self._check_parameters(module)
         H: int = module.hidden_size
         V, N, T, _ = mat.shape
-        _jac_mat_prod: Tensor = torch.zeros(
-            V, N, T, H, device=mat.device, dtype=mat.dtype
-        )
+        _jac_mat_prod: Tensor = zeros(V, N, T, H, device=mat.device, dtype=mat.dtype)
         for t in range(T):
             if t == 0:
                 _jac_mat_prod[:, :, t] = einsum(
