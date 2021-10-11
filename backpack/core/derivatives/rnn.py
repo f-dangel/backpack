@@ -73,7 +73,7 @@ class RNNDerivatives(BaseParameterDerivatives):
         """
         V, N, T, H = mat.shape
         output = subsample(module.output, dim=0, subsampling=subsampling)
-        a_jac_t_mat_prod: Tensor = zeros(V, N, T, H, device=mat.device)
+        a_jac_t_mat_prod: Tensor = zeros(V, N, T, H, device=mat.device, dtype=mat.dtype)
         for t in reversed(range(T)):
             if t == (T - 1):
                 a_jac_t_mat_prod[:, :, t] = einsum(
@@ -120,7 +120,9 @@ class RNNDerivatives(BaseParameterDerivatives):
         self._check_parameters(module)
         H: int = module.hidden_size
         V, N, T, _ = mat.shape
-        _jac_mat_prod: Tensor = torch.zeros(V, N, T, H, device=mat.device)
+        _jac_mat_prod: Tensor = torch.zeros(
+            V, N, T, H, device=mat.device, dtype=mat.dtype
+        )
         for t in range(T):
             if t == 0:
                 _jac_mat_prod[:, :, t] = einsum(
@@ -231,12 +233,7 @@ class RNNDerivatives(BaseParameterDerivatives):
         self._check_parameters(module)
         return einsum(
             f"vnth,ntj->v{'' if sum_batch else 'n'}hj",
-            self._a_jac_t_mat_prod(
-                module,
-                module.weight_hh_l0,
-                mat,
-                subsampling,
-            ),
+            self._a_jac_t_mat_prod(module, module.weight_hh_l0, mat, subsampling),
             subsample(module.input0, dim=0, subsampling=subsampling),
         )
 
@@ -266,14 +263,8 @@ class RNNDerivatives(BaseParameterDerivatives):
         N: int = mat.shape[1]
         H: int = mat.shape[3]
         output = subsample(module.output, dim=0, subsampling=subsampling)
-        shape_single_step = (N, 1, H)
-        output_shifted = cat(
-            [
-                zeros(shape_single_step, device=mat.device, dtype=mat.dtype),
-                output[(slice(None), slice(0, -1))],
-            ],
-            dim=1,
-        )
+        single_step = zeros(N, 1, H, device=mat.device, dtype=mat.dtype)
+        output_shifted = cat([single_step, output[:, :-1]], dim=1)
         return einsum(
             f"vnth,ntk->v{'' if sum_batch else 'n'}hk",
             self._a_jac_t_mat_prod(module, module.weight_hh_l0, mat, subsampling),
