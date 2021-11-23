@@ -73,4 +73,3 @@ def test_kfac_should_approx_ggn_montecarlo(problem):
     check_sizes_and_values(autograd_res, backpack_average_res, atol=1e-1, rtol=1e-1)
 
     problem.tear_down()
-

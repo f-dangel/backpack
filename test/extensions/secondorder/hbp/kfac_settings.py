@@ -27,4 +27,3 @@ BATCH_SIZE_1_SETTINGS = [
         "id_prefix": "one-additional",
     }
 ]
-
