@@ -4,6 +4,9 @@ from test.extensions.secondorder.secondorder_settings import (
     GROUP_CONV_SETTINGS,
     LINEAR_ADDITIONAL_DIMENSIONS_SETTINGS,
 )
+from test.core.derivatives.utils import regression_targets
+from torch.nn import (Sequential, Linear, Flatten, MSELoss, ReLU)
+from torch import rand
 
 SHARED_NOT_SUPPORTED_SETTINGS = (
     GROUP_CONV_SETTINGS + LINEAR_ADDITIONAL_DIMENSIONS_SETTINGS
@@ -12,10 +15,6 @@ LOCAL_NOT_SUPPORTED_SETTINGS = []
 
 NOT_SUPPORTED_SETTINGS = SHARED_NOT_SUPPORTED_SETTINGS + LOCAL_NOT_SUPPORTED_SETTINGS
 
-# ------------------------------------------------
-from test.core.derivatives.utils import regression_targets
-from torch.nn import (Sequential, Linear, Flatten, MSELoss, ReLU)
-from torch import rand
 BATCH_SIZE_1_SETTINGS = [
     {
         "input_fn": lambda: rand(1, 7),
@@ -25,5 +24,3 @@ BATCH_SIZE_1_SETTINGS = [
         "id_prefix": "one-additional",
     }
 ]
-
-

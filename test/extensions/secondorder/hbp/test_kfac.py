@@ -4,11 +4,17 @@ import torch
 from test.extensions.implementation.backpack import BackpackExtensions
 from test.extensions.problem import make_test_problems
 from test.extensions.secondorder.hbp.kfac_settings import NOT_SUPPORTED_SETTINGS
+from test.automated_test import check_sizes_and_values
+from test.extensions.secondorder.hbp.kfac_settings import BATCH_SIZE_1_SETTINGS
+from backpack.utils.kroneckers import kfacs_to_mat
+from backpack.hessianfree.ggnvp import ggn_vector_product_from_plist
 
 import pytest
 
 NOT_SUPPORTED_PROBLEMS = make_test_problems(NOT_SUPPORTED_SETTINGS)
 NOT_SUPPORTED_IDS = [problem.make_id() for problem in NOT_SUPPORTED_PROBLEMS]
+BATCH_SIZE_1_PROBLEMS = make_test_problems(BATCH_SIZE_1_SETTINGS)
+BATCH_SIZE_1_IDS = [problem.make_id() for problem in BATCH_SIZE_1_PROBLEMS]
 
 
 @pytest.mark.parametrize("problem", NOT_SUPPORTED_PROBLEMS, ids=NOT_SUPPORTED_IDS)
@@ -26,16 +32,6 @@ def test_kfac_not_supported(problem):
     problem.tear_down()
 
 
-# ------------------------------------------------------------
-from test.automated_test import check_sizes_and_values
-from test.extensions.secondorder.hbp.kfac_settings import BATCH_SIZE_1_SETTINGS
-from backpack.utils.kroneckers import kfacs_to_mat
-BATCH_SIZE_1_PROBLEMS = make_test_problems(BATCH_SIZE_1_SETTINGS)
-BATCH_SIZE_1_IDS = [problem.make_id() for problem in BATCH_SIZE_1_PROBLEMS]
-from backpack.hessianfree.ggnvp import ggn_vector_product, ggn_vector_product_from_plist
-from backpack.utils.convert_parameters import vector_to_parameter_list
-from backpack.utils.examples import _autograd_ggn_exact_columns
-
 @pytest.mark.parametrize("problem", BATCH_SIZE_1_PROBLEMS, ids=BATCH_SIZE_1_IDS)
 def test_kfac_should_approx_ggn_montecarlo(problem):
     """Check that for batch_size = 1, the K-FAC is the same as the GGN
@@ -46,9 +42,6 @@ def test_kfac_should_approx_ggn_montecarlo(problem):
     problem.set_up()
     torch.manual_seed(0)
     # calculate GGN
-    # todo remove this and calculate ggn
-    # ============================
-    autograd_res = 0  # todo remove this
     # create ID matrix for each layer
     mat_list = []
     for p in problem.model.parameters():
@@ -61,12 +54,11 @@ def test_kfac_should_approx_ggn_montecarlo(problem):
     autograd_res = []
     for layer, mat in zip(problem.model.parameters(), mat_list):
         ggn_cols = []
-        for i in range(len(mat[0])):
+        for i in range(mat.size(0)):
             e_d = mat[i, :]
             GGN_col_i = ggn_vector_product_from_plist(loss, outputs, [layer], e_d)[0]
             ggn_cols.append(GGN_col_i.unsqueeze(0))
-        autograd_res.append(ggn_cols)
-    # ============================
+        autograd_res.append(torch.cat(ggn_cols, dim=0).reshape(layer.numel(), layer.numel()))
 
     # calculate backpack average
     mc_samples = 200
@@ -79,10 +71,3 @@ def test_kfac_should_approx_ggn_montecarlo(problem):
     check_sizes_and_values(autograd_res, backpack_average_res, atol=1e-1, rtol=1e-1)
 
     problem.tear_down()
-
-
-# ==========================================
-test_kfac_should_approx_ggn_montecarlo(BATCH_SIZE_1_PROBLEMS[0])
-# ==========================================
-
-
