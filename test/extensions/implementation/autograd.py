@@ -171,6 +171,7 @@ class AutogradExtensions(ExtensionsImplementation):
         raise NotImplementedError
 
     def ggn_blocks(self) -> List[Tensor]:
+        """Calcuate the GGN."""
         mat_list = []
         for p in self.problem.model.parameters():
             mat_list.append(
