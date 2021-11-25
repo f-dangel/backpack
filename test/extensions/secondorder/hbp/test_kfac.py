@@ -9,7 +9,6 @@ from test.extensions.secondorder.hbp.kfac_settings import (
 )
 
 import pytest
-import torch
 
 from backpack.utils.kroneckers import kfacs_to_mat
 
