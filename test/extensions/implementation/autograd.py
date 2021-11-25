@@ -170,15 +170,6 @@ class AutogradExtensions(ExtensionsImplementation):
     def ggn_mc(self, mc_samples: int, chunks: int = 1):  # noqa: D102
         raise NotImplementedError
 
-    def kfac(self, mc_samples: int = 1) -> List[List[Tensor]]:  # noqa: D102
-        raise NotImplementedError
-
-    def kflr(self) -> List[List[Tensor]]:  # noqa: D102
-        raise NotImplementedError
-
-    def kfra(self) -> List[List[Tensor]]:  # noqa: D102
-        raise NotImplementedError
-
     def ggn_blocks(self) -> List[Tensor]:
         mat_list = []
         for p in self.problem.model.parameters():
@@ -198,3 +189,12 @@ class AutogradExtensions(ExtensionsImplementation):
                 ggn_cols.append(ggn_col_i.unsqueeze(0))
             res.append(cat(ggn_cols, dim=0).reshape(layer.numel(), layer.numel()))
         return res
+
+    def kfac(self, mc_samples: int = 1) -> List[List[Tensor]]:  # noqa: D102
+        raise NotImplementedError
+
+    def kflr(self) -> List[List[Tensor]]:  # noqa: D102
+        raise NotImplementedError
+
+    def kfra(self) -> List[List[Tensor]]:  # noqa: D102
+        raise NotImplementedError
