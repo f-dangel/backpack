@@ -1,5 +1,6 @@
 """Test BackPACK's KFAC extension."""
 from test.automated_test import check_sizes_and_values
+from test.extensions.implementation.autograd import AutogradExtensions
 from test.extensions.implementation.backpack import BackpackExtensions
 from test.extensions.problem import make_test_problems
 from test.extensions.secondorder.hbp.kfac_settings import (
@@ -10,7 +11,6 @@ from test.extensions.secondorder.hbp.kfac_settings import (
 import pytest
 import torch
 
-from backpack.hessianfree.ggnvp import ggn_vector_product_from_plist
 from backpack.utils.kroneckers import kfacs_to_mat
 
 NOT_SUPPORTED_PROBLEMS = make_test_problems(NOT_SUPPORTED_SETTINGS)
@@ -42,34 +42,15 @@ def test_kfac_should_approx_ggn_montecarlo(problem):
         problem (ExtensionsTestProblem): Test case.
     """
     problem.set_up()
-    torch.manual_seed(0)
     # calculate GGN
-    mat_list = []
-    for p in problem.model.parameters():
-        mat_list.append(
-            torch.eye(p.numel(), device=p.device).reshape(p.numel(), *p.shape)
-        )
-    outputs = problem.model(problem.input)
-    loss = problem.loss_function(outputs, problem.target)
-    autograd_res = []
-    for layer, mat in zip(problem.model.parameters(), mat_list):
-        ggn_cols = []
-        for i in range(mat.size(0)):
-            e_d = mat[i, :]
-            GGN_col_i = ggn_vector_product_from_plist(loss, outputs, [layer], e_d)[0]
-            ggn_cols.append(GGN_col_i.unsqueeze(0))
-        autograd_res.append(
-            torch.cat(ggn_cols, dim=0).reshape(layer.numel(), layer.numel())
-        )
+    autograd_res = AutogradExtensions(problem).ggn_blocks()
 
     # calculate backpack average
     mc_samples = 200
-    backpack_average_res = []
     backpack_kfac = BackpackExtensions(problem).kfac(mc_samples)
-    for bpr in backpack_kfac:
-        backpack_average_res.append(kfacs_to_mat(bpr))
+    backpack_res = [kfacs_to_mat(kfac) for kfac in backpack_kfac]
 
     # check the values
-    check_sizes_and_values(autograd_res, backpack_average_res, atol=1e-1, rtol=1e-1)
+    check_sizes_and_values(autograd_res, backpack_res, atol=1e-1, rtol=1e-1)
 
     problem.tear_down()

@@ -3,10 +3,10 @@ from math import isclose
 from test.extensions.implementation.base import ExtensionsImplementation
 from typing import Iterator, List, Union
 
-from torch import Tensor, autograd, backends, cat, stack, var, zeros, zeros_like
+from torch import Tensor, autograd, backends, cat, eye, stack, var, zeros, zeros_like
 from torch.nn.utils.convert_parameters import parameters_to_vector
 
-from backpack.hessianfree.ggnvp import ggn_vector_product
+from backpack.hessianfree.ggnvp import ggn_vector_product, ggn_vector_product_from_plist
 from backpack.hessianfree.rop import R_op
 from backpack.utils.convert_parameters import vector_to_parameter_list
 
@@ -178,3 +178,23 @@ class AutogradExtensions(ExtensionsImplementation):
 
     def kfra(self) -> List[List[Tensor]]:  # noqa: D102
         raise NotImplementedError
+
+    def ggn_blocks(self) -> List[Tensor]:
+        mat_list = []
+        for p in self.problem.model.parameters():
+            mat_list.append(
+                eye(p.numel(), device=p.device).reshape(p.numel(), *p.shape)
+            )
+        outputs = self.problem.model(self.problem.input)
+        loss = self.problem.loss_function(outputs, self.problem.target)
+        res = []
+        for layer, mat in zip(self.problem.model.parameters(), mat_list):
+            ggn_cols = []
+            for i in range(mat.size(0)):
+                e_d = mat[i, :]
+                ggn_col_i = ggn_vector_product_from_plist(loss, outputs, [layer], e_d)[
+                    0
+                ]
+                ggn_cols.append(ggn_col_i.unsqueeze(0))
+            res.append(cat(ggn_cols, dim=0).reshape(layer.numel(), layer.numel()))
+        return res
