@@ -42,15 +42,12 @@ def test_kfac_should_approx_ggn_montecarlo(problem):
         problem (ExtensionsTestProblem): Test case.
     """
     problem.set_up()
-    # calculate GGN
     autograd_res = AutogradExtensions(problem).ggn_blocks()
 
-    # calculate backpack average
     mc_samples = 300000
     backpack_kfac = BackpackExtensions(problem).kfac(mc_samples)
     backpack_res = [kfacs_to_mat(kfac) for kfac in backpack_kfac]
 
-    # check the values
     check_sizes_and_values(autograd_res, backpack_res, atol=1e-1, rtol=1e-1)
 
     problem.tear_down()
@@ -64,15 +61,12 @@ def test_kfac_should_approx_ggn_montecarlo_light(problem):
         problem (ExtensionsTestProblem): Test case.
     """
     problem.set_up()
-    # calculate GGN
     autograd_res = AutogradExtensions(problem).ggn_blocks()
 
-    # calculate backpack average
     mc_samples = 6000
     backpack_kfac = BackpackExtensions(problem).kfac(mc_samples)
     backpack_res = [kfacs_to_mat(kfac) for kfac in backpack_kfac]
 
-    # check the values
     check_sizes_and_values(autograd_res, backpack_res, atol=1e-1, rtol=1e-1)
 
     problem.tear_down()
