@@ -170,30 +170,42 @@ class AutogradExtensions(ExtensionsImplementation):
     def ggn_mc(self, mc_samples: int, chunks: int = 1):  # noqa: D102
         raise NotImplementedError
 
-    def ggn_blocks(self) -> List[Tensor]:
-        """Calcuate the GGN.
+    @staticmethod
+    def ggn_param_block(outputs: Tensor, loss: Tensor, param: Tensor) -> Tensor:
+        """Calculate the GGN block for a single parameter.
+
+        Args:
+            outputs: Model output.
+            loss: Loss value.
+            param: Parameter of the GGN block.
 
         Returns:
-            GGN as List[Tensor].
+            Parameter GGN of shape ``[param.numel(), param.numel()]``.
         """
-        mat_list = []
-        for p in self.problem.model.parameters():
-            mat_list.append(
-                eye(p.numel(), device=p.device).reshape(p.numel(), *p.shape)
-            )
-        outputs = self.problem.model(self.problem.input)
-        loss = self.problem.loss_function(outputs, self.problem.target)
-        res = []
-        for layer, mat in zip(self.problem.model.parameters(), mat_list):
-            ggn_cols = []
-            for i in range(mat.size(0)):
-                e_d = mat[i, :]
-                ggn_col_i = ggn_vector_product_from_plist(loss, outputs, [layer], e_d)[
-                    0
-                ]
-                ggn_cols.append(ggn_col_i.unsqueeze(0))
-            res.append(cat(ggn_cols, dim=0).reshape(layer.numel(), layer.numel()))
-        return res
+        columns = []
+
+        for i in range(param.numel()):
+            one_hot = zeros_like(param).flatten()
+            one_hot[i] = 1.0
+            one_hot = one_hot.reshape_as(param)
+
+            (column,) = ggn_vector_product_from_plist(loss, outputs, [param], one_hot)
+            columns.append(column.flatten())
+
+        return cat(columns)
+
+    def ggn_blocks(self) -> List[Tensor]:
+        """Calculate the GGN blocks for all trainable parameters.
+
+        Returns:
+            GGN blocks for each trainable parameter.
+        """
+        _, outputs, loss = self.problem.forward_pass()
+
+        return [
+            self.ggn_param_block(outputs, loss, param)
+            for param in self.problem.trainable_parameters()
+        ]
 
     def kfac(self, mc_samples: int = 1) -> List[List[Tensor]]:  # noqa: D102
         raise NotImplementedError
