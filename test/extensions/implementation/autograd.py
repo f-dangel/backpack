@@ -3,7 +3,17 @@ from math import isclose
 from test.extensions.implementation.base import ExtensionsImplementation
 from typing import Iterator, List, Union
 
-from torch import Tensor, autograd, backends, cat, eye, stack, var, zeros, zeros_like
+from torch import (
+    Tensor,
+    autograd,
+    backends,
+    cat,
+    reshape,
+    stack,
+    var,
+    zeros,
+    zeros_like,
+)
 from torch.nn.utils.convert_parameters import parameters_to_vector
 
 from backpack.hessianfree.ggnvp import ggn_vector_product, ggn_vector_product_from_plist
@@ -191,8 +201,7 @@ class AutogradExtensions(ExtensionsImplementation):
 
             (column,) = ggn_vector_product_from_plist(loss, outputs, [param], one_hot)
             columns.append(column.flatten())
-
-        return cat(columns)
+        return reshape(cat(columns), (param.numel(), param.numel()))
 
     def ggn_blocks(self) -> List[Tensor]:
         """Calculate the GGN blocks for all trainable parameters.

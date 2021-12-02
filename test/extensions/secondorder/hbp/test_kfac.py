@@ -2,7 +2,7 @@
 from test.automated_test import check_sizes_and_values
 from test.extensions.implementation.autograd import AutogradExtensions
 from test.extensions.implementation.backpack import BackpackExtensions
-from test.extensions.problem import make_test_problems
+from test.extensions.problem import ExtensionsTestProblem, make_test_problems
 from test.extensions.secondorder.hbp.kfac_settings import (
     BATCH_SIZE_1_SETTINGS,
     NOT_SUPPORTED_SETTINGS,
@@ -35,8 +35,9 @@ def test_kfac_not_supported(problem):
 
 @pytest.mark.montecarlo
 @pytest.mark.parametrize("problem", BATCH_SIZE_1_PROBLEMS, ids=BATCH_SIZE_1_IDS)
-def test_kfac_should_approx_ggn_montecarlo(problem):
-    """Check that for batch_size = 1, the K-FAC is the same as the GGN.
+def test_kfac_should_approx_ggn_montecarlo(problem: ExtensionsTestProblem):
+    """Check that for batch_size = 1, the K-FAC is the same as the GGN for linear
+    layers and in the limit of infinite mc_samples.
 
     Args:
         problem (ExtensionsTestProblem): Test case.
@@ -48,14 +49,15 @@ def test_kfac_should_approx_ggn_montecarlo(problem):
     backpack_kfac = BackpackExtensions(problem).kfac(mc_samples)
     backpack_res = [kfacs_to_mat(kfac) for kfac in backpack_kfac]
 
-    check_sizes_and_values(autograd_res, backpack_res, atol=1e-1, rtol=1e-1)
+    check_sizes_and_values(autograd_res, backpack_res, atol=1e-3, rtol=1e-3)
 
     problem.tear_down()
 
 
 @pytest.mark.parametrize("problem", BATCH_SIZE_1_PROBLEMS, ids=BATCH_SIZE_1_IDS)
-def test_kfac_should_approx_ggn_montecarlo_light(problem):
-    """Check that for batch_size = 1, the K-FAC is the same as the GGN.
+def test_kfac_should_approx_ggn_montecarlo_light(problem: ExtensionsTestProblem):
+    """Check that for batch_size = 1, the K-FAC is the same as the GGN for linear
+    layers and in the limit of infinite mc_samples.
 
     Args:
         problem (ExtensionsTestProblem): Test case.
@@ -67,6 +69,6 @@ def test_kfac_should_approx_ggn_montecarlo_light(problem):
     backpack_kfac = BackpackExtensions(problem).kfac(mc_samples)
     backpack_res = [kfacs_to_mat(kfac) for kfac in backpack_kfac]
 
-    check_sizes_and_values(autograd_res, backpack_res, atol=1e-1, rtol=1e-1)
+    check_sizes_and_values(autograd_res, backpack_res, atol=1e-2, rtol=1e-2)
 
     problem.tear_down()
