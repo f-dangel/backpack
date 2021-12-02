@@ -36,8 +36,9 @@ def test_kfac_not_supported(problem):
 @pytest.mark.montecarlo
 @pytest.mark.parametrize("problem", BATCH_SIZE_1_PROBLEMS, ids=BATCH_SIZE_1_IDS)
 def test_kfac_should_approx_ggn_montecarlo(problem: ExtensionsTestProblem):
-    """Check that for batch_size = 1, the K-FAC is the same as the GGN for linear
-    layers and in the limit of infinite mc_samples.
+    """Check that for batch_size = 1, the K-FAC is the same as the GGN.
+
+    Should be true for linear layers and in the limit of infinite mc_samples.
 
     Args:
         problem (ExtensionsTestProblem): Test case.
@@ -56,8 +57,9 @@ def test_kfac_should_approx_ggn_montecarlo(problem: ExtensionsTestProblem):
 
 @pytest.mark.parametrize("problem", BATCH_SIZE_1_PROBLEMS, ids=BATCH_SIZE_1_IDS)
 def test_kfac_should_approx_ggn_montecarlo_light(problem: ExtensionsTestProblem):
-    """Check that for batch_size = 1, the K-FAC is the same as the GGN for linear
-    layers and in the limit of infinite mc_samples.
+    """Check that for batch_size = 1, the K-FAC is the same as the GGN.
+
+     Should be true for linear layers and in the limit of infinite mc_samples.
 
     Args:
         problem (ExtensionsTestProblem): Test case.
