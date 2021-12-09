@@ -41,7 +41,7 @@ def test_kfac_should_approx_ggn_montecarlo(problem: ExtensionsTestProblem):
     Should be true for linear layers and in the limit of infinite mc_samples.
 
     Args:
-        problem (ExtensionsTestProblem): Test case.
+        problem: Test case.
     """
     problem.set_up()
     autograd_res = AutogradExtensions(problem).ggn_blocks()
@@ -50,7 +50,7 @@ def test_kfac_should_approx_ggn_montecarlo(problem: ExtensionsTestProblem):
     backpack_kfac = BackpackExtensions(problem).kfac(mc_samples)
     backpack_res = [kfacs_to_mat(kfac) for kfac in backpack_kfac]
 
-    check_sizes_and_values(autograd_res, backpack_res, atol=1e-3, rtol=1e-3)
+    check_sizes_and_values(autograd_res, backpack_res, atol=5e-3, rtol=5e-3)
 
     problem.tear_down()
 
@@ -62,7 +62,7 @@ def test_kfac_should_approx_ggn_montecarlo_light(problem: ExtensionsTestProblem)
      Should be true for linear layers and in the limit of infinite mc_samples.
 
     Args:
-        problem (ExtensionsTestProblem): Test case.
+        problem: Test case.
     """
     problem.set_up()
     autograd_res = AutogradExtensions(problem).ggn_blocks()
