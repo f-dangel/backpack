@@ -47,7 +47,7 @@ def test_kfac_should_approx_ggn_montecarlo(problem: ExtensionsTestProblem):
     autograd_res = AutogradExtensions(problem).ggn_blocks()
 
     mc_samples = 300000
-    backpack_kfac = BackpackExtensions(problem).kfac(mc_samples)
+    backpack_kfac = BackpackExtensions(problem).kfac_chunk(mc_samples)
     backpack_res = [kfacs_to_mat(kfac) for kfac in backpack_kfac]
 
     check_sizes_and_values(autograd_res, backpack_res, atol=5e-3, rtol=5e-3)
