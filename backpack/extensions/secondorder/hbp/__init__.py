@@ -15,13 +15,15 @@ from torch.nn import (
 
 from backpack.extensions.curvature import Curvature
 from backpack.extensions.secondorder.base import SecondOrderBackpropExtension
+from backpack.custom_module.branching import SumModule
 from backpack.extensions.secondorder.hbp.hbp_options import (
     BackpropStrategy,
     ExpectationApproximation,
     LossHessianStrategy,
 )
 
-from . import activations, conv2d, dropout, flatten, linear, losses, padding, pooling
+from . import activations, conv2d, dropout, flatten, linear, losses, padding, pooling, custom_module
+from typing import Any
 
 
 class HBP(SecondOrderBackpropExtension):
@@ -54,6 +56,7 @@ class HBP(SecondOrderBackpropExtension):
                 ReLU: activations.HBPReLU(),
                 Sigmoid: activations.HBPSigmoid(),
                 Tanh: activations.HBPTanh(),
+                SumModule: custom_module.KFACSumModule(),
             },
         )
 
@@ -114,6 +117,9 @@ class KFAC(HBP):
 
     def get_num_mc_samples(self):
         return self._mc_samples
+
+    def accumulate_backpropagated_quantities(self, existing: Any, other: Any):
+        return existing + other
 
 
 class KFRA(HBP):
