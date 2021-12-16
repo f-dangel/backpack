@@ -7,7 +7,16 @@ from test.extensions.secondorder.secondorder_settings import (
 )
 
 from torch import rand
-from torch.nn import Flatten, Linear, MSELoss, ReLU, Sequential, Sigmoid, CrossEntropyLoss
+from torch.nn import (
+    CrossEntropyLoss,
+    Flatten,
+    Linear,
+    MSELoss,
+    ReLU,
+    Sequential,
+    Sigmoid,
+)
+
 from backpack.custom_module.branching import Parallel
 
 SHARED_NOT_SUPPORTED_SETTINGS = (
@@ -44,5 +53,5 @@ BATCH_SIZE_1_SETTINGS = [
         "loss_function_fn": lambda: CrossEntropyLoss(),
         "target_fn": lambda: classification_targets((3,), 4),
         "id_prefix": "branching-linear",
-    }
+    },
 ]
