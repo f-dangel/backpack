@@ -1,3 +1,4 @@
+from torch import Tensor
 from torch.nn import (
     AvgPool2d,
     Conv2d,
@@ -13,17 +14,26 @@ from torch.nn import (
     ZeroPad2d,
 )
 
+from backpack.custom_module.branching import SumModule
 from backpack.extensions.curvature import Curvature
 from backpack.extensions.secondorder.base import SecondOrderBackpropExtension
-from backpack.custom_module.branching import SumModule
 from backpack.extensions.secondorder.hbp.hbp_options import (
     BackpropStrategy,
     ExpectationApproximation,
     LossHessianStrategy,
 )
 
-from . import activations, conv2d, dropout, flatten, linear, losses, padding, pooling, custom_module
-from typing import Any
+from . import (
+    activations,
+    conv2d,
+    custom_module,
+    dropout,
+    flatten,
+    linear,
+    losses,
+    padding,
+    pooling,
+)
 
 
 class HBP(SecondOrderBackpropExtension):
@@ -118,7 +128,19 @@ class KFAC(HBP):
     def get_num_mc_samples(self):
         return self._mc_samples
 
-    def accumulate_backpropagated_quantities(self, existing: Any, other: Any):
+    def accumulate_backpropagated_quantities(
+        self, existing: Tensor, other: Tensor
+    ) -> Tensor:
+        """Accumulate backpropagated tensors by summation.
+
+
+        Args:
+            existing: first backpropagated tensor.
+            other: second backpropagated tensor.
+
+        Returns:
+            Summation of the two tensors.
+        """
         return existing + other
 
 
