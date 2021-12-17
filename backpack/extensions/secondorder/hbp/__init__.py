@@ -66,7 +66,7 @@ class HBP(SecondOrderBackpropExtension):
                 ReLU: activations.HBPReLU(),
                 Sigmoid: activations.HBPSigmoid(),
                 Tanh: activations.HBPTanh(),
-                SumModule: custom_module.KFACSumModule(),
+                SumModule: custom_module.HBPSumModule(),
             },
         )
 
@@ -130,17 +130,7 @@ class KFAC(HBP):
 
     def accumulate_backpropagated_quantities(
         self, existing: Tensor, other: Tensor
-    ) -> Tensor:
-        """Accumulate backpropagated tensors by summation.
-
-
-        Args:
-            existing: first backpropagated tensor.
-            other: second backpropagated tensor.
-
-        Returns:
-            Summation of the two tensors.
-        """
+    ) -> Tensor:  # noqa: D102
         return existing + other
 
 
