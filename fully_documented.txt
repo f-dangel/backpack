@@ -18,6 +18,7 @@ backpack/core/derivatives/crossentropyloss.py
 backpack/core/derivatives/scale_module.py
 backpack/core/derivatives/sum_module.py
 backpack/core/derivatives/dropout.py
+backpack/core/derivatives/slicing.py
 
 backpack/extensions/__init__.py
 backpack/extensions/backprop_extension.py
@@ -100,6 +101,7 @@ test/core/derivatives/pooling_adaptive_settings.py
 test/core/derivatives/batch_norm_settings.py
 test/core/derivatives/embedding_settings.py
 test/core/derivatives/scale_module_settings.py
+test/core/derivatives/slicing_settings.py
 test/utils/evaluation_mode.py
 test/utils/skip_test.py
 test/utils/__init__.py
