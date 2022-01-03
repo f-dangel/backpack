@@ -91,6 +91,8 @@ test/extensions/implementation/backpack.py
 test/adaptive_avg_pool/
 test/core/derivatives/derivatives_test.py
 test/core/derivatives/__init__.py
+test/core/derivatives/pad.py
+test/core/derivatives/padding_settings.py
 test/core/derivatives/rnn_settings.py
 test/core/derivatives/utils.py
 test/core/derivatives/implementation/

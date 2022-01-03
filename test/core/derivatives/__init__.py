@@ -63,6 +63,7 @@ from backpack.core.derivatives.maxpool1d import MaxPool1DDerivatives
 from backpack.core.derivatives.maxpool2d import MaxPool2DDerivatives
 from backpack.core.derivatives.maxpool3d import MaxPool3DDerivatives
 from backpack.core.derivatives.mseloss import MSELossDerivatives
+from backpack.core.derivatives.pad import PadDerivatives
 from backpack.core.derivatives.permute import PermuteDerivatives
 from backpack.core.derivatives.relu import ReLUDerivatives
 from backpack.core.derivatives.rnn import RNNDerivatives
@@ -73,6 +74,7 @@ from backpack.core.derivatives.sum_module import SumModuleDerivatives
 from backpack.core.derivatives.tanh import TanhDerivatives
 from backpack.core.derivatives.zeropad2d import ZeroPad2dDerivatives
 from backpack.custom_module.branching import SumModule
+from backpack.custom_module.pad import Pad
 from backpack.custom_module.permute import Permute
 from backpack.custom_module.scale_module import ScaleModule
 
@@ -114,4 +116,5 @@ derivatives_for = {
     ScaleModule: ScaleModuleDerivatives,
     Identity: ScaleModuleDerivatives,
     SumModule: SumModuleDerivatives,
+    Pad: PadDerivatives,
 }
