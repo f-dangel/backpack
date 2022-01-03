@@ -1,4 +1,4 @@
-"""Test configurations for `backpack.core.derivatives` for PADDING Layers
+"""Test configurations for `backpack.core.derivatives` for PADDING Layers.
 
 Required entries:
     "module_fn" (callable): Contains a model constructed from `torch.nn` layers

@@ -2,11 +2,10 @@
 
 from typing import List, Sequence, Tuple
 
-from torch import Tensor, zeros
+from torch import Tensor
 
 from backpack.core.derivatives.basederivatives import BaseDerivatives
 from backpack.custom_module.pad import Pad
-from backpack.utils.subsampling import subsample
 
 
 class PadDerivatives(BaseDerivatives):
