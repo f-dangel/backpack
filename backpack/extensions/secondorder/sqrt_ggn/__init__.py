@@ -31,6 +31,7 @@ from torch.nn import (
     ZeroPad2d,
 )
 
+from backpack.custom_module.slicing import Slicing
 from backpack.extensions.secondorder.base import SecondOrderBackpropExtension
 from backpack.extensions.secondorder.hbp import LossHessianStrategy
 from backpack.extensions.secondorder.sqrt_ggn import (
@@ -44,6 +45,7 @@ from backpack.extensions.secondorder.sqrt_ggn import (
     losses,
     padding,
     pooling,
+    slicing,
 )
 
 
@@ -95,6 +97,7 @@ class SqrtGGN(SecondOrderBackpropExtension):
                 ELU: activations.SqrtGGNELU(),
                 SELU: activations.SqrtGGNSELU(),
                 Embedding: embedding.SqrtGGNEmbedding(),
+                Slicing: slicing.SqrtGGNSlicing(),
             },
             subsampling=subsampling,
         )
