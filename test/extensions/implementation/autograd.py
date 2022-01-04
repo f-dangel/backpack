@@ -142,6 +142,8 @@ class AutogradExtensions(ExtensionsImplementation):
             factor = self.problem.compute_reduction_factor()
             if not isclose(factor, 1.0):
                 ggn *= len(subsampling) * factor
+            elif isclose(factor, 1.0) and self.problem.get_batch_size() == 1:
+                ggn *= len(subsampling)
 
         return ggn
 
