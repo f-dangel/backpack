@@ -408,7 +408,11 @@ def test_ea_jac_t_mat_jac_prod(problem: DerivativesTestProblem, request) -> None
 
 
 @fixture(
-    params=PROBLEMS + BATCH_NORM_PROBLEMS + RNN_PROBLEMS + EMBEDDING_PROBLEMS,
+    params=PROBLEMS
+    + BATCH_NORM_PROBLEMS
+    + RNN_PROBLEMS
+    + EMBEDDING_PROBLEMS
+    + CUSTOM_SLICING_MODULE_PROBLEMS,
     ids=lambda p: p.make_id(),
 )
 def problem(request) -> DerivativesTestProblem:

@@ -42,3 +42,6 @@ class SlicingDerivatives(BaseDerivatives):
 
         if slice_batch_axis != slice(None):
             raise ValueError("Slicing the batch axis is not supported.")
+
+    def hessian_is_zero(self, module: Slicing) -> bool:  # noqa: D102
+        return True
