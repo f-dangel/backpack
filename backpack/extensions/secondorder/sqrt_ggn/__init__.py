@@ -118,7 +118,6 @@ class SqrtGGN(SecondOrderBackpropExtension):
     def accumulate_backpropagated_quantities(
         self, existing: Tensor, other: Tensor
     ) -> Tensor:  # noqa: D102
-        print("Accumulating")
         return existing + other
 
 
