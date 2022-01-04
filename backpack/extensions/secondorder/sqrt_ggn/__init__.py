@@ -2,6 +2,7 @@
 
 from typing import List, Union
 
+from torch import Tensor
 from torch.nn import (
     ELU,
     SELU,
@@ -18,6 +19,7 @@ from torch.nn import (
     Dropout,
     Embedding,
     Flatten,
+    Identity,
     LeakyReLU,
     Linear,
     LogSigmoid,
@@ -31,12 +33,15 @@ from torch.nn import (
     ZeroPad2d,
 )
 
+from backpack.custom_module.branching import SumModule
+from backpack.custom_module.scale_module import ScaleModule
 from backpack.extensions.secondorder.base import SecondOrderBackpropExtension
 from backpack.extensions.secondorder.hbp import LossHessianStrategy
 from backpack.extensions.secondorder.sqrt_ggn import (
     activations,
     convnd,
     convtransposend,
+    custom_module,
     dropout,
     embedding,
     flatten,
@@ -95,6 +100,9 @@ class SqrtGGN(SecondOrderBackpropExtension):
                 ELU: activations.SqrtGGNELU(),
                 SELU: activations.SqrtGGNSELU(),
                 Embedding: embedding.SqrtGGNEmbedding(),
+                Identity: custom_module.SqrtGGNScaleModule(),
+                ScaleModule: custom_module.SqrtGGNScaleModule(),
+                SumModule: custom_module.SqrtGGNSumModule(),
             },
             subsampling=subsampling,
         )
@@ -106,6 +114,12 @@ class SqrtGGN(SecondOrderBackpropExtension):
             Loss Hessian strategy.
         """
         return self.loss_hessian_strategy
+
+    def accumulate_backpropagated_quantities(
+        self, existing: Tensor, other: Tensor
+    ) -> Tensor:  # noqa: D102
+        print("Accumulating")
+        return existing + other
 
 
 class SqrtGGNExact(SqrtGGN):
