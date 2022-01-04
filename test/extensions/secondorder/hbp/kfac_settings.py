@@ -10,6 +10,7 @@ from torch import rand
 from torch.nn import (
     CrossEntropyLoss,
     Flatten,
+    Identity,
     Linear,
     MSELoss,
     ReLU,
@@ -43,7 +44,7 @@ BATCH_SIZE_1_SETTINGS = [
             ReLU(),
             # skip connection
             Parallel(
-                Linear(5, 5),
+                Identity(),
                 Linear(5, 5),
             ),
             # end of skip connection

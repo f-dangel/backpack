@@ -5,6 +5,7 @@ from torch.nn import (
     CrossEntropyLoss,
     Dropout,
     Flatten,
+    Identity,
     Linear,
     MaxPool2d,
     MSELoss,
@@ -67,6 +68,7 @@ class HBP(SecondOrderBackpropExtension):
                 Sigmoid: activations.HBPSigmoid(),
                 Tanh: activations.HBPTanh(),
                 SumModule: custom_module.HBPSumModule(),
+                Identity: custom_module.HBPScaleModule(),
             },
         )
 
