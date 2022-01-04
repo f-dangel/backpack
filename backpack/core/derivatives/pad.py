@@ -69,3 +69,6 @@ class PadDerivatives(BaseDerivatives):
             unpad_slice.insert(0, slice(pad_start, dim - pad_end))
 
         return tensor[no_slice + unpad_slice]
+
+    def hessian_is_zero(self, module: Pad) -> bool:  # noqa: D102
+        return True
