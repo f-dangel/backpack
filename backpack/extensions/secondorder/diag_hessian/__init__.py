@@ -31,6 +31,7 @@ from torch.nn import (
     ZeroPad2d,
 )
 
+from backpack.custom_module.pad import Pad
 from backpack.extensions.secondorder.base import SecondOrderBackpropExtension
 
 from . import (
@@ -45,6 +46,7 @@ from . import (
     flatten,
     linear,
     losses,
+    pad,
     padding,
     pooling,
 )
@@ -92,6 +94,7 @@ class DiagHessian(SecondOrderBackpropExtension):
                 LogSigmoid: activations.DiagHLogSigmoid(),
                 ELU: activations.DiagHELU(),
                 SELU: activations.DiagHSELU(),
+                Pad: pad.DiagHPad(),
             },
         )
 
@@ -139,5 +142,6 @@ class BatchDiagHessian(SecondOrderBackpropExtension):
                 LogSigmoid: activations.DiagHLogSigmoid(),
                 ELU: activations.DiagHELU(),
                 SELU: activations.DiagHSELU(),
+                Pad: pad.DiagHPad(),
             },
         )

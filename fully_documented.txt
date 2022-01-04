@@ -60,6 +60,7 @@ backpack/extensions/secondorder/diag_hessian/__init__.py
 backpack/extensions/secondorder/diag_hessian/conv1d.py
 backpack/extensions/secondorder/diag_hessian/conv2d.py
 backpack/extensions/secondorder/diag_hessian/conv3d.py
+backpack/extensions/secondorder/diag_hessian/pad.py
 backpack/extensions/secondorder/sqrt_ggn/
 
 backpack/hessianfree/ggnvp.py
@@ -86,6 +87,7 @@ test/extensions/secondorder/secondorder_settings.py
 test/extensions/secondorder/diag_ggn/
 test/extensions/secondorder/hbp/
 test/extensions/secondorder/sqrt_ggn/
+test/extensions/secondorder/diag_hessian/diagh_settings.py
 test/extensions/implementation/base.py
 test/extensions/implementation/autograd.py
 test/extensions/implementation/backpack.py
