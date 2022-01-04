@@ -1,3 +1,4 @@
+"""Module extensions for custom properties of HBPBaseModule."""
 from backpack.core.derivatives.sum_module import SumModuleDerivatives
 from backpack.extensions.secondorder.hbp.hbpbase import HBPBaseModule
 
