@@ -42,6 +42,7 @@ from backpack.custom_module import branching
 from backpack.custom_module.branching import Parallel
 from backpack.custom_module.permute import Permute
 from backpack.custom_module.reduce_tuple import ReduceTuple
+from backpack.custom_module.slicing import Slicing
 
 SHARED_SETTINGS = SECONDORDER_SETTINGS
 LOCAL_SETTINGS = []
@@ -277,6 +278,36 @@ LOCAL_SETTINGS += [
         "loss_function_fn": lambda: ResNet2.loss_test,
         "target_fn": lambda: rand(ResNet2.target_test),
         "id_prefix": "ResNet2",
+    },
+]
+
+###############################################################################
+#                              Custom Slicing mod                             #
+###############################################################################
+LOCAL_SETTINGS += [
+    {
+        "input_fn": lambda: rand(3, 3, 4, 5),
+        "module_fn": lambda: Sequential(
+            Conv2d(in_channels=3, out_channels=2, kernel_size=2, padding=1),
+            Slicing((slice(None), 0, slice(None, None, 2), slice(0, 2))),
+            ReLU(),
+            Flatten(),
+            Linear(6, 4),
+        ),
+        "loss_function_fn": lambda: CrossEntropyLoss(reduction="mean"),
+        "target_fn": lambda: classification_targets((3,), 4),
+    },
+    {
+        "input_fn": lambda: rand(3, 3, 4, 5),
+        "module_fn": lambda: Sequential(
+            Conv2d(in_channels=3, out_channels=2, kernel_size=2, padding=1),
+            Slicing((slice(None), slice(None), 2)),
+            ReLU(),
+            Slicing((slice(None), 1)),
+            Linear(6, 4),
+        ),
+        "loss_function_fn": lambda: MSELoss(reduction="mean"),
+        "target_fn": lambda: regression_targets((3, 4)),
     },
 ]
 
