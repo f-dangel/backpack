@@ -19,6 +19,7 @@ from torch.nn import (
 )
 
 from backpack.custom_module.branching import Parallel
+from backpack.custom_module.scale_module import ScaleModule
 
 SHARED_NOT_SUPPORTED_SETTINGS = (
     GROUP_CONV_SETTINGS + LINEAR_ADDITIONAL_DIMENSIONS_SETTINGS
@@ -43,16 +44,28 @@ BATCH_SIZE_1_SETTINGS = [
             Linear(10, 5),
             ReLU(),
             # skip connection
-            Parallel(
-                Identity(),
-                Linear(5, 5),
-            ),
+            Parallel(Identity(), Linear(5, 5),),
             # end of skip connection
             Sigmoid(),
             Linear(5, 4),
         ),
         "loss_function_fn": lambda: CrossEntropyLoss(),
         "target_fn": lambda: classification_targets((3,), 4),
-        "id_prefix": "branching-linear",
+        "id_prefix": "branching-linear-identity",
+    },
+    {
+        "input_fn": lambda: rand(3, 10),
+        "module_fn": lambda: Sequential(
+            Linear(10, 5),
+            ReLU(),
+            # skip connection
+            Parallel(ScaleModule(weight=3.0), Linear(5, 5),),
+            # end of skip connection
+            Sigmoid(),
+            Linear(5, 4),
+        ),
+        "loss_function_fn": lambda: CrossEntropyLoss(),
+        "target_fn": lambda: classification_targets((3,), 4),
+        "id_prefix": "branching-linear-scale",
     },
 ]
