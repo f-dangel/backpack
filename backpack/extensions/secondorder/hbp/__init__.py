@@ -16,6 +16,7 @@ from torch.nn import (
 )
 
 from backpack.custom_module.branching import SumModule
+from backpack.custom_module.scale_module import ScaleModule
 from backpack.extensions.curvature import Curvature
 from backpack.extensions.secondorder.base import SecondOrderBackpropExtension
 from backpack.extensions.secondorder.hbp.hbp_options import (
@@ -68,6 +69,7 @@ class HBP(SecondOrderBackpropExtension):
                 Sigmoid: activations.HBPSigmoid(),
                 Tanh: activations.HBPTanh(),
                 SumModule: custom_module.HBPSumModule(),
+                ScaleModule: custom_module.HBPScaleModule(),
                 Identity: custom_module.HBPScaleModule(),
             },
         )
