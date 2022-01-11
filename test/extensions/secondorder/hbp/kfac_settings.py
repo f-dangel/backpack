@@ -66,6 +66,6 @@ BATCH_SIZE_1_SETTINGS = [
         ),
         "loss_function_fn": lambda: CrossEntropyLoss(),
         "target_fn": lambda: classification_targets((3,), 4),
-        "id_prefix": "branching-linear-scale",
+        "id_prefix": "branching-scalar",
     },
 ]
