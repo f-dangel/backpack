@@ -44,7 +44,10 @@ BATCH_SIZE_1_SETTINGS = [
             Linear(10, 5),
             ReLU(),
             # skip connection
-            Parallel(Identity(), Linear(5, 5),),
+            Parallel(
+                Identity(),
+                Linear(5, 5),
+            ),
             # end of skip connection
             Sigmoid(),
             Linear(5, 4),
@@ -59,7 +62,10 @@ BATCH_SIZE_1_SETTINGS = [
             Linear(10, 5),
             ReLU(),
             # skip connection
-            Parallel(ScaleModule(weight=3.0), Linear(5, 5),),
+            Parallel(
+                ScaleModule(weight=3.0),
+                Linear(5, 5),
+            ),
             # end of skip connection
             Sigmoid(),
             Linear(5, 4),
