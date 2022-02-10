@@ -2,7 +2,7 @@
 import warnings
 
 from backpack.extensions.backprop_extension import BackpropExtension
-from backpack.extensions.backprop_extension import FAIL_ERROR, FAIL_SILENT, FAIL_WARN
+from backpack.extensions.backprop_extension import FAIL_ERROR, FAIL_WARN
 from backpack.utils.errors import change_error_to_warn_message
 from torch.nn import Module
 

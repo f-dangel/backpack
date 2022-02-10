@@ -21,7 +21,7 @@ class FirstOrderBackpropExtension(BackpropExtension):
         self,
         savefield: str,
         module_exts: Dict[Type[Module], ModuleExtension],
-        fail_mode: str = FAIL_WARN,
+        fail_mode: str = FAIL_ERROR,
         subsampling: List[int] = None,
     ):  # noqa: D107
         super().__init__(
