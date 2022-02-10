@@ -6,6 +6,11 @@ from backpack.extensions.backprop_extension import BackpropExtension
 from backpack.extensions.backprop_extension import FAIL_ERROR, FAIL_WARN, FAIL_SILENT
 from torch.nn import BatchNorm1d, BatchNorm2d, BatchNorm3d
 
+change_error_to_warn_message = (
+    "To only raise a warning, change the failure mode of the BackPACK extension "
+    "(for example, `BatchGrad(fail_mode='WARNING')`)."
+)
+
 
 def batch_norm_raise_error_if_train(
     module: Union[BatchNorm1d, BatchNorm2d, BatchNorm3d], ext: BackpropExtension
@@ -30,8 +35,8 @@ def batch_norm_raise_error_if_train(
             "but the quantity will not match its definition. "
             "Advanced users: If you are specifically interested in what this code "
             "would return for a BatchNorm network, change the failure mode of "
-            "the BackPACK extension (`BatchGrad`) to only raise a warning "
-            "(`BatchGrad(fail_mode='WARNING')`). This is not supported behavior."
+            f"the BackPACK extension. {change_error_to_warn_message} "
+            "This is not supported behavior."
         )
         if ext._fail_mode == FAIL_ERROR:
             raise ValueError(message)
