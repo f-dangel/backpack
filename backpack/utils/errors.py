@@ -15,13 +15,17 @@ def batch_norm_raise_error_if_train(
         raise_error: whether to raise an error, alternatively warn. Default: True.
 
     Raises:
-        NotImplementedError: if module is in training mode
+        ValueError: if module is in training mode and BackPACK extension's
+            fail_mode is FAIL_ERROR (default)
     """
     if module.training:
         message = (
-            "Encountered BatchNorm module in training mode. BackPACK's computation "
-            "will pass, but results like individual gradients may not be meaningful, "
-            "as BatchNorm mixes samples. Only proceed if you know what you are doing."
+            "Encountered BatchNorm module in training mode."
+            "Quantity to compute is undefined as BatchNorm mixes samples. "
+            "You should most likely use another type of normalization. "
+            "Concepts like individual gradients are not meaningful with BatchNorm. "
+            "The code to compute the requested quantity may not raise an error, "
+            "but the quantity will not match its definition. "
         )
         if raise_error:
             raise NotImplementedError(message)
