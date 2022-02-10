@@ -41,4 +41,4 @@ class BatchDiagGGNBatchNormNd(DiagGGNBaseModule):
         g_inp: Tuple[Tensor],
         g_out: Tuple[Tensor],
     ) -> None:  # noqa: D102
-        batch_norm_raise_error_if_train(module)
+        batch_norm_raise_error_if_train(module, ext)
