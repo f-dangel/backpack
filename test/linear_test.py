@@ -40,7 +40,7 @@ def loss_function(tensor):
 EXAMPLE_1 = {
     "in": Tensor([[1, 1, 1]]).float(),
     "out": Tensor([[6 + 7, 15 + 8]]).float(),
-    "loss": 13 ** 2 + 23 ** 2,
+    "loss": 13**2 + 23**2,
     "bias_grad": Tensor([2 * 13, 2 * 23]).float(),
     "bias_grad_batch": Tensor([2 * 13, 2 * 23]).float(),
     "weight_grad": Tensor([[26, 26, 26], [46, 46, 46]]).float(),
@@ -50,7 +50,7 @@ EXAMPLE_1 = {
 EXAMPLE_2 = {
     "in": Tensor([[1, 0, 1], [0, 1, 0]]).float(),
     "out": Tensor([[4 + 7, 10 + 8], [2 + 7, 5 + 8]]).float(),
-    "loss": 11 ** 2 + 18 ** 2 + 9 ** 2 + 13 ** 2,
+    "loss": 11**2 + 18**2 + 9**2 + 13**2,
     "bias_grad": Tensor([2 * (11 + 9), 2 * (18 + 13)]),
     "bias_grad_batch": Tensor([[2 * 11, 2 * 18], [2 * 9, 2 * 13]]).float(),
     "weight_grad": Tensor([[22, 18, 22], [36, 26, 36]]).float(),
