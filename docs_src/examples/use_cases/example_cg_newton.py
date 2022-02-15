@@ -205,7 +205,7 @@ class CGNOptimizer(torch.optim.Optimizer):
         # initialize parameters
         r = (b - A(x)).detach()
         p = r.clone()
-        rs_old = (r ** 2).sum().item()
+        rs_old = (r**2).sum().item()
 
         # stopping criterion
         norm_bound = max([tol * torch.norm(b).item(), atol])
@@ -225,7 +225,7 @@ class CGNOptimizer(torch.optim.Optimizer):
             alpha = rs_old / (p * Ap).sum().item()
             x.add_(p, alpha=alpha)
             r.sub_(Ap, alpha=alpha)
-            rs_new = (r ** 2).sum().item()
+            rs_new = (r**2).sum().item()
             iterations += 1
 
             stop, info = converged(rs_new, iterations)

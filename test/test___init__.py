@@ -71,7 +71,7 @@ def memory_leak(device, context=None):
     # threshold to detect a memory_leak
     steps = 50
     memory_leak_threshold_mb = 1
-    memory_leak_threshold = memory_leak_threshold_mb * 2 ** 20
+    memory_leak_threshold = memory_leak_threshold_mb * 2**20
 
     if context is None:
         context = nullcontext

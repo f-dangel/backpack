@@ -40,12 +40,12 @@ class AutogradExtensions(ExtensionsImplementation):
 
     def batch_l2_grad(self) -> List[Tensor]:  # noqa: D102
         return [
-            (g ** 2).flatten(start_dim=1).sum(1)
+            (g**2).flatten(start_dim=1).sum(1)
             for g in self.batch_grad(subsampling=None)
         ]
 
     def sgs(self) -> List[Tensor]:  # noqa: D102
-        return [(g ** 2).sum(0) for g in self.batch_grad(subsampling=None)]
+        return [(g**2).sum(0) for g in self.batch_grad(subsampling=None)]
 
     def variance(self) -> List[Tensor]:  # noqa: D102
         return [
