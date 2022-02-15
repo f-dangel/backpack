@@ -248,3 +248,31 @@ class BackpackExtensions(ExtensionsImplementation):
         """
         sqrt_mat = cat([s.flatten(start_dim=2) for s in sqrt_ggn], dim=2)
         return einsum("cni,cnj->ij", sqrt_mat, sqrt_mat)
+
+    def kfac_chunk(self, mc_samples: int, chunks: int = 10) -> List[Tensor]:
+        """Like ``kfac``, but can handle more samples by chunking.
+
+        Args:
+            mc_samples: Number of Monte-Carlo samples.
+            chunks: Maximum sequential split of the computation. Default: ``10``.
+
+        Returns:
+            KFAC approximation from MC-sampling calculated via chunks.
+        """
+        chunk_samples = chunk_sizes(mc_samples, chunks)
+        chunk_weights = [samples / mc_samples for samples in chunk_samples]
+
+        kfac_mc = None
+
+        for weight, samples in zip(chunk_weights, chunk_samples):
+            chunk_kfac = self.kfac(samples)
+            chunk_kfac = [[k * weight for k in kfac] for kfac in chunk_kfac]
+
+            if kfac_mc is None:
+                kfac_mc = chunk_kfac
+            else:
+                kfac_mc = [
+                    [new_k + k for new_k, k in zip(new_kfac, kfac)]
+                    for new_kfac, kfac in zip(chunk_kfac, kfac_mc)
+                ]
+        return kfac_mc

@@ -14,11 +14,13 @@ from test.core.derivatives.implementation.autograd import AutogradDerivatives
 from test.core.derivatives.implementation.backpack import BackpackDerivatives
 from test.core.derivatives.loss_settings import LOSS_FAIL_SETTINGS
 from test.core.derivatives.lstm_settings import LSTM_SETTINGS
+from test.core.derivatives.padding_settings import CUSTOM_PADDING_SETTINGS
 from test.core.derivatives.permute_settings import PERMUTE_SETTINGS
 from test.core.derivatives.problem import DerivativesTestProblem, make_test_problems
 from test.core.derivatives.rnn_settings import RNN_SETTINGS as RNN_SETTINGS
 from test.core.derivatives.scale_module_settings import SCALE_MODULE_SETTINGS
 from test.core.derivatives.settings import SETTINGS
+from test.core.derivatives.slicing_settings import CUSTOM_SLICING_SETTINGS
 from test.utils.skip_test import (
     skip_adaptive_avg_pool3d_cuda,
     skip_batch_norm_train_mode_with_subsampling,
@@ -60,6 +62,16 @@ EMBEDDING_IDS = [problem.make_id() for problem in EMBEDDING_PROBLEMS]
 
 SCALE_MODULE_PROBLEMS = make_test_problems(SCALE_MODULE_SETTINGS)
 SCALE_MODULE_IDS = [problem.make_id() for problem in SCALE_MODULE_PROBLEMS]
+
+CUSTOM_PADDING_MODULE_PROBLEMS = make_test_problems(CUSTOM_PADDING_SETTINGS)
+CUSTOM_PADDING_MODULE_IDS = [
+    problem.make_id() for problem in CUSTOM_PADDING_MODULE_PROBLEMS
+]
+
+CUSTOM_SLICING_MODULE_PROBLEMS = make_test_problems(CUSTOM_SLICING_SETTINGS)
+CUSTOM_SLICING_MODULE_IDS = [
+    problem.make_id() for problem in CUSTOM_SLICING_MODULE_PROBLEMS
+]
 
 SUBSAMPLINGS = [None, [0, 0], [2, 0]]
 SUBSAMPLING_IDS = [f"subsampling={s}".replace(" ", "") for s in SUBSAMPLINGS]
@@ -134,8 +146,16 @@ def test_jac_mat_prod(problem: DerivativesTestProblem, V: int = 3) -> None:
     + RNN_PROBLEMS
     + PERMUTE_PROBLEMS
     + BATCH_NORM_PROBLEMS
-    + SCALE_MODULE_PROBLEMS,
-    ids=NO_LOSS_IDS + RNN_IDS + PERMUTE_IDS + BATCH_NORM_IDS + SCALE_MODULE_IDS,
+    + SCALE_MODULE_PROBLEMS
+    + CUSTOM_PADDING_MODULE_PROBLEMS
+    + CUSTOM_SLICING_MODULE_PROBLEMS,
+    ids=NO_LOSS_IDS
+    + RNN_IDS
+    + PERMUTE_IDS
+    + BATCH_NORM_IDS
+    + SCALE_MODULE_IDS
+    + CUSTOM_PADDING_MODULE_IDS
+    + CUSTOM_SLICING_MODULE_IDS,
 )
 def test_jac_t_mat_prod(
     problem: DerivativesTestProblem,
@@ -396,7 +416,12 @@ def test_ea_jac_t_mat_jac_prod(problem: DerivativesTestProblem, request) -> None
 
 
 @fixture(
-    params=PROBLEMS + BATCH_NORM_PROBLEMS + RNN_PROBLEMS + EMBEDDING_PROBLEMS,
+    params=PROBLEMS
+    + BATCH_NORM_PROBLEMS
+    + RNN_PROBLEMS
+    + EMBEDDING_PROBLEMS
+    + CUSTOM_PADDING_MODULE_PROBLEMS
+    + CUSTOM_SLICING_MODULE_PROBLEMS,
     ids=lambda p: p.make_id(),
 )
 def problem(request) -> DerivativesTestProblem:

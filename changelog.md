@@ -6,6 +6,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2022-02-15
+
+This small release improves ResNet support of some second-order extensions and
+adds some more custom layers.
+
+Thanks to [@jabader97](https://github.com/jabader97) for contributing to `KFAC`.
+
+### Added/New
+- `KFAC` for ResNets modules
+  ([commit](https://github.com/f-dangel/backpack/commit/69f561f9f827115d2075faafe384592eff5c0158))
+- Custom modules for
+  - Slicing
+   ([commit](https://github.com/f-dangel/backpack/commit/fc9a97ef0180a840437367b941493cc840d6d564))
+  - Padding
+   ([commit](https://github.com/f-dangel/backpack/commit/175db2abf9d1be9c02796fbafdcb0ad4d81d1300))
+- `{Batch}DiagGGN{Exact,MC}`, `{Batch}DiagHessian` support for
+  - Custom slicing module
+    ([commit](https://github.com/f-dangel/backpack/commit/fc9a97ef0180a840437367b941493cc840d6d564))
+  - Custom padding module
+    ([commit](https://github.com/f-dangel/backpack/commit/175db2abf9d1be9c02796fbafdcb0ad4d81d1300))
+- `SqrtGGN{Exact,MC}` support for
+  - `BatchNormNd` (eval mode)
+    ([commit](https://github.com/f-dangel/backpack/commit/7e634e3a78884f1cc4676e00991143aaed2ab56f))
+  - ResNet modules (`ScaleModule`, `SumModule`, `Identity`)
+    ([commit](https://github.com/f-dangel/backpack/commit/98e7420368ef56b830b9251c067ed6b8f0d43502))
+  - Custom slicing module
+    ([commit](https://github.com/f-dangel/backpack/commit/fc9a97ef0180a840437367b941493cc840d6d564))
+  - Custom padding module
+    ([commit](https://github.com/f-dangel/backpack/commit/175db2abf9d1be9c02796fbafdcb0ad4d81d1300))
+
+### Fixed/Removed
+
+### Internal
+- Automate PyPI release through GitHub action
+  ([commit](https://github.com/f-dangel/backpack/commit/cf50703aba72d8e208e2abba9a5b11365b0fd9aa))
+- Add `KFAC` tests for linear layers to test suite
+  ([commit](https://github.com/f-dangel/backpack/commit/26352070fae41d2f5ded10bf704c89de7a7416fb))
+- Update formatting to `black==22.1.0`
+  ([commit](https://github.com/f-dangel/backpack/commit/cbf7955dd1812d5fcbab544d0d8a04d8ed102448))
+- Add BackPACK logo to RTD
+  ([commit](https://github.com/f-dangel/backpack/commit/70441b6f8889136b3630f15cfde2174d90e809cc))
+
 ## [1.4.0] - 2021-11-12
 
 This release ships many new features. Some rely on recent PyTorch functionality.
@@ -336,7 +378,8 @@ co-authoring many PRs shipped in this release.
 
 Initial release
 
-[Unreleased]: https://github.com/f-dangel/backpack/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/f-dangel/backpack/compare/v1.5.0...HEAD
+[1.4.0]: https://github.com/f-dangel/backpack/compare/1.5.0...1.4.0
 [1.4.0]: https://github.com/f-dangel/backpack/compare/1.4.0...1.3.0
 [1.3.0]: https://github.com/f-dangel/backpack/compare/1.3.0...1.2.0
 [1.2.0]: https://github.com/f-dangel/backpack/compare/1.2.0...1.1.1
