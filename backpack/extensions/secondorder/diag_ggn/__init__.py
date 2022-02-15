@@ -48,6 +48,7 @@ from torch.nn import (
 )
 
 from backpack.custom_module.branching import SumModule
+from backpack.custom_module.pad import Pad
 from backpack.custom_module.permute import Permute
 from backpack.custom_module.scale_module import ScaleModule
 from backpack.custom_module.slicing import Slicing
@@ -70,6 +71,7 @@ from . import (
     flatten,
     linear,
     losses,
+    pad,
     padding,
     permute,
     pooling,
@@ -145,6 +147,7 @@ class DiagGGN(SecondOrderBackpropExtension):
                 BatchNorm2d: batchnorm_nd.DiagGGNBatchNormNd(),
                 BatchNorm3d: batchnorm_nd.DiagGGNBatchNormNd(),
                 Embedding: embedding.DiagGGNEmbedding(),
+                Pad: pad.DiagGGNPad(),
                 Slicing: slicing.DiagGGNSlicing(),
             },
         )
@@ -269,6 +272,7 @@ class BatchDiagGGN(SecondOrderBackpropExtension):
                 BatchNorm2d: batchnorm_nd.BatchDiagGGNBatchNormNd(),
                 BatchNorm3d: batchnorm_nd.BatchDiagGGNBatchNormNd(),
                 Embedding: embedding.BatchDiagGGNEmbedding(),
+                Pad: pad.DiagGGNPad(),
                 Slicing: slicing.DiagGGNSlicing(),
             },
         )

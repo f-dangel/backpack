@@ -56,11 +56,13 @@ backpack/extensions/secondorder/diag_ggn/batchnorm_nd.py
 backpack/extensions/secondorder/diag_ggn/adaptive_avg_pool_nd.py
 backpack/extensions/secondorder/diag_ggn/embedding.py
 backpack/extensions/secondorder/diag_ggn/custom_module.py
+backpack/extensions/secondorder/diag_ggn/pad.py
 backpack/extensions/secondorder/diag_ggn/slicing.py
 backpack/extensions/secondorder/diag_hessian/__init__.py
 backpack/extensions/secondorder/diag_hessian/conv1d.py
 backpack/extensions/secondorder/diag_hessian/conv2d.py
 backpack/extensions/secondorder/diag_hessian/conv3d.py
+backpack/extensions/secondorder/diag_hessian/pad.py
 backpack/extensions/secondorder/diag_hessian/slicing.py
 backpack/extensions/secondorder/sqrt_ggn/
 backpack/extensions/secondorder/hbp/custom_module.py
@@ -96,6 +98,7 @@ test/extensions/implementation/backpack.py
 test/adaptive_avg_pool/
 test/core/derivatives/derivatives_test.py
 test/core/derivatives/__init__.py
+test/core/derivatives/padding_settings.py
 test/core/derivatives/rnn_settings.py
 test/core/derivatives/utils.py
 test/core/derivatives/implementation/
