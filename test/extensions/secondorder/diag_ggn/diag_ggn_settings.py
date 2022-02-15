@@ -38,7 +38,6 @@ from torch.nn import (
 )
 
 from backpack import convert_module_to_backpack
-from backpack.custom_module import branching
 from backpack.custom_module.branching import Parallel
 from backpack.custom_module.permute import Permute
 from backpack.custom_module.reduce_tuple import ReduceTuple
@@ -239,7 +238,7 @@ LOCAL_SETTINGS += [
                     Conv2d(2, 4, kernel_size=3, stride=1, padding=1),
                     Sigmoid(),
                     Conv2d(4, 2, kernel_size=3, stride=1, padding=1),
-                    branching.Parallel(
+                    Parallel(
                         Identity(),
                         Sequential(
                             Conv2d(2, 4, kernel_size=3, stride=1, padding=1),
