@@ -31,6 +31,7 @@ from torch.nn import (
     ZeroPad2d,
 )
 
+from backpack.custom_module.slicing import Slicing
 from backpack.extensions.secondorder.base import SecondOrderBackpropExtension
 
 from . import (
@@ -47,6 +48,7 @@ from . import (
     losses,
     padding,
     pooling,
+    slicing,
 )
 
 
@@ -92,6 +94,7 @@ class DiagHessian(SecondOrderBackpropExtension):
                 LogSigmoid: activations.DiagHLogSigmoid(),
                 ELU: activations.DiagHELU(),
                 SELU: activations.DiagHSELU(),
+                Slicing: slicing.DiagHSlicing(),
             },
         )
 
@@ -139,5 +142,6 @@ class BatchDiagHessian(SecondOrderBackpropExtension):
                 LogSigmoid: activations.DiagHLogSigmoid(),
                 ELU: activations.DiagHELU(),
                 SELU: activations.DiagHSELU(),
+                Slicing: slicing.DiagHSlicing(),
             },
         )

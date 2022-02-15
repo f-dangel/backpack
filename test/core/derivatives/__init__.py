@@ -69,12 +69,14 @@ from backpack.core.derivatives.rnn import RNNDerivatives
 from backpack.core.derivatives.scale_module import ScaleModuleDerivatives
 from backpack.core.derivatives.selu import SELUDerivatives
 from backpack.core.derivatives.sigmoid import SigmoidDerivatives
+from backpack.core.derivatives.slicing import SlicingDerivatives
 from backpack.core.derivatives.sum_module import SumModuleDerivatives
 from backpack.core.derivatives.tanh import TanhDerivatives
 from backpack.core.derivatives.zeropad2d import ZeroPad2dDerivatives
 from backpack.custom_module.branching import SumModule
 from backpack.custom_module.permute import Permute
 from backpack.custom_module.scale_module import ScaleModule
+from backpack.custom_module.slicing import Slicing
 
 derivatives_for = {
     Linear: LinearDerivatives,
@@ -114,4 +116,5 @@ derivatives_for = {
     ScaleModule: ScaleModuleDerivatives,
     Identity: ScaleModuleDerivatives,
     SumModule: SumModuleDerivatives,
+    Slicing: SlicingDerivatives,
 }
