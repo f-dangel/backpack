@@ -8,6 +8,9 @@ from torch.nn import (
     AvgPool1d,
     AvgPool2d,
     AvgPool3d,
+    BatchNorm1d,
+    BatchNorm2d,
+    BatchNorm3d,
     Conv1d,
     Conv2d,
     Conv3d,
@@ -37,6 +40,7 @@ from backpack.extensions.secondorder.base import SecondOrderBackpropExtension
 from backpack.extensions.secondorder.hbp import LossHessianStrategy
 from backpack.extensions.secondorder.sqrt_ggn import (
     activations,
+    batchnorm_nd,
     convnd,
     convtransposend,
     dropout,
@@ -99,6 +103,9 @@ class SqrtGGN(SecondOrderBackpropExtension):
                 ELU: activations.SqrtGGNELU(),
                 SELU: activations.SqrtGGNSELU(),
                 Embedding: embedding.SqrtGGNEmbedding(),
+                BatchNorm1d: batchnorm_nd.SqrtGGNBatchNormNd(),
+                BatchNorm2d: batchnorm_nd.SqrtGGNBatchNormNd(),
+                BatchNorm3d: batchnorm_nd.SqrtGGNBatchNormNd(),
                 Pad: pad.SqrtGGNPad(),
                 Slicing: slicing.SqrtGGNSlicing(),
             },
