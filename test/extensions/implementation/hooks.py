@@ -100,7 +100,7 @@ class BatchL2GradHook(ParameterHook):
     def hook(self, param):
         """Extract individual gradient squared ℓ₂ norms from individual gradients."""
         feature_dims = [i + 1 for i in range(param.dim())]
-        return (param.grad_batch ** 2).sum(feature_dims)
+        return (param.grad_batch**2).sum(feature_dims)
 
 
 class SumGradSquaredHook(ParameterHook):
@@ -116,4 +116,4 @@ class SumGradSquaredHook(ParameterHook):
     def hook(self, param):
         """Extract individual gradient squared ℓ₂ norms from individual gradients."""
         N_axis = 0
-        return (param.grad_batch ** 2).sum(N_axis)
+        return (param.grad_batch**2).sum(N_axis)
