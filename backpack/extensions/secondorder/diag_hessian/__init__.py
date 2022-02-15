@@ -32,6 +32,7 @@ from torch.nn import (
 )
 
 from backpack.custom_module.pad import Pad
+from backpack.custom_module.slicing import Slicing
 from backpack.extensions.secondorder.base import SecondOrderBackpropExtension
 
 from . import (
@@ -49,6 +50,7 @@ from . import (
     pad,
     padding,
     pooling,
+    slicing,
 )
 
 
@@ -95,6 +97,7 @@ class DiagHessian(SecondOrderBackpropExtension):
                 ELU: activations.DiagHELU(),
                 SELU: activations.DiagHSELU(),
                 Pad: pad.DiagHPad(),
+                Slicing: slicing.DiagHSlicing(),
             },
         )
 
@@ -143,5 +146,6 @@ class BatchDiagHessian(SecondOrderBackpropExtension):
                 ELU: activations.DiagHELU(),
                 SELU: activations.DiagHSELU(),
                 Pad: pad.DiagHPad(),
+                Slicing: slicing.DiagHSlicing(),
             },
         )

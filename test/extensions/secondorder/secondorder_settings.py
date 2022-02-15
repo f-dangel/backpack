@@ -57,6 +57,7 @@ from torch.nn import (
 )
 
 from backpack.custom_module.pad import Pad
+from backpack.custom_module.slicing import Slicing
 
 SECONDORDER_SETTINGS = []
 
@@ -304,7 +305,6 @@ SECONDORDER_SETTINGS += [
     },
 ]
 
-
 ###############################################################################
 #                                Custom Pad mod                               #
 ###############################################################################
@@ -334,5 +334,35 @@ SECONDORDER_SETTINGS += [
         ),
         "loss_function_fn": lambda: CrossEntropyLoss(reduction="mean"),
         "target_fn": lambda: classification_targets((5,), 3),
+    },
+]
+
+###############################################################################
+#                              Custom Slicing mod                             #
+###############################################################################
+SECONDORDER_SETTINGS += [
+    {
+        "input_fn": lambda: rand(3, 3, 4, 5),
+        "module_fn": lambda: Sequential(
+            Conv2d(in_channels=3, out_channels=2, kernel_size=2, padding=1),
+            Slicing((slice(None), 0, slice(None, None, 2), slice(0, 2))),
+            ReLU(),
+            Flatten(),
+            Linear(6, 4),
+        ),
+        "loss_function_fn": lambda: CrossEntropyLoss(reduction="mean"),
+        "target_fn": lambda: classification_targets((3,), 4),
+    },
+    {
+        "input_fn": lambda: rand(3, 3, 4, 5),
+        "module_fn": lambda: Sequential(
+            Conv2d(in_channels=3, out_channels=2, kernel_size=2, padding=1),
+            Slicing((slice(None), slice(None), 2)),
+            ReLU(),
+            Slicing((slice(None), 1)),
+            Linear(6, 4),
+        ),
+        "loss_function_fn": lambda: MSELoss(reduction="mean"),
+        "target_fn": lambda: regression_targets((3, 4)),
     },
 ]

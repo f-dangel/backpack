@@ -32,6 +32,7 @@ from torch.nn import (
 )
 
 from backpack.custom_module.pad import Pad
+from backpack.custom_module.slicing import Slicing
 from backpack.extensions.secondorder.base import SecondOrderBackpropExtension
 from backpack.extensions.secondorder.hbp import LossHessianStrategy
 from backpack.extensions.secondorder.sqrt_ggn import (
@@ -46,6 +47,7 @@ from backpack.extensions.secondorder.sqrt_ggn import (
     pad,
     padding,
     pooling,
+    slicing,
 )
 
 
@@ -98,6 +100,7 @@ class SqrtGGN(SecondOrderBackpropExtension):
                 SELU: activations.SqrtGGNSELU(),
                 Embedding: embedding.SqrtGGNEmbedding(),
                 Pad: pad.SqrtGGNPad(),
+                Slicing: slicing.SqrtGGNSlicing(),
             },
             subsampling=subsampling,
         )
