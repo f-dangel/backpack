@@ -1,9 +1,11 @@
+from torch import Tensor
 from torch.nn import (
     AvgPool2d,
     Conv2d,
     CrossEntropyLoss,
     Dropout,
     Flatten,
+    Identity,
     Linear,
     MaxPool2d,
     MSELoss,
@@ -13,6 +15,8 @@ from torch.nn import (
     ZeroPad2d,
 )
 
+from backpack.custom_module.branching import SumModule
+from backpack.custom_module.scale_module import ScaleModule
 from backpack.extensions.curvature import Curvature
 from backpack.extensions.secondorder.base import SecondOrderBackpropExtension
 from backpack.extensions.secondorder.hbp.hbp_options import (
@@ -21,7 +25,17 @@ from backpack.extensions.secondorder.hbp.hbp_options import (
     LossHessianStrategy,
 )
 
-from . import activations, conv2d, dropout, flatten, linear, losses, padding, pooling
+from . import (
+    activations,
+    conv2d,
+    custom_module,
+    dropout,
+    flatten,
+    linear,
+    losses,
+    padding,
+    pooling,
+)
 
 
 class HBP(SecondOrderBackpropExtension):
@@ -54,6 +68,9 @@ class HBP(SecondOrderBackpropExtension):
                 ReLU: activations.HBPReLU(),
                 Sigmoid: activations.HBPSigmoid(),
                 Tanh: activations.HBPTanh(),
+                SumModule: custom_module.HBPSumModule(),
+                ScaleModule: custom_module.HBPScaleModule(),
+                Identity: custom_module.HBPScaleModule(),
             },
         )
 
@@ -114,6 +131,11 @@ class KFAC(HBP):
 
     def get_num_mc_samples(self):
         return self._mc_samples
+
+    def accumulate_backpropagated_quantities(
+        self, existing: Tensor, other: Tensor
+    ) -> Tensor:  # noqa: D102
+        return existing + other
 
 
 class KFRA(HBP):

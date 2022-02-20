@@ -2,12 +2,16 @@
 
 from typing import List, Union
 
+from torch import Tensor
 from torch.nn import (
     ELU,
     SELU,
     AvgPool1d,
     AvgPool2d,
     AvgPool3d,
+    BatchNorm1d,
+    BatchNorm2d,
+    BatchNorm3d,
     Conv1d,
     Conv2d,
     Conv3d,
@@ -18,6 +22,7 @@ from torch.nn import (
     Dropout,
     Embedding,
     Flatten,
+    Identity,
     LeakyReLU,
     Linear,
     LogSigmoid,
@@ -31,19 +36,27 @@ from torch.nn import (
     ZeroPad2d,
 )
 
+from backpack.custom_module.branching import SumModule
+from backpack.custom_module.pad import Pad
+from backpack.custom_module.scale_module import ScaleModule
+from backpack.custom_module.slicing import Slicing
 from backpack.extensions.secondorder.base import SecondOrderBackpropExtension
 from backpack.extensions.secondorder.hbp import LossHessianStrategy
 from backpack.extensions.secondorder.sqrt_ggn import (
     activations,
+    batchnorm_nd,
     convnd,
     convtransposend,
+    custom_module,
     dropout,
     embedding,
     flatten,
     linear,
     losses,
+    pad,
     padding,
     pooling,
+    slicing,
 )
 
 
@@ -95,6 +108,14 @@ class SqrtGGN(SecondOrderBackpropExtension):
                 ELU: activations.SqrtGGNELU(),
                 SELU: activations.SqrtGGNSELU(),
                 Embedding: embedding.SqrtGGNEmbedding(),
+                Identity: custom_module.SqrtGGNScaleModule(),
+                ScaleModule: custom_module.SqrtGGNScaleModule(),
+                SumModule: custom_module.SqrtGGNSumModule(),
+                BatchNorm1d: batchnorm_nd.SqrtGGNBatchNormNd(),
+                BatchNorm2d: batchnorm_nd.SqrtGGNBatchNormNd(),
+                BatchNorm3d: batchnorm_nd.SqrtGGNBatchNormNd(),
+                Pad: pad.SqrtGGNPad(),
+                Slicing: slicing.SqrtGGNSlicing(),
             },
             subsampling=subsampling,
         )
@@ -106,6 +127,11 @@ class SqrtGGN(SecondOrderBackpropExtension):
             Loss Hessian strategy.
         """
         return self.loss_hessian_strategy
+
+    def accumulate_backpropagated_quantities(
+        self, existing: Tensor, other: Tensor
+    ) -> Tensor:  # noqa: D102
+        return existing + other
 
 
 class SqrtGGNExact(SqrtGGN):

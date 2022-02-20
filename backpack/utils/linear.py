@@ -31,7 +31,7 @@ def extract_weight_diagonal(
 
     else:
         equation = f"vno,ni->{'' if sum_batch else 'n'}oi"
-        return einsum(equation, S ** 2, module.input0 ** 2)
+        return einsum(equation, S**2, module.input0**2)
 
 
 # TODO This method applies the bias Jacobian, then squares and sums the result. Intro-
@@ -59,4 +59,4 @@ def extract_bias_diagonal(module: Linear, S: Tensor, sum_batch: bool = True) -> 
 
     equation = f"vno->{'' if sum_batch else 'n'}o"
 
-    return einsum(equation, JS ** 2)
+    return einsum(equation, JS**2)

@@ -4,6 +4,8 @@
 - MC-approximated diagonal of the generalized Gauss-Newton
 - Diagonal of the Hessian
 - MC Approximation of Diagonal of Gauss Newton
+- Exact matrix square root of the generalized Gauss-Newton
+- MC-approximated matrix square root of the generalized Gauss-Newton
 
 Required entries:
     "module_fn" (callable): Contains a model constructed from `torch.nn` layers
@@ -53,6 +55,9 @@ from torch.nn import (
     Sigmoid,
     Tanh,
 )
+
+from backpack.custom_module.pad import Pad
+from backpack.custom_module.slicing import Slicing
 
 SECONDORDER_SETTINGS = []
 
@@ -297,5 +302,67 @@ SECONDORDER_SETTINGS += [
         "loss_function_fn": lambda: CrossEntropyLoss(reduction="sum"),
         "target_fn": lambda: classification_targets((3, 2, 3, 2), 4),
         "id_prefix": "multi-d-CrossEntropyLoss",
+    },
+]
+
+###############################################################################
+#                                Custom Pad mod                               #
+###############################################################################
+SECONDORDER_SETTINGS += [
+    {
+        "input_fn": lambda: rand(5, 3, 4, 4),
+        "module_fn": lambda: Sequential(
+            Conv2d(in_channels=3, out_channels=2, kernel_size=2),
+            Pad((1, 1, 0, 2), mode="constant", value=0.0),
+            Conv2d(in_channels=2, out_channels=2, kernel_size=3, stride=2),
+            Flatten(),
+            Linear(8, 2),
+        ),
+        "loss_function_fn": lambda: MSELoss(reduction="mean"),
+        "target_fn": lambda: regression_targets((5, 2)),
+    },
+    {
+        "input_fn": lambda: rand(5, 3, 4, 4),
+        "module_fn": lambda: Sequential(
+            Conv2d(in_channels=3, out_channels=2, kernel_size=3, padding=1),
+            ReLU(),
+            Pad((1, 1, 2, 0, 1, 2), mode="constant", value=1.0),
+            Conv2d(in_channels=5, out_channels=2, kernel_size=3, stride=2),
+            ReLU(),
+            Flatten(),
+            Linear(8, 3),
+        ),
+        "loss_function_fn": lambda: CrossEntropyLoss(reduction="mean"),
+        "target_fn": lambda: classification_targets((5,), 3),
+    },
+]
+
+###############################################################################
+#                              Custom Slicing mod                             #
+###############################################################################
+SECONDORDER_SETTINGS += [
+    {
+        "input_fn": lambda: rand(3, 3, 4, 5),
+        "module_fn": lambda: Sequential(
+            Conv2d(in_channels=3, out_channels=2, kernel_size=2, padding=1),
+            Slicing((slice(None), 0, slice(None, None, 2), slice(0, 2))),
+            ReLU(),
+            Flatten(),
+            Linear(6, 4),
+        ),
+        "loss_function_fn": lambda: CrossEntropyLoss(reduction="mean"),
+        "target_fn": lambda: classification_targets((3,), 4),
+    },
+    {
+        "input_fn": lambda: rand(3, 3, 4, 5),
+        "module_fn": lambda: Sequential(
+            Conv2d(in_channels=3, out_channels=2, kernel_size=2, padding=1),
+            Slicing((slice(None), slice(None), 2)),
+            ReLU(),
+            Slicing((slice(None), 1)),
+            Linear(6, 4),
+        ),
+        "loss_function_fn": lambda: MSELoss(reduction="mean"),
+        "target_fn": lambda: regression_targets((3, 4)),
     },
 ]

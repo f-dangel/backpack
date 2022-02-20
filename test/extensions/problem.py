@@ -122,15 +122,12 @@ class ExtensionsTestProblem:
             str: id of problem
         """
         prefix = (self.id_prefix + "-") if self.id_prefix != "" else ""
-        return (
-            prefix
-            + "dev={}-in={}-model={}-loss={}".format(
-                self.device,
-                tuple(self.input_fn().shape),
-                self.module_fn(),
-                self.loss_function_fn(),
-            ).replace(" ", "")
-        )
+        return prefix + "dev={}-in={}-model={}-loss={}".format(
+            self.device,
+            tuple(self.input_fn().shape),
+            self.module_fn(),
+            self.loss_function_fn(),
+        ).replace(" ", "")
 
     def forward_pass(
         self, subsampling: List[int] = None

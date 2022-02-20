@@ -6,7 +6,7 @@ from typing import Iterator, List, Union
 from torch import Tensor, autograd, backends, cat, stack, var, zeros, zeros_like
 from torch.nn.utils.convert_parameters import parameters_to_vector
 
-from backpack.hessianfree.ggnvp import ggn_vector_product
+from backpack.hessianfree.ggnvp import ggn_vector_product, ggn_vector_product_from_plist
 from backpack.hessianfree.rop import R_op
 from backpack.utils.convert_parameters import vector_to_parameter_list
 
@@ -40,12 +40,12 @@ class AutogradExtensions(ExtensionsImplementation):
 
     def batch_l2_grad(self) -> List[Tensor]:  # noqa: D102
         return [
-            (g ** 2).flatten(start_dim=1).sum(1)
+            (g**2).flatten(start_dim=1).sum(1)
             for g in self.batch_grad(subsampling=None)
         ]
 
     def sgs(self) -> List[Tensor]:  # noqa: D102
-        return [(g ** 2).sum(0) for g in self.batch_grad(subsampling=None)]
+        return [(g**2).sum(0) for g in self.batch_grad(subsampling=None)]
 
     def variance(self) -> List[Tensor]:  # noqa: D102
         return [
@@ -142,6 +142,8 @@ class AutogradExtensions(ExtensionsImplementation):
             factor = self.problem.compute_reduction_factor()
             if not isclose(factor, 1.0):
                 ggn *= len(subsampling) * factor
+            elif isclose(factor, 1.0) and self.problem.get_batch_size() == 1:
+                ggn *= len(subsampling)
 
         return ggn
 
@@ -169,6 +171,42 @@ class AutogradExtensions(ExtensionsImplementation):
 
     def ggn_mc(self, mc_samples: int, chunks: int = 1):  # noqa: D102
         raise NotImplementedError
+
+    @staticmethod
+    def ggn_param_block(outputs: Tensor, loss: Tensor, param: Tensor) -> Tensor:
+        """Calculate the GGN block for a single parameter.
+
+        Args:
+            outputs: Model output.
+            loss: Loss value.
+            param: Parameter of the GGN block.
+
+        Returns:
+            Parameter GGN of shape ``[param.numel(), param.numel()]``.
+        """
+        columns = []
+
+        for i in range(param.numel()):
+            one_hot = zeros_like(param).flatten()
+            one_hot[i] = 1.0
+            one_hot = one_hot.reshape_as(param)
+
+            (column,) = ggn_vector_product_from_plist(loss, outputs, [param], one_hot)
+            columns.append(column.flatten())
+        return stack(columns)
+
+    def ggn_blocks(self) -> List[Tensor]:
+        """Calculate the GGN blocks for all trainable parameters.
+
+        Returns:
+            GGN blocks for each trainable parameter.
+        """
+        _, outputs, loss = self.problem.forward_pass()
+
+        return [
+            self.ggn_param_block(outputs, loss, param)
+            for param in self.problem.trainable_parameters()
+        ]
 
     def kfac(self, mc_samples: int = 1) -> List[List[Tensor]]:  # noqa: D102
         raise NotImplementedError
