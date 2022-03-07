@@ -8,6 +8,7 @@ from test.extensions.secondorder.secondorder_settings import (
 
 from torch import rand
 from torch.nn import (
+    Conv2d,
     CrossEntropyLoss,
     Flatten,
     Identity,
@@ -73,5 +74,23 @@ BATCH_SIZE_1_SETTINGS = [
         "loss_function_fn": lambda: CrossEntropyLoss(),
         "target_fn": lambda: classification_targets((3,), 4),
         "id_prefix": "branching-scalar",
+    },
+    {
+        "module_fn": lambda: Sequential(
+            Conv2d(
+                in_channels=3,
+                out_channels=6,
+                kernel_size=10,
+                bias=False,
+                padding=0,
+                stride=1,
+                dilation=1,
+            ),
+            Flatten(start_dim=1, end_dim=-1),
+        ),
+        "input_fn": lambda: rand(size=(1, 3, 10, 10)),
+        "loss_function_fn": lambda: MSELoss(),
+        "target_fn": lambda: regression_targets((1, 6)),
+        "id_prefix": "conv-example",
     },
 ]
