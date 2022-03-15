@@ -8,6 +8,10 @@ from backpack.core.derivatives.nll_base import NLLLossDerivatives
 
 
 class MSELossDerivatives(NLLLossDerivatives, ABC):
+    """Partial derivatives for mean square erro loss.
+
+    This comes from the Gaussian distribution.
+    """
     def _checks(self, module):
         self._check_input_dims(module)
 

@@ -43,15 +43,50 @@ class NLLLossDerivatives(BaseLossDerivatives):
         return
 
     def _make_distribution(self, subsampled_input, mc_samples):
+        """
+        Create the sampling distribution for the negative log likelihood.
+        Args:
+            subsampled_input: input after subsampling
+            mc_samples: number of samples
+
+        Returns: torch.Distributions object
+
+        """
         raise NotImplementedError
 
     def _sqrt(self, samples):
+        """
+        Adjust the samples to get the correct Hessian.
+        TODO redo this description
+        Args:
+            samples: samples taken
+
+        Returns: corrected samples.
+
+        """
         return samples
 
     def _post_process(self, samples):
+        """
+        Any final processing.
+        Args:
+            samples:
+
+        Returns:
+
+        """
         return samples
 
     def _mean_reduction(self, samples, input0):
+        """
+        Implementation of the mean reduction.
+        Args:
+            samples:
+            input0:
+
+        Returns:
+
+        """
         return samples / sqrt(input0.numel())
 
     def hessian_is_psd(self) -> bool:

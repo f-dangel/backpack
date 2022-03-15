@@ -1,7 +1,7 @@
 """NLL extention for Cross-Entropy Loss."""
 from abc import ABC
 from math import sqrt
-from typing import Dict, List, Tuple
+from typing import Dict, Tuple
 
 from einops import rearrange
 from torch import Tensor, softmax
@@ -12,6 +12,10 @@ from backpack.core.derivatives.nll_base import NLLLossDerivatives
 
 
 class CrossEntropyLossDerivatives(NLLLossDerivatives, ABC):
+    """Partial derivatives for cross-entropy loss.
+
+    This comes from the one-hot encoded Categorical distribution.
+    """
     def _checks(self, module):
         self._check_2nd_order_parameters(module)
 
