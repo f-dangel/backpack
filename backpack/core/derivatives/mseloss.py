@@ -1,14 +1,13 @@
 """NLL extention for Mean Square Error Loss."""
 from abc import ABC
-
-
+from math import sqrt
 from typing import List, Tuple
+
 from torch import Tensor, eye, mul, ones, zeros
 from torch.distributions import MultivariateNormal
 from torch.nn import MSELoss
 
 from backpack.core.derivatives.nll_base import NLLLossDerivatives
-from math import sqrt
 
 
 class MSELossDerivatives(NLLLossDerivatives, ABC):
