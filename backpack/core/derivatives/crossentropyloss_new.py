@@ -47,10 +47,10 @@ class CrossEntropyLossDerivatives(NLLLossDerivatives, ABC):
                 )
             )
 
-    def _make_distribution(self, module, subsampling, N, M, D):
+    def _make_distribution(self, module, subsampling, M, N, D):
         probs = self._get_probs(module, subsampling=subsampling)
         probs, *rearrange_info = self._merge_batch_and_additional(probs)
-        return OneHotCategorical(probs), (M,)
+        return OneHotCategorical(probs)
 
     @staticmethod
     def _get_probs(module: CrossEntropyLoss, subsampling: List[int] = None) -> Tensor:

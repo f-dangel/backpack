@@ -3,7 +3,7 @@ from math import sqrt
 from typing import Callable, Dict, List, Tuple
 
 from einops import rearrange
-from torch import Tensor, diag, diag_embed, einsum, eye, multinomial, ones_like, softmax
+from torch import Tensor, diag, diag_embed, einsum, eye, multinomial, ones_like, softmax, reshape
 from torch.nn import CrossEntropyLoss
 from torch.nn.functional import one_hot
 
@@ -36,8 +36,10 @@ class NLLLossDerivatives(BaseLossDerivatives):
         self._checks(module)
         M = mc_samples
         N, D = module.input0.shape
-        dist, to_sample = self._make_distribution(module, subsampling, N, M, D)
-        samples = dist.sample(to_sample)
+        dist = self._make_distribution(module, subsampling, M, N, D)
+        samples = dist.sample(M)
+        samples = reshape(samples, (M, N, D))
+        samples /= sqrt(M)
         raise NotImplementedError
 
     def _sum_hessian(
@@ -63,5 +65,8 @@ class NLLLossDerivatives(BaseLossDerivatives):
         """
         return
 
-    def _make_distribution(self, module, subsampling, N, M, D):
+    def _make_distribution(self, module, subsampling, M, N, D):
+        raise NotImplementedError
+
+    def _sqrt(self, samples):
         raise NotImplementedError

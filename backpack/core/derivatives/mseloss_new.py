@@ -1,8 +1,9 @@
 """NLL extention for Mean Square Error Loss."""
 from abc import ABC
 from backpack.core.derivatives.nll_base import NLLLossDerivatives
-from torch.distributions import Normal
-from torch import tensor
+from torch.distributions import MultivariateNormal
+from torch import tensor, zeros, eye, mul
+from math import sqrt
 
 
 class MSELossDerivatives(NLLLossDerivatives, ABC):
@@ -22,5 +23,5 @@ class MSELossDerivatives(NLLLossDerivatives, ABC):
         if not len(module.input0.shape) == 2:
             raise ValueError("Only 2D inputs are currently supported for MSELoss.")
 
-    def _make_distribution(self, module, subsampling, N, M, D):
-        return Normal(tensor([0.0]), tensor([1.0])), (M, N, D)
+    def _make_distribution(self, module, subsampling, M, N, D):
+        return MultivariateNormal(zeros(D * N), eye(D * N))
