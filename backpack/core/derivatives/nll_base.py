@@ -2,7 +2,7 @@
 from math import sqrt
 from typing import List, Tuple
 
-from torch import Size, Tensor, reshape
+from torch import Size, Tensor
 from torch.nn import CrossEntropyLoss
 
 from backpack.core.derivatives.basederivatives import BaseLossDerivatives
