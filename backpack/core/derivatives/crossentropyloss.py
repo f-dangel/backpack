@@ -1,14 +1,15 @@
 """NLL extention for Cross-Entropy Loss."""
 from abc import ABC
 from math import sqrt
-from typing import Dict, Tuple
+from typing import Callable, Dict, List, Tuple
 
 from einops import rearrange
-from torch import Tensor, softmax
+from torch import Tensor, diag, diag_embed, einsum, eye, ones_like, softmax
 from torch.distributions import OneHotCategorical
 from torch.nn import CrossEntropyLoss
 
 from backpack.core.derivatives.nll_base import NLLLossDerivatives
+from backpack.utils.subsampling import subsample
 
 
 class CrossEntropyLossDerivatives(NLLLossDerivatives, ABC):
@@ -16,6 +17,78 @@ class CrossEntropyLossDerivatives(NLLLossDerivatives, ABC):
 
     This comes from the one-hot encoded Categorical distribution.
     """
+
+    def _sqrt_hessian(
+        self,
+        module: CrossEntropyLoss,
+        g_inp: Tuple[Tensor],
+        g_out: Tuple[Tensor],
+        subsampling: List[int] = None,
+    ) -> Tensor:
+        self._check_2nd_order_parameters(module)
+
+        probs = self._get_probs(module, subsampling=subsampling)
+        probs, *rearrange_info = self._merge_batch_and_additional(probs)
+
+        tau = probs.sqrt()
+        V_dim, C_dim = 0, 2
+        Id = diag_embed(ones_like(probs), dim1=V_dim, dim2=C_dim)
+        Id_tautau = Id - einsum("nv,nc->vnc", tau, tau)
+        sqrt_H = einsum("nc,vnc->vnc", tau, Id_tautau)
+
+        if module.reduction == "mean":
+            sqrt_H /= sqrt(self._get_mean_normalization(module.input0))
+
+        sqrt_H = self._ungroup_batch_and_additional(sqrt_H, *rearrange_info)
+        sqrt_H = self._expand_sqrt_h(sqrt_H)
+        return sqrt_H
+
+    def _sum_hessian(
+        self, module: CrossEntropyLoss, g_inp: Tuple[Tensor], g_out: Tuple[Tensor]
+    ) -> Tensor:
+        self._check_2nd_order_parameters(module)
+
+        probs = self._get_probs(module)
+
+        if probs.dim() == 2:
+            diagonal = diag(probs.sum(0))
+            sum_H = diagonal - einsum("nc,nd->cd", probs, probs)
+        else:
+            out_shape = (*probs.shape[1:], *probs.shape[1:])
+            additional = probs.shape[2:].numel()
+
+            diagonal = diag(probs.sum(0).flatten()).reshape(out_shape)
+
+            probs = probs.flatten(2)
+            kron_delta = eye(additional, device=probs.device, dtype=probs.dtype)
+
+            sum_H = diagonal - einsum(
+                "ncx,ndy,xy->cxdy", probs, probs, kron_delta
+            ).reshape(out_shape)
+
+        if module.reduction == "mean":
+            sum_H /= self._get_mean_normalization(module.input0)
+
+        return sum_H
+
+    def _make_hessian_mat_prod(
+        self, module: CrossEntropyLoss, g_inp: Tuple[Tensor], g_out: Tuple[Tensor]
+    ) -> Callable[[Tensor], Tensor]:
+        self._check_2nd_order_parameters(module)
+
+        probs = self._get_probs(module)
+
+        def hessian_mat_prod(mat):
+            Hmat = einsum("...,v...->v...", probs, mat) - einsum(
+                "nc...,nd...,vnd...->vnc...", probs, probs, mat
+            )
+
+            if module.reduction == "mean":
+                Hmat /= self._get_mean_normalization(module.input0)
+
+            return Hmat
+
+        return hessian_mat_prod
 
     def _checks(self, module):
         self._check_2nd_order_parameters(module)
@@ -31,7 +104,7 @@ class CrossEntropyLossDerivatives(NLLLossDerivatives, ABC):
         return self.probs_unsqeezed - samples
 
     def _mean_reduction(self, samples, input0):
-        return samples / sqrt(input0.numel() // input0.shape[1])
+        return samples / self._get_mean_normalization()
 
     def _post_process(self, samples):
         return self._ungroup_batch_and_additional(samples, *self.rearrange_info)
@@ -129,3 +202,54 @@ class CrossEntropyLossDerivatives(NLLLossDerivatives, ABC):
             True
         """
         return True
+
+    @staticmethod
+    def _get_probs(module: CrossEntropyLoss, subsampling: List[int] = None) -> Tensor:
+        """Compute the softmax probabilities from the module input.
+
+        Args:
+            module: cross-entropy loss with I/O.
+            subsampling: Indices of samples to be considered. Default of ``None`` uses
+                the full mini-batch.
+
+        Returns:
+            Softmax probabilites
+        """
+        input0 = subsample(module.input0, subsampling=subsampling)
+        return softmax(input0, dim=1)
+
+    @staticmethod
+    def _get_mean_normalization(input: Tensor) -> int:
+        """Get normalization constant used with reduction='mean'.
+
+        Args:
+            input: Input to the cross-entropy module.
+
+        Returns:
+            Divisor for mean reduction.
+        """
+        return input.numel() // input.shape[1]
+
+    @staticmethod
+    def _expand_sqrt_h(sqrt_h: Tensor) -> Tensor:
+        """Expands the square root hessian if CrossEntropyLoss has additional axes.
+
+        In the case of e.g. two additional axes (A and B), the input is [N,C,A,B].
+        In CrossEntropyLoss the additional axes are treated independently.
+        Therefore, the intermediate result has shape [C,N,C,A,B].
+        In subsequent calculations the additional axes are not independent anymore.
+        The required shape for sqrt_h_full is then [C*A*B,N,C,A,B].
+        Due to the independence, sqrt_h lives on the diagonal of sqrt_h_full.
+
+        Args:
+            sqrt_h: intermediate result, shape [C,N,C,A,B]
+
+        Returns:
+            sqrt_h_full, shape [C*A*B,N,C,A,B], sqrt_h on diagonal.
+        """
+        if sqrt_h.dim() > 3:
+            return diag_embed(sqrt_h.flatten(3), offset=0, dim1=1, dim2=4).reshape(
+                -1, *sqrt_h.shape[1:]
+            )
+        else:
+            return sqrt_h
