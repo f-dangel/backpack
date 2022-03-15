@@ -35,7 +35,7 @@ class NLLLossDerivatives(BaseLossDerivatives):
 
     def _checks(self, module):
         """
-        Default runs no checks.
+        Any checks to be performed. Default runs none.
         """
         return
 
@@ -53,8 +53,8 @@ class NLLLossDerivatives(BaseLossDerivatives):
 
     def _sqrt(self, samples):
         """
-        Adjust the samples to get the correct Hessian.
-        TODO redo this description
+        Adjust the samples to get the correct Hessian. Default does nothing.
+
         Args:
             samples: samples taken
 
@@ -67,21 +67,21 @@ class NLLLossDerivatives(BaseLossDerivatives):
         """
         Any final processing.
         Args:
-            samples:
+            samples: sampled Hessian before final processing. Default does nothing.
 
-        Returns:
+        Returns: final Hessian
 
         """
         return samples
 
     def _mean_reduction(self, samples, input0):
         """
-        Implementation of the mean reduction.
+        Take the mean. Default takes this over total elements.
         Args:
-            samples:
-            input0:
+            samples: square root Hessian
+            input0: original input
 
-        Returns:
+        Returns: mean Hessian
 
         """
         return samples / sqrt(input0.numel())

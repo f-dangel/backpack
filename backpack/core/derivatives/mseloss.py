@@ -97,14 +97,5 @@ class MSELossDerivatives(NLLLossDerivatives, ABC):
         """
         return True
 
-    def _sqrt(self, samples):
-        """
-        Adjust the samples to get the correct Hessian.
-        TODO redo this description
-        Args:
-            samples: samples taken
-
-        Returns: corrected samples.
-
-        """
+    def _post_process(self, samples):
         return reshape(samples, (self.mc_samples, self.N, self.D))
