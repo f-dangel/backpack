@@ -1,29 +1,16 @@
 """Partial derivative bases for NLL losses."""
 from math import sqrt
-from typing import Callable, Dict, List, Tuple
+from typing import List, Tuple
 
-from einops import rearrange
-from torch import Tensor, diag, diag_embed, einsum, eye, multinomial, ones_like, softmax, reshape
+from torch import Size, Tensor, reshape
 from torch.nn import CrossEntropyLoss
-from torch.nn.functional import one_hot
 
 from backpack.core.derivatives.basederivatives import BaseLossDerivatives
 from backpack.utils.subsampling import subsample
 
 
 class NLLLossDerivatives(BaseLossDerivatives):
-    """Partial derivative bases for NLL loss.
-    """
-
-    def _sqrt_hessian(
-        self,
-        module: CrossEntropyLoss,
-        g_inp: Tuple[Tensor],
-        g_out: Tuple[Tensor],
-        subsampling: List[int] = None,
-    ) -> Tensor:
-        # TODO
-        raise NotImplementedError
+    """Partial derivative bases for NLL loss."""
 
     def _sqrt_hessian_sampled(
         self,
@@ -34,39 +21,38 @@ class NLLLossDerivatives(BaseLossDerivatives):
         subsampling: List[int] = None,
     ) -> Tensor:
         self._checks(module)
-        M = mc_samples
-        N, D = module.input0.shape
-        dist = self._make_distribution(module, subsampling, M, N, D)
-        samples = dist.sample(M)
-        samples = reshape(samples, (M, N, D))
-        samples /= sqrt(M)
-        raise NotImplementedError
 
-    def _sum_hessian(
-        self, module: CrossEntropyLoss, g_inp: Tuple[Tensor], g_out: Tuple[Tensor]
-    ) -> Tensor:
-        # TODO
-        raise NotImplementedError
+        subsampled_input = subsample(module.input0, subsampling=subsampling)
+        dist = self._make_distribution(subsampled_input, mc_samples)
 
-    def _make_hessian_mat_prod(
-        self, module: CrossEntropyLoss, g_inp: Tuple[Tensor], g_out: Tuple[Tensor]
-    ) -> Callable[[Tensor], Tensor]:
-        # TODO
-        raise NotImplementedError
+        samples = dist.sample(sample_shape=Size([mc_samples]))
+        samples = reshape(
+            samples, (mc_samples, len(subsampled_input), len(subsampled_input[0]))
+        )
+        samples = self._sqrt(samples) / sqrt(mc_samples)
 
-    def hessian_is_psd(self) -> bool:
-        """Return whether loss Hessian is positive semi-definite.
-        """
-        raise NotImplementedError
+        if module.reduction == "mean":
+            samples = self._mean_reduction(samples, module.input0)
+
+        return self._post_process(samples)
 
     def _checks(self, module):
         """
-        Default runs no checks
+        Default runs no checks.
         """
         return
 
-    def _make_distribution(self, module, subsampling, M, N, D):
+    def _make_distribution(self, subsampled_input, mc_samples):
         raise NotImplementedError
 
     def _sqrt(self, samples):
+        return samples
+
+    def _post_process(self, samples):
+        return samples
+
+    def _mean_reduction(self, samples, input0):
+        return samples / sqrt(input0.numel())
+
+    def hessian_is_psd(self) -> bool:
         raise NotImplementedError
