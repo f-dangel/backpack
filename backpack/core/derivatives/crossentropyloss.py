@@ -16,6 +16,7 @@ class CrossEntropyLossDerivatives(NLLLossDerivatives, ABC):
 
     This comes from the one-hot encoded Categorical distribution.
     """
+
     def _checks(self, module):
         self._check_2nd_order_parameters(module)
 
@@ -122,4 +123,9 @@ class CrossEntropyLossDerivatives(NLLLossDerivatives, ABC):
         )
 
     def hessian_is_psd(self) -> bool:
+        """Return whether cross-entropy loss Hessian is positive semi-definite.
+
+        Returns:
+            True
+        """
         return True

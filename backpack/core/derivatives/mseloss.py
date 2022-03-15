@@ -12,6 +12,7 @@ class MSELossDerivatives(NLLLossDerivatives, ABC):
 
     This comes from the Gaussian distribution.
     """
+
     def _checks(self, module):
         self._check_input_dims(module)
 
@@ -27,4 +28,9 @@ class MSELossDerivatives(NLLLossDerivatives, ABC):
             raise ValueError("Only 2D inputs are currently supported for MSELoss.")
 
     def hessian_is_psd(self) -> bool:
+        """Return whether cross-entropy loss Hessian is positive semi-definite.
+
+        Returns:
+            True
+        """
         return True
