@@ -26,9 +26,6 @@ class NLLLossDerivatives(BaseLossDerivatives):
         dist = self._make_distribution(subsampled_input, mc_samples)
 
         samples = dist.sample(sample_shape=Size([mc_samples]))
-        samples = reshape(
-            samples, (mc_samples, len(subsampled_input), len(subsampled_input[0]))
-        )
         samples = self._sqrt(samples) / sqrt(mc_samples)
 
         if module.reduction == "mean":

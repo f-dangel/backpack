@@ -3,7 +3,7 @@ from abc import ABC
 from math import sqrt
 from typing import List, Tuple
 
-from torch import Tensor, eye, mul, ones, zeros
+from torch import Tensor, eye, mul, ones, reshape, zeros
 from torch.distributions import MultivariateNormal
 from torch.nn import MSELoss
 
@@ -76,9 +76,12 @@ class MSELossDerivatives(NLLLossDerivatives, ABC):
         self._check_input_dims(module)
 
     def _make_distribution(self, subsampled_input, mc_samples):
+        self.mc_samples = mc_samples
+        self.N = len(subsampled_input)
+        self.D = len(subsampled_input[0])
         return MultivariateNormal(
-            zeros(len(subsampled_input) * len(subsampled_input[0])),
-            mul(eye(len(subsampled_input) * len(subsampled_input[0])), 2),
+            zeros(self.N * self.D),
+            mul(eye(self.N * self.D), 2),
         )
 
     def _check_input_dims(self, module):
@@ -93,3 +96,15 @@ class MSELossDerivatives(NLLLossDerivatives, ABC):
             True
         """
         return True
+
+    def _sqrt(self, samples):
+        """
+        Adjust the samples to get the correct Hessian.
+        TODO redo this description
+        Args:
+            samples: samples taken
+
+        Returns: corrected samples.
+
+        """
+        return reshape(samples, (self.mc_samples, self.N, self.D))

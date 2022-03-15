@@ -104,7 +104,7 @@ class CrossEntropyLossDerivatives(NLLLossDerivatives, ABC):
         return self.probs_unsqeezed - samples
 
     def _mean_reduction(self, samples, input0):
-        return samples / self._get_mean_normalization(input0)
+        return samples / sqrt(self._get_mean_normalization(input0))
 
     def _post_process(self, samples):
         return self._ungroup_batch_and_additional(samples, *self.rearrange_info)
