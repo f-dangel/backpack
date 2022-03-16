@@ -35,9 +35,9 @@ class NLLLossDerivatives(BaseLossDerivatives):
 
     def _checks(self, module):
         """
-        Any checks to be performed. Default runs none.
+        Any checks to be performed.
         """
-        return
+        raise NotImplementedError
 
     def _make_distribution(self, subsampled_input, mc_samples):
         """
@@ -62,10 +62,10 @@ class NLLLossDerivatives(BaseLossDerivatives):
         """
         Any final processing.
         Args:
-            samples: sampled Hessian before final processing. Default does nothing.
+            samples: sampled Hessian before final processing.
         Returns: final Hessian
         """
-        return samples
+        raise NotImplementedError
 
     def _mean_reduction(self, samples, input0):
         """
