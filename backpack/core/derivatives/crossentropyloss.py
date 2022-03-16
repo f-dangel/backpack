@@ -1,17 +1,18 @@
 """Partial derivatives for cross-entropy loss."""
+from abc import ABC
 from math import sqrt
 from typing import Callable, Dict, List, Tuple
 
 from einops import rearrange
-from torch import Tensor, diag, diag_embed, einsum, eye, multinomial, ones_like, softmax
+from torch import Tensor, diag, diag_embed, einsum, eye, ones_like, softmax
+from torch.distributions import OneHotCategorical
 from torch.nn import CrossEntropyLoss
-from torch.nn.functional import one_hot
 
-from backpack.core.derivatives.basederivatives import BaseLossDerivatives
+from backpack.core.derivatives.nll_base import NLLLossDerivatives
 from backpack.utils.subsampling import subsample
 
 
-class CrossEntropyLossDerivatives(BaseLossDerivatives):
+class CrossEntropyLossDerivatives(NLLLossDerivatives, ABC):
     """Partial derivatives for cross-entropy loss.
 
     The `torch.nn.CrossEntropyLoss` operation is a composition of softmax
@@ -42,37 +43,6 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
         sqrt_H = self._ungroup_batch_and_additional(sqrt_H, *rearrange_info)
         sqrt_H = self._expand_sqrt_h(sqrt_H)
         return sqrt_H
-
-    def _sqrt_hessian_sampled(
-        self,
-        module: CrossEntropyLoss,
-        g_inp: Tuple[Tensor],
-        g_out: Tuple[Tensor],
-        mc_samples: int = 1,
-        subsampling: List[int] = None,
-    ) -> Tensor:
-        self._check_2nd_order_parameters(module)
-
-        M = mc_samples
-        C = module.input0.shape[1]
-
-        probs = self._get_probs(module, subsampling=subsampling)
-        probs, *rearrange_info = self._merge_batch_and_additional(probs)
-
-        V_dim = 0
-        probs_unsqueezed = probs.unsqueeze(V_dim).repeat(M, 1, 1)
-
-        multi = multinomial(probs, M, replacement=True)
-        classes = one_hot(multi, num_classes=C)
-        classes = einsum("nvc->vnc", classes).float()
-
-        sqrt_mc_h = (probs_unsqueezed - classes) / sqrt(M)
-
-        if module.reduction == "mean":
-            sqrt_mc_h /= sqrt(self._get_mean_normalization(module.input0))
-
-        sqrt_mc_h = self._ungroup_batch_and_additional(sqrt_mc_h, *rearrange_info)
-        return sqrt_mc_h
 
     def _sum_hessian(
         self, module: CrossEntropyLoss, g_inp: Tuple[Tensor], g_out: Tuple[Tensor]
@@ -265,3 +235,22 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
             Divisor for mean reduction.
         """
         return input.numel() // input.shape[1]
+
+    def _checks(self, module):
+        self._check_2nd_order_parameters(module)
+
+    def _make_distribution(self, subsampled_input, mc_samples):
+        probs = softmax(subsampled_input, dim=1)
+        probs, *rearrange_info = self._merge_batch_and_additional(probs)
+        self.rearrange_info = rearrange_info
+        self.probs_unsqeezed = probs.unsqueeze(0).repeat(mc_samples, 1, 1)
+        return OneHotCategorical(probs)
+
+    def _sqrt(self, samples):
+        return self.probs_unsqeezed - samples
+
+    def _mean_reduction(self, samples, input0):
+        return samples / sqrt(self._get_mean_normalization(input0))
+
+    def _post_process(self, samples):
+        return self._ungroup_batch_and_additional(samples, *self.rearrange_info)

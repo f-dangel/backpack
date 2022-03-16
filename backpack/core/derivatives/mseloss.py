@@ -1,15 +1,17 @@
 """Derivatives of the MSE Loss."""
 
+from abc import ABC
 from math import sqrt
 from typing import List, Tuple
 
-from torch import Tensor, eye, normal, ones
+from torch import Tensor, eye, mul, ones, reshape, zeros
+from torch.distributions import MultivariateNormal
 from torch.nn import MSELoss
 
-from backpack.core.derivatives.basederivatives import BaseLossDerivatives
+from backpack.core.derivatives.nll_base import NLLLossDerivatives
 
 
-class MSELossDerivatives(BaseLossDerivatives):
+class MSELossDerivatives(NLLLossDerivatives, ABC):
     """Derivatives of the MSE Loss.
 
     We only support 2D tensors.
@@ -39,33 +41,6 @@ class MSELossDerivatives(BaseLossDerivatives):
         sqrt_H = sqrt_H_diag.diag().unsqueeze(1).expand(-1, N_active, -1)
 
         return sqrt_H
-
-    def _sqrt_hessian_sampled(
-        self,
-        module: MSELoss,
-        g_inp: Tuple[Tensor],
-        g_out: Tuple[Tensor],
-        mc_samples: int = 1,
-        subsampling: List[int] = None,
-    ) -> Tensor:
-        self.check_input_dims(module)
-
-        input0: Tensor = module.input0
-        N, D = input0.shape
-        N_active = N if subsampling is None else len(subsampling)
-        samples = normal(
-            0,
-            1,
-            size=[mc_samples, N_active, D],
-            device=input0.device,
-            dtype=input0.dtype,
-        )
-        samples *= sqrt(2) / sqrt(mc_samples)
-
-        if module.reduction == "mean":
-            samples /= sqrt(input0.numel())
-
-        return samples
 
     def _sum_hessian(self, module, g_inp, g_out):
         """The Hessian, summed across the batch dimension.
@@ -108,3 +83,18 @@ class MSELossDerivatives(BaseLossDerivatives):
 
     def hessian_is_psd(self):
         return True
+
+    def _checks(self, module):
+        self.check_input_dims(module)
+
+    def _make_distribution(self, subsampled_input, mc_samples):
+        self.mc_samples = mc_samples
+        self.N = len(subsampled_input)
+        self.D = len(subsampled_input[0])
+        return MultivariateNormal(
+            zeros(self.N * self.D),
+            mul(eye(self.N * self.D), 2),
+        )
+
+    def _post_process(self, samples):
+        return reshape(samples, (self.mc_samples, self.N, self.D))
