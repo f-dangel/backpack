@@ -38,10 +38,13 @@ class NLLLossDerivatives(BaseLossDerivatives):
 
     def compute_sampled_grads(self, subsampled_input, mc_samples):
         """Method to create the subsampled gradients.
+
         This can be overwritten by a faster method if a hand-crafted gradient is possible.
+
         Args:
             subsampled_input: input after subsampling
             mc_samples: number of samples
+
         Returns:
             sampled gradient of shape [mc_samples, *subsampled_input.shape]
         """
@@ -62,8 +65,10 @@ class NLLLossDerivatives(BaseLossDerivatives):
 
     def _make_distribution(self, subsampled_input):
         """Create the sampling distribution for the negative log likelihood.
+
         Args:
             subsampled_input: input after subsampling
+
         Returns: torch.Distributions object
         """
         raise NotImplementedError

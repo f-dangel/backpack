@@ -12,6 +12,7 @@ from backpack.core.derivatives.nll_base import NLLLossDerivatives
 
 class MSELossDerivatives(NLLLossDerivatives, ABC):
     """Partial derivatives for mean square error loss.
+
     This comes from the Gaussian distribution.
     """
 
@@ -39,10 +40,12 @@ class MSELossDerivatives(NLLLossDerivatives, ABC):
 
     def _sum_hessian(self, module, g_inp, g_out):
         """The Hessian, summed across the batch dimension.
+
         Args:
             module: (torch.nn.MSELoss) module
             g_inp: Gradient of loss w.r.t. input
             g_out: Gradient of loss w.r.t. output
+
         Returns: a `[D, D]` tensor of the Hessian, summed across batch
         """
         self._check_input_dims(module)
@@ -81,6 +84,7 @@ class MSELossDerivatives(NLLLossDerivatives, ABC):
 
     def hessian_is_psd(self) -> bool:
         """Return whether cross-entropy loss Hessian is positive semi-definite.
+
         Returns:
             True
         """
@@ -92,9 +96,11 @@ class MSELossDerivatives(NLLLossDerivatives, ABC):
 
     def compute_sampled_grads(self, subsampled_input, mc_samples):
         """Custom method to overwrite gradient computation for MeanSquareError Loss.
+
         Args:
             subsampled_input: input after subsampling
             mc_samples: number of samples
+
         Returns:
             sampled gradient
         """

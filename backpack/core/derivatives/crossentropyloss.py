@@ -14,6 +14,7 @@ from backpack.utils.subsampling import subsample
 
 class CrossEntropyLossDerivatives(NLLLossDerivatives, ABC):
     """Partial derivatives for cross-entropy loss.
+
     This comes from the one-hot encoded Categorical distribution.
     """
 
@@ -100,8 +101,10 @@ class CrossEntropyLossDerivatives(NLLLossDerivatives, ABC):
 
     def _check_2nd_order_parameters(self, module: CrossEntropyLoss) -> None:
         """Verify that the parameters are supported by 2nd-order quantities.
+
         Args:
             module: Extended CrossEntropyLoss module
+
         Raises:
             NotImplementedError: If module's setting is not implemented.
         """
@@ -127,9 +130,12 @@ class CrossEntropyLossDerivatives(NLLLossDerivatives, ABC):
         probs: Tensor,
     ) -> Tuple[Tensor, str, Dict[str, int]]:
         """Rearranges the input if it has additional axes.
+
         Treat additional axes like batch axis, i.e. group ``n c d1 d2 -> (n d1 d2) c``.
+
         Args:
             probs: the tensor to rearrange
+
         Returns:
             a tuple containing
                 - probs: the rearranged tensor
@@ -153,17 +159,22 @@ class CrossEntropyLossDerivatives(NLLLossDerivatives, ABC):
         tensor: Tensor, str_d_dims, d_info, free_axis: int = 1
     ) -> Tensor:
         """Rearranges output if it has additional axes.
+
         Used with group_batch_and_additional.
+
         Undoes treating additional axes like batch axis and assumes an number of
         additional free axes (``v``) were added, i.e. un-groups
         ``v (n d1 d2) c -> v n c d1 d2``.
+
         Args:
             tensor: the tensor to rearrange
             str_d_dims: a string representation of the additional dimensions
             d_info: a dictionary encoding the size of the additional dimensions
             free_axis: Number of free leading axes. Default: ``1``.
+
         Returns:
             the rearranged tensor
+
         Raises:
             NotImplementedError: If ``free_axis != 1``.
         """
@@ -176,6 +187,7 @@ class CrossEntropyLossDerivatives(NLLLossDerivatives, ABC):
 
     def hessian_is_psd(self) -> bool:
         """Return whether cross-entropy loss Hessian is positive semi-definite.
+
         Returns:
             True
         """
@@ -184,10 +196,12 @@ class CrossEntropyLossDerivatives(NLLLossDerivatives, ABC):
     @staticmethod
     def _get_probs(module: CrossEntropyLoss, subsampling: List[int] = None) -> Tensor:
         """Compute the softmax probabilities from the module input.
+
         Args:
             module: cross-entropy loss with I/O.
             subsampling: Indices of samples to be considered. Default of ``None`` uses
                 the full mini-batch.
+
         Returns:
             Softmax probabilites
         """
@@ -197,8 +211,10 @@ class CrossEntropyLossDerivatives(NLLLossDerivatives, ABC):
     @staticmethod
     def _get_mean_normalization(input: Tensor) -> int:
         """Get normalization constant used with reduction='mean'.
+
         Args:
             input: Input to the cross-entropy module.
+
         Returns:
             Divisor for mean reduction.
         """
@@ -207,14 +223,17 @@ class CrossEntropyLossDerivatives(NLLLossDerivatives, ABC):
     @staticmethod
     def _expand_sqrt_h(sqrt_h: Tensor) -> Tensor:
         """Expands the square root hessian if CrossEntropyLoss has additional axes.
+
         In the case of e.g. two additional axes (A and B), the input is [N,C,A,B].
         In CrossEntropyLoss the additional axes are treated independently.
         Therefore, the intermediate result has shape [C,N,C,A,B].
         In subsequent calculations the additional axes are not independent anymore.
         The required shape for sqrt_h_full is then [C*A*B,N,C,A,B].
         Due to the independence, sqrt_h lives on the diagonal of sqrt_h_full.
+
         Args:
             sqrt_h: intermediate result, shape [C,N,C,A,B]
+
         Returns:
             sqrt_h_full, shape [C*A*B,N,C,A,B], sqrt_h on diagonal.
         """
@@ -227,9 +246,11 @@ class CrossEntropyLossDerivatives(NLLLossDerivatives, ABC):
 
     def compute_sampled_grads(self, subsampled_input, mc_samples):
         """Custom method to overwrite gradient computation for CrossEntropyLoss.
+
         Args:
             subsampled_input: input after subsampling
             mc_samples: number of samples
+
         Returns:
             sampled gradient
         """
