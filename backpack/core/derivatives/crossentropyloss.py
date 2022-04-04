@@ -1,11 +1,11 @@
-"""Partial derivatives for cross-entropy loss."""
+"""NLL extention for Cross-Entropy Loss."""
 from abc import ABC
 from math import sqrt
 from typing import Callable, Dict, List, Tuple
 
 from einops import rearrange
-from torch import Tensor, diag, diag_embed, einsum, eye, ones_like, softmax
-from torch.distributions import OneHotCategorical
+from torch import Size, Tensor, diag, diag_embed, einsum, eye, ones_like, softmax
+from torch.distributions import Categorical, OneHotCategorical
 from torch.nn import CrossEntropyLoss
 
 from backpack.core.derivatives.nll_base import NLLLossDerivatives
@@ -14,9 +14,7 @@ from backpack.utils.subsampling import subsample
 
 class CrossEntropyLossDerivatives(NLLLossDerivatives, ABC):
     """Partial derivatives for cross-entropy loss.
-
-    The `torch.nn.CrossEntropyLoss` operation is a composition of softmax
-    and negative log-likelihood.
+    This comes from the one-hot encoded Categorical distribution.
     """
 
     def _sqrt_hessian(
@@ -91,35 +89,19 @@ class CrossEntropyLossDerivatives(NLLLossDerivatives, ABC):
 
         return hessian_mat_prod
 
-    def hessian_is_psd(self) -> bool:
-        """Return whether cross-entropy loss Hessian is positive semi-definite.
+    def _checks(self, module):
+        self._check_2nd_order_parameters(module)
 
-        Returns:
-            True
-        """
-        return True
+    def _make_distribution(self, subsampled_input):
+        return Categorical(softmax(subsampled_input, dim=1))
 
-    @staticmethod
-    def _get_probs(module: CrossEntropyLoss, subsampling: List[int] = None) -> Tensor:
-        """Compute the softmax probabilities from the module input.
-
-        Args:
-            module: cross-entropy loss with I/O.
-            subsampling: Indices of samples to be considered. Default of ``None`` uses
-                the full mini-batch.
-
-        Returns:
-            Softmax probabilites
-        """
-        input0 = subsample(module.input0, subsampling=subsampling)
-        return softmax(input0, dim=1)
+    def _mean_reduction(self, samples, input0):
+        return samples / sqrt(self._get_mean_normalization(input0))
 
     def _check_2nd_order_parameters(self, module: CrossEntropyLoss) -> None:
         """Verify that the parameters are supported by 2nd-order quantities.
-
         Args:
             module: Extended CrossEntropyLoss module
-
         Raises:
             NotImplementedError: If module's setting is not implemented.
         """
@@ -145,12 +127,9 @@ class CrossEntropyLossDerivatives(NLLLossDerivatives, ABC):
         probs: Tensor,
     ) -> Tuple[Tensor, str, Dict[str, int]]:
         """Rearranges the input if it has additional axes.
-
         Treat additional axes like batch axis, i.e. group ``n c d1 d2 -> (n d1 d2) c``.
-
         Args:
             probs: the tensor to rearrange
-
         Returns:
             a tuple containing
                 - probs: the rearranged tensor
@@ -174,22 +153,17 @@ class CrossEntropyLossDerivatives(NLLLossDerivatives, ABC):
         tensor: Tensor, str_d_dims, d_info, free_axis: int = 1
     ) -> Tensor:
         """Rearranges output if it has additional axes.
-
         Used with group_batch_and_additional.
-
         Undoes treating additional axes like batch axis and assumes an number of
         additional free axes (``v``) were added, i.e. un-groups
         ``v (n d1 d2) c -> v n c d1 d2``.
-
         Args:
             tensor: the tensor to rearrange
             str_d_dims: a string representation of the additional dimensions
             d_info: a dictionary encoding the size of the additional dimensions
             free_axis: Number of free leading axes. Default: ``1``.
-
         Returns:
             the rearranged tensor
-
         Raises:
             NotImplementedError: If ``free_axis != 1``.
         """
@@ -200,20 +174,47 @@ class CrossEntropyLossDerivatives(NLLLossDerivatives, ABC):
             tensor, f"v (n {str_d_dims}) c -> v n c {str_d_dims}", **d_info
         )
 
+    def hessian_is_psd(self) -> bool:
+        """Return whether cross-entropy loss Hessian is positive semi-definite.
+        Returns:
+            True
+        """
+        return True
+
+    @staticmethod
+    def _get_probs(module: CrossEntropyLoss, subsampling: List[int] = None) -> Tensor:
+        """Compute the softmax probabilities from the module input.
+        Args:
+            module: cross-entropy loss with I/O.
+            subsampling: Indices of samples to be considered. Default of ``None`` uses
+                the full mini-batch.
+        Returns:
+            Softmax probabilites
+        """
+        input0 = subsample(module.input0, subsampling=subsampling)
+        return softmax(input0, dim=1)
+
+    @staticmethod
+    def _get_mean_normalization(input: Tensor) -> int:
+        """Get normalization constant used with reduction='mean'.
+        Args:
+            input: Input to the cross-entropy module.
+        Returns:
+            Divisor for mean reduction.
+        """
+        return input.numel() // input.shape[1]
+
     @staticmethod
     def _expand_sqrt_h(sqrt_h: Tensor) -> Tensor:
         """Expands the square root hessian if CrossEntropyLoss has additional axes.
-
         In the case of e.g. two additional axes (A and B), the input is [N,C,A,B].
         In CrossEntropyLoss the additional axes are treated independently.
         Therefore, the intermediate result has shape [C,N,C,A,B].
         In subsequent calculations the additional axes are not independent anymore.
         The required shape for sqrt_h_full is then [C*A*B,N,C,A,B].
         Due to the independence, sqrt_h lives on the diagonal of sqrt_h_full.
-
         Args:
             sqrt_h: intermediate result, shape [C,N,C,A,B]
-
         Returns:
             sqrt_h_full, shape [C*A*B,N,C,A,B], sqrt_h on diagonal.
         """
@@ -224,33 +225,17 @@ class CrossEntropyLossDerivatives(NLLLossDerivatives, ABC):
         else:
             return sqrt_h
 
-    @staticmethod
-    def _get_mean_normalization(input: Tensor) -> int:
-        """Get normalization constant used with reduction='mean'.
-
+    def compute_sampled_grads(self, subsampled_input, mc_samples):
+        """Custom method to overwrite gradient computation for CrossEntropyLoss.
         Args:
-            input: Input to the cross-entropy module.
-
+            subsampled_input: input after subsampling
+            mc_samples: number of samples
         Returns:
-            Divisor for mean reduction.
+            sampled gradient
         """
-        return input.numel() // input.shape[1]
-
-    def _checks(self, module):
-        self._check_2nd_order_parameters(module)
-
-    def _make_distribution(self, subsampled_input, mc_samples):
         probs = softmax(subsampled_input, dim=1)
         probs, *rearrange_info = self._merge_batch_and_additional(probs)
-        self.rearrange_info = rearrange_info
-        self.probs_unsqeezed = probs.unsqueeze(0).repeat(mc_samples, 1, 1)
-        return OneHotCategorical(probs)
-
-    def _sqrt(self, samples):
-        return self.probs_unsqeezed - samples
-
-    def _mean_reduction(self, samples, input0):
-        return samples / sqrt(self._get_mean_normalization(input0))
-
-    def _post_process(self, samples):
-        return self._ungroup_batch_and_additional(samples, *self.rearrange_info)
+        probs_unsqeezed = probs.unsqueeze(0).repeat(mc_samples, 1, 1)
+        samples = OneHotCategorical(probs).sample(sample_shape=Size([mc_samples]))
+        sqrt_mc_h = probs_unsqeezed - samples
+        return self._ungroup_batch_and_additional(sqrt_mc_h, *rearrange_info)

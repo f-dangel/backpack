@@ -1,23 +1,18 @@
-"""Derivatives of the MSE Loss."""
-
+"""NLL extention for Mean Square Error Loss."""
 from abc import ABC
 from math import sqrt
 from typing import List, Tuple
 
-from torch import Tensor, eye, mul, ones, reshape, zeros
-from torch.distributions import MultivariateNormal
+from torch import Tensor, eye, mean, normal, ones, tensor
+from torch.distributions import Normal
 from torch.nn import MSELoss
 
 from backpack.core.derivatives.nll_base import NLLLossDerivatives
 
 
 class MSELossDerivatives(NLLLossDerivatives, ABC):
-    """Derivatives of the MSE Loss.
-
-    We only support 2D tensors.
-
-    For `X : [n, d]` and `Y : [n, d]`, if `reduce=sum`, the MSE computes
-    `∑ᵢ₌₁ⁿ ‖X[i,∶] − Y[i,∶]‖²`. If `reduce=mean`, the result is divided by `nd`.
+    """Partial derivatives for mean square error loss.
+    This comes from the Gaussian distribution.
     """
 
     def _sqrt_hessian(
@@ -27,7 +22,7 @@ class MSELossDerivatives(NLLLossDerivatives, ABC):
         g_out: Tuple[Tensor],
         subsampling: List[int] = None,
     ) -> Tensor:  # noqa: D102
-        self.check_input_dims(module)
+        self._check_input_dims(module)
 
         input0: Tensor = module.input0
         N, D = input0.shape
@@ -44,16 +39,13 @@ class MSELossDerivatives(NLLLossDerivatives, ABC):
 
     def _sum_hessian(self, module, g_inp, g_out):
         """The Hessian, summed across the batch dimension.
-
         Args:
             module: (torch.nn.MSELoss) module
             g_inp: Gradient of loss w.r.t. input
             g_out: Gradient of loss w.r.t. output
-
         Returns: a `[D, D]` tensor of the Hessian, summed across batch
-
         """
-        self.check_input_dims(module)
+        self._check_input_dims(module)
 
         N, D = module.input0.shape
         H = 2 * eye(D, device=module.input0.device)
@@ -76,25 +68,41 @@ class MSELossDerivatives(NLLLossDerivatives, ABC):
 
         return hessian_mat_prod
 
-    def check_input_dims(self, module):
+    def _checks(self, module):
+        self._check_input_dims(module)
+
+    def _make_distribution(self, subsampled_input):
+        return Normal(mean(subsampled_input), tensor(sqrt(0.5)))
+
+    def _check_input_dims(self, module):
         """Raises an exception if the shapes of the input are not supported."""
         if not len(module.input0.shape) == 2:
             raise ValueError("Only 2D inputs are currently supported for MSELoss.")
 
-    def hessian_is_psd(self):
+    def hessian_is_psd(self) -> bool:
+        """Return whether cross-entropy loss Hessian is positive semi-definite.
+        Returns:
+            True
+        """
         return True
 
-    def _checks(self, module):
-        self.check_input_dims(module)
+    @staticmethod
+    def _get_mean_normalization(input: Tensor) -> int:
+        return input.numel()
 
-    def _make_distribution(self, subsampled_input, mc_samples):
-        self.mc_samples = mc_samples
-        self.N = len(subsampled_input)
-        self.D = len(subsampled_input[0])
-        return MultivariateNormal(
-            zeros(self.N * self.D),
-            mul(eye(self.N * self.D), 2),
+    def compute_sampled_grads(self, subsampled_input, mc_samples):
+        """Custom method to overwrite gradient computation for MeanSquareError Loss.
+        Args:
+            subsampled_input: input after subsampling
+            mc_samples: number of samples
+        Returns:
+            sampled gradient
+        """
+        samples = normal(
+            0,
+            1,
+            size=[mc_samples, len(subsampled_input), len(subsampled_input[0])],
+            device=subsampled_input.device,
+            dtype=subsampled_input.dtype,
         )
-
-    def _post_process(self, samples):
-        return reshape(samples, (self.mc_samples, self.N, self.D))
+        return samples * sqrt(2)
