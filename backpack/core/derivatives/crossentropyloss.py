@@ -13,10 +13,7 @@ from backpack.utils.subsampling import subsample
 
 
 class CrossEntropyLossDerivatives(NLLLossDerivatives, ABC):
-    """Partial derivatives for cross-entropy loss.
-
-    This comes from the one-hot encoded Categorical distribution.
-    """
+    """Partial derivatives for cross-entropy loss."""
 
     def _sqrt_hessian(
         self,
@@ -94,10 +91,20 @@ class CrossEntropyLossDerivatives(NLLLossDerivatives, ABC):
         self._check_2nd_order_parameters(module)
 
     def _make_distribution(self, subsampled_input):
-        return Categorical(softmax(subsampled_input, dim=1))
+        """Make the sampling distribution for the NLL loss form of CE.
 
-    def _mean_reduction(self, samples, input0):
-        return samples / sqrt(self._get_mean_normalization(input0))
+        CE loss can be formulated as −log p(yₙ | f_𝜃(xₙ)), where yₙ is
+        drawn from a Categorical distribution with probabilities equal
+        to the softmax of the subsampled input.
+
+        Args:
+            subsampled_input: input after subsamping
+
+        Returns:
+            torch.distributions Categorical distribution
+
+        """
+        return Categorical(softmax(subsampled_input, dim=1))
 
     def _check_2nd_order_parameters(self, module: CrossEntropyLoss) -> None:
         """Verify that the parameters are supported by 2nd-order quantities.
@@ -247,12 +254,17 @@ class CrossEntropyLossDerivatives(NLLLossDerivatives, ABC):
     def compute_sampled_grads(self, subsampled_input, mc_samples):
         """Custom method to overwrite gradient computation for CrossEntropyLoss.
 
+        The gradient of Cross Entropy loss can be calculated as pᵢ−yᵢ, where p is the
+        softmax of the subsampled input, and y is the one-hot label vector sampled from
+        p.
+
         Args:
             subsampled_input: input after subsampling
             mc_samples: number of samples
 
         Returns:
             sampled gradient
+
         """
         probs = softmax(subsampled_input, dim=1)
         probs, *rearrange_info = self._merge_batch_and_additional(probs)

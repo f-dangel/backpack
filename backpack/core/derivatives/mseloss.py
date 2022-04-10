@@ -11,10 +11,7 @@ from backpack.core.derivatives.nll_base import NLLLossDerivatives
 
 
 class MSELossDerivatives(NLLLossDerivatives, ABC):
-    """Partial derivatives for mean square error loss.
-
-    This comes from the Gaussian distribution.
-    """
+    """Partial derivatives for mean square error loss."""
 
     def _sqrt_hessian(
         self,
@@ -47,6 +44,7 @@ class MSELossDerivatives(NLLLossDerivatives, ABC):
             g_out: Gradient of loss w.r.t. output
 
         Returns: a `[D, D]` tensor of the Hessian, summed across batch
+
         """
         self._check_input_dims(module)
 
@@ -75,6 +73,21 @@ class MSELossDerivatives(NLLLossDerivatives, ABC):
         self._check_input_dims(module)
 
     def _make_distribution(self, subsampled_input):
+        """Make the sampling distribution for the NLL loss form of MSE.
+
+        The log probabiity of the Gaussian distribution is proportional to
+        ¹/₍₂𝜎²₎∑ᵢ₌₁ⁿ (xᵢ−𝜇)². Because MSE = ∑ᵢ₌₁ⁿ(Yᵢ−Ŷᵢ)², this is
+        equivalent for samples drawn from a Gaussian distribution with
+        mean of the subsampled input and variance √0.5.
+
+        Args:
+            subsampled_input: input after subsampling
+
+        Returns:
+            torch.distributions Normal distribution with mean of
+        the subsampled input and variance √0.5
+
+        """
         return Normal(mean(subsampled_input), tensor(sqrt(0.5)))
 
     def _check_input_dims(self, module):
@@ -87,6 +100,7 @@ class MSELossDerivatives(NLLLossDerivatives, ABC):
 
         Returns:
             True
+
         """
         return True
 
@@ -97,18 +111,22 @@ class MSELossDerivatives(NLLLossDerivatives, ABC):
     def compute_sampled_grads(self, subsampled_input, mc_samples):
         """Custom method to overwrite gradient computation for MeanSquareError Loss.
 
+        Because MSE = ∑ᵢ₌₁ⁿ(Yᵢ−Ŷᵢ)², the gradient is 2∑ᵢ₋₁ⁿ(Yᵢ−Ŷᵢ). Therefore, one can
+        sample this from a Gaussian distribution with a mean of 0 and a variance of √2.
+
         Args:
             subsampled_input: input after subsampling
             mc_samples: number of samples
 
         Returns:
             sampled gradient
+
         """
         samples = normal(
             0,
-            1,
+            sqrt(2),
             size=[mc_samples, len(subsampled_input), len(subsampled_input[0])],
             device=subsampled_input.device,
             dtype=subsampled_input.dtype,
         )
-        return samples * sqrt(2)
+        return samples
