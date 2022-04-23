@@ -87,10 +87,10 @@ class CrossEntropyLossDerivatives(NLLLossDerivatives, ABC):
 
         return hessian_mat_prod
 
-    def _checks(self, module):
+    def _verify_support(self, module: CrossEntropyLoss):
         self._check_2nd_order_parameters(module)
 
-    def _make_distribution(self, subsampled_input):
+    def _make_distribution(self, subsampled_input: Tensor):
         """Make the sampling distribution for the NLL loss form of CE.
 
         CE loss can be formulated as −log p(yₙ | f_𝜃(xₙ)), where yₙ is
@@ -251,7 +251,7 @@ class CrossEntropyLossDerivatives(NLLLossDerivatives, ABC):
             return sqrt_h
 
     def compute_sampled_grads(
-        self, subsampled_input, mc_samples, use_dist: bool = False
+        self, subsampled_input: Tensor, mc_samples: int, use_dist: bool = False
     ):
         """Custom method to overwrite gradient computation for CrossEntropyLoss.
 

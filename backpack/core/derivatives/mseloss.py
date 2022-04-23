@@ -11,7 +11,9 @@ from backpack.core.derivatives.nll_base import NLLLossDerivatives
 
 
 class MSELossDerivatives(NLLLossDerivatives, ABC):
-    """Partial derivatives for mean square error loss."""
+    """Partial derivatives for mean square error loss.
+
+    This can be sampled from a Gaussian distribution with a mean of 0 and a variance of √2."""
 
     def _sqrt_hessian(
         self,
@@ -68,10 +70,10 @@ class MSELossDerivatives(NLLLossDerivatives, ABC):
 
         return hessian_mat_prod
 
-    def _checks(self, module):
+    def _verify_support(self, module: MSELoss):
         self._check_input_dims(module)
 
-    def _make_distribution(self, subsampled_input):
+    def _make_distribution(self, subsampled_input: Tensor):
         """Make the sampling distribution for the NLL loss form of MSE.
 
         The log probabiity of the Gaussian distribution is proportional to
@@ -88,7 +90,7 @@ class MSELossDerivatives(NLLLossDerivatives, ABC):
         """
         return Normal(mean(subsampled_input), tensor(sqrt(0.5)))
 
-    def _check_input_dims(self, module):
+    def _check_input_dims(self, module: MSELoss):
         """Raises an exception if the shapes of the input are not supported."""
         if not len(module.input0.shape) == 2:
             raise ValueError("Only 2D inputs are currently supported for MSELoss.")
@@ -106,12 +108,11 @@ class MSELossDerivatives(NLLLossDerivatives, ABC):
         return input.numel()
 
     def compute_sampled_grads(
-        self, subsampled_input, mc_samples, use_dist: bool = False
+        self, subsampled_input: Tensor, mc_samples: int, use_dist: bool = False
     ):
         """Custom method to overwrite gradient computation for MeanSquareError Loss.
 
-        Because MSE = ∑ᵢ₌₁ⁿ(Yᵢ−Ŷᵢ)², the gradient is 2∑ᵢ₋₁ⁿ(Yᵢ−Ŷᵢ). Therefore, one can
-        sample this from a Gaussian distribution with a mean of 0 and a variance of √2.
+        Because MSE = ∑ᵢ₌₁ⁿ(Yᵢ−Ŷᵢ)², the gradient is 2∑ᵢ₋₁ⁿ(Yᵢ−Ŷᵢ).
 
         Args:
             subsampled_input: input after subsampling
@@ -126,7 +127,7 @@ class MSELossDerivatives(NLLLossDerivatives, ABC):
         samples = normal(
             0,
             sqrt(2),
-            size=[mc_samples, len(subsampled_input), len(subsampled_input[0])],
+            size=[mc_samples, *subsampled_input.shape[:2]],
             device=subsampled_input.device,
             dtype=subsampled_input.dtype,
         )
