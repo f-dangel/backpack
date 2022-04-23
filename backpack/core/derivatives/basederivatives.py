@@ -11,6 +11,7 @@ from backpack.core.derivatives import shape_check
 
 class BaseDerivatives(ABC):
     """First- and second-order partial derivatives of unparameterized module.
+
     Note:
         Throughout the code, use these conventions if possible:
         - `N`: batch size
@@ -21,15 +22,21 @@ class BaseDerivatives(ABC):
           - Layer input shape `[N, C_in, H_in, W_in]`
           - Layer output shape `[N, C_out, H_out, W_out]`
         - `V`: vectorization axis
+
     Definition:
         For simplicity, consider the vector case, i.e. a function which maps an
         `[N, D_in]` `input` into an `[N, D_out]` `output`.
+
         The input-output Jacobian `J` of  is tensor of shape `[N, D_out, N_in, D_in]`.
         Partial derivatives are ordered as
+
             `J[i, j, k, l] = 𝜕output[i, j] / 𝜕input[k, l].
+
         The transposed input-output Jacobian `Jᵀ` has shape `[N, D_in, N, D_out]`.
         Partial derivatives are ordered as
-            `Jᵀ[i, j, k, l] = 𝜕output[k, l] / 𝜕input[i, j]`.
+            `
+            Jᵀ[i, j, k, l] = 𝜕output[k, l] / 𝜕input[i, j]`.
+
         In general, feature dimension indices `j, l` are product indices.
     """
 
@@ -39,18 +46,23 @@ class BaseDerivatives(ABC):
         self, module: Module, g_inp: Tuple[Tensor], g_out: Tuple[Tensor], mat: Tensor
     ) -> Tensor:
         """Apply Jacobian of the output w.r.t. input to a matrix.
+
         It is assumed that the module input has shape `[N, *]`, while the output is
         of shape `[N, •]`. Both `*`, `•` denote arbitrary shapes.
+
         Apply Jacobian to all slices among the vectorization axis.
             `result[v, n, •] =  ∑ₖ ∑_* J[n, •, k, *] mat[v, n, *]`.
+
         Args:
             module: Extended module.
             g_inp: Gradients of the module w.r.t. its inputs.
             g_out: Gradients of the module w.r.t. its outputs.
             mat: Matrix the Jacobian will be applied to. Must have
                 shape `[V, N, *]`.
+
         Returns:
             Jacobian-matrix product. Has shape [V, N, *].
+
         Note:
             - The Jacobian can be applied without knowledge about backpropagated
               derivatives. Both `g_inp` and `g_out` are usually not required and
@@ -74,9 +86,11 @@ class BaseDerivatives(ABC):
         subsampling: List[int] = None,
     ) -> Tensor:
         """Apply transposed input-ouput Jacobian of module output to a matrix.
+
         Implicit application of Jᵀ:
             result[v, ̃n, ̃c, ̃w, ...]
             = ∑_{n, c, w} Jᵀ[̃n, ̃c, ̃w, ..., n, c, w, ...] mat[v, n, c, w, ...].
+
         Args:
             module: module which derivative is calculated
             g_inp: input gradients
@@ -86,6 +100,7 @@ class BaseDerivatives(ABC):
                 sub-sampling, the batch dimension is replaced by ``len(subsampling)``.
             subsampling: Indices of samples along the output's batch dimension that
                 should be considered. Defaults to ``None`` (use all samples).
+
         Returns:
             Transposed Jacobian-matrix product.
             Has shape ``[V, *module.input0.shape]``; but if used with sub-sampling,
@@ -109,23 +124,29 @@ class BaseDerivatives(ABC):
         self, module: Module, g_inp: Tuple[Tensor], g_out: Tuple[Tensor], mat: Tensor
     ) -> Tensor:
         """Expectation approximation of outer product with input-output Jacobian.
+
         Used for backpropagation in KFRA.
+
         For `yₙ = f(xₙ) n=1,...,n`, compute `E(Jₙᵀ mat Jₙ) = 1/n ∑ₙ Jₙᵀ mat Jₙ`.
         In index notation, let `output[n]=f(input[n]) n = 1,...,n`. Then,
         `result[i,j]
         = 1/n ∑ₙₖₗ (𝜕output[n,k] / 𝜕input[n,i]) mat[k,l] (𝜕output[n,j] / 𝜕input[n,l])
+
         Args:
             module: Extended module.
             g_inp: Gradients of the module w.r.t. its inputs.
             g_out: Gradients of the module w.r.t. its outputs.
             mat: Matrix of shape `[D_out, D_out]`.
+
         # noqa: DAR202
         Returns:
             Matrix of shape `[D_in, D_in]`.
+
         Note:
             - This operation can be applied without knowledge about backpropagated
               derivatives. Both `g_inp` and `g_out` are usually not required and
               can be set to `None`.
+
         Raises:
             NotImplementedError: if not overwritten
         """
@@ -133,12 +154,17 @@ class BaseDerivatives(ABC):
 
     def hessian_is_zero(self, module: Module) -> bool:
         """Returns whether Hessian is zero.
+
         I.e. whether ``∂²output[i] / ∂input[j] ∂input[k] = 0  ∀ i,j,k``.
+
         Args:
             module: current module to evaluate
+
         # noqa: DAR202
+
         Returns:
             whether Hessian is zero
+
         Raises:
             NotImplementedError: if not overwritten
         """
@@ -146,14 +172,19 @@ class BaseDerivatives(ABC):
 
     def hessian_is_diagonal(self, module: Module) -> bool:
         """Is `∂²output[i] / ∂input[j] ∂input[k]` nonzero only if `i = j = k`.
+
         The Hessian diagonal is only defined for layers that preserve the size
         of their input.
+
         Must be implemented by descendants that don't implement ``hessian_is_zero``.
+
         Args:
             module: current module to evaluate
+
         # noqa: DAR202
         Returns:
             whether Hessian is diagonal
+
         Raises:
             NotImplementedError: if not overwritten
         """
@@ -165,16 +196,20 @@ class BaseDerivatives(ABC):
         self, module: Module, g_in: Tuple[Tensor], g_out: Tuple[Tensor]
     ) -> Tensor:
         """Return the Hessian diagonal `∂²output[i] / ∂input[i]²`.
+
         Only required if `hessian_is_diagonal` returns `True`.
         The Hessian diagonal is only defined for layers that preserve the size
         of their input.
+
         Args:
             module: Module whose output-input Hessian diagonal is computed.
             g_in: Gradients w.r.t. the module input.
             g_out: Gradients w.r.t. the module output.
+
         # noqa: DAR202
         Returns:
             Hessian diagonal. Has same shape as module input.
+
         Raises:
             NotImplementedError: if not overwritten
         """
@@ -182,9 +217,11 @@ class BaseDerivatives(ABC):
 
     def hessian_is_psd(self) -> bool:
         """Is `∂²output[i] / ∂input[j] ∂input[k]` positive semidefinite (PSD).
+
         # noqa: DAR202
         Returns:
             whether hessian is positive semi definite
+
         Raises:
             NotImplementedError: if not overwritten
         """
@@ -196,14 +233,18 @@ class BaseDerivatives(ABC):
         self, module: Module, g_inp: Tuple[Tensor], g_out: Tuple[Tensor], mat: Tensor
     ) -> Tensor:
         """Multiply with the residual term.
+
         Performs mat → [∑_{k} Hz_k(x) 𝛿z_k] mat.
+
         Args:
             module: module
             g_inp: input gradients
             g_out: output gradients
             mat: matrix to multiply
+
         Returns:
             product
+
         Note:
             This function only has to be implemented if the residual is not
             zero and not diagonal (for instance, `BatchNorm`).
@@ -218,10 +259,13 @@ class BaseDerivatives(ABC):
     @staticmethod
     def _reshape_like(mat: Tensor, shape: Tuple[int]) -> Tensor:
         """Reshape as like with trailing and additional 0th dimension.
+
         If like is [N, C, H, ...], returns shape [-1, N, C, H, ...]
+
         Args:
             mat: Matrix to reshape.
             shape: Trailing target shape.
+
         Returns:
             reshaped matrix
         """
@@ -232,10 +276,12 @@ class BaseDerivatives(ABC):
         cls, mat: Tensor, module: Module, subsampling: List[int] = None
     ) -> Tensor:
         """Reshapes matrix according to input.
+
         Args:
             mat: matrix to reshape
             module: module which input shape is used
             subsampling: Indices of active samples. ``None`` means use all samples.
+
         Returns:
             reshaped matrix
         """
@@ -248,9 +294,11 @@ class BaseDerivatives(ABC):
     @classmethod
     def reshape_like_output(cls, mat: Tensor, module: Module) -> Tensor:
         """Reshapes matrix like output.
+
         Args:
             mat: matrix to reshape
             module: module which output is used
+
         Returns:
             reshaped matrix
         """
@@ -259,13 +307,16 @@ class BaseDerivatives(ABC):
 
 class BaseParameterDerivatives(BaseDerivatives, ABC):
     """First- and second order partial derivatives of a module with parameters.
+
     Assumptions (true for `nn.Linear`, `nn.Conv(Transpose)Nd`, `nn.BatchNormNd`):
     - Parameters are saved as `.weight` and `.bias` fields in a module
     - The output is linear in the model parameters
+
     Shape conventions:
     ------------------
     Weight [C_w, H_w, W_w, ...] (usually 1d, 2d, 4d)
     Bias [C_b, ...] (usually 1d)
+
     For most layers, these shapes correspond to shapes of the module input or output.
     """
 
@@ -281,10 +332,13 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
         subsampling: List[int] = None,
     ) -> Tensor:
         """Compute matrix-Jacobian products (MJPs) of the module w.r.t. a parameter.
+
         Handles both vector and matrix inputs. Preserves input format in output.
+
         Internally calls out to ``_{param_str}_jac_t_mat_prod`` function that must be
         implemented by descendants. It follows the same signature, but does not have
         the ``param_str`` argument.
+
         Args:
             param_str: Attribute name under which the parameter is stored in the module.
             module: Module whose Jacobian will be applied. Must provide access to IO.
@@ -297,12 +351,14 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
             sum_batch: Sum out the MJP's batch axis. Default: ``True``.
             subsampling: Indices of samples along the output's batch dimension that
                 should be considered. Defaults to ``None`` (use all samples).
+
         Returns:
             Matrix-Jacobian products. Has shape ``[V, *param_shape]`` when batch
             summation is enabled (same shape as parameter in the vector case). Without
             batch summation, the result has shape ``[V, N, *param_shape]`` (vector case
             has shape ``[N, *param_shape]``). If used with subsampling, the batch size N
             is replaced by len(subsampling).
+
         Raises:
             NotImplementedError: if required method is not implemented by derivatives class
         """
@@ -334,12 +390,14 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
         self, module: Module, g_inp: Tuple[Tensor], g_out: Tuple[Tensor], mat: Tensor
     ) -> Tensor:
         """Apply Jacobian of the output w.r.t. bias to a matrix.
+
         Args:
             module: module to perform derivatives on
             g_inp: input gradients
             g_out: output gradients
             mat: Matrix the Jacobian will be applied to.
                 Must have shape [V, C_b, ...].
+
         Returns:
             Jacobian-matrix product. Has shape [V, N, C_out, H_out, ...].
         """
@@ -356,12 +414,14 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
         self, module: Module, g_inp: Tuple[Tensor], g_out: Tuple[Tensor], mat: Tensor
     ) -> Tensor:
         """Apply Jacobian of the output w.r.t. weight to a matrix.
+
         Args:
             module: module to perform derivatives on
             g_inp: input gradients
             g_out: output gradients
             mat: Matrix the Jacobian will be applied to.
                 Must have shape [V, C_w, H_w, ...].
+
         Returns:
             Jacobian-matrix product.
             Has shape [V, N, C_out, H_out, ...].
@@ -386,15 +446,18 @@ class BaseLossDerivatives(BaseDerivatives, ABC):
         subsampling: List[int] = None,
     ) -> Tensor:
         """Symmetric factorization ('sqrt') of the loss Hessian.
+
         The Hessian factorization is returned in format ``Hs = [D, N, D]``, where
         ``Hs[:, n, :]`` is the Hessian factorization for the ``n``th sample, i.e.
         ``Hs[:, n, :]ᵀ Hs[:, n, :]`` is the Hessian w.r.t. to the ``n``th sample.
+
         Args:
             module: Loss layer whose factorized Hessian will be computed.
             g_inp: Gradients w.r.t. module input.
             g_out: Gradients w.r.t. module output.
             subsampling: Indices of data samples to be considered. Default of ``None``
                 uses all data in the mini-batch.
+
         Returns:
             Symmetric factorization of the loss Hessian for each sample. If the input
             to the loss has shape ``[N, D]``, this is a tensor of shape ``[D, N, D]``;
@@ -425,10 +488,12 @@ class BaseLossDerivatives(BaseDerivatives, ABC):
         use_dist: bool = False,
     ) -> Tensor:
         """A Monte-Carlo sampled symmetric factorization of the loss Hessian.
+
         The Hessian factorization is returned in format ``Hs = [M, N, D]``, where
         ``Hs[:, n, :]`` approximates the Hessian factorization for the ``n``th sample,
         i.e. ``Hs[:, n, :]ᵀ Hs[:, n, :]ᵀ`` approximates the Hessian w.r.t. to sample
         ``n``.
+
         Args:
             module: Loss layer whose factorized Hessian will be computed.
             g_inp: Gradients w.r.t. module input.
@@ -437,6 +502,7 @@ class BaseLossDerivatives(BaseDerivatives, ABC):
             subsampling: Indices of data samples to be considered. Default of ``None``
                 uses all data in the mini-batch.
             use_dist: boolean to use NLL version of compute_sampled_grads for testing.
+
         Returns:
             Symmetric factorization of the loss Hessian for each sample. If the input
             to the loss has shape ``[N, D]``, this is a tensor of shape ``[M, N, D]``
@@ -470,11 +536,14 @@ class BaseLossDerivatives(BaseDerivatives, ABC):
         self, module: Module, g_inp: Tuple[Tensor], g_out: Tuple[Tensor]
     ) -> Callable[[Tensor], Tensor]:
         """Multiplication of the input Hessian with a matrix.
+
         Return a function that maps mat to H * mat.
+
         Args:
             module: module to perform derivatives on
             g_inp: input gradients
             g_out: output gradients
+
         Returns:
             function that maps mat to H * mat
         """
@@ -491,10 +560,12 @@ class BaseLossDerivatives(BaseDerivatives, ABC):
         self, module: Module, g_inp: Tuple[Tensor], g_out: Tuple[Tensor]
     ) -> Tensor:
         """Loss Hessians, summed over the batch dimension.
+
         Args:
             module: module to perform derivatives on
             g_inp: input gradients
             g_out: output gradients
+
         Returns:
             sum of hessians
         """
@@ -508,9 +579,11 @@ class BaseLossDerivatives(BaseDerivatives, ABC):
 
     def _check_2nd_order_make_sense(self, module: Module, g_out: Tuple[Tensor]) -> None:
         """Verify conditions for 2nd-order extensions to be working.
+
         2nd-order extensions are only guaranteed to work if the `loss`,
         on which `backward()` is called, is a scalar that has not been
         modified further after passing through the loss function module.
+
         Args:
             module: module to perform derivatives on
             g_out: output gradients
@@ -521,8 +594,10 @@ class BaseLossDerivatives(BaseDerivatives, ABC):
     @classmethod
     def _check_output_is_scalar(cls, module: Module) -> None:
         """Raise an exception is the module output is not a scalar.
+
         Args:
             module: module to perform derivatives on
+
         Raises:
             ValueError: if output is not scalar
         """
@@ -536,6 +611,7 @@ class BaseLossDerivatives(BaseDerivatives, ABC):
         cls, module: Module, g_out: Tuple[Tensor]
     ) -> None:
         """Raise a warning if the module output seems to have been changed.
+
         Args:
             module: module to perform derivatives on
             g_out: output gradients

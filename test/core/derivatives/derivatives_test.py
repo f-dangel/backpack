@@ -1,6 +1,8 @@
 """Test class for module partial derivatives.
+
 - Jacobian-matrix products
 - Transposed Jacobian-matrix products
+
 - Jacobian-matrix products with respect to layer parameters
 - Transposed Jacobian-matrix products with respect to layer parameters
 """
@@ -84,6 +86,7 @@ def test_param_mjp(
     request,
 ) -> None:
     """Test all parameter derivatives.
+
     Args:
         problem: test problem
         sum_batch: whether to sum along batch axis
@@ -121,6 +124,7 @@ def test_param_mjp(
 )
 def test_jac_mat_prod(problem: DerivativesTestProblem, V: int = 3) -> None:
     """Test the Jacobian-matrix product.
+
     Args:
         problem: Test case.
         V: Number of vectorized Jacobian-vector products. Default: ``3``.
@@ -160,6 +164,7 @@ def test_jac_t_mat_prod(
     V: int = 3,
 ) -> None:
     """Test the transposed Jacobian-matrix product.
+
     Args:
         problem: Problem for derivative test.
         subsampling: Indices of active samples.
@@ -196,12 +201,15 @@ def rand_mat_like_output(
     V: int, problem: DerivativesTestProblem, subsampling: List[int] = None
 ) -> Tensor:
     """Generate random matrix whose columns are shaped like the layer output.
+
     Can be used to generate random inputs to functions that act on tensors
     shaped like the module output (like ``*_jac_t_mat_prod``).
+
     Args:
         V: Number of rows.
         problem: Test case.
         subsampling: Indices of samples used by sub-sampling.
+
     Returns:
         Random matrix with (subsampled) output shape.
     """
@@ -220,6 +228,7 @@ def rand_mat_like_output(
 )
 def test_weight_jac_mat_prod(problem: DerivativesTestProblem, V: int = 3) -> None:
     """Test the Jacobian-matrix product w.r.t. to the weight.
+
     Args:
         problem: Test case.
         V: Number of vectorized Jacobian-vector products. Default: ``3``.
@@ -249,6 +258,7 @@ for problem, problem_id in zip(PROBLEMS, IDS):
 )
 def test_bias_jac_mat_prod(problem: DerivativesTestProblem, V: int = 3) -> None:
     """Test the Jacobian-matrix product w.r.t. to the bias.
+
     Args:
         problem: Test case.
         V: Number of vectorized Jacobian-vector products. Default: ``3``.
@@ -269,9 +279,11 @@ def test_sqrt_hessian_squared_equals_hessian(
     problem: DerivativesTestProblem, subsampling: Union[List[int], None]
 ) -> None:
     """Test the sqrt decomposition of the input Hessian.
+
     Args:
         problem: Test case.
         subsampling: Indices of active samples.
+
     Compares the Hessian to reconstruction from individual Hessian sqrt.
     """
     problem.set_up()
@@ -292,6 +304,7 @@ def test_sqrt_hessian_should_fail(
     problem: DerivativesTestProblem, subsampling: Union[List[int], None]
 ) -> None:
     """Test that sqrt_hessian fails.
+
     Args:
         problem: Test case.
         subsampling: Indices of active samples.
@@ -309,7 +322,9 @@ def test_sqrt_hessian_sampled_squared_approximates_hessian(
     chunks: int = 10,
 ) -> None:
     """Test the MC-sampled sqrt decomposition of the input Hessian.
+
     Compares the Hessian to reconstruction from individual Hessian MC-sampled sqrt.
+
     Args:
         problem: Test case.
         subsampling: Indices of active samples.
@@ -338,11 +353,14 @@ def test_sqrt_hessian_sampled_squared_approximates_hessian_nll(
     chunks: int = 10,
 ) -> None:
     """Test the MC-sampled sqrt decomposition of the input Hessian for NLL loss base.
+
     Compares the Hessian to reconstruction from individual Hessian MC-sampled sqrt.
     This test runs specifically on the NLL version of compute_sampled_grads, rather
     than faster overwritten versions for individual losses.
+
     For efficiency, it will try running the test with only mc_samples first. If this
     fails, it will retry the test with 10 times as many samples.
+
     Args:
         problem: Test case.
         subsampling: Indices of active samples.
@@ -383,6 +401,7 @@ def test_sqrt_hessian_sampled_should_fail(
     problem: DerivativesTestProblem, subsampling: Union[List[int], None]
 ) -> None:
     """Test that sqrt_hessian_samples fails.
+
     Args:
         problem: Test case.
         subsampling: Indices of active samples.
@@ -394,6 +413,7 @@ def test_sqrt_hessian_sampled_should_fail(
 @mark.parametrize("problem", LOSS_PROBLEMS, ids=LOSS_IDS)
 def test_sum_hessian(problem):
     """Test the summed Hessian.
+
     Args:
         problem (DerivativesProblem): Problem for derivative test.
     """
@@ -409,6 +429,7 @@ def test_sum_hessian(problem):
 @mark.parametrize("problem", LOSS_FAIL_PROBLEMS, ids=LOSS_FAIL_IDS)
 def test_sum_hessian_should_fail(problem):
     """Test sum_hessian, should fail.
+
     Args:
         problem: test problem
     """
@@ -419,12 +440,15 @@ def test_sum_hessian_should_fail(problem):
 @mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
 def test_ea_jac_t_mat_jac_prod(problem: DerivativesTestProblem, request) -> None:
     """Test KFRA backpropagation.
+
     H_in →  1/N ∑ₙ Jₙ^T H_out Jₙ
+
     Notes:
         - `Dropout` cannot be tested,as the `autograd` implementation does a forward
         pass over each sample, while the `backpack` implementation requires only
         one forward pass over the batched data. This leads to different outputs,
         as `Dropout` is not deterministic.
+
     Args:
         problem: Test case.
         request: PyTest request, used to get test id.
@@ -453,8 +477,10 @@ def test_ea_jac_t_mat_jac_prod(problem: DerivativesTestProblem, request) -> None
 )
 def problem(request) -> DerivativesTestProblem:
     """Set seed, create tested layer and data. Finally clean up.
+
     Args:
         request (SubRequest): Request for the fixture from a test/fixture function.
+
     Yields:
         Test case with deterministically constructed attributes.
     """
@@ -469,9 +495,11 @@ def small_input_problem(
     problem: DerivativesTestProblem, max_input_numel: int = 100
 ) -> DerivativesTestProblem:
     """Skip cases with large inputs.
+
     Args:
         problem: Test case with deterministically constructed attributes.
         max_input_numel: Maximum input size. Default: ``100``.
+
     Yields:
         Instantiated test case with small input.
     """
@@ -486,8 +514,10 @@ def no_loss_problem(
     small_input_problem: DerivativesTestProblem,
 ) -> DerivativesTestProblem:
     """Skip cases that are loss functions.
+
     Args:
         small_input_problem: Test case with small input.
+
     Yields:
         Instantiated test case that is not a loss layer.
     """
@@ -499,10 +529,12 @@ def no_loss_problem(
 
 def test_hessian_is_zero(no_loss_problem: DerivativesTestProblem) -> None:
     """Check if the input-output Hessian is (non-)zero.
+
     Note:
         `hessian_is_zero` is a global statement that assumes arbitrary inputs.
         It can thus happen that the Hessian diagonal is zero for the current
         input, but not in general.
+
     Args:
         no_loss_problem: Test case whose module is not a loss.
     """
@@ -521,6 +553,7 @@ def test_hessian_is_zero(no_loss_problem: DerivativesTestProblem) -> None:
 @mark.parametrize("problem", LOSS_PROBLEMS, ids=LOSS_IDS)
 def test_make_hessian_mat_prod(problem: DerivativesTestProblem) -> None:
     """Test hessian_mat_prod.
+
     Args:
         problem: test problem
     """

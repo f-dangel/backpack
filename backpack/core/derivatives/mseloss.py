@@ -37,10 +37,12 @@ class MSELossDerivatives(NLLLossDerivatives, ABC):
 
     def _sum_hessian(self, module, g_inp, g_out):
         """The Hessian, summed across the batch dimension.
+
         Args:
             module: (torch.nn.MSELoss) module
             g_inp: Gradient of loss w.r.t. input
             g_out: Gradient of loss w.r.t. output
+
         Returns: a `[D, D]` tensor of the Hessian, summed across batch
         """
         self._check_input_dims(module)
@@ -71,12 +73,15 @@ class MSELossDerivatives(NLLLossDerivatives, ABC):
 
     def _make_distribution(self, subsampled_input):
         """Make the sampling distribution for the NLL loss form of MSE.
+
         The log probabiity of the Gaussian distribution is proportional to
         ¹/₍₂𝜎²₎∑ᵢ₌₁ⁿ (xᵢ−𝜇)². Because MSE = ∑ᵢ₌₁ⁿ(Yᵢ−Ŷᵢ)², this is
         equivalent for samples drawn from a Gaussian distribution with
         mean of the subsampled input and variance √0.5.
+
         Args:
             subsampled_input: input after subsampling
+
         Returns:
             torch.distributions Normal distribution with mean of
         the subsampled input and variance √0.5
@@ -90,6 +95,7 @@ class MSELossDerivatives(NLLLossDerivatives, ABC):
 
     def hessian_is_psd(self) -> bool:
         """Return whether cross-entropy loss Hessian is positive semi-definite.
+
         Returns:
             True
         """
@@ -103,12 +109,15 @@ class MSELossDerivatives(NLLLossDerivatives, ABC):
         self, subsampled_input, mc_samples, use_dist: bool = False
     ):
         """Custom method to overwrite gradient computation for MeanSquareError Loss.
+
         Because MSE = ∑ᵢ₌₁ⁿ(Yᵢ−Ŷᵢ)², the gradient is 2∑ᵢ₋₁ⁿ(Yᵢ−Ŷᵢ). Therefore, one can
         sample this from a Gaussian distribution with a mean of 0 and a variance of √2.
+
         Args:
             subsampled_input: input after subsampling
             mc_samples: number of samples
             use_dist: boolean to use NLL version of compute_sampled_grads for testing
+
         Returns:
             sampled gradient
         """

@@ -13,6 +13,7 @@ class BackpackDerivatives(DerivativesImplementation):
 
     def __init__(self, problem):
         """Initialization.
+
         Args:
             problem: test problem
         """
@@ -21,6 +22,7 @@ class BackpackDerivatives(DerivativesImplementation):
 
     def store_forward_io(self):
         """Do one forward pass.
+
         This implicitly saves relevant quantities for backward pass.
         """
         self.problem.forward_pass()
@@ -87,6 +89,7 @@ class BackpackDerivatives(DerivativesImplementation):
         use_dist: bool = False,
     ) -> Tensor:
         """Computes the Hessian w.r.t. to the input from its matrix square root.
+
         Args:
             mc_samples: If int, uses an MC approximation with the specified
                 number of samples. If None, uses the exact hessian. Defaults to None.
@@ -94,6 +97,7 @@ class BackpackDerivatives(DerivativesImplementation):
                 Only used if mc_samples is specified.
             subsampling: Indices of active samples. ``None`` uses all samples.
             use_dist: boolean to use NLL version of compute_sampled_grads for testing.
+
         Returns:
             Hessian with respect to the input. Has shape
             ``[N, A, B, ..., N, A, B, ...]`` where ``N`` is the batch size or number
@@ -134,8 +138,10 @@ class BackpackDerivatives(DerivativesImplementation):
 
     def _sample_hessians_from_sqrt(self, sqrt: Tensor) -> Tensor:
         """Convert individual matrix square root into individual full matrix.
+
         Args:
             sqrt: individual square root of hessian
+
         Returns:
             Individual Hessians of shape ``[N, A, B, ..., A, B, ...]`` where
             ``input.shape[1:] = [A, B, ...]`` are the input feature dimensions
@@ -152,11 +158,13 @@ class BackpackDerivatives(DerivativesImplementation):
         self, individual_hessians: Tensor, input: Tensor
     ) -> Tensor:
         """Embed Hessians w.r.t. individual samples into Hessian w.r.t. all samples.
+
         Args:
             individual_hessians: Hessians w.r.t. individual samples in the input.
             input: Inputs for the for samples whose individual Hessians are passed.
                 Has shape ``[N, A, B, ..., A, B, ...]`` where ``N`` is the number of
                 active samples and ``[A, B, ...]`` are the feature dimensions.
+
         Returns:
             Hessian that contains the individual Hessians as diagonal blocks.
             Has shape ``[N, A, B, ..., N, A, B, ...]``.
