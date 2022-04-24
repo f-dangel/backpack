@@ -60,7 +60,7 @@ class NLLLossDerivatives(BaseLossDerivatives):
 
     def _verify_support(self, module: Module):
         """Any checks to be performed to verify module support."""
-        return
+        raise NotImplementedError
 
     def compute_sampled_grads(
         self, subsampled_input: Tensor, mc_samples: int, use_dist: bool = False
