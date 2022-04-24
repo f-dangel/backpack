@@ -3,7 +3,7 @@ from abc import ABC
 from math import sqrt
 from typing import List, Tuple
 
-from torch import Tensor, eye, mean, normal, ones, tensor
+from torch import Tensor, eye, normal, ones, tensor
 from torch.distributions import Normal
 from torch.nn import MSELoss
 
@@ -13,7 +13,12 @@ from backpack.core.derivatives.nll_base import NLLLossDerivatives
 class MSELossDerivatives(NLLLossDerivatives, ABC):
     """Partial derivatives for mean square error loss.
 
-    This can be sampled from a Gaussian distribution with a mean of 0 and a variance of √2."""
+    We only support 2D tensors.
+
+    For `X : [n, d]` and `Y : [n, d]`, if `reduce=sum`, the MSE computes
+    `∑ᵢ₌₁ⁿ ‖X[i,∶] − Y[i,∶]‖²`. If `reduce=mean`, the result is divided by `nd`.
+    The square root Hessian can be sampled from a Gaussian distribution
+    with a mean of 0 and a variance of √2."""
 
     def _sqrt_hessian(
         self,
@@ -88,7 +93,7 @@ class MSELossDerivatives(NLLLossDerivatives, ABC):
             torch.distributions Normal distribution with mean of
         the subsampled input and variance √0.5
         """
-        return Normal(mean(subsampled_input), tensor(sqrt(0.5)))
+        return Normal(subsampled_input, tensor(sqrt(0.5)))
 
     def _check_input_dims(self, module: MSELoss):
         """Raises an exception if the shapes of the input are not supported."""
