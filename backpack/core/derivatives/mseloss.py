@@ -3,7 +3,7 @@ from abc import ABC
 from math import sqrt
 from typing import List, Tuple
 
-from torch import Tensor, eye, normal, ones, tensor
+from torch import Size, Tensor, eye, ones, tensor
 from torch.distributions import Normal
 from torch.nn import MSELoss
 
@@ -129,11 +129,11 @@ class MSELossDerivatives(NLLLossDerivatives, ABC):
         """
         if use_dist:
             super().compute_sampled_grads(subsampled_input, mc_samples, use_dist)
-        samples = normal(
-            0,
-            sqrt(2),
-            size=[mc_samples, *subsampled_input.shape[:2]],
-            device=subsampled_input.device,
-            dtype=subsampled_input.dtype,
+
+        dist = self._make_distribution(subsampled_input)
+        samples = dist.sample(sample_shape=Size([mc_samples]))
+        subsampled_input_expanded = subsampled_input.unsqueeze(0).expand(
+            mc_samples, -1, -1
         )
-        return samples
+
+        return 2 * (samples - subsampled_input_expanded)
