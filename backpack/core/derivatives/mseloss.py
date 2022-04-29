@@ -128,7 +128,9 @@ class MSELossDerivatives(NLLLossDerivatives, ABC):
             sampled gradient
         """
         if use_autograd:
-            return super().compute_sampled_grads(subsampled_input, mc_samples, use_autograd)
+            return super().compute_sampled_grads(
+                subsampled_input, mc_samples, use_autograd
+            )
 
         dist = self._make_distribution(subsampled_input)
         samples = dist.sample(sample_shape=Size([mc_samples]))
