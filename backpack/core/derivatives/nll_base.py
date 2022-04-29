@@ -25,7 +25,7 @@ class NLLLossDerivatives(BaseLossDerivatives):
         g_out: Tuple[Tensor],
         mc_samples: int = 1,
         subsampling: List[int] = None,
-        use_dist: bool = False,
+        use_autograd: bool = False,
     ) -> Tensor:
         """Method to approximate the square root Hessian through Monte Carlo sampling.
 
@@ -52,7 +52,7 @@ class NLLLossDerivatives(BaseLossDerivatives):
         self._verify_support(module)
         subsampled_input = subsample(module.input0, subsampling=subsampling)
         sqrt_hessian = self.compute_sampled_grads(
-            subsampled_input, mc_samples, use_dist
+            subsampled_input, mc_samples, use_autograd
         ) / sqrt(mc_samples)
         if module.reduction == "mean":
             sqrt_hessian /= sqrt(self._get_mean_normalization(module.input0))
@@ -63,7 +63,7 @@ class NLLLossDerivatives(BaseLossDerivatives):
         raise NotImplementedError
 
     def compute_sampled_grads(
-        self, subsampled_input: Tensor, mc_samples: int, use_dist: bool = False
+        self, subsampled_input: Tensor, mc_samples: int, use_autograd: bool = False
     ):
         """Method to create the sampled gradients.
 
@@ -79,7 +79,7 @@ class NLLLossDerivatives(BaseLossDerivatives):
         Args:
             subsampled_input: input after subsampling
             mc_samples: number of samples
-            use_dist: boolean to use NLL version of compute_sampled_grads for testing
+            use_autograd: boolean to use NLL version of compute_sampled_grads for testing
 
         Returns:
             sampled gradient of shape [mc_samples, *subsampled_input.shape]

@@ -93,7 +93,7 @@ class MSELossDerivatives(NLLLossDerivatives, ABC):
             torch.distributions Normal distribution with mean of
         the subsampled input and variance √0.5
         """
-        return Normal(subsampled_input, tensor(sqrt(0.5)))
+        return Normal(subsampled_input, tensor(sqrt(0.5)).to(subsampled_input.device))
 
     def _check_input_dims(self, module: MSELoss):
         """Raises an exception if the shapes of the input are not supported."""
@@ -113,7 +113,7 @@ class MSELossDerivatives(NLLLossDerivatives, ABC):
         return input.numel()
 
     def compute_sampled_grads(
-        self, subsampled_input: Tensor, mc_samples: int, use_dist: bool = False
+        self, subsampled_input: Tensor, mc_samples: int, use_autograd: bool = False
     ):
         """Custom method to overwrite gradient computation for MeanSquareError Loss.
 
@@ -122,13 +122,13 @@ class MSELossDerivatives(NLLLossDerivatives, ABC):
         Args:
             subsampled_input: input after subsampling
             mc_samples: number of samples
-            use_dist: boolean to use NLL version of compute_sampled_grads for testing
+            use_autograd: boolean to use NLL version of compute_sampled_grads for testing
 
         Returns:
             sampled gradient
         """
-        if use_dist:
-            super().compute_sampled_grads(subsampled_input, mc_samples, use_dist)
+        if use_autograd:
+            return super().compute_sampled_grads(subsampled_input, mc_samples, use_autograd)
 
         dist = self._make_distribution(subsampled_input)
         samples = dist.sample(sample_shape=Size([mc_samples]))

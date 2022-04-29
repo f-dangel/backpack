@@ -86,7 +86,7 @@ class BackpackDerivatives(DerivativesImplementation):
         mc_samples: int = None,
         chunks: int = 1,
         subsampling: List[int] = None,
-        use_dist: bool = False,
+        use_autograd: bool = False,
     ) -> Tensor:
         """Computes the Hessian w.r.t. to the input from its matrix square root.
 
@@ -96,7 +96,7 @@ class BackpackDerivatives(DerivativesImplementation):
             chunks: Maximum sequential split of the computation. Default: ``1``.
                 Only used if mc_samples is specified.
             subsampling: Indices of active samples. ``None`` uses all samples.
-            use_dist: boolean to use NLL version of compute_sampled_grads for testing.
+            use_autograd: boolean to use NLL version of compute_sampled_grads for testing.
 
         Returns:
             Hessian with respect to the input. Has shape
@@ -119,7 +119,7 @@ class BackpackDerivatives(DerivativesImplementation):
                         None,
                         mc_samples=samples,
                         subsampling=subsampling,
-                        use_dist=use_dist,
+                        use_autograd=use_autograd,
                     )
                 )
                 for weight, samples in zip(chunk_weights, chunk_samples)

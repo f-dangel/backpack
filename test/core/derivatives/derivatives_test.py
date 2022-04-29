@@ -373,7 +373,7 @@ def test_sqrt_hessian_sampled_squared_approximates_hessian_nll(
 
     try:
         backpack_res = BackpackDerivatives(problem).input_hessian_via_sqrt_hessian(
-            mc_samples=mc_samples, chunks=chunks, subsampling=subsampling, use_dist=True
+            mc_samples=mc_samples, chunks=chunks, subsampling=subsampling, use_autograd=True
         )
         autograd_res = AutogradDerivatives(problem).input_hessian(
             subsampling=subsampling
@@ -385,7 +385,7 @@ def test_sqrt_hessian_sampled_squared_approximates_hessian_nll(
             mc_samples=mc_samples * 10,
             chunks=chunks,
             subsampling=subsampling,
-            use_dist=True,
+            use_autograd=True,
         )
         autograd_res = AutogradDerivatives(problem).input_hessian(
             subsampling=subsampling
