@@ -35,7 +35,8 @@ class BaseDerivatives(ABC):
 
         The transposed input-output Jacobian `Jᵀ` has shape `[N, D_in, N, D_out]`.
         Partial derivatives are ordered as
-            'Jᵀ[i, j, k, l] = 𝜕output[k, l] / 𝜕input[i, j]`.
+
+             `Jᵀ[i, j, k, l] = 𝜕output[k, l] / 𝜕input[i, j]`.
 
         In general, feature dimension indices `j, l` are product indices.
     """

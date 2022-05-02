@@ -18,7 +18,8 @@ class MSELossDerivatives(NLLLossDerivatives, ABC):
     For `X : [n, d]` and `Y : [n, d]`, if `reduce=sum`, the MSE computes
     `∑ᵢ₌₁ⁿ ‖X[i,∶] − Y[i,∶]‖²`. If `reduce=mean`, the result is divided by `nd`.
     The square root Hessian can be sampled from a Gaussian distribution
-    with a mean of 0 and a variance of √2."""
+    with a mean of 0 and a variance of √2.
+    """
 
     def _sqrt_hessian(
         self,
@@ -51,6 +52,7 @@ class MSELossDerivatives(NLLLossDerivatives, ABC):
             g_out: Gradient of loss w.r.t. output
 
         Returns: a `[D, D]` tensor of the Hessian, summed across batch
+
         """
         self._check_input_dims(module)
 
