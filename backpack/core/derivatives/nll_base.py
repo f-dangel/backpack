@@ -59,7 +59,7 @@ class NLLLossDerivatives(BaseLossDerivatives):
         return sqrt_hessian
 
     def _verify_support(self, module: Module):
-        """Any checks to be performed to verify module support."""
+        """Verification that the module is supported for the loss function."""
         raise NotImplementedError
 
     def compute_sampled_grads(
@@ -69,12 +69,12 @@ class NLLLossDerivatives(BaseLossDerivatives):
 
         This method returns the gradient of the loss with respect
         to each of the randomly drawn samples. To use this function, the user must implement
-        the functions _make_distribution.
+        the function _make_distribution.
 
         By default, this will compute gradients for samples of the likelihood distribution
         with autograd. This function can be overwritten if the gradient is known analytically.
         In this case, the method should return the gradient of the loss with respect to the
-        subsampled input for each of the Monte Carlo samples
+        subsampled input for each of the Monte Carlo samples.
 
         Args:
             subsampled_input: input after subsampling
@@ -122,8 +122,6 @@ class NLLLossDerivatives(BaseLossDerivatives):
         """Normalization factor for mean mode.
 
         The number C in loss = 1 / C * ∑ᵢ lossᵢ.
-
-        If used in mean mode, the normalization factor must be provided.
 
         Args:
             input: input to the layer
