@@ -14,6 +14,7 @@ class BaseDerivatives(ABC):
 
     Note:
         Throughout the code, use these conventions if possible:
+
         - `N`: batch size
         - Vectors
           - Layer input shape `[N, D_in]`
@@ -34,8 +35,7 @@ class BaseDerivatives(ABC):
 
         The transposed input-output Jacobian `Jᵀ` has shape `[N, D_in, N, D_out]`.
         Partial derivatives are ordered as
-            `
-            Jᵀ[i, j, k, l] = 𝜕output[k, l] / 𝜕input[i, j]`.
+            'Jᵀ[i, j, k, l] = 𝜕output[k, l] / 𝜕input[i, j]`.
 
         In general, feature dimension indices `j, l` are product indices.
     """
@@ -51,6 +51,7 @@ class BaseDerivatives(ABC):
         of shape `[N, •]`. Both `*`, `•` denote arbitrary shapes.
 
         Apply Jacobian to all slices among the vectorization axis.
+
             `result[v, n, •] =  ∑ₖ ∑_* J[n, •, k, *] mat[v, n, *]`.
 
         Args:
@@ -161,7 +162,6 @@ class BaseDerivatives(ABC):
             module: current module to evaluate
 
         # noqa: DAR202
-
         Returns:
             whether Hessian is zero
 

@@ -11,7 +11,7 @@ from backpack.core.derivatives.nll_base import NLLLossDerivatives
 
 
 class MSELossDerivatives(NLLLossDerivatives, ABC):
-    """Partial derivatives for mean square error loss.
+    """Derivatives of the MSE Loss.
 
     We only support 2D tensors.
 
