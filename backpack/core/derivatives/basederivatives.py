@@ -527,6 +527,7 @@ class BaseLossDerivatives(BaseDerivatives, ABC):
         g_out: Tuple[Tensor],
         mc_samples: int = 1,
         subsampling=None,
+        use_autograd: bool = False,
     ) -> Tensor:
         raise NotImplementedError
 
