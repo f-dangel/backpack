@@ -21,6 +21,10 @@ class MSELossDerivatives(NLLLossDerivatives, ABC):
     with a mean of 0 and a variance of √2.
     """
 
+    def __init__(self, use_autograd: bool = False):
+        super().__init__(use_autograd=use_autograd)
++
+
     def _sqrt_hessian(
         self,
         module: MSELoss,
