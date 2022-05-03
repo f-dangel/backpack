@@ -50,7 +50,6 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
         g_out: Tuple[Tensor],
         mc_samples: int = 1,
         subsampling: List[int] = None,
-        use_autograd: bool = False,
     ) -> Tensor:
         self._check_2nd_order_parameters(module)
 
