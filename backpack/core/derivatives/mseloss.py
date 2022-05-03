@@ -10,7 +10,7 @@ from torch.nn import MSELoss
 from backpack.core.derivatives.nll_base import NLLLossDerivatives
 
 
-class MSELossDerivatives(NLLLossDerivatives, ABC):
+class MSELossDerivatives(NLLLossDerivatives):
     """Derivatives of the MSE Loss.
 
     We only support 2D tensors.
@@ -117,7 +117,7 @@ class MSELossDerivatives(NLLLossDerivatives, ABC):
     def _get_mean_normalization(input: Tensor) -> int:
         return input.numel()
 
-    def compute_sampled_grads_manual(self, subsampled_input: Tensor, mc_samples: int):
+    def _compute_sampled_grads_manual(self, subsampled_input: Tensor, mc_samples: int):
         """Custom method to overwrite gradient computation for MeanSquareError Loss.
 
         Because MSE = ∑ᵢ₌₁ⁿ(Yᵢ−Ŷᵢ)², the gradient is 2∑ᵢ₋₁ⁿ(Yᵢ−Ŷᵢ).
