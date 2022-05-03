@@ -5,6 +5,7 @@ from typing import List
 
 from torch import Tensor, einsum, zeros
 
+from backpack.core.derivatives.nll_base import NLLLossDerivatives
 from backpack.utils.subsampling import subsample
 
 
@@ -110,6 +111,9 @@ class BackpackDerivatives(DerivativesImplementation):
             chunk_samples = chunk_sizes(mc_samples, chunks)
             chunk_weights = [samples / mc_samples for samples in chunk_samples]
 
+            if isinstance(self.problem.derivative, NLLLossDerivatives):
+                self.problem.derivative.use_autograd = use_autograd
+
             individual_hessians: Tensor = sum(
                 weight
                 * self._sample_hessians_from_sqrt(
@@ -119,7 +123,6 @@ class BackpackDerivatives(DerivativesImplementation):
                         None,
                         mc_samples=samples,
                         subsampling=subsampling,
-                        use_autograd=use_autograd,
                     )
                 )
                 for weight, samples in zip(chunk_weights, chunk_samples)

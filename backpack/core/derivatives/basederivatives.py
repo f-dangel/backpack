@@ -486,7 +486,6 @@ class BaseLossDerivatives(BaseDerivatives, ABC):
         g_out: Tuple[Tensor],
         mc_samples: int = 1,
         subsampling: List[int] = None,
-        use_autograd: bool = False,
     ) -> Tensor:
         """A Monte-Carlo sampled symmetric factorization of the loss Hessian.
 
@@ -502,7 +501,6 @@ class BaseLossDerivatives(BaseDerivatives, ABC):
             mc_samples: Number of samples used for MC approximation.
             subsampling: Indices of data samples to be considered. Default of ``None``
                 uses all data in the mini-batch.
-            use_autograd: boolean to use NLL version of compute_sampled_grads for testing.
 
         Returns:
             Symmetric factorization of the loss Hessian for each sample. If the input
@@ -513,12 +511,7 @@ class BaseLossDerivatives(BaseDerivatives, ABC):
         """
         self._check_2nd_order_make_sense(module, g_out)
         return self._sqrt_hessian_sampled(
-            module,
-            g_inp,
-            g_out,
-            mc_samples=mc_samples,
-            subsampling=subsampling,
-            use_autograd=use_autograd,
+            module, g_inp, g_out, mc_samples=mc_samples, subsampling=subsampling
         )
 
     def _sqrt_hessian_sampled(
@@ -528,7 +521,6 @@ class BaseLossDerivatives(BaseDerivatives, ABC):
         g_out: Tuple[Tensor],
         mc_samples: int = 1,
         subsampling=None,
-        use_autograd: bool = False,
     ) -> Tensor:
         raise NotImplementedError
 

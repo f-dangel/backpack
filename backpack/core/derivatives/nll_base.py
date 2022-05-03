@@ -18,6 +18,9 @@ class NLLLossDerivatives(BaseLossDerivatives):
     𝜃ₘₐₚ = argmin_𝜃 (𝑟(𝜃)+𝑙(xₙ,yₙ;𝜃)) where 𝑟 is the regularizer and 𝑙 is the loss
     function, defined here as 𝑙(xₙ,yₙ;𝜃)= −log p(yₙ | f_𝜃(xₙ))."""
 
+    def __init__(self, use_autograd: bool = True):
+        self.use_autograd = use_autograd
+
     def _sqrt_hessian_sampled(
         self,
         module: Module,
@@ -25,7 +28,6 @@ class NLLLossDerivatives(BaseLossDerivatives):
         g_out: Tuple[Tensor],
         mc_samples: int = 1,
         subsampling: List[int] = None,
-        use_autograd: bool = False,
     ) -> Tensor:
         """Method to approximate the square root Hessian through Monte Carlo sampling.
 
@@ -51,9 +53,9 @@ class NLLLossDerivatives(BaseLossDerivatives):
         """
         self._verify_support(module)
         subsampled_input = subsample(module.input0, subsampling=subsampling)
-        sqrt_hessian = self.compute_sampled_grads(
-            subsampled_input, mc_samples, use_autograd
-        ) / sqrt(mc_samples)
+        sqrt_hessian = self.compute_sampled_grads(subsampled_input, mc_samples) / sqrt(
+            mc_samples
+        )
         if module.reduction == "mean":
             sqrt_hessian /= sqrt(self._get_mean_normalization(module.input0))
         return sqrt_hessian
@@ -84,6 +86,12 @@ class NLLLossDerivatives(BaseLossDerivatives):
         Returns:
             sampled gradient of shape [mc_samples, *subsampled_input.shape]
         """
+        if self.use_autograd == True:
+            return self._compute_sampled_grads_autograd(subsampled_input, mc_samples)
+        else:
+            return self._compute_sampled_grads_manual(subsampled_input, mc_samples)
+
+    def _compute_sampled_grads_autograd(self, subsampled_input, mc_samples):
         subsampled_input = Variable(subsampled_input, requires_grad=True)
         with enable_grad():
             gradient = []
@@ -99,6 +107,9 @@ class NLLLossDerivatives(BaseLossDerivatives):
                     )[0]
                 )
         return stack(gradient)
+
+    def _compute_sampled_grads_manual(self, subsamlped_input, mc_samples):
+        raise NotImplementedError("Manual sampled gradients not implemented.")
 
     def _make_distribution(self, subsampled_input: Tensor):
         """Create the negative log likelihood distribution.

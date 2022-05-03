@@ -114,9 +114,7 @@ class MSELossDerivatives(NLLLossDerivatives, ABC):
     def _get_mean_normalization(input: Tensor) -> int:
         return input.numel()
 
-    def compute_sampled_grads(
-        self, subsampled_input: Tensor, mc_samples: int, use_autograd: bool = False
-    ):
+    def compute_sampled_grads_manual(self, subsampled_input: Tensor, mc_samples: int):
         """Custom method to overwrite gradient computation for MeanSquareError Loss.
 
         Because MSE = ∑ᵢ₌₁ⁿ(Yᵢ−Ŷᵢ)², the gradient is 2∑ᵢ₋₁ⁿ(Yᵢ−Ŷᵢ).
@@ -129,11 +127,6 @@ class MSELossDerivatives(NLLLossDerivatives, ABC):
         Returns:
             sampled gradient
         """
-        if use_autograd:
-            return super().compute_sampled_grads(
-                subsampled_input, mc_samples, use_autograd
-            )
-
         dist = self._make_distribution(subsampled_input)
         samples = dist.sample(sample_shape=Size([mc_samples]))
         subsampled_input_expanded = subsampled_input.unsqueeze(0).expand(
