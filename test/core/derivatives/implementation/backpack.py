@@ -97,7 +97,8 @@ class BackpackDerivatives(DerivativesImplementation):
             chunks: Maximum sequential split of the computation. Default: ``1``.
                 Only used if mc_samples is specified.
             subsampling: Indices of active samples. ``None`` uses all samples.
-            use_autograd: boolean to use NLL version of compute_sampled_grads for testing.
+            use_autograd: Compute sampled gradients with ``autograd``. Only relevant
+                for ``NLLLossDerivatives``. Default: ``False``.
 
         Returns:
             Hessian with respect to the input. Has shape
