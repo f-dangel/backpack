@@ -65,7 +65,7 @@ class NLLLossDerivatives(BaseLossDerivatives):
         raise NotImplementedError
 
     def compute_sampled_grads(
-        self, subsampled_input: Tensor, mc_samples: int, use_autograd: bool = False
+        self, subsampled_input: Tensor, mc_samples: int
     ):
         """Method to create the sampled gradients.
 
@@ -81,7 +81,6 @@ class NLLLossDerivatives(BaseLossDerivatives):
         Args:
             subsampled_input: input after subsampling
             mc_samples: number of samples
-            use_autograd: boolean to use NLL version of compute_sampled_grads for testing
 
         Returns:
             sampled gradient of shape [mc_samples, *subsampled_input.shape]
@@ -91,7 +90,7 @@ class NLLLossDerivatives(BaseLossDerivatives):
         else:
             return self._compute_sampled_grads_manual(subsampled_input, mc_samples)
 
-    def _compute_sampled_grads_autograd(self, subsampled_input, mc_samples):
+    def _compute_sampled_grads_autograd(self, subsampled_input: Tensor, mc_samples: int):
         subsampled_input = Variable(subsampled_input, requires_grad=True)
         with enable_grad():
             gradient = []
@@ -108,7 +107,7 @@ class NLLLossDerivatives(BaseLossDerivatives):
                 )
         return stack(gradient)
 
-    def _compute_sampled_grads_manual(self, subsamlped_input, mc_samples):
+    def _compute_sampled_grads_manual(self, subsamlped_input: Tensor, mc_samples: int):
         raise NotImplementedError("Manual sampled gradients not implemented.")
 
     def _make_distribution(self, subsampled_input: Tensor):

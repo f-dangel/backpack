@@ -371,15 +371,15 @@ def test_sqrt_hessian_sampled_squared_approximates_hessian_nll(
     skip_subsampling_conflict(problem, subsampling)
     RTOL, ATOL = 1e-2, 8e-3
 
+    autograd_res = AutogradDerivatives(problem).input_hessian(
+        subsampling=subsampling
+    )
     try:
         backpack_res = BackpackDerivatives(problem).input_hessian_via_sqrt_hessian(
             mc_samples=mc_samples,
             chunks=chunks,
             subsampling=subsampling,
             use_autograd=True,
-        )
-        autograd_res = AutogradDerivatives(problem).input_hessian(
-            subsampling=subsampling
         )
 
         check_sizes_and_values(autograd_res, backpack_res, rtol=RTOL, atol=ATOL)
@@ -389,9 +389,6 @@ def test_sqrt_hessian_sampled_squared_approximates_hessian_nll(
             chunks=chunks,
             subsampling=subsampling,
             use_autograd=True,
-        )
-        autograd_res = AutogradDerivatives(problem).input_hessian(
-            subsampling=subsampling
         )
 
         check_sizes_and_values(autograd_res, backpack_res, rtol=RTOL, atol=ATOL)
