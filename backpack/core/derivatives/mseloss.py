@@ -23,7 +23,6 @@ class MSELossDerivatives(NLLLossDerivatives, ABC):
 
     def __init__(self, use_autograd: bool = False):
         super().__init__(use_autograd=use_autograd)
-+
 
     def _sqrt_hessian(
         self,
