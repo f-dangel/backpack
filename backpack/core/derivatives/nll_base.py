@@ -186,15 +186,17 @@ class NLLLossDerivatives(BaseLossDerivatives):
     ):
         """Method to verify sample.shape is equal to subsampled_input.shape.
 
-        The distribution returned by _make_distribution must sample tensors with the same shape as
-        subsampled_input.
+        The distribution returned by _make_distribution must sample tensors
+        with the same shape as subsampled_input.
 
         Args:
-            dist: torch.Distributions object for the likelihood p(y | xₙ, 𝜃) as returned by _make_distribution
+            dist: torch.Distributions object for the likelihood p(y | xₙ, 𝜃)
+                as returned by _make_distribution
             subsampled_input: input after subsampling
 
         Raises:
-            ValueError: if dist.sample() does not return an object of the same shape as subsampled_input
+            ValueError: if dist.sample() does not return an object of the same
+                shape as subsampled_input
         """
         if dist.sample().shape != subsampled_input.shape:
             raise ValueError("Sample does not have same shape as subsampled_input.")
