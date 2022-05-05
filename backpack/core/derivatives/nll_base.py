@@ -77,7 +77,7 @@ class NLLLossDerivatives(BaseLossDerivatives):
             module: loss module
 
         Raises:
-            NotImlementedError: if module verification has not been provided for the loss
+            NotImplementedError: if module verification has not been provided for the loss
         """
         raise NotImplementedError
 
@@ -137,14 +137,15 @@ class NLLLossDerivatives(BaseLossDerivatives):
 
         This function can be used instead of _compute_sampled_grads_autograd if the gradient
         is known analytically. In this case, the method should return the gradient of the loss
-        with respect to the subsampled input for each of the Monte Carlo samples.
+        with respect to the subsampled input for each of the Monte Carlo samples. This should
+        be of shape [mc_samples, *subsampled_input.shape].
 
         Args:
             subsamlped_input: input after subsampling
             mc_samples: number of samples
 
-        Returns:
-            sampled gradient of shape [mc_samples, *subsampled_input.shape]
+        Raises:
+            NotImplementedError: if manual sampled gradients not implemented
         """
         raise NotImplementedError("Manual sampled gradients not implemented.")
 
