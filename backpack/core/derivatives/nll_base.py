@@ -4,7 +4,7 @@ from typing import List, Tuple
 
 import torch.distributions
 from torch import Tensor, enable_grad, stack
-from torch.autograd import Variable, grad
+from torch.autograd import grad
 from torch.nn import Module
 
 from backpack.core.derivatives.basederivatives import BaseLossDerivatives
@@ -116,21 +116,18 @@ class NLLLossDerivatives(BaseLossDerivatives):
             sampled gradient of shape [mc_samples, *subsampled_input.shape]
 
         """
-        subsampled_input = Variable(subsampled_input, requires_grad=True)
-        with enable_grad():
-            gradient = []
-            dist = self._make_distribution(subsampled_input)
-            self._check_distribution_shape(dist, subsampled_input)
-            for _ in range(mc_samples):
-                y_tilde = dist.sample()
-                loss_tilde = -dist.log_prob(y_tilde).sum()
-                gradient.append(
-                    grad(
-                        loss_tilde,
-                        subsampled_input,
-                    )[0]
-                )
-        return stack(gradient)
+        subsampled_input.requires_grad = True
+        gradients = []
+
+        dist = self._make_distribution(subsampled_input)
+        self._check_distribution_shape(dist, subsampled_input)
+
+        for _ in range(mc_samples):
+            y_tilde = dist.sample()
+            loss_tilde = -dist.log_prob(y_tilde).sum()
+            gradients.append(grad(loss_tilde, subsampled_input)[0])
+
+        return stack(gradients)
 
     def _compute_sampled_grads_manual(self, subsamlped_input: Tensor, mc_samples: int):
         """Compute gradients manually.
