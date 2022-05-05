@@ -354,6 +354,7 @@ def test_sqrt_hessian_sampled_squared_approximates_hessian_nll(
     subsampling: Union[List[int], None],
     mc_samples: int = 50000,
     chunks: int = 10,
+    rerun_on_crash: bool = True,
 ) -> None:
     """Test the MC-sampled sqrt decomposition of the input Hessian for NLL loss base.
 
@@ -369,12 +370,15 @@ def test_sqrt_hessian_sampled_squared_approximates_hessian_nll(
         subsampling: Indices of active samples.
         mc_samples: number of samples. Defaults to 50000.
         chunks: Number of passes the MC samples will be processed sequentially.
+        rerun_on_crash: Run the test again with more samples, then crash if it
+            still fails. Default: ``True``.
     """
     problem.set_up()
     skip_subsampling_conflict(problem, subsampling)
     RTOL, ATOL = 1e-2, 8e-3
 
     autograd_res = AutogradDerivatives(problem).input_hessian(subsampling=subsampling)
+
     try:
         backpack_res = BackpackDerivatives(problem).input_hessian_via_sqrt_hessian(
             mc_samples=mc_samples,
@@ -382,18 +386,21 @@ def test_sqrt_hessian_sampled_squared_approximates_hessian_nll(
             subsampling=subsampling,
             use_autograd=True,
         )
-
+        problem.tear_down()
         check_sizes_and_values(autograd_res, backpack_res, rtol=RTOL, atol=ATOL)
-    except AssertionError:
-        backpack_res = BackpackDerivatives(problem).input_hessian_via_sqrt_hessian(
-            mc_samples=mc_samples * 10,
-            chunks=chunks,
-            subsampling=subsampling,
-            use_autograd=True,
-        )
 
-        check_sizes_and_values(autograd_res, backpack_res, rtol=RTOL, atol=ATOL)
-    problem.tear_down()
+    except AssertionError as e:
+        if rerun_on_crash:
+            more = 10
+            test_sqrt_hessian_sampled_squared_approximates_hessian_nll(
+                problem,
+                subsampling,
+                mc_samples=mc_samples * more,
+                chunks=chunks * more,
+                rerun_on_crash=False,
+            )
+        else:
+            raise e
 
 
 @mark.parametrize("subsampling", SUBSAMPLINGS, ids=SUBSAMPLING_IDS)
