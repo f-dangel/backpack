@@ -3,6 +3,7 @@ from torch.fx import GraphModule
 from torch.nn import Module, Sequential
 from torch.nn.modules.loss import _Loss
 
+from backpack.core.derivatives.mseloss import MSELoss
 from backpack.custom_module.branching import Parallel, _Branch
 from backpack.custom_module.reduce_tuple import ReduceTuple
 
@@ -17,6 +18,18 @@ def is_loss(module: Module) -> bool:
         Whether `module` is a loss function.
     """
     return isinstance(module, _Loss)
+
+
+def is_mse(module: Module) -> bool:
+    """Return whether 'module' is a MSELoss function.
+
+    Args:
+        module: A PyTorch module.
+
+    Returns:
+        Whether 'module' is an MSE loss function
+    """
+    return isinstance(module, MSELoss)
 
 
 def is_no_op(module: Module) -> bool:
