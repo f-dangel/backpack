@@ -26,8 +26,7 @@ class NLLLossDerivatives(BaseLossDerivatives):
         _compute_sampled_grads_autograd or the loss-specific _compute_sampled_grads_manual.
 
         Args:
-            use_autograd: compute gradients with autograd (rather than manual).
-            Defaults to True (use _compute_sampled_grads_autograd).
+            use_autograd: compute gradients with autograd (rather than manual)
         """
         self.use_autograd = use_autograd
 
@@ -53,11 +52,10 @@ class NLLLossDerivatives(BaseLossDerivatives):
 
         Args:
             module: loss module.
-            g_inp: Gradient of loss w.r.t. input.
-            g_out: Gradient of loss w.r.t. output.
-            mc_samples: number of Monte Carlo samples to take.
-            subsampling: Indices of samples that are sliced along the dimension.
-            Defaults to ``None`` (use all samples).
+            g_inp: Gradient of loss w.r.t. input
+            g_out: Gradient of loss w.r.t. output
+            mc_samples: number of Monte Carlo samples to take
+            subsampling: Indices of samples that are sliced along the dimension
 
         Returns:
             Monte Carlo sampled gradients
