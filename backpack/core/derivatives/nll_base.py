@@ -2,7 +2,7 @@
 from math import sqrt
 from typing import List, Tuple
 
-from torch import Tensor, enable_grad, stack
+from torch import Tensor, stack
 from torch.autograd import grad
 from torch.distributions import Distribution
 from torch.nn import Module
