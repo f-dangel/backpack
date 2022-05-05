@@ -19,6 +19,15 @@ class NLLLossDerivatives(BaseLossDerivatives):
     function, defined here as 𝑙(xₙ,yₙ;𝜃)= −log p(yₙ | f_𝜃(xₙ))."""
 
     def __init__(self, use_autograd: bool = True):
+        """Initialization for NLL loss derivative.
+
+        use_autograd determines whether gradients are calculated with the general
+        _compute_sampled_grads_autograd or the loss-specific _compute_sampled_grads_manual.
+
+        Args:
+            use_autograd: compute gradients with autograd (rather than manual)
+            Defaults to True (use _compute_sampled_grads_autograd).
+        """
         self.use_autograd = use_autograd
 
     def _sqrt_hessian_sampled(
@@ -31,8 +40,9 @@ class NLLLossDerivatives(BaseLossDerivatives):
     ) -> Tensor:
         """Method to approximate the square root Hessian through Monte Carlo sampling.
 
-        For a given loss, either _make_distribution or compute_sampled_grads must be
-        implemented.
+        With use_autograd true, _make_distribution must be implemented for the
+        loss function. If use_autograd is false, _compute_sampled_grads_manual must be
+        implemented to calculate the gradients directly.
 
         Optionally, it is possible in _verify_support to specify checks to perform
         on the input module before calculating the loss gradient, to verify that
@@ -61,22 +71,23 @@ class NLLLossDerivatives(BaseLossDerivatives):
         return sqrt_hessian
 
     def _verify_support(self, module: Module):
-        """Verification that the module is supported for the loss function."""
+        """Verification that the module is supported for the loss function.
+
+        Args:
+            module: loss module
+
+        Raises:
+            NotImlementedError: if module verification has not been provided for the loss
+        """
         raise NotImplementedError
 
-    def compute_sampled_grads(
-        self, subsampled_input: Tensor, mc_samples: int
-    ):
+    def compute_sampled_grads(self, subsampled_input: Tensor, mc_samples: int):
         """Method to create the sampled gradients.
 
-        This method returns the gradient of the loss with respect
-        to each of the randomly drawn samples. To use this function, the user must implement
-        the function _make_distribution.
-
-        By default, this will compute gradients for samples of the likelihood distribution
-        with autograd. This function can be overwritten if the gradient is known analytically.
-        In this case, the method should return the gradient of the loss with respect to the
-        subsampled input for each of the Monte Carlo samples.
+        This method returns the gradient of the loss with respect to each of the randomly
+        drawn samples. If use_autograd is True, this will be done with the method
+        _compute_sampled_grads_autograd. Otherwise, _compute_sampled_grads_manual will be
+        used.
 
         Args:
             subsampled_input: input after subsampling
@@ -85,12 +96,26 @@ class NLLLossDerivatives(BaseLossDerivatives):
         Returns:
             sampled gradient of shape [mc_samples, *subsampled_input.shape]
         """
-        if self.use_autograd == True:
+        if self.use_autograd:
             return self._compute_sampled_grads_autograd(subsampled_input, mc_samples)
         else:
             return self._compute_sampled_grads_manual(subsampled_input, mc_samples)
 
-    def _compute_sampled_grads_autograd(self, subsampled_input: Tensor, mc_samples: int):
+    def _compute_sampled_grads_autograd(
+        self, subsampled_input: Tensor, mc_samples: int
+    ):
+        """Compute gradients for samples of the likelihood distribution with autograd.
+
+        To use this function, the user must implement the function _make_distribution.
+
+        Args:
+            subsampled_input: input after subsampling
+            mc_samples: number of samples
+
+        Returns:
+            sampled gradient of shape [mc_samples, *subsampled_input.shape]
+
+        """
         subsampled_input = Variable(subsampled_input, requires_grad=True)
         with enable_grad():
             gradient = []
@@ -108,6 +133,19 @@ class NLLLossDerivatives(BaseLossDerivatives):
         return stack(gradient)
 
     def _compute_sampled_grads_manual(self, subsamlped_input: Tensor, mc_samples: int):
+        """Compute gradients manually.
+
+        This function can be used instead of _compute_sampled_grads_autograd if the gradient
+        is known analytically. In this case, the method should return the gradient of the loss
+        with respect to the subsampled input for each of the Monte Carlo samples.
+
+        Args:
+            subsamlped_input: input after subsampling
+            mc_samples: number of samples
+
+        Returns:
+            sampled gradient of shape [mc_samples, *subsampled_input.shape]
+        """
         raise NotImplementedError("Manual sampled gradients not implemented.")
 
     def _make_distribution(self, subsampled_input: Tensor):
@@ -122,8 +160,8 @@ class NLLLossDerivatives(BaseLossDerivatives):
         Args:
             subsampled_input: input after subsampling
 
-        Returns:
-            torch.Distributions object for the likelihood p(y | xₙ, 𝜃)
+        Raises:
+            NotImplementedError: if the distribution function has not been provided
         """
         raise NotImplementedError
 
@@ -136,7 +174,7 @@ class NLLLossDerivatives(BaseLossDerivatives):
         Args:
             input: input to the layer
 
-        Returns:
-            normalization factor for mean mode
+        Raises:
+            NotImplementedError: if the mean normalization has not been provided
         """
         raise NotImplementedError

@@ -1,5 +1,4 @@
 """NLL extention for Mean Square Error Loss."""
-from abc import ABC
 from math import sqrt
 from typing import List, Tuple
 
@@ -11,7 +10,7 @@ from backpack.core.derivatives.nll_base import NLLLossDerivatives
 
 
 class MSELossDerivatives(NLLLossDerivatives):
-    """Derivatives of the MSE Loss.
+    """Derivatives of the Mean Square Error Loss.
 
     We only support 2D tensors.
 
@@ -22,6 +21,12 @@ class MSELossDerivatives(NLLLossDerivatives):
     """
 
     def __init__(self, use_autograd: bool = False):
+        """Initialization for MSE loss derivative.
+
+        Args:
+            use_autograd: compute gradients with autograd (rather than manual)
+            Defaults to False (use _compute_sampled_grads_manual).
+        """
         super().__init__(use_autograd=use_autograd)
 
     def _sqrt_hessian(
@@ -81,6 +86,7 @@ class MSELossDerivatives(NLLLossDerivatives):
         return hessian_mat_prod
 
     def _verify_support(self, module: MSELoss):
+        """We only support 2D tensors."""
         self._check_input_dims(module)
 
     def _make_distribution(self, subsampled_input: Tensor):
@@ -125,7 +131,6 @@ class MSELossDerivatives(NLLLossDerivatives):
         Args:
             subsampled_input: input after subsampling
             mc_samples: number of samples
-            use_autograd: boolean to use NLL version of compute_sampled_grads for testing
 
         Returns:
             sampled gradient
