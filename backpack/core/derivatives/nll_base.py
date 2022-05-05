@@ -2,6 +2,7 @@
 from math import sqrt
 from typing import List, Tuple
 
+import torch.distributions
 from torch import Tensor, enable_grad, stack
 from torch.autograd import Variable, grad
 from torch.nn import Module
@@ -119,6 +120,7 @@ class NLLLossDerivatives(BaseLossDerivatives):
         with enable_grad():
             gradient = []
             dist = self._make_distribution(subsampled_input)
+            self._check_distribution_shape(dist, subsampled_input)
             for _ in range(mc_samples):
                 y_tilde = dist.sample()
                 loss_tilde = -dist.log_prob(y_tilde).sum()
@@ -177,3 +179,22 @@ class NLLLossDerivatives(BaseLossDerivatives):
             NotImplementedError: if the mean normalization has not been provided
         """
         raise NotImplementedError
+
+    @staticmethod
+    def _check_distribution_shape(
+        dist: torch.distributions.Distribution, subsampled_input: Tensor
+    ):
+        """Method to verify sample.shape is equal to subsampled_input.shape.
+
+        The distribution returned by _make_distribution must sample tensors with the same shape as
+        subsampled_input.
+
+        Args:
+            dist: torch.Distributions object for the likelihood p(y | xₙ, 𝜃) as returned by _make_distribution
+            subsampled_input: input after subsampling
+
+        Raises:
+            ValueError: if dist.sample() does not return an object of the same shape as subsampled_input
+        """
+        if dist.sample().shape != subsampled_input.shape:
+            raise ValueError("Sample does not have same shape as subsampled_input.")
