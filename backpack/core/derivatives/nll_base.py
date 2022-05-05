@@ -16,7 +16,8 @@ class NLLLossDerivatives(BaseLossDerivatives):
     For loss functions that can be expressed as a Negative Log Likelihood (NLL), the
     Maximum a-Posteriori (MAP) estimate of the network parameters can be written as
     𝜃ₘₐₚ = argmin_𝜃 (𝑟(𝜃)+𝑙(xₙ,yₙ;𝜃)) where 𝑟 is the regularizer and 𝑙 is the loss
-    function, defined here as 𝑙(xₙ,yₙ;𝜃)= −log p(yₙ | f_𝜃(xₙ))."""
+    function, defined here as 𝑙(xₙ,yₙ;𝜃)= −log p(yₙ | f_𝜃(xₙ)).
+    """
 
     def __init__(self, use_autograd: bool = True):
         """Initialization for NLL loss derivative.
@@ -25,7 +26,7 @@ class NLLLossDerivatives(BaseLossDerivatives):
         _compute_sampled_grads_autograd or the loss-specific _compute_sampled_grads_manual.
 
         Args:
-            use_autograd: compute gradients with autograd (rather than manual)
+            use_autograd: compute gradients with autograd (rather than manual).
             Defaults to True (use _compute_sampled_grads_autograd).
         """
         self.use_autograd = use_autograd
@@ -51,10 +52,10 @@ class NLLLossDerivatives(BaseLossDerivatives):
         For use in mean mode, _get_mean_normalization must be implemented.
 
         Args:
-            module: loss module
-            g_inp: Gradient of loss w.r.t. input
-            g_out: Gradient of loss w.r.t. output
-            mc_samples: number of Monte Carlo samples to take
+            module: loss module.
+            g_inp: Gradient of loss w.r.t. input.
+            g_out: Gradient of loss w.r.t. output.
+            mc_samples: number of Monte Carlo samples to take.
             subsampling: Indices of samples that are sliced along the dimension.
             Defaults to ``None`` (use all samples).
 
