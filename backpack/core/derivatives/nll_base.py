@@ -126,7 +126,6 @@ class NLLLossDerivatives(BaseLossDerivatives):
                     grad(
                         loss_tilde,
                         subsampled_input,
-                        retain_graph=True,
                     )[0]
                 )
         return stack(gradient)
