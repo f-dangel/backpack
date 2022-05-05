@@ -372,6 +372,10 @@ def test_sqrt_hessian_sampled_squared_approximates_hessian_nll(
         chunks: Number of passes the MC samples will be processed sequentially.
         rerun_on_crash: Run the test again with more samples, then crash if it
             still fails. Default: ``True``.
+
+    Raises:
+        AssertionError: If the MC-sampled Hessian square root does not square to the
+            exact Hessian.
     """
     problem.set_up()
     skip_subsampling_conflict(problem, subsampling)
