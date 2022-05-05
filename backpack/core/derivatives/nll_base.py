@@ -2,9 +2,9 @@
 from math import sqrt
 from typing import List, Tuple
 
-import torch.distributions
 from torch import Tensor, enable_grad, stack
 from torch.autograd import grad
+from torch.distributions import Distribution
 from torch.nn import Module
 
 from backpack.core.derivatives.basederivatives import BaseLossDerivatives
@@ -178,9 +178,7 @@ class NLLLossDerivatives(BaseLossDerivatives):
         raise NotImplementedError
 
     @staticmethod
-    def _check_distribution_shape(
-        dist: torch.distributions.Distribution, subsampled_input: Tensor
-    ):
+    def _check_distribution_shape(dist: Distribution, subsampled_input: Tensor):
         """Method to verify sample.shape is equal to subsampled_input.shape.
 
         The distribution returned by _make_distribution must sample tensors
