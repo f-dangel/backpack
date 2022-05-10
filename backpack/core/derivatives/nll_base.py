@@ -12,17 +12,17 @@ from backpack.utils.subsampling import subsample
 
 
 class NLLLossDerivatives(BaseLossDerivatives):
-    """Partial derivative bases for NLL loss.
+    """Base class for partial derivatives of negative log-likelihood losses.
 
-    NLL Loss functions can be expressed as a Negative Log Likelihood (NLL)
-    𝑙(xₙ,yₙ;𝜃)= −log p(yₙ | f_𝜃(xₙ)).
+    These loss functions can be expressed as a negative log-likelihood (NLL)
+    of targets given the input, 𝑙(fₙ,yₙ)= −log p(yₙ | fₙ).
     """
 
     def __init__(self, use_autograd: bool = True):
         """Initialization.
 
         Args:
-            use_autograd: compute gradients with autograd (rather than manual).
+            use_autograd: Compute gradient samples with autograd (rather than manual).
                 Default: ``True`` This argument is used to test automated and manual
                 versions of sampled gradient computation.
         """
@@ -38,15 +38,10 @@ class NLLLossDerivatives(BaseLossDerivatives):
     ) -> Tensor:
         """Approximate the Hessian square root through Monte-Carlo sampling.
 
-        With use_autograd true, _make_distribution must be implemented for the
-        loss function. If use_autograd is False, _compute_sampled_grads_manual
-        must be implemented to calculate the MC samples.
+        With use_autograd is True, _make_distribution must be implemented.
+        Otherwise, _compute_sampled_grads_manual must be implemented.
 
-        Optionally, it is possible in _verify_support to specify checks to perform
-        on the input module before calculating the loss gradient, to verify that
-        it's parameters are supported for that particular loss.
-
-        For use in mean mode, _get_mean_normalization must be implemented.
+        In mean reduction mode, _get_mean_normalization must be implemented.
 
         Args:
             module: loss module.
@@ -56,7 +51,8 @@ class NLLLossDerivatives(BaseLossDerivatives):
             subsampling: Indices of samples that are sliced along the dimension
 
         Returns:
-            Approximate Hessian square root
+            Approximate Hessian square root. Has shape [mc_samples,
+            subsampled_input.shape].
         """
         self._verify_support(module)
         subsampled_input = subsample(module.input0, subsampling=subsampling)
@@ -68,27 +64,27 @@ class NLLLossDerivatives(BaseLossDerivatives):
         return sqrt_hessian
 
     def _verify_support(self, module: Module):
-        """Verification that the module is supported for the loss function.
+        """Verify that the module hyperparameters are supported.
 
         Args:
             module: loss module
 
         Raises:
-            NotImplementedError: if module verification has not been provided for the loss
+            NotImplementedError: If the module has unsupported hyperparameters.
         """
         raise NotImplementedError
 
     def compute_sampled_grads(
         self, subsampled_input: Tensor, mc_samples: int
     ) -> Tensor:
-        """Compute gradients with targets drawn from the likelihood.
+        """Compute gradients with targets drawn from the likelihood p(· | f).
 
         If use_autograd is True, use _compute_sampled_grads_autograd.
-        Otherwise, _compute_sampled_grads_manual will be used.
+        Otherwise, use _compute_sampled_grads_manual.
 
         Args:
             subsampled_input: input after subsampling
-            mc_samples: number of samples
+            mc_samples: number of gradient samples
 
         Returns:
             Sampled gradients of shape [mc_samples, *subsampled_input.shape]
@@ -132,8 +128,8 @@ class NLLLossDerivatives(BaseLossDerivatives):
     ) -> Tensor:
         """Compute gradients for samples of the likelihood distribution manually.
 
-        This function can be used instead of _compute_sampled_grads_autograd if the gradient
-        is known analytically.
+        This function can be used instead of _compute_sampled_grads_autograd if
+        the gradient is known analytically.
 
         Args:
             subsampled_input: input after subsampling
@@ -145,25 +141,25 @@ class NLLLossDerivatives(BaseLossDerivatives):
         raise NotImplementedError("Manual sampled gradients not implemented.")
 
     def _make_distribution(self, subsampled_input: Tensor) -> Distribution:
-        """Create the likelihood distribution.
+        """Create the likelihood distribution p(· | f).
 
         This should be in the form of a torch.Distributions object for p, such that
-        the desired loss 𝑙(xₙ,yₙ;𝜃)= −log p(yₙ | f_𝜃(xₙ)).
+        the desired loss 𝑙(f, y) α ∑ₙ − log p(yₙ | fₙ).
 
-        This torch.Distributions object must include the functions
-        sample(sample_shape=torch.Size([])) and log_prob(value).
+        Otherwise, the distribution must offer functions to draw samples and to
+        evaluate its log-probability.
 
         Args:
             subsampled_input: input after subsampling
 
         Raises:
-            NotImplementedError: if the distribution function has not been provided
+            NotImplementedError: If not implemented.
         """
         raise NotImplementedError
 
     @staticmethod
     def _get_mean_normalization(input: Tensor) -> int:
-        """Normalization factor for mean mode.
+        """Return the normalization factor in mean mode.
 
         The number C in loss = 1 / C * ∑ᵢ lossᵢ.
 
@@ -171,25 +167,21 @@ class NLLLossDerivatives(BaseLossDerivatives):
             input: input to the layer
 
         Raises:
-            NotImplementedError: if the mean normalization has not been provided
+            NotImplementedError: If not implemented
         """
         raise NotImplementedError
 
     @staticmethod
     def _check_distribution_shape(dist: Distribution, subsampled_input: Tensor):
-        """Verify shape of sampled targets.
-
-        The distribution returned by _make_distribution must sample tensors
-        with the same shape as subsampled_input.
+        """Verify shape of sampled targets y ∼ p(· | f).
 
         Args:
-            dist: torch.Distributions object for the likelihood p(y | xₙ, 𝜃)
-                as returned by _make_distribution
-            subsampled_input: input after subsampling
+            dist: Distribution of the likelihood p(y | f), e.g. created by
+                _make_distribution.
+            subsampled_input: Input after subsampling.
 
         Raises:
-            ValueError: if dist.sample() does not return an object of the same
-                shape as subsampled_input
+            ValueError: If the target samples have incorrect shape.
         """
         if dist.sample().shape != subsampled_input.shape:
             raise ValueError("Sample does not have same shape as subsampled_input.")
