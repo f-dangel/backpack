@@ -136,7 +136,7 @@ class NLLLossDerivatives(BaseLossDerivatives):
         is known analytically.
 
         Args:
-            subsamlped_input: input after subsampling
+            subsampled_input: input after subsampling
             mc_samples: number of samples
 
         Raises:
