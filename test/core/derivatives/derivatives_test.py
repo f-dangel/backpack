@@ -73,6 +73,9 @@ CUSTOM_SLICING_MODULE_IDS = [
     problem.make_id() for problem in CUSTOM_SLICING_MODULE_PROBLEMS
 ]
 
+MSE_PROBLEMS = [problem for problem in PROBLEMS if problem.is_mse()]
+MSE_IDS = [problem.make_id() for problem in MSE_PROBLEMS]
+
 SUBSAMPLINGS = [None, [0, 0], [2, 0]]
 SUBSAMPLING_IDS = [f"subsampling={s}".replace(" ", "") for s in SUBSAMPLINGS]
 
@@ -342,6 +345,64 @@ def test_sqrt_hessian_sampled_squared_approximates_hessian(
     RTOL, ATOL = 1e-2, 7e-3
     check_sizes_and_values(autograd_res, backpack_res, rtol=RTOL, atol=ATOL)
     problem.tear_down()
+
+
+@mark.parametrize("subsampling", SUBSAMPLINGS, ids=SUBSAMPLING_IDS)
+@mark.parametrize("problem", MSE_PROBLEMS, ids=MSE_IDS)
+def test_sqrt_hessian_sampled_squared_approximates_hessian_nll(
+    problem: DerivativesTestProblem,
+    subsampling: Union[List[int], None],
+    mc_samples: int = 50000,
+    chunks: int = 10,
+    rerun_on_crash: bool = True,
+) -> None:
+    """Test the MC-sampled sqrt decomposition of the input Hessian for NLL loss base.
+
+    Compares the Hessian to reconstruction from individual Hessian MC-sampled
+    sqrt. This test runs specifically on the autograd version of
+    compute_sampled_grads, rather than manual versions which are used by default
+    and tested elsewhere.
+
+    Args:
+        problem: Test case.
+        subsampling: Indices of active samples.
+        mc_samples: number of samples. Defaults to 50000.
+        chunks: Number of passes the MC samples will be processed sequentially.
+        rerun_on_crash: Run the test again with more samples, then crash if it
+            still fails. Default: ``True``.
+
+    Raises:
+        AssertionError: If the MC-sampled Hessian square root does not square to the
+            exact Hessian.
+    """
+    problem.set_up()
+    skip_subsampling_conflict(problem, subsampling)
+    RTOL, ATOL = 1e-2, 8e-3
+
+    autograd_res = AutogradDerivatives(problem).input_hessian(subsampling=subsampling)
+
+    try:
+        backpack_res = BackpackDerivatives(problem).input_hessian_via_sqrt_hessian(
+            mc_samples=mc_samples,
+            chunks=chunks,
+            subsampling=subsampling,
+            use_autograd=True,
+        )
+        problem.tear_down()
+        check_sizes_and_values(autograd_res, backpack_res, rtol=RTOL, atol=ATOL)
+
+    except AssertionError as e:
+        if rerun_on_crash:
+            more = 10
+            test_sqrt_hessian_sampled_squared_approximates_hessian_nll(
+                problem,
+                subsampling,
+                mc_samples=mc_samples * more,
+                chunks=chunks * more,
+                rerun_on_crash=False,
+            )
+        else:
+            raise e
 
 
 @mark.parametrize("subsampling", SUBSAMPLINGS, ids=SUBSAMPLING_IDS)

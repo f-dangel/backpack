@@ -5,6 +5,7 @@ backpack/context.py
 backpack/custom_module/
 
 backpack/core/derivatives/basederivatives.py
+backpack/core/derivatives/nll_base.py
 backpack/core/derivatives/rnn.py
 backpack/core/derivatives/shape_check.py
 backpack/core/derivatives/__init__.py

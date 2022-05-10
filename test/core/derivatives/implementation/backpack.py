@@ -5,6 +5,7 @@ from typing import List
 
 from torch import Tensor, einsum, zeros
 
+from backpack.core.derivatives.nll_base import NLLLossDerivatives
 from backpack.utils.subsampling import subsample
 
 
@@ -82,7 +83,11 @@ class BackpackDerivatives(DerivativesImplementation):
         return self.problem.derivative.sum_hessian(self.problem.module, None, None)
 
     def input_hessian_via_sqrt_hessian(
-        self, mc_samples: int = None, chunks: int = 1, subsampling: List[int] = None
+        self,
+        mc_samples: int = None,
+        chunks: int = 1,
+        subsampling: List[int] = None,
+        use_autograd: bool = False,
     ) -> Tensor:
         """Computes the Hessian w.r.t. to the input from its matrix square root.
 
@@ -92,6 +97,8 @@ class BackpackDerivatives(DerivativesImplementation):
             chunks: Maximum sequential split of the computation. Default: ``1``.
                 Only used if mc_samples is specified.
             subsampling: Indices of active samples. ``None`` uses all samples.
+            use_autograd: Compute sampled gradients with ``autograd``. Only relevant
+                for ``NLLLossDerivatives``. Default: ``False``.
 
         Returns:
             Hessian with respect to the input. Has shape
@@ -104,6 +111,9 @@ class BackpackDerivatives(DerivativesImplementation):
         if mc_samples is not None:
             chunk_samples = chunk_sizes(mc_samples, chunks)
             chunk_weights = [samples / mc_samples for samples in chunk_samples]
+
+            if isinstance(self.problem.derivative, NLLLossDerivatives):
+                self.problem.derivative.use_autograd = use_autograd
 
             individual_hessians: Tensor = sum(
                 weight
