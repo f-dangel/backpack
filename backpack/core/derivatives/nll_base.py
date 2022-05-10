@@ -144,7 +144,7 @@ class NLLLossDerivatives(BaseLossDerivatives):
         """
         raise NotImplementedError("Manual sampled gradients not implemented.")
 
-    def _make_distribution(self, subsampled_input: Tensor->Distribution):
+    def _make_distribution(self, subsampled_input: Tensor) -> Distribution:
         """Create the likelihood distribution.
 
         This should be in the form of a torch.Distributions object for p, such that
