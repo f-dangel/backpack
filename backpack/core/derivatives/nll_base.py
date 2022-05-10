@@ -14,20 +14,17 @@ from backpack.utils.subsampling import subsample
 class NLLLossDerivatives(BaseLossDerivatives):
     """Partial derivative bases for NLL loss.
 
-    For loss functions that can be expressed as a Negative Log Likelihood (NLL), the
-    Maximum a-Posteriori (MAP) estimate of the network parameters can be written as
-    𝜃ₘₐₚ = argmin_𝜃 (𝑟(𝜃)+𝑙(xₙ,yₙ;𝜃)) where 𝑟 is the regularizer and 𝑙 is the loss
-    function, defined here as 𝑙(xₙ,yₙ;𝜃)= −log p(yₙ | f_𝜃(xₙ)).
+    NLL Loss functions can be expressed as a Negative Log Likelihood (NLL)
+    𝑙(xₙ,yₙ;𝜃)= −log p(yₙ | f_𝜃(xₙ)).
     """
 
     def __init__(self, use_autograd: bool = True):
-        """Initialization for NLL loss derivative.
-
-        use_autograd determines whether gradients are calculated with the general
-        _compute_sampled_grads_autograd or the loss-specific _compute_sampled_grads_manual.
+        """Initialization.
 
         Args:
-            use_autograd: compute gradients with autograd (rather than manual)
+            use_autograd: compute gradients with autograd (rather than manual).
+                Default: ``True`` This argument is used to test automated and manual
+                versions of sampled gradient computation.
         """
         self.use_autograd = use_autograd
 
@@ -39,11 +36,11 @@ class NLLLossDerivatives(BaseLossDerivatives):
         mc_samples: int = 1,
         subsampling: List[int] = None,
     ) -> Tensor:
-        """Method to approximate the square root Hessian through Monte Carlo sampling.
+        """Approximate the Hessian square root through Monte-Carlo sampling.
 
         With use_autograd true, _make_distribution must be implemented for the
-        loss function. If use_autograd is false, _compute_sampled_grads_manual must be
-        implemented to calculate the gradients directly.
+        loss function. If use_autograd is False, _compute_sampled_grads_manual
+        must be implemented to calculate the MC samples.
 
         Optionally, it is possible in _verify_support to specify checks to perform
         on the input module before calculating the loss gradient, to verify that
@@ -59,7 +56,7 @@ class NLLLossDerivatives(BaseLossDerivatives):
             subsampling: Indices of samples that are sliced along the dimension
 
         Returns:
-            Monte Carlo sampled gradients
+            Approximate Hessian square root
         """
         self._verify_support(module)
         subsampled_input = subsample(module.input0, subsampling=subsampling)
@@ -81,40 +78,41 @@ class NLLLossDerivatives(BaseLossDerivatives):
         """
         raise NotImplementedError
 
-    def compute_sampled_grads(self, subsampled_input: Tensor, mc_samples: int):
-        """Method to create the sampled gradients.
+    def compute_sampled_grads(
+        self, subsampled_input: Tensor, mc_samples: int
+    ) -> Tensor:
+        """Compute gradients with targets drawn from the likelihood.
 
-        This method returns the gradient of the loss with respect to each of the randomly
-        drawn samples. If use_autograd is True, this will be done with the method
-        _compute_sampled_grads_autograd. Otherwise, _compute_sampled_grads_manual will be
-        used.
+        If use_autograd is True, use _compute_sampled_grads_autograd.
+        Otherwise, _compute_sampled_grads_manual will be used.
 
         Args:
             subsampled_input: input after subsampling
             mc_samples: number of samples
 
         Returns:
-            sampled gradient of shape [mc_samples, *subsampled_input.shape]
+            Sampled gradients of shape [mc_samples, *subsampled_input.shape]
         """
-        if self.use_autograd:
-            return self._compute_sampled_grads_autograd(subsampled_input, mc_samples)
-        else:
-            return self._compute_sampled_grads_manual(subsampled_input, mc_samples)
+        grad_func = (
+            self._compute_sampled_grads_autograd
+            if self.use_autograd
+            else self._compute_sampled_grads_manual
+        )
+        return grad_func(subsampled_input, mc_samples)
 
     def _compute_sampled_grads_autograd(
         self, subsampled_input: Tensor, mc_samples: int
-    ):
+    ) -> Tensor:
         """Compute gradients for samples of the likelihood distribution with autograd.
 
-        To use this function, the user must implement the function _make_distribution.
+        _make_distribution must be implemented for this function to work.
 
         Args:
             subsampled_input: input after subsampling
             mc_samples: number of samples
 
         Returns:
-            sampled gradient of shape [mc_samples, *subsampled_input.shape]
-
+            Sampled gradients of shape [mc_samples, *subsampled_input.shape]
         """
         subsampled_input.requires_grad = True
         gradients = []
@@ -129,13 +127,13 @@ class NLLLossDerivatives(BaseLossDerivatives):
 
         return stack(gradients)
 
-    def _compute_sampled_grads_manual(self, subsamlped_input: Tensor, mc_samples: int):
-        """Compute gradients manually.
+    def _compute_sampled_grads_manual(
+        self, subsampled_input: Tensor, mc_samples: int
+    ) -> Tensor:
+        """Compute gradients for samples of the likelihood distribution manually.
 
         This function can be used instead of _compute_sampled_grads_autograd if the gradient
-        is known analytically. In this case, the method should return the gradient of the loss
-        with respect to the subsampled input for each of the Monte Carlo samples. This should
-        be of shape [mc_samples, *subsampled_input.shape].
+        is known analytically.
 
         Args:
             subsamlped_input: input after subsampling
@@ -146,10 +144,10 @@ class NLLLossDerivatives(BaseLossDerivatives):
         """
         raise NotImplementedError("Manual sampled gradients not implemented.")
 
-    def _make_distribution(self, subsampled_input: Tensor):
-        """Create the negative log likelihood distribution.
+    def _make_distribution(self, subsampled_input: Tensor->Distribution):
+        """Create the likelihood distribution.
 
-        This should be in the form of a torch.Distributions object, such that
+        This should be in the form of a torch.Distributions object for p, such that
         the desired loss 𝑙(xₙ,yₙ;𝜃)= −log p(yₙ | f_𝜃(xₙ)).
 
         This torch.Distributions object must include the functions
@@ -179,7 +177,7 @@ class NLLLossDerivatives(BaseLossDerivatives):
 
     @staticmethod
     def _check_distribution_shape(dist: Distribution, subsampled_input: Tensor):
-        """Method to verify sample.shape is equal to subsampled_input.shape.
+        """Verify shape of sampled targets.
 
         The distribution returned by _make_distribution must sample tensors
         with the same shape as subsampled_input.
