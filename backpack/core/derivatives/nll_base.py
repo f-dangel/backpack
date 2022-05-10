@@ -15,16 +15,17 @@ class NLLLossDerivatives(BaseLossDerivatives):
     """Base class for partial derivatives of negative log-likelihood losses.
 
     These loss functions can be expressed as a negative log-likelihood (NLL)
-    of targets given the input, 𝑙(fₙ,yₙ)= −log p(yₙ | fₙ).
+    of targets given the input, 𝑙(fₙ,yₙ)= −log p(yₙ | fₙ) with a likelihood
+    distribution p(· | f).
     """
 
     def __init__(self, use_autograd: bool = True):
         """Initialization.
 
         Args:
-            use_autograd: Compute gradient samples with autograd (rather than manual).
-                Default: ``True`` This argument is used to test automated and manual
-                versions of sampled gradient computation.
+            use_autograd: Compute gradient samples with autograd (rather than manually).
+                Default: ``True``. This argument is used to test the non-default
+                computation.
         """
         self.use_autograd = use_autograd
 
@@ -38,7 +39,7 @@ class NLLLossDerivatives(BaseLossDerivatives):
     ) -> Tensor:
         """Approximate the Hessian square root through Monte-Carlo sampling.
 
-        With use_autograd is True, _make_distribution must be implemented.
+        If use_autograd is True, _make_distribution must be implemented.
         Otherwise, _compute_sampled_grads_manual must be implemented.
 
         In mean reduction mode, _get_mean_normalization must be implemented.
@@ -146,8 +147,8 @@ class NLLLossDerivatives(BaseLossDerivatives):
         This should be in the form of a torch.Distributions object for p, such that
         the desired loss 𝑙(f, y) α ∑ₙ − log p(yₙ | fₙ).
 
-        Otherwise, the distribution must offer functions to draw samples and to
-        evaluate its log-probability.
+        Otherwise, the returned object must offer functions to draw samples and to
+        evaluate the log-probability.
 
         Args:
             subsampled_input: input after subsampling
