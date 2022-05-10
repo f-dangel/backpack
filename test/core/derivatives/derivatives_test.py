@@ -358,12 +358,10 @@ def test_sqrt_hessian_sampled_squared_approximates_hessian_nll(
 ) -> None:
     """Test the MC-sampled sqrt decomposition of the input Hessian for NLL loss base.
 
-    Compares the Hessian to reconstruction from individual Hessian MC-sampled sqrt.
-    This test runs specifically on the NLL version of compute_sampled_grads, rather
-    than faster overwritten versions for individual losses.
-
-    For efficiency, it will try running the test with only mc_samples first. If this
-    fails, it will retry the test with 10 times as many samples.
+    Compares the Hessian to reconstruction from individual Hessian MC-sampled
+    sqrt. This test runs specifically on the autograd version of
+    compute_sampled_grads, rather than manual versions which are used by default
+    and tested elsewhere.
 
     Args:
         problem: Test case.
