@@ -1,4 +1,5 @@
-"""NLL extention for Mean Square Error Loss."""
+"""Derivatives of the MSE Loss."""
+
 from math import sqrt
 from typing import List, Tuple
 
@@ -10,22 +11,23 @@ from backpack.core.derivatives.nll_base import NLLLossDerivatives
 
 
 class MSELossDerivatives(NLLLossDerivatives):
-    """Derivatives of the Mean Square Error Loss.
+    """Derivatives of ``MSELoss``.
 
     We only support 2D tensors.
 
     For `X : [n, d]` and `Y : [n, d]`, if `reduce=sum`, the MSE computes
     `∑ᵢ₌₁ⁿ ‖X[i,∶] − Y[i,∶]‖²`. If `reduce=mean`, the result is divided by `nd`.
-    The square root Hessian can be sampled from a Gaussian distribution
-    with a mean of 0 and a variance of √2.
+
+    ``MSELoss`` is a negative log-likelihood of a Gaussian with mean corresponding
+    to the module input and constant standard deviation √0.5.
     """
 
     def __init__(self, use_autograd: bool = False):
         """Initialization for MSE loss derivative.
 
         Args:
-            use_autograd: compute gradients with autograd (rather than manual)
-            Defaults to False (use _compute_sampled_grads_manual).
+            use_autograd: Compute gradients with autograd (rather than manual)
+                Defaults to ``False`` (manual computation).
         """
         super().__init__(use_autograd=use_autograd)
 
@@ -89,22 +91,23 @@ class MSELossDerivatives(NLLLossDerivatives):
         """We only support 2D tensors."""
         self._check_input_dims(module)
 
-    def _make_distribution(self, subsampled_input: Tensor):
-        """Make the sampling distribution for the NLL loss form of MSE.
+    def _make_distribution(self, subsampled_input: Tensor) -> Normal:
+        """Create the likelihood distribution whose NLL is the MSE.
 
-        The log probabiity of the Gaussian distribution is proportional to
+        The log probability of the Gaussian distribution is proportional to
         ¹/₍₂𝜎²₎∑ᵢ₌₁ⁿ (xᵢ−𝜇)². Because MSE = ∑ᵢ₌₁ⁿ(Yᵢ−Ŷᵢ)², this is
         equivalent for samples drawn from a Gaussian distribution with
-        mean of the subsampled input and variance √0.5.
+        mean of the subsampled input and standard deviation √0.5.
 
         Args:
             subsampled_input: input after subsampling
 
         Returns:
-            torch.distributions Normal distribution with mean of
-        the subsampled input and variance √0.5
+            Normal distribution for targets | inputs
         """
-        return Normal(subsampled_input, tensor(sqrt(0.5)).to(subsampled_input.device))
+        return Normal(
+            subsampled_input, tensor(sqrt(0.5), device=subsampled_input.device)
+        )
 
     def _check_input_dims(self, module: MSELoss):
         """Raises an exception if the shapes of the input are not supported."""
@@ -123,8 +126,10 @@ class MSELossDerivatives(NLLLossDerivatives):
     def _get_mean_normalization(input: Tensor) -> int:
         return input.numel()
 
-    def _compute_sampled_grads_manual(self, subsampled_input: Tensor, mc_samples: int):
-        """Custom method to overwrite gradient computation for MeanSquareError Loss.
+    def _compute_sampled_grads_manual(
+        self, subsampled_input: Tensor, mc_samples: int
+    ) -> Tensor:
+        """Manually compute gradients from sampled targets.
 
         Because MSE = ∑ᵢ₌₁ⁿ(Yᵢ−Ŷᵢ)², the gradient is 2∑ᵢ₋₁ⁿ(Yᵢ−Ŷᵢ).
 
@@ -133,7 +138,7 @@ class MSELossDerivatives(NLLLossDerivatives):
             mc_samples: number of samples
 
         Returns:
-            sampled gradient
+            Gradient samples
         """
         dist = self._make_distribution(subsampled_input)
         samples = dist.sample(sample_shape=Size([mc_samples]))
