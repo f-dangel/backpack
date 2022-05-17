@@ -40,7 +40,9 @@ IDS = [problem.make_id() for problem in PROBLEMS]
 NO_LOSS_PROBLEMS = [problem for problem in PROBLEMS if not problem.is_loss()]
 NO_LOSS_IDS = [problem.make_id() for problem in NO_LOSS_PROBLEMS]
 
-LOSS_PROBLEMS = [problem for problem in PROBLEMS if problem.is_loss()]
+LOSS_PROBLEMS = [
+    problem for problem in PROBLEMS if problem.is_loss() and not problem.is_bce()
+]
 LOSS_IDS = [problem.make_id() for problem in LOSS_PROBLEMS]
 
 # second-order does not make sense
@@ -73,8 +75,8 @@ CUSTOM_SLICING_MODULE_IDS = [
     problem.make_id() for problem in CUSTOM_SLICING_MODULE_PROBLEMS
 ]
 
-MSE_PROBLEMS = [problem for problem in PROBLEMS if problem.is_mse()]
-MSE_IDS = [problem.make_id() for problem in MSE_PROBLEMS]
+NLL_PROBLEMS = [problem for problem in PROBLEMS if problem.is_nll()]
+NLL_IDS = [problem.make_id() for problem in NLL_PROBLEMS]
 
 SUBSAMPLINGS = [None, [0, 0], [2, 0]]
 SUBSAMPLING_IDS = [f"subsampling={s}".replace(" ", "") for s in SUBSAMPLINGS]
@@ -348,7 +350,7 @@ def test_sqrt_hessian_sampled_squared_approximates_hessian(
 
 
 @mark.parametrize("subsampling", SUBSAMPLINGS, ids=SUBSAMPLING_IDS)
-@mark.parametrize("problem", MSE_PROBLEMS, ids=MSE_IDS)
+@mark.parametrize("problem", NLL_PROBLEMS, ids=NLL_IDS)
 def test_sqrt_hessian_sampled_squared_approximates_hessian_nll(
     problem: DerivativesTestProblem,
     subsampling: Union[List[int], None],

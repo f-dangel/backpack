@@ -120,7 +120,7 @@ class NLLLossDerivatives(BaseLossDerivatives):
         for _ in range(mc_samples):
             y_tilde = dist.sample()
             loss_tilde = -dist.log_prob(y_tilde).sum()
-            gradients.append(grad(loss_tilde, subsampled_input)[0])
+            gradients.append(grad(loss_tilde, subsampled_input, retain_graph=True)[0])
 
         return stack(gradients)
 

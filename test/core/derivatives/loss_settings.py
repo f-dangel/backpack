@@ -77,6 +77,11 @@ LOSS_SETTINGS += [
         "input_fn": lambda: torch.rand(size=(1, 1)),
         "target_fn": lambda: regression_targets(size=(1, 1)),
     },
+    {
+        "module_fn": lambda: torch.nn.BCEWithLogitsLoss(reduction="mean"),
+        "input_fn": lambda: torch.rand(size=(2, 1)),
+        "target_fn": lambda: classification_targets(size=(2, 1), num_classes=2).float(),
+    },
 ]
 
 
