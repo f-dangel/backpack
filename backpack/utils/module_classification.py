@@ -1,9 +1,8 @@
 """Contains util function for classification of modules."""
 from torch.fx import GraphModule
 from torch.nn import Module, Sequential
-from torch.nn.modules.loss import _Loss
+from torch.nn.modules.loss import BCEWithLogitsLoss, CrossEntropyLoss, MSELoss, _Loss
 
-from backpack.core.derivatives.mseloss import MSELoss
 from backpack.custom_module.branching import Parallel, _Branch
 from backpack.custom_module.reduce_tuple import ReduceTuple
 
@@ -30,6 +29,45 @@ def is_mse(module: Module) -> bool:
         Whether 'module' is an MSE loss function
     """
     return isinstance(module, MSELoss)
+
+
+def is_ce(module: Module) -> bool:
+    """Return whether 'module' is a CrossEntropyLoss function.
+
+    Args:
+        module: A PyTorch module.
+
+    Returns:
+        Whether 'module' is a CrossEntropyloss function
+    """
+    return isinstance(module, CrossEntropyLoss)
+
+
+def is_bce(module: Module) -> bool:
+    """Return whether 'module' is a BCEWithLogitsLoss function.
+
+    Args:
+        module: A PyTorch module.
+
+    Returns:
+        Whether 'module' is a BCEWithLogits loss function
+    """
+    return isinstance(module, BCEWithLogitsLoss)
+
+
+def is_nll(module: Module) -> bool:
+    """Return whether 'module' is a NLL Loss function.
+
+    Current NLL loss functions include MSE, BCEWithLogits,
+    and CrossEntropy.
+
+    Args:
+        module: A PyTorch module.
+
+    Returns:
+        Whether 'module' is an NLL loss function
+    """
+    return is_bce(module) or is_ce(module) or is_mse(module)
 
 
 def is_no_op(module: Module) -> bool:

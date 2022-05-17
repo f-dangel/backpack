@@ -3,20 +3,30 @@ from math import sqrt
 from typing import Callable, Dict, List, Tuple
 
 from einops import rearrange
-from torch import Tensor, diag, diag_embed, einsum, eye, multinomial, ones_like, softmax
+from torch import Size, Tensor, diag, diag_embed, einsum, eye, ones_like, softmax
+from torch.distributions import OneHotCategorical
 from torch.nn import CrossEntropyLoss
-from torch.nn.functional import one_hot
 
-from backpack.core.derivatives.basederivatives import BaseLossDerivatives
+from backpack.core.derivatives.nll_base import NLLLossDerivatives
 from backpack.utils.subsampling import subsample
 
 
-class CrossEntropyLossDerivatives(BaseLossDerivatives):
+class CrossEntropyLossDerivatives(NLLLossDerivatives):
     """Partial derivatives for cross-entropy loss.
 
     The `torch.nn.CrossEntropyLoss` operation is a composition of softmax
     and negative log-likelihood.
     """
+
+    def __init__(self, use_autograd: bool = False):
+        """Initialization for CE loss derivative.
+
+        Args:
+            use_autograd: Compute gradients with autograd (rather than manual)
+                Defaults to ``False`` (manual computation).
+        """
+        self.rearrange_info = None
+        super().__init__(use_autograd=use_autograd)
 
     def _sqrt_hessian(
         self,
@@ -42,37 +52,6 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
         sqrt_H = self._ungroup_batch_and_additional(sqrt_H, *rearrange_info)
         sqrt_H = self._expand_sqrt_h(sqrt_H)
         return sqrt_H
-
-    def _sqrt_hessian_sampled(
-        self,
-        module: CrossEntropyLoss,
-        g_inp: Tuple[Tensor],
-        g_out: Tuple[Tensor],
-        mc_samples: int = 1,
-        subsampling: List[int] = None,
-    ) -> Tensor:
-        self._check_2nd_order_parameters(module)
-
-        M = mc_samples
-        C = module.input0.shape[1]
-
-        probs = self._get_probs(module, subsampling=subsampling)
-        probs, *rearrange_info = self._merge_batch_and_additional(probs)
-
-        V_dim = 0
-        probs_unsqueezed = probs.unsqueeze(V_dim).repeat(M, 1, 1)
-
-        multi = multinomial(probs, M, replacement=True)
-        classes = one_hot(multi, num_classes=C)
-        classes = einsum("nvc->vnc", classes).float()
-
-        sqrt_mc_h = (probs_unsqueezed - classes) / sqrt(M)
-
-        if module.reduction == "mean":
-            sqrt_mc_h /= sqrt(self._get_mean_normalization(module.input0))
-
-        sqrt_mc_h = self._ungroup_batch_and_additional(sqrt_mc_h, *rearrange_info)
-        return sqrt_mc_h
 
     def _sum_hessian(
         self, module: CrossEntropyLoss, g_inp: Tuple[Tensor], g_out: Tuple[Tensor]
@@ -265,3 +244,56 @@ class CrossEntropyLossDerivatives(BaseLossDerivatives):
             Divisor for mean reduction.
         """
         return input.numel() // input.shape[1]
+
+    def _verify_support(self, module: CrossEntropyLoss):
+        """We only support default weight and ignore_index.
+
+        Args:
+            module: CrossEntropyLoss module
+        """
+        self._check_2nd_order_parameters(module)
+
+    def _make_distribution(self, subsampled_input: Tensor) -> OneHotCategorical:
+        """Create the likelihood distribution whose NLL is the CE.
+        The log probability of the Categorical distribution for a single sample
+        with k classes is ∑ᵢ₌₁ᵏ Ŷᵢ log pᵢ, where Ŷ is one-hot encoded. If p is
+        chosen as the softmax, this is equivalent to CrossEntropyLoss
+
+        Args:
+            subsampled_input: input after subsampling
+
+        Returns:
+            Normal distribution for targets | inputs
+        """
+        return OneHotCategorical(probs=softmax(subsampled_input, dim=1))
+
+    def _compute_sampled_grads_manual(
+        self, subsampled_input: Tensor, mc_samples: int
+    ) -> Tensor:
+        """Manually compute gradients from sampled targets.
+        Cross Entropy loss is ∑ᵢ₌₁ᵏ Ŷᵢ log 𝜎(xᵢ), where 𝜎(xᵢ) is the softmax of
+        the input and Ŷᵢ is one-hot encoded. The gradient is 𝜎(xᵢ) - Ŷᵢ.
+
+        Args:
+            subsampled_input: input after subsampling
+            mc_samples: number of samples
+
+        Returns:
+            Gradient samples
+        """
+        subsampled_input, *self.rearrange_info = self._merge_batch_and_additional(
+            subsampled_input
+        )
+        probs = softmax(subsampled_input, dim=1)
+        samples = self._make_distribution(subsampled_input).sample(
+            sample_shape=Size([mc_samples])
+        )
+        sqrt_mc_h = probs - samples
+        return self._ungroup_batch_and_additional(sqrt_mc_h, *self.rearrange_info)
+
+    def _arrange(self, input: Tensor):
+        rearranged_input, *self.rearrange_info = self._merge_batch_and_additional(input)
+        return rearranged_input
+
+    def _rearrange(self, input: Tensor):
+        return self._ungroup_batch_and_additional(input, *self.rearrange_info)
