@@ -190,6 +190,7 @@ class NLLLossDerivatives(BaseLossDerivatives):
 
     def _arrange(self, input: Tensor):
         """Arrange subsampled input before samples are taken for autograd sample computation.
+
         Subsampled_input may be arranged as desired before the autograd calculation of the
         gradient. After arrangement, the tensor should be the correct shape to be passed
         to _make_distribution. _rearrange should also be specified to return the final
@@ -205,6 +206,7 @@ class NLLLossDerivatives(BaseLossDerivatives):
 
     def _rearrange(self, input: Tensor):
         """Rearrange sampled gradient after autograd gradient calculation.
+
         The opposite of _arrange, the gradient should be rearranged to match the
         original shape of subsampled_input. Default does no rearranging.
 

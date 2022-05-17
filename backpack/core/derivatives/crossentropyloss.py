@@ -255,6 +255,7 @@ class CrossEntropyLossDerivatives(NLLLossDerivatives):
 
     def _make_distribution(self, subsampled_input: Tensor) -> OneHotCategorical:
         """Create the likelihood distribution whose NLL is the CE.
+
         The log probability of the Categorical distribution for a single sample
         with k classes is ∑ᵢ₌₁ᵏ Ŷᵢ log pᵢ, where Ŷ is one-hot encoded. If p is
         chosen as the softmax, this is equivalent to CrossEntropyLoss
@@ -271,6 +272,7 @@ class CrossEntropyLossDerivatives(NLLLossDerivatives):
         self, subsampled_input: Tensor, mc_samples: int
     ) -> Tensor:
         """Manually compute gradients from sampled targets.
+
         Cross Entropy loss is ∑ᵢ₌₁ᵏ Ŷᵢ log 𝜎(xᵢ), where 𝜎(xᵢ) is the softmax of
         the input and Ŷᵢ is one-hot encoded. The gradient is 𝜎(xᵢ) - Ŷᵢ.
 
