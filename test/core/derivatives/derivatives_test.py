@@ -7,10 +7,7 @@
 - Transposed Jacobian-matrix products with respect to layer parameters
 """
 from contextlib import nullcontext
-
-import torch
-
-from test.automated_test import check_sizes_and_values, check_sizes
+from test.automated_test import check_sizes, check_sizes_and_values
 from test.core.derivatives.batch_norm_settings import BATCH_NORM_SETTINGS
 from test.core.derivatives.embedding_settings import EMBEDDING_SETTINGS
 from test.core.derivatives.implementation.autograd import AutogradDerivatives
@@ -29,14 +26,15 @@ from test.utils.skip_test import (
     skip_batch_norm_train_mode_with_subsampling,
     skip_subsampling_conflict,
 )
-from backpack.utils.subsampling import subsample
 from typing import List, Union
 from warnings import warn
 
+import torch
 from pytest import fixture, mark, raises, skip
-from torch import Tensor, rand, Size
+from torch import Size, Tensor, rand
 
 from backpack.core.derivatives.convnd import weight_jac_t_save_memory
+from backpack.utils.subsampling import subsample
 
 PROBLEMS = make_test_problems(SETTINGS)
 IDS = [problem.make_id() for problem in PROBLEMS]
@@ -423,10 +421,6 @@ def test_dist_sample_shape_nll(
     Args:
         problem: Test case.
         subsampling: Indices of active samples.
-
-    Raises:
-        AssertionError: If the sample from the distribution does not have
-            the same size as the output.
     """
     problem.set_up()
     skip_subsampling_conflict(problem, subsampling)
