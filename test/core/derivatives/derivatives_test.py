@@ -29,9 +29,8 @@ from test.utils.skip_test import (
 from typing import List, Union
 from warnings import warn
 
-import torch
 from pytest import fixture, mark, raises, skip
-from torch import Size, Tensor, rand
+from torch import Tensor, rand
 
 from backpack.core.derivatives.convnd import weight_jac_t_save_memory
 from backpack.utils.subsampling import subsample
