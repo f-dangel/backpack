@@ -7,7 +7,10 @@
 - Transposed Jacobian-matrix products with respect to layer parameters
 """
 from contextlib import nullcontext
-from test.automated_test import check_sizes_and_values
+
+import torch
+
+from test.automated_test import check_sizes_and_values, check_sizes
 from test.core.derivatives.batch_norm_settings import BATCH_NORM_SETTINGS
 from test.core.derivatives.embedding_settings import EMBEDDING_SETTINGS
 from test.core.derivatives.implementation.autograd import AutogradDerivatives
@@ -26,11 +29,12 @@ from test.utils.skip_test import (
     skip_batch_norm_train_mode_with_subsampling,
     skip_subsampling_conflict,
 )
+from backpack.utils.subsampling import subsample
 from typing import List, Union
 from warnings import warn
 
 from pytest import fixture, mark, raises, skip
-from torch import Tensor, rand
+from torch import Tensor, rand, Size
 
 from backpack.core.derivatives.convnd import weight_jac_t_save_memory
 
@@ -403,6 +407,34 @@ def test_sqrt_hessian_sampled_squared_approximates_hessian_nll(
             )
         else:
             raise e
+
+
+@mark.parametrize("subsampling", SUBSAMPLINGS, ids=SUBSAMPLING_IDS)
+@mark.parametrize("problem", NLL_PROBLEMS, ids=NLL_IDS)
+def test_dist_sample_shape_nll(
+    problem: DerivativesTestProblem,
+    subsampling: Union[List[int], None],
+) -> None:
+    """Test distribution sample shape for NLL derivatives.
+
+    Compares the shape sampled from the distribution to the output to
+    verify the shapes match.
+
+    Args:
+        problem: Test case.
+        subsampling: Indices of active samples.
+
+    Raises:
+        AssertionError: If the sample from the distribution does not have
+            the same size as the output.
+    """
+    problem.set_up()
+    skip_subsampling_conflict(problem, subsampling)
+    BackpackDerivatives(problem).store_forward_io()
+
+    subsampled_input = subsample(problem.module.input0)
+    samples = problem.derivative._make_distribution(subsampled_input).sample()
+    check_sizes(samples, problem.module.input1)
 
 
 @mark.parametrize("subsampling", SUBSAMPLINGS, ids=SUBSAMPLING_IDS)
