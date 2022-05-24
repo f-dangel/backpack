@@ -4,8 +4,8 @@ from typing import Callable, Dict, List, Tuple
 
 import torch
 from einops import rearrange
-from torch import Size, Tensor, diag, diag_embed, einsum, eye, ones_like, softmax
-from torch.distributions import OneHotCategorical, Categorical
+from torch import Tensor, diag, diag_embed, einsum, eye, ones_like, softmax
+from torch.distributions import Categorical
 from torch.nn import CrossEntropyLoss
 from torch.nn.functional import one_hot
 
@@ -27,7 +27,6 @@ class CrossEntropyLossDerivatives(NLLLossDerivatives):
             use_autograd: Compute gradients with autograd (rather than manual)
                 Defaults to ``False`` (manual computation).
         """
-        self.rearrange_info = None
         super().__init__(use_autograd=use_autograd)
 
     def _sqrt_hessian(
@@ -288,9 +287,15 @@ class CrossEntropyLossDerivatives(NLLLossDerivatives):
             Gradient samples
         """
         probs = softmax(subsampled_input, dim=1)
-        probs_unsqeezed = probs.unsqueeze(0).expand(mc_samples, *[-1 for _ in range(probs.dim())])
+        probs_unsqeezed = probs.unsqueeze(0).expand(
+            mc_samples, *[-1 for _ in range(probs.dim())]
+        )
         distribution = self._make_distribution(subsampled_input)
         samples = distribution.sample(torch.Size([mc_samples]))  # shape: [V N D1 D2]
-        samples_onehot = one_hot(samples, num_classes=probs.shape[1])  # shape: [V N D1 D2 C]
-        samples_onehot_rearranged = einsum("vn...c->vnc...", samples_onehot).float()  # shape [V N C D1 D2]
+        samples_onehot = one_hot(
+            samples, num_classes=probs.shape[1]
+        )  # shape: [V N D1 D2 C]
+        samples_onehot_rearranged = einsum(
+            "vn...c->vnc...", samples_onehot
+        ).float()  # shape [V N C D1 D2]
         return probs_unsqeezed - samples_onehot_rearranged

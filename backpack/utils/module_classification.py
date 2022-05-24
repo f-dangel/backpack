@@ -30,7 +30,7 @@ def is_nll(module: Module) -> bool:
     Returns:
         Whether 'module' is an NLL loss function
     """
-    return isinstance(module, MSELoss) or isinstance(module, CrossEntropyLoss)
+    return isinstance(module, (MSELoss, CrossEntropyLoss))
 
 
 def is_no_op(module: Module) -> bool:
