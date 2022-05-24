@@ -255,7 +255,7 @@ class CrossEntropyLossDerivatives(NLLLossDerivatives):
         """
         self._check_2nd_order_parameters(module)
 
-    def _make_distribution(self, subsampled_input: Tensor) -> Categorical:  #OneHotCategorical:
+    def _make_distribution(self, subsampled_input: Tensor) -> Categorical:
         """Create the likelihood distribution whose NLL is the CE.
 
         The log probability of the Categorical distribution for a single sample
@@ -288,13 +288,9 @@ class CrossEntropyLossDerivatives(NLLLossDerivatives):
             Gradient samples
         """
         probs = softmax(subsampled_input, dim=1)
-        probs, *self.rearrange_info = self._merge_batch_and_additional(
-            probs
-        )
-        probs_unsqeezed = probs.unsqueeze(0).repeat(mc_samples, 1, 1)
-
-        samples = OneHotCategorical(probs).sample(torch.Size([mc_samples]))
-
-        sqrt_mc_h = probs_unsqeezed - samples
-        return self._ungroup_batch_and_additional(sqrt_mc_h, *self.rearrange_info)
-
+        probs_unsqeezed = probs.unsqueeze(0).expand(mc_samples, *[-1 for _ in range(probs.dim())])
+        distribution = self._make_distribution(subsampled_input)
+        samples = distribution.sample(torch.Size([mc_samples]))  # shape: [V N D1 D2]
+        samples_onehot = one_hot(samples, num_classes=probs.shape[1])  # shape: [V N D1 D2 C]
+        samples_onehot_rearranged = einsum("vn...c->vnc...", samples_onehot).float()  # shape [V N C D1 D2]
+        return probs_unsqeezed - samples_onehot_rearranged

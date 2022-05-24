@@ -116,7 +116,6 @@ class NLLLossDerivatives(BaseLossDerivatives):
         gradients = []
 
         dist = self._make_distribution(subsampled_input)
-        # self._check_distribution_shape(dist, subsampled_input)
 
         for _ in range(mc_samples):
             y_tilde = dist.sample()
@@ -172,18 +171,3 @@ class NLLLossDerivatives(BaseLossDerivatives):
             NotImplementedError: If not implemented
         """
         raise NotImplementedError
-
-    @staticmethod
-    def _check_distribution_shape(dist: Distribution, subsampled_input: Tensor):
-        """Verify shape of sampled targets y ∼ p(· | f).
-
-        Args:
-            dist: Distribution of the likelihood p(y | f), e.g. created by
-                _make_distribution.
-            subsampled_input: Input after subsampling.
-
-        Raises:
-            ValueError: If the target samples have incorrect shape.
-        """
-        if dist.sample().shape != subsampled_input.shape:
-            raise ValueError("Sample does not have same shape as subsampled_input.")
