@@ -2,10 +2,12 @@
 from math import sqrt
 from typing import Callable, Dict, List, Tuple
 
+import torch
 from einops import rearrange
 from torch import Size, Tensor, diag, diag_embed, einsum, eye, ones_like, softmax
-from torch.distributions import OneHotCategorical
+from torch.distributions import OneHotCategorical, Categorical
 from torch.nn import CrossEntropyLoss
+from torch.nn.functional import one_hot
 
 from backpack.core.derivatives.nll_base import NLLLossDerivatives
 from backpack.utils.subsampling import subsample
@@ -253,7 +255,7 @@ class CrossEntropyLossDerivatives(NLLLossDerivatives):
         """
         self._check_2nd_order_parameters(module)
 
-    def _make_distribution(self, subsampled_input: Tensor) -> OneHotCategorical:
+    def _make_distribution(self, subsampled_input: Tensor) -> Categorical:  #OneHotCategorical:
         """Create the likelihood distribution whose NLL is the CE.
 
         The log probability of the Categorical distribution for a single sample
@@ -266,7 +268,9 @@ class CrossEntropyLossDerivatives(NLLLossDerivatives):
         Returns:
             Normal distribution for targets | inputs
         """
-        return OneHotCategorical(probs=softmax(subsampled_input, dim=1))
+        probs = softmax(subsampled_input, dim=1)
+        probs_rearrange = torch.einsum("nc...->n...c", probs)
+        return Categorical(probs_rearrange)
 
     def _compute_sampled_grads_manual(
         self, subsampled_input: Tensor, mc_samples: int
@@ -283,19 +287,14 @@ class CrossEntropyLossDerivatives(NLLLossDerivatives):
         Returns:
             Gradient samples
         """
-        subsampled_input, *self.rearrange_info = self._merge_batch_and_additional(
-            subsampled_input
-        )
         probs = softmax(subsampled_input, dim=1)
-        samples = self._make_distribution(subsampled_input).sample(
-            sample_shape=Size([mc_samples])
+        probs, *self.rearrange_info = self._merge_batch_and_additional(
+            probs
         )
-        sqrt_mc_h = probs - samples
+        probs_unsqeezed = probs.unsqueeze(0).repeat(mc_samples, 1, 1)
+
+        samples = OneHotCategorical(probs).sample(torch.Size([mc_samples]))
+
+        sqrt_mc_h = probs_unsqeezed - samples
         return self._ungroup_batch_and_additional(sqrt_mc_h, *self.rearrange_info)
 
-    def _arrange(self, input: Tensor):
-        rearranged_input, *self.rearrange_info = self._merge_batch_and_additional(input)
-        return rearranged_input
-
-    def _rearrange(self, input: Tensor):
-        return self._ungroup_batch_and_additional(input, *self.rearrange_info)
