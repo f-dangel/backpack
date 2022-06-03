@@ -1,6 +1,6 @@
 """NLL extention for BCEWithLogits Loss."""
 
-from torch import Tensor, sigmoid
+from torch import Tensor
 from torch.distributions import Binomial
 from torch.nn import BCEWithLogitsLoss
 
@@ -74,7 +74,7 @@ class BCELossWithLogitsDerivatives(NLLLossDerivatives):
         if module.input0.dim() != 2:
             raise NotImplementedError("Only 2D inputs are currently supported.")
 
-    def _make_distribution(self, subsampled_input: Tensor):
+    def _make_distribution(self, subsampled_input: Tensor) -> Binomial:
         """Make the sampling distribution for the NLL loss form of BCEWithLogits.
 
         The BCEWithLogitsLoss ∝ ∑ᵢ₌₁ⁿ Yᵢ log 𝜎(xᵢ) + (1 − Yᵢ) log(1− 𝜎(xᵢ)).
@@ -86,10 +86,9 @@ class BCELossWithLogitsDerivatives(NLLLossDerivatives):
             subsampled_input: input after subsampling
 
         Returns:
-            torch.distributions Binomial distribution with probabilities equal to
-                the sigmoid of subsampled_input.
+            Binomial distribution with sigmoid probabilities from the subsampled_input.
         """
-        return Binomial(probs=sigmoid(subsampled_input))
+        return Binomial(probs=subsampled_input.sigmoid())
 
     @staticmethod
     def _get_mean_normalization(input: Tensor) -> int:
