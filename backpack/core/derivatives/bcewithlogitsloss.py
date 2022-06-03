@@ -10,15 +10,6 @@ from backpack.core.derivatives.nll_base import NLLLossDerivatives
 class BCELossWithLogitsDerivatives(NLLLossDerivatives):
     """Derivatives of the BCEWithLogits Loss."""
 
-    def __init__(self, use_autograd: bool = True):
-        """Initialization for BCEWithLogits loss derivative.
-
-        Args:
-            use_autograd: Compute gradients with autograd (rather than manual)
-                Defaults to ``False`` (manual computation).
-        """
-        super().__init__(use_autograd=use_autograd)
-
     def _verify_support(self, module: BCEWithLogitsLoss):
         """Verification of module support for BCEWithLogitsLoss.
 
