@@ -2,9 +2,8 @@
 from math import sqrt
 from typing import Callable, Dict, List, Tuple
 
-import torch
 from einops import rearrange
-from torch import Tensor, diag, diag_embed, einsum, eye, ones_like, softmax
+from torch import Size, Tensor, diag, diag_embed, einsum, eye, ones_like, softmax
 from torch.distributions import Categorical
 from torch.nn import CrossEntropyLoss
 from torch.nn.functional import one_hot
@@ -268,8 +267,8 @@ class CrossEntropyLossDerivatives(NLLLossDerivatives):
             Normal distribution for targets | inputs
         """
         probs = softmax(subsampled_input, dim=1)
-        probs_rearrange = torch.einsum("nc...->n...c", probs)
-        return Categorical(probs_rearrange)
+        probs_rearranged = einsum("nc...->n...c", probs)
+        return Categorical(probs_rearranged)
 
     def _compute_sampled_grads_manual(
         self, subsampled_input: Tensor, mc_samples: int
@@ -291,11 +290,9 @@ class CrossEntropyLossDerivatives(NLLLossDerivatives):
             mc_samples, *[-1 for _ in range(probs.dim())]
         )
         distribution = self._make_distribution(subsampled_input)
-        samples = distribution.sample(torch.Size([mc_samples]))  # shape: [V N D1 D2]
-        samples_onehot = one_hot(
-            samples, num_classes=probs.shape[1]
-        )  # shape: [V N D1 D2 C]
-        samples_onehot_rearranged = einsum(
-            "vn...c->vnc...", samples_onehot
-        ).float()  # shape [V N C D1 D2]
+        samples = distribution.sample(Size([mc_samples]))  # [V N D1 D2]
+        samples_onehot = one_hot(samples, num_classes=probs.shape[1])  # [V N D1 D2 C]
+        samples_onehot_rearranged = einsum("vn...c->vnc...", samples_onehot).to(
+            probs.dtype
+        )  # [V N C D1 D2]
         return probs_unsqeezed - samples_onehot_rearranged
