@@ -78,4 +78,4 @@ def skip_BCEWithLogitsLoss(problem: ExtensionsTestProblem) -> None:
         problem: Test case.
     """
     if isinstance(problem.module, BCEWithLogitsLoss):
-        skip(f"Skipping BCEWithLogitsLoss")
+        skip("Skipping BCEWithLogitsLoss")
