@@ -24,6 +24,7 @@ from test.core.derivatives.slicing_settings import CUSTOM_SLICING_SETTINGS
 from test.utils.skip_test import (
     skip_adaptive_avg_pool3d_cuda,
     skip_batch_norm_train_mode_with_subsampling,
+    skip_BCEWithLogitsLoss,
     skip_subsampling_conflict,
 )
 from typing import List, Union
@@ -40,9 +41,7 @@ IDS = [problem.make_id() for problem in PROBLEMS]
 NO_LOSS_PROBLEMS = [problem for problem in PROBLEMS if not problem.is_loss()]
 NO_LOSS_IDS = [problem.make_id() for problem in NO_LOSS_PROBLEMS]
 
-LOSS_PROBLEMS = [
-    problem for problem in PROBLEMS if problem.is_loss() and not problem.is_bce()
-]
+LOSS_PROBLEMS = [problem for problem in PROBLEMS if problem.is_loss()]
 LOSS_IDS = [problem.make_id() for problem in LOSS_PROBLEMS]
 
 # second-order does not make sense
@@ -293,6 +292,7 @@ def test_sqrt_hessian_squared_equals_hessian(
     """
     problem.set_up()
     skip_subsampling_conflict(problem, subsampling)
+    skip_BCEWithLogitsLoss(problem)  # TODO Implement sqrt_hessian for BCEWithLogitsLoss
 
     backpack_res = BackpackDerivatives(problem).input_hessian_via_sqrt_hessian(
         subsampling=subsampling
@@ -338,6 +338,9 @@ def test_sqrt_hessian_sampled_squared_approximates_hessian(
     """
     problem.set_up()
     skip_subsampling_conflict(problem, subsampling)
+    skip_BCEWithLogitsLoss(
+        problem
+    )  # TODO Implement _compute_sampled_grads_manual for BCEWithLogitsLoss
 
     backpack_res = BackpackDerivatives(problem).input_hessian_via_sqrt_hessian(
         mc_samples=mc_samples, chunks=chunks, subsampling=subsampling
