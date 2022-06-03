@@ -72,6 +72,10 @@ def skip_large_parameters(
 
 
 def skip_BCEWithLogitsLoss(problem: ExtensionsTestProblem) -> None:
-    """Skip if the test problem uses BCEWithLogitsLoss."""
+    """Skip if the test problem uses BCEWithLogitsLoss.
+
+    Args:
+        problem: Test case.
+    """
     if isinstance(problem.module, BCEWithLogitsLoss):
         skip(f"Skipping BCEWithLogitsLoss")
