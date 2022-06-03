@@ -5,7 +5,7 @@ from test.extensions.problem import ExtensionsTestProblem
 from typing import List, Union
 
 from pytest import skip
-from torch.nn import BatchNorm1d, BatchNorm2d, BatchNorm3d
+from torch.nn import BatchNorm1d, BatchNorm2d, BatchNorm3d, BCEWithLogitsLoss
 
 from backpack.utils import ADAPTIVE_AVG_POOL_BUG
 
@@ -69,3 +69,13 @@ def skip_large_parameters(
     num_params = sum(p.numel() for p in problem.trainable_parameters())
     if num_params > max_num_params:
         skip(f"Model has too many parameters: {num_params} > {max_num_params}")
+
+
+def skip_BCEWithLogitsLoss(problem: ExtensionsTestProblem) -> None:
+    """Skip if the test problem uses BCEWithLogitsLoss.
+
+    Args:
+        problem: Test case.
+    """
+    if isinstance(problem.module, BCEWithLogitsLoss):
+        skip("Skipping BCEWithLogitsLoss")
