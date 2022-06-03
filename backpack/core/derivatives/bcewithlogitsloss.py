@@ -1,5 +1,4 @@
 """NLL extention for BCEWithLogits Loss."""
-from typing import List, Tuple
 
 from torch import Tensor, sigmoid
 from torch.distributions import Binomial
@@ -8,7 +7,7 @@ from torch.nn import BCEWithLogitsLoss
 from backpack.core.derivatives.nll_base import NLLLossDerivatives
 
 
-class BCELossDerivatives(NLLLossDerivatives):
+class BCELossWithLogitsDerivatives(NLLLossDerivatives):
     """Derivatives of the BCEWithLogits Loss."""
 
     def __init__(self, use_autograd: bool = True):
