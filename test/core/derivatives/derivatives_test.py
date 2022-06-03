@@ -425,9 +425,11 @@ def test_dist_sample_shape_nll(
     skip_subsampling_conflict(problem, subsampling)
     BackpackDerivatives(problem).store_forward_io()
 
-    subsampled_input = subsample(problem.module.input0)
+    subsampled_input = subsample(problem.module.input0, subsampling=subsampling)
+    subsampled_target = subsample(problem.module.input1, subsampling=subsampling)
     samples = problem.derivative._make_distribution(subsampled_input).sample()
-    check_sizes(samples, problem.module.input1)
+
+    check_sizes(samples, subsampled_target)
 
 
 @mark.parametrize("subsampling", SUBSAMPLINGS, ids=SUBSAMPLING_IDS)
