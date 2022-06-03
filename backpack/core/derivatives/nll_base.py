@@ -2,7 +2,7 @@
 from math import sqrt
 from typing import List, Tuple
 
-from torch import Tensor, stack
+from torch import Tensor, enable_grad, stack
 from torch.autograd import grad
 from torch.distributions import Distribution
 from torch.nn import Module
@@ -111,15 +111,21 @@ class NLLLossDerivatives(BaseLossDerivatives):
         Returns:
             Sampled gradients of shape [mc_samples, *subsampled_input.shape]
         """
-        subsampled_input.requires_grad = True
-        gradients = []
 
-        dist = self._make_distribution(subsampled_input)
+        with enable_grad():
+            subsampled_input = subsampled_input.detach()
+            subsampled_input.requires_grad = True
 
-        for _ in range(mc_samples):
-            y_tilde = dist.sample()
-            loss_tilde = -dist.log_prob(y_tilde).sum()
-            gradients.append(grad(loss_tilde, subsampled_input, retain_graph=True)[0])
+            gradients = []
+
+            dist = self._make_distribution(subsampled_input)
+
+            for _ in range(mc_samples):
+                y_tilde = dist.sample()
+                loss_tilde = -dist.log_prob(y_tilde).sum()
+                gradients.append(
+                    grad(loss_tilde, subsampled_input, retain_graph=True)[0]
+                )
 
         return stack(gradients)
 

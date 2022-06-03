@@ -79,6 +79,14 @@ class BCELossWithLogitsDerivatives(NLLLossDerivatives):
         """
         return Binomial(probs=subsampled_input.sigmoid())
 
+    def hessian_is_psd(self) -> bool:
+        """Return whether BCEWithLogits loss Hessian is positive semi-definite.
+
+        Returns:
+            True
+        """
+        return True
+
     @staticmethod
     def _get_mean_normalization(input: Tensor) -> int:
         return input.shape[0]

@@ -1,5 +1,6 @@
 from functools import partial
 
+from backpack.core.derivatives.bcewithlogitsloss import BCELossWithLogitsDerivatives
 from backpack.core.derivatives.crossentropyloss import CrossEntropyLossDerivatives
 from backpack.core.derivatives.mseloss import MSELossDerivatives
 from backpack.extensions.curvature import Curvature
@@ -41,3 +42,8 @@ class HBPMSELoss(HBPLoss):
 class HBPCrossEntropyLoss(HBPLoss):
     def __init__(self):
         super().__init__(derivatives=CrossEntropyLossDerivatives())
+
+
+class HBPBCEWithLogitsLoss(HBPLoss):
+    def __init__(self):
+        super().__init__(derivatives=BCELossWithLogitsDerivatives())

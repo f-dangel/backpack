@@ -8,6 +8,7 @@ from test.extensions.secondorder.secondorder_settings import (
 
 from torch import rand
 from torch.nn import (
+    BCEWithLogitsLoss,
     CrossEntropyLoss,
     Flatten,
     Identity,
@@ -73,5 +74,11 @@ BATCH_SIZE_1_SETTINGS = [
         "loss_function_fn": lambda: CrossEntropyLoss(),
         "target_fn": lambda: classification_targets((3,), 4),
         "id_prefix": "branching-scalar",
+    },
+    {
+        "input_fn": lambda: rand(1, 7),
+        "module_fn": lambda: Sequential(Linear(7, 3), ReLU(), Linear(3, 1)),
+        "loss_function_fn": lambda: BCEWithLogitsLoss(reduction="mean"),
+        "target_fn": lambda: classification_targets((1, 1), 2).float(),
     },
 ]

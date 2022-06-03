@@ -14,6 +14,7 @@ from torch.nn import (
     Tanh,
     ZeroPad2d,
 )
+from torch.nn.modules.loss import BCEWithLogitsLoss
 
 from backpack.custom_module.branching import SumModule
 from backpack.custom_module.scale_module import ScaleModule
@@ -58,6 +59,7 @@ class HBP(SecondOrderBackpropExtension):
             module_exts={
                 MSELoss: losses.HBPMSELoss(),
                 CrossEntropyLoss: losses.HBPCrossEntropyLoss(),
+                BCEWithLogitsLoss: losses.HBPBCEWithLogitsLoss(),
                 Linear: linear.HBPLinear(),
                 MaxPool2d: pooling.HBPMaxpool2d(),
                 AvgPool2d: pooling.HBPAvgPool2d(),
