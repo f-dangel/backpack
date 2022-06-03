@@ -23,29 +23,28 @@ class BCELossDerivatives(NLLLossDerivatives):
     def _verify_support(self, module: BCEWithLogitsLoss):
         """Verification of module support for BCEWithLogitsLoss.
 
-        Currently BCEWithLogitsLoss only supports binary output tensors,
+        Currently BCEWithLogitsLoss only supports binary target tensors,
         2D inputs, and default parameters.
 
         Args:
-            module: (torch.nn.BCEWithLogitsLoss) module
+            module: BCEWithLogitsLoss module
         """
-        """"""
         self._check_binary(module)
         self._check_is_default(module)
         self._check_input_dims(module)
 
     def _check_binary(self, module: BCEWithLogitsLoss):
-        """Raises exception if outputs are not binary.
+        """Raises exception if labels are not binary.
 
         Args:
             module: BCEWithLogitsLoss module
 
         Raises:
-            ValueError: if outputs non-binary.
+            NotImplementedError: if labels are non-binary.
         """
-        if False in [x == 0 or x == 1 for x in module.input1]:
-            raise ValueError(
-                "Only 0 and 1 output values are currently supported for BCEWithLogits loss."
+        if any(x != 0 and x != 1 for x in module.input1.flatten()):
+            raise NotImplementedError(
+                "Only binary targets (0 and 1) are currently supported."
             )
 
     def _check_is_default(self, module: BCEWithLogitsLoss):
@@ -55,20 +54,14 @@ class BCELossDerivatives(NLLLossDerivatives):
             module: BCEWithLogitsLoss module
 
         Raises:
-            ValueError: if module parameters non-default.
+            NotImplementedError: if module parameters non-default.
         """
         if module.weight is not None:
-            raise ValueError(
-                "Only None weight is currently supported for BCEWithLogits loss."
-            )
+            raise NotImplementedError("Only None weight is currently supported.")
         if module.reduction != "mean":
-            raise ValueError(
-                "Only mean reduction is currently supported for BCEWithLogits loss."
-            )
+            raise NotImplementedError("Only mean reduction is currently supported.")
         if module.pos_weight is not None:
-            raise ValueError(
-                "Only None pos_weight is currently supported for BCEWithLogits loss."
-            )
+            raise NotImplementedError("Only None pos_weight is currently supported.")
 
     def _check_input_dims(self, module: BCEWithLogitsLoss):
         """Raises an exception if the shapes of the input are not supported.
@@ -77,12 +70,10 @@ class BCELossDerivatives(NLLLossDerivatives):
             module: BCEWithLogitsLoss module
 
         Raises:
-            ValueError: if input not 2D.
+            NotImplementedError: if input is not 2D.
         """
-        if not len(module.input0.shape) == 2:
-            raise ValueError(
-                "Only 2D inputs are currently supported for BCEWithLogitsLoss."
-            )
+        if module.input0.dim() != 2:
+            raise NotImplementedError("Only 2D inputs are currently supported.")
 
     def _make_distribution(self, subsampled_input: Tensor):
         """Make the sampling distribution for the NLL loss form of BCEWithLogits.
@@ -101,14 +92,6 @@ class BCELossDerivatives(NLLLossDerivatives):
         """
         return Binomial(probs=sigmoid(subsampled_input))
 
-    def hessian_is_psd(self) -> bool:
-        """Return whether BCEWithLogits loss Hessian is positive semi-definite.
-
-        Returns:
-            True
-        """
-        return True
-
     @staticmethod
     def _get_mean_normalization(input: Tensor) -> int:
-        return input.numel()
+        return input.shape[0]
