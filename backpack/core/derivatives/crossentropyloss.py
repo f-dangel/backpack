@@ -286,13 +286,14 @@ class CrossEntropyLossDerivatives(NLLLossDerivatives):
             Gradient samples
         """
         probs = softmax(subsampled_input, dim=1)
-        probs_unsqeezed = probs.unsqueeze(0).expand(
-            mc_samples, *[-1 for _ in range(probs.dim())]
-        )
+        expand_dims = [mc_samples] + probs.dim() * [-1]
+        probs_unsqeezed = probs.unsqueeze(0).expand(*expand_dims)  # [V N C D1 D2]
+
         distribution = self._make_distribution(subsampled_input)
         samples = distribution.sample(Size([mc_samples]))  # [V N D1 D2]
         samples_onehot = one_hot(samples, num_classes=probs.shape[1])  # [V N D1 D2 C]
         samples_onehot_rearranged = einsum("vn...c->vnc...", samples_onehot).to(
             probs.dtype
         )  # [V N C D1 D2]
+
         return probs_unsqeezed - samples_onehot_rearranged
