@@ -430,6 +430,7 @@ def test_dist_sample_shape_nll(
     samples = problem.derivative._make_distribution(subsampled_input).sample()
 
     check_sizes(samples, subsampled_target)
+    problem.tear_down()
 
 
 @mark.parametrize("subsampling", SUBSAMPLINGS, ids=SUBSAMPLING_IDS)
