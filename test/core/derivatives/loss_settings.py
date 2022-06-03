@@ -82,6 +82,11 @@ LOSS_SETTINGS += [
         "input_fn": lambda: torch.rand(size=(2, 1)),
         "target_fn": lambda: classification_targets(size=(2, 1), num_classes=2).float(),
     },
+    {
+        "module_fn": lambda: torch.nn.BCEWithLogitsLoss(reduction="sum"),
+        "input_fn": lambda: torch.rand(size=(4, 1)),
+        "target_fn": lambda: classification_targets(size=(4, 1), num_classes=2).float(),
+    },
 ]
 
 

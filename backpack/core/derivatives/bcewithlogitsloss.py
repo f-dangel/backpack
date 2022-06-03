@@ -57,8 +57,6 @@ class BCELossWithLogitsDerivatives(NLLLossDerivatives):
         """
         if module.weight is not None:
             raise NotImplementedError("Only None weight is currently supported.")
-        if module.reduction != "mean":
-            raise NotImplementedError("Only mean reduction is currently supported.")
         if module.pos_weight is not None:
             raise NotImplementedError("Only None pos_weight is currently supported.")
 
