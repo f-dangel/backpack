@@ -461,6 +461,7 @@ def test_sum_hessian(problem):
         problem (DerivativesProblem): Problem for derivative test.
     """
     problem.set_up()
+    skip_BCEWithLogitsLoss(problem)  # TODO Implement _sum_hessian for BCEWithLogitsLoss
 
     backpack_res = BackpackDerivatives(problem).sum_hessian()
     autograd_res = AutogradDerivatives(problem).sum_hessian()
@@ -601,6 +602,10 @@ def test_make_hessian_mat_prod(problem: DerivativesTestProblem) -> None:
         problem: test problem
     """
     problem.set_up()
+    skip_BCEWithLogitsLoss(
+        problem
+    )  # TODO Implement _make_hessian_mat_prod for BCEWithLogitsLoss
+
     mat = rand(4, *problem.input_shape, device=problem.device)
 
     autograd_res = AutogradDerivatives(problem).hessian_mat_prod(mat)

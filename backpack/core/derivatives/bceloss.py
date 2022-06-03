@@ -20,33 +20,6 @@ class BCELossDerivatives(NLLLossDerivatives):
         """
         super().__init__(use_autograd=use_autograd)
 
-    def _sqrt_hessian(
-        self,
-        module: BCEWithLogitsLoss,
-        g_inp: Tuple[Tensor],
-        g_out: Tuple[Tensor],
-        subsampling: List[int] = None,
-    ) -> Tensor:  # noqa: D102
-        raise NotImplementedError
-
-    def _sum_hessian(self, module, g_inp, g_out):
-        """The Hessian, summed across the batch dimension.
-
-        Args:
-            module: (torch.nn.BCEWithLogitsLoss) module
-            g_inp: Gradient of loss w.r.t. input
-            g_out: Gradient of loss w.r.t. output
-
-        Returns: a `[D, D]` tensor of the Hessian, summed across batch
-
-        """
-        raise NotImplementedError
-
-    def _make_hessian_mat_prod(self, module, g_inp, g_out):
-        """Multiplication of the input Hessian with a matrix."""
-
-        raise NotImplementedError
-
     def _verify_support(self, module: BCEWithLogitsLoss):
         """Verification of module support for BCEWithLogitsLoss.
 
