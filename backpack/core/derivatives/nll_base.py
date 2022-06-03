@@ -111,7 +111,6 @@ class NLLLossDerivatives(BaseLossDerivatives):
         Returns:
             Sampled gradients of shape [mc_samples, *subsampled_input.shape]
         """
-        subsampled_input = subsampled_input.clone().detach()
         subsampled_input.requires_grad = True
         gradients = []
 
