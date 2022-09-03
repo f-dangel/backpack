@@ -1,6 +1,9 @@
 from torch import Tensor
 from torch.nn import (
     AvgPool2d,
+    BatchNorm1d,
+    BatchNorm2d,
+    BatchNorm3d,
     Conv2d,
     CrossEntropyLoss,
     Dropout,
@@ -35,6 +38,7 @@ from . import (
     losses,
     padding,
     pooling,
+    batchnorm_nd
 )
 
 
@@ -71,6 +75,9 @@ class HBP(SecondOrderBackpropExtension):
                 SumModule: custom_module.HBPSumModule(),
                 ScaleModule: custom_module.HBPScaleModule(),
                 Identity: custom_module.HBPScaleModule(),
+                BatchNorm1d: batchnorm_nd.HBPBatchNormNd(),
+                BatchNorm2d: batchnorm_nd.HBPBatchNormNd(),
+                BatchNorm3d: batchnorm_nd.HBPBatchNormNd(),
             },
         )
 
