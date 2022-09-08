@@ -1,12 +1,13 @@
-from torch import einsum
-from torch import Tensor
-from torch.nn import BatchNorm1d, BatchNorm2d, BatchNorm3d
 from typing import Tuple, Union
 
-from backpack.extensions.secondorder.hbp.hbpbase import HBPBaseModule
+from torch import Tensor, einsum
+from torch.nn import BatchNorm1d, BatchNorm2d, BatchNorm3d
+
 from backpack.core.derivatives.batchnorm_nd import BatchNormNdDerivatives
 from backpack.extensions.backprop_extension import BackpropExtension
+from backpack.extensions.secondorder.hbp.hbpbase import HBPBaseModule
 from backpack.utils.errors import batch_norm_raise_error_if_train
+
 
 class HBPBatchNormNd(HBPBaseModule):
     def __init__(self):

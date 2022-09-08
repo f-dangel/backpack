@@ -30,6 +30,7 @@ from backpack.extensions.secondorder.hbp.hbp_options import (
 
 from . import (
     activations,
+    batchnorm_nd,
     conv2d,
     custom_module,
     dropout,
@@ -38,7 +39,6 @@ from . import (
     losses,
     padding,
     pooling,
-    batchnorm_nd
 )
 
 

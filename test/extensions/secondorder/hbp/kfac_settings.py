@@ -5,9 +5,11 @@ from test.extensions.secondorder.secondorder_settings import (
     GROUP_CONV_SETTINGS,
     LINEAR_ADDITIONAL_DIMENSIONS_SETTINGS,
 )
+from test.utils.evaluation_mode import initialize_batch_norm_eval
 
 from torch import rand
 from torch.nn import (
+    BatchNorm1d,
     CrossEntropyLoss,
     Flatten,
     Identity,
@@ -25,8 +27,6 @@ SHARED_NOT_SUPPORTED_SETTINGS = (
     GROUP_CONV_SETTINGS + LINEAR_ADDITIONAL_DIMENSIONS_SETTINGS
 )
 LOCAL_NOT_SUPPORTED_SETTINGS = []
-
-NOT_SUPPORTED_SETTINGS = SHARED_NOT_SUPPORTED_SETTINGS + LOCAL_NOT_SUPPORTED_SETTINGS
 
 BATCH_SIZE_1_SETTINGS = [
     {
@@ -75,3 +75,75 @@ BATCH_SIZE_1_SETTINGS = [
         "id_prefix": "branching-scalar",
     },
 ]
+
+BATCH_SIZE_1_SETTINGS += [
+    {
+        "input_fn": lambda: rand(1, 7),
+        "module_fn": lambda: Sequential(
+            Linear(7, 3),
+            initialize_batch_norm_eval(BatchNorm1d(3)),
+            ReLU(),
+            Flatten(start_dim=1, end_dim=-1),
+            Linear(3, 1),
+        ),
+        "loss_function_fn": lambda: MSELoss(reduction="mean"),
+        "target_fn": lambda: regression_targets((1, 1)),
+        "id_prefix": "one-additional(bn)",
+    },
+    {
+        "input_fn": lambda: rand(3, 10),
+        "module_fn": lambda: Sequential(
+            Linear(10, 5),
+            initialize_batch_norm_eval(BatchNorm1d(5)),
+            ReLU(),
+            # skip connection
+            Parallel(
+                Identity(), Linear(5, 5), initialize_batch_norm_eval(BatchNorm1d(5))
+            ),
+            # end of skip connection
+            Sigmoid(),
+            Linear(5, 4),
+        ),
+        "loss_function_fn": lambda: CrossEntropyLoss(),
+        "target_fn": lambda: classification_targets((3,), 4),
+        "id_prefix": "branching-linear(bn)",
+    },
+    {
+        "input_fn": lambda: rand(3, 10),
+        "module_fn": lambda: Sequential(
+            Linear(10, 5),
+            initialize_batch_norm_eval(BatchNorm1d(5)),
+            ReLU(),
+            # skip connection
+            Parallel(
+                ScaleModule(weight=3.0),
+                Linear(5, 5),
+                initialize_batch_norm_eval(BatchNorm1d(5)),
+            ),
+            # end of skip connection
+            Sigmoid(),
+            Linear(5, 4),
+        ),
+        "loss_function_fn": lambda: CrossEntropyLoss(),
+        "target_fn": lambda: classification_targets((3,), 4),
+        "id_prefix": "branching-scalar(bn)",
+    },
+]
+
+LOCAL_NOT_SUPPORTED_SETTINGS += [
+    {
+        "input_fn": lambda: rand(3, 7),
+        "module_fn": lambda: Sequential(
+            Linear(7, 3),
+            initialize_batch_norm_eval(BatchNorm1d(3)).train(),
+            ReLU(),
+            Flatten(start_dim=1, end_dim=-1),
+            Linear(3, 1),
+        ),
+        "loss_function_fn": lambda: MSELoss(reduction="mean"),
+        "target_fn": lambda: regression_targets((3, 1)),
+        "id_prefix": "one-additional(bn-train)",
+    },
+]
+
+NOT_SUPPORTED_SETTINGS = SHARED_NOT_SUPPORTED_SETTINGS + LOCAL_NOT_SUPPORTED_SETTINGS
