@@ -71,14 +71,14 @@ and the variance with BackPACK
 """</span>
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">CrossEntropyLoss</span><span class="p">,</span> <span class="n">Linear</span>
 <span class="kn">from</span> <span class="nn">utils</span> <span class="kn">import</span> <span class="n">load_mnist_data</span>
-<span style="color: blue;"><span class="kn">from</span> <span class="nn">backpack</span> <span class="kn">import</span> <span class="n">extend</span><span class="p">,</span> <span class="n">backpack</span><span class="p">,</span> <span class="n">Variance</span></span>
+<span style="color: blue;"><span class="kn">from</span> <span class="nn">backpack</span> <span class="kn">import</span> <span class="n">extend</span><span class="p">,</span> <span class="n">backpack</span><span class="p">,</span> <span class="n">extensions</span></span>
 
 <span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">load_mnist_data</span><span class="p">()</span>
 <span class="n">model</span> <span class="o">=</span> <span class="n"><span style="color: blue;">extend</span></span><span class="p">(</span><span class="n">Linear</span><span class="p">(</span><span class="mi">784</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
 <span class="n">lossfunc</span> <span class="o">=</span> <span class="n"><span style="color: blue;">extend</span></span><span class="p">(</span><span class="n">CrossEntropyLoss</span><span class="p">())</span>
 <span class="n">loss</span> <span class="o">=</span> <span class="n">lossfunc</span><span class="p">(</span><span class="n">model</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="n">y</span><span class="p">)</span>
 
-<span style="color: blue;"><span class="k">with</span> <span class="n">backpack</span><span class="p">(</span><span class="n">Variance</span><span class="p">()):</span></span>
+<span style="color: blue;"><span class="k">with</span> <span class="n">backpack</span><span class="p">(</span><span class="n">extensions.Variance</span><span class="p">()):</span></span>
     <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
 
 <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">():</span>
@@ -118,14 +118,14 @@ and the diagonal of the Gauss-Newton with BackPACK
 """</span>
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">CrossEntropyLoss</span><span class="p">,</span> <span class="n">Linear</span>
 <span class="kn">from</span> <span class="nn">utils</span> <span class="kn">import</span> <span class="n">load_mnist_data</span>
-<span style="color: blue;"><span class="kn">from</span> <span class="nn">backpack</span> <span class="kn">import</span> <span class="n">extend</span><span class="p">,</span> <span class="n">backpack</span><span class="p">,</span> <span class="n">DiagGGNExact</span></span>
+<span style="color: blue;"><span class="kn">from</span> <span class="nn">backpack</span> <span class="kn">import</span> <span class="n">extend</span><span class="p">,</span> <span class="n">backpack</span><span class="p">,</span> <span class="n">extensions</span></span>
 
 <span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">load_mnist_data</span><span class="p">()</span>
 <span class="n">model</span> <span class="o">=</span> <span class="n"><span style="color: blue;">extend</span></span><span class="p">(</span><span class="n">Linear</span><span class="p">(</span><span class="mi">784</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
 <span class="n">lossfunc</span> <span class="o">=</span> <span class="n"><span style="color: blue;">extend</span></span><span class="p">(</span><span class="n">CrossEntropyLoss</span><span class="p">())</span>
 <span class="n">loss</span> <span class="o">=</span> <span class="n">lossfunc</span><span class="p">(</span><span class="n">model</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="n">y</span><span class="p">)</span>
 
-<span style="color: blue;"><span class="k">with</span> <span class="n">backpack</span><span class="p">(</span><span class="n">DiagGGNExact</span><span class="p">()):</span></span>
+<span style="color: blue;"><span class="k">with</span> <span class="n">backpack</span><span class="p">(</span><span class="n">extensions.DiagGGNExact</span><span class="p">()):</span></span>
     <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
 
 <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">():</span>
@@ -141,14 +141,14 @@ and KFAC with BackPACK
 """</span>
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">CrossEntropyLoss</span><span class="p">,</span> <span class="n">Linear</span>
 <span class="kn">from</span> <span class="nn">utils</span> <span class="kn">import</span> <span class="n">load_mnist_data</span>
-<span style="color: blue;"><span class="kn">from</span> <span class="nn">backpack</span> <span class="kn">import</span> <span class="n">extend</span><span class="p">,</span> <span class="n">backpack</span><span class="p">,</span> <span class="n">KFAC</span></span>
+<span style="color: blue;"><span class="kn">from</span> <span class="nn">backpack</span> <span class="kn">import</span> <span class="n">extend</span><span class="p">,</span> <span class="n">backpack</span><span class="p">,</span> <span class="n">extensions</span></span>
 
 <span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">load_mnist_data</span><span class="p">()</span>
 <span class="n">model</span> <span class="o">=</span> <span class="n"><span style="color: blue;">extend</span></span><span class="p">(</span><span class="n">Linear</span><span class="p">(</span><span class="mi">784</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
 <span class="n">lossfunc</span> <span class="o">=</span> <span class="n"><span style="color: blue;">extend</span></span><span class="p">(</span><span class="n">CrossEntropyLoss</span><span class="p">())</span>
 <span class="n">loss</span> <span class="o">=</span> <span class="n">lossfunc</span><span class="p">(</span><span class="n">model</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="n">y</span><span class="p">)</span>
 
-<span style="color: blue;"><span class="k">with</span> <span class="n">backpack</span><span class="p">(</span><span class="n">KFAC</span><span class="p">()):</span></span>
+<span style="color: blue;"><span class="k">with</span> <span class="n">backpack</span><span class="p">(</span><span class="n">extensions.KFAC</span><span class="p">()):</span></span>
     <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
 
 <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">():</span>
@@ -159,20 +159,20 @@ and KFAC with BackPACK
 
 <script>
     window.onload = function() {
-        var varianceButton = document.getElementById("varianceButton");  
-        var gradientButton = document.getElementById("gradientButton");  
-        var diagGGNButton = document.getElementById("diagGGNButton");  
+        var varianceButton = document.getElementById("varianceButton");
+        var gradientButton = document.getElementById("gradientButton");
+        var diagGGNButton = document.getElementById("diagGGNButton");
         var KFACButton = document.getElementById("KFACButton");
 
-        var varianceItem = document.getElementById("varianceItem");  
-        var gradientItem = document.getElementById("gradientItem");  
-        var diagGGNItem = document.getElementById("diagGGNItem");  
-        var KFACItem = document.getElementById("KFACItem");  
+        var varianceItem = document.getElementById("varianceItem");
+        var gradientItem = document.getElementById("gradientItem");
+        var diagGGNItem = document.getElementById("diagGGNItem");
+        var KFACItem = document.getElementById("KFACItem");
 
-        var gradientCode = document.getElementById("gradientCode");  
-        var varianceCode = document.getElementById("varianceCode");  
-        var diagGGNCode = document.getElementById("diagGGNCode");  
-        var KFACCode = document.getElementById("KFACCode");  
+        var gradientCode = document.getElementById("gradientCode");
+        var varianceCode = document.getElementById("varianceCode");
+        var diagGGNCode = document.getElementById("diagGGNCode");
+        var KFACCode = document.getElementById("KFACCode");
 
         var getCurrent = function() {
             if (varianceItem.className === "active") {
