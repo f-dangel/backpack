@@ -24,6 +24,7 @@ from test.core.derivatives.slicing_settings import CUSTOM_SLICING_SETTINGS
 from test.utils.skip_test import (
     skip_adaptive_avg_pool3d_cuda,
     skip_batch_norm_train_mode_with_subsampling,
+    skip_BCEWithLogitsLoss,
     skip_subsampling_conflict,
 )
 from typing import List, Union
@@ -292,6 +293,7 @@ def test_sqrt_hessian_squared_equals_hessian(
     """
     problem.set_up()
     skip_subsampling_conflict(problem, subsampling)
+    skip_BCEWithLogitsLoss(problem)  # TODO Implement sqrt_hessian for BCEWithLogitsLoss
 
     backpack_res = BackpackDerivatives(problem).input_hessian_via_sqrt_hessian(
         subsampling=subsampling
@@ -337,6 +339,9 @@ def test_sqrt_hessian_sampled_squared_approximates_hessian(
     """
     problem.set_up()
     skip_subsampling_conflict(problem, subsampling)
+    skip_BCEWithLogitsLoss(
+        problem
+    )  # TODO Implement _compute_sampled_grads_manual for BCEWithLogitsLoss
 
     backpack_res = BackpackDerivatives(problem).input_hessian_via_sqrt_hessian(
         mc_samples=mc_samples, chunks=chunks, subsampling=subsampling
@@ -456,6 +461,7 @@ def test_sum_hessian(problem):
         problem (DerivativesProblem): Problem for derivative test.
     """
     problem.set_up()
+    skip_BCEWithLogitsLoss(problem)  # TODO Implement _sum_hessian for BCEWithLogitsLoss
 
     backpack_res = BackpackDerivatives(problem).sum_hessian()
     autograd_res = AutogradDerivatives(problem).sum_hessian()
@@ -596,6 +602,10 @@ def test_make_hessian_mat_prod(problem: DerivativesTestProblem) -> None:
         problem: test problem
     """
     problem.set_up()
+    skip_BCEWithLogitsLoss(
+        problem
+    )  # TODO Implement _make_hessian_mat_prod for BCEWithLogitsLoss
+
     mat = rand(4, *problem.input_shape, device=problem.device)
 
     autograd_res = AutogradDerivatives(problem).hessian_mat_prod(mat)

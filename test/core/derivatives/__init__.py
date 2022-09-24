@@ -13,6 +13,7 @@ from torch.nn import (
     BatchNorm1d,
     BatchNorm2d,
     BatchNorm3d,
+    BCEWithLogitsLoss,
     Conv1d,
     Conv2d,
     Conv3d,
@@ -45,6 +46,7 @@ from backpack.core.derivatives.avgpool1d import AvgPool1DDerivatives
 from backpack.core.derivatives.avgpool2d import AvgPool2DDerivatives
 from backpack.core.derivatives.avgpool3d import AvgPool3DDerivatives
 from backpack.core.derivatives.batchnorm_nd import BatchNormNdDerivatives
+from backpack.core.derivatives.bcewithlogitsloss import BCELossWithLogitsDerivatives
 from backpack.core.derivatives.conv1d import Conv1DDerivatives
 from backpack.core.derivatives.conv2d import Conv2DDerivatives
 from backpack.core.derivatives.conv3d import Conv3DDerivatives
@@ -120,4 +122,5 @@ derivatives_for = {
     SumModule: SumModuleDerivatives,
     Pad: PadDerivatives,
     Slicing: SlicingDerivatives,
+    BCEWithLogitsLoss: BCELossWithLogitsDerivatives,
 }
