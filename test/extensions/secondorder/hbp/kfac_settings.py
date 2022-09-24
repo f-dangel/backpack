@@ -9,7 +9,6 @@ from test.extensions.secondorder.secondorder_settings import (
 from torch import rand
 from torch.nn import (
     CrossEntropyLoss,
-    Flatten,
     Identity,
     Linear,
     MSELoss,
