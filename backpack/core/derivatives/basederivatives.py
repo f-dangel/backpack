@@ -1,6 +1,6 @@
 """Base classes for more flexible Jacobians and second-order information."""
 import warnings
-from abc import ABC, abstractmethod
+from abc import ABC
 from typing import Callable, List, Tuple
 
 from torch import Tensor
@@ -9,7 +9,7 @@ from torch.nn import Module
 from backpack.core.derivatives import shape_check
 
 
-class BaseDerivatives(ABC):
+class BaseDerivatives(ABC):  # noqa: B024
     """First- and second-order partial derivatives of unparameterized module.
 
     Note:
@@ -72,7 +72,6 @@ class BaseDerivatives(ABC):
         """
         return self._jac_mat_prod(module, g_inp, g_out, mat)
 
-    @abstractmethod
     def _jac_mat_prod(
         self, module: Module, g_inp: Tuple[Tensor], g_out: Tuple[Tensor], mat: Tensor
     ) -> Tensor:
@@ -111,7 +110,6 @@ class BaseDerivatives(ABC):
         """
         return self._jac_t_mat_prod(module, g_inp, g_out, mat, subsampling=subsampling)
 
-    @abstractmethod
     def _jac_t_mat_prod(
         self,
         module: Module,
@@ -124,7 +122,6 @@ class BaseDerivatives(ABC):
 
     # TODO Add shape check
     # TODO Use new convention
-    @abstractmethod
     def ea_jac_t_mat_jac_prod(
         self, module: Module, g_inp: Tuple[Tensor], g_out: Tuple[Tensor], mat: Tensor
     ) -> Tensor:
@@ -157,7 +154,6 @@ class BaseDerivatives(ABC):
         """
         raise NotImplementedError
 
-    @abstractmethod
     def hessian_is_zero(self, module: Module) -> bool:
         """Returns whether Hessian is zero.
 
@@ -175,7 +171,6 @@ class BaseDerivatives(ABC):
         """
         raise NotImplementedError
 
-    @abstractmethod
     def hessian_is_diagonal(self, module: Module) -> bool:
         """Is `∂²output[i] / ∂input[j] ∂input[k]` nonzero only if `i = j = k`.
 
@@ -198,7 +193,7 @@ class BaseDerivatives(ABC):
 
     # FIXME Currently returns `∂²output[i] / ∂input[i]² * g_out[0][i]`,
     # which s the residual matrix diagonal, rather than the Hessian diagonal
-    @abstractmethod
+
     def hessian_diagonal(
         self, module: Module, g_in: Tuple[Tensor], g_out: Tuple[Tensor]
     ) -> Tensor:
@@ -222,7 +217,6 @@ class BaseDerivatives(ABC):
         """
         raise NotImplementedError
 
-    @abstractmethod
     def hessian_is_psd(self) -> bool:
         """Is `∂²output[i] / ∂input[j] ∂input[k]` positive semidefinite (PSD).
 
@@ -259,7 +253,6 @@ class BaseDerivatives(ABC):
         """
         return self._residual_mat_prod(module, g_inp, g_out, mat)
 
-    @abstractmethod
     def _residual_mat_prod(
         self, module: Module, g_inp: Tuple[Tensor], g_out: Tuple[Tensor], mat: Tensor
     ) -> Tensor:
@@ -314,7 +307,7 @@ class BaseDerivatives(ABC):
         return cls._reshape_like(mat, module.output.shape)
 
 
-class BaseParameterDerivatives(BaseDerivatives, ABC):
+class BaseParameterDerivatives(BaseDerivatives, ABC):  # noqa: B024
     """First- and second order partial derivatives of a module with parameters.
 
     Assumptions (true for `nn.Linear`, `nn.Conv(Transpose)Nd`, `nn.BatchNormNd`):
@@ -412,7 +405,6 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
         """
         return self._bias_jac_mat_prod(module, g_inp, g_out, mat)
 
-    @abstractmethod
     def _bias_jac_mat_prod(
         self, module: Module, g_inp: Tuple[Tensor], g_out: Tuple[Tensor], mat: Tensor
     ) -> Tensor:
@@ -438,14 +430,13 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
         """
         return self._weight_jac_mat_prod(module, g_inp, g_out, mat)
 
-    @abstractmethod
     def _weight_jac_mat_prod(
         self, module: Module, g_inp: Tuple[Tensor], g_out: Tuple[Tensor], mat: Tensor
     ) -> Tensor:
         raise NotImplementedError
 
 
-class BaseLossDerivatives(BaseDerivatives, ABC):
+class BaseLossDerivatives(BaseDerivatives, ABC):  # noqa: B024
     """Second- order partial derivatives of loss functions."""
 
     # TODO Add shape check
@@ -479,7 +470,6 @@ class BaseLossDerivatives(BaseDerivatives, ABC):
         self._check_2nd_order_make_sense(module, g_out)
         return self._sqrt_hessian(module, g_inp, g_out, subsampling=subsampling)
 
-    @abstractmethod
     def _sqrt_hessian(
         self,
         module: Module,
@@ -525,7 +515,6 @@ class BaseLossDerivatives(BaseDerivatives, ABC):
             module, g_inp, g_out, mc_samples=mc_samples, subsampling=subsampling
         )
 
-    @abstractmethod
     def _sqrt_hessian_sampled(
         self,
         module: Module,
@@ -556,7 +545,6 @@ class BaseLossDerivatives(BaseDerivatives, ABC):
         self._check_2nd_order_make_sense(module, g_out)
         return self._make_hessian_mat_prod(module, g_inp, g_out)
 
-    @abstractmethod
     def _make_hessian_mat_prod(
         self, module: Module, g_inp: Tuple[Tensor], g_out: Tuple[Tensor]
     ) -> Callable[[Tensor], Tensor]:
@@ -579,7 +567,6 @@ class BaseLossDerivatives(BaseDerivatives, ABC):
         self._check_2nd_order_make_sense(module, g_out)
         return self._sum_hessian(module, g_inp, g_out)
 
-    @abstractmethod
     def _sum_hessian(
         self, module: Module, g_inp: Tuple[Tensor], g_out: Tuple[Tensor]
     ) -> Tensor:
