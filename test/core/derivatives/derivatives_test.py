@@ -293,7 +293,6 @@ def test_sqrt_hessian_squared_equals_hessian(
     """
     problem.set_up()
     skip_subsampling_conflict(problem, subsampling)
-    skip_BCEWithLogitsLoss(problem)  # TODO Implement sqrt_hessian for BCEWithLogitsLoss
 
     backpack_res = BackpackDerivatives(problem).input_hessian_via_sqrt_hessian(
         subsampling=subsampling

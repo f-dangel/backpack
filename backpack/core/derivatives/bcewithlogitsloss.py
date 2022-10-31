@@ -1,10 +1,14 @@
 """NLL extention for BCEWithLogits Loss."""
 
-from torch import Tensor
+from math import sqrt
+from typing import List, Tuple
+
+from torch import Tensor, sigmoid
 from torch.distributions import Binomial
 from torch.nn import BCEWithLogitsLoss
 
 from backpack.core.derivatives.nll_base import NLLLossDerivatives
+from backpack.utils.subsampling import subsample
 
 
 class BCELossWithLogitsDerivatives(NLLLossDerivatives):
@@ -58,10 +62,14 @@ class BCELossWithLogitsDerivatives(NLLLossDerivatives):
             module: BCEWithLogitsLoss module
 
         Raises:
-            NotImplementedError: if input is not 2D.
+            NotImplementedError: if input is not a batch of scalars.
         """
         if module.input0.dim() != 2:
             raise NotImplementedError("Only 2D inputs are currently supported.")
+        if module.input0.shape[1] != 1:
+            raise NotImplementedError(
+                "Only scalar-valued predictions are currently supported."
+            )
 
     def _make_distribution(self, subsampled_input: Tensor) -> Binomial:
         """Make the sampling distribution for the NLL loss form of BCEWithLogits.
@@ -82,3 +90,29 @@ class BCELossWithLogitsDerivatives(NLLLossDerivatives):
     @staticmethod
     def _get_mean_normalization(input: Tensor) -> int:
         return input.shape[0]
+
+    def _sqrt_hessian(
+        self,
+        module: BCEWithLogitsLoss,
+        g_inp: Tuple[Tensor],
+        g_out: Tuple[Tensor],
+        subsampling: List[int],
+    ) -> Tensor:  # noqa: D102
+        """Return a symmetric factorization of the loss Hessian.
+
+        Let fₙ ∈ ℝ be the input and yₙ ∈ [0; 1] be the label, and σ(fₙ) ∈ (0;
+        1) be the sigmoid probability. Then, the Hessian ∇²ℓ(fₙ, yₙ) w.r.t. fₙ
+        is ∇²ℓ(fₙ, yₙ) = -σ'(fₙ) = σ(fₙ) (1 - σ(fₙ)).
+        """
+        self._check_is_default(module)
+        self._check_input_dims(module)
+
+        input0 = subsample(module.input0, subsampling=subsampling)
+        sigma = sigmoid(input0).unsqueeze(0)
+
+        sqrt_H = (sigma * (1 - sigma)).sqrt()
+
+        if module.reduction == "mean":
+            sqrt_H /= sqrt(self._get_mean_normalization(module.input0))
+
+        return sqrt_H
