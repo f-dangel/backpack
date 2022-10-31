@@ -79,3 +79,15 @@ def skip_BCEWithLogitsLoss(problem: ExtensionsTestProblem) -> None:
     """
     if isinstance(problem.module, BCEWithLogitsLoss):
         skip("Skipping BCEWithLogitsLoss")
+
+
+def skip_BCEWithLogitsLoss_non_binary_labels(problem: ExtensionsTestProblem) -> None:
+    """Skip if the test problem uses BCEWithLogitsLoss and non-binary labels.
+
+    Args:
+        problem: Test case.
+    """
+    if isinstance(problem.module, BCEWithLogitsLoss) and any(
+        y not in [0, 1] for y in problem.target.flatten()
+    ):
+        skip("Skipping BCEWithLogitsLoss with non-binary labels")

@@ -25,6 +25,7 @@ from test.utils.skip_test import (
     skip_adaptive_avg_pool3d_cuda,
     skip_batch_norm_train_mode_with_subsampling,
     skip_BCEWithLogitsLoss,
+    skip_BCEWithLogitsLoss_non_binary_labels,
     skip_subsampling_conflict,
 )
 from typing import List, Union
@@ -382,6 +383,7 @@ def test_sqrt_hessian_sampled_squared_approximates_hessian_nll(
     """
     problem.set_up()
     skip_subsampling_conflict(problem, subsampling)
+    skip_BCEWithLogitsLoss_non_binary_labels(problem)
     RTOL, ATOL = 1e-2, 8e-3
 
     autograd_res = AutogradDerivatives(problem).input_hessian(subsampling=subsampling)
