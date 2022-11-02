@@ -1,12 +1,12 @@
-from typing import Iterable
+"""Utility functions to convert between parameter lists and vectors."""
 
-import torch
-from torch import Tensor
+from typing import Iterable, List
+
+from torch import Tensor, cat, typename
 
 
-def vector_to_parameter_list(vec, parameters):
-    """
-    Convert the vector `vec` to a parameter-list format matching `parameters`.
+def vector_to_parameter_list(vec: Tensor, parameters: Iterable[Tensor]) -> List[Tensor]:
+    """Convert the vector `vec` to a parameter-list format matching `parameters`.
 
     This function is the inverse of `parameters_to_vector` from the
     pytorch module `torch.nn.utils.convert_parameters`.
@@ -24,18 +24,20 @@ def vector_to_parameter_list(vec, parameters):
         assert torch.all_close(a, b)
     ```
 
-    Parameters:
-    -----------
-        vec: Tensor
-            a single vector represents the parameters of a model
-        parameters: (Iterable[Tensor])
-            an iterator of Tensors that are of the desired shapes.
+    Args:
+        vec: A single vector represents the parameters of a model
+        parameters: An iterator of Tensors that are of the desired shapes.
+
+    Raises:
+        TypeError: If `vec` is not a PyTorch tensor.
+
+    Returns:
+        List of parameter-shaped tensors containing the entries of `vec`.
     """
     # Ensure vec of type Tensor
-    if not isinstance(vec, torch.Tensor):
-        raise TypeError(
-            "expected torch.Tensor, but got: {}".format(torch.typename(vec))
-        )
+    if not isinstance(vec, Tensor):
+        raise TypeError(f"expected Tensor, but got: {typename(vec)}")
+
     params_new = []
     # Pointer for slicing the vector for each parameter
     pointer = 0
@@ -60,4 +62,4 @@ def tensor_list_to_vector(tensor_list: Iterable[Tensor]) -> Tensor:
     Returns:
         Vector containing the flattened and concatenated tensor inputs.
     """
-    return torch.cat([t.flatten() for t in tensor_list])
+    return cat([t.flatten() for t in tensor_list])
