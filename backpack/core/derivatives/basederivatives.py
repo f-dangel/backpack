@@ -9,7 +9,7 @@ from torch.nn import Module
 from backpack.core.derivatives import shape_check
 
 
-class BaseDerivatives(ABC):
+class BaseDerivatives(ABC):  # noqa: B204
     """First- and second-order partial derivatives of unparameterized module.
 
     Note:
