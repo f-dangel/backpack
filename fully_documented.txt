@@ -20,6 +20,7 @@ backpack/core/derivatives/scale_module.py
 backpack/core/derivatives/sum_module.py
 backpack/core/derivatives/dropout.py
 backpack/core/derivatives/slicing.py
+backpack/core/derivatives/bcewithlogitsloss.py
 
 backpack/extensions/__init__.py
 backpack/extensions/backprop_extension.py

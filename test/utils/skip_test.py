@@ -71,7 +71,7 @@ def skip_large_parameters(
         skip(f"Model has too many parameters: {num_params} > {max_num_params}")
 
 
-def skip_BCEWithLogitsLoss(problem: ExtensionsTestProblem) -> None:
+def skip_BCEWithLogitsLoss(problem: DerivativesTestProblem) -> None:
     """Skip if the test problem uses BCEWithLogitsLoss.
 
     Args:
@@ -81,7 +81,7 @@ def skip_BCEWithLogitsLoss(problem: ExtensionsTestProblem) -> None:
         skip("Skipping BCEWithLogitsLoss")
 
 
-def skip_BCEWithLogitsLoss_non_binary_labels(problem: ExtensionsTestProblem) -> None:
+def skip_BCEWithLogitsLoss_non_binary_labels(problem: DerivativesTestProblem) -> None:
     """Skip if the test problem uses BCEWithLogitsLoss and non-binary labels.
 
     Args:

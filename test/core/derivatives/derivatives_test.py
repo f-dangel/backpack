@@ -339,9 +339,7 @@ def test_sqrt_hessian_sampled_squared_approximates_hessian(
     """
     problem.set_up()
     skip_subsampling_conflict(problem, subsampling)
-    skip_BCEWithLogitsLoss(
-        problem
-    )  # TODO Implement _compute_sampled_grads_manual for BCEWithLogitsLoss
+    skip_BCEWithLogitsLoss_non_binary_labels(problem)
 
     backpack_res = BackpackDerivatives(problem).input_hessian_via_sqrt_hessian(
         mc_samples=mc_samples, chunks=chunks, subsampling=subsampling
