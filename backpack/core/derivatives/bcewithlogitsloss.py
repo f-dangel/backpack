@@ -101,8 +101,10 @@ class BCELossWithLogitsDerivatives(NLLLossDerivatives):
         """Return a symmetric factorization of the loss Hessian.
 
         Let fₙ ∈ ℝ be the input and yₙ ∈ [0; 1] be the label, and σ(fₙ) ∈ (0;
-        1) be the sigmoid probability. Then, the Hessian ∇²ℓ(fₙ, yₙ) w.r.t. fₙ
-        is ∇²ℓ(fₙ, yₙ) = -σ'(fₙ) = σ(fₙ) (1 - σ(fₙ)).
+        1) be the sigmoid probability. Then, the gradient ∇ℓ(fₙ, yₙ) w.r.t. fₙ
+        is ∇ℓ(fₙ, yₙ) = σ(fₙ) - yₙ, and the Hessian ∇²ℓ(fₙ, yₙ) w.r.t. fₙ is
+        ∇²ℓ(fₙ, yₙ) = σ'(fₙ) = σ(fₙ) (1 - σ(fₙ)). Consequently, the (scalar)
+        Hessian square root is √(σ(fₙ) (1 - σ(fₙ))).
         """
         self._check_is_default(module)
         self._check_input_dims(module)
