@@ -3,13 +3,15 @@ from typing import Iterator, List, Tuple
 
 from torch import Tensor, stack, zeros
 from torch.nn import Module
-from torch.nn.utils.convert_parameters import parameters_to_vector
 from torch.utils.data import DataLoader, Dataset
 from torchvision.datasets import MNIST
 from torchvision.transforms import Compose, Normalize, ToTensor
 
 from backpack.hessianfree.ggnvp import ggn_vector_product
-from backpack.utils.convert_parameters import vector_to_parameter_list
+from backpack.utils.convert_parameters import (
+    tensor_list_to_vector,
+    vector_to_parameter_list,
+)
 
 
 def load_mnist_dataset() -> Dataset:
@@ -114,4 +116,4 @@ def _autograd_ggn_exact_columns(
 
         ggn_d_list = ggn_vector_product(loss, outputs, model, e_d_list)
 
-        yield d, parameters_to_vector(ggn_d_list)
+        yield d, tensor_list_to_vector(ggn_d_list)
