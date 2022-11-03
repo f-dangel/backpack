@@ -4,6 +4,7 @@ from test.extensions.implementation.autograd import AutogradExtensions
 from test.extensions.implementation.backpack import BackpackExtensions
 from test.extensions.problem import make_test_problems
 from test.extensions.secondorder.diag_ggn.diag_ggn_settings import DiagGGN_SETTINGS
+from test.utils.skip_extension_test import skip_BCEWithLogitsLoss
 from test.utils.skip_test import skip_adaptive_avg_pool3d_cuda
 
 import pytest
@@ -45,6 +46,7 @@ def test_diag_ggn_mc_batch_light(problem):
         problem (ExtensionsTestProblem): Problem for extension test.
     """
     problem.set_up()
+    skip_BCEWithLogitsLoss(problem)
 
     backpack_res = BackpackExtensions(problem).diag_ggn_exact_batch()
     mc_samples = 6000
@@ -67,6 +69,7 @@ def test_diag_ggn_mc_batch(problem):
         problem (ExtensionsTestProblem): Problem for extension test.
     """
     problem.set_up()
+    skip_BCEWithLogitsLoss(problem)
 
     backpack_res = BackpackExtensions(problem).diag_ggn_exact_batch()
     mc_samples = 300000
