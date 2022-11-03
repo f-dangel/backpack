@@ -3,7 +3,7 @@
 from math import sqrt
 from typing import List, Tuple
 
-from torch import Tensor, sigmoid
+from torch import Size, Tensor, sigmoid
 from torch.distributions import Binomial
 from torch.nn import BCEWithLogitsLoss
 
@@ -13,6 +13,15 @@ from backpack.utils.subsampling import subsample
 
 class BCELossWithLogitsDerivatives(NLLLossDerivatives):
     """Derivatives of the BCEWithLogits Loss."""
+
+    def __init__(self, use_autograd: bool = False):
+        """Initialization for BCEWithLogitsLoss derivative.
+
+        Args:
+            use_autograd: Compute gradients with autograd (rather than manual)
+                Defaults to ``False`` (manual computation).
+        """
+        super().__init__(use_autograd=use_autograd)
 
     def _verify_support(self, module: BCEWithLogitsLoss):
         """Verification of module support for BCEWithLogitsLoss.
@@ -86,6 +95,30 @@ class BCELossWithLogitsDerivatives(NLLLossDerivatives):
             Binomial distribution with sigmoid probabilities from the subsampled_input.
         """
         return Binomial(probs=subsampled_input.sigmoid())
+
+    def _compute_sampled_grads_manual(
+        self, subsampled_input: Tensor, mc_samples: int
+    ) -> Tensor:
+        """Manually compute gradients from sampled targets.
+
+        Let fₙ ∈ ℝ and yₙ ∈ {0, 1} ∼ p(y | fₙ) and σ(fₙ) the softmax probability.
+        Then the gradient is ∇ℓ(fₙ, yₙ) = σ(fₙ) - fₙ.
+
+        Args:
+            subsampled_input: input after subsampling
+            mc_samples: number of samples
+
+        Returns:
+            Gradient samples
+        """
+        probs = subsampled_input.sigmoid()
+        expand_dims = [mc_samples] + probs.dim() * [-1]
+        probs_unsqeezed = probs.unsqueeze(0).expand(*expand_dims)  # [V N 1]
+
+        distribution = self._make_distribution(subsampled_input)
+        samples = distribution.sample(Size([mc_samples]))  # [V N 1]
+
+        return probs_unsqeezed - samples
 
     @staticmethod
     def _get_mean_normalization(input: Tensor) -> int:
