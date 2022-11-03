@@ -131,7 +131,9 @@ class BCELossWithLogitsDerivatives(NLLLossDerivatives):
         g_out: Tuple[Tensor],
         subsampling: List[int],
     ) -> Tensor:  # noqa: D102
-        """Return a symmetric factorization of the loss Hessian. # noqa: DAR101
+        """Return a symmetric factorization of the loss Hessian.
+
+        # noqa: DAR101
 
         Let fₙ ∈ ℝ be the input and yₙ ∈ [0; 1] be the label, and σ(fₙ) ∈ (0;
         1) be the sigmoid probability. Then, the gradient ∇ℓ(fₙ, yₙ) w.r.t. fₙ
