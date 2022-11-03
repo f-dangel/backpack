@@ -23,6 +23,7 @@ def test_diag_ggn_exact_batch(problem, request):
     """
     skip_adaptive_avg_pool3d_cuda(request)
     problem.set_up()
+    skip_BCEWithLogitsLoss(problem)
 
     backpack_res = BackpackExtensions(problem).diag_ggn_exact_batch()
     autograd_res = AutogradExtensions(problem).diag_ggn_exact_batch()
