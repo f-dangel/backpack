@@ -45,7 +45,7 @@ class BCELossWithLogitsDerivatives(NLLLossDerivatives):
         Raises:
             NotImplementedError: if labels are non-binary.
         """
-        if any(x != 0 and x != 1 for x in module.input1.flatten()):
+        if any(x not in [0, 1] for x in module.input1.flatten()):
             raise NotImplementedError(
                 "Only binary targets (0 and 1) are currently supported."
             )
@@ -131,13 +131,17 @@ class BCELossWithLogitsDerivatives(NLLLossDerivatives):
         g_out: Tuple[Tensor],
         subsampling: List[int],
     ) -> Tensor:  # noqa: D102
-        """Return a symmetric factorization of the loss Hessian.
+        """Return a symmetric factorization of the loss Hessian. # noqa: DAR101
 
         Let fₙ ∈ ℝ be the input and yₙ ∈ [0; 1] be the label, and σ(fₙ) ∈ (0;
         1) be the sigmoid probability. Then, the gradient ∇ℓ(fₙ, yₙ) w.r.t. fₙ
         is ∇ℓ(fₙ, yₙ) = σ(fₙ) - yₙ, and the Hessian ∇²ℓ(fₙ, yₙ) w.r.t. fₙ is
         ∇²ℓ(fₙ, yₙ) = σ'(fₙ) = σ(fₙ) (1 - σ(fₙ)). Consequently, the (scalar)
         Hessian square root is √(σ(fₙ) (1 - σ(fₙ))).
+
+        Returns:
+            Hessian square root factorization of shape ``[1, N, 1]`` where ``N``
+            corresponds to the (subsampled) batch size.
         """
         self._check_is_default(module)
         self._check_input_dims(module)
