@@ -1,6 +1,7 @@
 from torch import Tensor
 from torch.nn import (
     AvgPool2d,
+    BCEWithLogitsLoss,
     Conv2d,
     CrossEntropyLoss,
     Dropout,
@@ -58,6 +59,7 @@ class HBP(SecondOrderBackpropExtension):
             module_exts={
                 MSELoss: losses.HBPMSELoss(),
                 CrossEntropyLoss: losses.HBPCrossEntropyLoss(),
+                BCEWithLogitsLoss: losses.HBPBCEWithLogitsLoss(),
                 Linear: linear.HBPLinear(),
                 MaxPool2d: pooling.HBPMaxpool2d(),
                 AvgPool2d: pooling.HBPAvgPool2d(),

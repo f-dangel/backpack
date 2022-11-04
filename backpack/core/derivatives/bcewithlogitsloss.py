@@ -157,3 +157,15 @@ class BCELossWithLogitsDerivatives(NLLLossDerivatives):
             sqrt_H /= sqrt(self._get_mean_normalization(module.input0))
 
         return sqrt_H
+
+    def hessian_is_psd(self) -> bool:
+        """Return whether the Hessian is PSD.
+
+        Let fₙ ∈ ℝ be the input and yₙ ∈ [0; 1] be the label, and σ(fₙ) ∈ (0;
+        1) be the sigmoid probability. The Hessian ∇²ℓ(fₙ, yₙ) w.r.t. fₙ is
+        ∇²ℓ(fₙ, yₙ) = σ'(fₙ) = σ(fₙ) (1 - σ(fₙ)) > 0. Hence, the Hessian is PSD.
+
+        Returns:
+            True
+        """
+        return True
