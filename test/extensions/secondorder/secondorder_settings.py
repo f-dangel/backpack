@@ -372,7 +372,7 @@ SECONDORDER_SETTINGS += [
 ###############################################################################
 #                              BCEWithLogitsLoss                              #
 ###############################################################################
-BCEWithLogitsLoss_SETTINGS = [
+SECONDORDER_SETTINGS += [
     {
         "input_fn": lambda: rand(3, 6),
         "module_fn": lambda: Sequential(Linear(6, 4), ReLU(), Linear(4, 1)),

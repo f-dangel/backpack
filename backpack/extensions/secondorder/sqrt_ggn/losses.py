@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Tuple, Union
 from torch import Tensor
 from torch.nn import Module
 
+from backpack.core.derivatives.bcewithlogitsloss import BCELossWithLogitsDerivatives
 from backpack.core.derivatives.crossentropyloss import CrossEntropyLossDerivatives
 from backpack.core.derivatives.mseloss import MSELossDerivatives
 from backpack.extensions.secondorder.hbp import LossHessianStrategy
@@ -80,3 +81,11 @@ class SqrtGGNCrossEntropyLoss(SqrtGGNBaseLossModule):
     def __init__(self):
         """Pass derivatives for ``torch.nn.CrossEntropyLoss`` module."""
         super().__init__(CrossEntropyLossDerivatives())
+
+
+class SqrtGGNBCEWithLogithsLoss(SqrtGGNBaseLossModule):
+    """``SqrtGGN{Exact, MC}`` extension for ``torch.nn.BCEWithLogitsLoss`` module."""
+
+    def __init__(self):
+        """Pass derivatives for ``torch.nn.BCEWithLogitsLoss`` module."""
+        super().__init__(BCELossWithLogitsDerivatives())
