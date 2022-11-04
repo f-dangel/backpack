@@ -1,5 +1,6 @@
 from functools import partial
 
+from backpack.core.derivatives.bcewithlogitsloss import BCELossWithLogitsDerivatives
 from backpack.core.derivatives.crossentropyloss import CrossEntropyLossDerivatives
 from backpack.core.derivatives.mseloss import MSELossDerivatives
 from backpack.extensions.curvature import Curvature
@@ -14,9 +15,8 @@ class HBPLoss(HBPBaseModule):
         )
 
         H_func = self.make_loss_hessian_func(ext)
-        H_loss = H_func(module, g_inp, g_out)
 
-        return H_loss
+        return H_func(module, g_inp, g_out)
 
     def make_loss_hessian_func(self, ext):
         """Get function that produces the backpropagated quantity."""
@@ -30,7 +30,7 @@ class HBPLoss(HBPBaseModule):
         elif hessian_strategy == LossHessianStrategy.SUM:
             return self.derivatives.sum_hessian
         else:
-            raise ValueError("Unknown Hessian strategy: {}".format(hessian_strategy))
+            raise ValueError(f"Unknown Hessian strategy: {hessian_strategy}")
 
 
 class HBPMSELoss(HBPLoss):
@@ -41,3 +41,11 @@ class HBPMSELoss(HBPLoss):
 class HBPCrossEntropyLoss(HBPLoss):
     def __init__(self):
         super().__init__(derivatives=CrossEntropyLossDerivatives())
+
+
+class HBPBCEWithLogitsLoss(HBPLoss):
+    """Hessian backpropagation for the ``BCEWithLogitsLoss`` layer."""
+
+    def __init__(self):
+        """Pass derivatives for ``BCEWithLogitsLoss``."""
+        super().__init__(derivatives=BCELossWithLogitsDerivatives())

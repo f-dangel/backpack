@@ -7,6 +7,7 @@ from test.extensions.secondorder.hbp.kfac_settings import (
     BATCH_SIZE_1_SETTINGS,
     NOT_SUPPORTED_SETTINGS,
 )
+from test.utils.skip_extension_test import skip_BCEWithLogitsLoss_non_binary_labels
 
 import pytest
 
@@ -44,6 +45,7 @@ def test_kfac_should_approx_ggn_montecarlo(problem: ExtensionsTestProblem):
         problem: Test case.
     """
     problem.set_up()
+    skip_BCEWithLogitsLoss_non_binary_labels(problem)
     autograd_res = AutogradExtensions(problem).ggn_blocks()
 
     mc_samples = 300000
@@ -65,6 +67,7 @@ def test_kfac_should_approx_ggn_montecarlo_light(problem: ExtensionsTestProblem)
         problem: Test case.
     """
     problem.set_up()
+    skip_BCEWithLogitsLoss_non_binary_labels(problem)
     autograd_res = AutogradExtensions(problem).ggn_blocks()
 
     mc_samples = 6000
