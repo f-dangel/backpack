@@ -23,6 +23,7 @@ from torch.nn import (
     BatchNorm1d,
     BatchNorm2d,
     BatchNorm3d,
+    BCEWithLogitsLoss,
     Conv1d,
     Conv2d,
     Conv3d,
@@ -149,6 +150,7 @@ class DiagGGN(SecondOrderBackpropExtension):
                 Embedding: embedding.DiagGGNEmbedding(),
                 Pad: pad.DiagGGNPad(),
                 Slicing: slicing.DiagGGNSlicing(),
+                BCEWithLogitsLoss: losses.DiagGGNBCEWithLogitsLossDerivatives(),
             },
         )
 
@@ -274,6 +276,7 @@ class BatchDiagGGN(SecondOrderBackpropExtension):
                 Embedding: embedding.BatchDiagGGNEmbedding(),
                 Pad: pad.DiagGGNPad(),
                 Slicing: slicing.DiagGGNSlicing(),
+                BCEWithLogitsLoss: losses.DiagGGNBCEWithLogitsLossDerivatives(),
             },
         )
 
