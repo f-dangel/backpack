@@ -1,5 +1,6 @@
 from functools import partial
 
+from backpack.core.derivatives.bcewithlogitsloss import BCELossWithLogitsDerivatives
 from backpack.core.derivatives.crossentropyloss import CrossEntropyLossDerivatives
 from backpack.core.derivatives.mseloss import MSELossDerivatives
 from backpack.extensions.secondorder.diag_ggn.diag_ggn_base import DiagGGNBaseModule
@@ -34,3 +35,8 @@ class DiagGGNMSELoss(DiagGGNLoss):
 class DiagGGNCrossEntropyLoss(DiagGGNLoss):
     def __init__(self):
         super().__init__(derivatives=CrossEntropyLossDerivatives())
+
+
+class DiagGGNBCEWithLogitsLossDerivatives(DiagGGNLoss):
+    def __init__(self):
+        super().__init__(derivatives=BCELossWithLogitsDerivatives())
