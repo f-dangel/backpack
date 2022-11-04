@@ -114,7 +114,6 @@ test/core/derivatives/scale_module_settings.py
 test/core/derivatives/slicing_settings.py
 test/utils/evaluation_mode.py
 test/utils/skip_test.py
-test/utils/skip_extension_test.py
 test/utils/__init__.py
 test/converter/
 test/utils/test_subsampling.py
