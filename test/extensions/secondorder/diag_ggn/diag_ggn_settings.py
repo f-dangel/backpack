@@ -11,10 +11,7 @@ Additional local cases can be defined here through ``LOCAL_SETTINGS``.
 """
 from test.converter.resnet_cases import ResNet1, ResNet2
 from test.core.derivatives.utils import classification_targets, regression_targets
-from test.extensions.secondorder.secondorder_settings import (
-    SECONDORDER_SETTINGS,
-    BCEWithLogitsLoss_SETTINGS,
-)
+from test.extensions.secondorder.secondorder_settings import SECONDORDER_SETTINGS
 from test.utils.evaluation_mode import initialize_training_false_recursive
 
 from torch import rand, randint
@@ -281,10 +278,5 @@ LOCAL_SETTINGS += [
         "id_prefix": "ResNet2",
     },
 ]
-
-###############################################################################
-#                              BCEWithLogitsLoss                              #
-###############################################################################
-LOCAL_SETTINGS += BCEWithLogitsLoss_SETTINGS
 
 DiagGGN_SETTINGS = SHARED_SETTINGS + LOCAL_SETTINGS
