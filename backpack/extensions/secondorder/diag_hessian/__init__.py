@@ -9,6 +9,7 @@ from torch.nn import (
     AvgPool1d,
     AvgPool2d,
     AvgPool3d,
+    BCEWithLogitsLoss,
     Conv1d,
     Conv2d,
     Conv3d,
@@ -98,6 +99,7 @@ class DiagHessian(SecondOrderBackpropExtension):
                 SELU: activations.DiagHSELU(),
                 Pad: pad.DiagHPad(),
                 Slicing: slicing.DiagHSlicing(),
+                BCEWithLogitsLoss: losses.DiagHBCEWithLogitsLoss(),
             },
         )
 
@@ -147,5 +149,6 @@ class BatchDiagHessian(SecondOrderBackpropExtension):
                 SELU: activations.DiagHSELU(),
                 Pad: pad.DiagHPad(),
                 Slicing: slicing.DiagHSlicing(),
+                BCEWithLogitsLoss: losses.DiagHBCEWithLogitsLoss(),
             },
         )
