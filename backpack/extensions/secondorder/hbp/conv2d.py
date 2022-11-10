@@ -52,11 +52,11 @@ class HBPConv2d(HBPBaseModule):
             yield einsum("bik,bjk->ij", (X, X)) / batch
 
     def _factor_from_sqrt(self, module, backproped):
-        sqrt_ggn = backproped
+        num_spatial_dims = 2
 
-        sqrt_ggn = convUtils.separate_channels_and_pixels(module, sqrt_ggn)
-        sqrt_ggn = einsum("cbij->cbi", (sqrt_ggn,))
-        return einsum("cbi,cbl->il", (sqrt_ggn, sqrt_ggn))
+        sqrt_ggn = backproped.flatten(start_dim=-num_spatial_dims)
+        sqrt_ggn = einsum("cbij->cbi", sqrt_ggn)
+        return einsum("cbi,cbl->il", sqrt_ggn, sqrt_ggn)
 
     def bias(self, ext, module, g_inp, g_out, backproped):
         bp_strategy = ext.get_backprop_strategy()

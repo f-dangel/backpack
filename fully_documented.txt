@@ -79,6 +79,7 @@ backpack/utils/module_classification.py
 backpack/utils/hooks.py
 backpack/utils/examples.py
 backpack/utils/convert_parameters.py
+backpack/utils/conv.py
 
 test/extensions/automated_settings.py
 test/extensions/problem.py
