@@ -5,6 +5,7 @@ from einops import rearrange
 from torch import Tensor, einsum
 from torch.nn import Conv1d, Conv2d, Conv3d, Module
 from torch.nn.functional import conv1d, conv2d, conv3d, unfold
+from unfoldNd import unfoldNd
 
 
 def get_conv_module(N: int) -> Type[Module]:
@@ -133,34 +134,24 @@ def extract_bias_diagonal(module, S, sum_batch=True):
     return S.sum(sum_before).pow_(2).sum(sum_after)
 
 
-def unfold_by_conv(input, module):
-    """Return the unfolded input using convolution"""
-    N, C_in = input.shape[0], input.shape[1]
-    kernel_size = module.kernel_size
-    kernel_size_numel = module.weight.shape[2:].numel()
+def unfold_by_conv(
+    input: torch.Tensor, module: Union[Conv1d, Conv2d, Conv3d]
+) -> torch.Tensor:
+    """Return the unfolded input using convolution.
 
-    def make_weight():
-        weight = torch.zeros(kernel_size_numel, 1, *kernel_size)
+    Args:
+        input: Convolution layer input.
+        module: Convolution layer.
 
-        for i in range(kernel_size_numel):
-            extraction = torch.zeros(kernel_size_numel)
-            extraction[i] = 1.0
-            weight[i] = extraction.reshape(1, *kernel_size)
-
-        repeat = [C_in, 1] + [1 for _ in kernel_size]
-        return weight.repeat(*repeat)
-
-    conv_dim = input.dim() - 2
-    conv = get_conv_function(conv_dim)
-
-    unfold = conv(
+    Returns:
+        Unfolded input. For a 2d convolution with input of shape `[N, C_in, *, *]`
+        and a kernel of shape `[_, _, K_H, K_W]`, this tensor has shape
+        `[N, C_in * K_H * K_W, L]` where `L` is the output's number of patches.
+    """
+    return unfoldNd(
         input,
-        make_weight().to(input.device),
-        bias=None,
-        stride=module.stride,
-        padding=module.padding,
+        module.kernel_size,
         dilation=module.dilation,
-        groups=C_in,
+        padding=module.padding,
+        stride=module.stride,
     )
-
-    return unfold.reshape(N, C_in * kernel_size_numel, -1)
