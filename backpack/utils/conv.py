@@ -137,7 +137,17 @@ def extract_bias_diagonal(module, S, sum_batch=True):
 def unfold_by_conv(
     input: torch.Tensor, module: Union[Conv1d, Conv2d, Conv3d]
 ) -> torch.Tensor:
-    """Return the unfolded input using convolution."""
+    """Return the unfolded input using convolution.
+
+    Args:
+        input: Convolution layer input.
+        module: Convolution layer.
+
+    Returns:
+        Unfolded input. For a 2d convolution with input of shape `[N, C_in, *, *]`
+        and a kernel of shape `[_, _, K_H, K_W]`, this tensor has shape
+        `[N, C_in * K_H * K_W, L]` where `L` is the output's number of patches.
+    """
     return unfoldNd(
         input,
         module.kernel_size,
