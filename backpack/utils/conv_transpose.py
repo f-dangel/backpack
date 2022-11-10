@@ -1,10 +1,10 @@
 """Utility functions for extracting transpose convolution BackPACK quantities."""
 
-from typing import Callable, Type
+from typing import Callable, Type, Union
 
 import torch
 from einops import rearrange
-from torch import einsum
+from torch import Tensor, einsum
 from torch.nn import ConvTranspose1d, ConvTranspose2d, ConvTranspose3d, Module
 from torch.nn.functional import conv_transpose1d, conv_transpose2d, conv_transpose3d
 
@@ -114,19 +114,22 @@ def extract_bias_diagonal(module, S, sum_batch=True):
     return conv_extract_bias_diagonal(module, S, sum_batch=sum_batch)
 
 
-def unfold_by_conv_transpose(input, module):
+def unfold_by_conv_transpose(
+    input: Tensor, module: Union[ConvTranspose1d, ConvTranspose2d, ConvTranspose3d]
+) -> Tensor:
     """Return the unfolded input using one-hot transpose convolution.
 
     Args:
-        input (torch.Tensor): Input to a transpose convolution.
-        module (torch.nn.ConvTranspose1d or torch.nn.ConvTranspose2d or
-            torch.nn.ConvTranspose3d): Transpose convolution layer that specifies
-            the hyperparameters for unfolding.
+        input: Input to a transpose convolution.
+        module: Transpose convolution layer that specifies the hyperparameters for
+            unfolding.
 
     Returns:
-        torch.Tensor: Unfolded input of shape ``(N, C, K * X)`` with
-            ``K = module.weight.shape[2:].numel()`` the number of kernel elements
-            and ``X = module.output.shape[2:].numel()`` the number of output pixels.
+        Unfolded input of shape ``(N, C, K * X)`` with
+        ``K = module.weight.shape[2:].numel()`` the number of kernel elements
+        and ``X = module.output.shape[2:].numel()`` the number of output pixels.
+        TODO: The returned shape is inconsistent with `unfold_by_conv`, which
+        returns shape `[N, C * K, X]`.
     """
     N, C_in = input.shape[0], input.shape[1]
     kernel_size = module.kernel_size
@@ -156,5 +159,22 @@ def unfold_by_conv_transpose(input, module):
         dilation=module.dilation,
         groups=C_in,
     )
+    unfold = unfold.reshape(N, C_in, -1)
 
-    return unfold.reshape(N, C_in, -1)
+    from unfoldNd import unfold_transposeNd
+
+    unfold2 = unfold_transposeNd(
+        input,
+        module.kernel_size,
+        stride=module.stride,
+        padding=module.padding,
+        # TODO The case where output_size is specified in the forward pass of a
+        # ConvTransposeNd is not handled
+        output_padding=0,
+        dilation=module.dilation,
+    )
+    unfold2 = unfold2.reshape(N, C_in, -1)
+
+    assert torch.allclose(unfold, unfold2)
+
+    return unfold
