@@ -5,7 +5,15 @@ from typing import Callable, Tuple, Type, Union
 import torch
 from einops import rearrange
 from torch import Tensor, einsum
-from torch.nn import Conv1d, Conv2d, Conv3d, Module
+from torch.nn import (
+    Conv1d,
+    Conv2d,
+    Conv3d,
+    ConvTranspose1d,
+    ConvTranspose2d,
+    ConvTranspose3d,
+    Module,
+)
 from torch.nn.functional import conv1d, conv2d, conv3d, unfold
 from unfoldNd import unfoldNd
 
@@ -123,7 +131,11 @@ def extract_weight_diagonal(
 # TODO This method applies the bias Jacobian, then squares and sums the result. Intro-
 # duce base class for {Batch}DiagHessian and DiagGGN{Exact,MC} and remove this method
 def extract_bias_diagonal(
-    module: Union[Conv1d, Conv2d, Conv3d], S: Tensor, sum_batch: bool = True
+    module: Union[
+        Conv1d, Conv2d, Conv3d, ConvTranspose1d, ConvTranspose2d, ConvTranspose3d
+    ],
+    S: Tensor,
+    sum_batch: bool = True,
 ) -> Tensor:
     """Extract diagonal of ``(Jᵀ S) (Jᵀ S)ᵀ`` where ``J`` is the bias Jacobian.
 

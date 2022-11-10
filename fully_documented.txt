@@ -80,6 +80,7 @@ backpack/utils/hooks.py
 backpack/utils/examples.py
 backpack/utils/convert_parameters.py
 backpack/utils/conv.py
+backpack/utils/conv_transpose.py
 
 test/extensions/automated_settings.py
 test/extensions/problem.py
