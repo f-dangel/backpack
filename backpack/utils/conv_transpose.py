@@ -58,10 +58,7 @@ def get_weight_gradient_factors(
     Returns:
         unfolded input, output gradient with flattened spatial dimensions
     """
-    M, C_in = input.shape[0], input.shape[1]
-    kernel_size_numel = module.weight.shape[2:].numel()
-
-    X = unfold_by_conv_transpose(input, module).reshape(M, C_in * kernel_size_numel, -1)
+    X = unfold_by_conv_transpose(input, module)
     dE_dY = rearrange(grad_out, "n c ... -> n c (...)")
 
     return X, dE_dY
@@ -91,12 +88,12 @@ def extract_weight_diagonal(
     S = rearrange(S, "v n (g o) ... -> v n g o (...)", g=module.groups)
     unfolded_input = rearrange(
         unfolded_input,
-        "n (g c) (k x) -> n g c k x",
+        "n (g c k) x -> n g c k x",
         g=module.groups,
         k=module.weight.shape[2:].numel(),
     )
 
-    JS = einsum("ngckx,vngox->vngcok", (unfolded_input, S))
+    JS = einsum("ngckx,vngox->vngcok", unfolded_input, S)
 
     sum_dims = [0, 1] if sum_batch else [0]
     out_shape = (
@@ -141,15 +138,11 @@ def unfold_by_conv_transpose(
             unfolding.
 
     Returns:
-        Unfolded input of shape ``(N, C, K * X)`` with
+        Unfolded input of shape ``(N, C * K, X)`` with
         ``K = module.weight.shape[2:].numel()`` the number of kernel elements
         and ``X = module.output.shape[2:].numel()`` the number of output pixels.
-        TODO: The returned shape is inconsistent with `unfold_by_conv`, which
-        returns shape `[N, C * K, X]`.
     """
-    N, C_in = input.shape[0], input.shape[1]
-
-    unfold = unfold_transposeNd(
+    return unfold_transposeNd(
         input,
         module.kernel_size,
         stride=module.stride,
@@ -159,4 +152,3 @@ def unfold_by_conv_transpose(
         output_padding=0,
         dilation=module.dilation,
     )
-    return unfold.reshape(N, C_in, -1)
