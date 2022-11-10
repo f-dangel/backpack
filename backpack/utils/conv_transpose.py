@@ -2,11 +2,11 @@
 
 from typing import Callable, Type, Union
 
-import torch
 from einops import rearrange
 from torch import Tensor, einsum
 from torch.nn import ConvTranspose1d, ConvTranspose2d, ConvTranspose3d, Module
 from torch.nn.functional import conv_transpose1d, conv_transpose2d, conv_transpose3d
+from unfoldNd import unfold_transposeNd
 
 from backpack.utils.conv import extract_bias_diagonal as conv_extract_bias_diagonal
 
@@ -132,38 +132,8 @@ def unfold_by_conv_transpose(
         returns shape `[N, C * K, X]`.
     """
     N, C_in = input.shape[0], input.shape[1]
-    kernel_size = module.kernel_size
-    kernel_size_numel = module.weight.shape[2:].numel()
 
-    def make_weight():
-        weight = torch.zeros(1, kernel_size_numel, *kernel_size)
-
-        for i in range(kernel_size_numel):
-            extraction = torch.zeros(kernel_size_numel)
-            extraction[i] = 1.0
-            weight[0, i] = extraction.reshape(*kernel_size)
-
-        repeat = [C_in, 1] + [1 for _ in kernel_size]
-        weight = weight.repeat(*repeat)
-        return weight.to(module.weight.device)
-
-    conv_dim = input.dim() - 2
-    conv_transpose = get_conv_transpose_function(conv_dim)
-
-    unfold = conv_transpose(
-        input,
-        make_weight().to(module.weight.device),
-        bias=None,
-        stride=module.stride,
-        padding=module.padding,
-        dilation=module.dilation,
-        groups=C_in,
-    )
-    unfold = unfold.reshape(N, C_in, -1)
-
-    from unfoldNd import unfold_transposeNd
-
-    unfold2 = unfold_transposeNd(
+    unfold = unfold_transposeNd(
         input,
         module.kernel_size,
         stride=module.stride,
@@ -173,8 +143,4 @@ def unfold_by_conv_transpose(
         output_padding=0,
         dilation=module.dilation,
     )
-    unfold2 = unfold2.reshape(N, C_in, -1)
-
-    assert torch.allclose(unfold, unfold2)
-
-    return unfold
+    return unfold.reshape(N, C_in, -1)
