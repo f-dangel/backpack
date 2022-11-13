@@ -75,9 +75,9 @@ class HBPConvNd(HBPBaseModule):
 
         Returns:
             List of Kronecker factors whose Kronecker product approximates the weight
-            Hessian. Its length depends on the Hessian approximation. If `[A, B, C]`
-            is returned, then `A ⊗ B ⊗ C` has shape `[weight.numel(), weight.numel()]`
-            and approximates the weight Hessian.
+            Hessian. Its length depends on the Hessian approximation. If `[A, B]` is
+            returned, then `A ⊗ B` has shape `[weight.numel(), weight.numel()]` and
+            approximates the weight Hessian.
         """
         self._maybe_raise_groups_not_implemented_error(ext, module)
 
@@ -176,10 +176,8 @@ class HBPConvNd(HBPBaseModule):
                 output and has shape `[C * H * W, C * H * W]`.
 
         Returns:
-            List of Kronecker factors whose Kronecker product approximates the bias
-            Hessian. Its length depends on the Hessian approximation. If `[A, B, C]`
-            is returned, then `A ⊗ B ⊗ C` has shape `[bias.numel(), bias.numel()]`
-            and approximates the bias Hessian.
+            List containing a single tensor of shape `[bias.numel(), bias.numel()]` that
+            approximates the bias Hessian.
         """
         kron_factors: List[Tensor] = []
         bp_strategy = ext.get_backprop_strategy()
