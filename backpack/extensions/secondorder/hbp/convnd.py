@@ -84,7 +84,6 @@ class HBPConvNd(HBPBaseModule):
         kron_factors: List[Tensor] = []
         bp_strategy = ext.get_backprop_strategy()
 
-        # TODO Find a setting in which this corresponds to an autodiff quantity, test
         if BackpropStrategy.is_batch_average(bp_strategy):  # KFRA
             kron_factors.append(self._factor_from_batch_average(module, backproped))
 
@@ -182,9 +181,9 @@ class HBPConvNd(HBPBaseModule):
         kron_factors: List[Tensor] = []
         bp_strategy = ext.get_backprop_strategy()
 
-        # TODO Find a setting in which this corresponds to an autodiff quantity, test
         if BackpropStrategy.is_batch_average(bp_strategy):  # KFRA
             kron_factors.append(self._factor_from_batch_average(module, backproped))
+
         elif BackpropStrategy.is_sqrt(bp_strategy):  # KFAC/KFLR
             kron_factors.append(self._factor_from_sqrt(module, backproped))
 
