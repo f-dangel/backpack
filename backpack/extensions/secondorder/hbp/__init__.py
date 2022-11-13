@@ -2,7 +2,9 @@ from torch import Tensor
 from torch.nn import (
     AvgPool2d,
     BCEWithLogitsLoss,
+    Conv1d,
     Conv2d,
+    Conv3d,
     CrossEntropyLoss,
     Dropout,
     Flatten,
@@ -28,7 +30,9 @@ from backpack.extensions.secondorder.hbp.hbp_options import (
 
 from . import (
     activations,
+    conv1d,
     conv2d,
+    conv3d,
     custom_module,
     dropout,
     flatten,
@@ -64,7 +68,9 @@ class HBP(SecondOrderBackpropExtension):
                 MaxPool2d: pooling.HBPMaxpool2d(),
                 AvgPool2d: pooling.HBPAvgPool2d(),
                 ZeroPad2d: padding.HBPZeroPad2d(),
+                Conv1d: conv1d.HBPConv1d(),
                 Conv2d: conv2d.HBPConv2d(),
+                Conv3d: conv3d.HBPConv3d(),
                 Dropout: dropout.HBPDropout(),
                 Flatten: flatten.HBPFlatten(),
                 ReLU: activations.HBPReLU(),

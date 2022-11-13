@@ -9,7 +9,9 @@ from test.extensions.secondorder.secondorder_settings import (
 from torch import rand
 from torch.nn import (
     BCEWithLogitsLoss,
+    Conv1d,
     Conv2d,
+    Conv3d,
     CrossEntropyLoss,
     Flatten,
     Identity,
@@ -59,13 +61,33 @@ _BATCH_SIZE_1_NO_BRANCHING_SETTINGS = [
     },
     # convolution with single output is a linear layer (no weight sharing across input)
     {
+        "input_fn": lambda: rand(1, 2, 4),
+        "module_fn": lambda: Sequential(
+            Conv1d(2, 4, 4), ReLU(), Conv1d(4, 1, 1), Flatten()
+        ),
+        "loss_function_fn": lambda: MSELoss(reduction="mean"),
+        "target_fn": lambda: regression_targets((1, 1)),
+        "id_prefix": "conv1d-single-output",
+    },
+    # convolution with single output is a linear layer (no weight sharing across input)
+    {
         "input_fn": lambda: rand(1, 2, 3, 3),
         "module_fn": lambda: Sequential(
             Conv2d(2, 4, 3), ReLU(), Conv2d(4, 1, 1), Flatten()
         ),
         "loss_function_fn": lambda: MSELoss(reduction="mean"),
         "target_fn": lambda: regression_targets((1, 1)),
-        "id_prefix": "convolution-single-output",
+        "id_prefix": "conv2d-single-output",
+    },
+    # convolution with single output is a linear layer (no weight sharing across input)
+    {
+        "input_fn": lambda: rand(1, 2, 3, 3, 3),
+        "module_fn": lambda: Sequential(
+            Conv3d(2, 3, 3), ReLU(), Conv3d(3, 1, 1), Flatten()
+        ),
+        "loss_function_fn": lambda: MSELoss(reduction="mean"),
+        "target_fn": lambda: regression_targets((1, 1)),
+        "id_prefix": "conv3d-single-output",
     },
 ]
 
