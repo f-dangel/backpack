@@ -52,10 +52,10 @@ class HBPConv2d(HBPBaseModule):
             g_out: output gradient.
             backproped: Backpropagated quantity, depends on the approximation mode.
                 For KFLR/KFAC this is the MC/exact matrix square root of the GGN w.r.t.
-                the convolution output (shape `[M, N, C, H, W]`) and has shape
+                the convolution output (shape `[N, C, H, W]`) and has shape
                 `[M, N, C, H, W]` with `M` the number of MC samples or the number of
                 classes for KFAC/KFLR, respectively. For KFRA, the backpropagated
-                object approximates the batch-averaged GGN w.r.t. to the convolution
+                object approximates the batch-averaged Hessian w.r.t. to the convolution
                 output and has shape `[C * H * W, C * H * W]`.
 
         Returns:
@@ -82,8 +82,8 @@ class HBPConv2d(HBPBaseModule):
     def _factors_from_input(self, ext: HBP, module: Conv2d) -> List[Tensor]:
         """Compute the un-centered covariance of the unfolded input.
 
-        In the notation of http://proceedings.mlr.press/v48/grosse16.pdf,
-        this computes Ω from equation (23) for KFAC.
+        In the notation of https://arxiv.org/pdf/1602.01407.pdf,
+        this computes Ω from equation (32) for KFAC.
 
         Args:
             ext: HBP extension.
@@ -113,7 +113,7 @@ class HBPConv2d(HBPBaseModule):
 
         Note:
             In comparison to the KFC paper, the output differs by a factor of |Τ|.
-            This is because |Τ| * Γ is the MC/exact GGN w.r.t. the convolution's bias.
+            This is because |Τ| * Γ is the MC/exact GGN w.r.t. the convolution's bias,
             For two-dimensional convolution with output of shape `[N, C_out, H, W]`,
             |Τ| = H * W.
 
@@ -152,10 +152,10 @@ class HBPConv2d(HBPBaseModule):
             g_out: output gradient.
             backproped: Backpropagated quantity, depends on the approximation mode.
                 For KFLR/KFAC this is the MC/exact matrix square root of the GGN w.r.t.
-                the convolution output (shape `[M, N, C, H, W]`) and has shape
+                the convolution output (shape `[N, C, H, W]`) and has shape
                 `[M, N, C, H, W]` with `M` the number of MC samples or the number of
                 classes for KFAC/KFLR, respectively. For KFRA, the backpropagated
-                object approximates the batch-averaged GGN w.r.t. to the convolution
+                object approximates the batch-averaged Hessian w.r.t. the convolution
                 output and has shape `[C * H * W, C * H * W]`.
 
         Returns:
