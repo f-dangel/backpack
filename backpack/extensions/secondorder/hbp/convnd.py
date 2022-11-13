@@ -76,7 +76,7 @@ class HBPConvNd(HBPBaseModule):
         Returns:
             List of Kronecker factors whose Kronecker product approximates the weight
             Hessian. Its length depends on the Hessian approximation. If `[A, B, C]`
-            is returned, then `A ⊗ B ⊗ C` has shape `[weights.numel(), weights.numel()]`
+            is returned, then `A ⊗ B ⊗ C` has shape `[weight.numel(), weight.numel()]`
             and approximates the weight Hessian.
         """
         self._maybe_raise_groups_not_implemented_error(ext, module)
@@ -99,8 +99,8 @@ class HBPConvNd(HBPBaseModule):
     ) -> List[Tensor]:
         """Compute the un-centered covariance of the unfolded input.
 
-        In the notation of http://proceedings.mlr.press/v48/grosse16.pdf,
-        this computes Ω from equation (23) for KFAC.
+        In the notation of https://arxiv.org/pdf/1602.01407.pdf,
+        this computes Ω from equation (32) for KFAC.
 
         Args:
             ext: HBP extension.
@@ -112,7 +112,7 @@ class HBPConvNd(HBPBaseModule):
         Returns:
             List containing the tensor of the un-centered covariance of the unfolded
             input. For a convolution with kernel of size `[_, C_in, K_H, K_W]`, its
-            shape is shape `[C_in * K_H * K_W, C_in * K_H * K_W]`.
+            shape is `[C_in * K_H * K_W, C_in * K_H * K_W]`.
         """
         ea_strategy = ext.get_ea_strategy()
         if ExpectationApproximation.should_average_param_jac(ea_strategy):
