@@ -9,7 +9,9 @@ from test.extensions.secondorder.secondorder_settings import (
 from torch import rand
 from torch.nn import (
     BCEWithLogitsLoss,
+    Conv2d,
     CrossEntropyLoss,
+    Flatten,
     Identity,
     Linear,
     MSELoss,
@@ -54,6 +56,16 @@ _BATCH_SIZE_1_NO_BRANCHING_SETTINGS = [
         "loss_function_fn": lambda: BCEWithLogitsLoss(reduction="sum"),
         "target_fn": lambda: classification_targets(size=(1, 1), num_classes=2).float(),
         "id_prefix": "binary-labels",
+    },
+    # convolution with single output is a linear layer (no weight sharing across input)
+    {
+        "input_fn": lambda: rand(1, 2, 3, 3),
+        "module_fn": lambda: Sequential(
+            Conv2d(2, 4, 3), ReLU(), Conv2d(4, 1, 1), Flatten()
+        ),
+        "loss_function_fn": lambda: MSELoss(reduction="mean"),
+        "target_fn": lambda: regression_targets((1, 1)),
+        "id_prefix": "convolution-single-output",
     },
 ]
 
