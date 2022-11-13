@@ -71,7 +71,7 @@ backpack/extensions/secondorder/hbp/custom_module.py
 backpack/extensions/secondorder/hbp/conv1d.py
 backpack/extensions/secondorder/hbp/conv2d.py
 backpack/extensions/secondorder/hbp/conv3d.py
-backpack/extensions/secondorder/hbp/convNd.py
+backpack/extensions/secondorder/hbp/convnd.py
 
 backpack/hessianfree/ggnvp.py
 
