@@ -47,8 +47,8 @@ def test_kfra_equals_ggn(problem: ExtensionsTestProblem):
 
     autograd_res = AutogradExtensions(problem).ggn_blocks()
 
-    backpack_kflr = BackpackExtensions(problem).kflr()
-    backpack_res = [kfacs_to_mat(kflr) for kflr in backpack_kflr]
+    backpack_kfra = BackpackExtensions(problem).kfra()
+    backpack_res = [kfacs_to_mat(kfra) for kfra in backpack_kfra]
 
     check_sizes_and_values(autograd_res, backpack_res, atol=1e-7, rtol=1e-5)
 
