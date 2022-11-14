@@ -12,8 +12,6 @@ from test.utils.skip_extension_test import skip_BCEWithLogitsLoss
 
 import pytest
 
-from backpack.utils.kroneckers import kfacs_to_mat
-
 NOT_SUPPORTED_PROBLEMS = make_test_problems(NOT_SUPPORTED_SETTINGS)
 NOT_SUPPORTED_IDS = [problem.make_id() for problem in NOT_SUPPORTED_PROBLEMS]
 BATCH_SIZE_1_PROBLEMS = make_test_problems(BATCH_SIZE_1_SETTINGS)
@@ -46,9 +44,7 @@ def test_kfra_equals_ggn(problem: ExtensionsTestProblem):
     skip_BCEWithLogitsLoss(problem)
 
     autograd_res = AutogradExtensions(problem).ggn_blocks()
-
-    backpack_kfra = BackpackExtensions(problem).kfra()
-    backpack_res = [kfacs_to_mat(kfra) for kfra in backpack_kfra]
+    backpack_res = BackpackExtensions(problem).kfra_as_mat()
 
     check_sizes_and_values(autograd_res, backpack_res, atol=1e-7, rtol=1e-5)
 
