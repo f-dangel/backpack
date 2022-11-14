@@ -4,9 +4,7 @@ from backpack.extensions.secondorder.hbp.conv_transposend import HBPConvTranspos
 
 
 class HBPConvTranspose2d(HBPConvTransposeNd):
-    """
-    Computes Kronecker-structured Hessian approximations for 2d transpose convolutions.
-    """
+    """Compute Kronecker-structured Hessian proxies for 2d transpose convolutions."""
 
     def __init__(self):
         """Instantiate base class with convolution dimension."""

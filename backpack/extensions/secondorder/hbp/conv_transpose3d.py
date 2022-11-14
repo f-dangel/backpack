@@ -4,9 +4,7 @@ from backpack.extensions.secondorder.hbp.conv_transposend import HBPConvTranspos
 
 
 class HBPConvTranspose3d(HBPConvTransposeNd):
-    """
-    Computes Kronecker-structured Hessian approximations for 3d transpose convolutions.
-    """
+    """Compute Kronecker-structured Hessian proxies for 3d transpose convolutions."""
 
     def __init__(self):
         """Instantiate base class with convolution dimension."""

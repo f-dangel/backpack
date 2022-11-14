@@ -24,7 +24,6 @@ def fix_index_order_conv_transpose_weights(model: Module, kfac_mats: List[Tensor
         the matrices stemming from weights of transpose convolutions in order to
         represent the correct index order.
     """
-
     params = [p for p in model.parameters() if p.requires_grad]
     conv_t_modules = _get_conv_transpose_modules(model)
 
