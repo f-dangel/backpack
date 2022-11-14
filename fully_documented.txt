@@ -68,7 +68,10 @@ backpack/extensions/secondorder/diag_hessian/pad.py
 backpack/extensions/secondorder/diag_hessian/slicing.py
 backpack/extensions/secondorder/sqrt_ggn/
 backpack/extensions/secondorder/hbp/custom_module.py
+backpack/extensions/secondorder/hbp/conv1d.py
 backpack/extensions/secondorder/hbp/conv2d.py
+backpack/extensions/secondorder/hbp/conv3d.py
+backpack/extensions/secondorder/hbp/convnd.py
 
 backpack/hessianfree/ggnvp.py
 
