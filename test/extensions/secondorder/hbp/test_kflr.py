@@ -11,8 +11,6 @@ from test.extensions.secondorder.hbp.kflr_settings import (
 
 import pytest
 
-from backpack.utils.kroneckers import kfacs_to_mat
-
 NOT_SUPPORTED_PROBLEMS = make_test_problems(NOT_SUPPORTED_SETTINGS)
 NOT_SUPPORTED_IDS = [problem.make_id() for problem in NOT_SUPPORTED_PROBLEMS]
 BATCH_SIZE_1_PROBLEMS = make_test_problems(BATCH_SIZE_1_SETTINGS)
@@ -42,10 +40,9 @@ def test_kflr_equals_ggn(problem: ExtensionsTestProblem):
         problem: Test case.
     """
     problem.set_up()
-    autograd_res = AutogradExtensions(problem).ggn_blocks()
 
-    backpack_kflr = BackpackExtensions(problem).kflr()
-    backpack_res = [kfacs_to_mat(kflr) for kflr in backpack_kflr]
+    autograd_res = AutogradExtensions(problem).ggn_blocks()
+    backpack_res = BackpackExtensions(problem).kflr_as_mat()
 
     check_sizes_and_values(autograd_res, backpack_res, atol=1e-7, rtol=1e-5)
 

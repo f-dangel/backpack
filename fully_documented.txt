@@ -72,6 +72,10 @@ backpack/extensions/secondorder/hbp/conv1d.py
 backpack/extensions/secondorder/hbp/conv2d.py
 backpack/extensions/secondorder/hbp/conv3d.py
 backpack/extensions/secondorder/hbp/convnd.py
+backpack/extensions/secondorder/hbp/conv_transpose1d.py
+backpack/extensions/secondorder/hbp/conv_transpose2d.py
+backpack/extensions/secondorder/hbp/conv_transpose3d.py
+backpack/extensions/secondorder/hbp/conv_transposend.py
 
 backpack/hessianfree/ggnvp.py
 
@@ -124,6 +128,7 @@ test/utils/skip_extension_test.py
 test/utils/__init__.py
 test/converter/
 test/utils/test_subsampling.py
+test/utils/conv_transpose.py
 test/custom_module/
 test/test_retain_graph.py
 test/test_batch_first.py
