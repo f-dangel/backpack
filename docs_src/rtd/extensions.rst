@@ -24,6 +24,7 @@ Available Extensions
 .. autofunction:: backpack.extensions.KFLR
 .. autofunction:: backpack.extensions.KFRA
 .. autofunction:: backpack.extensions.DiagHessian
+.. autofunction:: backpack.extensions.DiagHessianMC
 .. autofunction:: backpack.extensions.BatchDiagHessian
 .. autofunction:: backpack.extensions.SqrtGGNExact
 .. autofunction:: backpack.extensions.SqrtGGNMC

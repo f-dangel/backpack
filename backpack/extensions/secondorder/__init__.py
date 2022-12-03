@@ -31,6 +31,7 @@ from backpack.extensions.secondorder.diag_ggn import (
     DiagGGNMC,
 )
 from backpack.extensions.secondorder.diag_hessian import BatchDiagHessian, DiagHessian
+from backpack.extensions.secondorder.diag_hessian_mc import DiagHessianMC
 from backpack.extensions.secondorder.hbp import HBP, KFAC, KFLR, KFRA
 from backpack.extensions.secondorder.sqrt_ggn import SqrtGGNExact, SqrtGGNMC
 
@@ -40,6 +41,7 @@ __all__ = [
     "DiagGGNMC",
     "BatchDiagGGNMC",
     "DiagHessian",
+    "DiagHessianMC",
     "BatchDiagHessian",
     "KFAC",
     "KFLR",

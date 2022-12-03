@@ -64,6 +64,8 @@ class DiagHessian(SecondOrderBackpropExtension):
 
         Very expensive on networks with non-piecewise linear activations.
 
+    For a less precise but faster alternative,
+    see :py:meth:`backpack.extensions.DiagHessianMC`.
     """
 
     def __init__(self):
