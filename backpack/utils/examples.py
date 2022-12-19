@@ -113,5 +113,6 @@ def _autograd_ggn_exact_columns(
         e_d_list = vector_to_parameter_list(e_d, trainable_parameters)
 
         ggn_d_list = ggn_vector_product(loss, outputs, model, e_d_list)
+        ggn_d_list = [t.contiguous() for t in ggn_d_list]
 
         yield d, parameters_to_vector(ggn_d_list)
