@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.1] - 2022-11-03
+
+This patch fixes temporary compatibility issues with the latest PyTorch release.
+
+### Fixed/Removed
+- Circumvent compatibility issues with `torch==1.13.0` by requiring
+  `torch<1.13.0`` ([PR](https://github.com/f-dangel/backpack/pull/276))
+
 ## [1.5.0] - 2022-02-15
 
 This small release improves ResNet support of some second-order extensions and
@@ -378,8 +386,9 @@ co-authoring many PRs shipped in this release.
 
 Initial release
 
-[Unreleased]: https://github.com/f-dangel/backpack/compare/v1.5.0...HEAD
-[1.4.0]: https://github.com/f-dangel/backpack/compare/1.5.0...1.4.0
+[Unreleased]: https://github.com/f-dangel/backpack/compare/v1.5.1...HEAD
+[1.5.1]: https://github.com/f-dangel/backpack/compare/1.5.1...1.5.0
+[1.5.0]: https://github.com/f-dangel/backpack/compare/1.5.0...1.4.0
 [1.4.0]: https://github.com/f-dangel/backpack/compare/1.4.0...1.3.0
 [1.3.0]: https://github.com/f-dangel/backpack/compare/1.3.0...1.2.0
 [1.2.0]: https://github.com/f-dangel/backpack/compare/1.2.0...1.1.1
