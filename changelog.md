@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.2] - 2022-12-19
+
+This patch adds support for `torch==1.13.0` to BackPACK.
+
 ## [1.5.1] - 2022-11-03
 
 This patch fixes temporary compatibility issues with the latest PyTorch release.
@@ -386,7 +390,8 @@ co-authoring many PRs shipped in this release.
 
 Initial release
 
-[Unreleased]: https://github.com/f-dangel/backpack/compare/v1.5.1...HEAD
+[Unreleased]: https://github.com/f-dangel/backpack/compare/v1.5.2...HEAD
+[1.5.2]: https://github.com/f-dangel/backpack/compare/1.5.2...1.5.1
 [1.5.1]: https://github.com/f-dangel/backpack/compare/1.5.1...1.5.0
 [1.5.0]: https://github.com/f-dangel/backpack/compare/1.5.0...1.4.0
 [1.4.0]: https://github.com/f-dangel/backpack/compare/1.4.0...1.3.0
