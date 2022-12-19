@@ -12,6 +12,7 @@ from torch.nn import (
     BatchNorm1d,
     BatchNorm2d,
     BatchNorm3d,
+    BCEWithLogitsLoss,
     Conv1d,
     Conv2d,
     Conv3d,
@@ -116,6 +117,7 @@ class SqrtGGN(SecondOrderBackpropExtension):
                 BatchNorm3d: batchnorm_nd.SqrtGGNBatchNormNd(),
                 Pad: pad.SqrtGGNPad(),
                 Slicing: slicing.SqrtGGNSlicing(),
+                BCEWithLogitsLoss: losses.SqrtGGNBCEWithLogithsLoss(),
             },
             subsampling=subsampling,
         )

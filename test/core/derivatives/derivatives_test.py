@@ -7,7 +7,7 @@
 - Transposed Jacobian-matrix products with respect to layer parameters
 """
 from contextlib import nullcontext
-from test.automated_test import check_sizes_and_values
+from test.automated_test import check_sizes, check_sizes_and_values
 from test.core.derivatives.batch_norm_settings import BATCH_NORM_SETTINGS
 from test.core.derivatives.embedding_settings import EMBEDDING_SETTINGS
 from test.core.derivatives.implementation.autograd import AutogradDerivatives
@@ -24,6 +24,8 @@ from test.core.derivatives.slicing_settings import CUSTOM_SLICING_SETTINGS
 from test.utils.skip_test import (
     skip_adaptive_avg_pool3d_cuda,
     skip_batch_norm_train_mode_with_subsampling,
+    skip_BCEWithLogitsLoss,
+    skip_BCEWithLogitsLoss_non_binary_labels,
     skip_subsampling_conflict,
 )
 from typing import List, Union
@@ -33,6 +35,7 @@ from pytest import fixture, mark, raises, skip
 from torch import Tensor, rand
 
 from backpack.core.derivatives.convnd import weight_jac_t_save_memory
+from backpack.utils.subsampling import subsample
 
 PROBLEMS = make_test_problems(SETTINGS)
 IDS = [problem.make_id() for problem in PROBLEMS]
@@ -72,6 +75,9 @@ CUSTOM_SLICING_MODULE_PROBLEMS = make_test_problems(CUSTOM_SLICING_SETTINGS)
 CUSTOM_SLICING_MODULE_IDS = [
     problem.make_id() for problem in CUSTOM_SLICING_MODULE_PROBLEMS
 ]
+
+NLL_PROBLEMS = [problem for problem in PROBLEMS if problem.is_nll()]
+NLL_IDS = [problem.make_id() for problem in NLL_PROBLEMS]
 
 SUBSAMPLINGS = [None, [0, 0], [2, 0]]
 SUBSAMPLING_IDS = [f"subsampling={s}".replace(" ", "") for s in SUBSAMPLINGS]
@@ -333,6 +339,7 @@ def test_sqrt_hessian_sampled_squared_approximates_hessian(
     """
     problem.set_up()
     skip_subsampling_conflict(problem, subsampling)
+    skip_BCEWithLogitsLoss_non_binary_labels(problem)
 
     backpack_res = BackpackDerivatives(problem).input_hessian_via_sqrt_hessian(
         mc_samples=mc_samples, chunks=chunks, subsampling=subsampling
@@ -341,6 +348,92 @@ def test_sqrt_hessian_sampled_squared_approximates_hessian(
 
     RTOL, ATOL = 1e-2, 7e-3
     check_sizes_and_values(autograd_res, backpack_res, rtol=RTOL, atol=ATOL)
+    problem.tear_down()
+
+
+@mark.parametrize("subsampling", SUBSAMPLINGS, ids=SUBSAMPLING_IDS)
+@mark.parametrize("problem", NLL_PROBLEMS, ids=NLL_IDS)
+def test_sqrt_hessian_sampled_squared_approximates_hessian_nll(
+    problem: DerivativesTestProblem,
+    subsampling: Union[List[int], None],
+    mc_samples: int = 50000,
+    chunks: int = 10,
+    rerun_on_crash: bool = True,
+) -> None:
+    """Test the MC-sampled sqrt decomposition of the input Hessian for NLL loss base.
+
+    Compares the Hessian to reconstruction from individual Hessian MC-sampled
+    sqrt. This test runs specifically on the autograd version of
+    compute_sampled_grads, rather than manual versions which are used by default
+    and tested elsewhere.
+
+    Args:
+        problem: Test case.
+        subsampling: Indices of active samples.
+        mc_samples: number of samples. Defaults to 50000.
+        chunks: Number of passes the MC samples will be processed sequentially.
+        rerun_on_crash: Run the test again with more samples, then crash if it
+            still fails. Default: ``True``.
+
+    Raises:
+        AssertionError: If the MC-sampled Hessian square root does not square to the
+            exact Hessian.
+    """
+    problem.set_up()
+    skip_subsampling_conflict(problem, subsampling)
+    skip_BCEWithLogitsLoss_non_binary_labels(problem)
+    RTOL, ATOL = 1e-2, 8e-3
+
+    autograd_res = AutogradDerivatives(problem).input_hessian(subsampling=subsampling)
+
+    try:
+        backpack_res = BackpackDerivatives(problem).input_hessian_via_sqrt_hessian(
+            mc_samples=mc_samples,
+            chunks=chunks,
+            subsampling=subsampling,
+            use_autograd=True,
+        )
+        problem.tear_down()
+        check_sizes_and_values(autograd_res, backpack_res, rtol=RTOL, atol=ATOL)
+
+    except AssertionError as e:
+        if rerun_on_crash:
+            more = 10
+            test_sqrt_hessian_sampled_squared_approximates_hessian_nll(
+                problem,
+                subsampling,
+                mc_samples=mc_samples * more,
+                chunks=chunks * more,
+                rerun_on_crash=False,
+            )
+        else:
+            raise e
+
+
+@mark.parametrize("subsampling", SUBSAMPLINGS, ids=SUBSAMPLING_IDS)
+@mark.parametrize("problem", NLL_PROBLEMS, ids=NLL_IDS)
+def test_dist_sample_shape_nll(
+    problem: DerivativesTestProblem,
+    subsampling: Union[List[int], None],
+) -> None:
+    """Test distribution sample shape for NLL derivatives.
+
+    Compares the shape sampled from the distribution to the output to
+    verify the shapes match.
+
+    Args:
+        problem: Test case.
+        subsampling: Indices of active samples.
+    """
+    problem.set_up()
+    skip_subsampling_conflict(problem, subsampling)
+    BackpackDerivatives(problem).store_forward_io()
+
+    subsampled_input = subsample(problem.module.input0, subsampling=subsampling)
+    subsampled_target = subsample(problem.module.input1, subsampling=subsampling)
+    samples = problem.derivative._make_distribution(subsampled_input).sample()
+
+    check_sizes(samples, subsampled_target)
     problem.tear_down()
 
 
@@ -367,6 +460,7 @@ def test_sum_hessian(problem):
         problem (DerivativesProblem): Problem for derivative test.
     """
     problem.set_up()
+    skip_BCEWithLogitsLoss(problem)  # TODO Implement _sum_hessian for BCEWithLogitsLoss
 
     backpack_res = BackpackDerivatives(problem).sum_hessian()
     autograd_res = AutogradDerivatives(problem).sum_hessian()
@@ -507,6 +601,10 @@ def test_make_hessian_mat_prod(problem: DerivativesTestProblem) -> None:
         problem: test problem
     """
     problem.set_up()
+    skip_BCEWithLogitsLoss(
+        problem
+    )  # TODO Implement _make_hessian_mat_prod for BCEWithLogitsLoss
+
     mat = rand(4, *problem.input_shape, device=problem.device)
 
     autograd_res = AutogradDerivatives(problem).hessian_mat_prod(mat)

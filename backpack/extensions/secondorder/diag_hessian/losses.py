@@ -1,3 +1,4 @@
+from backpack.core.derivatives.bcewithlogitsloss import BCELossWithLogitsDerivatives
 from backpack.core.derivatives.crossentropyloss import CrossEntropyLossDerivatives
 from backpack.core.derivatives.mseloss import MSELossDerivatives
 from backpack.extensions.secondorder.diag_hessian.diag_h_base import DiagHBaseModule
@@ -17,3 +18,8 @@ class DiagHMSELoss(DiagHLoss):
 class DiagHCrossEntropyLoss(DiagHLoss):
     def __init__(self):
         super().__init__(derivatives=CrossEntropyLossDerivatives())
+
+
+class DiagHBCEWithLogitsLoss(DiagHLoss):
+    def __init__(self):
+        super().__init__(derivatives=BCELossWithLogitsDerivatives())

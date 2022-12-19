@@ -193,6 +193,7 @@ class BaseDerivatives(ABC):  # noqa: B024
 
     # FIXME Currently returns `∂²output[i] / ∂input[i]² * g_out[0][i]`,
     # which s the residual matrix diagonal, rather than the Hessian diagonal
+
     def hessian_diagonal(
         self, module: Module, g_in: Tuple[Tensor], g_out: Tuple[Tensor]
     ) -> Tensor:
@@ -306,7 +307,7 @@ class BaseDerivatives(ABC):  # noqa: B024
         return cls._reshape_like(mat, module.output.shape)
 
 
-class BaseParameterDerivatives(BaseDerivatives, ABC):
+class BaseParameterDerivatives(BaseDerivatives, ABC):  # noqa: B024
     """First- and second order partial derivatives of a module with parameters.
 
     Assumptions (true for `nn.Linear`, `nn.Conv(Transpose)Nd`, `nn.BatchNormNd`):
@@ -435,7 +436,7 @@ class BaseParameterDerivatives(BaseDerivatives, ABC):
         raise NotImplementedError
 
 
-class BaseLossDerivatives(BaseDerivatives, ABC):
+class BaseLossDerivatives(BaseDerivatives, ABC):  # noqa: B024
     """Second- order partial derivatives of loss functions."""
 
     # TODO Add shape check

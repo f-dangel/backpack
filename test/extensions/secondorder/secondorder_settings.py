@@ -35,6 +35,7 @@ from torch.nn import (
     AvgPool1d,
     AvgPool2d,
     AvgPool3d,
+    BCEWithLogitsLoss,
     Conv1d,
     Conv2d,
     Conv3d,
@@ -364,5 +365,26 @@ SECONDORDER_SETTINGS += [
         ),
         "loss_function_fn": lambda: MSELoss(reduction="mean"),
         "target_fn": lambda: regression_targets((3, 4)),
+    },
+]
+
+
+###############################################################################
+#                              BCEWithLogitsLoss                              #
+###############################################################################
+SECONDORDER_SETTINGS += [
+    {
+        "input_fn": lambda: rand(3, 6),
+        "module_fn": lambda: Sequential(Linear(6, 4), ReLU(), Linear(4, 1)),
+        "loss_function_fn": lambda: BCEWithLogitsLoss(reduction="mean"),
+        "target_fn": lambda: rand(3, 1),
+        "id_prefix": "non-binary-labels",
+    },
+    {
+        "input_fn": lambda: rand(3, 6),
+        "module_fn": lambda: Sequential(Linear(6, 4), ReLU(), Linear(4, 1)),
+        "loss_function_fn": lambda: BCEWithLogitsLoss(reduction="sum"),
+        "target_fn": lambda: classification_targets(size=(3, 1), num_classes=2).float(),
+        "id_prefix": "binary-labels",
     },
 ]
