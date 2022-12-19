@@ -20,7 +20,13 @@ jobs:
     strategy:
       matrix:
         python-version: [3.7, 3.8, 3.9]
-        pytorch-version: [1.12.1, 1.13]
+        pytorch-version:
+          - "==1.9"
+          - "==1.10"
+          - "==1.11"
+          - "==1.12"
+          - "==1.13"
+          - "" # latest
     steps:
     - uses: actions/checkout@v1
     - uses: actions/setup-python@v1
@@ -30,7 +36,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         make install-test
-        pip install torch==${{ matrix.pytorch-version }} torchvision
+        pip install torch${{ matrix.pytorch-version }} torchvision
     - name: Run test
       if: contains('refs/heads/master refs/heads/development refs/heads/release', github.ref)
       run: |
