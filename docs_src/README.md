@@ -17,8 +17,8 @@ and installing the jekyll dependencies (`bundle install` in `docs_src/splash`)
   
   Note: The code examples on backpack.pt are defined with HTML tags in 
   `splash/_includes/code-samples.html`. 
-  The python files in `splash/_includes/` are copy-pasted from the resulting page
-  for testing purposes. Editing the tags in the HTML file is manual. 
+  There are no python source file to generate them. 
+  Test manually by copy-pasting from the resulting page.
 
 - Local build of the documentation
   ```
