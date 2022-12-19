@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.5.2] - 2022-12-19
 
-This patch adds support for `torch==1.13.0` to BackPACK.
+This patch adds support for `torch>=1.13.0` to BackPACK.
 
 ## [1.5.1] - 2022-11-03
 
