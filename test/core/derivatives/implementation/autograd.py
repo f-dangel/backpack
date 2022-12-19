@@ -248,7 +248,7 @@ class AutogradDerivatives(DerivativesImplementation):
         for t in tensor.flatten():
             try:
                 yield self._hessian(t, x)
-            except (RuntimeError, AttributeError):
+            except (RuntimeError, AttributeError, TypeError):
                 yield zeros(*x.shape, *x.shape, device=x.device, dtype=x.dtype)
 
     def hessian_is_zero(self) -> bool:  # noqa: D102
