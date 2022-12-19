@@ -1,6 +1,7 @@
 """Utility functions for convolution layers."""
 
 from typing import Callable, Tuple, Type, Union
+from warnings import warn
 
 import torch
 from einops import rearrange
@@ -179,8 +180,6 @@ def unfold_by_conv(
         padding=module.padding,
         stride=module.stride,
     )
-
-    return unfold.reshape(N, C_in * kernel_size_numel, -1)
 
 
 def _grad_input_padding(
