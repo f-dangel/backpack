@@ -40,7 +40,7 @@ def get_mnist_dataloader(batch_size: int = 64, shuffle: bool = True) -> DataLoad
 
 
 def load_one_batch_mnist(
-    batch_size: int = 64, shuffle: bool = True, flat = False
+    batch_size: int = 64, shuffle: bool = True, flat: bool = False
 ) -> Tuple[Tensor, Tensor]:
     """Return a single mini-batch (inputs, labels) from MNIST.
 
