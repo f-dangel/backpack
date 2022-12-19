@@ -187,6 +187,8 @@ def _grad_input_padding(
 ):
     """Determine padding for the VJP of convolution.
 
+    # noqa: DAR101, DAR201, DAR 401
+
     Note:
         This function was copied from the PyTorch repository (version 1.9).
         It was removed between torch 1.12.1 and torch 1.13.
