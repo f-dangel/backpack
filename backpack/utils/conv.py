@@ -186,7 +186,7 @@ def _grad_input_padding(
     padding: Tuple[int, ...],
     kernel_size: Tuple[int, ...],
     dilation: Union[None, Tuple[int]] = None,
-):
+) -> Tuple[int, ...]:
     """Determine padding for the VJP of convolution.
 
     # noqa: DAR101
