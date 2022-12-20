@@ -3,7 +3,6 @@
 from typing import Callable, Tuple, Type, Union
 from warnings import warn
 
-import torch
 from einops import rearrange
 from torch import Tensor, einsum
 from torch.nn import (
@@ -159,9 +158,7 @@ def extract_bias_diagonal(
     return S.sum(sum_before).pow_(2).sum(sum_after)
 
 
-def unfold_by_conv(
-    input: torch.Tensor, module: Union[Conv1d, Conv2d, Conv3d]
-) -> torch.Tensor:
+def unfold_by_conv(input: Tensor, module: Union[Conv1d, Conv2d, Conv3d]) -> Tensor:
     """Return the unfolded input using convolution.
 
     Args:
@@ -183,11 +180,18 @@ def unfold_by_conv(
 
 
 def _grad_input_padding(
-    grad_output, input_size, stride, padding, kernel_size, dilation=None
+    grad_output: Tensor,
+    input_size: Tuple[int, ...],
+    stride: Tuple[int, ...],
+    padding: Tuple[int, ...],
+    kernel_size: Tuple[int, ...],
+    dilation: Union[None, Tuple[int]] = None,
 ):
     """Determine padding for the VJP of convolution.
 
-    # noqa: DAR101, DAR201, DAR 401
+    # noqa: DAR101
+    # noqa: DAR201
+    # noqa: DAR401
 
     Note:
         This function was copied from the PyTorch repository (version 1.9).
