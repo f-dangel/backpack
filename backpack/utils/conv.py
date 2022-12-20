@@ -1,8 +1,8 @@
 """Utility functions for convolution layers."""
 
 from typing import Callable, Tuple, Type, Union
+from warnings import warn
 
-import torch
 from einops import rearrange
 from torch import Tensor, einsum
 from torch.nn import (
@@ -158,9 +158,7 @@ def extract_bias_diagonal(
     return S.sum(sum_before).pow_(2).sum(sum_after)
 
 
-def unfold_by_conv(
-    input: torch.Tensor, module: Union[Conv1d, Conv2d, Conv3d]
-) -> torch.Tensor:
+def unfold_by_conv(input: Tensor, module: Union[Conv1d, Conv2d, Conv3d]) -> Tensor:
     """Return the unfolded input using convolution.
 
     Args:
@@ -179,3 +177,57 @@ def unfold_by_conv(
         padding=module.padding,
         stride=module.stride,
     )
+
+
+def _grad_input_padding(
+    grad_output: Tensor,
+    input_size: Tuple[int, ...],
+    stride: Tuple[int, ...],
+    padding: Tuple[int, ...],
+    kernel_size: Tuple[int, ...],
+    dilation: Union[None, Tuple[int]] = None,
+) -> Tuple[int, ...]:
+    """Determine padding for the VJP of convolution.
+
+    # noqa: DAR101
+    # noqa: DAR201
+    # noqa: DAR401
+
+    Note:
+        This function was copied from the PyTorch repository (version 1.9).
+        It was removed between torch 1.12.1 and torch 1.13.
+    """
+    if dilation is None:
+        # For backward compatibility
+        warn(
+            "_grad_input_padding 'dilation' argument not provided. Default of 1 is used."
+        )
+        dilation = [1] * len(stride)
+
+    input_size = list(input_size)
+    k = grad_output.dim() - 2
+
+    if len(input_size) == k + 2:
+        input_size = input_size[-k:]
+    if len(input_size) != k:
+        raise ValueError(f"input_size must have {k+2} elements (got {len(input_size)})")
+
+    def dim_size(d):
+        return (
+            (grad_output.size(d + 2) - 1) * stride[d]
+            - 2 * padding[d]
+            + 1
+            + dilation[d] * (kernel_size[d] - 1)
+        )
+
+    min_sizes = [dim_size(d) for d in range(k)]
+    max_sizes = [min_sizes[d] + stride[d] - 1 for d in range(k)]
+    for size, min_size, max_size in zip(input_size, min_sizes, max_sizes):
+        if size < min_size or size > max_size:
+            raise ValueError(
+                f"requested an input grad size of {input_size}, but valid sizes range "
+                f"from {min_sizes} to {max_sizes} (for a grad_output of "
+                f"{grad_output.size()[2:]})"
+            )
+
+    return tuple(input_size[d] - min_sizes[d] for d in range(k))

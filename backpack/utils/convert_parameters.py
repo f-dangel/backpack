@@ -2,7 +2,7 @@
 
 from typing import Iterable, List
 
-from torch import Tensor, cat, typename
+from torch import Tensor, typename
 
 
 def vector_to_parameter_list(vec: Tensor, parameters: Iterable[Tensor]) -> List[Tensor]:
@@ -51,15 +51,3 @@ def vector_to_parameter_list(vec: Tensor, parameters: Iterable[Tensor]) -> List[
         pointer += num_param
 
     return params_new
-
-
-def tensor_list_to_vector(tensor_list: Iterable[Tensor]) -> Tensor:
-    """Convert a list of tensors into a vector by flattening and concatenation.
-
-    Args:
-        tensor_list: List of tensors.
-
-    Returns:
-        Vector containing the flattened and concatenated tensor inputs.
-    """
-    return cat([t.flatten() for t in tensor_list])
