@@ -3,9 +3,8 @@ r"""BackPACK's :code:`retain_graph` option
 
 This tutorial demonstrates how to perform multiple backward passes through the
 same computation graph with BackPACK. This option can be useful if you run into
-out-of-memory errors with BackPACK. If your computation can be chunked, you
-might consider distributing it onto multiple backward passes to reduce peak
-memory.
+out-of-memory errors. If your computation can be chunked, you might consider
+distributing it onto multiple backward passes to reduce peak memory.
 
 Our use case for such a quantity is the GGN diagonal of an auto-encoder's
 reconstruction error.
@@ -34,9 +33,9 @@ manual_seed(0)
 # -----
 #
 # Let :math:`f_{\mathbf{\theta}}` denote the auto-encoder, and
-# :math:`\mathbf{x'} = f_{\mathbf{\theta}}(\mathbf{x})` its reconstruction of
-# an input :math:`\mathbf{x} \in \mathbb{R}^M`. The associated reconstruction
-# error is measured by the mean squared error
+# :math:`\mathbf{x'} = f_{\mathbf{\theta}}(\mathbf{x}) \in \mathbb{R}^M` its
+# reconstruction of an input :math:`\mathbf{x} \in \mathbb{R}^M`. The
+# associated reconstruction error is measured by the mean squared error
 #
 # .. math::
 #     \ell(\mathbf{\theta})
@@ -169,12 +168,12 @@ print(f"Output dimension: {model(X).shape[1:].numel()}")
 # with the :math:`M \times |\mathbf{\theta}|` Jacobian
 # :math:`\mathbf{J}_{\mathbf{\theta}} f_{\mathbf{\theta}}(\mathbf{x})` of the
 # model, and :math:`\frac{2}{M} \mathbf{I}_{M\times M}` the mean squared
-# error's Hessian w.r.t. the reconstructed input. Here you an see that the
-# memory consumption scales with :code:`M` as we need to compute :code:`M`
-# vector-Jacobian products.
+# error's Hessian w.r.t. the reconstructed input. Here you can see that the
+# memory consumption scales with the output dimension, as we need to compute
+# :code:`M` vector-Jacobian products.
 #
-# Let :math:`S` be a number that divides :math:`M`. Then, we can decompose
-# the above computation into chunks:
+# Let :math:`S`, the chunk size, be a number that divides the output dimension
+# :math:`M`. Then, we can decompose the above computation into chunks:
 #
 # .. math::
 #     \frac{S}{M}
@@ -226,7 +225,7 @@ print(f"Output dimension: {model(X).shape[1:].numel()}")
 #     \dots
 #     \right\}\,.
 #
-# Each chunk is the GGN diagonal of the mean squared error on a chunk
+# Each summand is the GGN diagonal of the mean squared error on a chunk
 #
 # .. math::
 #     \tilde{\ell}(\mathbf{\theta})
@@ -237,9 +236,11 @@ print(f"Output dimension: {model(X).shape[1:].numel()}")
 #     -
 #     [\mathbf{x}]_{i S: (i+1) S}
 #     \rVert_2^2\,,
-#     \qquad i = 0, 1, \dots, \frac{M}{S} - 1\,.
+#     \qquad i = 0, 1, \dots, \frac{M}{S} - 1\,,
 #
-# Hence we can split the computation as follows:
+# and its memory consumption scales with :math:`S < M`.
+#
+# In summary, the computation split works as follows:
 #
 # - Compute :math:`f_{\mathbf{\theta}}(\mathbf{x})` in a single forward pass.
 #
@@ -250,12 +251,12 @@ print(f"Output dimension: {model(X).shape[1:].numel()}")
 #   over all chunks.
 #
 # (This carries over to the mini-batch case in a straightforward fashion. We
-# avoid the presentation here because of the involved notation.)
+# avoid the presentation here because of the involved notation, though.)
 #
 # Note that because we perform multiple backward passes, we need to tell
 # PyTorch (and BackPACK) to retain the graph.
 #
-# To slice out a chunk, we will use BackPACK's :py:class:`Slicing
+# To slice out a chunk, we use BackPACK's :py:class:`Slicing
 # <backpack.custom_module.slicing>` module.
 #
 # Here is the implementation:
@@ -263,6 +264,9 @@ print(f"Output dimension: {model(X).shape[1:].numel()}")
 
 def diag_ggn_multiple_passes(num_chunks: int) -> List[Tensor]:
     """Compute the GGN diagonal in multiple backward passes.
+
+    Uses less memory than ``diag_ggn_one_pass`` if ``num_chunks > 1``.
+    Does the same as ``diag_ggn_one_pass`` for ``num_chunks = 1``.
 
     Args:
         num_chunks: Number of backward passes. Must divide the model's output dimension.
@@ -311,18 +315,18 @@ def diag_ggn_multiple_passes(num_chunks: int) -> List[Tensor]:
 
 # %%
 #
-# Let's benchmark peak memory and run time for different number of chunks:
+# Let's benchmark peak memory and run time for different numbers of chunks:
 
 num_chunks = [1, 4, 16, 64]
 
 for n in num_chunks:
     print(f"GGN diagonal in {n} backward passes:")
     start = time()
-    max_usage, diag_ggn_chunk = memory_usage(
+    max_mem, diag_ggn_chunk = memory_usage(
         partial(diag_ggn_multiple_passes, n), interval=1e-3, max_usage=True, retval=True
     )
     end = time()
-    print(f"\tPeak memory [MiB]: {max_usage:.2e}")
+    print(f"\tPeak memory [MiB]: {max_mem:.2e}")
     print(f"\tTime [s]: {end-start:.2e}")
 
     correct = [
@@ -337,9 +341,9 @@ for n in num_chunks:
 # %%
 #
 # We can see that using more chunks consistently decreases the peak memory.
-# Even run time decreases up to a sweet spot where further increasing the
-# number of chunks slows down the computation. This sweet spot will depend on
-# your model and compute architecture.
+# Even run time decreases up to a sweet spot where increasing the number of
+# chunks further eventually slows down the computation. The details of this
+# trade-off will depend on your model and compute architecture.
 #
 # Concluding remarks
 # ------------------
