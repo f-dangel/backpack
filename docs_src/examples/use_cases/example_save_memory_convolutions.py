@@ -135,7 +135,6 @@ def compare_peakmem(device):
     print(f"Device: {device}")
 
     for save_memory in True, False:
-
         with weight_jac_t_save_memory(save_memory=save_memory):
 
             def work():
@@ -168,7 +167,6 @@ def compare_runtime(device):
     print(f"Device: {device}")
 
     for save_memory in True, False:
-
         with weight_jac_t_save_memory(save_memory=save_memory):
             start = time.time()
 
