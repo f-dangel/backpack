@@ -1,5 +1,5 @@
-r"""BackPACK's :code:`retain_graph` option
-==========================================
+r"""BackPACK's retain_graph option
+==================================
 
 This tutorial demonstrates how to perform multiple backward passes through the
 same computation graph with BackPACK. This option can be useful if you run into
