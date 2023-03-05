@@ -17,7 +17,6 @@ TEST_PROBLEMS = {}
 
 for act_name, act_cls in ACTIVATIONS.items():
     for lin_name, lin_cls in LINEARS.items():
-
         TEST_PROBLEMS[
             "{}{}-regression".format(lin_name, act_name)
         ] = make_regression_problem(
