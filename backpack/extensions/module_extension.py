@@ -116,11 +116,16 @@ class ModuleExtension:
 
         module_inputs = self.__get_inputs_for_backpropagation(extension, module)
         if module_inputs:
+            # if quantity is a tuple, each entry is backpropagated to one module input.
+            # Otherwise we backpropagate the same quantity to all inputs
             bp_quantity = self.backpropagate(
                 extension, module, g_inp, g_out, bp_quantity
             )
-            for module_inp in module_inputs:
-                self.__save_backproped_quantity(extension, module_inp, bp_quantity)
+            for idx, inp in enumerate(module_inputs):
+                bp_for_inp = (
+                    bp_quantity[idx] if isinstance(bp_quantity, tuple) else bp_quantity
+                )
+                self.__save_backproped_quantity(extension, inp, bp_for_inp)
 
     @staticmethod
     def __get_inputs_for_backpropagation(
