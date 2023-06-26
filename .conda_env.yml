@@ -3,10 +3,7 @@ channels:
   - pytorch
   - defaults
 dependencies:
-  - pip=19.3.1
-  - python=3.7.6
+  - pip=21.2.4
+  - python=3.8.5
   - pip:
-    - -e .
-    - -e .[lint]
-    - -e .[test]
-    - -e .[docs]
+    - -e .[lint,test,doc]

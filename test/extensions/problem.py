@@ -227,7 +227,7 @@ class ExtensionsTestProblem:
             else:
                 if hasattr(p, savefield):
                     raise RuntimeError(
-                        f"Found non-differentiable parameter with attribute '{savefield}'."
+                        f"Found non-differentiable parameter with attribute {savefield}."
                     )
 
         return data

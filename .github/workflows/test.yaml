@@ -15,17 +15,18 @@ jobs:
     name: "py${{ matrix.python-version }} torch${{  matrix.pytorch-version}}"
     runs-on: ubuntu-latest
     env:
-      USING_COVERAGE: '3.7,3.9'
+      USING_COVERAGE: '3.9'
 
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: [3.8, 3.9]
         pytorch-version:
           - "==1.9.1"
           - "==1.10.1"
           - "==1.11.0"
           - "==1.12.1"
           - "==1.13.1"
+          - "==2.0.1"
           - "" # latest
     steps:
     - uses: actions/checkout@v1
