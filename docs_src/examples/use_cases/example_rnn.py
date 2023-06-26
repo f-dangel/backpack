@@ -53,7 +53,7 @@ DEVICE = device("cpu")  # Verification via autograd only works on CPU
 # %%
 #
 # .. note::
-#    Due to `#99413 <https://github.com/pytorch/pytorch/issues/99413>`, we have to disable
+#    Due to `#99413 <https://github.com/pytorch/pytorch/issues/99413>`_, we have to disable
 #    MKLDNN for PyTorch 2.0.1 to get the double-backward through LSTMs working.
 if TORCH_VERSION == packaging.version.parse("2.0.1"):
     _C._set_mkldnn_enabled(False)
