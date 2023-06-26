@@ -35,7 +35,6 @@ from warnings import warn
 
 from pytest import fixture, mark, raises, skip
 from torch import Tensor, rand
-from torch.nn import LSTM
 
 from backpack.core.derivatives.convnd import weight_jac_t_save_memory
 from backpack.utils.subsampling import subsample

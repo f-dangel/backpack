@@ -8,6 +8,7 @@ from test.core.derivatives.utils import classification_targets, regression_targe
 from test.utils.skip_test import skip_torch_2_0_1_lstm
 from typing import Tuple
 
+from pytest import fixture
 from torch import Tensor, allclose, cat, int32, linspace, manual_seed
 from torch.nn import CrossEntropyLoss, Module, MSELoss
 
