@@ -3,22 +3,16 @@
 - whether converted network is equivalent to original network
 - whether DiagGGN runs without errors on new network
 """
-from test.converter.converter_cases import (
-    CONVERTER_MODULES,
-    ConverterModule,
-    _TolstoiCharRNN,
-)
+from test.converter.converter_cases import CONVERTER_MODULES, ConverterModule
 from test.core.derivatives.utils import classification_targets, regression_targets
+from test.utils.skip_test import skip_torch_2_0_1_lstm
 from typing import Tuple
 
-from pkg_resources import packaging
-from pytest import fixture, skip
 from torch import Tensor, allclose, cat, int32, linspace, manual_seed
 from torch.nn import CrossEntropyLoss, Module, MSELoss
 
 from backpack import backpack, extend
 from backpack.extensions import DiagGGNExact
-from backpack.utils import TORCH_VERSION
 from backpack.utils.examples import autograd_diag_ggn_exact
 
 
@@ -37,12 +31,7 @@ def model_and_input(request) -> Tuple[Module, Tensor, Module]:
     """
     manual_seed(0)
     model: ConverterModule = request.param()
-
-    # double-backward not supported https://github.com/pytorch/pytorch/issues/99413
-    TORCH_VERSION_2_0_1 = TORCH_VERSION == packaging.version.parse("2.0.1")
-    if isinstance(model, _TolstoiCharRNN) and TORCH_VERSION_2_0_1:
-        skip("Double-backward not supported for LSTM in PyTorch 2.0.1 (#99413)")
-
+    skip_torch_2_0_1_lstm(model)
     inputs: Tensor = model.input_fn()
     loss_fn: Module = model.loss_fn()
     yield model, inputs, loss_fn

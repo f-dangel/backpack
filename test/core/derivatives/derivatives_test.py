@@ -28,17 +28,16 @@ from test.utils.skip_test import (
     skip_BCEWithLogitsLoss,
     skip_BCEWithLogitsLoss_non_binary_labels,
     skip_subsampling_conflict,
+    skip_torch_2_0_1_lstm,
 )
 from typing import List, Union
 from warnings import warn
 
-from pkg_resources import packaging
 from pytest import fixture, mark, raises, skip
 from torch import Tensor, rand
 from torch.nn import LSTM
 
 from backpack.core.derivatives.convnd import weight_jac_t_save_memory
-from backpack.utils import TORCH_VERSION
 from backpack.utils.subsampling import subsample
 
 PROBLEMS = make_test_problems(SETTINGS)
@@ -127,18 +126,6 @@ def test_param_mjp(
             check_sizes_and_values(autograd_res, backpack_res)
 
 
-def skip_torch_2_0_1_lstm(problem: DerivativesTestProblem):
-    """Skip LSTMs on PyTorch 2.0.1.
-
-    Args:
-        problem: Test case (`.set_up` must have been called before).
-    """
-    # double-backward not supported https://github.com/pytorch/pytorch/issues/99413
-    TORCH_VERSION_2_0_1 = TORCH_VERSION == packaging.version.parse("2.0.1")
-    if isinstance(problem.module, LSTM) and TORCH_VERSION_2_0_1:
-        skip("Double-backward not supported for LSTM in PyTorch 2.0.1 (#99413)")
-
-
 @mark.parametrize(
     "problem",
     NO_LOSS_PROBLEMS + RNN_PROBLEMS + PERMUTE_PROBLEMS + BATCH_NORM_PROBLEMS,
@@ -152,7 +139,7 @@ def test_jac_mat_prod(problem: DerivativesTestProblem, V: int = 3) -> None:
         V: Number of vectorized Jacobian-vector products. Default: ``3``.
     """
     problem.set_up()
-    skip_torch_2_0_1_lstm(problem)
+    skip_torch_2_0_1_lstm(problem.module)
     mat = rand(V, *problem.input_shape).to(problem.device)
 
     backpack_res = BackpackDerivatives(problem).jac_mat_prod(mat)
