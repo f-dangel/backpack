@@ -8,7 +8,7 @@ import torch
 from torch import Tensor, long
 
 from backpack import extend
-from backpack.utils.module_classification import is_loss
+from backpack.utils.module_classification import is_loss, is_nll
 from backpack.utils.subsampling import subsample
 
 
@@ -140,6 +140,9 @@ class DerivativesTestProblem:
 
     def is_loss(self):
         return is_loss(self.make_module())
+
+    def is_nll(self):
+        return is_nll(self.make_module())
 
     def forward_pass(
         self, input_requires_grad: bool = False, subsampling: List[int] = None

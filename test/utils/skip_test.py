@@ -4,10 +4,31 @@ from test.core.derivatives.problem import DerivativesTestProblem
 from test.extensions.problem import ExtensionsTestProblem
 from typing import List, Union
 
+from pkg_resources import packaging
 from pytest import skip
-from torch.nn import BatchNorm1d, BatchNorm2d, BatchNorm3d
+from torch.nn import (
+    LSTM,
+    BatchNorm1d,
+    BatchNorm2d,
+    BatchNorm3d,
+    BCEWithLogitsLoss,
+    Module,
+)
 
-from backpack.utils import ADAPTIVE_AVG_POOL_BUG
+from backpack.utils import ADAPTIVE_AVG_POOL_BUG, TORCH_VERSION
+
+
+def skip_torch_2_0_1_lstm(module: Module):
+    """Skip if module contains LSTMs and we are using PyTorch 2.0.1.
+
+    Args:
+        module: Neural network
+    """
+    # double-backward not supported https://github.com/pytorch/pytorch/issues/99413
+    TORCH_VERSION_2_0_1 = TORCH_VERSION == packaging.version.parse("2.0.1")
+    lstm = any(isinstance(m, LSTM) for m in module.modules())
+    if lstm and TORCH_VERSION_2_0_1:
+        skip("Double-backward not supported for LSTM in PyTorch 2.0.1 (#99413)")
 
 
 def skip_adaptive_avg_pool3d_cuda(request) -> None:
@@ -69,3 +90,25 @@ def skip_large_parameters(
     num_params = sum(p.numel() for p in problem.trainable_parameters())
     if num_params > max_num_params:
         skip(f"Model has too many parameters: {num_params} > {max_num_params}")
+
+
+def skip_BCEWithLogitsLoss(problem: DerivativesTestProblem) -> None:
+    """Skip if the test problem uses BCEWithLogitsLoss.
+
+    Args:
+        problem: Test case.
+    """
+    if isinstance(problem.module, BCEWithLogitsLoss):
+        skip("Skipping BCEWithLogitsLoss")
+
+
+def skip_BCEWithLogitsLoss_non_binary_labels(problem: DerivativesTestProblem) -> None:
+    """Skip if the test problem uses BCEWithLogitsLoss and non-binary labels.
+
+    Args:
+        problem: Test case.
+    """
+    if isinstance(problem.module, BCEWithLogitsLoss) and any(
+        y not in [0, 1] for y in problem.target.flatten()
+    ):
+        skip("Skipping BCEWithLogitsLoss with non-binary labels")
