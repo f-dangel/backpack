@@ -3,6 +3,7 @@
 Defines the backpropagation extension.
 Within it, define the extension for each module.
 """
+from backpack.extensions.backprop_extension import FAIL_ERROR
 from torch.nn import (
     LSTM,
     RNN,
@@ -48,7 +49,7 @@ class BatchL2Grad(FirstOrderBackpropExtension):
         - ``[¹/ₙ g₁, …, ¹/ₙ gₙ]`` if the loss is a mean, ``¹/ₙ ∑ᵢ₌₁ⁿ fᵢ``.
     """
 
-    def __init__(self):
+    def __init__(self, fail_mode: str = FAIL_ERROR):
         """Initialization.
 
         Define the extensions for each module.
@@ -70,4 +71,5 @@ class BatchL2Grad(FirstOrderBackpropExtension):
                 BatchNorm3d: batchnorm_nd.BatchL2BatchNorm(),
                 Embedding: embedding.BatchL2Embedding(),
             },
+            fail_mode=fail_mode,
         )

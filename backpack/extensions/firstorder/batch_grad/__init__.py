@@ -4,6 +4,7 @@ It defines the module extension for each module.
 """
 from typing import List
 
+from backpack.extensions.backprop_extension import FAIL_ERROR
 from torch.nn import (
     LSTM,
     RNN,
@@ -60,7 +61,7 @@ class BatchGrad(FirstOrderBackpropExtension):
     objective is a sum of independent functions (no batchnorm).
     """
 
-    def __init__(self, subsampling: List[int] = None):
+    def __init__(self, subsampling: List[int] = None, fail_mode: str = FAIL_ERROR):
         """Initialization.
 
         Defines extension for each module.
@@ -87,4 +88,5 @@ class BatchGrad(FirstOrderBackpropExtension):
                 Embedding: embedding.BatchGradEmbedding(),
             },
             subsampling=subsampling,
+            fail_mode=fail_mode,
         )

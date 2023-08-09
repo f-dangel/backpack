@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import abc
-import warnings
 from abc import ABC
 from typing import Any, Dict, List, Tuple, Type, Union
 
@@ -60,7 +59,10 @@ class BackpropExtension(ABC):
             AssertionError: if fail_mode is not valid
         """
         if fail_mode not in (FAIL_WARN, FAIL_ERROR, FAIL_SILENT):
-            raise AssertionError(f"no valid fail mode: {fail_mode}")
+            raise AssertionError(
+                f"Invalid failure mode: {fail_mode}."
+                f" Should be one of {(FAIL_WARN, FAIL_ERROR, FAIL_SILENT)}"
+            )
         self.saved_quantities: SavedQuantities = SavedQuantities()
         self.savefield: str = savefield
         self.__module_extensions: Dict[Type[Module], ModuleExtension] = module_exts
@@ -94,23 +96,16 @@ class BackpropExtension(ABC):
         module_extension = self.__module_extensions.get(module.__class__)
 
         if module_extension is None:
-            if self._fail_mode is FAIL_ERROR:
-                # PyTorch converts this Error into a RuntimeError for torch<1.7.0
-                raise NotImplementedError(
-                    f"Extension saving to {self.savefield} "
-                    "does not have an extension for "
-                    f"Module {module.__class__}"
-                )
-            elif self._fail_mode == FAIL_WARN:
-                for _ in module.parameters():
-                    warnings.warn(
-                        f"Extension saving to {self.savefield} does not have an "
-                        f"extension for Module {module.__class__} "
-                        f"although the module has parameters"
-                    )
-                    break
+            self._handle_missing_module_extension(module)
 
         return module_extension
+
+    def _handle_missing_module_extension(self, module: Module) -> None:
+        """What to do if module does not have an extension (default: raise exception)"""
+        raise NotImplementedError(
+            f"Extension saving to {self.savefield} "
+            f"does not have an extension for Module {module.__class__}."
+        )
 
     def __call__(
         self, module: Module, g_inp: Tuple[Tensor], g_out: Tuple[Tensor]

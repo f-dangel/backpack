@@ -2,28 +2,45 @@
 from typing import Union
 from warnings import warn
 
+from backpack.extensions.backprop_extension import BackpropExtension
+from backpack.extensions.backprop_extension import FAIL_ERROR, FAIL_WARN, FAIL_SILENT
 from torch.nn import BatchNorm1d, BatchNorm2d, BatchNorm3d
+
+change_error_to_warn_message = (
+    "To only raise a warning, change the failure mode of the BackPACK extension "
+    "(for example, `BatchGrad(fail_mode='WARNING')`)."
+)
 
 
 def batch_norm_raise_error_if_train(
-    module: Union[BatchNorm1d, BatchNorm2d, BatchNorm3d], raise_error: bool = True
+    module: Union[BatchNorm1d, BatchNorm2d, BatchNorm3d], ext: BackpropExtension
 ) -> None:
     """Check if BatchNorm module is in training mode.
 
     Args:
         module: BatchNorm module to check
-        raise_error: whether to raise an error, alternatively warn. Default: True.
+        ext: The BackpropExtension checking for errors
 
     Raises:
-        NotImplementedError: if module is in training mode
+        ValueError: if module is in training mode and BackPACK extension's
+            fail_mode is FAIL_ERROR (default)
     """
     if module.training:
         message = (
-            "Encountered BatchNorm module in training mode. BackPACK's computation "
-            "will pass, but results like individual gradients may not be meaningful, "
-            "as BatchNorm mixes samples. Only proceed if you know what you are doing."
+            "Encountered BatchNorm module in training mode."
+            "Quantity to compute is undefined as BatchNorm mixes samples. "
+            "You should most likely use another type of normalization. "
+            "Concepts like individual gradients are not meaningful with BatchNorm. "
+            "The code to compute the requested quantity may not raise an error, "
+            "but the quantity will not match its definition. "
+            "Advanced users: If you are specifically interested in what this code "
+            "would return for a BatchNorm network, change the failure mode of "
+            f"the BackPACK extension. {change_error_to_warn_message} "
+            "This is not supported behavior."
         )
-        if raise_error:
-            raise NotImplementedError(message)
-        else:
+        if ext._fail_mode == FAIL_ERROR:
+            raise ValueError(message)
+        if ext._fail_mode == FAIL_WARN:
             warn(message)
+        if ext._fail_mode == FAIL_SILENT:
+            return
