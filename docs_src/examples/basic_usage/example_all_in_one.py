@@ -2,8 +2,8 @@
 Example using all extensions
 ==============================
 
-Basic example showing how compute the gradient,
-and and other quantities with BackPACK,
+Basic example showing how to compute the gradient,
+and other quantities with BackPACK,
 on a linear model for MNIST.
 """
 
