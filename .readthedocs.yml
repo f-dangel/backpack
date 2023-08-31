@@ -7,10 +7,9 @@ sphinx:
   configuration: docs_src/rtd/conf.py
 
 python:
-  version: 3.8
+  version: "3.8"
   install:
     - method: pip
       path: .
       extra_requirements:
         - docs
-  system_packages: true
