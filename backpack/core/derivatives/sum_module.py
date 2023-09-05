@@ -19,3 +19,7 @@ class SumModuleDerivatives(BaseDerivatives):
         subsampling: List[int] = None,
     ) -> Tensor:
         return mat
+
+    def hessian_is_zero(self, module: SumModule) -> bool:  # noqa: D102
+        """No gradients tracking parameters in SumModule, 2nd derivative thus =0"""
+        return True

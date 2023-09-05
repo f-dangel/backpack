@@ -35,7 +35,7 @@ from torch.nn import (
     Tanh,
     ZeroPad2d,
 )
-
+from backpack.custom_module.branching import SumModule
 from backpack.custom_module.pad import Pad
 from backpack.custom_module.scale_module import ScaleModule
 from backpack.custom_module.slicing import Slicing
@@ -104,6 +104,7 @@ class DiagHessian(SecondOrderBackpropExtension):
                 ReLU: activations.DiagHReLU(),
                 ScaleModule: custom_module.DiagHScaleModule(),
                 Sigmoid: activations.DiagHSigmoid(),
+                SumModule: custom_module.DiagHSumModule(),
                 Tanh: activations.DiagHTanh(),
                 LeakyReLU: activations.DiagHLeakyReLU(),
                 LogSigmoid: activations.DiagHLogSigmoid(),
@@ -114,6 +115,9 @@ class DiagHessian(SecondOrderBackpropExtension):
                 ZeroPad2d: padding.DiagHZeroPad2d(),
             },
         )
+
+    def accumulate_backpropagated_quantities(self, existing, other):
+        return existing | other
 
 
 class BatchDiagHessian(SecondOrderBackpropExtension):
@@ -159,6 +163,7 @@ class BatchDiagHessian(SecondOrderBackpropExtension):
                 ReLU: activations.DiagHReLU(),
                 ScaleModule: custom_module.DiagHScaleModule(),
                 Sigmoid: activations.DiagHSigmoid(),
+                SumModule: custom_module.DiagHSumModule(),
                 Tanh: activations.DiagHTanh(),
                 LeakyReLU: activations.DiagHLeakyReLU(),
                 LogSigmoid: activations.DiagHLogSigmoid(),
@@ -169,3 +174,6 @@ class BatchDiagHessian(SecondOrderBackpropExtension):
                 ZeroPad2d: padding.DiagHZeroPad2d(),
             },
         )
+
+    def accumulate_backpropagated_quantities(self, existing, other):
+        return existing | other
