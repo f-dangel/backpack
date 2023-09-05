@@ -23,3 +23,7 @@ class ScaleModuleDerivatives(BaseDerivatives):
             return mat
         else:
             return mat * module.weight
+
+    def hessian_is_zero(self, module: ScaleModule) -> bool:
+        """Second derivative of a scalar is always = 0."""
+        return True

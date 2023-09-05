@@ -22,6 +22,7 @@ from torch.nn import (
     CrossEntropyLoss,
     Dropout,
     Flatten,
+    Identity,
     LeakyReLU,
     Linear,
     LogSigmoid,
@@ -36,6 +37,7 @@ from torch.nn import (
 )
 
 from backpack.custom_module.pad import Pad
+from backpack.custom_module.scale_module import ScaleModule
 from backpack.custom_module.slicing import Slicing
 from backpack.extensions.secondorder.base import SecondOrderBackpropExtension
 
@@ -48,6 +50,7 @@ from . import (
     convtranspose1d,
     convtranspose2d,
     convtranspose3d,
+    custom_module,
     dropout,
     flatten,
     linear,
@@ -81,14 +84,14 @@ class DiagHessian(SecondOrderBackpropExtension):
                 Linear: linear.DiagHLinear(),
                 MaxPool1d: pooling.DiagHMaxPool1d(),
                 MaxPool2d: pooling.DiagHMaxPool2d(),
-                AvgPool1d: pooling.DiagHAvgPool1d(),
                 MaxPool3d: pooling.DiagHMaxPool3d(),
+                AvgPool1d: pooling.DiagHAvgPool1d(),
                 AvgPool2d: pooling.DiagHAvgPool2d(),
                 AvgPool3d: pooling.DiagHAvgPool3d(),
                 AdaptiveAvgPool1d: adaptive_avg_pool_nd.DiagHAdaptiveAvgPoolNd(1),
                 AdaptiveAvgPool2d: adaptive_avg_pool_nd.DiagHAdaptiveAvgPoolNd(2),
                 AdaptiveAvgPool3d: adaptive_avg_pool_nd.DiagHAdaptiveAvgPoolNd(3),
-                ZeroPad2d: padding.DiagHZeroPad2d(),
+                BCEWithLogitsLoss: losses.DiagHBCEWithLogitsLoss(),
                 Conv1d: conv1d.DiagHConv1d(),
                 Conv2d: conv2d.DiagHConv2d(),
                 Conv3d: conv3d.DiagHConv3d(),
@@ -97,7 +100,9 @@ class DiagHessian(SecondOrderBackpropExtension):
                 ConvTranspose3d: convtranspose3d.DiagHConvTranspose3d(),
                 Dropout: dropout.DiagHDropout(),
                 Flatten: flatten.DiagHFlatten(),
+                Identity: custom_module.DiagHScaleModule(),
                 ReLU: activations.DiagHReLU(),
+                ScaleModule: custom_module.DiagHScaleModule(),
                 Sigmoid: activations.DiagHSigmoid(),
                 Tanh: activations.DiagHTanh(),
                 LeakyReLU: activations.DiagHLeakyReLU(),
@@ -106,7 +111,7 @@ class DiagHessian(SecondOrderBackpropExtension):
                 SELU: activations.DiagHSELU(),
                 Pad: pad.DiagHPad(),
                 Slicing: slicing.DiagHSlicing(),
-                BCEWithLogitsLoss: losses.DiagHBCEWithLogitsLoss(),
+                ZeroPad2d: padding.DiagHZeroPad2d(),
             },
         )
 
@@ -134,14 +139,14 @@ class BatchDiagHessian(SecondOrderBackpropExtension):
                 Linear: linear.BatchDiagHLinear(),
                 MaxPool1d: pooling.DiagHMaxPool1d(),
                 MaxPool2d: pooling.DiagHMaxPool2d(),
-                AvgPool1d: pooling.DiagHAvgPool1d(),
                 MaxPool3d: pooling.DiagHMaxPool3d(),
+                AvgPool1d: pooling.DiagHAvgPool1d(),
                 AvgPool2d: pooling.DiagHAvgPool2d(),
                 AvgPool3d: pooling.DiagHAvgPool3d(),
                 AdaptiveAvgPool1d: adaptive_avg_pool_nd.DiagHAdaptiveAvgPoolNd(1),
                 AdaptiveAvgPool2d: adaptive_avg_pool_nd.DiagHAdaptiveAvgPoolNd(2),
                 AdaptiveAvgPool3d: adaptive_avg_pool_nd.DiagHAdaptiveAvgPoolNd(3),
-                ZeroPad2d: padding.DiagHZeroPad2d(),
+                BCEWithLogitsLoss: losses.DiagHBCEWithLogitsLoss(),
                 Conv1d: conv1d.BatchDiagHConv1d(),
                 Conv2d: conv2d.BatchDiagHConv2d(),
                 Conv3d: conv3d.BatchDiagHConv3d(),
@@ -150,7 +155,9 @@ class BatchDiagHessian(SecondOrderBackpropExtension):
                 ConvTranspose3d: convtranspose3d.BatchDiagHConvTranspose3d(),
                 Dropout: dropout.DiagHDropout(),
                 Flatten: flatten.DiagHFlatten(),
+                Identity: custom_module.DiagHScaleModule(),
                 ReLU: activations.DiagHReLU(),
+                ScaleModule: custom_module.DiagHScaleModule(),
                 Sigmoid: activations.DiagHSigmoid(),
                 Tanh: activations.DiagHTanh(),
                 LeakyReLU: activations.DiagHLeakyReLU(),
@@ -159,6 +166,6 @@ class BatchDiagHessian(SecondOrderBackpropExtension):
                 SELU: activations.DiagHSELU(),
                 Pad: pad.DiagHPad(),
                 Slicing: slicing.DiagHSlicing(),
-                BCEWithLogitsLoss: losses.DiagHBCEWithLogitsLoss(),
+                ZeroPad2d: padding.DiagHZeroPad2d(),
             },
         )
