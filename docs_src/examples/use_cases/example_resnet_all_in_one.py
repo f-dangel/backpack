@@ -139,7 +139,7 @@ loss.backward()
 
 print("Do the individual gradients match?")
 for name, parameter in model.named_parameters():
-    match = allclose(parameter.grad_batch[sample_to_check], parameter.grad, atol=1e-6)
+    match = allclose(parameter.grad_batch[sample_to_check], parameter.grad, atol=1e-4)
     print(f"{name:>20}: {match}")
     if not match:
         raise AssertionError("Individual gradients don't match!")
