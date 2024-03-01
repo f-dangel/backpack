@@ -1,4 +1,5 @@
 """Contains GradRNN."""
+
 from backpack.core.derivatives.lstm import LSTMDerivatives
 from backpack.core.derivatives.rnn import RNNDerivatives
 from backpack.extensions.firstorder.gradient.base import GradBaseModule

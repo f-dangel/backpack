@@ -1,6 +1,5 @@
 """Contains test cases of BackPACK's custom Slicing module."""
 
-
 from torch import rand
 
 from backpack.custom_module.slicing import Slicing

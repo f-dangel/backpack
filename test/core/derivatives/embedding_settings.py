@@ -1,4 +1,5 @@
 """Settings for testing derivatives of Embedding."""
+
 from torch import randint
 from torch.nn import Embedding
 

@@ -1,4 +1,5 @@
 """Implements the backpropagation mechanism."""
+
 from __future__ import annotations
 
 import abc

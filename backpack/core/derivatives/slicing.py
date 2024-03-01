@@ -1,4 +1,5 @@
 """Contains derivatives of slicing operation."""
+
 from typing import List, Tuple
 
 from torch import Tensor, zeros

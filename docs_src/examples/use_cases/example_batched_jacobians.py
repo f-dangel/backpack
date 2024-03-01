@@ -26,6 +26,7 @@ We will use the batched vector-valued output of a simple MLP as tensor
 Let's start by importing the required functionality and write a setup function
 to create our synthetic data.
 """
+
 import itertools
 from math import sqrt
 from typing import List, Tuple

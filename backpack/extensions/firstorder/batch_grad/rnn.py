@@ -1,4 +1,5 @@
 """Contains BatchGradRNN."""
+
 from backpack.core.derivatives.lstm import LSTMDerivatives
 from backpack.core.derivatives.rnn import RNNDerivatives
 from backpack.extensions.firstorder.batch_grad.batch_grad_base import BatchGradBase

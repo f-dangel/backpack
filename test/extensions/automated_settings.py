@@ -1,4 +1,5 @@
 """Contains helpers to create CNN test cases."""
+
 from test.core.derivatives.utils import classification_targets
 from typing import Any, Tuple, Type
 

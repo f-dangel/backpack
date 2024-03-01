@@ -2,6 +2,7 @@
 
 Use ``setup.cfg`` for configuration.
 """
+
 import sys
 
 from pkg_resources import VersionConflict, require

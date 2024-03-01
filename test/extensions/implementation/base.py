@@ -1,4 +1,5 @@
 """Base class containing the functions to compare BackPACK and autograd."""
+
 from abc import ABC, abstractmethod
 from test.extensions.problem import ExtensionsTestProblem
 from typing import List, Union

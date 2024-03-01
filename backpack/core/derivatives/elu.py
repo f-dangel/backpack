@@ -1,4 +1,5 @@
 """Partial derivatives for the ELU activation function."""
+
 from typing import List, Tuple
 
 from torch import Tensor, exp, le, ones_like, zeros_like

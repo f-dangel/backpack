@@ -1,4 +1,5 @@
 """Partial derivatives for the torch.nn.RNN layer."""
+
 from typing import List, Tuple
 
 from torch import Tensor, cat, einsum, zeros

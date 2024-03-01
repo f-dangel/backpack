@@ -1,4 +1,5 @@
 """Module implementing GGN for RNN."""
+
 from backpack.core.derivatives.lstm import LSTMDerivatives
 from backpack.core.derivatives.rnn import RNNDerivatives
 from backpack.extensions.secondorder.diag_ggn.diag_ggn_base import DiagGGNBaseModule

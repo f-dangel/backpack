@@ -54,6 +54,6 @@ def make_2layer_classification_problem(padding_cls):
 
 TEST_PROBLEMS = {}
 for pad_name, pad_cls in PADDINGS.items():
-    TEST_PROBLEMS[
-        "conv+{}-classification-2layer".format(pad_name)
-    ] = make_2layer_classification_problem(pad_cls)
+    TEST_PROBLEMS["conv+{}-classification-2layer".format(pad_name)] = (
+        make_2layer_classification_problem(pad_cls)
+    )

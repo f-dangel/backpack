@@ -1,4 +1,5 @@
 """Partial derivatives for cross-entropy loss."""
+
 from math import sqrt
 from typing import Callable, Dict, List, Tuple
 

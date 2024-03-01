@@ -1,4 +1,5 @@
 """Implements the derivatives for AdaptiveAvgPool."""
+
 from typing import List, Tuple, Union
 from warnings import warn
 

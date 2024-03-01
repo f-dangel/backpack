@@ -1,4 +1,5 @@
 """Utility functions to enable mini-batch subsampling in extensions."""
+
 from typing import List
 
 from torch import Tensor

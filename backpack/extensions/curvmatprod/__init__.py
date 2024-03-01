@@ -20,7 +20,6 @@ backpropagation, described in:
   by Felix Dangel, Stefan Harmeling, Philipp Hennig, 2020.
 """
 
-
 from .ggnmp import GGNMP
 from .hmp import HMP
 from .pchmp import PCHMP

@@ -1,4 +1,5 @@
 """Partial derivatives of the flatten layer."""
+
 from typing import List, Tuple
 
 from torch import Tensor

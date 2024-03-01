@@ -1,4 +1,5 @@
 """Contains DiagGGN base class."""
+
 from typing import Callable, List, Tuple, Union
 
 from torch import Tensor

@@ -1,4 +1,5 @@
 """batch_l2 extension for Conv."""
+
 from torch import einsum
 
 from backpack.core.derivatives.conv1d import Conv1DDerivatives
