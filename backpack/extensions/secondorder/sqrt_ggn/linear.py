@@ -1,4 +1,5 @@
 """Contains extension for the linear layer used by ``SqrtGGN{Exact, MC}``."""
+
 from backpack.core.derivatives.linear import LinearDerivatives
 from backpack.extensions.secondorder.sqrt_ggn.base import SqrtGGNBaseModule
 

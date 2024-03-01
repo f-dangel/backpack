@@ -2,6 +2,7 @@
 
 It defines the module extension for each module.
 """
+
 from typing import List
 
 from torch.nn import (

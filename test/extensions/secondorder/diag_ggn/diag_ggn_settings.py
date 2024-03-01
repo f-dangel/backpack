@@ -9,6 +9,7 @@ Includes
 Shared settings are taken from `test.extensions.secondorder.secondorder_settings`.
 Additional local cases can be defined here through ``LOCAL_SETTINGS``.
 """
+
 from test.converter.resnet_cases import ResNet1, ResNet2
 from test.core.derivatives.utils import classification_targets, regression_targets
 from test.extensions.secondorder.secondorder_settings import SECONDORDER_SETTINGS

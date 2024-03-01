@@ -1,4 +1,5 @@
 """Test problems for the AdaptiveAvgPool shape checker."""
+
 from __future__ import annotations
 
 import copy

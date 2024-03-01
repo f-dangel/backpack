@@ -1,4 +1,5 @@
 """Contains batch_l2 extension for Linear."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Tuple

@@ -1,4 +1,5 @@
 """Contains derivatives for SumModule."""
+
 from typing import List, Tuple
 
 from torch import Tensor

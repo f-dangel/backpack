@@ -1,4 +1,5 @@
 """Tests whether batch axis is always first."""
+
 from pytest import raises
 
 from backpack.custom_module.permute import Permute

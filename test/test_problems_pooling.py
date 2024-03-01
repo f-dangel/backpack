@@ -85,9 +85,9 @@ for pool_name, pool_cls in POOLINGS.items():
     TEST_PROBLEMS["conv+{}-regression".format(pool_name)] = make_regression_problem(
         pool_cls
     )
-    TEST_PROBLEMS[
-        "conv+{}-classification".format(pool_name)
-    ] = make_classification_problem(pool_cls)
-    TEST_PROBLEMS[
-        "conv+{}-classification-2layer".format(pool_name)
-    ] = make_2layer_classification_problem(pool_cls)
+    TEST_PROBLEMS["conv+{}-classification".format(pool_name)] = (
+        make_classification_problem(pool_cls)
+    )
+    TEST_PROBLEMS["conv+{}-classification-2layer".format(pool_name)] = (
+        make_2layer_classification_problem(pool_cls)
+    )

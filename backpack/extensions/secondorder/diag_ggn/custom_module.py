@@ -1,4 +1,5 @@
 """DiagGGN extensions for backpack's custom modules."""
+
 from backpack.core.derivatives.scale_module import ScaleModuleDerivatives
 from backpack.core.derivatives.sum_module import SumModuleDerivatives
 from backpack.extensions.secondorder.diag_ggn.diag_ggn_base import DiagGGNBaseModule

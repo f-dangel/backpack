@@ -1,6 +1,7 @@
 """Residual networks
 ====================
 """
+
 # %%
 # There are three different approaches to using BackPACK with ResNets.
 #

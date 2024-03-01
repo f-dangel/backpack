@@ -1,4 +1,5 @@
 """Calculates the gradient."""
+
 from backpack.extensions.firstorder.base import FirstOrderModuleExtension
 
 

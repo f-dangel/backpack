@@ -1,4 +1,5 @@
 """Base class for first order extensions."""
+
 from typing import Dict, List, Type
 
 from torch.nn import Module
