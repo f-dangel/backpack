@@ -46,10 +46,3 @@ jobs:
       if: contains('refs/heads/master refs/heads/development refs/heads/release', github.ref) != 1
       run: |
         make test-light
-
-    - name: Test coveralls - python ${{ matrix.python-version }}
-      run: coveralls --service=github
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        flag-name: run-${{ matrix.python-version }}
-        parallel: true
