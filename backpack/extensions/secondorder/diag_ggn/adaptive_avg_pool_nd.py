@@ -1,4 +1,5 @@
 """DiagGGN extension for AdaptiveAvgPool."""
+
 from backpack.core.derivatives.adaptive_avg_pool_nd import AdaptiveAvgPoolNDDerivatives
 from backpack.extensions.secondorder.diag_ggn.diag_ggn_base import DiagGGNBaseModule
 

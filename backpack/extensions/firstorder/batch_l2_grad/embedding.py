@@ -1,4 +1,5 @@
 """BatchL2 extension for Embedding."""
+
 from backpack.core.derivatives.embedding import EmbeddingDerivatives
 from backpack.extensions.firstorder.batch_l2_grad.batch_l2_base import BatchL2Base
 

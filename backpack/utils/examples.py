@@ -1,4 +1,5 @@
 """Utility functions for examples."""
+
 from typing import Iterator, List, Tuple
 
 from torch import Tensor, stack, zeros

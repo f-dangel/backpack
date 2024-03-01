@@ -1,4 +1,5 @@
 """Contains Base class for batch_l2_grad."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Callable, List, Tuple

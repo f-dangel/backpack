@@ -1,4 +1,5 @@
 """Test the shape checker of AdaptiveAvgPoolNDDerivatives."""
+
 from test.adaptive_avg_pool.problem import AdaptiveAvgPoolProblem, make_test_problems
 from test.adaptive_avg_pool.settings_adaptive_avg_pool_nd import SETTINGS
 from typing import List

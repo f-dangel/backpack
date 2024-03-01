@@ -1,4 +1,5 @@
 """Test DiagGGN extension."""
+
 from test.automated_test import check_sizes_and_values
 from test.extensions.implementation.autograd import AutogradExtensions
 from test.extensions.implementation.backpack import BackpackExtensions

@@ -34,17 +34,18 @@ for lin_name, lin_cls in LINEARS.items():
         + [BatchNorm1d(TEST_SETTINGS["out_features"])],
     )
 
-    TEST_PROBLEMS[
-        "{}-bn-classification".format(lin_name)
-    ] = make_classification_problem(
-        INPUT_SHAPE,
-        single_linear_layer(TEST_SETTINGS, lin_cls, activation_cls=None)
-        + [bn_layer1()],
+    TEST_PROBLEMS["{}-bn-classification".format(lin_name)] = (
+        make_classification_problem(
+            INPUT_SHAPE,
+            single_linear_layer(TEST_SETTINGS, lin_cls, activation_cls=None)
+            + [bn_layer1()],
+        )
     )
 
-    TEST_PROBLEMS[
-        "{}-bn-2layer-classification".format(lin_name)
-    ] = make_classification_problem(
-        INPUT_SHAPE,
-        two_linear_layers(TEST_SETTINGS, lin_cls, activation_cls=None) + [bn_layer2()],
+    TEST_PROBLEMS["{}-bn-2layer-classification".format(lin_name)] = (
+        make_classification_problem(
+            INPUT_SHAPE,
+            two_linear_layers(TEST_SETTINGS, lin_cls, activation_cls=None)
+            + [bn_layer2()],
+        )
     )

@@ -1,4 +1,5 @@
 """BatchGrad extension for Embedding."""
+
 from backpack.core.derivatives.embedding import EmbeddingDerivatives
 from backpack.extensions.firstorder.batch_grad.batch_grad_base import BatchGradBase
 

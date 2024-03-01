@@ -1,4 +1,5 @@
 """Module extensions for diagonal Hessian properties of ``torch.nn.Conv2d``."""
+
 from backpack.core.derivatives.conv2d import Conv2DDerivatives
 from backpack.extensions.secondorder.diag_hessian.convnd import (
     BatchDiagHConvND,

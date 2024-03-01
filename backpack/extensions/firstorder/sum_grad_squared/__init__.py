@@ -2,6 +2,7 @@
 
 Defines module extension for each module.
 """
+
 from torch.nn import (
     LSTM,
     RNN,

@@ -1,4 +1,5 @@
 """Extension implementations with BackPACK."""
+
 from test.extensions.implementation.base import ExtensionsImplementation
 from test.extensions.implementation.hooks import (
     BatchL2GradHook,

@@ -1,4 +1,5 @@
 """Test whether the graph is clear after a backward pass."""
+
 from typing import Tuple
 
 from pytest import fixture

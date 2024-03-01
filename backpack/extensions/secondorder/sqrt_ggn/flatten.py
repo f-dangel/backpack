@@ -1,4 +1,5 @@
 """Contains extensions for the flatten layer used by ``SqrtGGN{Exact, MC}``."""
+
 from backpack.core.derivatives.flatten import FlattenDerivatives
 from backpack.extensions.secondorder.sqrt_ggn.base import SqrtGGNBaseModule
 

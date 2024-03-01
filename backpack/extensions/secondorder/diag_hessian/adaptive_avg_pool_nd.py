@@ -1,4 +1,5 @@
 """DiagH extension for AdaptiveAvgPool."""
+
 from backpack.core.derivatives.adaptive_avg_pool_nd import AdaptiveAvgPoolNDDerivatives
 from backpack.extensions.secondorder.diag_hessian.diag_h_base import DiagHBaseModule
 

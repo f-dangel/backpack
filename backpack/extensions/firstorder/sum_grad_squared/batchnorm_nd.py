@@ -1,4 +1,5 @@
 """SGS extension for BatchNorm."""
+
 from typing import Tuple, Union
 
 from torch import Tensor

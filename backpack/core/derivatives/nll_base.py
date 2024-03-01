@@ -1,4 +1,5 @@
 """Partial derivative bases for NLL losses."""
+
 from math import sqrt
 from typing import List, Tuple
 

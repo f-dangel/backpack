@@ -1,4 +1,5 @@
 """Contains SGSRNN module."""
+
 from backpack.core.derivatives.lstm import LSTMDerivatives
 from backpack.core.derivatives.rnn import RNNDerivatives
 from backpack.extensions.firstorder.sum_grad_squared.sgs_base import SGSBase

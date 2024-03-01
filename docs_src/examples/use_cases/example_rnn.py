@@ -1,6 +1,7 @@
 """Recurrent networks
 ====================
 """
+
 # %%
 # There are two different approaches to using BackPACK with RNNs.
 #

@@ -1,4 +1,5 @@
 """Partial derivatives for the Sigmoid activation function."""
+
 from typing import List, Tuple
 
 from torch import Tensor

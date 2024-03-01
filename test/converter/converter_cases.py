@@ -7,6 +7,7 @@ Network with flatten operation
 Network with multiply operation
 Network with add operation
 """
+
 import abc
 from typing import List, Type
 

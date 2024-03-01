@@ -1,4 +1,5 @@
 """Contains example ResNets to be used in tests."""
+
 from torch import flatten, tensor
 from torch.nn import (
     AdaptiveAvgPool2d,

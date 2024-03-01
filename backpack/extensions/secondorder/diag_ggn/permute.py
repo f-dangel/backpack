@@ -1,4 +1,5 @@
 """Module defining DiagGGNPermute."""
+
 from backpack.core.derivatives.permute import PermuteDerivatives
 from backpack.extensions.secondorder.diag_ggn.diag_ggn_base import DiagGGNBaseModule
 

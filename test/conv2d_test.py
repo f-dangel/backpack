@@ -5,6 +5,7 @@ The example is taken from
     Chellapilla: High Performance Convolutional Neural Networks
     for Document Processing (2007).
 """
+
 from random import choice, randint
 
 import pytest

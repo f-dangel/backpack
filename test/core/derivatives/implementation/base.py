@@ -1,4 +1,5 @@
 """Contains DerivativesImplementation, the base class for autograd and backpack."""
+
 from abc import ABC, abstractmethod
 from typing import List
 

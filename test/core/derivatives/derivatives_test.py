@@ -112,9 +112,11 @@ def test_param_mjp(
                 print(f"testing with save_memory={save_memory}")
 
             mat = rand_mat_like_output(V, problem, subsampling=subsampling)
-            with weight_jac_t_save_memory(
-                save_memory=save_memory
-            ) if test_save_memory else nullcontext():
+            with (
+                weight_jac_t_save_memory(save_memory=save_memory)
+                if test_save_memory
+                else nullcontext()
+            ):
                 backpack_res = BackpackDerivatives(problem).param_mjp(
                     param_str, mat, sum_batch, subsampling=subsampling
                 )
