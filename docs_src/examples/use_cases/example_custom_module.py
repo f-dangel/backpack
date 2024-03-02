@@ -75,7 +75,8 @@ class ScaleModule(torch.nn.Module):
 #
 # First-order extensions
 # ----------------------
-# First we focus on `BackPACK's first-order extensions <https://docs.backpack.pt/en/master/extensions.html#first-order-extensions>`_.
+# First we focus on `BackPACK's first-order extensions
+# <https://docs.backpack.pt/en/master/extensions.html#first-order-extensions>`_.
 # They don't backpropagate additional information and thus require less functionality.
 #
 # Let's make BackPACK support computing individual gradients for ``ScaleModule``.
@@ -239,9 +240,11 @@ if not match:
 # %%
 # Second-order extension
 # ----------------------
-# Next, we focus on `BackPACK's second-order extensions <https://docs.backpack.pt/en/master/extensions.html#second-order-extensions>`_.
-# They backpropagate additional information and thus require more functionality to be implemented and a more in-depth
-# understanding of BackPACK's internals and the quantity of interest.
+# Next, we focus on `BackPACK's second-order extensions
+# <https://docs.backpack.pt/en/master/extensions.html#second-order-extensions>`_.
+# They backpropagate additional information and thus require more functionality to be
+# implemented and a more in-depth understanding of BackPACK's internals and
+# the quantity of interest.
 #
 # Let's make BackPACK support computing the exact diagonal of the generalized
 # Gauss-Newton (GGN) matrix
