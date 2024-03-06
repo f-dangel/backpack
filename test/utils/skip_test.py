@@ -15,7 +15,7 @@ from torch.nn import (
     Module,
 )
 
-from backpack.utils import ADAPTIVE_AVG_POOL_BUG, TORCH_VERSION
+from backpack.utils import TORCH_VERSION
 
 
 def skip_torch_2_0_1_lstm(module: Module):
@@ -29,23 +29,6 @@ def skip_torch_2_0_1_lstm(module: Module):
     lstm = any(isinstance(m, LSTM) for m in module.modules())
     if lstm and TORCH_VERSION_2_0_1:
         skip("Double-backward not supported for LSTM in PyTorch 2.0.1 (#99413)")
-
-
-def skip_adaptive_avg_pool3d_cuda(request) -> None:
-    """Skips test if AdaptiveAvgPool3d and cuda.
-
-    Args:
-        request: problem request
-    """
-    if ADAPTIVE_AVG_POOL_BUG:
-        if all(
-            string in request.node.callspec.id
-            for string in ["AdaptiveAvgPool3d", "cuda"]
-        ):
-            skip(
-                "Skip test because AdaptiveAvgPool3d does not work on cuda. "
-                "Should be fixed in torch 2.0."
-            )
 
 
 def skip_batch_norm_train_mode_with_subsampling(
