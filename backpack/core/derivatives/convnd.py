@@ -7,9 +7,15 @@ from torch import Tensor, einsum
 from torch.nn import Conv1d, Conv2d, Conv3d, Module
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
-from backpack.utils.conv import _grad_input_padding, get_conv_function, unfold_by_conv
+from backpack.utils import TORCH_VERSION_AT_LEAST_1_13
+from backpack.utils.conv import get_conv_function, unfold_by_conv
 from backpack.utils.conv_transpose import get_conv_transpose_function
 from backpack.utils.subsampling import subsample
+
+if TORCH_VERSION_AT_LEAST_1_13:
+    from backpack.utils.conv import _grad_input_padding
+else:
+    from torch.nn.grad import _grad_input_padding
 
 
 class weight_jac_t_save_memory:

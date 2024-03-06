@@ -1,7 +1,6 @@
 """Implements the derivatives for AdaptiveAvgPool."""
 
 from typing import List, Tuple, Union
-from warnings import warn
 
 from torch import Size
 from torch.nn import AdaptiveAvgPool1d, AdaptiveAvgPool2d, AdaptiveAvgPool3d

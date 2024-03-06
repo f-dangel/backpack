@@ -8,12 +8,18 @@ from torch import Tensor, einsum
 from torch.nn import ConvTranspose1d, ConvTranspose2d, ConvTranspose3d, Module
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
-from backpack.utils.conv import _grad_input_padding, get_conv_function
+from backpack.utils import TORCH_VERSION_AT_LEAST_1_13
+from backpack.utils.conv import get_conv_function
 from backpack.utils.conv_transpose import (
     get_conv_transpose_function,
     unfold_by_conv_transpose,
 )
 from backpack.utils.subsampling import subsample
+
+if TORCH_VERSION_AT_LEAST_1_13:
+    from backpack.utils.conv import _grad_input_padding
+else:
+    from torch.nn.grad import _grad_input_padding
 
 
 class ConvTransposeNDDerivatives(BaseParameterDerivatives):
