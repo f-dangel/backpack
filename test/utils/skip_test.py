@@ -4,31 +4,8 @@ from test.core.derivatives.problem import DerivativesTestProblem
 from test.extensions.problem import ExtensionsTestProblem
 from typing import List, Union
 
-from pkg_resources import packaging
 from pytest import skip
-from torch.nn import (
-    LSTM,
-    BatchNorm1d,
-    BatchNorm2d,
-    BatchNorm3d,
-    BCEWithLogitsLoss,
-    Module,
-)
-
-from backpack.utils import TORCH_VERSION
-
-
-def skip_torch_2_0_1_lstm(module: Module):
-    """Skip if module contains LSTMs and we are using PyTorch 2.0.1.
-
-    Args:
-        module: Neural network
-    """
-    # double-backward not supported https://github.com/pytorch/pytorch/issues/99413
-    TORCH_VERSION_2_0_1 = TORCH_VERSION == packaging.version.parse("2.0.1")
-    lstm = any(isinstance(m, LSTM) for m in module.modules())
-    if lstm and TORCH_VERSION_2_0_1:
-        skip("Double-backward not supported for LSTM in PyTorch 2.0.1 (#99413)")
+from torch.nn import BatchNorm1d, BatchNorm2d, BatchNorm3d, BCEWithLogitsLoss
 
 
 def skip_batch_norm_train_mode_with_subsampling(
