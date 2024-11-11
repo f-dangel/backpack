@@ -34,8 +34,8 @@ dynamic = ["version"]
 dependencies = [
     "torch>=2.2.0",
     "torchvision>=0.7.0",
-    "einops>=0.3.0, < 1.0.0",
-    "unfoldNd>=0.2.0, < 1.0.0",
+    "einops>=0.3.0,<1.0.0",
+    "unfoldNd>=0.2.0,<1.0.0",
 ]
 # Require a specific Python version, e.g. Python 2.7 or >= 3.4
 requires-python = ">=3.9"
@@ -51,7 +51,7 @@ test = [
     "pytest-benchmark>=3.2.2,<4.0.0",
     "pytest-optional-tests>=0.1.1",
     "pytest-cov",
-    "coveralls"
+    "coveralls",
 ]
 # Dependencies needed for linting.
 lint = [
@@ -80,6 +80,8 @@ docs = [
 ###############################################################################
 #                       Development tool configurations                       #
 ###############################################################################
+[tool.setuptools]
+packages = ["backpack"]
 [tool.setuptools_scm]
 [tool.isort]
 profile = "black"
