@@ -235,10 +235,6 @@ class AutogradDerivatives(DerivativesImplementation):
         `hessian[a, b, c]` contains the Hessian of the scalar entry `tensor[a, b, c]`
         w.r.t. `x[a, b, c]`.
 
-        If ``tensor`` is linear in ``x``, autograd raises a ``RuntimeError``.
-        If ``tensor`` does not depend on ``x``, autograd raises an ``AttributeError``.
-        In both cases, a Hessian of zeros is created manually and returned.
-
         Arguments:
             tensor: An arbitrary tensor.
             x: Tensor used in the computation graph of `tensor`.
@@ -247,10 +243,7 @@ class AutogradDerivatives(DerivativesImplementation):
             Hessians in the order of elements in the flattened tensor.
         """
         for t in tensor.flatten():
-            try:
-                yield self._hessian(t, x)
-            except (RuntimeError, AttributeError, TypeError):
-                yield zeros(*x.shape, *x.shape, device=x.device, dtype=x.dtype)
+            yield self._hessian(t, x)
 
     def hessian_is_zero(self) -> bool:  # noqa: D102
         input, output, _ = self.problem.forward_pass(input_requires_grad=True)
