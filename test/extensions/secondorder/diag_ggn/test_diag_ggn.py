@@ -6,7 +6,7 @@ from test.extensions.implementation.backpack import BackpackExtensions
 from test.extensions.problem import make_test_problems
 from test.extensions.secondorder.diag_ggn.diag_ggn_settings import DiagGGN_SETTINGS
 from test.utils.skip_extension_test import skip_BCEWithLogitsLoss_non_binary_labels
-from test.utils.skip_test import skip_adaptive_avg_pool3d_cuda, skip_torch_2_0_1_lstm
+from test.utils.skip_test import skip_torch_2_0_1_lstm
 
 import pytest
 
@@ -15,14 +15,12 @@ IDS = [problem.make_id() for problem in PROBLEMS]
 
 
 @pytest.mark.parametrize("problem", PROBLEMS, ids=IDS)
-def test_diag_ggn(problem, request):
+def test_diag_ggn(problem):
     """Test the diagonal of generalized Gauss-Newton.
 
     Args:
         problem (ExtensionsTestProblem): Problem for extension test.
-        request: problem request
     """
-    skip_adaptive_avg_pool3d_cuda(request)
     problem.set_up()
     skip_torch_2_0_1_lstm(problem.model)
 

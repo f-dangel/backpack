@@ -23,7 +23,6 @@ from test.core.derivatives.scale_module_settings import SCALE_MODULE_SETTINGS
 from test.core.derivatives.settings import SETTINGS
 from test.core.derivatives.slicing_settings import CUSTOM_SLICING_SETTINGS
 from test.utils.skip_test import (
-    skip_adaptive_avg_pool3d_cuda,
     skip_batch_norm_train_mode_with_subsampling,
     skip_BCEWithLogitsLoss,
     skip_BCEWithLogitsLoss_non_binary_labels,
@@ -169,21 +168,15 @@ def test_jac_mat_prod(problem: DerivativesTestProblem, V: int = 3) -> None:
     + CUSTOM_SLICING_MODULE_IDS,
 )
 def test_jac_t_mat_prod(
-    problem: DerivativesTestProblem,
-    subsampling: Union[None, List[int]],
-    request,
-    V: int = 3,
+    problem: DerivativesTestProblem, subsampling: Union[None, List[int]], V: int = 3
 ) -> None:
     """Test the transposed Jacobian-matrix product.
 
     Args:
         problem: Problem for derivative test.
         subsampling: Indices of active samples.
-        request: Pytest request, used for getting id.
         V: Number of vectorized transposed Jacobian-vector products. Default: ``3``.
     """
-    skip_adaptive_avg_pool3d_cuda(request)
-
     problem.set_up()
     skip_batch_norm_train_mode_with_subsampling(problem, subsampling)
     skip_subsampling_conflict(problem, subsampling)
@@ -486,7 +479,7 @@ def test_sum_hessian_should_fail(problem):
 
 
 @mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
-def test_ea_jac_t_mat_jac_prod(problem: DerivativesTestProblem, request) -> None:
+def test_ea_jac_t_mat_jac_prod(problem: DerivativesTestProblem) -> None:
     """Test KFRA backpropagation.
 
     H_in →  1/N ∑ₙ Jₙ^T H_out Jₙ
@@ -499,10 +492,7 @@ def test_ea_jac_t_mat_jac_prod(problem: DerivativesTestProblem, request) -> None
 
     Args:
         problem: Test case.
-        request: PyTest request, used to get test id.
     """
-    skip_adaptive_avg_pool3d_cuda(request)
-
     problem.set_up()
     out_features = problem.output_shape[1:].numel()
     mat = rand(out_features, out_features).to(problem.device)
