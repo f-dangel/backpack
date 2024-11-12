@@ -2,6 +2,7 @@
 
 Helpers to check input and output sizes of Jacobian-matrix products.
 """
+
 import functools
 from typing import Any, Callable
 

@@ -1,4 +1,5 @@
 """Contains partial derivatives for the ``torch.nn.Linear`` layer."""
+
 from typing import List, Tuple
 
 from torch import Size, Tensor, einsum

@@ -8,6 +8,7 @@ BatchDiagGGN(BackpropExtension)
 BatchDiagGGNExact(BatchDiagGGN)
 BatchDiagGGNMC(BatchDiagGGN)
 """
+
 from torch import Tensor
 from torch.nn import (
     ELU,

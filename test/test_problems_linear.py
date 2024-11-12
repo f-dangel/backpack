@@ -24,8 +24,8 @@ for lin_name, lin_cls in LINEARS.items():
         INPUT_SHAPE, single_linear_layer(TEST_SETTINGS, lin_cls, activation_cls=None)
     )
 
-    TEST_PROBLEMS[
-        "{}-2layer-classification".format(lin_name)
-    ] = make_classification_problem(
-        INPUT_SHAPE, two_linear_layers(TEST_SETTINGS, lin_cls, activation_cls=None)
+    TEST_PROBLEMS["{}-2layer-classification".format(lin_name)] = (
+        make_classification_problem(
+            INPUT_SHAPE, two_linear_layers(TEST_SETTINGS, lin_cls, activation_cls=None)
+        )
     )

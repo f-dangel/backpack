@@ -3,6 +3,7 @@
 Average pooling can be expressed as convolution over grouped channels with a constant
 kernel.
 """
+
 from typing import Any, List, Tuple
 
 from einops import rearrange

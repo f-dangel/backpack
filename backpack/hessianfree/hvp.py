@@ -42,7 +42,9 @@ def hessian_vector_product(f, params, v, grad_params=None, detach=True):
     if grad_params is not None:
         df_dx = tuple(grad_params)
     else:
-        df_dx = torch.autograd.grad(f, params, create_graph=True, retain_graph=True)
+        df_dx = torch.autograd.grad(
+            f, params, create_graph=True, retain_graph=True, materialize_grads=True
+        )
 
     Hv = R_op(df_dx, params, v)
 

@@ -1,6 +1,7 @@
 """
 Test of the interface - calls every method that needs implementation
 """
+
 import pytest
 import torch
 from torch.nn import Conv2d, CrossEntropyLoss, Linear, ReLU, Sequential

@@ -1,4 +1,5 @@
 """Context class for BackPACK."""
+
 from typing import Callable, Iterable, List, Tuple, Type
 
 from torch.nn import Module

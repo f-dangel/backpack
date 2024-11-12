@@ -1,4 +1,5 @@
 """Contains extensions for padding layers used by ``SqrtGGN{Exact, MC}``."""
+
 from backpack.core.derivatives.zeropad2d import ZeroPad2dDerivatives
 from backpack.extensions.secondorder.sqrt_ggn.base import SqrtGGNBaseModule
 

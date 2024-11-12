@@ -1,4 +1,5 @@
 """Derivatives for Embedding."""
+
 from typing import List, Tuple
 
 from torch import Tensor, einsum, zeros

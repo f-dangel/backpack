@@ -3,9 +3,13 @@
 - Hessian diagonal
 - Per-sample (individual) Hessian diagonal
 """
+
 from torch.nn import (
     ELU,
     SELU,
+    AdaptiveAvgPool1d,
+    AdaptiveAvgPool2d,
+    AdaptiveAvgPool3d,
     AvgPool1d,
     AvgPool2d,
     AvgPool3d,
@@ -38,6 +42,7 @@ from backpack.extensions.secondorder.base import SecondOrderBackpropExtension
 
 from . import (
     activations,
+    adaptive_avg_pool_nd,
     conv1d,
     conv2d,
     conv3d,
@@ -81,6 +86,9 @@ class DiagHessian(SecondOrderBackpropExtension):
                 MaxPool3d: pooling.DiagHMaxPool3d(),
                 AvgPool2d: pooling.DiagHAvgPool2d(),
                 AvgPool3d: pooling.DiagHAvgPool3d(),
+                AdaptiveAvgPool1d: adaptive_avg_pool_nd.DiagHAdaptiveAvgPoolNd(1),
+                AdaptiveAvgPool2d: adaptive_avg_pool_nd.DiagHAdaptiveAvgPoolNd(2),
+                AdaptiveAvgPool3d: adaptive_avg_pool_nd.DiagHAdaptiveAvgPoolNd(3),
                 ZeroPad2d: padding.DiagHZeroPad2d(),
                 Conv1d: conv1d.DiagHConv1d(),
                 Conv2d: conv2d.DiagHConv2d(),
@@ -131,6 +139,9 @@ class BatchDiagHessian(SecondOrderBackpropExtension):
                 MaxPool3d: pooling.DiagHMaxPool3d(),
                 AvgPool2d: pooling.DiagHAvgPool2d(),
                 AvgPool3d: pooling.DiagHAvgPool3d(),
+                AdaptiveAvgPool1d: adaptive_avg_pool_nd.DiagHAdaptiveAvgPoolNd(1),
+                AdaptiveAvgPool2d: adaptive_avg_pool_nd.DiagHAdaptiveAvgPoolNd(2),
+                AdaptiveAvgPool3d: adaptive_avg_pool_nd.DiagHAdaptiveAvgPoolNd(3),
                 ZeroPad2d: padding.DiagHZeroPad2d(),
                 Conv1d: conv1d.BatchDiagHConv1d(),
                 Conv2d: conv2d.BatchDiagHConv2d(),

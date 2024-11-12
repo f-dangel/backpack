@@ -1,4 +1,5 @@
 """Autodiff-only matrix-free multiplication by the generalized Gauss-Newton/Fisher."""
+
 from typing import List, Tuple
 
 from torch import Tensor

@@ -1,4 +1,5 @@
 """Contains batch_l2 extension for BatchNorm."""
+
 from typing import Tuple, Union
 
 from torch import Tensor

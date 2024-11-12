@@ -1,4 +1,5 @@
 """Tools for initializing in evaluation mode, especially BatchNorm."""
+
 from typing import Union
 
 from torch import rand_like

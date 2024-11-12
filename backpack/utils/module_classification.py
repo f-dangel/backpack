@@ -1,4 +1,5 @@
 """Contains util function for classification of modules."""
+
 from torch.fx import GraphModule
 from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss, Module, MSELoss, Sequential
 from torch.nn.modules.loss import _Loss

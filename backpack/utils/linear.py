@@ -1,4 +1,5 @@
 """Contains utility functions to extract the GGN diagonal for linear layers."""
+
 from torch import Tensor, einsum
 from torch.nn import Linear
 

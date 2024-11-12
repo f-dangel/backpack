@@ -1,4 +1,5 @@
 """Contains errors for BackPACK."""
+
 from typing import Union
 from warnings import warn
 

@@ -1,4 +1,5 @@
 """Autograd implementation of BackPACK's extensions."""
+
 from math import isclose
 from test.extensions.implementation.base import ExtensionsImplementation
 from typing import Iterator, List, Union

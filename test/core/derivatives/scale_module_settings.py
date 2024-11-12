@@ -1,4 +1,5 @@
 """Test settings for ScaleModule derivatives."""
+
 from torch import rand
 from torch.nn import Identity
 

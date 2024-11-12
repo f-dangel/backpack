@@ -1,4 +1,5 @@
 """Contains extension for the embedding layer used by ``SqrtGGN{Exact, MC}``."""
+
 from backpack.core.derivatives.embedding import EmbeddingDerivatives
 from backpack.extensions.secondorder.sqrt_ggn.base import SqrtGGNBaseModule
 

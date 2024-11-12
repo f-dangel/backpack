@@ -3,6 +3,7 @@
 These tests aim at demonstrating the pitfalls one may run into when using hooks that
 iterate over ``module.parameters()``.
 """
+
 from test.core.derivatives.utils import classification_targets, get_available_devices
 from typing import Tuple
 

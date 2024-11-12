@@ -1,4 +1,5 @@
 """DiagGGN extension for Embedding."""
+
 from backpack.core.derivatives.embedding import EmbeddingDerivatives
 from backpack.extensions.secondorder.diag_ggn.diag_ggn_base import DiagGGNBaseModule
 

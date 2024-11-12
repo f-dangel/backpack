@@ -1,4 +1,5 @@
 """Calculates the batch_grad derivative."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Callable, List, Tuple
