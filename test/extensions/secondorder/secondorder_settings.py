@@ -20,7 +20,6 @@ Optional entries:
     "seed" (int): seed for the random number for rand
 """
 
-
 from test.core.derivatives.utils import classification_targets, regression_targets
 from test.extensions.automated_settings import (
     make_simple_act_setting,

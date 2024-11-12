@@ -1,4 +1,5 @@
 """Module containing Permute module."""
+
 from typing import Any
 
 from torch import Tensor

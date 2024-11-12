@@ -1,4 +1,5 @@
 """Test BackPACK's ``Variance`` extension."""
+
 from test.automated_test import check_sizes_and_values
 from test.extensions.firstorder.variance.variance_settings import VARIANCE_SETTINGS
 from test.extensions.implementation.autograd import AutogradExtensions

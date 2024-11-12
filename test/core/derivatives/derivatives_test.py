@@ -23,12 +23,10 @@ from test.core.derivatives.scale_module_settings import SCALE_MODULE_SETTINGS
 from test.core.derivatives.settings import SETTINGS
 from test.core.derivatives.slicing_settings import CUSTOM_SLICING_SETTINGS
 from test.utils.skip_test import (
-    skip_adaptive_avg_pool3d_cuda,
     skip_batch_norm_train_mode_with_subsampling,
     skip_BCEWithLogitsLoss,
     skip_BCEWithLogitsLoss_non_binary_labels,
     skip_subsampling_conflict,
-    skip_torch_2_0_1_lstm,
 )
 from typing import List, Union
 from warnings import warn
@@ -112,9 +110,11 @@ def test_param_mjp(
                 print(f"testing with save_memory={save_memory}")
 
             mat = rand_mat_like_output(V, problem, subsampling=subsampling)
-            with weight_jac_t_save_memory(
-                save_memory=save_memory
-            ) if test_save_memory else nullcontext():
+            with (
+                weight_jac_t_save_memory(save_memory=save_memory)
+                if test_save_memory
+                else nullcontext()
+            ):
                 backpack_res = BackpackDerivatives(problem).param_mjp(
                     param_str, mat, sum_batch, subsampling=subsampling
                 )
@@ -138,7 +138,6 @@ def test_jac_mat_prod(problem: DerivativesTestProblem, V: int = 3) -> None:
         V: Number of vectorized Jacobian-vector products. Default: ``3``.
     """
     problem.set_up()
-    skip_torch_2_0_1_lstm(problem.module)
     mat = rand(V, *problem.input_shape).to(problem.device)
 
     backpack_res = BackpackDerivatives(problem).jac_mat_prod(mat)
@@ -167,21 +166,15 @@ def test_jac_mat_prod(problem: DerivativesTestProblem, V: int = 3) -> None:
     + CUSTOM_SLICING_MODULE_IDS,
 )
 def test_jac_t_mat_prod(
-    problem: DerivativesTestProblem,
-    subsampling: Union[None, List[int]],
-    request,
-    V: int = 3,
+    problem: DerivativesTestProblem, subsampling: Union[None, List[int]], V: int = 3
 ) -> None:
     """Test the transposed Jacobian-matrix product.
 
     Args:
         problem: Problem for derivative test.
         subsampling: Indices of active samples.
-        request: Pytest request, used for getting id.
         V: Number of vectorized transposed Jacobian-vector products. Default: ``3``.
     """
-    skip_adaptive_avg_pool3d_cuda(request)
-
     problem.set_up()
     skip_batch_norm_train_mode_with_subsampling(problem, subsampling)
     skip_subsampling_conflict(problem, subsampling)
@@ -484,7 +477,7 @@ def test_sum_hessian_should_fail(problem):
 
 
 @mark.parametrize("problem", NO_LOSS_PROBLEMS, ids=NO_LOSS_IDS)
-def test_ea_jac_t_mat_jac_prod(problem: DerivativesTestProblem, request) -> None:
+def test_ea_jac_t_mat_jac_prod(problem: DerivativesTestProblem) -> None:
     """Test KFRA backpropagation.
 
     H_in →  1/N ∑ₙ Jₙ^T H_out Jₙ
@@ -497,10 +490,7 @@ def test_ea_jac_t_mat_jac_prod(problem: DerivativesTestProblem, request) -> None
 
     Args:
         problem: Test case.
-        request: PyTest request, used to get test id.
     """
-    skip_adaptive_avg_pool3d_cuda(request)
-
     problem.set_up()
     out_features = problem.output_shape[1:].numel()
     mat = rand(out_features, out_features).to(problem.device)

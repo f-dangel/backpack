@@ -1,4 +1,5 @@
 """Class for saving backpropagation quantities."""
+
 from typing import Any, Callable, Dict, Union
 
 from torch import Tensor

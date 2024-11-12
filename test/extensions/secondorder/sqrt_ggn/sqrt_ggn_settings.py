@@ -1,4 +1,5 @@
 """Contains test settings for testing SqrtGGN extension."""
+
 from test.converter.resnet_cases import ResNet1, ResNet2
 from test.core.derivatives.utils import classification_targets, regression_targets
 from test.extensions.secondorder.secondorder_settings import SECONDORDER_SETTINGS

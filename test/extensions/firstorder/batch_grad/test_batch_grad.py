@@ -1,4 +1,5 @@
 """Test BackPACK's ``BatchGrad`` extension."""
+
 from test.automated_test import check_sizes_and_values
 from test.extensions.firstorder.batch_grad.batch_grad_settings import (
     BATCH_GRAD_SETTINGS,

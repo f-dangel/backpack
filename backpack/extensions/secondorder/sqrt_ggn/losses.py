@@ -1,4 +1,5 @@
 """Contains base class and extensions for losses used by ``SqrtGGN{Exact, MC}``."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Tuple, Union

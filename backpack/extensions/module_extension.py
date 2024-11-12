@@ -1,4 +1,5 @@
 """Contains base class for BackPACK module extensions."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, List, Tuple

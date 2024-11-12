@@ -1,4 +1,5 @@
 """Settings to run test_adaptive_avg_pool_nd."""
+
 from typing import Any, Dict, List
 
 from torch import Size

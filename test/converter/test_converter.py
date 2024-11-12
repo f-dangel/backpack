@@ -3,9 +3,9 @@
 - whether converted network is equivalent to original network
 - whether DiagGGN runs without errors on new network
 """
+
 from test.converter.converter_cases import CONVERTER_MODULES, ConverterModule
 from test.core.derivatives.utils import classification_targets, regression_targets
-from test.utils.skip_test import skip_torch_2_0_1_lstm
 from typing import Tuple
 
 from pytest import fixture
@@ -32,7 +32,6 @@ def model_and_input(request) -> Tuple[Module, Tensor, Module]:
     """
     manual_seed(0)
     model: ConverterModule = request.param()
-    skip_torch_2_0_1_lstm(model)
     inputs: Tensor = model.input_fn()
     loss_fn: Module = model.loss_fn()
     yield model, inputs, loss_fn

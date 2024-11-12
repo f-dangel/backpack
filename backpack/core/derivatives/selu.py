@@ -1,4 +1,5 @@
 """Partial derivatives for the SELU activation function."""
+
 from typing import List, Tuple
 
 from torch import Tensor, exp, le, ones_like, zeros_like

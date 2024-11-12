@@ -1,4 +1,5 @@
 """Derivatives of ScaleModule (implies Identity)."""
+
 from typing import List, Tuple, Union
 
 from torch import Tensor

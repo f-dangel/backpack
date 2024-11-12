@@ -18,6 +18,7 @@ Optional entries:
     "id_prefix" (str): Prefix to be included in the test name.
     "seed" (int): seed set before initializing a case.
 """
+
 from test.core.derivatives.utils import classification_targets, regression_targets
 from test.extensions.automated_settings import make_simple_cnn_setting
 from test.utils.evaluation_mode import initialize_training_false_recursive

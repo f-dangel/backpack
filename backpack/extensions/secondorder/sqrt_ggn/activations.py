@@ -1,4 +1,5 @@
 """Contains extensions for activation layers used by ``SqrtGGN{Exact, MC}``."""
+
 from backpack.core.derivatives.elu import ELUDerivatives
 from backpack.core.derivatives.leakyrelu import LeakyReLUDerivatives
 from backpack.core.derivatives.logsigmoid import LogSigmoidDerivatives

@@ -1,6 +1,7 @@
 """Recurrent networks
 ====================
 """
+
 # %%
 # There are two different approaches to using BackPACK with RNNs.
 #
@@ -21,13 +22,9 @@
 #
 #    Not all extensions support RNNs (yet). Please create a feature request in the
 #    repository if the extension you need is not supported.
-
-from pkg_resources import packaging
-
-# %%
+#
 # Let's get the imports out of the way.
 from torch import (
-    _C,
     allclose,
     cat,
     device,
@@ -44,19 +41,10 @@ from backpack.custom_module.graph_utils import BackpackTracer
 from backpack.custom_module.permute import Permute
 from backpack.custom_module.reduce_tuple import ReduceTuple
 from backpack.extensions import BatchGrad, DiagGGNExact
-from backpack.utils import TORCH_VERSION
 from backpack.utils.examples import autograd_diag_ggn_exact
 
 manual_seed(0)
 DEVICE = device("cpu")  # Verification via autograd only works on CPU
-
-# %%
-#
-# .. note::
-#    Due to `#99413 <https://github.com/pytorch/pytorch/issues/99413>`_, we have to disable
-#    MKLDNN for PyTorch 2.0.1 to get the double-backward through LSTMs working.
-if TORCH_VERSION == packaging.version.parse("2.0.1"):
-    _C._set_mkldnn_enabled(False)
 
 
 # %%

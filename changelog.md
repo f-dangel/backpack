@@ -6,6 +6,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.0] - 2024-11-12
+
+This version deprecates Python 3.8 and bumps the PyTorch dependency to
+`>=2.2.0`, allowing several internal clean-ups. We also move from a
+`setup.py`-based installation mechanism to `pyproject.toml`.
+
+### Added/New
+
+- Tutorial explaining how to write second-order extensions for custom layers
+  ([PR](https://github.com/f-dangel/backpack/pull/320),
+   [docs](https://docs.backpack.pt/en/master/use_cases/example_custom_module.html#second-order-extension))
+- Support `AdaptiveAvgPool{1,2,3}d` layers in `DiagHessian` and
+  `BatchDiagHessian` extensions
+  ([PR](https://github.com/f-dangel/backpack/pull/314))
+
+### Fixed/Removed
+- Fix RTD configuration after `system_packages` deprecation
+  ([PR1](https://github.com/f-dangel/backpack/pull/315),
+   [PR2](https://github.com/f-dangel/backpack/pull/323))
+
+### Internal
+- We will deprecate the `development` branch and from now on directly
+  merge new features and fixes into `master`
+- Deprecate Python 3.8 and PyTorch <2.2.0
+  ([PR1](https://github.com/f-dangel/backpack/pull/331),
+   [PR2](https://github.com/f-dangel/backpack/pull/333))
+- Move from `setup.py` to `pyproject.toml`
+  ([PR](https://github.com/f-dangel/backpack/pull/332))
+
 ## [1.6.0] - 2023-06-26
 
 With this patch, BackPACK supports `torch==2.x` and deprecates `python3.7`
@@ -460,7 +489,8 @@ co-authoring many PRs shipped in this release.
 
 Initial release
 
-[Unreleased]: https://github.com/f-dangel/backpack/compare/v1.6.0...HEAD
+[Unreleased]: https://github.com/f-dangel/backpack/compare/v1.7.0...HEAD
+[1.7.0]: https://github.com/f-dangel/backpack/compare/1.6.0...1.7.0
 [1.6.0]: https://github.com/f-dangel/backpack/compare/1.5.2...1.6.0
 [1.5.2]: https://github.com/f-dangel/backpack/compare/1.5.2...1.5.1
 [1.5.1]: https://github.com/f-dangel/backpack/compare/1.5.1...1.5.0

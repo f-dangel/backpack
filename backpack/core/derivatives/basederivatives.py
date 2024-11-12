@@ -1,4 +1,5 @@
 """Base classes for more flexible Jacobians and second-order information."""
+
 import warnings
 from abc import ABC
 from typing import Callable, List, Tuple

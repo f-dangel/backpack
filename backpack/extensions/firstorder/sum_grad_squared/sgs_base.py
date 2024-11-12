@@ -1,4 +1,5 @@
 """Contains SGSBase, the base module for sum_grad_squared extension."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Callable, List, Tuple

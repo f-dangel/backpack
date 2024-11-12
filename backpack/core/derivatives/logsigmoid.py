@@ -1,4 +1,5 @@
 """Contains partial derivatives for the ``torch.nn.LogSigmoid`` layer."""
+
 from typing import List, Tuple
 
 from torch import Tensor, exp

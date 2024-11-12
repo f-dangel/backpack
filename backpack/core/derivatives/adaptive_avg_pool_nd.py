@@ -1,12 +1,11 @@
 """Implements the derivatives for AdaptiveAvgPool."""
+
 from typing import List, Tuple, Union
-from warnings import warn
 
 from torch import Size
 from torch.nn import AdaptiveAvgPool1d, AdaptiveAvgPool2d, AdaptiveAvgPool3d
 
 from backpack.core.derivatives.avgpoolnd import AvgPoolNDDerivatives
-from backpack.utils import ADAPTIVE_AVG_POOL_BUG
 
 
 class AdaptiveAvgPoolNDDerivatives(AvgPoolNDDerivatives):
@@ -28,14 +27,6 @@ class AdaptiveAvgPoolNDDerivatives(AvgPoolNDDerivatives):
         Raises:
             NotImplementedError: if the given shapes do not match
         """
-        if ADAPTIVE_AVG_POOL_BUG and module.input0.is_cuda and (self.N == 3):
-            warn(
-                "Be careful when computing gradients of AdaptiveAvgPool3d. "
-                "There is a bug using autograd.grad on cuda with AdaptiveAvgPool3d. "
-                "https://discuss.pytorch.org/t/bug-report-autograd-grad-adaptiveavgpool3d-cuda/124614 "  # noqa: B950
-                "BackPACK derivatives are correct."
-            )
-
         shape_input: Size = module.input0.shape
         shape_output: Size = module.output.shape
 
