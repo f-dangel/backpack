@@ -1,0 +1,94 @@
+# This file is used to configure the project.
+# Read more about the various options under:
+# https://packaging.python.org/en/latest/guides/writing-pyproject-toml
+# https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
+[build-system]
+requires = ["setuptools >= 61.0", "setuptools_scm"]
+build-backend = "setuptools.build_meta"
+###############################################################################
+#                                 Main library                                #
+###############################################################################
+[project]
+name = "backpack-for-pytorch"
+authors = [
+    { name = "Felix Dangel" },
+    { name = "Frederik Kunstner" },
+]
+urls = { Repository = "https://github.com/f-dangel/backpack" }
+description = "BackPACK: Packing more into backprop"
+readme = { file = "README.md", content-type = "text/markdown; charset=UTF-8; variant=GFM" }
+license = { text = "MIT" }
+# Add all kinds of additional classifiers as defined under
+# https://pypi.python.org/pypi?%3Aaction=list_classifiers
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dynamic = ["version"]
+# Dependencies of the project:
+dependencies = [
+    "torch>=2.2.0",
+    "torchvision>=0.7.0",
+    "einops>=0.3.0,<1.0.0",
+    "unfoldNd>=0.2.0,<1.0.0",
+]
+# Require a specific Python version, e.g. Python 2.7 or >= 3.4
+requires-python = ">=3.9"
+###############################################################################
+#                           Development dependencies                          #
+###############################################################################
+[project.optional-dependencies]
+# Dependencies needed to run the tests.
+test = [
+    "scipy",
+    "numpy<2",
+    "pytest>=4.5.0,<5.0.0",
+    "pytest-benchmark>=3.2.2,<4.0.0",
+    "pytest-optional-tests>=0.1.1",
+    "pytest-cov",
+    "coveralls",
+]
+# Dependencies needed for linting.
+lint = [
+    "black",
+    "flake8",
+    "mccabe",
+    "pycodestyle",
+    "pyflakes",
+    "pep8-naming",
+    "flake8-bugbear",
+    "flake8-comprehensions",
+    "flake8-tidy-imports",
+    "darglint",
+    "pydocstyle",
+    "isort",
+]
+# Dependencies needed to build/view the documentation.
+docs = [
+    "matplotlib",
+    "sphinx<7",
+    "sphinx-gallery",
+    "sphinx-rtd-theme",
+    "memory_profiler",
+    "tabulate",
+]
+###############################################################################
+#                       Development tool configurations                       #
+###############################################################################
+[tool.setuptools]
+packages = ["backpack"]
+[tool.setuptools_scm]
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+[tool.pydocstyle]
+convention = "google"
+match = '.*\.py'
