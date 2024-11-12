@@ -1,4 +1,5 @@
 """Module containing derivatives of Permute."""
+
 from typing import List, Tuple
 
 from torch import Tensor, argsort

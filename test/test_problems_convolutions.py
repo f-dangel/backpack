@@ -104,12 +104,12 @@ def make_2layer_classification_problem(conv_cls, act_cls):
 TEST_PROBLEMS = {}
 for conv_name, conv_cls in CONVS.items():
     for act_name, act_cls in ACTIVATIONS.items():
-        TEST_PROBLEMS[
-            "{}-{}-regression".format(conv_name, act_name)
-        ] = make_regression_problem(conv_cls, act_cls)
-        TEST_PROBLEMS[
-            "{}-{}-classification".format(conv_name, act_name)
-        ] = make_classification_problem(conv_cls, act_cls)
-        TEST_PROBLEMS[
-            "{}-{}-2layer-classification".format(conv_name, act_name)
-        ] = make_2layer_classification_problem(conv_cls, act_cls)
+        TEST_PROBLEMS["{}-{}-regression".format(conv_name, act_name)] = (
+            make_regression_problem(conv_cls, act_cls)
+        )
+        TEST_PROBLEMS["{}-{}-classification".format(conv_name, act_name)] = (
+            make_classification_problem(conv_cls, act_cls)
+        )
+        TEST_PROBLEMS["{}-{}-2layer-classification".format(conv_name, act_name)] = (
+            make_2layer_classification_problem(conv_cls, act_cls)
+        )

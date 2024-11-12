@@ -1,4 +1,5 @@
 """Emulating branching with modules."""
+
 from typing import Any, OrderedDict, Tuple, Union
 
 from torch import Tensor

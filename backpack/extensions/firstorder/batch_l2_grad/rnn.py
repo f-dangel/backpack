@@ -1,4 +1,5 @@
 """Contains BatchL2RNN."""
+
 from backpack.core.derivatives.lstm import LSTMDerivatives
 from backpack.core.derivatives.rnn import RNNDerivatives
 from backpack.extensions.firstorder.batch_l2_grad.batch_l2_base import BatchL2Base

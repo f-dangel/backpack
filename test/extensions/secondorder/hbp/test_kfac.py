@@ -1,4 +1,5 @@
 """Test BackPACK's KFAC extension."""
+
 from test.automated_test import check_sizes_and_values
 from test.extensions.implementation.autograd import AutogradExtensions
 from test.extensions.implementation.backpack import BackpackExtensions
@@ -7,10 +8,9 @@ from test.extensions.secondorder.hbp.kfac_settings import (
     BATCH_SIZE_1_SETTINGS,
     NOT_SUPPORTED_SETTINGS,
 )
+from test.utils.skip_extension_test import skip_BCEWithLogitsLoss_non_binary_labels
 
 import pytest
-
-from backpack.utils.kroneckers import kfacs_to_mat
 
 NOT_SUPPORTED_PROBLEMS = make_test_problems(NOT_SUPPORTED_SETTINGS)
 NOT_SUPPORTED_IDS = [problem.make_id() for problem in NOT_SUPPORTED_PROBLEMS]
@@ -44,11 +44,13 @@ def test_kfac_should_approx_ggn_montecarlo(problem: ExtensionsTestProblem):
         problem: Test case.
     """
     problem.set_up()
+    skip_BCEWithLogitsLoss_non_binary_labels(problem)
     autograd_res = AutogradExtensions(problem).ggn_blocks()
 
     mc_samples = 300000
-    backpack_kfac = BackpackExtensions(problem).kfac_chunk(mc_samples)
-    backpack_res = [kfacs_to_mat(kfac) for kfac in backpack_kfac]
+    backpack_res = BackpackExtensions(problem).kfac_as_mat(
+        chunks=10, mc_samples=mc_samples
+    )
 
     check_sizes_and_values(autograd_res, backpack_res, atol=5e-3, rtol=5e-3)
 
@@ -65,11 +67,11 @@ def test_kfac_should_approx_ggn_montecarlo_light(problem: ExtensionsTestProblem)
         problem: Test case.
     """
     problem.set_up()
-    autograd_res = AutogradExtensions(problem).ggn_blocks()
+    skip_BCEWithLogitsLoss_non_binary_labels(problem)
 
+    autograd_res = AutogradExtensions(problem).ggn_blocks()
     mc_samples = 6000
-    backpack_kfac = BackpackExtensions(problem).kfac(mc_samples)
-    backpack_res = [kfacs_to_mat(kfac) for kfac in backpack_kfac]
+    backpack_res = BackpackExtensions(problem).kfac_as_mat(mc_samples=mc_samples)
 
     check_sizes_and_values(autograd_res, backpack_res, atol=1e-2, rtol=1e-2)
 

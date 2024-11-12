@@ -1,4 +1,5 @@
 """Contains extensions for pooling layers used by ``SqrtGGN{Exact, MC}``."""
+
 from backpack.core.derivatives.avgpool1d import AvgPool1DDerivatives
 from backpack.core.derivatives.avgpool2d import AvgPool2DDerivatives
 from backpack.core.derivatives.avgpool3d import AvgPool3DDerivatives

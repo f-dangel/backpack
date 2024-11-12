@@ -1,4 +1,5 @@
 """Contains base class for ``SqrtGGN{Exact, MC}`` module extensions."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Callable, List, Tuple, Union
@@ -33,9 +34,7 @@ class SqrtGGNBaseModule(MatToJacMat):
 
         super().__init__(derivatives, params=params)
 
-    def _make_param_function(
-        self, param_str: str
-    ) -> Callable[
+    def _make_param_function(self, param_str: str) -> Callable[
         [Union[SqrtGGNExact, SqrtGGNMC], Module, Tuple[Tensor], Tuple[Tensor], Tensor],
         Tensor,
     ]:

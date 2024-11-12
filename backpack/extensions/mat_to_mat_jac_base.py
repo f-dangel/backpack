@@ -1,4 +1,5 @@
 """Contains base class for second order extensions."""
+
 from typing import List, Tuple, Union
 
 from torch import Tensor

@@ -1,14 +1,14 @@
 """Partial derivatives for ``torch.nn.ConvTranspose{1,2,3}d``."""
+
 from typing import List, Tuple, Union
 
 from einops import rearrange
 from numpy import prod
 from torch import Tensor, einsum
 from torch.nn import ConvTranspose1d, ConvTranspose2d, ConvTranspose3d, Module
-from torch.nn.grad import _grad_input_padding
 
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
-from backpack.utils.conv import get_conv_function
+from backpack.utils.conv import _grad_input_padding, get_conv_function
 from backpack.utils.conv_transpose import (
     get_conv_transpose_function,
     unfold_by_conv_transpose,

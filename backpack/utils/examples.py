@@ -1,4 +1,5 @@
 """Utility functions for examples."""
+
 from typing import Iterator, List, Tuple
 
 from torch import Tensor, stack, zeros
@@ -40,19 +41,23 @@ def get_mnist_dataloader(batch_size: int = 64, shuffle: bool = True) -> DataLoad
 
 
 def load_one_batch_mnist(
-    batch_size: int = 64, shuffle: bool = True
+    batch_size: int = 64, shuffle: bool = True, flat: bool = False
 ) -> Tuple[Tensor, Tensor]:
     """Return a single mini-batch (inputs, labels) from MNIST.
 
     Args:
         batch_size: Mini-batch size. Default: ``64``.
         shuffle: Randomly shuffle the data. Default: ``True``.
+        flat: Flatten chanel and returns a matrix ``[batch_size x 784]``
 
     Returns:
         A single batch (inputs, labels) from MNIST.
     """
     dataloader = get_mnist_dataloader(batch_size, shuffle)
     X, y = next(iter(dataloader))
+
+    if flat:
+        X = X.reshape(X.shape[0], -1)
 
     return X, y
 
@@ -113,5 +118,6 @@ def _autograd_ggn_exact_columns(
         e_d_list = vector_to_parameter_list(e_d, trainable_parameters)
 
         ggn_d_list = ggn_vector_product(loss, outputs, model, e_d_list)
+        ggn_d_list = [t.contiguous() for t in ggn_d_list]
 
         yield d, parameters_to_vector(ggn_d_list)

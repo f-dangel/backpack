@@ -1,6 +1,7 @@
 """Recurrent networks
 ====================
 """
+
 # %%
 # There are two different approaches to using BackPACK with RNNs.
 #
@@ -21,8 +22,7 @@
 #
 #    Not all extensions support RNNs (yet). Please create a feature request in the
 #    repository if the extension you need is not supported.
-
-# %%
+#
 # Let's get the imports out of the way.
 from torch import (
     allclose,

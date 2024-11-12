@@ -14,6 +14,7 @@ Optional entries:
     "id_prefix" (str): Prefix to be included in the test name.
     "seed" (int): seed for the random number for torch.rand
 """
+
 import torch
 
 SETTINGS = []

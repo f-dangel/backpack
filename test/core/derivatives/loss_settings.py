@@ -87,6 +87,12 @@ LOSS_SETTINGS += [
         "input_fn": lambda: torch.rand(size=(4, 1)),
         "target_fn": lambda: classification_targets(size=(4, 1), num_classes=2).float(),
     },
+    {
+        "module_fn": lambda: torch.nn.BCEWithLogitsLoss(reduction="mean"),
+        "input_fn": lambda: torch.rand(size=(5, 1)),
+        "target_fn": lambda: torch.rand(size=(5, 1)),
+        "id_prefix": "non-binary-labels",
+    },
 ]
 
 

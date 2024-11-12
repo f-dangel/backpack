@@ -16,7 +16,6 @@ INPUT_SHAPE = (TEST_SETTINGS["batch"], TEST_SETTINGS["in_features"])
 TEST_PROBLEMS = {}
 
 for lin_name, lin_cls in LINEARS.items():
-
     TEST_PROBLEMS["{}-regression".format(lin_name)] = make_regression_problem(
         INPUT_SHAPE, single_linear_layer(TEST_SETTINGS, lin_cls, activation_cls=None)
     )
@@ -25,8 +24,8 @@ for lin_name, lin_cls in LINEARS.items():
         INPUT_SHAPE, single_linear_layer(TEST_SETTINGS, lin_cls, activation_cls=None)
     )
 
-    TEST_PROBLEMS[
-        "{}-2layer-classification".format(lin_name)
-    ] = make_classification_problem(
-        INPUT_SHAPE, two_linear_layers(TEST_SETTINGS, lin_cls, activation_cls=None)
+    TEST_PROBLEMS["{}-2layer-classification".format(lin_name)] = (
+        make_classification_problem(
+            INPUT_SHAPE, two_linear_layers(TEST_SETTINGS, lin_cls, activation_cls=None)
+        )
     )

@@ -1,10 +1,21 @@
-from typing import Callable, Type, Union
+"""Utility functions for convolution layers."""
 
-import torch
+from typing import Callable, Tuple, Type, Union
+from warnings import warn
+
 from einops import rearrange
 from torch import Tensor, einsum
-from torch.nn import Conv1d, Conv2d, Conv3d, Module
+from torch.nn import (
+    Conv1d,
+    Conv2d,
+    Conv3d,
+    ConvTranspose1d,
+    ConvTranspose2d,
+    ConvTranspose3d,
+    Module,
+)
 from torch.nn.functional import conv1d, conv2d, conv3d, unfold
+from unfoldNd import unfoldNd
 
 
 def get_conv_module(N: int) -> Type[Module]:
@@ -64,34 +75,45 @@ def unfold_input(module: Union[Conv1d, Conv2d, Conv3d], input: Tensor) -> Tensor
         return unfold_by_conv(input, module)
 
 
-def get_weight_gradient_factors(input, grad_out, module):
+def get_weight_gradient_factors(
+    input: Tensor, grad_out: Tensor, module: Union[Conv1d, Conv2d, Conv3d]
+) -> Tuple[Tensor, Tensor]:
+    """Return the factors for constructing the gradients w.r.t. the kernel.
+
+    Args:
+        input: Convolution layer input.
+        grad_out: Gradient w.r.t. to the convolution layer output.
+        module: Convolution layer.
+
+    Returns:
+        Unfolded input, output gradient with flattened spatial dimensions.
+    """
     X = unfold_input(module, input)
     dE_dY = rearrange(grad_out, "n c ... -> n c (...)")
     return X, dE_dY
 
 
-def separate_channels_and_pixels(module, tensor):
-    """Reshape (V, N, C, H, W) into (V, N, C, H * W)."""
-    return rearrange(tensor, "v n c ... -> v n c (...)")
-
-
-def extract_weight_diagonal(module, unfolded_input, S, sum_batch=True):
+def extract_weight_diagonal(
+    module: Union[Conv1d, Conv2d, Conv3d],
+    unfolded_input: Tensor,
+    S: Tensor,
+    sum_batch: bool = True,
+) -> Tensor:
     """Extract diagonal of ``(Jᵀ S) (Jᵀ S)ᵀ`` where ``J`` is the weight Jacobian.
 
     Args:
-        module (torch.nn.Conv1d or torch.nn.Conv2d or torch.nn.Conv3d): Convolution
-            layer for which the diagonal is extracted w.r.t. the weight.
-        unfolded_input (torch.Tensor): Unfolded input to the convolution. Shape must
-            follow the conventions of ``torch.nn.Unfold``.
-        S (torch.Tensor): Backpropagated (symmetric factorization) of the loss Hessian.
+        module: Convolution layer for which the diagonal is extracted w.r.t. the weight.
+        unfolded_input: Unfolded input to the convolution. Shape must follow the
+            conventions of ``torch.nn.Unfold``.
+        S: Backpropagated (symmetric factorization) of the loss Hessian.
             Has shape ``(V, *module.output.shape)``.
-        sum_batch (bool, optional): Sum out the batch dimension of the weight diagonals.
+        sum_batch: Sum out the batch dimension of the weight diagonals.
             Default value: ``True``.
 
     Returns:
-        torch.Tensor: Per-sample weight diagonal if ``sum_batch=False`` (shape
-            ``(N, module.weight.shape)`` with batch size ``N``) or summed weight
-            diagonal if ``sum_batch=True`` (shape ``module.weight.shape``).
+        Per-sample weight diagonal if ``sum_batch=False`` (shape
+        ``(N, module.weight.shape)`` with batch size ``N``) or summed weight
+        diagonal if ``sum_batch=True`` (shape ``module.weight.shape``).
     """
     S = rearrange(S, "v n (g c) ... -> v n g c (...)", g=module.groups)
     unfolded_input = rearrange(unfolded_input, "n (g c) k -> n g c k", g=module.groups)
@@ -103,28 +125,31 @@ def extract_weight_diagonal(module, unfolded_input, S, sum_batch=True):
         module.weight.shape if sum_batch else (JS.shape[1], *module.weight.shape)
     )
 
-    weight_diagonal = JS.pow_(2).sum(sum_dims).reshape(out_shape)
-
-    return weight_diagonal
+    return JS.pow_(2).sum(sum_dims).reshape(out_shape)
 
 
 # TODO This method applies the bias Jacobian, then squares and sums the result. Intro-
 # duce base class for {Batch}DiagHessian and DiagGGN{Exact,MC} and remove this method
-def extract_bias_diagonal(module, S, sum_batch=True):
+def extract_bias_diagonal(
+    module: Union[
+        Conv1d, Conv2d, Conv3d, ConvTranspose1d, ConvTranspose2d, ConvTranspose3d
+    ],
+    S: Tensor,
+    sum_batch: bool = True,
+) -> Tensor:
     """Extract diagonal of ``(Jᵀ S) (Jᵀ S)ᵀ`` where ``J`` is the bias Jacobian.
 
     Args:
-        module (torch.nn.Conv1d or torch.nn.Conv2d or torch.nn.Conv3d): Convolution
-            layer for which the diagonal is extracted w.r.t. the bias.
-        S (torch.Tensor): Backpropagated (symmetric factorization) of the loss Hessian.
+        module: Convolution layer for which the diagonal is extracted w.r.t. the bias.
+        S: Backpropagated (symmetric factorization) of the loss Hessian.
             Has shape ``(V, *module.output.shape)``.
-        sum_batch (bool, optional): Sum out the batch dimension of the bias diagonals.
+        sum_batch: Sum out the batch dimension of the bias diagonals.
             Default value: ``True``.
 
     Returns:
-        torch.Tensor: Per-sample bias diagonal if ``sum_batch=False`` (shape
-            ``(N, module.bias.shape)`` with batch size ``N``) or summed bias
-            diagonal if ``sum_batch=True`` (shape ``module.bias.shape``).
+        Per-sample bias diagonal if ``sum_batch=False`` (shape
+        ``(N, module.bias.shape)`` with batch size ``N``) or summed bias
+        diagonal if ``sum_batch=True`` (shape ``module.bias.shape``).
     """
     start_spatial = 3
     sum_before = list(range(start_spatial, S.dim()))
@@ -133,34 +158,76 @@ def extract_bias_diagonal(module, S, sum_batch=True):
     return S.sum(sum_before).pow_(2).sum(sum_after)
 
 
-def unfold_by_conv(input, module):
-    """Return the unfolded input using convolution"""
-    N, C_in = input.shape[0], input.shape[1]
-    kernel_size = module.kernel_size
-    kernel_size_numel = module.weight.shape[2:].numel()
+def unfold_by_conv(input: Tensor, module: Union[Conv1d, Conv2d, Conv3d]) -> Tensor:
+    """Return the unfolded input using convolution.
 
-    def make_weight():
-        weight = torch.zeros(kernel_size_numel, 1, *kernel_size)
+    Args:
+        input: Convolution layer input.
+        module: Convolution layer.
 
-        for i in range(kernel_size_numel):
-            extraction = torch.zeros(kernel_size_numel)
-            extraction[i] = 1.0
-            weight[i] = extraction.reshape(1, *kernel_size)
-
-        repeat = [C_in, 1] + [1 for _ in kernel_size]
-        return weight.repeat(*repeat)
-
-    conv_dim = input.dim() - 2
-    conv = get_conv_function(conv_dim)
-
-    unfold = conv(
+    Returns:
+        Unfolded input. For a 2d convolution with input of shape `[N, C_in, *, *]`
+        and a kernel of shape `[_, _, K_H, K_W]`, this tensor has shape
+        `[N, C_in * K_H * K_W, L]` where `L` is the output's number of patches.
+    """
+    return unfoldNd(
         input,
-        make_weight().to(input.device),
-        bias=None,
-        stride=module.stride,
-        padding=module.padding,
+        module.kernel_size,
         dilation=module.dilation,
-        groups=C_in,
+        padding=module.padding,
+        stride=module.stride,
     )
 
-    return unfold.reshape(N, C_in * kernel_size_numel, -1)
+
+def _grad_input_padding(
+    grad_output: Tensor,
+    input_size: Tuple[int, ...],
+    stride: Tuple[int, ...],
+    padding: Tuple[int, ...],
+    kernel_size: Tuple[int, ...],
+    dilation: Union[None, Tuple[int]] = None,
+) -> Tuple[int, ...]:
+    """Determine padding for the VJP of convolution.
+
+    # noqa: DAR101
+    # noqa: DAR201
+    # noqa: DAR401
+
+    Note:
+        This function was copied from the PyTorch repository (version 1.9).
+        It was removed between torch 1.12.1 and torch 1.13.
+    """
+    if dilation is None:
+        # For backward compatibility
+        warn(
+            "_grad_input_padding 'dilation' argument not provided. Default of 1 is used."
+        )
+        dilation = [1] * len(stride)
+
+    input_size = list(input_size)
+    k = grad_output.dim() - 2
+
+    if len(input_size) == k + 2:
+        input_size = input_size[-k:]
+    if len(input_size) != k:
+        raise ValueError(f"input_size must have {k+2} elements (got {len(input_size)})")
+
+    def dim_size(d):
+        return (
+            (grad_output.size(d + 2) - 1) * stride[d]
+            - 2 * padding[d]
+            + 1
+            + dilation[d] * (kernel_size[d] - 1)
+        )
+
+    min_sizes = [dim_size(d) for d in range(k)]
+    max_sizes = [min_sizes[d] + stride[d] - 1 for d in range(k)]
+    for size, min_size, max_size in zip(input_size, min_sizes, max_sizes):
+        if size < min_size or size > max_size:
+            raise ValueError(
+                f"requested an input grad size of {input_size}, but valid sizes range "
+                f"from {min_sizes} to {max_sizes} (for a grad_output of "
+                f"{grad_output.size()[2:]})"
+            )
+
+    return tuple(input_size[d] - min_sizes[d] for d in range(k))

@@ -1,4 +1,5 @@
 from torch import einsum
+from torch.linalg import eigh
 
 from backpack.utils.unsqueeze import kfacmp_unsqueeze_if_missing_dim
 
@@ -101,7 +102,7 @@ def inv_kfacs(factors, shift=None):
         Computed by eigenvalue decomposition. Eigenvalues with small
         absolute values are truncated.
         """
-        eigvals, eigvecs = mat.symeig(eigenvectors=True)
+        eigvals, eigvecs = eigh(mat)
         eigvals.add_(shift)
         inv_eigvals = 1.0 / eigvals
         inv_truncate = 1.0 / truncate

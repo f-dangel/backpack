@@ -28,24 +28,24 @@ INPUT_SHAPE = (TEST_SETTINGS["batch"], TEST_SETTINGS["in_features"])
 TEST_PROBLEMS = {}
 
 for lin_name, lin_cls in LINEARS.items():
-
     TEST_PROBLEMS["{}-bn-regression".format(lin_name)] = make_regression_problem(
         INPUT_SHAPE,
         single_linear_layer(TEST_SETTINGS, lin_cls, activation_cls=None)
         + [BatchNorm1d(TEST_SETTINGS["out_features"])],
     )
 
-    TEST_PROBLEMS[
-        "{}-bn-classification".format(lin_name)
-    ] = make_classification_problem(
-        INPUT_SHAPE,
-        single_linear_layer(TEST_SETTINGS, lin_cls, activation_cls=None)
-        + [bn_layer1()],
+    TEST_PROBLEMS["{}-bn-classification".format(lin_name)] = (
+        make_classification_problem(
+            INPUT_SHAPE,
+            single_linear_layer(TEST_SETTINGS, lin_cls, activation_cls=None)
+            + [bn_layer1()],
+        )
     )
 
-    TEST_PROBLEMS[
-        "{}-bn-2layer-classification".format(lin_name)
-    ] = make_classification_problem(
-        INPUT_SHAPE,
-        two_linear_layers(TEST_SETTINGS, lin_cls, activation_cls=None) + [bn_layer2()],
+    TEST_PROBLEMS["{}-bn-2layer-classification".format(lin_name)] = (
+        make_classification_problem(
+            INPUT_SHAPE,
+            two_linear_layers(TEST_SETTINGS, lin_cls, activation_cls=None)
+            + [bn_layer2()],
+        )
     )

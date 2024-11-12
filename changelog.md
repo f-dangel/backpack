@@ -6,6 +6,88 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.0] - 2023-06-26
+
+With this patch, BackPACK supports `torch==2.x` and deprecates `python3.7`
+([PR](https://github.com/f-dangel/backpack/pull/307)). BackPACK now supports
+`BCEWithLogitsLoss`, and supports KFAC for N-dimensional (transpose)
+convolutions.
+
+### Added/New
+- Example use case for `retain_graph`
+  ([PR](https://github.com/f-dangel/backpack/pull/302))
+- Example for computing batched Jacobians
+  ([PR](https://github.com/f-dangel/backpack/pull/267))
+- Support `BCEWithLogitsLoss`
+  - `BatchDiagHessian` and `DiagHessian` extensions
+    ([PR](https://github.com/f-dangel/backpack/pull/279))
+  - `BatchDiagGGN` (exact, MC) and `DiagGGN` (exact, MC) extensions
+    ([PR](https://github.com/f-dangel/backpack/pull/280))
+  - `KFAC` extension
+    ([PR](https://github.com/f-dangel/backpack/pull/283))
+  - `KFLR` extension
+    ([PR](https://github.com/f-dangel/backpack/pull/284))
+- Extend `KFAC, KFLR, KFRA` to N-dimensional convolutions (and transpose
+  convolutions) ([blog post](https://fdangel.com/posts/kfac_explained.html))
+  - Support for `Conv{1,2,3}d`
+    ([PR](https://github.com/f-dangel/backpack/pull/291))
+  - Support for `ConvTranspose{1,2,3}d`
+    ([PR](https://github.com/f-dangel/backpack/pull/292))
+
+### Fixed/Removed
+- Use correct imports on website code samples
+  ([PR](https://github.com/f-dangel/backpack/pull/262))
+
+### Internal
+- Update code to latest `black` and `flake8`
+  ([PR](https://github.com/f-dangel/backpack/pull/301))
+- Fix examples on splash page
+  ([PR](https://github.com/f-dangel/backpack/pull/298))
+- Abstract negative log-likelihood losses in core
+  ([PR](https://github.com/f-dangel/backpack/pull/252))
+  - Apply to `MSELoss` derivatives
+    ([PR](https://github.com/f-dangel/backpack/pull/252))
+  - Apply to `CrossEntropyLoss` derivatives
+    ([PR](https://github.com/f-dangel/backpack/pull/256))
+  - Implement `BCEWithLogitsLoss` derivatives
+    ([PR](https://github.com/f-dangel/backpack/pull/257))
+- Implement second-order derivatives of `BCEWithLogitsLoss`
+  ([PR](https://github.com/f-dangel/backpack/pull/271))
+- Implement optimized sampled gradients for `BCEWithLogitsLoss`
+  ([PR](https://github.com/f-dangel/backpack/pull/278))
+- Use batch size 1 in KFAC tests for ResNets
+  ([PR](https://github.com/f-dangel/backpack/pull/265))
+- Test with PyTorch `1.9.0` and `1.12.0` and make tests compatible
+  ([PR](https://github.com/f-dangel/backpack/pull/277))
+- Use `unfoldNd` package
+  - For input unfolding of convolutions
+    ([PR](https://github.com/f-dangel/backpack/pull/285))
+  - For input unfolding of transpose convolutions
+    ([PR](https://github.com/f-dangel/backpack/pull/287))
+- Fully-document utility functions for convolutions
+  ([PR](https://github.com/f-dangel/backpack/pull/286))
+- Make output shape of unfolded input of transpose convolution consistent with
+  convolution case
+  ([PR](https://github.com/f-dangel/backpack/pull/289))
+- Fully-document `HBPConv2d` class
+  ([PR](https://github.com/f-dangel/backpack/pull/290))
+- Fix support for PyTorch 1.13
+  ([PR](https://github.com/f-dangel/backpack/pull/296))
+- Update linting and formatting to latest `black`, `flake8`
+  ([PR](https://github.com/f-dangel/backpack/pull/301))
+
+## [1.5.2] - 2022-12-19
+
+This patch adds support for `torch>=1.13.0` to BackPACK.
+
+## [1.5.1] - 2022-11-03
+
+This patch fixes temporary compatibility issues with the latest PyTorch release.
+
+### Fixed/Removed
+- Circumvent compatibility issues with `torch==1.13.0` by requiring
+  `torch<1.13.0`` ([PR](https://github.com/f-dangel/backpack/pull/276))
+
 ## [1.5.0] - 2022-02-15
 
 This small release improves ResNet support of some second-order extensions and
@@ -378,8 +460,11 @@ co-authoring many PRs shipped in this release.
 
 Initial release
 
-[Unreleased]: https://github.com/f-dangel/backpack/compare/v1.5.0...HEAD
-[1.4.0]: https://github.com/f-dangel/backpack/compare/1.5.0...1.4.0
+[Unreleased]: https://github.com/f-dangel/backpack/compare/v1.6.0...HEAD
+[1.6.0]: https://github.com/f-dangel/backpack/compare/1.5.2...1.6.0
+[1.5.2]: https://github.com/f-dangel/backpack/compare/1.5.2...1.5.1
+[1.5.1]: https://github.com/f-dangel/backpack/compare/1.5.1...1.5.0
+[1.5.0]: https://github.com/f-dangel/backpack/compare/1.5.0...1.4.0
 [1.4.0]: https://github.com/f-dangel/backpack/compare/1.4.0...1.3.0
 [1.3.0]: https://github.com/f-dangel/backpack/compare/1.3.0...1.2.0
 [1.2.0]: https://github.com/f-dangel/backpack/compare/1.2.0...1.1.1

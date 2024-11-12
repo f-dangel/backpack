@@ -1,4 +1,5 @@
 """Extension implementations with BackPACK."""
+
 from test.extensions.implementation.base import ExtensionsImplementation
 from test.extensions.implementation.hooks import (
     BatchL2GradHook,
@@ -7,12 +8,14 @@ from test.extensions.implementation.hooks import (
 )
 from test.extensions.problem import ExtensionsTestProblem
 from test.utils import chunk_sizes
+from test.utils.conv_transpose import fix_index_order_conv_transpose_weights
 from typing import List
 
 from torch import Tensor, cat, einsum
 
 import backpack.extensions as new_ext
 from backpack import backpack
+from backpack.utils.kroneckers import kfacs_to_mat
 
 
 class BackpackExtensions(ExtensionsImplementation):
@@ -169,17 +172,54 @@ class BackpackExtensions(ExtensionsImplementation):
             loss.backward()
         return self.problem.collect_data("kfac")
 
+    def kfac_as_mat(self, chunks: int = 1, mc_samples: int = 1) -> List[Tensor]:
+        """Return the matrix representation of the KFAC approximation.
+
+        Args:
+            chunks: Number of chunks to split the MC samples. Default: `1`.
+            mc_samples: Number of MC samples. Default: `1`.
+
+        Returns:
+            List of tensors containing the block-diagonal Hessian's
+            approximation implied by KFAC in matrix format.
+        """
+        kfac = [
+            kfacs_to_mat(kron_list)
+            for kron_list in self.kfac_chunk(mc_samples=mc_samples, chunks=chunks)
+        ]
+        return fix_index_order_conv_transpose_weights(self.problem.model, kfac)
+
     def kflr(self) -> List[List[Tensor]]:  # noqa:D102
         with backpack(new_ext.KFLR()):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
         return self.problem.collect_data("kflr")
 
+    def kflr_as_mat(self) -> List[Tensor]:
+        """Return the matrix representation of the KFLR approximation.
+
+        Returns:
+            List of tensors containing the block-diagonal Hessian's
+            approximation implied by KFLR in matrix format.
+        """
+        kflr = [kfacs_to_mat(kron_list) for kron_list in self.kflr()]
+        return fix_index_order_conv_transpose_weights(self.problem.model, kflr)
+
     def kfra(self) -> List[List[Tensor]]:  # noqa:D102
         with backpack(new_ext.KFRA()):
             _, _, loss = self.problem.forward_pass()
             loss.backward()
         return self.problem.collect_data("kfra")
+
+    def kfra_as_mat(self) -> List[Tensor]:
+        """Return the matrix representation of the KFRA approximation.
+
+        Returns:
+            List of tensors containing the block-diagonal Hessian's
+            approximation implied by KFRA in matrix format.
+        """
+        kfra = [kfacs_to_mat(kron_list) for kron_list in self.kfra()]
+        return fix_index_order_conv_transpose_weights(self.problem.model, kfra)
 
     def diag_h_batch(self) -> List[Tensor]:  # noqa:D102
         with backpack(new_ext.BatchDiagHessian()):

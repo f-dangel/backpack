@@ -6,6 +6,7 @@ Test individual gradients for the following layers:
 - sum of the square of batch gradients of convolutional layers
 
 """
+
 from test.automated_test import check_sizes_and_values
 from test.extensions.firstorder.sum_grad_squared.sumgradsquared_settings import (
     SUMGRADSQUARED_SETTINGS,

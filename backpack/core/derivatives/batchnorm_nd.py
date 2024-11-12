@@ -1,4 +1,5 @@
 """Contains derivatives for BatchNorm."""
+
 from typing import List, Tuple, Union
 
 from torch import Size, Tensor, einsum
@@ -93,7 +94,6 @@ class BatchNormNdDerivatives(BaseParameterDerivatives):
         self._check_parameters(module)
         N: int = self._get_n_axis(module)
         if module.training:
-
             if subsampling is not None:
                 raise NotImplementedError(
                     "BatchNorm VJP sub-sampling is not defined in train mode."

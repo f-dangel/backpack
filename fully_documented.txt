@@ -1,5 +1,3 @@
-setup.py
-
 backpack/__init__.py
 backpack/context.py
 backpack/custom_module/
@@ -20,6 +18,7 @@ backpack/core/derivatives/scale_module.py
 backpack/core/derivatives/sum_module.py
 backpack/core/derivatives/dropout.py
 backpack/core/derivatives/slicing.py
+backpack/core/derivatives/bcewithlogitsloss.py
 
 backpack/extensions/__init__.py
 backpack/extensions/backprop_extension.py
@@ -67,6 +66,14 @@ backpack/extensions/secondorder/diag_hessian/pad.py
 backpack/extensions/secondorder/diag_hessian/slicing.py
 backpack/extensions/secondorder/sqrt_ggn/
 backpack/extensions/secondorder/hbp/custom_module.py
+backpack/extensions/secondorder/hbp/conv1d.py
+backpack/extensions/secondorder/hbp/conv2d.py
+backpack/extensions/secondorder/hbp/conv3d.py
+backpack/extensions/secondorder/hbp/convnd.py
+backpack/extensions/secondorder/hbp/conv_transpose1d.py
+backpack/extensions/secondorder/hbp/conv_transpose2d.py
+backpack/extensions/secondorder/hbp/conv_transpose3d.py
+backpack/extensions/secondorder/hbp/conv_transposend.py
 
 backpack/hessianfree/ggnvp.py
 
@@ -77,6 +84,9 @@ backpack/utils/__init__.py
 backpack/utils/module_classification.py
 backpack/utils/hooks.py
 backpack/utils/examples.py
+backpack/utils/convert_parameters.py
+backpack/utils/conv.py
+backpack/utils/conv_transpose.py
 
 test/extensions/automated_settings.py
 test/extensions/problem.py
@@ -112,9 +122,11 @@ test/core/derivatives/scale_module_settings.py
 test/core/derivatives/slicing_settings.py
 test/utils/evaluation_mode.py
 test/utils/skip_test.py
+test/utils/skip_extension_test.py
 test/utils/__init__.py
 test/converter/
 test/utils/test_subsampling.py
+test/utils/conv_transpose.py
 test/custom_module/
 test/test_retain_graph.py
 test/test_batch_first.py

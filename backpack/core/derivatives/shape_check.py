@@ -2,6 +2,7 @@
 
 Helpers to check input and output sizes of Jacobian-matrix products.
 """
+
 import functools
 from typing import Any, Callable
 
@@ -249,7 +250,6 @@ def make_hessian_mat_prod_accept_vectors(
 
     @functools.wraps(make_hessian_mat_prod)
     def _wrapped_make_hessian_mat_prod(self, module, g_inp, g_out):
-
         hessian_mat_prod = make_hessian_mat_prod(self, module, g_inp, g_out)
 
         def _new_hessian_mat_prod(mat):
@@ -280,7 +280,6 @@ def make_hessian_mat_prod_check_shapes(
 
     @functools.wraps(make_hessian_mat_prod)
     def _wrapped_make_hessian_mat_prod(self, module, g_inp, g_out):
-
         hessian_mat_prod = make_hessian_mat_prod(self, module, g_inp, g_out)
 
         def _new_hessian_mat_prod(mat):

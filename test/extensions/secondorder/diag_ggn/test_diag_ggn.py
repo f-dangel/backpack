@@ -1,10 +1,11 @@
 """Test DiagGGN extension."""
+
 from test.automated_test import check_sizes_and_values
 from test.extensions.implementation.autograd import AutogradExtensions
 from test.extensions.implementation.backpack import BackpackExtensions
 from test.extensions.problem import make_test_problems
 from test.extensions.secondorder.diag_ggn.diag_ggn_settings import DiagGGN_SETTINGS
-from test.utils.skip_test import skip_adaptive_avg_pool3d_cuda
+from test.utils.skip_extension_test import skip_BCEWithLogitsLoss_non_binary_labels
 
 import pytest
 
@@ -13,14 +14,12 @@ IDS = [problem.make_id() for problem in PROBLEMS]
 
 
 @pytest.mark.parametrize("problem", PROBLEMS, ids=IDS)
-def test_diag_ggn(problem, request):
+def test_diag_ggn(problem):
     """Test the diagonal of generalized Gauss-Newton.
 
     Args:
         problem (ExtensionsTestProblem): Problem for extension test.
-        request: problem request
     """
-    skip_adaptive_avg_pool3d_cuda(request)
     problem.set_up()
 
     backpack_res = BackpackExtensions(problem).diag_ggn()
@@ -45,6 +44,7 @@ def test_diag_ggn_mc_light(problem):
         problem (ExtensionsTestProblem): Problem for extension test.
     """
     problem.set_up()
+    skip_BCEWithLogitsLoss_non_binary_labels(problem)
 
     backpack_res = BackpackExtensions(problem).diag_ggn()
     mc_samples = 3000
@@ -67,6 +67,7 @@ def test_diag_ggn_mc(problem):
         problem (ExtensionsTestProblem): Problem for extension test.
     """
     problem.set_up()
+    skip_BCEWithLogitsLoss_non_binary_labels(problem)
 
     backpack_res = BackpackExtensions(problem).diag_ggn()
     mc_samples = 300000
