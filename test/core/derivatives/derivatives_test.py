@@ -27,7 +27,6 @@ from test.utils.skip_test import (
     skip_BCEWithLogitsLoss,
     skip_BCEWithLogitsLoss_non_binary_labels,
     skip_subsampling_conflict,
-    skip_torch_2_0_1_lstm,
 )
 from typing import List, Union
 from warnings import warn
@@ -139,7 +138,6 @@ def test_jac_mat_prod(problem: DerivativesTestProblem, V: int = 3) -> None:
         V: Number of vectorized Jacobian-vector products. Default: ``3``.
     """
     problem.set_up()
-    skip_torch_2_0_1_lstm(problem.module)
     mat = rand(V, *problem.input_shape).to(problem.device)
 
     backpack_res = BackpackDerivatives(problem).jac_mat_prod(mat)

@@ -6,7 +6,6 @@ from test.extensions.implementation.backpack import BackpackExtensions
 from test.extensions.problem import make_test_problems
 from test.extensions.secondorder.diag_ggn.diag_ggn_settings import DiagGGN_SETTINGS
 from test.utils.skip_extension_test import skip_BCEWithLogitsLoss_non_binary_labels
-from test.utils.skip_test import skip_torch_2_0_1_lstm
 
 import pytest
 
@@ -22,7 +21,6 @@ def test_diag_ggn_exact_batch(problem):
         problem (ExtensionsTestProblem): Problem for extension test.
     """
     problem.set_up()
-    skip_torch_2_0_1_lstm(problem.model)
 
     backpack_res = BackpackExtensions(problem).diag_ggn_exact_batch()
     autograd_res = AutogradExtensions(problem).diag_ggn_exact_batch()
@@ -47,7 +45,6 @@ def test_diag_ggn_mc_batch_light(problem):
     """
     problem.set_up()
     skip_BCEWithLogitsLoss_non_binary_labels(problem)
-    skip_torch_2_0_1_lstm(problem.model)
 
     backpack_res = BackpackExtensions(problem).diag_ggn_exact_batch()
     mc_samples = 6000
@@ -71,7 +68,6 @@ def test_diag_ggn_mc_batch(problem):
     """
     problem.set_up()
     skip_BCEWithLogitsLoss_non_binary_labels(problem)
-    skip_torch_2_0_1_lstm(problem.model)
 
     backpack_res = BackpackExtensions(problem).diag_ggn_exact_batch()
     mc_samples = 300000
