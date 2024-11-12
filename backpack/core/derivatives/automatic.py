@@ -20,7 +20,8 @@ class ForwardCallable(Protocol):
         x: Tensor,
         *params_args: Union[Parameter, Tensor],
         **params_kwargs: Union[Parameter, Tensor, None],
-    ) -> Tensor: ...  # noqa: D102
+    ) -> Tensor:  # noqa: D102
+        pass
 
 
 class AutomaticDerivatives(BaseParameterDerivatives):
