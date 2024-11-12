@@ -132,3 +132,5 @@ test/custom_module/
 test/test_retain_graph.py
 test/test_batch_first.py
 test/test_automatic_support.py
+test/automatic_derivatives.py
+test/automatic_extensions.py
