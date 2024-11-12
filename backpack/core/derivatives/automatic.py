@@ -3,7 +3,7 @@
 from abc import abstractmethod
 from typing import Dict, List, Optional, Protocol, Tuple, Union
 
-from torch import Tensor, allclose, enable_grad, stack
+from torch import Tensor, allclose, cat, enable_grad, stack
 from torch.autograd import grad
 from torch.nn import Module, Parameter
 
@@ -19,9 +19,8 @@ class ForwardCallable(Protocol):
         self,
         x: Tensor,
         *params_args: Union[Parameter, Tensor],
-        **params_kwargs: Union[Parameter, Tensor, None]
-    ) -> Tensor:
-        ...
+        **params_kwargs: Union[Parameter, Tensor, None],
+    ) -> Tensor: ...  # noqa: D102
 
 
 class AutomaticDerivatives(BaseParameterDerivatives):
@@ -72,6 +71,10 @@ class AutomaticDerivatives(BaseParameterDerivatives):
         Returns:
             The sub-sampled tensor used as input to the forward pass, the parameters,
             and the output.
+
+        Raises:
+            RuntimeError: If the forward function produces a different output than the
+                layer's forward pass.
         """
         # Create an independent copy of the layer's input and parameters
         input0 = module.input0.clone().detach()
@@ -116,14 +119,7 @@ class AutomaticDerivatives(BaseParameterDerivatives):
     ) -> Tensor:
         # regenerate computation graph for differentiation
         input0, _, output = self.forward_pass(module, subsampling=subsampling)
-
-        # ``mat`` consists of ``V`` vectors of shape ``[*module.output.shape]``
-        vjps = [
-            grad(output, input0, v, retain_graph=idx != mat.shape[0] - 1)[0]
-            for idx, v in enumerate(mat)
-        ]
-
-        return stack(vjps)  # shape [V, *module.input0.shape]
+        return grad(output, input0, grad_outputs=mat, is_grads_batched=True)[0]
 
     # NOTE Explicitly turn on autodiff as this function is called during a
     # backward pass.
@@ -139,34 +135,51 @@ class AutomaticDerivatives(BaseParameterDerivatives):
         sum_batch: bool = True,
         subsampling: Optional[List[int]] = None,
     ) -> Tensor:
+        """Compute matrix-Jacobian products (MJPs) of the module w.r.t. a parameter.
+
+        Handles both vector and matrix inputs. Preserves input format in output.
+
+        Args:
+            param_str: Attribute name under which the parameter is stored in the module.
+            module: Module whose Jacobian will be applied. Must provide access to IO.
+            g_inp: Gradients w.r.t. module input.
+            g_out: Gradients w.r.t. module output.
+            mat: Matrix the Jacobian will be applied to. Has shape
+                ``[V, *module.output.shape]`` (matrix case) or same shape as
+                ``module.output`` (vector case). If used with subsampling, has dimension
+                len(subsampling) instead of batch size along the batch axis.
+            sum_batch: Sum out the MJP's batch axis. Default: ``True``.
+            subsampling: Indices of samples along the output's batch dimension that
+                should be considered. Defaults to ``None`` (use all samples).
+
+        Returns:
+            Matrix-Jacobian products. Has shape ``[V, *param_shape]`` when batch
+            summation is enabled (same shape as parameter in the vector case). Without
+            batch summation, the result has shape ``[V, N, *param_shape]`` (vector case
+            has shape ``[N, *param_shape]``). If used with subsampling, the batch size N
+            is replaced by len(subsampling).
+        """
         batch_size = module.input0.shape[self.BATCH_AXIS]
         subsampling = list(range(batch_size)) if subsampling is None else subsampling
 
         # contains the MJPs for each sample along the batch dimension
         sample_vjps = []
 
-        # ``mat`` consists of ``V`` vectors of shape ``[*module.output.shape]``
-        num_vecs = mat.shape[0]
-
         for sample_idx, sample in enumerate(subsampling):
             # regenerate computation graph for differentiation
             _, params, output = self.forward_pass(module, subsampling=[sample])
+            # shape [V, *module.param_str.shape]
+            vjps = grad(
+                output,
+                params[param_str],
+                grad_outputs=mat[:, [sample_idx]],
+                is_grads_batched=True,
+            )[0]
+            sample_vjps.append(vjps.sum(self.BATCH_AXIS) if sum_batch else vjps)
 
-            vjps = [
-                grad(
-                    output,
-                    params[param_str],
-                    v,
-                    retain_graph=v_idx != num_vecs - 1,
-                )[0]
-                for v_idx, v in enumerate(mat[:, [sample_idx]])
-            ]
-
-            sample_vjps.append(stack(vjps))  # shape [V, *module.param_str.shape]
-
-        sample_vjps = stack(sample_vjps, dim=1)
-
-        if sum_batch:
-            sample_vjps = sample_vjps.sum(1)
-
-        return sample_vjps  # shape [V, B, *module.param_str.shape] or [V, B, *module.param_str.shape]
+        # shape [V, B, *module.param_str.shape] or [V, *module.param_str.shape]
+        return (
+            cat(sample_vjps, dim=self.BATCH_AXIS)
+            if sum_batch
+            else stack(sample_vjps, dim=self.BATCH_AXIS + 1)
+        )
