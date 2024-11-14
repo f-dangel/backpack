@@ -5,7 +5,6 @@ def R_op(ys, xs, vs, retain_graph=True, detach=True):
     """
     Multiplies the vector `vs` with the Jacobian of `ys` w.r.t. `xs`.
     """
-
     if isinstance(ys, tuple):
         ws = [torch.zeros_like(y).requires_grad_(True) for y in ys]
     else:
@@ -31,10 +30,7 @@ def R_op(ys, xs, vs, retain_graph=True, detach=True):
         materialize_grads=True,
     )
 
-    if detach:
-        return tuple(j.detach() for j in re)
-    else:
-        return re
+    return tuple(j.detach() for j in re) if detach else re
 
 
 def jacobian_vector_product(f, x, v, retain_graph=True, detach=True):
