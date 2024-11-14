@@ -88,6 +88,8 @@ backpack/utils/convert_parameters.py
 backpack/utils/conv.py
 backpack/utils/conv_transpose.py
 
+test/hessianfree/__init__.py
+test/hessianfree/test_ggn.py
 test/extensions/automated_settings.py
 test/extensions/problem.py
 test/extensions/utils.py
