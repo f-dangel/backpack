@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.1] - 2024-11-15
+
+This patch extends the support of BackPACK's GGN-vector product to compute
+graphs where one parameter of the GGN is not used by explicitly materializing
+the zero tensors in the associated derivatives
+([PR](https://github.com/f-dangel/backpack/pull/338)).
+
 ## [1.7.0] - 2024-11-12
 
 This version deprecates Python 3.8 and bumps the PyTorch dependency to

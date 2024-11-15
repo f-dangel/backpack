@@ -5,7 +5,6 @@ def L_op(ys, xs, ws, retain_graph=True, detach=True):
     """
     Multiplies the vector `ws` with the transposed Jacobian of `ys` w.r.t. `xs`.
     """
-
     vJ = torch.autograd.grad(
         ys,
         xs,
@@ -13,11 +12,9 @@ def L_op(ys, xs, ws, retain_graph=True, detach=True):
         create_graph=True,
         retain_graph=retain_graph,
         allow_unused=True,
+        materialize_grads=True,
     )
-    if detach:
-        return tuple(j.detach() for j in vJ)
-    else:
-        return vJ
+    return tuple(j.detach() for j in vJ) if detach else vJ
 
 
 def transposed_jacobian_vector_product(f, x, v, retain_graph=True, detach=True):
