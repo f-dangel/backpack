@@ -2,7 +2,6 @@
 
 from typing import Optional, Sequence, Tuple, Union
 
-import torch
 from torch import Tensor
 from torch.autograd import grad
 from torch.nn import Parameter
@@ -56,8 +55,6 @@ def hessian_vector_product(
         )
 
     gv = sum((g_i * v_i).sum() for g_i, v_i in zip(grad_params, v))
-    Hv = torch.autograd.grad(
-        gv, params, create_graph=True, retain_graph=True, materialize_grads=True
-    )
+    Hv = grad(gv, params, create_graph=True, retain_graph=True, materialize_grads=True)
 
     return tuple(j.detach() for j in Hv) if detach else Hv
