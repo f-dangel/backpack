@@ -76,6 +76,7 @@ backpack/extensions/secondorder/hbp/conv_transpose3d.py
 backpack/extensions/secondorder/hbp/conv_transposend.py
 
 backpack/hessianfree/ggnvp.py
+backpack/hessianfree/hvp.py
 
 backpack/utils/linear.py
 backpack/utils/subsampling.py
