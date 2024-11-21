@@ -32,7 +32,8 @@ def hessian_vector_product(
         Entries have same shape as entries of ``params`` and ``v``.
 
     Raises:
-        ValueError: If the length or shapes of ``params`` and ``v`` does not match.
+        ValueError: If the length or shapes of ``params``, ``v``, and ``grad_params``
+            do not match.
     """
     if grad_params is None:
         grad_params = grad(
