@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added/New
+
+### Fixed/Removed
+
+### Internal
+
+- Improve efficiency of Hessian-vector product
+  ([PR](https://github.com/f-dangel/backpack/pull/341))
+
 ## [1.7.1] - 2024-11-15
 
 This patch extends the support of BackPACK's GGN-vector product to compute
