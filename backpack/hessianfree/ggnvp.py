@@ -53,6 +53,6 @@ def ggn_vector_product_from_plist(
         ``plist``.
     """
     Jv = R_op(output, plist, v)
-    HJv = hessian_vector_product(loss, output, Jv)
+    (HJv,) = hessian_vector_product(loss, [output], Jv)
     JTHJv = L_op(output, plist, HJv)
     return JTHJv

@@ -132,7 +132,7 @@ class AutogradImpl(Implementation):
     def hvp_applied_columnwise(self, f, p, mat):
         h_cols = []
         for i in range(mat.size(0)):
-            hvp_col_i = hessian_vector_product(f, [p], mat[i, :])[0]
+            (hvp_col_i,) = hessian_vector_product(f, [p], [mat[i, :]])
             h_cols.append(hvp_col_i.unsqueeze(0))
 
         return torch.cat(h_cols, dim=0)
@@ -172,7 +172,7 @@ class AutogradImpl(Implementation):
         ggn_cols = []
         for i in range(mat.size(0)):
             col_i = mat[i, :]
-            GGN_col_i = ggn_vector_product_from_plist(loss, out, [p], col_i)[0]
+            (GGN_col_i,) = ggn_vector_product_from_plist(loss, out, [p], [col_i])
             ggn_cols.append(GGN_col_i.unsqueeze(0))
 
         return torch.cat(ggn_cols, dim=0)
