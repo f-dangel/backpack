@@ -235,8 +235,8 @@ class AutogradDerivatives(DerivativesImplementation):
         `hessian[a, b, c]` contains the Hessian of the scalar entry `tensor[a, b, c]`
         w.r.t. `x[a, b, c]`.
 
-        If ``tensor`` is linear in ``x``, autograd raises a ``RuntimeError``.
-        In that case, a Hessian of zeros is created manually and returned.
+        If ``x`` is not of floating dtype, it cannot be differentiated and the returned
+        Hessian will be zero.
 
         Arguments:
             tensor: An arbitrary tensor.
@@ -249,6 +249,7 @@ class AutogradDerivatives(DerivativesImplementation):
             try:
                 yield self._hessian(t, x)
             except RuntimeError:
+                assert not x.is_floating_point()
                 yield zeros(*x.shape, *x.shape, device=x.device, dtype=x.dtype)
 
     def hessian_is_zero(self) -> bool:  # noqa: D102
