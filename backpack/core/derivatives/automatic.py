@@ -2,13 +2,12 @@
 
 from copy import deepcopy
 from functools import partial
-from typing import Callable, List, Optional, Tuple, Union
+from typing import Callable, List, Optional, Tuple, Union, Any
 
 from torch import Tensor
 from torch.func import functional_call, vjp, vmap
 from torch.nn import Module
 
-from backpack.core.derivatives import shape_check
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 from backpack.utils.subsampling import subsample
 
@@ -106,8 +105,25 @@ class AutomaticDerivatives(BaseParameterDerivatives):
 
         return vmp
 
-    @shape_check.param_mjp_accept_vectors
-    def param_mjp(
+    def __getattribute__(self, name: str) -> Any:
+        """Dynamically generate parameter MJP methods if their attributes are accessed.
+
+        Args:
+            name: Name of the requested attribute.
+
+        Returns:
+            The requested attribute.
+        """
+        suffix = "_jac_t_mat_prod"
+        if name.endswith(suffix) and name.split(suffix)[0] != "":
+            param_str, _ = name.split(suffix)
+            param_str = param_str[1:] # remove leading underscore
+            return partial(self._param_mjp, param_str)
+
+        return super().__getattribute__(name)
+
+
+    def _param_mjp(
         self,
         param_str: str,
         module: Module,
