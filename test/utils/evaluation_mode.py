@@ -24,7 +24,7 @@ def initialize_training_false_recursive(module: Module) -> Module:
 
 
 def initialize_batch_norm_eval(
-    module: Union[BatchNorm1d, BatchNorm2d, BatchNorm3d]
+    module: Union[BatchNorm1d, BatchNorm2d, BatchNorm3d],
 ) -> Union[BatchNorm1d, BatchNorm2d, BatchNorm3d]:
     """Initializes a BatchNorm module in evaluation mode.
 

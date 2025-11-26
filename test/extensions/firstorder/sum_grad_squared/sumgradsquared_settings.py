@@ -1,6 +1,6 @@
 """Test configurations to test sum_grad_square
 
-The tests are taken from `test.extensions.firstorder.firstorder_settings`, 
+The tests are taken from `test.extensions.firstorder.firstorder_settings`,
 but additional custom tests can be defined here by appending it to the list.
 """
 
