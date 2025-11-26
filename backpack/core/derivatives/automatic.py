@@ -1,4 +1,4 @@
-"""Automatic derivative implementation via ``torch.autograd``."""
+"""Automatic derivative implementation via ``torch.func``."""
 
 from copy import deepcopy
 from functools import partial
