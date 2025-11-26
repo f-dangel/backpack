@@ -1,35 +1,25 @@
 """Automatic derivative implementation via ``torch.autograd``."""
 
-from abc import abstractmethod
-from typing import Dict, List, Optional, Protocol, Tuple, Union
+from copy import deepcopy
+from functools import partial
+from typing import Callable, List, Optional, Tuple, Union
 
-from torch import Tensor, allclose, cat, enable_grad, stack
-from torch.autograd import grad
-from torch.nn import Module, Parameter
+from torch import Tensor
+from torch.func import functional_call, vjp, vmap
+from torch.nn import Module
 
 from backpack.core.derivatives import shape_check
 from backpack.core.derivatives.basederivatives import BaseParameterDerivatives
 from backpack.utils.subsampling import subsample
 
 
-class ForwardCallable(Protocol):
-    """Type-annotation for functions performing a forward pass."""
-
-    def __call__(
-        self,
-        x: Tensor,
-        *params_args: Union[Parameter, Tensor],
-        **params_kwargs: Union[Parameter, Tensor, None],
-    ) -> Tensor:  # noqa: D102
-        pass
-
-
 class AutomaticDerivatives(BaseParameterDerivatives):
-    """Implements derivatives for an arbitrary layer using ``torch.autograd``.
+    """Implements derivatives for an arbitrary layer using ``torch.func``.
 
     This class can be used to support new layers without implementing their
-    derivatives. However, this comes at the cost of performance, since the
-    autograd-based implementation is often not as efficient as a hand-crafted one.
+    derivatives by hand. However, this comes at the cost of performance, since the
+    autograd-based implementation is often not as efficient as a hand-crafted one
+    and re-evaluates the forward pass through the layer.
 
     Attributes:
         BATCH_AXIS: Index of the layer input's batch axis. Default: ``0``.
@@ -38,78 +28,66 @@ class AutomaticDerivatives(BaseParameterDerivatives):
     BATCH_AXIS: int = 0
 
     @staticmethod
-    @abstractmethod
-    def as_functional(module: Module) -> ForwardCallable:
-        """Return a function that performs the layer's forward pass.
+    def clone_without_hooks(module: Module) -> Module:
+        """Create a copy of module without BackPACK hooks.
+
+        Args:
+            module: Module to be cloned.
+
+        Returns:
+            Cloned module without BackPACK hooks.
+        """
+        # Temporarily remove input and output to avoid error when calling deepcopy
+        input0, output = module.input0, module.output
+        delattr(module, "input0")
+        delattr(module, "output")
+
+        # Clone the module and remove BackPACK's hooks
+        clean = deepcopy(module)
+        clean._forward_hooks.clear()
+        clean._backward_hooks.clear()
+
+        # Restore input and output in the original module
+        module.input0, module.output = input0, output
+
+        return clean
+
+    def as_functional(
+        self, module: Module, param_name: Optional[str] = None
+    ) -> Union[Callable[[Tensor, Tensor], Tensor], Callable[[Tensor], Tensor]]:
+        """Return a function that performs the layer's forward pass on a single datum.
 
         Args:
             module: Layer for which to return the forward function.
+            param_name: If specified, the name of a parameter of the module that
+                will be passed as second argument to the returned function.
+                Default: ``None`` (all parameters are frozen in the module).
 
         Returns:
             Function that performs the forward pass of the layer and returns a tensor
-            representing the result. First argument must be the input tensor, and
-            subsequent keyword arguments must be the layer's parameters.
-
-        Note:
-            One way to automate this procedure would be via
-            ``torch.func.functional_call``. However, this does not work at the moment
-            because the passed layer has hooks. For now, this function must thus
-            be specified explicitly.
+            representing the result. First argument is the un-batched input tensor.
+            If `param_name` is specified, the second argument corresponds to the
+            parameter.
         """
-        raise NotImplementedError("Must be implemented by a child class.")
+        module = self.clone_without_hooks(module)
+        parameters = dict(module.named_parameters())
+        buffers = dict(module.named_buffers())
 
-    @classmethod
-    def forward_pass(
-        cls, module: Module, subsampling: Optional[List[int]] = None
-    ) -> Tuple[Tensor, Dict[str, Tensor], Tensor]:
-        """Perform a forward pass through the layer.
+        if param_name is None:
 
-        Args:
-            module: Layer for which to perform the forward pass.
-            subsampling: Indices of the batch axis to keep. If ``None``, all indices
-                are kept.Default: ``None``.
+            def f(x: Tensor) -> Tensor:
+                return functional_call(module, {**parameters, **buffers}, x)
 
-        Returns:
-            The sub-sampled tensor used as input to the forward pass, the parameters,
-            and the output.
+        else:
+            parameters.pop(param_name)
 
-        Raises:
-            RuntimeError: If the forward function produces a different output than the
-                layer's forward pass.
-        """
-        # Create an independent copy of the layer's input and parameters
-        input0 = module.input0.clone().detach()
-        input0 = subsample(input0, dim=cls.BATCH_AXIS, subsampling=subsampling)
-        params = {
-            name: param.clone().detach() for name, param in module.named_parameters()
-        }
+            def f(x: Tensor, param: Tensor) -> Tensor:
+                return functional_call(
+                    module, {**parameters, **buffers, param_name: param}, x
+                )
 
-        # turn on autograd for input and parameters
-        input0.requires_grad_(True)
-        for param in params.values():
-            param.requires_grad_(True)
+        return f
 
-        forward_fn = cls.as_functional(module)
-        output = forward_fn(input0, **params)
-
-        # make sure the layer's re-created output matches the output from the
-        # initial forward pass
-        if not allclose(
-            output,
-            subsample(module.output, dim=cls.BATCH_AXIS, subsampling=subsampling),
-        ):
-            raise RuntimeError(
-                "Forward function used inside `AutogradDerivatives` produced a "
-                + "different output than the module's forward pass. This indicates "
-                + "1) the layer is non-deterministic and cannot be supported by "
-                + "`AutogradDerivatives`, or 2) `.as_functional` is incorrect."
-            )
-
-        return input0, params, output
-
-    # NOTE Explicitly turn on autodiff as this function is called during a
-    # backward pass.
-    @enable_grad()
     def _jac_t_mat_prod(
         self,
         module: Module,
@@ -118,13 +96,16 @@ class AutomaticDerivatives(BaseParameterDerivatives):
         mat: Tensor,
         subsampling: Optional[List[int]] = None,
     ) -> Tensor:
-        # regenerate computation graph for differentiation
-        input0, _, output = self.forward_pass(module, subsampling=subsampling)
-        return grad(output, input0, grad_outputs=mat, is_grads_batched=True)[0]
+        f = vmap(self.as_functional(module))  # {x_n} -> {f(x_n)}
 
-    # NOTE Explicitly turn on autodiff as this function is called during a
-    # backward pass.
-    @enable_grad()
+        X = subsample(module.input0, dim=self.BATCH_AXIS, subsampling=subsampling)
+        _, vjp_func = vjp(f, X)  # {v_n} -> {Jf(x_n)^T v_n}
+        # vmap over matrix columns
+        vmp_func = vmap(vjp_func)
+        (vmp,) = vmp_func(mat)
+
+        return vmp
+
     @shape_check.param_mjp_accept_vectors
     def param_mjp(
         self,
@@ -160,27 +141,25 @@ class AutomaticDerivatives(BaseParameterDerivatives):
             has shape ``[N, *param_shape]``). If used with subsampling, the batch size N
             is replaced by len(subsampling).
         """
-        batch_size = module.input0.shape[self.BATCH_AXIS]
-        subsampling = list(range(batch_size)) if subsampling is None else subsampling
+        f = self.as_functional(
+            module, param_name=param_str
+        )  # (x, param) -> f(x, param)
 
-        # contains the MJPs for each sample along the batch dimension
-        sample_vjps = []
+        def param_vjp(x, param, v) -> Tensor:
+            f_x = partial(f, x)  # param -> f(x, param)
+            _, vjp_func = vjp(f_x, param)  # v -> Jf(x, param)^T v
+            (mjp,) = vjp_func(v)
+            return mjp
 
-        for sample_idx, sample in enumerate(subsampling):
-            # regenerate computation graph for differentiation
-            _, params, output = self.forward_pass(module, subsampling=[sample])
-            # shape [V, *module.param_str.shape]
-            vjps = grad(
-                output,
-                params[param_str],
-                grad_outputs=mat[:, [sample_idx]],
-                is_grads_batched=True,
-            )[0]
-            sample_vjps.append(vjps.sum(self.BATCH_AXIS) if sum_batch else vjps)
+        # vectorize over data points: ({x_n}, param, {v_n}) -> {Jf(x_n, param)^T v_n}
+        param_vjp = vmap(param_vjp, in_dims=(self.BATCH_AXIS, None, self.BATCH_AXIS))
+        # vectorize over matrix columns
+        param_mjp = vmap(param_vjp, in_dims=(None, None, 0))
 
-        # shape [V, B, *module.param_str.shape] or [V, *module.param_str.shape]
-        return (
-            cat(sample_vjps, dim=self.BATCH_AXIS)
-            if sum_batch
-            else stack(sample_vjps, dim=self.BATCH_AXIS + 1)
-        )
+        X = subsample(module.input0, dim=self.BATCH_AXIS, subsampling=subsampling)
+        mjp = param_mjp(X, getattr(module, param_str), mat)
+
+        if sum_batch:
+            mjp = mjp.sum(dim=self.BATCH_AXIS + 1)
+
+        return mjp

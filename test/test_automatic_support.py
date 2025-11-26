@@ -1,13 +1,11 @@
 """Test automatic support of new layers."""
 
 from test.automatic_extensions import (
+    BatchDiagGGNExactAutomatic,
     BatchDiagGGNExactLinearAutomatic,
-    BatchDiagGGNExactReLUAutomatic,
-    BatchDiagGGNExactSigmoidAutomatic,
     BatchGradLinearAutomatic,
+    DiagGGNExactAutomatic,
     DiagGGNExactLinearAutomatic,
-    DiagGGNExactReLUAutomatic,
-    DiagGGNExactSigmoidAutomatic,
 )
 from test.test___init__ import DEVICES, DEVICES_ID
 from test.utils import popattr
@@ -46,19 +44,13 @@ def test_automatic_support_diag_ggn_exact(dev: device, batched: bool):
     # same quantity with automatic support
     ext = extensions.BatchDiagGGNExact() if batched else extensions.DiagGGNExact()
     new_mappings = {
-        ReLU: (
-            BatchDiagGGNExactReLUAutomatic() if batched else DiagGGNExactReLUAutomatic()
-        ),
+        ReLU: (BatchDiagGGNExactAutomatic() if batched else DiagGGNExactAutomatic()),
         Linear: (
             BatchDiagGGNExactLinearAutomatic()
             if batched
             else DiagGGNExactLinearAutomatic()
         ),
-        Sigmoid: (
-            BatchDiagGGNExactSigmoidAutomatic()
-            if batched
-            else DiagGGNExactSigmoidAutomatic()
-        ),
+        Sigmoid: (BatchDiagGGNExactAutomatic() if batched else DiagGGNExactAutomatic()),
     }
     for layer_cls, extension in new_mappings.items():
         # make sure we need to turn on explicit overwriting
