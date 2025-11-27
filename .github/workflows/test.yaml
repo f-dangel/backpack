@@ -1,14 +1,6 @@
 name: Test
 
-on:
-  push:
-    branches:
-      - '*'
-  pull_request:
-    branches:
-      - development
-      - master
-      - release
+on: [push, pull_request]
 
 jobs:
   tests:
@@ -34,10 +26,5 @@ jobs:
         make install-test
         pip install torch${{ matrix.pytorch-version }} torchvision
     - name: Run test
-      if: contains('refs/heads/master refs/heads/development refs/heads/release', github.ref)
       run: |
         make test
-    - name: Run test-light
-      if: contains('refs/heads/master refs/heads/development refs/heads/release', github.ref) != 1
-      run: |
-        make test-light
