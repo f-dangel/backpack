@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Internal
 
+- Fix CI (apply latest `black`, use latest `pytest` and `pytest-benchmark`)
+  ([PR](https://github.com/f-dangel/backpack/pull/348))
 - Improve efficiency of Hessian-vector product
   ([PR](https://github.com/f-dangel/backpack/pull/341))
 

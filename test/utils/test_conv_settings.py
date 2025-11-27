@@ -7,7 +7,7 @@ Required entries:
 
 
 Optional entries:
-    "target_fn" (callable): Fetches the groundtruth/target classes 
+    "target_fn" (callable): Fetches the groundtruth/target classes
                             of regression/classification task
     "loss_function_fn" (callable): Loss function used in the model
     "device" [list(torch.device)]: List of devices to run the test on.
