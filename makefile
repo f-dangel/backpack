@@ -64,12 +64,12 @@ test-light:
 	@pytest -vx -rs --cov=backpack . -k "not test_memory_leak"
 
 test-no-gpu:
-	@pytest -k "not cuda and test_memory_leak" -vx -rs --run-optional-tests=montecarlo --cov=backpack .
-	@pytest -k "not cuda and not test_memory_leak" -vx -rs --run-optional-tests=montecarlo --cov=backpack .
+	@pytest -k "(not cuda) and test_memory_leak" -vx -rs --run-optional-tests=montecarlo --cov=backpack .
+	@pytest -k "(not cuda) and (not test_memory_leak)" -vx -rs --run-optional-tests=montecarlo --cov=backpack .
 
 test-light-no-gpu:
-	@pytest -k "not cuda and test_memory_leak" -vx -rs --cov=backpack .
-	@pytest -k "not cuda and not test_memory_leak" -vx -rs --cov=backpack .
+	@pytest -k "(not cuda) and test_memory_leak" -vx -rs --cov=backpack .
+	@pytest -k "(not cuda) and (not test_memory_leak)" -vx -rs --cov=backpack .
 
 ###
 # Linter and autoformatter
