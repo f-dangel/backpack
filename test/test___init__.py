@@ -76,7 +76,7 @@ def memory_leak(device, context=None):
     if context is None:
         context = nullcontext
 
-    for _ in range(steps):
+    for s in range(steps):
         lossfunc = torch.nn.CrossEntropyLoss().to(device)
         lossfunc = extend(lossfunc)
 
@@ -87,6 +87,7 @@ def memory_leak(device, context=None):
             loss = lossfunc(model(X), y)  # this is what kills it
 
         memory = pytorch_current_memory_usage()
+        print(f"Step {s}, Memory delta: {(memory - memory_init) / 2**20:.2f} MiB.")
         if memory - memory_init > memory_leak_threshold:
             raise RuntimeError(
                 f"Memory leak detected: context={context}, device={device}"

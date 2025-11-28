@@ -56,16 +56,20 @@ help:
 ###
 # Test coverage
 test:
-	@pytest -vx -rs --run-optional-tests=montecarlo --cov=backpack .
+	@pytest -vx -rs --run-optional-tests=montecarlo --cov=backpack . -k "test_memory_leak"
+	@pytest -vx -rs --run-optional-tests=montecarlo --cov=backpack . -k "not test_memory_leak"
 
 test-light:
-	@pytest -vx -rs --cov=backpack .
+	@pytest -vx -rs --cov=backpack . -k "test_memory_leak"
+	@pytest -vx -rs --cov=backpack . -k "not test_memory_leak"
 
 test-no-gpu:
-	@pytest -k "not cuda" -vx -rs --run-optional-tests=montecarlo --cov=backpack .
+	@pytest -k "(not cuda) and test_memory_leak" -vx -rs --run-optional-tests=montecarlo --cov=backpack .
+	@pytest -k "(not cuda) and (not test_memory_leak)" -vx -rs --run-optional-tests=montecarlo --cov=backpack .
 
 test-light-no-gpu:
-	@pytest -k "not cuda" -vx -rs --cov=backpack .
+	@pytest -k "(not cuda) and test_memory_leak" -vx -rs --cov=backpack .
+	@pytest -k "(not cuda) and (not test_memory_leak)" -vx -rs --cov=backpack .
 
 ###
 # Linter and autoformatter
