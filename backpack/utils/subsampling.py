@@ -1,11 +1,13 @@
 """Utility functions to enable mini-batch subsampling in extensions."""
 
-from typing import List
+from typing import List, Optional
 
 from torch import Tensor
 
 
-def subsample(tensor: Tensor, dim: int = 0, subsampling: List[int] = None) -> Tensor:
+def subsample(
+    tensor: Tensor, dim: int = 0, subsampling: Optional[List[int]] = None
+) -> Tensor:
     """Select samples from a tensor along a dimension.
 
     Args:

@@ -1,6 +1,6 @@
 """Helper functions for tests."""
 
-from typing import List
+from typing import Any, List
 
 
 def chunk_sizes(total_size: int, num_chunks: int) -> List[int]:
@@ -25,3 +25,18 @@ def chunk_sizes(total_size: int, num_chunks: int) -> List[int]:
             sizes.append(rest)
 
     return sizes
+
+
+def popattr(obj: Any, name: str) -> Any:
+    """Pop an attribute from an object.
+
+    Args:
+        obj: The object from which to pop the attribute.
+        name: The name of the attribute to pop.
+
+    Returns:
+        The attribute's value.
+    """
+    value = getattr(obj, name)
+    delattr(obj, name)
+    return value
