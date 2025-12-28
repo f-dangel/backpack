@@ -56,6 +56,12 @@ def hessian_vector_product(
         )
 
     gv = sum((g_i * v_i).sum() for g_i, v_i in zip(grad_params, v))
-    Hv = grad(gv, params, create_graph=True, retain_graph=True, materialize_grads=True)
+    Hv = grad(
+        gv,
+        params,
+        create_graph=not detach,
+        retain_graph=True,
+        materialize_grads=True,
+    )
 
     return tuple(j.detach() for j in Hv) if detach else Hv

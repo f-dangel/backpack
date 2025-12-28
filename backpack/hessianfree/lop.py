@@ -9,7 +9,7 @@ def L_op(ys, xs, ws, retain_graph=True, detach=True):
         ys,
         xs,
         grad_outputs=ws,
-        create_graph=True,
+        create_graph=not detach,
         retain_graph=retain_graph,
         allow_unused=True,
         materialize_grads=True,

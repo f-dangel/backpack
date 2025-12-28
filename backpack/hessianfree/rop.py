@@ -24,7 +24,7 @@ def R_op(ys, xs, vs, retain_graph=True, detach=True):
         gs,
         ws,
         grad_outputs=vs,
-        create_graph=True,
+        create_graph=not detach,
         retain_graph=True,
         allow_unused=True,
         materialize_grads=True,
